@@ -16,6 +16,7 @@
     "@ipld/dag-cbor": "^9.2.2",
     "@libp2p/interface": "^2.2.0",
     "@my/ui": "0.0.1",
+    "@react-native-masked-view/masked-view": "^0.3.2",
     "app": "0.0.0",
     "babel-plugin-module-resolver": "^5.0.2",
     "burnt": "^0.12.2",
@@ -49,9 +50,5 @@
   },
   "browser": {
     "crypto": false
-  },
-  "resolutions": {
-    "metro": "git+ssh://git@github.com/facebook/metro.git#78db442",
-    "metro-resolver": "git+ssh://git@github.com/facebook/metro.git#78db442"
   }
 }

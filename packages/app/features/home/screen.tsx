@@ -19,6 +19,7 @@ import { ChevronDown, ChevronUp, X } from '@tamagui/lucide-icons'
 import { useState } from 'react'
 import { Platform } from 'react-native'
 import { useLink } from 'solito/navigation'
+import { useCanvas } from '@canvas-js/hooks'
 
 export function HomeScreen({ pagesMode = false }: { pagesMode?: boolean }) {
   const linkTarget = pagesMode ? '/pages-example-user' : '/user'
@@ -29,6 +30,37 @@ export function HomeScreen({ pagesMode = false }: { pagesMode?: boolean }) {
     { username: "raymond", user: "Raymond", item: "Designing Data-Driven Applications" },
     { username: "raymond", user: "Raymond", item: "Intermezzo" },
   ])
+
+  const { app } = useCanvas(null, {
+    contract: {
+      models: {
+        profiles: {
+          did: "primary",
+          name: "string",
+          items: "@items[]", // TODO
+          image: "string?", // TODO
+        },
+        items: {
+          id: "primary",
+          name: "string",
+          image: "string?",
+          children: "@items[]", // TODO
+          parent: "@items", // TODO
+        }
+      },
+      actions: {
+        createProfile(db, name) {
+          const { did } = this
+          db.create("profiles", { did, name, items: [], image: null })
+        },
+        updateProfile(db, name) {
+          const { did } = this
+          db.update("profiles", { did, name })
+        }
+      }
+    },
+    topic: "refs.canvas.xyz"
+  })
 
   return (
     <YStack f={1} jc="center" ai="center" gap="$8" p="$4" bg="$background">

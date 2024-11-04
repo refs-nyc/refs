@@ -21,6 +21,25 @@ config.resolver.nodeModulesPaths = [
 // 3. Force Metro to resolve (sub)dependencies only from the `nodeModulesPaths`
 config.resolver.disableHierarchicalLookup = true
 
+config.resolver.resolverMainFields = ['react-native', 'browser', 'main', 'lib', 'import']
+
+config.resolver.unstable_enablePackageExports = true
+
+config.resolver.resolveRequest = (context, moduleName, platform) => {
+  console.log('========================================')
+  console.log('resolving', moduleName, platform, context.enablePackageExports)
+  try {
+    const result = context.resolveRequest(context, moduleName, platform)
+    console.log('----------------------------------------')
+    console.log(result)
+    console.log('========================================')
+    return result
+  } catch (e) {
+    console.log('ERR', e)
+    throw e
+  }
+}
+
 config.transformer = { ...config.transformer, unstable_allowRequireContext: true }
 config.transformer.minifierPath = require.resolve('metro-minify-terser')
 

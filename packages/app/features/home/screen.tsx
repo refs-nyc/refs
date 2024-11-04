@@ -19,47 +19,50 @@ import { ChevronDown, ChevronUp, X } from '@tamagui/lucide-icons'
 import { useState } from 'react'
 import { Platform } from 'react-native'
 import { useLink } from 'solito/navigation'
+
+import 'event-target-polyfill'
+import 'fast-text-encoding'
 import { useCanvas } from '@canvas-js/hooks'
 
 export function HomeScreen({ pagesMode = false }: { pagesMode?: boolean }) {
   const linkTarget = pagesMode ? '/pages-example-user' : '/user'
 
   const [itemHistory, setItemHistory] = useState([
-    { username: "max", user: "Max", item: "The Strokes" },
-    { username: "max", user: "Max", item: "The Inner Game of Tennis" },
-    { username: "raymond", user: "Raymond", item: "Designing Data-Driven Applications" },
-    { username: "raymond", user: "Raymond", item: "Intermezzo" },
+    { username: 'max', user: 'Max', item: 'The Strokes' },
+    { username: 'max', user: 'Max', item: 'The Inner Game of Tennis' },
+    { username: 'raymond', user: 'Raymond', item: 'Designing Data-Driven Applications' },
+    { username: 'raymond', user: 'Raymond', item: 'Intermezzo' },
   ])
 
   const { app } = useCanvas(null, {
     contract: {
       models: {
         profiles: {
-          did: "primary",
-          name: "string",
-          items: "@items[]", // TODO
-          image: "string?", // TODO
+          did: 'primary',
+          name: 'string',
+          items: '@items[]', // TODO
+          image: 'string?', // TODO
         },
         items: {
-          id: "primary",
-          name: "string",
-          image: "string?",
-          children: "@items[]", // TODO
-          parent: "@items", // TODO
-        }
+          id: 'primary',
+          name: 'string',
+          image: 'string?',
+          children: '@items[]', // TODO
+          parent: '@items', // TODO
+        },
       },
       actions: {
         createProfile(db, name) {
           const { did } = this
-          db.create("profiles", { did, name, items: [], image: null })
+          db.create('profiles', { did, name, items: [], image: null })
         },
         updateProfile(db, name) {
           const { did } = this
-          db.update("profiles", { did, name })
-        }
-      }
+          db.update('profiles', { did, name })
+        },
+      },
     },
-    topic: "refs.canvas.xyz"
+    topic: 'refs.canvas.xyz',
   })
 
   return (
@@ -98,26 +101,32 @@ export function HomeScreen({ pagesMode = false }: { pagesMode?: boolean }) {
             const itemLinkProps = useLink({
               href: `${linkTarget}/${item.username}`,
             })
-            
+
             return (
-              <XStack 
-                key={index} 
-                gap="$3" 
-                ai="center" 
-                p="$2" 
-                br="$4" 
-                bw={1} 
+              <XStack
+                key={index}
+                gap="$3"
+                ai="center"
+                p="$2"
+                br="$4"
+                bw={1}
                 borderColor="$gray8"
                 pressStyle={{ opacity: 0.8 }}
                 {...itemLinkProps}
               >
                 <Avatar circular size="$3">
                   <Avatar.Image source={{ uri: `https://i.pravatar.cc/150?u=${item.user}` }} />
-                  <Avatar.Fallback bc="$gray5"><Text>{item.user[0]}</Text></Avatar.Fallback>
+                  <Avatar.Fallback bc="$gray5">
+                    <Text>{item.user[0]}</Text>
+                  </Avatar.Fallback>
                 </Avatar>
                 <YStack>
-                  <Paragraph size="$3" fontWeight="bold">{item.user}</Paragraph>
-                  <Paragraph size="$2" col="$gray11">{item.item}</Paragraph>
+                  <Paragraph size="$3" fontWeight="bold">
+                    {item.user}
+                  </Paragraph>
+                  <Paragraph size="$2" col="$gray11">
+                    {item.item}
+                  </Paragraph>
                 </YStack>
               </XStack>
             )

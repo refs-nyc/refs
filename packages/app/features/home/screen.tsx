@@ -22,7 +22,8 @@ import { useLink } from 'solito/navigation'
 
 import 'event-target-polyfill'
 import 'fast-text-encoding'
-import { useCanvas } from '@canvas-js/hooks'
+
+import { useCanvas, useLiveQuery } from '@canvas-js/hooks'
 
 export function HomeScreen({ pagesMode = false }: { pagesMode?: boolean }) {
   const linkTarget = pagesMode ? '/pages-example-user' : '/user'
@@ -50,6 +51,10 @@ export function HomeScreen({ pagesMode = false }: { pagesMode?: boolean }) {
           children: '@items[]', // TODO
           parent: '@items', // TODO
         },
+        counters: {
+          id: 'primary',
+          count: 'number',
+        },
       },
       actions: {
         createProfile(db, name) {
@@ -60,13 +65,23 @@ export function HomeScreen({ pagesMode = false }: { pagesMode?: boolean }) {
           const { did } = this
           db.update('profiles', { did, name })
         },
+        async updateCounter(db) {
+          const current = await db.get('counters', '0')
+          db.set('counters', { id: '0', count: current ? current.count + 1 : 0 })
+        },
       },
     },
     topic: 'refs.canvas.xyz',
   })
 
+  const counterRows = useLiveQuery(app, 'counters', { where: { id: '0' } })
+
   return (
     <YStack f={1} jc="center" ai="center" gap="$8" p="$4" bg="$background">
+      <XStack t="$6" gap="$4" jc="center">
+        <Button onPress={() => app?.actions.updateCounter()}>Hi</Button>
+        <Paragraph>Counter: {counterRows ? counterRows[0]?.count : '--'}</Paragraph>
+      </XStack>
       <XStack
         pos="absolute"
         w="100%"

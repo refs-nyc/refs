@@ -7,8 +7,8 @@
     "*.css"
   ],
   "dependencies": {
-    "@canvas-js/core": "^0.12.3-next.0",
-    "@canvas-js/hooks": "^0.12.3-next.0",
+    "@canvas-js/core": "^0.12.3-next.2",
+    "@canvas-js/hooks": "^0.12.3-next.2",
     "@ipld/dag-cbor": "^9.2.2",
     "@libp2p/interface": "^2.2.0",
     "@my/ui": "0.0.1",

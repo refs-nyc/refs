@@ -26,6 +26,21 @@ config.resolver.disableHierarchicalLookup = true
 // 4. Read the `exports` field, instead of just `main`, in package.json
 config.resolver.unstable_enablePackageExports = true
 
+// 5. Extra node modules
+config.resolver.extraNodeModules = {
+  ...config.resolver.extraNodeModules,
+}
+
+// 6.
+config.resolver.resolveRequest = (context, moduleName, platform) => {
+  if (moduleName === 'crypto') {
+    // when importing crypto, resolve to react-native-quick-crypto
+    return context.resolveRequest(context, 'react-native-quick-crypto', platform)
+  }
+  // otherwise chain to the standard Metro resolver.
+  return context.resolveRequest(context, moduleName, platform)
+}
+
 config.transformer = { ...config.transformer, unstable_allowRequireContext: true }
 config.transformer.minifierPath = require.resolve('metro-minify-terser')
 

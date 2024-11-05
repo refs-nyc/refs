@@ -25,6 +25,8 @@ config.resolver.disableHierarchicalLookup = true
 
 // 4. Read the `exports` field, instead of just `main`, in package.json
 config.resolver.unstable_enablePackageExports = true
+config.resolver.unstable_conditionNames = ['require', 'import', 'react-native', 'ios', 'default']
+// TODO: remove ios, use react-native
 
 // 5. Extra node modules
 config.resolver.extraNodeModules = {

@@ -17976,9 +17976,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"metro-resolver@git+ssh://git@github.com/raykyri/metro.git#7a4c6a1854891387c77dbc7cfcb9ac9b4db475b5":
+"metro-resolver@https://github.com/raykyri/metro.git#7a4c6a1854891387c77dbc7cfcb9ac9b4db475b5":
   version: 0.81.0
-  resolution: "metro-resolver@git+ssh://git@github.com/raykyri/metro.git#commit=7a4c6a1854891387c77dbc7cfcb9ac9b4db475b5"
+  resolution: "metro-resolver@https://github.com/raykyri/metro.git#commit=7a4c6a1854891387c77dbc7cfcb9ac9b4db475b5"
   dependencies:
     flow-enums-runtime: "npm:^0.0.6"
   checksum: 10/e560931497bcfda76a76567dcea138adc6ba3ab4d2643917a80eac9b4b878db4d871cea2aaece5df6f0f777cd11a36ac263239e157995da3dbbd2e41f8dfa0d6

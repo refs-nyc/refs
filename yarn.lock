@@ -1346,37 +1346,37 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@canvas-js/chain-ethereum@npm:0.12.3-next.3":
-  version: 0.12.3-next.3
-  resolution: "@canvas-js/chain-ethereum@npm:0.12.3-next.3"
+"@canvas-js/chain-ethereum@npm:0.12.3-next.4":
+  version: 0.12.3-next.4
+  resolution: "@canvas-js/chain-ethereum@npm:0.12.3-next.4"
   dependencies:
-    "@canvas-js/interfaces": "npm:0.12.3-next.3"
-    "@canvas-js/signatures": "npm:0.12.3-next.3"
-    "@canvas-js/utils": "npm:0.12.3-next.3"
+    "@canvas-js/interfaces": "npm:0.12.3-next.4"
+    "@canvas-js/signatures": "npm:0.12.3-next.4"
+    "@canvas-js/utils": "npm:0.12.3-next.4"
     "@ipld/dag-json": "npm:^10.2.2"
     "@libp2p/logger": "npm:^5.1.0"
     ethers: "npm:^6.13.2"
     multiformats: "npm:^13.3.0"
     siwe: "npm:^2.3.2"
-  checksum: 10/2811f1a40b8e8974b6fb1686b7677912b70c5b099c3c74f1d8a23ea7d2eac031f2a369a76bc50b846059b131d7733128726408192d2235e3e5dc6ba0ff5187c0
+  checksum: 10/6d7c519f0d7809848dbc712244decdace44b57e743d8f875955ee9c4746b618e6e195aedac73805fbbe928eb7a3fc8f7b5adc038c9f1450d8009b320c3a2dc78
   languageName: node
   linkType: hard
 
-"@canvas-js/core@npm:0.12.3-next.3, @canvas-js/core@npm:^0.12.3-next.3":
-  version: 0.12.3-next.3
-  resolution: "@canvas-js/core@npm:0.12.3-next.3"
+"@canvas-js/core@npm:0.12.3-next.4, @canvas-js/core@npm:^0.12.3-next.4":
+  version: 0.12.3-next.4
+  resolution: "@canvas-js/core@npm:0.12.3-next.4"
   dependencies:
-    "@canvas-js/chain-ethereum": "npm:0.12.3-next.3"
-    "@canvas-js/gossiplog": "npm:0.12.3-next.3"
-    "@canvas-js/interfaces": "npm:0.12.3-next.3"
-    "@canvas-js/modeldb": "npm:0.12.3-next.3"
-    "@canvas-js/modeldb-durable-objects": "npm:0.12.3-next.3"
-    "@canvas-js/modeldb-idb": "npm:0.12.3-next.3"
-    "@canvas-js/modeldb-pg": "npm:0.12.3-next.3"
-    "@canvas-js/modeldb-sqlite": "npm:0.12.3-next.3"
-    "@canvas-js/signatures": "npm:0.12.3-next.3"
-    "@canvas-js/utils": "npm:0.12.3-next.3"
-    "@canvas-js/vm": "npm:0.12.3-next.3"
+    "@canvas-js/chain-ethereum": "npm:0.12.3-next.4"
+    "@canvas-js/gossiplog": "npm:0.12.3-next.4"
+    "@canvas-js/interfaces": "npm:0.12.3-next.4"
+    "@canvas-js/modeldb": "npm:0.12.3-next.4"
+    "@canvas-js/modeldb-durable-objects": "npm:0.12.3-next.4"
+    "@canvas-js/modeldb-idb": "npm:0.12.3-next.4"
+    "@canvas-js/modeldb-pg": "npm:0.12.3-next.4"
+    "@canvas-js/modeldb-sqlite": "npm:0.12.3-next.4"
+    "@canvas-js/signatures": "npm:0.12.3-next.4"
+    "@canvas-js/utils": "npm:0.12.3-next.4"
+    "@canvas-js/vm": "npm:0.12.3-next.4"
     "@ipld/dag-cbor": "npm:^9.2.1"
     "@ipld/dag-json": "npm:^10.2.2"
     "@ipld/schema": "npm:^5.0.0"
@@ -1406,27 +1406,27 @@ __metadata:
     quickjs-emscripten: "npm:^0.29.2"
     uint8arraylist: "npm:^2.4.8"
     uint8arrays: "npm:^5.1.0"
-  checksum: 10/38260a3882ca67ed415494a295e6cb1bcc0d0ec618ec504408c70ca2fd584ccb357fd76e955c3f91484c8502852346872965c8f611e66240947bbe159928b9cc
+  checksum: 10/5f1e72271e12048acdb84550454e959f2c404489d815daf2cf0d5d1ba1b244d479cc44dc3e2bd0a2f47def32fa716d68b7abed735d5bae8ace30b2dfa35c2660
   languageName: node
   linkType: hard
 
-"@canvas-js/gossiplog@npm:0.12.3-next.3":
-  version: 0.12.3-next.3
-  resolution: "@canvas-js/gossiplog@npm:0.12.3-next.3"
+"@canvas-js/gossiplog@npm:0.12.3-next.4":
+  version: 0.12.3-next.4
+  resolution: "@canvas-js/gossiplog@npm:0.12.3-next.4"
   dependencies:
-    "@canvas-js/interfaces": "npm:0.12.3-next.3"
+    "@canvas-js/interfaces": "npm:0.12.3-next.4"
     "@canvas-js/libp2p-rendezvous": "npm:^0.2.0"
-    "@canvas-js/modeldb": "npm:0.12.3-next.3"
-    "@canvas-js/modeldb-durable-objects": "npm:0.12.3-next.3"
-    "@canvas-js/modeldb-idb": "npm:0.12.3-next.3"
-    "@canvas-js/modeldb-pg": "npm:0.12.3-next.3"
-    "@canvas-js/modeldb-sqlite": "npm:0.12.3-next.3"
-    "@canvas-js/modeldb-sqlite-expo": "npm:0.12.3-next.3"
+    "@canvas-js/modeldb": "npm:0.12.3-next.4"
+    "@canvas-js/modeldb-durable-objects": "npm:0.12.3-next.4"
+    "@canvas-js/modeldb-idb": "npm:0.12.3-next.4"
+    "@canvas-js/modeldb-pg": "npm:0.12.3-next.4"
+    "@canvas-js/modeldb-sqlite": "npm:0.12.3-next.4"
+    "@canvas-js/modeldb-sqlite-expo": "npm:0.12.3-next.4"
     "@canvas-js/okra": "npm:^0.4.5"
     "@canvas-js/okra-lmdb": "npm:^0.2.0"
     "@canvas-js/okra-memory": "npm:^0.4.5"
-    "@canvas-js/signatures": "npm:0.12.3-next.3"
-    "@canvas-js/utils": "npm:0.12.3-next.3"
+    "@canvas-js/signatures": "npm:0.12.3-next.4"
+    "@canvas-js/utils": "npm:0.12.3-next.4"
     "@chainsafe/libp2p-gossipsub": "npm:^14.1.0"
     "@chainsafe/libp2p-noise": "npm:^16.0.0"
     "@chainsafe/libp2p-yamux": "npm:^7.0.1"
@@ -1473,28 +1473,28 @@ __metadata:
     uint8arraylist: "npm:^2.4.8"
     uint8arrays: "npm:^5.1.0"
     ws: "npm:^8.18.0"
-  checksum: 10/577afb3e3a33393646a84087dadee347c5c10c1adc2b06055258115ab6dde5ac68c65c3c14009f8715b2b42252dc736547083870ca5fbcbc4e12f164171f5e06
+  checksum: 10/7b8a1e63544182a81b50371b450be229daa4b4cd275957d0089eea19145d1ddefe283d47983d26085d324577a2bba84f3119644e173718f7ac8815da3b488210
   languageName: node
   linkType: hard
 
-"@canvas-js/hooks@npm:^0.12.3-next.3":
-  version: 0.12.3-next.3
-  resolution: "@canvas-js/hooks@npm:0.12.3-next.3"
+"@canvas-js/hooks@npm:^0.12.3-next.4":
+  version: 0.12.3-next.4
+  resolution: "@canvas-js/hooks@npm:0.12.3-next.4"
   dependencies:
-    "@canvas-js/core": "npm:0.12.3-next.3"
-    "@canvas-js/interfaces": "npm:0.12.3-next.3"
-    "@canvas-js/modeldb": "npm:0.12.3-next.3"
-    "@canvas-js/modeldb-idb": "npm:0.12.3-next.3"
+    "@canvas-js/core": "npm:0.12.3-next.4"
+    "@canvas-js/interfaces": "npm:0.12.3-next.4"
+    "@canvas-js/modeldb": "npm:0.12.3-next.4"
+    "@canvas-js/modeldb-idb": "npm:0.12.3-next.4"
   peerDependencies:
     react: ^18.3.1
-  checksum: 10/91c3dc81bc16ca04de2e1940ba9c818c400dfd6055cf7e6e39d213aaf198ff20265f40f5d09bc28c0bb9b6cdfef93f05010f1ff407543c543e1f5adde0f623e4
+  checksum: 10/bea58393d2e7f481bb8c8ab6ccb78c75ddc032bd016d6c510f003d9b1ccf63be76b4ab50adcefa770b232f82eadddd7521c5576e1b167a6faeb95135e663d57a
   languageName: node
   linkType: hard
 
-"@canvas-js/interfaces@npm:0.12.3-next.3":
-  version: 0.12.3-next.3
-  resolution: "@canvas-js/interfaces@npm:0.12.3-next.3"
-  checksum: 10/a6061a315f927473f041f65d89cf692e502bf2c8ab7411bace0e990ccdeaf5ba2d77fc5e67902ad3c725bfe21e78a84f2614b2732dcb706f617008aee672cdac
+"@canvas-js/interfaces@npm:0.12.3-next.4":
+  version: 0.12.3-next.4
+  resolution: "@canvas-js/interfaces@npm:0.12.3-next.4"
+  checksum: 10/4497e3c21ea7e0605403f431670454da8ed8ac48dc0faf480325fcc4df936905e8234e04bbe440b957ce1fb5716e69a1eb33bc1329d2285abfb08b7570dba0af
   languageName: node
   linkType: hard
 
@@ -1520,27 +1520,27 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@canvas-js/modeldb-durable-objects@npm:0.12.3-next.3":
-  version: 0.12.3-next.3
-  resolution: "@canvas-js/modeldb-durable-objects@npm:0.12.3-next.3"
+"@canvas-js/modeldb-durable-objects@npm:0.12.3-next.4":
+  version: 0.12.3-next.4
+  resolution: "@canvas-js/modeldb-durable-objects@npm:0.12.3-next.4"
   dependencies:
-    "@canvas-js/modeldb": "npm:0.12.3-next.3"
-    "@canvas-js/utils": "npm:0.12.3-next.3"
+    "@canvas-js/modeldb": "npm:0.12.3-next.4"
+    "@canvas-js/utils": "npm:0.12.3-next.4"
     "@cloudflare/workers-types": "npm:^4.20240925.0"
     "@ipld/dag-json": "npm:^10.2.2"
     "@types/better-sqlite3": "npm:^7.6.10"
     better-sqlite3: "npm:^11.0.0"
     wrangler: "npm:^3.78.12"
-  checksum: 10/6bb56c8f9b5e1fea06bf9598a07b8d55ad2dbaa2ef72ebf8d900e535321cc86414f0468e80f0f1576ef7c20d3f57ef0f8d6bf626ebb2d45db9d2a8d870eeb3b5
+  checksum: 10/fd07d1097e5804f52001ff2919a869a175b0095ead134605ae1918e457aaebb2f7d5808707bb46427aa0b01d42892d2516d388659cb4ac591a085d5c0355e1a2
   languageName: node
   linkType: hard
 
-"@canvas-js/modeldb-idb@npm:0.12.3-next.3":
-  version: 0.12.3-next.3
-  resolution: "@canvas-js/modeldb-idb@npm:0.12.3-next.3"
+"@canvas-js/modeldb-idb@npm:0.12.3-next.4":
+  version: 0.12.3-next.4
+  resolution: "@canvas-js/modeldb-idb@npm:0.12.3-next.4"
   dependencies:
-    "@canvas-js/modeldb": "npm:0.12.3-next.3"
-    "@canvas-js/utils": "npm:0.12.3-next.3"
+    "@canvas-js/modeldb": "npm:0.12.3-next.4"
+    "@canvas-js/utils": "npm:0.12.3-next.4"
     "@ipld/dag-json": "npm:^10.2.2"
     "@libp2p/logger": "npm:^5.1.0"
     fast-deep-equal: "npm:^3.1.3"
@@ -1548,61 +1548,61 @@ __metadata:
   peerDependencies:
     "@types/react": ^18.3.9
     react: ^18.3.1
-  checksum: 10/cc0a071140042a2c1b72c1286357dddc4761055fa47c2a79f5088aad4b640429e45348da7ff45c8c96bdc8c3a13f5f0064cfa65f5b88fd3d4052ebba28c53fc8
+  checksum: 10/33e50a4fb5ff3c829ef45bb53d52643a39385df361286115b4b0b868f1909beace4499df22ca2ca036cd1732426b81e386e3ab11e68c8420219af48e2c605d08
   languageName: node
   linkType: hard
 
-"@canvas-js/modeldb-pg@npm:0.12.3-next.3":
-  version: 0.12.3-next.3
-  resolution: "@canvas-js/modeldb-pg@npm:0.12.3-next.3"
+"@canvas-js/modeldb-pg@npm:0.12.3-next.4":
+  version: 0.12.3-next.4
+  resolution: "@canvas-js/modeldb-pg@npm:0.12.3-next.4"
   dependencies:
-    "@canvas-js/modeldb": "npm:0.12.3-next.3"
-    "@canvas-js/utils": "npm:0.12.3-next.3"
+    "@canvas-js/modeldb": "npm:0.12.3-next.4"
+    "@canvas-js/utils": "npm:0.12.3-next.4"
     "@ipld/dag-json": "npm:^10.2.2"
     "@types/pg": "npm:^8.11.10"
     "@types/pg-cursor": "npm:^2.7.2"
     pg: "npm:^8.13.0"
     pg-cursor: "npm:^2.12.0"
-  checksum: 10/1b12d244e4e67f6c63f1173397563e69ae8a505d6f492484b3de57bf7bb2d0fa7a7c132fb25bdef50f23906c66d5a8ae8daebf64afa8392ea2bb44d7969c0a04
+  checksum: 10/4adf178f6950fe1231de460e2b5537c9641c1b0ee06b20619bbce0b627152ddfea97fef3b93d7f3f78bddafe8c9b954405c19e5dec322e683dc586b5b36b4abe
   languageName: node
   linkType: hard
 
-"@canvas-js/modeldb-sqlite-expo@npm:0.12.3-next.3":
-  version: 0.12.3-next.3
-  resolution: "@canvas-js/modeldb-sqlite-expo@npm:0.12.3-next.3"
+"@canvas-js/modeldb-sqlite-expo@npm:0.12.3-next.4":
+  version: 0.12.3-next.4
+  resolution: "@canvas-js/modeldb-sqlite-expo@npm:0.12.3-next.4"
   dependencies:
-    "@canvas-js/modeldb": "npm:0.12.3-next.3"
-    "@canvas-js/utils": "npm:0.12.3-next.3"
+    "@canvas-js/modeldb": "npm:0.12.3-next.4"
+    "@canvas-js/utils": "npm:0.12.3-next.4"
     "@ipld/dag-json": "npm:^10.2.2"
     "@types/better-sqlite3": "npm:^7.6.10"
     better-sqlite3: "npm:^11.0.0"
     expo-sqlite: "npm:^14.0.6"
-  checksum: 10/f6033107c7e1b5b091080a7e5c93a315d6f720d4c086f87abfbf51762cfed2f2e75f0d14d95fa4d32cbfbf6f7b719e1d766366c8d8709a85a6d3b7d438d656cc
+  checksum: 10/c25902edacf2edf3002e66bf1089bfe214e9d6b421191293812a44fa47fb25b23a6d092f5d2dd9ab0a00c1ce087f56369fe60a3579a62656c1f99143379ba1d6
   languageName: node
   linkType: hard
 
-"@canvas-js/modeldb-sqlite@npm:0.12.3-next.3":
-  version: 0.12.3-next.3
-  resolution: "@canvas-js/modeldb-sqlite@npm:0.12.3-next.3"
+"@canvas-js/modeldb-sqlite@npm:0.12.3-next.4":
+  version: 0.12.3-next.4
+  resolution: "@canvas-js/modeldb-sqlite@npm:0.12.3-next.4"
   dependencies:
-    "@canvas-js/modeldb": "npm:0.12.3-next.3"
-    "@canvas-js/utils": "npm:0.12.3-next.3"
+    "@canvas-js/modeldb": "npm:0.12.3-next.4"
+    "@canvas-js/utils": "npm:0.12.3-next.4"
     "@ipld/dag-json": "npm:^10.2.2"
     "@types/better-sqlite3": "npm:^7.6.10"
     better-sqlite3: "npm:^11.0.0"
-  checksum: 10/d9a19492ff1a87c54c827a770976c09cc606f5d59ebb8adabd49807bc78ab5cda8f5c5c3aac7d4ad25bf74ba70839b968c0b22e31cd634cd390eabe049351cab
+  checksum: 10/5b6b4436e78f976eea99872a10578860688a3b891ec1c8319ffcd3f44bf39f5465ff01c1df87106e3b4c098b8abb4fd9001666a91d8968ae297aa70d8e8c4817
   languageName: node
   linkType: hard
 
-"@canvas-js/modeldb@npm:0.12.3-next.3":
-  version: 0.12.3-next.3
-  resolution: "@canvas-js/modeldb@npm:0.12.3-next.3"
+"@canvas-js/modeldb@npm:0.12.3-next.4":
+  version: 0.12.3-next.4
+  resolution: "@canvas-js/modeldb@npm:0.12.3-next.4"
   dependencies:
-    "@canvas-js/utils": "npm:0.12.3-next.3"
+    "@canvas-js/utils": "npm:0.12.3-next.4"
     "@ipld/dag-json": "npm:^10.2.2"
     "@libp2p/logger": "npm:^5.1.0"
     uint8arrays: "npm:^5.1.0"
-  checksum: 10/f1bd0c1b4b57bcc00363f909cc2d89b897e613cc49972958c09e084462c26d635df1d8dbd5b3bdf11f5a9fc535d3571a3e85dad3cff915e892cf41a1bb949074
+  checksum: 10/81cf47c330f45d563b53b837518e0e64040377798fa6a1e719b11559c6621007ba362d906a7d2e9ea3235e3d58b1f977f1389db05891fb81e1833b995730271d
   languageName: node
   linkType: hard
 
@@ -1641,40 +1641,40 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@canvas-js/signatures@npm:0.12.3-next.3":
-  version: 0.12.3-next.3
-  resolution: "@canvas-js/signatures@npm:0.12.3-next.3"
+"@canvas-js/signatures@npm:0.12.3-next.4":
+  version: 0.12.3-next.4
+  resolution: "@canvas-js/signatures@npm:0.12.3-next.4"
   dependencies:
-    "@canvas-js/interfaces": "npm:0.12.3-next.3"
-    "@canvas-js/utils": "npm:0.12.3-next.3"
+    "@canvas-js/interfaces": "npm:0.12.3-next.4"
+    "@canvas-js/utils": "npm:0.12.3-next.4"
     "@ipld/dag-cbor": "npm:^9.2.1"
     "@ipld/dag-json": "npm:^10.2.2"
     "@libp2p/logger": "npm:^5.1.0"
     "@noble/curves": "npm:^1.6.0"
     "@noble/hashes": "npm:^1.5.0"
     multiformats: "npm:^13.3.0"
-  checksum: 10/34d5e28b4bc654745f3f8e6c7a5a4454de0934090f5d80b5b642c8351c4a7459f5b2a0996a4b6abcc5814f7ac10a6621db9823cdcc22d90098ab72d62f05e179
+  checksum: 10/335a8566bf90be316be6a385c4c35966818b3e55aad61a602fc8e6e6acc867028be09440f243041c8eac6970c2c970f8056aa237c07292e60595698fb9c3e41e
   languageName: node
   linkType: hard
 
-"@canvas-js/utils@npm:0.12.3-next.3":
-  version: 0.12.3-next.3
-  resolution: "@canvas-js/utils@npm:0.12.3-next.3"
+"@canvas-js/utils@npm:0.12.3-next.4":
+  version: 0.12.3-next.4
+  resolution: "@canvas-js/utils@npm:0.12.3-next.4"
   dependencies:
-    "@canvas-js/interfaces": "npm:0.12.3-next.3"
-  checksum: 10/953c801452c09785c306ee8f95413ac0201608949b3c3e0c03551bb9aa64efc1ffa28e86b43c413c97af9c9497708140ba22712a4746e2f71d8d09bcbfd62938
+    "@canvas-js/interfaces": "npm:0.12.3-next.4"
+  checksum: 10/a30cdfb5100922ec7a86d4aaca81861b4d8d98bb76e417e61a93a1e3663e43b0a8c8a1ac9673268288286effd66aab5e90af6717be6d58c2542b7751a88eb033
   languageName: node
   linkType: hard
 
-"@canvas-js/vm@npm:0.12.3-next.3":
-  version: 0.12.3-next.3
-  resolution: "@canvas-js/vm@npm:0.12.3-next.3"
+"@canvas-js/vm@npm:0.12.3-next.4":
+  version: 0.12.3-next.4
+  resolution: "@canvas-js/vm@npm:0.12.3-next.4"
   dependencies:
-    "@canvas-js/utils": "npm:0.12.3-next.3"
+    "@canvas-js/utils": "npm:0.12.3-next.4"
     "@libp2p/logger": "npm:^5.1.0"
     "@noble/hashes": "npm:^1.5.0"
     quickjs-emscripten: "npm:^0.29.2"
-  checksum: 10/a0681c18f1bfd06f8fc2af776fc4be4b1e8b3fec82dbab08a8bc316b5c5766f435c9e94d81254af49d6bf5542d7b053ffbdfcd8a4bd89e8af2f40de2fbb7d130
+  checksum: 10/c008f3fdb181272369d2bbe812505b96f9c4ce696db7ae8952cf3ace7d97a807aa0e1c60d9cee18c451cacad606aa1cfa33ee37db84ba7a8d2a73d55a112163d
   languageName: node
   linkType: hard
 
@@ -9364,8 +9364,8 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "app@workspace:packages/app"
   dependencies:
-    "@canvas-js/core": "npm:^0.12.3-next.3"
-    "@canvas-js/hooks": "npm:^0.12.3-next.3"
+    "@canvas-js/core": "npm:^0.12.3-next.4"
+    "@canvas-js/hooks": "npm:^0.12.3-next.4"
     "@ipld/dag-cbor": "npm:^9.2.2"
     "@libp2p/interface": "npm:^2.2.0"
     "@my/ui": "npm:0.0.1"

@@ -1346,45 +1346,45 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@canvas-js/chain-ethereum@npm:0.12.5":
-  version: 0.12.5
-  resolution: "@canvas-js/chain-ethereum@npm:0.12.5"
+"@canvas-js/chain-ethereum@npm:0.13.3":
+  version: 0.13.3
+  resolution: "@canvas-js/chain-ethereum@npm:0.13.3"
   dependencies:
-    "@canvas-js/interfaces": "npm:0.12.5"
-    "@canvas-js/signatures": "npm:0.12.5"
-    "@canvas-js/utils": "npm:0.12.5"
-    "@ipld/dag-json": "npm:^10.2.2"
+    "@canvas-js/interfaces": "npm:0.13.3"
+    "@canvas-js/signatures": "npm:0.13.3"
+    "@canvas-js/utils": "npm:0.13.3"
+    "@ipld/dag-json": "npm:^10.2.3"
     "@libp2p/logger": "npm:^5.1.0"
     ethers: "npm:^6.13.2"
-    multiformats: "npm:^13.3.0"
+    multiformats: "npm:^13.3.1"
     siwe: "npm:^2.3.2"
-  checksum: 10/17552cd4cff4b46ba269de508bfc9df437dad788f82bab4d038535d0c19632ed63f9b904d12b0a42c5811fc5bdf4b9ea7b24937449c3e144bed197103d20f2cd
+  checksum: 10/fe39418e36e607ddb3b592a8b82300dccedda1d9a8b71f96810290079ca421bdb6a42d593bb43823c65d6f36eb460973d75b9ee22dd64ed52a6eb854db0366c6
   languageName: node
   linkType: hard
 
-"@canvas-js/core@npm:0.12.5, @canvas-js/core@npm:^0.12.5":
-  version: 0.12.5
-  resolution: "@canvas-js/core@npm:0.12.5"
+"@canvas-js/core@npm:0.13.3, @canvas-js/core@npm:^0.13.3":
+  version: 0.13.3
+  resolution: "@canvas-js/core@npm:0.13.3"
   dependencies:
-    "@canvas-js/chain-ethereum": "npm:0.12.5"
-    "@canvas-js/gossiplog": "npm:0.12.5"
-    "@canvas-js/interfaces": "npm:0.12.5"
-    "@canvas-js/modeldb": "npm:0.12.5"
-    "@canvas-js/modeldb-durable-objects": "npm:0.12.5"
-    "@canvas-js/modeldb-idb": "npm:0.12.5"
-    "@canvas-js/modeldb-pg": "npm:0.12.5"
-    "@canvas-js/modeldb-sqlite": "npm:0.12.5"
-    "@canvas-js/signatures": "npm:0.12.5"
-    "@canvas-js/utils": "npm:0.12.5"
-    "@canvas-js/vm": "npm:0.12.5"
-    "@ipld/dag-cbor": "npm:^9.2.1"
-    "@ipld/dag-json": "npm:^10.2.2"
-    "@ipld/schema": "npm:^5.0.0"
-    "@libp2p/interface": "npm:^2.1.2"
+    "@canvas-js/chain-ethereum": "npm:0.13.3"
+    "@canvas-js/gossiplog": "npm:0.13.3"
+    "@canvas-js/interfaces": "npm:0.13.3"
+    "@canvas-js/modeldb": "npm:0.13.3"
+    "@canvas-js/modeldb-durable-objects": "npm:0.13.3"
+    "@canvas-js/modeldb-idb": "npm:0.13.3"
+    "@canvas-js/modeldb-pg": "npm:0.13.3"
+    "@canvas-js/modeldb-sqlite": "npm:0.13.3"
+    "@canvas-js/signatures": "npm:0.13.3"
+    "@canvas-js/utils": "npm:0.13.3"
+    "@canvas-js/vm": "npm:0.13.3"
+    "@ipld/dag-cbor": "npm:^9.2.2"
+    "@ipld/dag-json": "npm:^10.2.3"
+    "@ipld/schema": "npm:^6.0.4"
+    "@libp2p/interface": "npm:^2.2.1"
     "@libp2p/logger": "npm:^5.1.0"
     "@libp2p/peer-id": "npm:^5.0.4"
-    "@multiformats/multiaddr": "npm:^12.3.1"
-    "@noble/hashes": "npm:^1.5.0"
+    "@multiformats/multiaddr": "npm:^12.3.3"
+    "@noble/hashes": "npm:^1.6.1"
     "@types/cors": "npm:^2.8.17"
     "@types/express": "npm:^4.17.21"
     "@types/ws": "npm:^8.5.12"
@@ -1398,54 +1398,54 @@ __metadata:
     express-ipld: "npm:^0.0.1"
     http-status-codes: "npm:^2.3.0"
     it-length-prefixed: "npm:^9.1.0"
-    multiformats: "npm:^13.3.0"
+    multiformats: "npm:^13.3.1"
     p-defer: "npm:^4.0.1"
     p-queue: "npm:^8.0.1"
     pg: "npm:^8.13.0"
     prom-client: "npm:^15.1.2"
-    quickjs-emscripten: "npm:^0.29.2"
+    quickjs-emscripten: "npm:^0.31.0"
     uint8arraylist: "npm:^2.4.8"
     uint8arrays: "npm:^5.1.0"
-  checksum: 10/1d73729ab3f78494b681a2e26bbaa61dbd025d4d59b8d7c9e252d402cca42778e7b4066c603fb0364494f51214e118864bc3ebddb6cc2e67dad52626e9f62602
+  checksum: 10/e68fcaad0805a4dce1383cdb014cb9490f5fc51b3a3990aa149703417869965f00696b46809245089e766133d2b1d9451de42955df8f02723a146106638e34db
   languageName: node
   linkType: hard
 
-"@canvas-js/gossiplog@npm:0.12.5":
-  version: 0.12.5
-  resolution: "@canvas-js/gossiplog@npm:0.12.5"
+"@canvas-js/gossiplog@npm:0.13.3":
+  version: 0.13.3
+  resolution: "@canvas-js/gossiplog@npm:0.13.3"
   dependencies:
-    "@canvas-js/interfaces": "npm:0.12.5"
-    "@canvas-js/libp2p-rendezvous": "npm:^0.2.0"
-    "@canvas-js/modeldb": "npm:0.12.5"
-    "@canvas-js/modeldb-durable-objects": "npm:0.12.5"
-    "@canvas-js/modeldb-idb": "npm:0.12.5"
-    "@canvas-js/modeldb-pg": "npm:0.12.5"
-    "@canvas-js/modeldb-sqlite": "npm:0.12.5"
-    "@canvas-js/modeldb-sqlite-expo": "npm:0.12.5"
-    "@canvas-js/okra": "npm:^0.4.5"
-    "@canvas-js/okra-lmdb": "npm:^0.2.0"
-    "@canvas-js/okra-memory": "npm:^0.4.5"
-    "@canvas-js/signatures": "npm:0.12.5"
-    "@canvas-js/utils": "npm:0.12.5"
+    "@canvas-js/interfaces": "npm:0.13.3"
+    "@canvas-js/libp2p-rendezvous": "npm:^0.2.1"
+    "@canvas-js/modeldb": "npm:0.13.3"
+    "@canvas-js/modeldb-durable-objects": "npm:0.13.3"
+    "@canvas-js/modeldb-idb": "npm:0.13.3"
+    "@canvas-js/modeldb-pg": "npm:0.13.3"
+    "@canvas-js/modeldb-sqlite": "npm:0.13.3"
+    "@canvas-js/modeldb-sqlite-expo": "npm:0.13.3"
+    "@canvas-js/okra": "npm:^0.4.6"
+    "@canvas-js/okra-lmdb": "npm:^0.2.1"
+    "@canvas-js/okra-memory": "npm:^0.4.6"
+    "@canvas-js/signatures": "npm:0.13.3"
+    "@canvas-js/utils": "npm:0.13.3"
     "@chainsafe/libp2p-gossipsub": "npm:^14.1.0"
     "@chainsafe/libp2p-noise": "npm:^16.0.0"
     "@chainsafe/libp2p-yamux": "npm:^7.0.1"
-    "@ipld/dag-cbor": "npm:^9.2.1"
-    "@ipld/dag-json": "npm:^10.2.2"
-    "@libp2p/bootstrap": "npm:^11.0.5"
-    "@libp2p/crypto": "npm:^5.0.4"
-    "@libp2p/identify": "npm:^3.0.5"
-    "@libp2p/interface": "npm:^2.1.2"
-    "@libp2p/interface-internal": "npm:^2.0.5"
-    "@libp2p/kad-dht": "npm:^13.1.0"
+    "@ipld/dag-cbor": "npm:^9.2.2"
+    "@ipld/dag-json": "npm:^10.2.3"
+    "@libp2p/bootstrap": "npm:^11.0.13"
+    "@libp2p/crypto": "npm:^5.0.7"
+    "@libp2p/identify": "npm:^3.0.12"
+    "@libp2p/interface": "npm:^2.2.1"
+    "@libp2p/interface-internal": "npm:^2.1.1"
+    "@libp2p/kad-dht": "npm:^14.1.3"
     "@libp2p/logger": "npm:^5.1.0"
     "@libp2p/multistream-select": "npm:^6.0.5"
     "@libp2p/peer-id": "npm:^5.0.4"
-    "@libp2p/ping": "npm:^2.0.5"
-    "@libp2p/prometheus-metrics": "npm:^4.1.3"
-    "@libp2p/websockets": "npm:^9.0.5"
-    "@multiformats/multiaddr": "npm:^12.3.1"
-    "@noble/hashes": "npm:^1.5.0"
+    "@libp2p/ping": "npm:^2.0.12"
+    "@libp2p/prometheus-metrics": "npm:^4.2.7"
+    "@libp2p/websockets": "npm:^9.0.13"
+    "@multiformats/multiaddr": "npm:^12.3.3"
+    "@noble/hashes": "npm:^1.6.1"
     "@types/cors": "npm:^2.8.17"
     "@types/express": "npm:^4.17.21"
     "@types/ws": "npm:^8.5.12"
@@ -1460,10 +1460,10 @@ __metadata:
     it-length-prefixed: "npm:^9.1.0"
     it-pipe: "npm:^3.0.1"
     it-pushable: "npm:^3.2.3"
-    it-stream-types: "npm:^2.0.1"
+    it-stream-types: "npm:^2.0.2"
     it-ws: "npm:^6.1.5"
-    libp2p: "npm:^2.1.3"
-    multiformats: "npm:^13.3.0"
+    libp2p: "npm:^2.3.1"
+    multiformats: "npm:^13.3.1"
     nanoid: "npm:^5.0.7"
     p-queue: "npm:^8.0.1"
     pg: "npm:^8.13.0"
@@ -1473,208 +1473,208 @@ __metadata:
     uint8arraylist: "npm:^2.4.8"
     uint8arrays: "npm:^5.1.0"
     ws: "npm:^8.18.0"
-  checksum: 10/0f82d8369ff309bf059995048241d5b969cc7a162666ff9343d7e3bbcae6c20eadd04678dbdc91ea5ee64be2fca6a975035f785f4fd6be0f3c28bb975f828bd4
+  checksum: 10/5bb712760242fb5d01f08445a92ccad0f86f5c3075d96e05ef19e5ed19be7248b52ce2428d604f0959159e8adaabe84b8fe2da15cf3975d7ed7c9d4ab9d5b830
   languageName: node
   linkType: hard
 
-"@canvas-js/hooks@npm:^0.12.5":
-  version: 0.12.5
-  resolution: "@canvas-js/hooks@npm:0.12.5"
+"@canvas-js/hooks@npm:^0.13.3":
+  version: 0.13.3
+  resolution: "@canvas-js/hooks@npm:0.13.3"
   dependencies:
-    "@canvas-js/core": "npm:0.12.5"
-    "@canvas-js/interfaces": "npm:0.12.5"
-    "@canvas-js/modeldb": "npm:0.12.5"
-    "@canvas-js/modeldb-idb": "npm:0.12.5"
+    "@canvas-js/core": "npm:0.13.3"
+    "@canvas-js/interfaces": "npm:0.13.3"
+    "@canvas-js/modeldb": "npm:0.13.3"
+    "@canvas-js/modeldb-idb": "npm:0.13.3"
   peerDependencies:
     react: ^18.3.1
-  checksum: 10/1eba35ff9952dd073cb121cbb1db143f842dbc68c3fb330918243fb5eaa3dc268d83785d382fdba9cc720927d950ab40b7dc7c179e673b87edabb4ed240af0ee
+  checksum: 10/cca4979aaf2cda4c5dc406d02a702e295019fb6e94f68f9ffda5ae1247986ea2b0f2491d170dd8302c3f4fe505434385d62ee8c77834503004f0d0d83b1b8803
   languageName: node
   linkType: hard
 
-"@canvas-js/interfaces@npm:0.12.5":
-  version: 0.12.5
-  resolution: "@canvas-js/interfaces@npm:0.12.5"
-  checksum: 10/5e5a3b8439ba572b6770ed7b6f9babdead3eb4d82368d321c4adcfd18c3a05a4eca63d3a84329e5a8fec58010f318e66c41f0de280b9b21799e928ca5fdd0173
+"@canvas-js/interfaces@npm:0.13.3":
+  version: 0.13.3
+  resolution: "@canvas-js/interfaces@npm:0.13.3"
+  checksum: 10/d026f9d4cae05c165bbfcdb6bd9996a6486884b81fa0ad3710ccfbf1e273a72ad18dcbc96e60e17de46edba1ca075d1b62659489316a4bdcbb49644674645c71
   languageName: node
   linkType: hard
 
-"@canvas-js/libp2p-rendezvous@npm:^0.2.0":
-  version: 0.2.0
-  resolution: "@canvas-js/libp2p-rendezvous@npm:0.2.0"
+"@canvas-js/libp2p-rendezvous@npm:^0.2.1":
+  version: 0.2.1
+  resolution: "@canvas-js/libp2p-rendezvous@npm:0.2.1"
   dependencies:
-    "@libp2p/interface": "npm:^2.1.2"
-    "@libp2p/interface-internal": "npm:^2.0.5"
-    "@libp2p/logger": "npm:^5.1.0"
-    "@libp2p/peer-id": "npm:^5.0.4"
-    "@libp2p/peer-record": "npm:^8.0.5"
-    "@multiformats/multiaddr": "npm:^12.3.0"
-    "@types/better-sqlite3": "npm:^7.6.10"
-    better-sqlite3: "npm:^11.0.0"
+    "@libp2p/interface": "npm:^2.2.1"
+    "@libp2p/interface-internal": "npm:^2.1.1"
+    "@libp2p/logger": "npm:^5.1.4"
+    "@libp2p/peer-id": "npm:^5.0.8"
+    "@libp2p/peer-record": "npm:^8.0.12"
+    "@multiformats/multiaddr": "npm:^12.3.3"
+    "@types/better-sqlite3": "npm:^7.6.12"
+    better-sqlite3: "npm:^11.6.0"
     it-length-prefixed: "npm:^9.1.0"
     it-pipe: "npm:^3.0.1"
     it-pushable: "npm:^3.2.3"
     protons-runtime: "npm:^5.5.0"
     uint8arraylist: "npm:^2.4.8"
     uint8arrays: "npm:^5.1.0"
-  checksum: 10/ab342c99044e9be35dbb8e261425ec07dcea6fde5095b383d5d40047937d0477e715fab54f0ac763641a7d66e6f65c320e77c643fca6d3fbc16378798b9986dc
+  checksum: 10/36478e26fd61f98bf1bc7c6a62b00b4defd41c03a2b9c4cc3191bda0027f856524aef974a04ac22e1fbcccc1fdcd5b9b2c2dab435d26098fad7a3dabbda1e512
   languageName: node
   linkType: hard
 
-"@canvas-js/modeldb-durable-objects@npm:0.12.5":
-  version: 0.12.5
-  resolution: "@canvas-js/modeldb-durable-objects@npm:0.12.5"
+"@canvas-js/modeldb-durable-objects@npm:0.13.3":
+  version: 0.13.3
+  resolution: "@canvas-js/modeldb-durable-objects@npm:0.13.3"
   dependencies:
-    "@canvas-js/modeldb": "npm:0.12.5"
-    "@canvas-js/utils": "npm:0.12.5"
+    "@canvas-js/modeldb": "npm:0.13.3"
+    "@canvas-js/utils": "npm:0.13.3"
     "@cloudflare/workers-types": "npm:^4.20240925.0"
-    "@ipld/dag-json": "npm:^10.2.2"
+    "@ipld/dag-json": "npm:^10.2.3"
     "@types/better-sqlite3": "npm:^7.6.10"
     better-sqlite3: "npm:^11.0.0"
     wrangler: "npm:^3.78.12"
-  checksum: 10/b7467657596e8bd76ffeb3ee30b3a4308783ec9d53c98640a7a1b8e18bfab40118bb01bd4a2ffca26c77a9bcd8f35c411e56614c3788a9922148591b0dea54f6
+  checksum: 10/cca82bb3e9d3e08c2f81c69c3fe951465f6c016e6645a9f1ed0362593a878cf2233f4cf09b6ea24c83ae17f40b91e6f18c990d676273ff090267f567cb206bb9
   languageName: node
   linkType: hard
 
-"@canvas-js/modeldb-idb@npm:0.12.5":
-  version: 0.12.5
-  resolution: "@canvas-js/modeldb-idb@npm:0.12.5"
+"@canvas-js/modeldb-idb@npm:0.13.3":
+  version: 0.13.3
+  resolution: "@canvas-js/modeldb-idb@npm:0.13.3"
   dependencies:
-    "@canvas-js/modeldb": "npm:0.12.5"
-    "@canvas-js/utils": "npm:0.12.5"
-    "@ipld/dag-json": "npm:^10.2.2"
+    "@canvas-js/modeldb": "npm:0.13.3"
+    "@canvas-js/utils": "npm:0.13.3"
+    "@ipld/dag-json": "npm:^10.2.3"
     "@libp2p/logger": "npm:^5.1.0"
     fast-deep-equal: "npm:^3.1.3"
     idb: "npm:^8.0.0"
   peerDependencies:
     "@types/react": ^18.3.9
     react: ^18.3.1
-  checksum: 10/2896431fefa9996f76b73f0fd92fe7d824ccaef6bc40941ceb8a01f6ab37d4a281fe321715976a0fdc4a4436d2421227aae2817cfa88eae64002ce5f47361d48
+  checksum: 10/e386b42f6e15bdf108a637c688a8f5fb2c637b6894412db865c7205f306ef4e2ee0913090f7d3db2451cade8fd45e302284dd02ac3fcf5912a3711ce5313d178
   languageName: node
   linkType: hard
 
-"@canvas-js/modeldb-pg@npm:0.12.5":
-  version: 0.12.5
-  resolution: "@canvas-js/modeldb-pg@npm:0.12.5"
+"@canvas-js/modeldb-pg@npm:0.13.3":
+  version: 0.13.3
+  resolution: "@canvas-js/modeldb-pg@npm:0.13.3"
   dependencies:
-    "@canvas-js/modeldb": "npm:0.12.5"
-    "@canvas-js/utils": "npm:0.12.5"
-    "@ipld/dag-json": "npm:^10.2.2"
+    "@canvas-js/modeldb": "npm:0.13.3"
+    "@canvas-js/utils": "npm:0.13.3"
+    "@ipld/dag-json": "npm:^10.2.3"
     "@types/pg": "npm:^8.11.10"
     "@types/pg-cursor": "npm:^2.7.2"
     pg: "npm:^8.13.0"
     pg-cursor: "npm:^2.12.0"
-  checksum: 10/5af039ab40945d3ff1f9bed0d508ff946504e907f74deb5c1882820d40ca32f8b99a1aac9655541fd06e76056c872c4ae5a4b92b4e3fa8ce131b70e780585966
+  checksum: 10/1f122bced353d2d52926a22bbff60fb9af8a9636744ec11a5fd6017c70d2dbb60976cd67545f550c933bb74fc2045440451335ea0b92d3ca3ddf74a36f5f1ba4
   languageName: node
   linkType: hard
 
-"@canvas-js/modeldb-sqlite-expo@npm:0.12.5":
-  version: 0.12.5
-  resolution: "@canvas-js/modeldb-sqlite-expo@npm:0.12.5"
+"@canvas-js/modeldb-sqlite-expo@npm:0.13.3":
+  version: 0.13.3
+  resolution: "@canvas-js/modeldb-sqlite-expo@npm:0.13.3"
   dependencies:
-    "@canvas-js/modeldb": "npm:0.12.5"
-    "@canvas-js/utils": "npm:0.12.5"
-    "@ipld/dag-json": "npm:^10.2.2"
+    "@canvas-js/modeldb": "npm:0.13.3"
+    "@canvas-js/utils": "npm:0.13.3"
+    "@ipld/dag-json": "npm:^10.2.3"
     "@types/better-sqlite3": "npm:^7.6.10"
     better-sqlite3: "npm:^11.0.0"
     expo-sqlite: "npm:^14.0.6"
-  checksum: 10/4395335d5132b118244d4ae75ff4eea1068d3319114d70313f907826ce158d72afcb8ac501cc7b6e50c5382706c698ae250395f2915672ae57b7a90805115ced
+  checksum: 10/62d363e43533b39d9d9b026bfea43a0021a25380756a3fc1a0b6c22e4065882dd9ed8beeb722e751504866c05c004254937e4af922cb76d7f3220e0b255323c0
   languageName: node
   linkType: hard
 
-"@canvas-js/modeldb-sqlite@npm:0.12.5":
-  version: 0.12.5
-  resolution: "@canvas-js/modeldb-sqlite@npm:0.12.5"
+"@canvas-js/modeldb-sqlite@npm:0.13.3":
+  version: 0.13.3
+  resolution: "@canvas-js/modeldb-sqlite@npm:0.13.3"
   dependencies:
-    "@canvas-js/modeldb": "npm:0.12.5"
-    "@canvas-js/utils": "npm:0.12.5"
-    "@ipld/dag-json": "npm:^10.2.2"
+    "@canvas-js/modeldb": "npm:0.13.3"
+    "@canvas-js/utils": "npm:0.13.3"
+    "@ipld/dag-json": "npm:^10.2.3"
     "@types/better-sqlite3": "npm:^7.6.10"
     better-sqlite3: "npm:^11.0.0"
-  checksum: 10/e732b55b8e19e67af902bfe87a4c5623e2226555af5403e0d89d4a589781f68fdcdd32394085b6cb218c051aeaeb5cac8d68e3c31da8bc428337b29f30c66485
+  checksum: 10/6c4150da0ed3ef25aefa5ef9b5eaf248501b3b085a29653243d673dc73eb43ea4cd02819e2e58757a3beb0370a8565663ac9ac2e37a80effe6dcd87fdd1f38e4
   languageName: node
   linkType: hard
 
-"@canvas-js/modeldb@npm:0.12.5":
-  version: 0.12.5
-  resolution: "@canvas-js/modeldb@npm:0.12.5"
+"@canvas-js/modeldb@npm:0.13.3":
+  version: 0.13.3
+  resolution: "@canvas-js/modeldb@npm:0.13.3"
   dependencies:
-    "@canvas-js/utils": "npm:0.12.5"
-    "@ipld/dag-json": "npm:^10.2.2"
+    "@canvas-js/utils": "npm:0.13.3"
+    "@ipld/dag-json": "npm:^10.2.3"
     "@libp2p/logger": "npm:^5.1.0"
     uint8arrays: "npm:^5.1.0"
-  checksum: 10/34838c91f00d868aeac0c6dfc52b1bd0f71bea3563f2a63533676f0531921a7b1c3f8180bdb3e29feeda1586903a04f6e98665b975e9973917929478fee06e93
+  checksum: 10/bc8f08d5e510b1f89c95ee93e83741e6d00d66d4d5bb1038efa2eec0932dc4abd81cfc297a882b93466c09ca7ec00fa7cfcfab0145edb6c32af247a0f8c641fb
   languageName: node
   linkType: hard
 
-"@canvas-js/okra-lmdb@npm:^0.2.0":
-  version: 0.2.0
-  resolution: "@canvas-js/okra-lmdb@npm:0.2.0"
+"@canvas-js/okra-lmdb@npm:^0.2.1":
+  version: 0.2.1
+  resolution: "@canvas-js/okra-lmdb@npm:0.2.1"
   dependencies:
-    "@canvas-js/okra": "npm:^0.4.5"
+    "@canvas-js/okra": "npm:^0.4.6"
     detect-libc: "npm:^2.0.3"
     p-queue: "npm:^8.0.1"
     uint8arrays: "npm:^5.1.0"
-  checksum: 10/92f052747e20125a19b9270aa22ea833127d821be4586989092b4a8909fb7c77aeba2ca923a974706999c0d37d6e74aff53803a0b02088a5ce2d3d5888d9d93b
+  checksum: 10/e6549686a134a7da8af5c52703b5e8869d49f326d1b08af4eea724334a9c7211c05a740e00057277ad579c84ea8006f735c081d01b1c1ea2c78ac82f70379ed5
   languageName: node
   linkType: hard
 
-"@canvas-js/okra-memory@npm:^0.4.5":
-  version: 0.4.5
-  resolution: "@canvas-js/okra-memory@npm:0.4.5"
+"@canvas-js/okra-memory@npm:^0.4.6":
+  version: 0.4.6
+  resolution: "@canvas-js/okra-memory@npm:0.4.6"
   dependencies:
-    "@canvas-js/okra": "npm:^0.4.5"
+    "@canvas-js/okra": "npm:^0.4.6"
     functional-red-black-tree: "npm:^1.0.1"
     p-queue: "npm:^8.0.1"
     uint8arrays: "npm:^5.1.0"
-  checksum: 10/d1d6aa33626c20d08226d60de43a0a7c09e48d494cfe805f67fa0317bb883c18059e1f6af45a6fd0b8cc68d85b4bf63ef1a28162163301e57c21ed279301f780
+  checksum: 10/77bb5eb2eec1cf33ff270ce3f0604b50582cf41321859c61c600141dc3fb87e14357362fb2cf2e8bb44e0d4ca9dde64f0a9865676a224e17783a4a3b089e81ba
   languageName: node
   linkType: hard
 
-"@canvas-js/okra@npm:^0.4.5":
-  version: 0.4.5
-  resolution: "@canvas-js/okra@npm:0.4.5"
+"@canvas-js/okra@npm:^0.4.6":
+  version: 0.4.6
+  resolution: "@canvas-js/okra@npm:0.4.6"
   dependencies:
     "@noble/hashes": "npm:^1.5.0"
     uint8arrays: "npm:^5.1.0"
-    weald: "npm:^1.0.2"
-  checksum: 10/c78b647840cccfe49aa5b13769d8b21720ac6a8d9a705f865eac71b2301646112689381b70e56f51c07332f23374ed54ecc2c199be42dbdd0feb84af0bb79fb9
+    weald: "npm:^1.0.4"
+  checksum: 10/67ffeb8cb4a571815e9b248c7467a59e29512759ca9ef42dba68bcbf86ebcebd9480de92e896dba173351a1688db27ecd534966bd8cb33163b1b3f9b27b08b85
   languageName: node
   linkType: hard
 
-"@canvas-js/signatures@npm:0.12.5":
-  version: 0.12.5
-  resolution: "@canvas-js/signatures@npm:0.12.5"
+"@canvas-js/signatures@npm:0.13.3":
+  version: 0.13.3
+  resolution: "@canvas-js/signatures@npm:0.13.3"
   dependencies:
-    "@canvas-js/interfaces": "npm:0.12.5"
-    "@canvas-js/utils": "npm:0.12.5"
-    "@ipld/dag-cbor": "npm:^9.2.1"
-    "@ipld/dag-json": "npm:^10.2.2"
+    "@canvas-js/interfaces": "npm:0.13.3"
+    "@canvas-js/utils": "npm:0.13.3"
+    "@ipld/dag-cbor": "npm:^9.2.2"
+    "@ipld/dag-json": "npm:^10.2.3"
     "@libp2p/logger": "npm:^5.1.0"
-    "@noble/curves": "npm:^1.6.0"
-    "@noble/hashes": "npm:^1.5.0"
-    multiformats: "npm:^13.3.0"
-  checksum: 10/12b512ce78325f3ca1bca44d12d6f6496069509fc9074bc09b8fbf21ed03fbe1717d16369705d936c65b093db2098dc34e1739a1df2b84d713ac88a9409377c6
+    "@noble/curves": "npm:^1.7.0"
+    "@noble/hashes": "npm:^1.6.1"
+    multiformats: "npm:^13.3.1"
+  checksum: 10/1ad6ee3e78e747e51c92c3333e0499667a847a5e1291083cdfb7c67f458f8d67fe4f9f2cb054fa9065ebacb174796bb493edb93742bb03f562b1975632c6dd94
   languageName: node
   linkType: hard
 
-"@canvas-js/utils@npm:0.12.5":
-  version: 0.12.5
-  resolution: "@canvas-js/utils@npm:0.12.5"
+"@canvas-js/utils@npm:0.13.3":
+  version: 0.13.3
+  resolution: "@canvas-js/utils@npm:0.13.3"
   dependencies:
-    "@canvas-js/interfaces": "npm:0.12.5"
-  checksum: 10/a3744134329584db21072a81df445d84b69c683ef07ac5f88f31cea842e57b1947fa1ec6ec18570c290058c8f3b87a2e1dff60bdf7865fd337c3da470512c745
+    "@canvas-js/interfaces": "npm:0.13.3"
+  checksum: 10/a117612827a343a8d8a824b329ac1c4549f01e69b2297fbea8d2d93d19f8c83c99f0b5f60f3654e7e4ad99959cfa0d0df196a5665625fda8d704494138668629
   languageName: node
   linkType: hard
 
-"@canvas-js/vm@npm:0.12.5":
-  version: 0.12.5
-  resolution: "@canvas-js/vm@npm:0.12.5"
+"@canvas-js/vm@npm:0.13.3":
+  version: 0.13.3
+  resolution: "@canvas-js/vm@npm:0.13.3"
   dependencies:
-    "@canvas-js/utils": "npm:0.12.5"
+    "@canvas-js/utils": "npm:0.13.3"
     "@libp2p/logger": "npm:^5.1.0"
-    "@noble/hashes": "npm:^1.5.0"
-    quickjs-emscripten: "npm:^0.29.2"
-  checksum: 10/5124b54cf234510ed8040fdf9499ef930878276b81d0a5bbe6ea57b2c08191981ba555717ba5b55ee53bc0799fde5b64b7a39e53f387df9fe64d85317fe616d2
+    "@noble/hashes": "npm:^1.6.1"
+    quickjs-emscripten: "npm:^0.31.0"
+  checksum: 10/b81e4525ca1dace79ccff0e316e6802f697116e1d6cae4e3979d392919b4fbb005d55c95c090c23c92ba546c75272ad642868c64721b7720012ca4b0ae1456be
   languageName: node
   linkType: hard
 
@@ -3277,7 +3277,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@ipld/dag-cbor@npm:^9.2.0, @ipld/dag-cbor@npm:^9.2.1, @ipld/dag-cbor@npm:^9.2.2":
+"@ipld/dag-cbor@npm:^9.2.0, @ipld/dag-cbor@npm:^9.2.2":
   version: 9.2.2
   resolution: "@ipld/dag-cbor@npm:9.2.2"
   dependencies:
@@ -3287,7 +3287,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@ipld/dag-json@npm:^10.2.0, @ipld/dag-json@npm:^10.2.2":
+"@ipld/dag-json@npm:^10.2.0, @ipld/dag-json@npm:^10.2.3":
   version: 10.2.3
   resolution: "@ipld/dag-json@npm:10.2.3"
   dependencies:
@@ -3297,15 +3297,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@ipld/schema@npm:^5.0.0":
-  version: 5.0.0
-  resolution: "@ipld/schema@npm:5.0.0"
+"@ipld/schema@npm:^6.0.4":
+  version: 6.0.4
+  resolution: "@ipld/schema@npm:6.0.4"
   dependencies:
     get-stdin: "npm:^9.0.0"
     yargs: "npm:^17.7.2"
   bin:
     ipld-schema: bin/cli.js
-  checksum: 10/727925d0cc70727fc8642f338a0fe3b309eab9bbb3ed055f343ce9b131ad1d1ac432aa3a4ab259de2587001b9b051adb02d282d0d881359f1638211d14e08122
+  checksum: 10/6d3a8edb9143b40ad2819bd89552c850962b12cd94e37736170b1c69c4b56e4c54c092acdf8bfc99a42c394c78e18b83661c87eb6d2c731b775c414eb4f8f570
   languageName: node
   linkType: hard
 
@@ -3455,46 +3455,46 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@jitl/quickjs-ffi-types@npm:0.29.2":
-  version: 0.29.2
-  resolution: "@jitl/quickjs-ffi-types@npm:0.29.2"
-  checksum: 10/49d3273c97350b3a4cae86763843dad4b7ff273b2183f6f16c373f90b0b72162efc8df2b6d7a5994c92e3be063e65f46262ff505454df4e7b7cb66457c35cbb2
+"@jitl/quickjs-ffi-types@npm:0.31.0":
+  version: 0.31.0
+  resolution: "@jitl/quickjs-ffi-types@npm:0.31.0"
+  checksum: 10/bfdfc19b82d791f754ead60632d1dc658b7f7d47623d2be6a6502d87ca0c0ebef627ae754e6547522c255f70a9f120f313d80c4682d1be7a9836cbda5b4dde87
   languageName: node
   linkType: hard
 
-"@jitl/quickjs-wasmfile-debug-asyncify@npm:0.29.2":
-  version: 0.29.2
-  resolution: "@jitl/quickjs-wasmfile-debug-asyncify@npm:0.29.2"
+"@jitl/quickjs-wasmfile-debug-asyncify@npm:0.31.0":
+  version: 0.31.0
+  resolution: "@jitl/quickjs-wasmfile-debug-asyncify@npm:0.31.0"
   dependencies:
-    "@jitl/quickjs-ffi-types": "npm:0.29.2"
-  checksum: 10/f272d476e2b03a9397d01b045fdc52c40f555362ccfc502b007bac6e7271028a679a80e200231c59eb6d875e82d76054ae1d2b8eb029c0f3d208e469d96f19f6
+    "@jitl/quickjs-ffi-types": "npm:0.31.0"
+  checksum: 10/842f93320386fccf6f39abbc508c6e9d14d776fa0b9287ce9680114dad68dd7e850491768b30a941b1a731554833b3f184b93ff436ac44aad275c3e600cc81d6
   languageName: node
   linkType: hard
 
-"@jitl/quickjs-wasmfile-debug-sync@npm:0.29.2":
-  version: 0.29.2
-  resolution: "@jitl/quickjs-wasmfile-debug-sync@npm:0.29.2"
+"@jitl/quickjs-wasmfile-debug-sync@npm:0.31.0":
+  version: 0.31.0
+  resolution: "@jitl/quickjs-wasmfile-debug-sync@npm:0.31.0"
   dependencies:
-    "@jitl/quickjs-ffi-types": "npm:0.29.2"
-  checksum: 10/20bc5e7dd0529cb6dbcd385487ae6e53d3398f59ca52a959bf6bb80ded8104ea11cd345b39f94f18a32f5066de5e381e2c20dd8d01634ef01a852201c2cf2e0e
+    "@jitl/quickjs-ffi-types": "npm:0.31.0"
+  checksum: 10/aa7c2c1edfdfaa837b3dcfe47880219cc916fffb62900a56b9bbe7df46cbc6b17d3c6c77075bb64fd2d53ccbef4ea006b64217d6d5ea9ffaa5317a885884f9ec
   languageName: node
   linkType: hard
 
-"@jitl/quickjs-wasmfile-release-asyncify@npm:0.29.2":
-  version: 0.29.2
-  resolution: "@jitl/quickjs-wasmfile-release-asyncify@npm:0.29.2"
+"@jitl/quickjs-wasmfile-release-asyncify@npm:0.31.0":
+  version: 0.31.0
+  resolution: "@jitl/quickjs-wasmfile-release-asyncify@npm:0.31.0"
   dependencies:
-    "@jitl/quickjs-ffi-types": "npm:0.29.2"
-  checksum: 10/821972f80c402281689e91f497e854bcac2eae1f860eafa08c5da140c5430794659aac7f949470a5b1d269741f63604a1112f359e5bf2731391edc68d109da46
+    "@jitl/quickjs-ffi-types": "npm:0.31.0"
+  checksum: 10/1c71cf45bde098312283db6e029252b6867141cbca9004b7413074e243d07b99555c2200ad326c3c635007866d77270c3ad5f3cea2113fcfeeec4a9822acfb2d
   languageName: node
   linkType: hard
 
-"@jitl/quickjs-wasmfile-release-sync@npm:0.29.2":
-  version: 0.29.2
-  resolution: "@jitl/quickjs-wasmfile-release-sync@npm:0.29.2"
+"@jitl/quickjs-wasmfile-release-sync@npm:0.31.0":
+  version: 0.31.0
+  resolution: "@jitl/quickjs-wasmfile-release-sync@npm:0.31.0"
   dependencies:
-    "@jitl/quickjs-ffi-types": "npm:0.29.2"
-  checksum: 10/6c76c0e64646ee5570394c13d60a76cb59d403edba3ef9119509b4c646a795c24b84c03a14f42e720c8f1d5c356c0d6905dcd50670adf8a994242d4a65e799ef
+    "@jitl/quickjs-ffi-types": "npm:0.31.0"
+  checksum: 10/98748679bec7690760a6cd5d9887f099fb8fd81e2fad7f48dd33587115b8a76e177beb7c3f81255f6f269733fae2be035440c3a4c22339e10bbee8a1bf573168
   languageName: node
   linkType: hard
 
@@ -3574,20 +3574,20 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@libp2p/bootstrap@npm:^11.0.5":
-  version: 11.0.10
-  resolution: "@libp2p/bootstrap@npm:11.0.10"
+"@libp2p/bootstrap@npm:^11.0.13":
+  version: 11.0.13
+  resolution: "@libp2p/bootstrap@npm:11.0.13"
   dependencies:
-    "@libp2p/interface": "npm:^2.2.0"
-    "@libp2p/interface-internal": "npm:^2.0.10"
-    "@libp2p/peer-id": "npm:^5.0.7"
+    "@libp2p/interface": "npm:^2.2.1"
+    "@libp2p/interface-internal": "npm:^2.1.1"
+    "@libp2p/peer-id": "npm:^5.0.8"
     "@multiformats/mafmt": "npm:^12.1.6"
     "@multiformats/multiaddr": "npm:^12.2.3"
-  checksum: 10/509e9a8425e093935816974b8410a7879a935823b886a660eaeb689a91bae17f1f9d6de3b9cc968c07e31c010dc51c67c09dbedda39294f9d7faad1290a9b838
+  checksum: 10/cca2ced3317142814468869c4964eb664484c6e9320f40fd2fab7bc7b5e95d024d631b9c7f139a269a3a8fa76d1af2fee4c836d9e5649cfee7056390111d1ace
   languageName: node
   linkType: hard
 
-"@libp2p/crypto@npm:^5.0.0, @libp2p/crypto@npm:^5.0.4, @libp2p/crypto@npm:^5.0.6":
+"@libp2p/crypto@npm:^5.0.0, @libp2p/crypto@npm:^5.0.6":
   version: 5.0.6
   resolution: "@libp2p/crypto@npm:5.0.6"
   dependencies:
@@ -3603,16 +3603,32 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@libp2p/identify@npm:^3.0.5":
-  version: 3.0.10
-  resolution: "@libp2p/identify@npm:3.0.10"
+"@libp2p/crypto@npm:^5.0.7":
+  version: 5.0.7
+  resolution: "@libp2p/crypto@npm:5.0.7"
   dependencies:
-    "@libp2p/crypto": "npm:^5.0.6"
-    "@libp2p/interface": "npm:^2.2.0"
-    "@libp2p/interface-internal": "npm:^2.0.10"
-    "@libp2p/peer-id": "npm:^5.0.7"
-    "@libp2p/peer-record": "npm:^8.0.10"
-    "@libp2p/utils": "npm:^6.1.3"
+    "@libp2p/interface": "npm:^2.2.1"
+    "@noble/curves": "npm:^1.4.0"
+    "@noble/hashes": "npm:^1.4.0"
+    asn1js: "npm:^3.0.5"
+    multiformats: "npm:^13.1.0"
+    protons-runtime: "npm:^5.4.0"
+    uint8arraylist: "npm:^2.4.8"
+    uint8arrays: "npm:^5.1.0"
+  checksum: 10/7950ed3ec8c6e0fd4b2e115d80fb6202979668859bc81d68902e0c61d85d08f7b6eb8245f2737e76372120662ff2668e6537a9a102012a1533be5b329863af46
+  languageName: node
+  linkType: hard
+
+"@libp2p/identify@npm:^3.0.12":
+  version: 3.0.12
+  resolution: "@libp2p/identify@npm:3.0.12"
+  dependencies:
+    "@libp2p/crypto": "npm:^5.0.7"
+    "@libp2p/interface": "npm:^2.2.1"
+    "@libp2p/interface-internal": "npm:^2.1.1"
+    "@libp2p/peer-id": "npm:^5.0.8"
+    "@libp2p/peer-record": "npm:^8.0.12"
+    "@libp2p/utils": "npm:^6.2.1"
     "@multiformats/multiaddr": "npm:^12.2.3"
     "@multiformats/multiaddr-matcher": "npm:^1.2.1"
     it-drain: "npm:^3.0.7"
@@ -3622,11 +3638,11 @@ __metadata:
     uint8arraylist: "npm:^2.4.8"
     uint8arrays: "npm:^5.1.0"
     wherearewe: "npm:^2.0.1"
-  checksum: 10/125e6ad5480ae75f9701ab3c3337b31dd83af9190248bd4ab7b7a0e6b5643a03e3f080a7ae35ac61e847c35dc0f7ce9b99d955bfc96ce1ac87714cf962787a8b
+  checksum: 10/a6265ec8fe948742fbccb5898f2e5d867438d6b27428ab87f6b3792233648353ea9f329879e2e2db7b24a960a333a3f20254230dc4834e5c9ea5f737e6770323
   languageName: node
   linkType: hard
 
-"@libp2p/interface-internal@npm:^2.0.0, @libp2p/interface-internal@npm:^2.0.10, @libp2p/interface-internal@npm:^2.0.5, @libp2p/interface-internal@npm:^2.0.6":
+"@libp2p/interface-internal@npm:^2.0.0, @libp2p/interface-internal@npm:^2.0.10":
   version: 2.0.10
   resolution: "@libp2p/interface-internal@npm:2.0.10"
   dependencies:
@@ -3639,7 +3655,20 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@libp2p/interface@npm:^2.0.0, @libp2p/interface@npm:^2.1.2, @libp2p/interface@npm:^2.2.0":
+"@libp2p/interface-internal@npm:^2.1.1":
+  version: 2.1.1
+  resolution: "@libp2p/interface-internal@npm:2.1.1"
+  dependencies:
+    "@libp2p/interface": "npm:^2.2.1"
+    "@libp2p/peer-collections": "npm:^6.0.12"
+    "@multiformats/multiaddr": "npm:^12.2.3"
+    progress-events: "npm:^1.0.0"
+    uint8arraylist: "npm:^2.4.8"
+  checksum: 10/c16708207deeeb5e7437b37492fc582ba6a221ac045dcc6cf2519ae3365d79fab9b86e08408337b9c0cbf546e0194c0774ed8ac78abf5bf34aa71036f9885696
+  languageName: node
+  linkType: hard
+
+"@libp2p/interface@npm:^2.0.0, @libp2p/interface@npm:^2.2.0":
   version: 2.2.0
   resolution: "@libp2p/interface@npm:2.2.0"
   dependencies:
@@ -3653,20 +3682,33 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@libp2p/kad-dht@npm:^13.1.0":
-  version: 13.1.2
-  resolution: "@libp2p/kad-dht@npm:13.1.2"
+"@libp2p/interface@npm:^2.2.1":
+  version: 2.2.1
+  resolution: "@libp2p/interface@npm:2.2.1"
   dependencies:
-    "@libp2p/crypto": "npm:^5.0.4"
-    "@libp2p/interface": "npm:^2.1.2"
-    "@libp2p/interface-internal": "npm:^2.0.6"
-    "@libp2p/peer-collections": "npm:^6.0.6"
-    "@libp2p/peer-id": "npm:^5.0.4"
+    "@multiformats/multiaddr": "npm:^12.2.3"
+    it-pushable: "npm:^3.2.3"
+    it-stream-types: "npm:^2.0.1"
+    multiformats: "npm:^13.1.0"
+    progress-events: "npm:^1.0.0"
+    uint8arraylist: "npm:^2.4.8"
+  checksum: 10/ad90c4014d5aae53ea23083928f8b25d3375da28b33e530a6be69549c451cca39a8bc9fdf6dd8b4bcc94ca7bf39c0dbf4d05c48fbbfc88d1802517799c2d1e7e
+  languageName: node
+  linkType: hard
+
+"@libp2p/kad-dht@npm:^14.1.3":
+  version: 14.1.3
+  resolution: "@libp2p/kad-dht@npm:14.1.3"
+  dependencies:
+    "@libp2p/crypto": "npm:^5.0.7"
+    "@libp2p/interface": "npm:^2.2.1"
+    "@libp2p/interface-internal": "npm:^2.1.1"
+    "@libp2p/peer-collections": "npm:^6.0.12"
+    "@libp2p/peer-id": "npm:^5.0.8"
     "@libp2p/record": "npm:^4.0.4"
-    "@libp2p/utils": "npm:^6.0.6"
+    "@libp2p/utils": "npm:^6.2.1"
     "@multiformats/multiaddr": "npm:^12.2.3"
     any-signal: "npm:^4.1.1"
-    hashlru: "npm:^2.3.0"
     interface-datastore: "npm:^8.3.0"
     it-drain: "npm:^3.0.7"
     it-length: "npm:^3.0.6"
@@ -3677,17 +3719,17 @@ __metadata:
     it-pipe: "npm:^3.0.1"
     it-protobuf-stream: "npm:^1.1.3"
     it-take: "npm:^3.0.5"
+    mortice: "npm:^3.0.4"
     multiformats: "npm:^13.1.0"
     p-defer: "npm:^4.0.1"
     p-event: "npm:^6.0.1"
-    p-queue: "npm:^8.0.1"
     progress-events: "npm:^1.0.0"
     protons-runtime: "npm:^5.4.0"
     race-signal: "npm:^1.0.2"
     uint8-varint: "npm:^2.0.4"
     uint8arraylist: "npm:^2.4.8"
     uint8arrays: "npm:^5.1.0"
-  checksum: 10/4c2a635df60b5e9ea1ad114e62c6be2fae1f0b8a292e117fe7ae823957fe6d66bb2d1ab1ce24b505f54da8b93c8144fe3863d6eb366c567f9b33bee6525fd552
+  checksum: 10/5403907529c44b4a7c2acd3d5441b86a3a9bfbbbf452d80b7322544d24d77284d4e8e38d95182c30f58c6d348b87c2a95a4f27f35b839f3a6dab9d80ea0c6dde
   languageName: node
   linkType: hard
 
@@ -3704,7 +3746,20 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@libp2p/multistream-select@npm:^6.0.5, @libp2p/multistream-select@npm:^6.0.8":
+"@libp2p/logger@npm:^5.1.4":
+  version: 5.1.4
+  resolution: "@libp2p/logger@npm:5.1.4"
+  dependencies:
+    "@libp2p/interface": "npm:^2.2.1"
+    "@multiformats/multiaddr": "npm:^12.2.3"
+    interface-datastore: "npm:^8.3.0"
+    multiformats: "npm:^13.1.0"
+    weald: "npm:^1.0.2"
+  checksum: 10/5c7292c5b4d458536d7f04b35ce2c1516aacf2085116b29bbae1dedac268a73f33584a593f39f27290bbaca7492bdebf9c5053f19dc41b04b5103126f501564d
+  languageName: node
+  linkType: hard
+
+"@libp2p/multistream-select@npm:^6.0.5":
   version: 6.0.8
   resolution: "@libp2p/multistream-select@npm:6.0.8"
   dependencies:
@@ -3721,7 +3776,24 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@libp2p/peer-collections@npm:^6.0.10, @libp2p/peer-collections@npm:^6.0.6":
+"@libp2p/multistream-select@npm:^6.0.9":
+  version: 6.0.9
+  resolution: "@libp2p/multistream-select@npm:6.0.9"
+  dependencies:
+    "@libp2p/interface": "npm:^2.2.1"
+    it-length-prefixed: "npm:^9.0.4"
+    it-length-prefixed-stream: "npm:^1.1.7"
+    it-stream-types: "npm:^2.0.1"
+    p-defer: "npm:^4.0.1"
+    race-signal: "npm:^1.0.2"
+    uint8-varint: "npm:^2.0.4"
+    uint8arraylist: "npm:^2.4.8"
+    uint8arrays: "npm:^5.1.0"
+  checksum: 10/872b3c93f3b4f8082d0b52498094f3e0a92b09696d324761ea625f67881edec0fabddf04517c42bc249883baf51930a092e9e160449277d2e376472cc5507641
+  languageName: node
+  linkType: hard
+
+"@libp2p/peer-collections@npm:^6.0.10":
   version: 6.0.10
   resolution: "@libp2p/peer-collections@npm:6.0.10"
   dependencies:
@@ -3730,6 +3802,18 @@ __metadata:
     "@libp2p/utils": "npm:^6.1.3"
     multiformats: "npm:^13.2.2"
   checksum: 10/b0e381cdcd85777d31607506b25597fe97ffdad2e664d7355640eaf53aa5bf55f8810c96f036245edbc7738519daa74846397cc6c6e1c095538037abdd25f2d3
+  languageName: node
+  linkType: hard
+
+"@libp2p/peer-collections@npm:^6.0.12":
+  version: 6.0.12
+  resolution: "@libp2p/peer-collections@npm:6.0.12"
+  dependencies:
+    "@libp2p/interface": "npm:^2.2.1"
+    "@libp2p/peer-id": "npm:^5.0.8"
+    "@libp2p/utils": "npm:^6.2.1"
+    multiformats: "npm:^13.2.2"
+  checksum: 10/df7f12f4aef93d52145ea81e710b24dde459591972f36479abea7bde705a96877dd6d35c8c228b64e22cefb181885fcb5ebdb3a0482aa56276e67155ff98900f
   languageName: node
   linkType: hard
 
@@ -3745,32 +3829,44 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@libp2p/peer-record@npm:^8.0.10, @libp2p/peer-record@npm:^8.0.5":
-  version: 8.0.10
-  resolution: "@libp2p/peer-record@npm:8.0.10"
+"@libp2p/peer-id@npm:^5.0.8":
+  version: 5.0.8
+  resolution: "@libp2p/peer-id@npm:5.0.8"
   dependencies:
-    "@libp2p/crypto": "npm:^5.0.6"
-    "@libp2p/interface": "npm:^2.2.0"
-    "@libp2p/peer-id": "npm:^5.0.7"
-    "@libp2p/utils": "npm:^6.1.3"
+    "@libp2p/crypto": "npm:^5.0.7"
+    "@libp2p/interface": "npm:^2.2.1"
+    multiformats: "npm:^13.1.0"
+    uint8arrays: "npm:^5.1.0"
+  checksum: 10/588f6832e8cccfe1eee14952d10e98b4faa387ae9e0d004c003130b764e64302c55994385214f823a87cdaee0afae0d8bcfd96acac6384cc017b1a5748a5304c
+  languageName: node
+  linkType: hard
+
+"@libp2p/peer-record@npm:^8.0.12":
+  version: 8.0.12
+  resolution: "@libp2p/peer-record@npm:8.0.12"
+  dependencies:
+    "@libp2p/crypto": "npm:^5.0.7"
+    "@libp2p/interface": "npm:^2.2.1"
+    "@libp2p/peer-id": "npm:^5.0.8"
+    "@libp2p/utils": "npm:^6.2.1"
     "@multiformats/multiaddr": "npm:^12.2.3"
     multiformats: "npm:^13.2.2"
     protons-runtime: "npm:^5.4.0"
     uint8-varint: "npm:^2.0.4"
     uint8arraylist: "npm:^2.4.8"
     uint8arrays: "npm:^5.1.0"
-  checksum: 10/037d9e4ce3c6ea823981d55905f31b093f2563a544ff737dc67722be809e9ba1b0596a1f19a6e1b7f6a9ee5f96127d1f11cf7342e39557cceafe5811f8d8d61b
+  checksum: 10/79a6e53a7b4c78bcfafe424a7bcaba5d7866471681cbc957bdbaf2ef160fbab45deb1850310f9eba1ee7611b826447e3d22228c04d87c9896a8ef91e397f7e1b
   languageName: node
   linkType: hard
 
-"@libp2p/peer-store@npm:^11.0.10":
-  version: 11.0.10
-  resolution: "@libp2p/peer-store@npm:11.0.10"
+"@libp2p/peer-store@npm:^11.0.12":
+  version: 11.0.12
+  resolution: "@libp2p/peer-store@npm:11.0.12"
   dependencies:
-    "@libp2p/crypto": "npm:^5.0.6"
-    "@libp2p/interface": "npm:^2.2.0"
-    "@libp2p/peer-id": "npm:^5.0.7"
-    "@libp2p/peer-record": "npm:^8.0.10"
+    "@libp2p/crypto": "npm:^5.0.7"
+    "@libp2p/interface": "npm:^2.2.1"
+    "@libp2p/peer-id": "npm:^5.0.8"
+    "@libp2p/peer-record": "npm:^8.0.12"
     "@multiformats/multiaddr": "npm:^12.2.3"
     interface-datastore: "npm:^8.3.0"
     it-all: "npm:^3.0.6"
@@ -3779,34 +3875,34 @@ __metadata:
     protons-runtime: "npm:^5.4.0"
     uint8arraylist: "npm:^2.4.8"
     uint8arrays: "npm:^5.1.0"
-  checksum: 10/d46857e56284df1694dc52d40de3b1ff18b7326e38ae1ad03f36216741882fadd971b35b99ac3af8ccdd5c1267f31e45a5a934875361999a70c8c1479c788335
+  checksum: 10/3908b29f46077470f54a47ae83f0c567e666b4b1ed1d548596aa76712316c9889f94276650ba369f53893d9e41074a3c55610293ea6bbd3f35d55dcc1cae0755
   languageName: node
   linkType: hard
 
-"@libp2p/ping@npm:^2.0.5":
-  version: 2.0.10
-  resolution: "@libp2p/ping@npm:2.0.10"
+"@libp2p/ping@npm:^2.0.12":
+  version: 2.0.12
+  resolution: "@libp2p/ping@npm:2.0.12"
   dependencies:
-    "@libp2p/crypto": "npm:^5.0.6"
-    "@libp2p/interface": "npm:^2.2.0"
-    "@libp2p/interface-internal": "npm:^2.0.10"
+    "@libp2p/crypto": "npm:^5.0.7"
+    "@libp2p/interface": "npm:^2.2.1"
+    "@libp2p/interface-internal": "npm:^2.1.1"
     "@multiformats/multiaddr": "npm:^12.2.3"
     it-byte-stream: "npm:^1.1.0"
     uint8arrays: "npm:^5.1.0"
-  checksum: 10/84cc27ffc88f5976bd0adb644998acfe7dae5ac44f498404a080d01ab47e866ac3b33219ae575d8a10c39e05ba4ae754f135c674484664387309d6c4668b282e
+  checksum: 10/4ad3a4df27d9da2518a8823b6552c41f4d6f39720de90a315a9b068c86eaa123613cb4a336878535d3ab886747bf39bf220d1e4b70e2de71a1a7b8b0676811e4
   languageName: node
   linkType: hard
 
-"@libp2p/prometheus-metrics@npm:^4.1.3":
-  version: 4.2.4
-  resolution: "@libp2p/prometheus-metrics@npm:4.2.4"
+"@libp2p/prometheus-metrics@npm:^4.2.7":
+  version: 4.2.7
+  resolution: "@libp2p/prometheus-metrics@npm:4.2.7"
   dependencies:
-    "@libp2p/interface": "npm:^2.2.0"
+    "@libp2p/interface": "npm:^2.2.1"
     it-foreach: "npm:^2.1.0"
     it-stream-types: "npm:^2.0.1"
     prom-client: "npm:^15.1.2"
     uint8arraylist: "npm:^2.4.8"
-  checksum: 10/275794ff6a5b599592e9b75fb68d31f1a08e07e2fcf8536b7a24d2761543c3821da6e33e4eb58e923e895233f2ab3d804678275b7041702ed1ad6612b14b755e
+  checksum: 10/0cea61422e24bbd9e17bcc181486f8c3eb31868e1b9a91252b8e84adef99eaa5fd2ea94aae87c31a938f2cecb1589ca0f3df088ecb381ef9480f8de6e1f1a18b
   languageName: node
   linkType: hard
 
@@ -3842,7 +3938,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@libp2p/utils@npm:^6.0.0, @libp2p/utils@npm:^6.0.6, @libp2p/utils@npm:^6.1.3":
+"@libp2p/utils@npm:^6.0.0, @libp2p/utils@npm:^6.1.3":
   version: 6.1.3
   resolution: "@libp2p/utils@npm:6.1.3"
   dependencies:
@@ -3872,12 +3968,42 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@libp2p/websockets@npm:^9.0.5":
-  version: 9.0.11
-  resolution: "@libp2p/websockets@npm:9.0.11"
+"@libp2p/utils@npm:^6.2.1":
+  version: 6.2.1
+  resolution: "@libp2p/utils@npm:6.2.1"
   dependencies:
-    "@libp2p/interface": "npm:^2.2.0"
-    "@libp2p/utils": "npm:^6.1.3"
+    "@chainsafe/is-ip": "npm:^2.0.2"
+    "@libp2p/crypto": "npm:^5.0.7"
+    "@libp2p/interface": "npm:^2.2.1"
+    "@libp2p/logger": "npm:^5.1.4"
+    "@multiformats/multiaddr": "npm:^12.2.3"
+    "@sindresorhus/fnv1a": "npm:^3.1.0"
+    "@types/murmurhash3js-revisited": "npm:^3.0.3"
+    any-signal: "npm:^4.1.1"
+    delay: "npm:^6.0.0"
+    get-iterator: "npm:^2.0.1"
+    is-loopback-addr: "npm:^2.0.2"
+    it-foreach: "npm:^2.1.1"
+    it-pipe: "npm:^3.0.1"
+    it-pushable: "npm:^3.2.3"
+    it-stream-types: "npm:^2.0.1"
+    murmurhash3js-revisited: "npm:^3.0.0"
+    netmask: "npm:^2.0.2"
+    p-defer: "npm:^4.0.1"
+    race-event: "npm:^1.3.0"
+    race-signal: "npm:^1.0.2"
+    uint8arraylist: "npm:^2.4.8"
+    uint8arrays: "npm:^5.1.0"
+  checksum: 10/56a035d85a5f24a3cd06871bd3a2f7b67b431e91ae2ea98fe171995c33e6968c86cfeddaa68fd81501eb45c9ead8ecc3596121bc36c74b74990896036e912a51
+  languageName: node
+  linkType: hard
+
+"@libp2p/websockets@npm:^9.0.13":
+  version: 9.0.13
+  resolution: "@libp2p/websockets@npm:9.0.13"
+  dependencies:
+    "@libp2p/interface": "npm:^2.2.1"
+    "@libp2p/utils": "npm:^6.2.1"
     "@multiformats/multiaddr": "npm:^12.2.3"
     "@multiformats/multiaddr-matcher": "npm:^1.4.0"
     "@multiformats/multiaddr-to-uri": "npm:^10.0.1"
@@ -3888,7 +4014,7 @@ __metadata:
     race-signal: "npm:^1.0.2"
     wherearewe: "npm:^2.0.1"
     ws: "npm:^8.17.0"
-  checksum: 10/6796f8532923b08ba132039ade458b0adf1e2e9a463da59c07d4232e531195dacee4c3ee5e8b5d8e6d3a0211567e81b616aa392b10d4cd4690eb3f78ba887742
+  checksum: 10/7f26d5893a558117a54b53e7aa5d7e3ad272360b2920ce7632c147544ea59af87cefb2d1bd8129dbf0f1bb94f9efaebe7a526f51e24e54d22c621932da609ca7
   languageName: node
   linkType: hard
 
@@ -4020,7 +4146,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@multiformats/multiaddr@npm:^12.0.0, @multiformats/multiaddr@npm:^12.1.14, @multiformats/multiaddr@npm:^12.2.3, @multiformats/multiaddr@npm:^12.3.0, @multiformats/multiaddr@npm:^12.3.1":
+"@multiformats/multiaddr@npm:^12.0.0, @multiformats/multiaddr@npm:^12.1.14, @multiformats/multiaddr@npm:^12.2.3, @multiformats/multiaddr@npm:^12.3.0":
   version: 12.3.1
   resolution: "@multiformats/multiaddr@npm:12.3.1"
   dependencies:
@@ -4031,6 +4157,20 @@ __metadata:
     uint8-varint: "npm:^2.0.1"
     uint8arrays: "npm:^5.0.0"
   checksum: 10/59d5a6f7857d4f85a466d2ecfddfdfa00a526abd59bbf393bc05ae9cf4105d4a65ffe985aa9df88ac2377abe080c2296cf8a5c2eb2465dff942381a49434996c
+  languageName: node
+  linkType: hard
+
+"@multiformats/multiaddr@npm:^12.3.3":
+  version: 12.3.3
+  resolution: "@multiformats/multiaddr@npm:12.3.3"
+  dependencies:
+    "@chainsafe/is-ip": "npm:^2.0.1"
+    "@chainsafe/netmask": "npm:^2.0.0"
+    "@multiformats/dns": "npm:^1.0.3"
+    multiformats: "npm:^13.0.0"
+    uint8-varint: "npm:^2.0.1"
+    uint8arrays: "npm:^5.0.0"
+  checksum: 10/1e7e51a582526ae2995fe597519f9c52ec424063082049c2f2b52567279bbdfd806f16999f149ae44230d742efe3f19e119168230ec20b9c4860e59564930112
   languageName: node
   linkType: hard
 
@@ -4154,12 +4294,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@noble/curves@npm:^1.1.0, @noble/curves@npm:^1.4.0, @noble/curves@npm:^1.6.0":
+"@noble/curves@npm:^1.1.0, @noble/curves@npm:^1.4.0":
   version: 1.6.0
   resolution: "@noble/curves@npm:1.6.0"
   dependencies:
     "@noble/hashes": "npm:1.5.0"
   checksum: 10/9090b5a020b7e38c7b6d21506afaacd0c7557129d716a174334c1efc36385bf3ca6de16a543c216db58055e019c6a6c3bea8d9c0b79386e6bacff5c4c6b438a9
+  languageName: node
+  linkType: hard
+
+"@noble/curves@npm:^1.7.0":
+  version: 1.7.0
+  resolution: "@noble/curves@npm:1.7.0"
+  dependencies:
+    "@noble/hashes": "npm:1.6.0"
+  checksum: 10/2a11ef4895907d0b241bd3b72f9e6ebe56f0e705949bfd5efe003f25233549f620d287550df2d24ad56a1f953b82ec5f7cf4bd7cb78b1b2e76eb6dd516d44cf8
   languageName: node
   linkType: hard
 
@@ -4174,6 +4323,20 @@ __metadata:
   version: 1.5.0
   resolution: "@noble/hashes@npm:1.5.0"
   checksum: 10/da7fc7af52af7afcf59810a7eea6155075464ff462ffda2572dc6d57d53e2669b1ea2ec774e814f6273f1697e567f28d36823776c9bf7068cba2a2855140f26e
+  languageName: node
+  linkType: hard
+
+"@noble/hashes@npm:1.6.0":
+  version: 1.6.0
+  resolution: "@noble/hashes@npm:1.6.0"
+  checksum: 10/b44b043b02adbecd33596adeed97d9f9864c24a2410f7ac3b847986c2ecf1f6f0df76024b3f1b14d6ea954932960d88898fe551fb9d39844a8b870e9f9044ea1
+  languageName: node
+  linkType: hard
+
+"@noble/hashes@npm:^1.6.1":
+  version: 1.6.1
+  resolution: "@noble/hashes@npm:1.6.1"
+  checksum: 10/74d9ad7b1437a22ba3b877584add3367587fbf818113152f293025d20d425aa74c191d18d434797312f2270458bc9ab3241c34d14ec6115fb16438b3248f631f
   languageName: node
   linkType: hard
 
@@ -7794,6 +7957,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/better-sqlite3@npm:^7.6.12":
+  version: 7.6.12
+  resolution: "@types/better-sqlite3@npm:7.6.12"
+  dependencies:
+    "@types/node": "npm:*"
+  checksum: 10/a442231518f1a3e28e0ee6efe2581807e5cfaa88a8af4513da34e6ae303ce82f5666e8a0048a1d2738fa248b1b369ee28e59a75189ae0b43e28e44a243a2f24b
+  languageName: node
+  linkType: hard
+
 "@types/body-parser@npm:*":
   version: 1.19.5
   resolution: "@types/body-parser@npm:1.19.5"
@@ -9364,8 +9536,8 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "app@workspace:packages/app"
   dependencies:
-    "@canvas-js/core": "npm:^0.12.5"
-    "@canvas-js/hooks": "npm:^0.12.5"
+    "@canvas-js/core": "npm:^0.13.3"
+    "@canvas-js/hooks": "npm:^0.13.3"
     "@ipld/dag-cbor": "npm:^9.2.2"
     "@libp2p/interface": "npm:^2.2.0"
     "@my/ui": "npm:0.0.1"
@@ -10044,6 +10216,17 @@ __metadata:
     node-gyp: "npm:latest"
     prebuild-install: "npm:^7.1.1"
   checksum: 10/c76f450f6313b47317270dae9a641c41ca95b2be7b08024741298d019f0c453ebb0ac0707a33af558fcb41373026944dc8409871ee010c7ed08cab869a116371
+  languageName: node
+  linkType: hard
+
+"better-sqlite3@npm:^11.6.0":
+  version: 11.6.0
+  resolution: "better-sqlite3@npm:11.6.0"
+  dependencies:
+    bindings: "npm:^1.5.0"
+    node-gyp: "npm:latest"
+    prebuild-install: "npm:^7.1.1"
+  checksum: 10/044e80ec7de7029bcd35ee728e0ff22e3b14f408b99a948ffc461ef9cf0633915ac4b0182e79281c733930c273273405607188a52a7f25c09af888152874f469
   languageName: node
   linkType: hard
 
@@ -16678,7 +16861,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"it-stream-types@npm:^2.0.1":
+"it-stream-types@npm:^2.0.1, it-stream-types@npm:^2.0.2":
   version: 2.0.2
   resolution: "it-stream-types@npm:2.0.2"
   checksum: 10/3c3882941388353003c49bd18bd1fe4d543b9a7f32b0cd50b1764a49333ee3ea37e7bd4acfaeab7585e121ff27d2ec2ba58d9d55da4a997d9fbfd6b62e0ce58d
@@ -17227,19 +17410,19 @@ __metadata:
   languageName: node
   linkType: hard
 
-"libp2p@npm:^2.1.3":
-  version: 2.2.1
-  resolution: "libp2p@npm:2.2.1"
+"libp2p@npm:^2.3.1":
+  version: 2.3.1
+  resolution: "libp2p@npm:2.3.1"
   dependencies:
-    "@libp2p/crypto": "npm:^5.0.6"
-    "@libp2p/interface": "npm:^2.2.0"
-    "@libp2p/interface-internal": "npm:^2.0.10"
-    "@libp2p/logger": "npm:^5.1.3"
-    "@libp2p/multistream-select": "npm:^6.0.8"
-    "@libp2p/peer-collections": "npm:^6.0.10"
-    "@libp2p/peer-id": "npm:^5.0.7"
-    "@libp2p/peer-store": "npm:^11.0.10"
-    "@libp2p/utils": "npm:^6.1.3"
+    "@libp2p/crypto": "npm:^5.0.7"
+    "@libp2p/interface": "npm:^2.2.1"
+    "@libp2p/interface-internal": "npm:^2.1.1"
+    "@libp2p/logger": "npm:^5.1.4"
+    "@libp2p/multistream-select": "npm:^6.0.9"
+    "@libp2p/peer-collections": "npm:^6.0.12"
+    "@libp2p/peer-id": "npm:^5.0.8"
+    "@libp2p/peer-store": "npm:^11.0.12"
+    "@libp2p/utils": "npm:^6.2.1"
     "@multiformats/dns": "npm:^1.0.6"
     "@multiformats/multiaddr": "npm:^12.2.3"
     "@multiformats/multiaddr-matcher": "npm:^1.2.1"
@@ -17257,7 +17440,7 @@ __metadata:
     race-event: "npm:^1.3.0"
     race-signal: "npm:^1.0.2"
     uint8arrays: "npm:^5.1.0"
-  checksum: 10/6f89f93f9ee75ac69f0d0e3af5c0f9fad7d0854aaa29a1ebcc37060b76430e65fb63feb5d6ed070f896d5abdff424569fabfe0be7a6311b0e764b243cf2ac8fb
+  checksum: 10/434bd4e5ea5792dc80e73ed32dd81d5c27e0657bda0bf5851908e7a127738eb5541bcb17f48321a2abeedcf2f2411218e9d83cca5ef9848f2a98996094c5c407
   languageName: node
   linkType: hard
 
@@ -18597,7 +18780,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"multiformats@npm:^13.0.0, multiformats@npm:^13.0.1, multiformats@npm:^13.1.0, multiformats@npm:^13.2.2, multiformats@npm:^13.3.0":
+"multiformats@npm:^13.0.0, multiformats@npm:^13.0.1, multiformats@npm:^13.1.0, multiformats@npm:^13.2.2, multiformats@npm:^13.3.1":
   version: 13.3.1
   resolution: "multiformats@npm:13.3.1"
   checksum: 10/2e529613d457590dffe212a658546f313c7c7296d240d952d2baee7ce0abb227116d784f05cf4d238ef0db7d72ad2c3d04ea3c6b9bfd20db805a092024ce8d7e
@@ -20952,25 +21135,25 @@ __metadata:
   languageName: node
   linkType: hard
 
-"quickjs-emscripten-core@npm:0.29.2":
-  version: 0.29.2
-  resolution: "quickjs-emscripten-core@npm:0.29.2"
+"quickjs-emscripten-core@npm:0.31.0":
+  version: 0.31.0
+  resolution: "quickjs-emscripten-core@npm:0.31.0"
   dependencies:
-    "@jitl/quickjs-ffi-types": "npm:0.29.2"
-  checksum: 10/f1e24ee17096f35db023f735448547a95cbc99c9cbf8920f4b8aa024635ba9d587491858cd4da1e8ba1152a6c41803700cef3682be0a12fdd1c38259e77afd0b
+    "@jitl/quickjs-ffi-types": "npm:0.31.0"
+  checksum: 10/db313e87656368ec563fc7294a5dbd9a40c94311dbacdbde585c26b17295966a529f80144ab91d6e6bf6ebc64d570762fe89bb7082627c6e1a56c4253c4cc215
   languageName: node
   linkType: hard
 
-"quickjs-emscripten@npm:^0.29.2":
-  version: 0.29.2
-  resolution: "quickjs-emscripten@npm:0.29.2"
+"quickjs-emscripten@npm:^0.31.0":
+  version: 0.31.0
+  resolution: "quickjs-emscripten@npm:0.31.0"
   dependencies:
-    "@jitl/quickjs-wasmfile-debug-asyncify": "npm:0.29.2"
-    "@jitl/quickjs-wasmfile-debug-sync": "npm:0.29.2"
-    "@jitl/quickjs-wasmfile-release-asyncify": "npm:0.29.2"
-    "@jitl/quickjs-wasmfile-release-sync": "npm:0.29.2"
-    quickjs-emscripten-core: "npm:0.29.2"
-  checksum: 10/3aa35af1bc370730c1c37c4b206c01a516b5f429a3f710189b208c25437609f3dbad4eb7dd7899502cbb1048888c53c42ba5cfcf28b0ed2cfa5b9634ecf0de8a
+    "@jitl/quickjs-wasmfile-debug-asyncify": "npm:0.31.0"
+    "@jitl/quickjs-wasmfile-debug-sync": "npm:0.31.0"
+    "@jitl/quickjs-wasmfile-release-asyncify": "npm:0.31.0"
+    "@jitl/quickjs-wasmfile-release-sync": "npm:0.31.0"
+    quickjs-emscripten-core: "npm:0.31.0"
+  checksum: 10/93e90d60b89642beec983abba4d09f84e747f85387b8cde9fd89e741a4193e995ede6a79b1a470f4991eec595baf7fe0dd5571814a3148f189ee0a641974fe34
   languageName: node
   linkType: hard
 
@@ -25088,7 +25271,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"weald@npm:^1.0.2":
+"weald@npm:^1.0.2, weald@npm:^1.0.4":
   version: 1.0.4
   resolution: "weald@npm:1.0.4"
   dependencies:

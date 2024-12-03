@@ -7,6 +7,7 @@ export default function Screen() {
       <Stack.Screen
         options={{
           title: 'Refs',
+          headerShown: false,
         }}
       />
       <HomeScreen />

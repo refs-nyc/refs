@@ -1,4 +1,4 @@
-import { createTamagui } from 'tamagui'
+import { createTamagui, createTokens } from 'tamagui'
 import { createInterFont } from '@tamagui/font-inter'
 import { shorthands } from '@tamagui/shorthands'
 import { tokens, themes } from '@tamagui/config/v3'
@@ -8,11 +8,14 @@ import { animations } from '@my/ui/src/animations'
 
 const headingFont = createInterFont({
   size: {
+    4: 1,
     6: 15,
+    true: 12,
   },
   transform: {
     6: 'uppercase',
     7: 'none',
+    true: 'none',
   },
   weight: {
     6: '400',
@@ -21,6 +24,7 @@ const headingFont = createInterFont({
   color: {
     6: '$colorFocus',
     7: '$color',
+    true: '$color',
   },
   letterSpacing: {
     5: 2,
@@ -32,6 +36,7 @@ const headingFont = createInterFont({
     12: -4,
     14: -5,
     15: -6,
+    true: 0,
   },
   face: {
     700: { normal: 'InterBold' },
@@ -49,6 +54,18 @@ const bodyFont = createInterFont(
     sizeLineHeight: (size) => Math.round(size * 1.1 + (size > 20 ? 10 : 10)),
   }
 )
+
+const themeColorTokens = createTokens({
+  ...tokens,
+  color: {
+    ...tokens.color,
+    black: '#000000',
+    white: '#ffffff',
+    surface: '#F3F2ED',
+    'surface-2': '#EFEDE3',
+    accent: '#7F70B8',
+  },
+})
 
 export const config = createTamagui({
   defaultFont: 'body',
@@ -70,7 +87,7 @@ export const config = createTamagui({
     allowedStyleValues: 'somewhat-strict',
   },
   themes,
-  tokens,
+  tokens: themeColorTokens,
   media: createMedia({
     xs: { maxWidth: 660 },
     sm: { maxWidth: 800 },

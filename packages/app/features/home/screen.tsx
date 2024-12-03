@@ -1,12 +1,8 @@
 import {
-  Anchor,
-  Button,
-  H1,
+  MainButton,
+  View,
   Input,
   Paragraph,
-  Separator,
-  Sheet,
-  useToastController,
   SwitchThemeButton,
   SwitchRouterButton,
   XStack,
@@ -14,11 +10,11 @@ import {
   Avatar,
   Text,
   H2,
+  Anchor,
 } from '@my/ui'
-import { ChevronDown, ChevronUp, X } from '@tamagui/lucide-icons'
 import { useState } from 'react'
 import { Platform } from 'react-native'
-import { useLink } from 'solito/navigation'
+import { useRouter } from 'solito/router'
 
 import 'event-target-polyfill'
 import 'fast-text-encoding'
@@ -26,6 +22,8 @@ import 'fast-text-encoding'
 import { useCanvas, useLiveQuery } from '@canvas-js/hooks'
 
 export function HomeScreen({ pagesMode = false }: { pagesMode?: boolean }) {
+  const router = useRouter()
+
   const linkTarget = pagesMode ? '/pages-example-user' : '/user'
 
   const [itemHistory, setItemHistory] = useState([
@@ -77,77 +75,19 @@ export function HomeScreen({ pagesMode = false }: { pagesMode?: boolean }) {
   const counterRows = useLiveQuery(app, 'counters', { where: { id: '0' } })
 
   return (
-    <YStack f={1} jc="center" ai="center" gap="$8" p="$4" bg="$background">
-      <XStack t="$6" gap="$4" jc="center">
-        <Button onPress={() => app?.actions.updateCounter()}>Hi</Button>
-        <Paragraph>Counter: {counterRows ? counterRows[0]?.count : '--'}</Paragraph>
-      </XStack>
-      <XStack
-        pos="absolute"
-        w="100%"
-        t="$6"
-        gap="$6"
-        jc="center"
-        fw="wrap"
-        $sm={{ pos: 'relative', t: 0 }}
-      >
-        {Platform.OS === 'web' && (
-          <>
-            <SwitchRouterButton pagesMode={pagesMode} />
-            <SwitchThemeButton />
-          </>
-        )}
-      </XStack>
+    <View px="$4" py="$4" bg="$color.surface" height="100%">
+      <YStack gap="$4" pt="$20" pb="$16">
+        <H2 ta="center" col="$color12">
+          Refs is the phonebook for the internet.
+        </H2>
+      </YStack>
 
       <YStack gap="$4">
-        <H2 ta="center" col="$color12">
-          Welcome to Refs!
-        </H2>
-        <Input
-          size="$4"
-          borderWidth={2}
-          w="$20"
-          placeholder="Search anything or paste a link"
-          autoFocus={Platform.OS === 'web'}
-        />
-        <Paragraph ta="center">Recent saves from the network</Paragraph>
-        <YStack gap="$2" w="100%" maw={400}>
-          {itemHistory.map((item, index) => {
-            const itemLinkProps = useLink({
-              href: `${linkTarget}/${item.username}`,
-            })
-
-            return (
-              <XStack
-                key={index}
-                gap="$3"
-                ai="center"
-                p="$2"
-                br="$4"
-                bw={1}
-                borderColor="$gray8"
-                pressStyle={{ opacity: 0.8 }}
-                {...itemLinkProps}
-              >
-                <Avatar circular size="$3">
-                  <Avatar.Image source={{ uri: `https://i.pravatar.cc/150?u=${item.user}` }} />
-                  <Avatar.Fallback bc="$gray5">
-                    <Text>{item.user[0]}</Text>
-                  </Avatar.Fallback>
-                </Avatar>
-                <YStack>
-                  <Paragraph size="$3" fontWeight="bold">
-                    {item.user}
-                  </Paragraph>
-                  <Paragraph size="$2" col="$gray11">
-                    {item.item}
-                  </Paragraph>
-                </YStack>
-              </XStack>
-            )
-          })}
-        </YStack>
+        <MainButton onPress={() => router.push('/onboarding')}>Join</MainButton>
+        <MainButton secondary onPress={() => router.push('/user/1')}>
+          Login
+        </MainButton>
       </YStack>
-    </YStack>
+    </View>
   )
 }

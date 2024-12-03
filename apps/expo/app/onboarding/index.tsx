@@ -1,14 +1,12 @@
-import { UserDetailScreen } from 'app/features/user/detail-screen'
+import { OnboardingScreen } from 'app/features/user/onboarding-screen'
 import { Stack } from 'expo-router'
-import { useParams } from 'solito/navigation'
 
 export default function Screen() {
-  const { id } = useParams()
   return (
     <>
       <Stack.Screen
         options={{
-          title: 'User',
+          title: 'Onboarding',
           // presentation: 'modal',
           animation: 'slide_from_right',
           gestureEnabled: true,
@@ -16,7 +14,7 @@ export default function Screen() {
           headerShown: false,
         }}
       />
-      <UserDetailScreen id={id as string} />
+      <OnboardingScreen />
     </>
   )
 }

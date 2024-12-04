@@ -1,6 +1,7 @@
 import 'event-target-polyfill'
 import 'fast-text-encoding'
 
+import { models } from './models'
 import { useCanvas, useLiveQuery } from '@canvas-js/hooks'
 import { createContext, useContext } from 'react'
 
@@ -13,56 +14,54 @@ export function useCanvasContext() {
 export function CanvasContract({ children }) {
   const { app } = useCanvas(null, {
     contract: {
-      models: {
-        profiles: {
-          did: 'primary',
-          name: 'string',
-          item1: '@item',
-          item2: '@item',
-          item3: '@item',
-          items: '@item[]',
-          // items: '@items[]', // TODO
-          // image: 'string?', // TODO
-        },
-        items: {
-          id: 'primary',
-          title: 'string',
-          // image: 'string?',
-          // children: '@items[]', // TODO
-          // parent: '@items', // TODO
-        },
-        counters: {
-          id: 'primary',
-          count: 'number',
-        },
-      },
+      models,
       actions: {
-        createProfile(db, name) {
-          const { did } = this
-          db.create('profiles', { did, name, items: [], image: null })
+        // Profiles
+        createProfile(db, firstname, lastname, username, items = [], image = null) {
+          db.create('profiles', {
+            did: this.did,
+            firstname,
+            lastname,
+            username,
+            items,
+            image,
+            location: null,
+            geolocation: null,
+          })
         },
-        updateProfile(db, name) {
-          const { did } = this
-          db.update('profiles', { did, name })
+        updateProfile(db, firstname, lastname, username, location, image) {
+          db.update('profiles', { did: this.did, firstname, lastname, username, location, image })
         },
-        createTextItem(db, title) {
-          const { id } = this
-          db.create('items', { id, title })
+        updateProfileItems(db, items) {
+          db.update('profiles', { did: this.did, items })
         },
-        // createTextItem(db, title) {
-        //   const { id } = this
-        //   db.create("items", { id, title })
-        // },
-        removeTextItem(db, id) {
-          db.delete('items', id)
+        // Items
+        createItem(
+          db,
+          { title, text = null, image = null, location = null, url = null, children = [] }
+        ) {
+          db.create('items', {
+            id: this.id,
+            createdAt: new Date().getTime(),
+            deletedAt: null,
+            title,
+            text,
+            image,
+            location,
+            url,
+            children,
+          })
         },
-        async updateCounter(db) {
-          const current = await db.get('counters', '0')
-          db.set('counters', { id: '0', count: current ? current.count + 1 : 0 })
+        updateItem(db, id, title, text, image, location, url, children) {
+          db.update('items', { id, title, text, image, location, url, children })
         },
+        deleteItem(db, id) {
+          db.update('items', { id, deletedAt: new Date().getTime() })
+        },
+        // Chats
       },
     },
-    topic: 'refs.canvas.xyz',
+    topic: 'refsv2.canvas.xyz',
   })
 
   // const counterRows = useLiveQuery(app, 'counters', { where: { id: '0' } })

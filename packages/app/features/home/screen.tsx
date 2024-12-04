@@ -34,6 +34,7 @@ export function HomeScreen({ pagesMode = false }: { pagesMode?: boolean }) {
   ])
 
   const { app } = useCanvas(null, {
+    reset: true,
     contract: {
       models: {
         profiles: {

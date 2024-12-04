@@ -1,13 +1,11 @@
-import { Button, Paragraph, YStack, OnboardingCarouselItem, Drawer } from '@my/ui'
+import { OnboardingCarouselItem, Drawer, AddRef } from '@my/ui'
 import { ChevronLeft } from '@tamagui/lucide-icons'
-import { getTokens } from '@tamagui/core'
 import { Dimensions } from 'react-native'
 import { useRef, useState } from 'react'
 import { useSharedValue } from 'react-native-reanimated'
 import { View, Text, SizableText } from 'tamagui'
 import { useRouter } from 'solito/navigation'
 import Carousel, { ICarouselInstance } from 'react-native-reanimated-carousel'
-import Ionicons from '@expo/vector-icons/Ionicons'
 import { useCanvasContext } from 'app/features/canvas/contract'
 
 export function OnboardingScreen() {
@@ -57,38 +55,7 @@ export function OnboardingScreen() {
 
       {addingIndex > -1 && (
         <Drawer close={() => setAddingIndex(-1)}>
-          <YStack gap="$4">
-            <Button
-              borderColor="transparent"
-              borderWidth="$1"
-              borderRadius="$12"
-              jc="flex-start"
-              bg="white"
-            >
-              <Ionicons size={getTokens().size.$2.val} name="text-outline"></Ionicons>
-              <SizableText size="$5">Start typing</SizableText>
-            </Button>
-            <Button
-              borderColor="transparent"
-              borderWidth="$1"
-              borderRadius="$12"
-              jc="flex-start"
-              bg="white"
-            >
-              <Ionicons size={getTokens().size.$2.val} name="camera-outline"></Ionicons>
-              <SizableText size="$5">Take a photo</SizableText>
-            </Button>
-            <Button
-              borderColor="transparent"
-              borderWidth="$1"
-              borderRadius="$12"
-              jc="flex-start"
-              bg="white"
-            >
-              <Ionicons size={getTokens().size.$2.val} name="image-outline"></Ionicons>
-              <SizableText size="$5">Add from camera roll</SizableText>
-            </Button>
-          </YStack>
+          <AddRef onAddRef={() => {}} />
         </Drawer>
       )}
     </View>

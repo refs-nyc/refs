@@ -13,9 +13,10 @@ import Animated, {
   FadeIn,
   FadeOut,
 } from 'react-native-reanimated'
+import { useLayoutEffect, useRef, useState } from 'react'
 
 const win = Dimensions.get('window')
-const HEIGHT = win.height * 0.6
+const HEIGHT = 'auto'
 const OVERDRAG = 20
 const ACCENT_COLOR = '#FFF0FF'
 const BACKDROP_COLOR = '#FFF0FF'
@@ -23,9 +24,19 @@ const BACKGROUND_COLOR = '#FFF0FF'
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable)
 
-export function Drawer({ children, close }: { children?: React.ReactNode; close: () => void }) {
+export function Drawer({
+  children,
+  close,
+  height,
+}: {
+  children?: React.ReactNode
+  close: () => void
+  height?: 'auto' | number
+}) {
   const accent = useSharedValue(ACCENT_COLOR)
   const offset = useSharedValue(0)
+  const ref = useRef(null)
+  const [realHeight, setRealHeight] = useState(0)
 
   const toggleSheet = () => {
     offset.value = 0
@@ -40,10 +51,11 @@ export function Drawer({ children, close }: { children?: React.ReactNode; close:
       offset.value = offsetDelta > 0 ? offsetDelta : withSpring(clamp)
     })
     .onFinalize(() => {
-      if (offset.value < HEIGHT / 3) {
+      console.log('finalize', realHeight)
+      if (offset.value < realHeight / 3) {
         offset.value = withSpring(0)
       } else {
-        offset.value = withTiming(HEIGHT, {}, () => {
+        offset.value = withTiming(realHeight, {}, () => {
           runOnJS(toggleSheet)()
         })
       }
@@ -71,7 +83,10 @@ export function Drawer({ children, close }: { children?: React.ReactNode; close:
             <View style={styles.grip} />
           </View>
         </GestureDetector>
-        {children}
+
+        <View mt="$4" pb="$10" onLayout={(event) => setRealHeight(event.nativeEvent.layout.height)}>
+          {children}
+        </View>
       </Animated.View>
     </>
   )
@@ -108,12 +123,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     width: '100%',
-    height: 4,
+    height: 10,
   },
   grip: {
     flex: 0,
     width: 75,
     height: 4,
     borderRadius: 2,
+    backgroundColor: 'black',
   },
 })

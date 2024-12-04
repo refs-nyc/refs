@@ -56,7 +56,7 @@ export const OnboardingCarouselItem = styled(
             </H2>
           </YStack>
 
-          <Grid onAddItem={onAddItem} />
+          {/* <Grid onAddItem={onAddItem} /> */}
         </View>
       )
   }

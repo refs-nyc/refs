@@ -6,6 +6,7 @@ import { useSharedValue } from 'react-native-reanimated'
 import { View, Text } from 'tamagui'
 import { useRouter } from 'solito/navigation'
 import Carousel, { ICarouselInstance } from 'react-native-reanimated-carousel'
+import { useCanvasContext } from 'app/features/canvas/contract'
 
 export function OnboardingScreen() {
   const ref = useRef<ICarouselInstance>(null)
@@ -13,6 +14,10 @@ export function OnboardingScreen() {
   const progress = useSharedValue<number>(0)
   const win = Dimensions.get('window')
   const data = [{}, {}, {}, {}, {}]
+
+  const app = useCanvasContext()
+
+  console.log(app.actions)
 
   const [showDrawer, setShowDrawer] = useState(false)
 
@@ -30,11 +35,12 @@ export function OnboardingScreen() {
   return (
     <View style={{ flex: 1 }}>
       <Carousel
+        loop={false}
         ref={ref}
         data={data}
         width={win.width}
         height={win.height}
-        enabled={false}
+        enabled={true}
         renderItem={({ index }) => (
           <OnboardingCarouselItem
             index={index}

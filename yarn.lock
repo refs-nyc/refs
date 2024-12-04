@@ -13877,10 +13877,12 @@ __metadata:
     burnt: "npm:^0.12.2"
     crypto-browserify: "npm:^3.12.1"
     expo: "npm:^51.0.9"
+    expo-camera: "npm:~15.0.16"
     expo-constants: "npm:~16.0.2"
     expo-dev-client: "npm:~4.0.15"
     expo-font: "npm:~12.0.6"
     expo-image: "npm:~1.13.0"
+    expo-image-picker: "npm:~15.0.7"
     expo-linear-gradient: "npm:~13.0.2"
     expo-linking: "npm:~6.3.1"
     expo-modules-core: "npm:^1.12.26"
@@ -13917,6 +13919,17 @@ __metadata:
   peerDependencies:
     expo: "*"
   checksum: 10/6b1f90216ea5e2c785193528bdf2d5855f7089a39235149793130de77fa49b91ed4b6c131935e035598c08859b0fe0f7279a444f7c88d1261389dff303266409
+  languageName: node
+  linkType: hard
+
+"expo-camera@npm:~15.0.16":
+  version: 15.0.16
+  resolution: "expo-camera@npm:15.0.16"
+  dependencies:
+    invariant: "npm:^2.2.4"
+  peerDependencies:
+    expo: "*"
+  checksum: 10/738d26d43d62746d97790d9f06bc69facc1c1ab5e7e17b5c5c9ddaab43c33c50c1952b685fc7da211421083c6f21e860986b5e23f3a154cf6cd686b8ca95b92b
   languageName: node
   linkType: hard
 
@@ -14007,6 +14020,26 @@ __metadata:
   peerDependencies:
     expo: "*"
   checksum: 10/639602e4aa8e134ef367a672d36d28c7188ddaa1170fd112c1c221c7bdea4782a01035fde50c17420cbb9c43c61da4a80ea38696eb8daf8dcfa028e30bdf4063
+  languageName: node
+  linkType: hard
+
+"expo-image-loader@npm:~4.7.0":
+  version: 4.7.0
+  resolution: "expo-image-loader@npm:4.7.0"
+  peerDependencies:
+    expo: "*"
+  checksum: 10/dbd87fdbf3e50b8c459e5ea985bfd20d77462229e46edefbd62b68e1676416f8608c16cf09103c2fef1bd84ecf55a1fd48f38e1954a2dd535e6f9beef04785bb
+  languageName: node
+  linkType: hard
+
+"expo-image-picker@npm:~15.0.7":
+  version: 15.0.7
+  resolution: "expo-image-picker@npm:15.0.7"
+  dependencies:
+    expo-image-loader: "npm:~4.7.0"
+  peerDependencies:
+    expo: "*"
+  checksum: 10/6ebd8638ce41c13f63c51494d4c95a991eac31ef6625dc8c4fffa4ce4ccda3fa1bc0b4b3528995262435ddfa76080752ac7f6762c62c1122d7933a4ad85629f6
   languageName: node
   linkType: hard
 

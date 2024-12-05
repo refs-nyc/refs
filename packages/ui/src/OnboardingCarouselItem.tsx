@@ -27,11 +27,13 @@ export const OnboardingCarouselItem = styled(
         <View style={{ flex: 1 }} mx="$6" my="$4">
           <YStack gap="$4" pt="$12" pb="$8">
             <H2 ta="center" col="$color12">
-              Fill your grid with links, photos, hobbies, places--
+              Now fill your grid with links, photos, hobbies, places--
             </H2>
           </YStack>
 
           <Grid onAddItem={onAddItem} />
+
+          <MainButton onPress={next}>Next</MainButton>
         </View>
       )
 
@@ -44,7 +46,7 @@ export const OnboardingCarouselItem = styled(
             </H2>
           </YStack>
 
-          <Grid onAddItem={onAddItem} />
+          {/* <Grid onAddItem={onAddItem} /> */}
         </View>
       )
 

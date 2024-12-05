@@ -1,11 +1,17 @@
+import { Pressable } from 'react-native'
+import { Children } from 'react'
 import { View } from 'tamagui'
 
 export const GridTile = ({ children }: { children?: React.ReactNode }) => {
+  console.log(children)
+
   return (
     <View
       bg="$color.surface-2"
+      borderWidth="$1"
+      borderColor="$color.surface-2"
       borderRadius="$4"
-      style={{ flex: 1, aspectRatio: 1, justifyContent: 'center' }}
+      style={{ aspectRatio: 1, justifyContent: 'center', flex: 1 }}
     >
       {children}
     </View>

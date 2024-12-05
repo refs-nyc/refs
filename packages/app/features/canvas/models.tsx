@@ -1,3 +1,6 @@
+import uuid from 'react-native-uuid'
+import { create } from 'zustand'
+
 export const models = {
   profiles: {
     did: 'primary',
@@ -27,3 +30,16 @@ export const models = {
     createdAt: 'number',
   },
 } as const
+
+export const useItemStore = create((set) => ({
+  items: [],
+  push: (newItem) => {
+    const finalItem = { ...newItem, id: uuid.v4() }
+    set((state) => ({ items: [...state.items, finalItem] }))
+  },
+  remove: (id) => {
+    set((state) => ({
+      items: [...state.items.filter((i) => i.id !== id)],
+    }))
+  },
+}))

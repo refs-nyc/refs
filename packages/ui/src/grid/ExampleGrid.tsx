@@ -1,5 +1,7 @@
 import { YStack, styled, XStack } from 'tamagui'
-import { GridTile, GridTileActionAdd, GridTileImage, GridTileList } from '@my/ui'
+import { GridTile } from './GridTile'
+import { GridTileImage } from './GridTileImage'
+import { GridTileList } from './GridTileList'
 
 export const ExampleGrid = styled(
   () => (

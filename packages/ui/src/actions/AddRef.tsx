@@ -1,13 +1,29 @@
-import { Picker, Camera } from '@my/ui'
+import { Picker } from '../inputs/Picker'
+import { Camera } from '../inputs/Camera'
 import { YStack, Button, Text, SizableText } from 'tamagui'
 import { getTokens } from '@tamagui/core'
 import { useState } from 'react'
 import Ionicons from '@expo/vector-icons/Ionicons'
+import { useCanvasContext } from 'app/features/canvas/contract'
+import { useLiveQuery } from '@canvas-js/hooks'
 
 export const AddRef = ({ onAddRef }) => {
   const [textOpen, setTextOpen] = useState(false)
   const [cameraOpen, setCameraOpen] = useState(false)
   const [pickerOpen, setPickerOpen] = useState(false)
+
+  const app = useCanvasContext()
+
+  console.log(app)
+
+  if (!app) throw new Error('Canvas App not found')
+
+  const itemRows = useLiveQuery(app, 'items')
+
+  const add = async () => {
+    const myRef = await app.actions.createItem({ title: 'test' })
+    onAddRef(myRef)
+  }
 
   return (
     <YStack gap="$4">
@@ -45,7 +61,12 @@ export const AddRef = ({ onAddRef }) => {
         <SizableText size="$5">Add from camera roll</SizableText>
       </Button>
 
-      {textOpen && <Text>Search</Text>}
+      {textOpen && (
+        <>
+          <Text>{itemRows?.length}</Text>
+          <Button onPress={add}>Add</Button>
+        </>
+      )}
       {pickerOpen && <Picker />}
       {cameraOpen && <Camera />}
     </YStack>

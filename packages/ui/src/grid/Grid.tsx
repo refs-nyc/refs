@@ -1,31 +1,57 @@
+import { useEffect } from 'react'
 import { YStack, View, Text, styled, XStack } from 'tamagui'
-import { GridTile, GridTileActionAdd } from '@my/ui'
+import { GridTile } from './GridTile'
+import { GridTileActionAdd } from './GridTileActionAdd'
+import { useLiveQuery } from '@canvas-js/hooks'
+import { useCanvasContext } from 'app/features/canvas/contract'
 
 export const Grid = styled(
   ({ onAddItem }: { onAddItem?: () => void }) => {
+    const app = useCanvasContext()
+    const itemRows = useLiveQuery(app, 'items')
+
+    let rows = itemRows ? chunk(itemRows, 3) : []
+
+    useEffect(() => {
+      rows = itemRows ? chunk(itemRows, 3) : []
+    }, [itemRows])
+
     return (
       <YStack gap="$2">
-        <XStack gap="$2">
-          <GridTile>
-            <GridTileActionAdd onAddPress={onAddItem} />
-          </GridTile>
-          <GridTile>
-            <GridTileActionAdd onAddPress={onAddItem} />
-          </GridTile>
-          <GridTile>
-            <GridTileActionAdd onAddPress={onAddItem} />
-          </GridTile>
-        </XStack>
-        <XStack gap="$2">
-          <GridTile />
-          <GridTile />
-          <GridTile />
-        </XStack>
-        <XStack gap="$2">
-          <GridTile />
-          <GridTile />
-          <GridTile />
-        </XStack>
+        {rows.map((row, rowIndex) => (
+          <XStack key={rowIndex} gap="$2">
+            {row.map((item) => (
+              <GridTile key={item.id}>
+                <Text>{item.id}</Text>
+              </GridTile>
+            ))}
+            {/* Fill remaining space in last row with empty tiles */}
+            {rowIndex === rows.length - 1 && row.length < 3 && (
+              <>
+                {/* Add button in first empty slot */}
+                <GridTile>
+                  <GridTileActionAdd onAddPress={onAddItem} />
+                </GridTile>
+                {/* Fill remaining slots if any */}
+                {Array(2 - (row.length % 3))
+                  .fill(0)
+                  .map((_, i) => (
+                    <GridTile key={`empty-${i}`} />
+                  ))}
+              </>
+            )}
+          </XStack>
+        ))}
+        {/* If no items, show initial row with add button */}
+        {(!itemRows || itemRows.length === 0) && (
+          <XStack gap="$2">
+            <GridTile>
+              <GridTileActionAdd onAddPress={onAddItem} />
+            </GridTile>
+            <GridTile />
+            <GridTile />
+          </XStack>
+        )}
       </YStack>
     )
   },
@@ -33,3 +59,10 @@ export const Grid = styled(
     name: 'Grid',
   }
 )
+
+// Helper function to split array into chunks
+function chunk<T>(array: T[], size: number): T[][] {
+  return Array.from({ length: Math.ceil(array.length / size) }, (_, i) =>
+    array.slice(i * size, i * size + size)
+  )
+}

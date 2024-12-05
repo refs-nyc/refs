@@ -1,5 +1,7 @@
 import { Button, YStack, H2, styled, View, Text } from 'tamagui'
-import { ExampleGrid, Grid, MainButton } from '@my/ui'
+import { ExampleGrid } from './grid/ExampleGrid'
+import { MainButton } from './buttons/Button'
+import { Grid } from './grid/Grid'
 
 export const OnboardingCarouselItem = styled(
   ({ index, next, onAddItem }: { index: number; next: () => void; onAddItem: () => void }) => {

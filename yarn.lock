@@ -7959,6 +7959,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/base-64@npm:^1":
+  version: 1.0.2
+  resolution: "@types/base-64@npm:1.0.2"
+  checksum: 10/bb7593c6de16c88a1bfed73a37c3be2e940921261bb7a160ab6d671f66d976b5426334ae9ce59553a10086db11e52af348813271a8b636e4f88e4cab8f27a3e4
+  languageName: node
+  linkType: hard
+
 "@types/better-sqlite3@npm:^7.6.10":
   version: 7.6.11
   resolution: "@types/better-sqlite3@npm:7.6.11"
@@ -8434,6 +8441,13 @@ __metadata:
   version: 2.0.3
   resolution: "@types/stack-utils@npm:2.0.3"
   checksum: 10/72576cc1522090fe497337c2b99d9838e320659ac57fa5560fcbdcbafcf5d0216c6b3a0a8a4ee4fdb3b1f5e3420aa4f6223ab57b82fef3578bec3206425c6cf5
+  languageName: node
+  linkType: hard
+
+"@types/text-encoding@npm:^0":
+  version: 0.0.40
+  resolution: "@types/text-encoding@npm:0.0.40"
+  checksum: 10/7eef99107cdf5c1827b51b830a3b65cfd3cc34f9aa760bc2be2f5547cec28fef5c4104473f0d1fdd739eebd7ac9f1d743902af7e1c31852a4a3e748900001e51
   languageName: node
   linkType: hard
 
@@ -10195,6 +10209,13 @@ __metadata:
   version: 1.0.2
   resolution: "balanced-match@npm:1.0.2"
   checksum: 10/9706c088a283058a8a99e0bf91b0a2f75497f185980d9ffa8b304de1d9e58ebda7c72c07ebf01dadedaac5b2907b2c6f566f660d62bd336c3468e960403b9d65
+  languageName: node
+  linkType: hard
+
+"base-64@npm:^1.0.0":
+  version: 1.0.0
+  resolution: "base-64@npm:1.0.0"
+  checksum: 10/d10b64a1fc9b2c5a5f39f1ce1e6c9d1c5b249222bbfa3a0604c592d90623caf74419983feadd8a170f27dc0c3389704f72faafa3e645aeb56bfc030c93ff074a
   languageName: node
   linkType: hard
 
@@ -13871,11 +13892,15 @@ __metadata:
     "@my/ui": "npm:0.0.1"
     "@react-native-masked-view/masked-view": "npm:^0.3.2"
     "@tamagui/babel-plugin": "npm:^1.116.12"
+    "@types/base-64": "npm:^1"
     "@types/react-native-get-random-values": "npm:^1"
+    "@types/text-encoding": "npm:^0"
     app: "npm:0.0.0"
     babel-plugin-module-resolver: "npm:^5.0.2"
+    base-64: "npm:^1.0.0"
     burnt: "npm:^0.12.2"
     crypto-browserify: "npm:^3.12.1"
+    event-target-polyfill: "npm:^0.0.4"
     expo: "npm:^51.0.9"
     expo-camera: "npm:~15.0.16"
     expo-constants: "npm:~16.0.2"
@@ -13895,17 +13920,22 @@ __metadata:
     react: "npm:18.2.0"
     react-dom: "npm:18.2.0"
     react-native: "npm:0.74.5"
+    react-native-fetch-api: "npm:^3.0.0"
     react-native-gesture-handler: "npm:~2.16.2"
-    react-native-get-random-values: "npm:~1.11.0"
+    react-native-get-random-values: "npm:^1.11.0"
     react-native-mmkv: "npm:^2.12.2"
+    react-native-polyfill-globals: "npm:^3.1.0"
     react-native-quick-crypto: "npm:^0.7.6"
     react-native-reanimated: "npm:^3.16.3"
     react-native-reanimated-carousel: "npm:^3.5.1"
     react-native-safe-area-context: "npm:4.10.5"
     react-native-screens: "npm:~3.31.1"
     react-native-svg: "npm:15.2.0"
+    react-native-url-polyfill: "npm:^2.0.0"
     react-native-web: "npm:~0.19.12"
+    text-encoding: "npm:^0.7.0"
     typescript: "npm:~5.3.3"
+    web-streams-polyfill: "npm:^4.0.0"
   languageName: unknown
   linkType: soft
 
@@ -19693,6 +19723,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"p-defer@npm:^3.0.0":
+  version: 3.0.0
+  resolution: "p-defer@npm:3.0.0"
+  checksum: 10/ac3b0976a1c76b67cca1a34e00f7299b0cc230891f820749686aa84f8947326bbe0f8e3b7d9ca511578ee06f0c1a6e0ff68c8e9c325eac455f09d99f91697161
+  languageName: node
+  linkType: hard
+
 "p-defer@npm:^4.0.0, p-defer@npm:^4.0.1":
   version: 4.0.1
   resolution: "p-defer@npm:4.0.1"
@@ -21377,6 +21414,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"react-native-fetch-api@npm:^3.0.0":
+  version: 3.0.0
+  resolution: "react-native-fetch-api@npm:3.0.0"
+  dependencies:
+    p-defer: "npm:^3.0.0"
+  checksum: 10/e1e612d402615b439eb996b1fcc677944841a3ae51a31a2b0527e03a8e3afe00c0504ade4e88de0a36f6d11df45b2a543224e7f845c5763e68f585b1108937e7
+  languageName: node
+  linkType: hard
+
 "react-native-gesture-handler@npm:~2.16.2":
   version: 2.16.2
   resolution: "react-native-gesture-handler@npm:2.16.2"
@@ -21393,7 +21439,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-native-get-random-values@npm:~1.11.0":
+"react-native-get-random-values@npm:^1.11.0":
   version: 1.11.0
   resolution: "react-native-get-random-values@npm:1.11.0"
   dependencies:
@@ -21424,6 +21470,20 @@ __metadata:
     react: "*"
     react-native: ">=0.71.0"
   checksum: 10/c1ebb8e81905ee8ce17858ff6096525cbdd0e51892dca80a3cd6e26feb5e979a9c7d609c5a55886150efb0136c5899de174c71115f81607019ed7af68678797b
+  languageName: node
+  linkType: hard
+
+"react-native-polyfill-globals@npm:^3.1.0":
+  version: 3.1.0
+  resolution: "react-native-polyfill-globals@npm:3.1.0"
+  peerDependencies:
+    base-64: "*"
+    react-native-fetch-api: "*"
+    react-native-get-random-values: "*"
+    react-native-url-polyfill: "*"
+    text-encoding: "*"
+    web-streams-polyfill: "*"
+  checksum: 10/1385de6de67bf65842a3c4549f22a91ba39de576f8ccdd3e3ad79d67defc9953f8d6a2a53aedfbcd04344b8c8359b1c92242de4624066d680f40ca0310f2f7d6
   languageName: node
   linkType: hard
 
@@ -21553,6 +21613,17 @@ __metadata:
     react: "*"
     react-native: "*"
   checksum: 10/03cb153da260bf31f325f2c98e235f76a15af2211e5ee056667230d872b125ded2d3a7910f41b6239f5d35554eb276581e08629b6d27ffb7da55784ac6041a64
+  languageName: node
+  linkType: hard
+
+"react-native-url-polyfill@npm:^2.0.0":
+  version: 2.0.0
+  resolution: "react-native-url-polyfill@npm:2.0.0"
+  dependencies:
+    whatwg-url-without-unicode: "npm:8.0.0-3"
+  peerDependencies:
+    react-native: "*"
+  checksum: 10/6a8d605eeb1b0ee9b0f47f1866acc2edfa2131a4a8fb1ea3839ceb507e225b894ed66f49a3bd826fc964f2c8005b3678c9d3b65d07eb0a3b979be830cb618686
   languageName: node
   linkType: hard
 
@@ -23997,6 +24068,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"text-encoding@npm:^0.7.0":
+  version: 0.7.0
+  resolution: "text-encoding@npm:0.7.0"
+  checksum: 10/c61b7a59a54c58f0714da0ef4c1f65732821bb1f761e6f21c3e681e51c6dd56fdefa4fcfccd3254bf47132d87420fbc9898da21a804c89e87861f4e1478d5f18
+  languageName: node
+  linkType: hard
+
 "text-table@npm:^0.2.0":
   version: 0.2.0
   resolution: "text-table@npm:0.2.0"
@@ -25411,6 +25489,13 @@ __metadata:
   version: 3.3.3
   resolution: "web-streams-polyfill@npm:3.3.3"
   checksum: 10/8e7e13501b3834094a50abe7c0b6456155a55d7571312b89570012ef47ec2a46d766934768c50aabad10a9c30dd764a407623e8bfcc74fcb58495c29130edea9
+  languageName: node
+  linkType: hard
+
+"web-streams-polyfill@npm:^4.0.0":
+  version: 4.0.0
+  resolution: "web-streams-polyfill@npm:4.0.0"
+  checksum: 10/7367753500225ad8ed6ac32541163f999140878d5315e0e6477a86167a4233eb6125ebeef1dcdf453918f92c210c412ec930a6f47c66790204eaeb443512a345
   languageName: node
   linkType: hard
 

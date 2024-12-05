@@ -13,6 +13,7 @@ export function useCanvasContext() {
 
 export function CanvasContract({ children }) {
   const { app } = useCanvas(null, {
+    reset: true,
     contract: {
       models,
       actions: {
@@ -64,7 +65,5 @@ export function CanvasContract({ children }) {
     topic: 'refsv2.canvas.xyz',
   })
 
-  // const counterRows = useLiveQuery(app, 'counters', { where: { id: '0' } })
-
-  return <CanvasContext.Provider value={{ app }}>{children}</CanvasContext.Provider>
+  return <CanvasContext.Provider value={app}>{children}</CanvasContext.Provider>
 }

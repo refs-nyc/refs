@@ -17,8 +17,6 @@ export function OnboardingScreen() {
 
   const app = useCanvasContext()
 
-  console.log(app.actions)
-
   const [addingIndex, setAddingIndex] = useState(-1)
 
   const nextSlide = (index: number) => {
@@ -46,7 +44,6 @@ export function OnboardingScreen() {
             index={index}
             next={() => nextSlide(index)}
             onAddItem={() => {
-              console.log('on add item')
               setAddingIndex(index)
             }}
           />
@@ -55,7 +52,11 @@ export function OnboardingScreen() {
 
       {addingIndex > -1 && (
         <Drawer close={() => setAddingIndex(-1)}>
-          <AddRef onAddRef={() => {}} />
+          <AddRef
+            onAddRef={(e) => {
+              setAddingIndex(-1)
+            }}
+          />
         </Drawer>
       )}
     </View>

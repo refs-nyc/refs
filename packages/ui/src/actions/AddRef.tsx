@@ -22,8 +22,13 @@ export const AddRef = ({ onAddRef }) => {
     [textOpen, pickerOpen, cameraOpen]
   )
 
-  // const itemRows = useLiveQuery(app, 'items')
-  const itemRows = []
+  const app = useCanvasContext()
+
+  console.log(app)
+
+  if (!app) throw new Error('Canvas App not found')
+
+  const itemRows = useLiveQuery(app, 'items')
 
   const addImageRef = async (uri: string) => {
     // TODO; Upload to IPFS etc

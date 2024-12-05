@@ -4,25 +4,19 @@ import { YStack, Button, Text, SizableText } from 'tamagui'
 import { getTokens } from '@tamagui/core'
 import { useState } from 'react'
 import Ionicons from '@expo/vector-icons/Ionicons'
-import { useCanvasContext } from 'app/features/canvas/contract'
-import { useLiveQuery } from '@canvas-js/hooks'
 
 export const AddRef = ({ onAddRef }) => {
   const [textOpen, setTextOpen] = useState(false)
   const [cameraOpen, setCameraOpen] = useState(false)
   const [pickerOpen, setPickerOpen] = useState(false)
 
-  const app = useCanvasContext()
-
-  console.log(app)
-
-  if (!app) throw new Error('Canvas App not found')
-
-  const itemRows = useLiveQuery(app, 'items')
+  // const itemRows = useLiveQuery(app, 'items')
+  const itemRows = []
 
   const add = async () => {
-    const myRef = await app.actions.createItem({ title: 'test' })
-    onAddRef(myRef)
+    // Replace
+    // const myRef = await app.actions.createItem({ title: 'test' })
+    onAddRef(null)
   }
 
   return (

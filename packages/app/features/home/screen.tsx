@@ -20,6 +20,8 @@ import 'fast-text-encoding'
 export function HomeScreen({ pagesMode = false }: { pagesMode?: boolean }) {
   const router = useRouter()
 
+  const linkTarget = pagesMode ? '/pages-example-user' : '/user'
+
   return (
     <View px="$4" py="$4" bg="$color.surface" height="100%">
       <YStack gap="$4" pt="$20" pb="$16">

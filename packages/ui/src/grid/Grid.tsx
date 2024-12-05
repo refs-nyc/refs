@@ -2,15 +2,19 @@ import { useEffect } from 'react'
 import { YStack, View, Text, styled, XStack } from 'tamagui'
 import { GridTile } from './GridTile'
 import { GridTileActionAdd } from './GridTileActionAdd'
+import { useLiveQuery } from '@canvas-js/hooks'
+import { useCanvasContext } from 'app/features/canvas/contract'
 
 export const Grid = styled(
   ({ onAddItem }: { onAddItem?: () => void }) => {
-    const itemRows = []
+    const app = useCanvasContext()
+    const itemRows = useLiveQuery(app, 'items')
+
     let rows = itemRows ? chunk(itemRows, 3) : []
 
-    // useEffect(() => {
-    //   rows = itemRows ? chunk(itemRows, 3) : []
-    // }, [itemRows])
+    useEffect(() => {
+      rows = itemRows ? chunk(itemRows, 3) : []
+    }, [itemRows])
 
     return (
       <YStack gap="$2">

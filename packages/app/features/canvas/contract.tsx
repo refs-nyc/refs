@@ -13,6 +13,7 @@ export function useCanvasContext() {
 
 export function CanvasContract({ children }) {
   const { app } = useCanvas(null, {
+    reset: true,
     contract: {
       models,
       actions: {

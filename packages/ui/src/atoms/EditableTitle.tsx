@@ -6,11 +6,17 @@ import { Pressable } from 'react-native'
 import { getTokens } from '@tamagui/core'
 import { Check } from '@tamagui/lucide-icons'
 
-export const EditableTitle = ({ title }: { title: string }) => {
+export const EditableTitle = ({
+  title,
+  placeholder = '',
+  onComplete,
+}: {
+  title: string
+  placeholder: string
+  onComplete: (str: string) => string
+}) => {
   const [titleState, setTitleState] = useState(title)
   const [editing, setEditing] = useState(false)
-
-  console.log(titleState)
 
   const { size, color } = getTokens()
 
@@ -19,14 +25,19 @@ export const EditableTitle = ({ title }: { title: string }) => {
       {!editing ? (
         <Pressable onPress={() => setEditing(true)}>
           <XStack gap="$3" jc="center" ai="center">
-            <H2 ta="center" col="$color12">
+            <H2 ta="center" col={titleState == placeholder ? '$muted' : '$black'}>
               {titleState}
             </H2>
             <Pencil size="$1" color="$muted"></Pencil>
           </XStack>
         </Pressable>
       ) : (
-        <Pressable onPress={() => setEditing(false)}>
+        <Pressable
+          onPress={() => {
+            setEditing(false)
+            onComplete(titleState)
+          }}
+        >
           <XStack gap="$3" jc="center" ai="center">
             <TextInput
               style={{
@@ -34,8 +45,8 @@ export const EditableTitle = ({ title }: { title: string }) => {
                 fontSize: size.$2.val,
               }}
               autoFocus={true}
-              value={titleState}
-              placeholder="Edit"
+              value={titleState == placeholder ? '' : titleState}
+              placeholder={placeholder}
               onChangeText={setTitleState}
             ></TextInput>
             <Check />

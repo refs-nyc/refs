@@ -34,23 +34,36 @@ const AddImage = ({ onAddImage }: { onAddImage: (str) => string }) => {
   )
 }
 
-export const NewRef = ({ r, onComplete }: { r: StagedRef; onComplete: (i: RefsItem) => void }) => {
+export const NewRef = ({
+  r,
+  placeholder = 'What is it',
+  onComplete,
+}: {
+  r: StagedRef
+  placeholder: string
+  onComplete: (i: CompleteRef) => void
+}) => {
   const { push } = useItemStore()
 
   const [currentRef, setCurrentRef] = useState<StagedRef>(r)
+  const [imageSource, setImageSource] = useState(r?.image || '')
 
   const minHeight = win.height * 0.7
 
   const updateRef = (image) => {
     const u = { ...r, image }
+    setImageSource(image)
+    setCurrentRef(u)
+  }
+
+  const updateRefTitle = (title) => {
+    const u = { ...r, title }
     setCurrentRef(u)
   }
 
   const submit = () => {
     const finalRef = prepareRef(currentRef)
-
     push(finalRef)
-
     onComplete(finalRef)
   }
 
@@ -58,8 +71,19 @@ export const NewRef = ({ r, onComplete }: { r: StagedRef; onComplete: (i: RefsIt
     <>
       <View style={{ minHeight }}>
         <YStack gap="$3">
-          {r?.image ? <PinataImage source={r.image} /> : <AddImage onAddImage={updateRef} />}
-          {<EditableTitle title={r?.title || 'What is it'} />}
+          {imageSource !== '' ? (
+            <PinataImage source={imageSource} />
+          ) : (
+            <AddImage onAddImage={updateRef} />
+          )}
+          {
+            <EditableTitle
+              onComplete={updateRefTitle}
+              onChangeTitle={updateRefTitle}
+              placeholder={placeholder}
+              title={r?.title || placeholder}
+            />
+          }
         </YStack>
       </View>
 

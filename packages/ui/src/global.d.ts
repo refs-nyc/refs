@@ -18,7 +18,7 @@ declare global {
   }
 
   // Stored ref
-  type Ref = {
+  type CompleteRef = {
     id: number
     title: string
     createdAt: number

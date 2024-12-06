@@ -63,6 +63,8 @@ const themeColorTokens = createTokens({
     white: '#ffffff',
     surface: '#F3F2ED',
     'surface-2': '#EFEDE3',
+    'surface-3': '#E6E4DA',
+    muted: '#ABABAB',
     accent: '#7F70B8',
   },
 })

@@ -13,25 +13,27 @@ export function useCanvasContext() {
 
 export function CanvasContract({ children }) {
   const { app } = useCanvas(null, {
+    //
     reset: true,
+    //
     contract: {
       models,
       actions: {
         // Profiles
-        createProfile(db, firstname, lastname, username, items = [], image = null) {
+        createProfile(db, firstName, lastName, userName, items = [], image = null) {
           db.create('profiles', {
             did: this.did,
-            firstname,
-            lastname,
-            username,
+            firstName,
+            lastName,
+            userName,
             items,
             image,
             location: null,
             geolocation: null,
           })
         },
-        updateProfile(db, firstname, lastname, username, location, image) {
-          db.update('profiles', { did: this.did, firstname, lastname, username, location, image })
+        updateProfile(db, firstName, lastName, userName, location, image) {
+          db.update('profiles', { did: this.did, firstName, lastName, userName, location, image })
         },
         updateProfileItems(db, items) {
           db.update('profiles', { did: this.did, items })
@@ -39,13 +41,13 @@ export function CanvasContract({ children }) {
         // Items
         createItem(
           db,
-          { title, text = null, image = null, location = null, url = null, children = [] }
+          { ref, text = null, image = null, location = null, url = null, children = [] }
         ) {
           db.create('items', {
             id: this.id,
             createdAt: new Date().getTime(),
             deletedAt: null,
-            title,
+            ref,
             text,
             image,
             location,
@@ -53,8 +55,8 @@ export function CanvasContract({ children }) {
             children,
           })
         },
-        updateItem(db, id, title, text, image, location, url, children) {
-          db.update('items', { id, title, text, image, location, url, children })
+        updateItem(db, id, ref, text, image, location, url, children) {
+          db.update('items', { id, ref, text, image, location, url, children })
         },
         deleteItem(db, id) {
           db.update('items', { id, deletedAt: new Date().getTime() })

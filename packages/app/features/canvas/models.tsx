@@ -3,26 +3,44 @@ import { create } from 'zustand'
 export const models = {
   profiles: {
     did: 'primary',
-    firstname: 'string',
-    lastname: 'string',
-    username: 'string',
+    firstName: 'string',
+    lastName: 'string',
+    userName: 'string',
     location: 'string?',
     geolocation: 'string?',
     image: 'string?',
     items: '@items[]',
   },
-  items: {
+
+  // Canonical information
+
+  refs: {
     id: 'primary',
     title: 'string',
-    text: 'string?',
+    createdAt: 'number',
+    firstReferral: '@profile',
     image: 'string?',
     location: 'string?',
+    deletedAt: 'number?',
+    referrals: '@profiles[]',
+  },
+
+  // Copies of above
+
+  items: {
+    id: 'primary',
+    ref: '@refs',
+    createdAt: 'number',
+    image: 'string?',
+    location: 'string?',
+    text: 'string?',
     url: 'string?',
     children: '@items[]',
-    createdAt: 'number', // sort by last created at first
-    deletedAt: 'number?', // sort by last created at first
+    deletedAt: 'number?',
   },
+
   // Later, @raymond to rewrite: https://docs.canvas.xyz/examples-encrypted-chat.html
+
   messages: {
     id: 'primary', // id should always be `${userA}/${userB}` where userA is lexicographically first compared to userB
     message: 'string',

@@ -1,7 +1,7 @@
+import { useState, useMemo } from 'react'
 import { useItemStore } from 'app/features/canvas/models'
 import { YStack, Button, XStack, View, Text } from 'tamagui'
 import { getTokens } from '@tamagui/core'
-import { useState } from 'react'
 import { TextInput, Pressable, FlatList } from 'react-native'
 import { SearchResultItem } from '../atoms/SearchResultItem'
 import { NewRefListItem } from '../atoms/NewRefListItem'
@@ -34,9 +34,13 @@ export const SearchOrAddRef = ({ onComplete }: { onComplete: (r: StagedRef) => v
   const [searchQuery, setSearchQuery] = useState('')
   const [searchResults, setSearchResults] = useState<RefsItem[]>([])
 
-  const { size, color } = getTokens()
-
   const { items } = useItemStore()
+
+  console.log(items)
+
+  const searchableItems = useMemo(() => [...SEARCH_ARRAY, ...items], [SEARCH_ARRAY, items])
+
+  const { size, color } = getTokens()
 
   const renderItem = ({ item }) => {
     return (
@@ -47,14 +51,13 @@ export const SearchOrAddRef = ({ onComplete }: { onComplete: (r: StagedRef) => v
   }
 
   const updateQuery = (q: string) => {
-    console.log('updating query, ', q)
     const search = () => {
       console.log(q == '')
       if (q == '') return []
-      return SEARCH_ARRAY.filter((item) => {
+      return searchableItems.filter((item) => {
         const pattern = new RegExp(q, 'i')
 
-        return item.title.match(pattern) || item?.image?.match(pattern)
+        return item?.title?.match(pattern) || item?.image?.match(pattern)
       })
     }
 

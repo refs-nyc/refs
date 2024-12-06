@@ -15,7 +15,13 @@ import { useLiveQuery } from '@canvas-js/hooks'
 
 const win = Dimensions.get('window')
 
-export const AddRef = ({ onAddRef }) => {
+export const AddRef = ({
+  onAddRef,
+  onCancel,
+}: {
+  onAddRef: () => RefsItem
+  onCancel: () => void
+}) => {
   const { items, push } = useItemStore()
 
   const [textOpen, setTextOpen] = useState(false)
@@ -129,7 +135,7 @@ export const AddRef = ({ onAddRef }) => {
         </>
       )}
 
-      {addingRef && <NewRef r={refData} />}
+      {addingRef && <NewRef r={refData} onComplete={onAddRef} onCancel={onCancel} />}
     </Animated.View>
   )
 }

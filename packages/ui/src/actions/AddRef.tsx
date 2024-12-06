@@ -7,6 +7,8 @@ import { getTokens } from '@tamagui/core'
 import { useState, useMemo } from 'react'
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { useItemStore } from 'app/features/canvas/models'
+import { useCanvasContext } from 'app/features/canvas/contract'
+import { useLiveQuery } from '@canvas-js/hooks'
 
 export const AddRef = ({ onAddRef }) => {
   const { items, push } = useItemStore()

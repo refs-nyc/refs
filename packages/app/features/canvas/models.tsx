@@ -1,4 +1,3 @@
-import uuid from 'react-native-uuid'
 import { create } from 'zustand'
 
 export const models = {
@@ -34,7 +33,7 @@ export const models = {
 export const useItemStore = create((set) => ({
   items: [],
   push: (newItem) => {
-    const finalItem = { ...newItem, id: uuid.v4() }
+    const finalItem = { ...newItem, id: Math.random() }
     set((state) => ({ items: [...state.items, finalItem] }))
   },
   remove: (id) => {

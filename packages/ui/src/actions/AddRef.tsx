@@ -8,6 +8,7 @@ import { getTokens } from '@tamagui/core'
 import { useState, useMemo } from 'react'
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { NewRef } from '../actions/NewRef'
+import { SearchOrAddRef } from '../actions/SearchOrAddRef'
 import { useItemStore } from 'app/features/canvas/models'
 import { useCanvasContext } from 'app/features/canvas/contract'
 import { useLiveQuery } from '@canvas-js/hooks'
@@ -17,14 +18,10 @@ const win = Dimensions.get('window')
 export const AddRef = ({ onAddRef }) => {
   const { items, push } = useItemStore()
 
-  const [searchQuery, setSearchQuery] = useState('')
   const [textOpen, setTextOpen] = useState(false)
   const [pickerOpen, setPickerOpen] = useState(false)
   const [cameraOpen, setCameraOpen] = useState(false)
-  const [refData, setRefData] = useState<{ title?: string; image?: string }>({
-    title: null,
-    image: null,
-  })
+  const [refData, setRefData] = useState<StagedRef>({})
 
   const minHeight = useSharedValue(0)
 
@@ -51,12 +48,13 @@ export const AddRef = ({ onAddRef }) => {
     setRefData(rd)
   }
 
-  const addTextRef = async () => {
+  const addTextRef = async (newRef: StagedRef) => {
+    console.log(newRef)
     // Replace
-    const rd = { title: searchQuery, image: null }
+    // const rd = { title: searchQuery, image: null }
     // push(rd)
     // onAddRef(null)
-    setRefData(rd)
+    await setRefData(newRef)
   }
 
   return (
@@ -81,14 +79,7 @@ export const AddRef = ({ onAddRef }) => {
               </XStack>
               {textOpen && (
                 <YStack gap="$2">
-                  <TextInput
-                    value={searchQuery}
-                    placeholder="Start typing"
-                    onChangeText={setSearchQuery}
-                  />
-                  <Button disabled={searchQuery.length === 0} onPress={addTextRef}>
-                    Add
-                  </Button>
+                  <SearchOrAddRef onComplete={addTextRef} />
                 </YStack>
               )}
               {cameraOpen && <Camera />}
@@ -138,7 +129,7 @@ export const AddRef = ({ onAddRef }) => {
         </>
       )}
 
-      {addingRef && <NewRef data={addingRef} />}
+      {addingRef && <NewRef r={refData} />}
     </Animated.View>
   )
 }

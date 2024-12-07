@@ -43,8 +43,6 @@ export const NewRef = ({
   placeholder: string
   onComplete: (i: CompleteRef) => void
 }) => {
-  const { push } = useItemStore()
-
   const [currentRef, setCurrentRef] = useState<StagedRef>(r)
   const [imageSource, setImageSource] = useState(r?.image || '')
 

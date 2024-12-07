@@ -7,12 +7,12 @@ export const FormFieldWithIcon = ({
   type,
   id,
   placeholder,
-  onChangeText,
+  onChange,
 }: {
   type: 'user' | 'phone' | 'email'
   id: string
   placeholder: string
-  onChangeText: (str) => void
+  onChange: (str) => void
 }) => {
   const { color } = getTokens()
 
@@ -21,6 +21,6 @@ export const FormFieldWithIcon = ({
     {type === 'user' && <User col="$accent" />}
     {type === 'phone' && <Phone col="$accent" />}
     {type === 'email' && <AtSign col="$accent" />}
-    <TextInput style={{ flex: 1, paddingVertical: 10, color: color.$accent.val }} placeholder={placeholder} onChangeText={onChangeText} />
+    <TextInput style={{ flex: 1, paddingVertical: 10, color: color.$accent.val }} placeholder={placeholder} onChangeText={onChange} />
   </XStack>
 )}

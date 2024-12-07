@@ -1,7 +1,7 @@
 import { Children } from 'react'
 import { YStack, XStack, View } from 'tamagui'
 import { Pressable } from 'react-native'
-import { useItemStore } from 'app/features/canvas/models'
+import { useItemStore } from 'app/features/canvas/stores'
 
 export const GridWrapper = ({ children, columns = 3, rows = 4 }) => {
   const count = Children.count(children)

@@ -5,7 +5,7 @@ import { GridWrapper } from './GridWrapper'
 import { GridTile } from './GridTile'
 import { GridTileImage } from './GridTileImage'
 import { GridTileActionAdd } from './GridTileActionAdd'
-import { useItemStore } from 'app/features/canvas/models'
+import { useItemStore } from 'app/features/canvas/stores'
 
 export const Grid = ({ onAddItem }: { onAddItem?: () => void }) => {
   const { items, push, remove } = useItemStore()

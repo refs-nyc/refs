@@ -2,8 +2,8 @@ import 'event-target-polyfill'
 import 'fast-text-encoding'
 
 import { models } from './models'
-import { useCanvas, useLiveQuery } from '@canvas-js/hooks'
-import { createContext, useContext } from 'react'
+import { Canvas } from '@canvas-js/core'
+import { createContext, useContext, useEffect, useState } from 'react'
 
 export const CanvasContext = createContext(null)
 
@@ -11,8 +11,8 @@ export function useCanvasContext() {
   return useContext(CanvasContext)
 }
 
-export function CanvasContract({ children }) {
-  const { app } = useCanvas(null, {
+const init = async () => {
+  const app = await Canvas.initialize({
     //
     reset: true,
     //
@@ -67,5 +67,31 @@ export function CanvasContract({ children }) {
     topic: 'refsv2.canvas.xyz',
   })
 
-  return <CanvasContext.Provider value={app}>{children}</CanvasContext.Provider>
+  return app
+}
+
+export const appPromise = init()
+
+export function CanvasContract({ children }) {
+  const [ctx, setCtx] = useState(null);
+
+  useEffect(() => {
+    const start = async () => {
+      try {
+        const app = await appPromise; // Wait for the app to initialize
+        console.log('App initialized:', app);
+        setCtx(app); // Set the app in the context
+      } catch (error) {
+        console.error('Error initializing app:', error);
+      }
+    };
+
+    start(); // Trigger the initialization logic
+  }, []); // Empty dependency array ensures this runs only once
+
+  return (
+    <CanvasContext.Provider value={ctx}>
+      {children}
+    </CanvasContext.Provider>
+  );
 }

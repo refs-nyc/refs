@@ -11,7 +11,7 @@ export const Grid = ({ onAddItem }: { onAddItem?: () => void }) => {
   const { items } = useItemStore()
 
   return (
-    <GridWrapper columns={3} rows={4}>
+    <GridWrapper columns={3} rows={3}>
       {items.map((item) => (
         <>
           {item.image && <GridTileImage source={item.image} />}

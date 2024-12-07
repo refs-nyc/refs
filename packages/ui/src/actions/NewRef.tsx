@@ -41,7 +41,7 @@ export const NewRef = ({
 }: {
   r: StagedRef
   placeholder: string
-  onComplete: (i: CompleteRef) => void
+  onComplete: (i: Item) => void
 }) => {
   const [currentRef, setCurrentRef] = useState<StagedRef>(r)
   const [imageSource, setImageSource] = useState(r?.image || '')
@@ -63,7 +63,7 @@ export const NewRef = ({
     const finalRef = prepareRef(currentRef)
     const { item, ref } = await createRefWithItem(finalRef)
     console.log(item, ref)
-    onComplete(finalRef)
+    onComplete(item)
   }
 
   return (

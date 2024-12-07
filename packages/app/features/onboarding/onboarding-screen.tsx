@@ -10,8 +10,6 @@ import { useCanvasContext } from 'app/features/canvas/contract'
 
 export function OnboardingScreen() {
   const ref = useRef<ICarouselInstance>(null)
-  const router = useRouter()
-  const progress = useSharedValue<number>(0)
   const win = Dimensions.get('window')
   const data = [{}, {}, {}, {}, {}]
 

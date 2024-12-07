@@ -33,10 +33,24 @@ export const useItemStore = create((set) => ({
   items: [],
   // 1. Create a new Ref
   // 2. Attach Ref to Item and create
-  push: async (newItem: Item) => {
-    const finalItem = { ...newItem, id: Math.random() } // will be replaced by canvas
-    await set((state) => ({ items: [...state.items, finalItem] }))
-    return finalItem
+  push: async (newItem: StagedItem) => {
+    const app = await appPromise
+
+    const { result: id } = await app.actions.createItem(newItem)
+    const finalItem = await app.db.get("items", id)
+    if (finalItem === null) throw new Error("Could not fetch Item")
+    const ref = await app.db.get("refs", finalItem.ref)
+    if (ref === null) throw new Error("Could not fetch Ref")
+    const joinedItem = { ...finalItem, title: ref.title, image: ref.image }
+
+    console.log(joinedItem)
+
+    set((state) => {
+      const newItems = [...state.items, joinedItem]
+      return { items: newItems }
+    })
+
+    return joinedItem
   },
   // Reference an existing Ref, and create an item off it
   reference: () => {},
@@ -48,11 +62,10 @@ export const useItemStore = create((set) => ({
 }))
 
 // ***
-// Combined actions
+// Create Ref with Item
 //
 //
 export const createRefWithItem = async (stagedRef: StagedRef): { ref: CompleteRef; item: Item } => {
-  const app = await appPromise
   const refStore = useRefStore.getState()
   const itemStore = useItemStore.getState()
 
@@ -63,13 +76,14 @@ export const createRefWithItem = async (stagedRef: StagedRef): { ref: CompleteRe
   delete copiedRef.id
   delete copiedRef.firstReferral
   delete copiedRef.referrals
+  delete copiedRef.createdAt
+  delete copiedRef.deletedAt
 
   const newItem = await itemStore.push({
-    ...copiedRef,
-    id: Math.random(),
     ref: newRef.id,
-    createdAt: Date.now(),
   })
+
+  console.log({ ref: newRef, item: newItem })
 
   return { ref: newRef, item: newItem }
 }

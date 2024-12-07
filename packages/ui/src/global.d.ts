@@ -13,7 +13,7 @@ declare global {
 
   // Non completed ref
   type StagedRef = {
-    image?: string
+    image?: ImagePicker.ImagePickerAsset
     title?: string
   }
 

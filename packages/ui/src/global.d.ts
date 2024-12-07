@@ -22,7 +22,7 @@ declare global {
     id: number
     title: string
     createdAt: number
-    firstReferral: string
+    firstReferral?: string
     referrals: string[]
     image?: string
     location?: string

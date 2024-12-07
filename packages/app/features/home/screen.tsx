@@ -32,7 +32,8 @@ export function HomeScreen({ pagesMode = false }: { pagesMode?: boolean }) {
 
       <YStack gap="$4">
         <MainButton onPress={() => router.push('/onboarding')}>Join</MainButton>
-        <MainButton secondary onPress={() => router.push('/user/1')}>
+        {/* Replace this with local did */}
+        <MainButton secondary onPress={() => router.push('/user/login')}>
           Login
         </MainButton>
       </YStack>

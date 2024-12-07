@@ -29,7 +29,7 @@ export function OnboardingScreen() {
     })
   }
 
-  const done = () => router.push('/user/1')
+  const done = () => router.push('/user/new')
 
   return (
     <View style={{ flex: 1 }}>

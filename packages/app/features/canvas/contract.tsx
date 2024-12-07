@@ -13,7 +13,6 @@ export function useCanvasContext() {
 
 const init = async () => {
   const app = await Canvas.initialize({
-    //
     reset: true,
     //
     contract: {
@@ -48,7 +47,7 @@ const init = async () => {
           db,
           { title, firstReferral = null, image = null, location = null, referrals = [] }
         ) {
-          const newRef = db.create('refs', {
+          db.create('refs', {
             id: this.id,
             title,
             image,
@@ -59,7 +58,7 @@ const init = async () => {
             referrals,
           })
 
-          return newRef
+          return this.id
         },
         //
         // ***

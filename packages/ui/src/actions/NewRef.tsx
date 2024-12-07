@@ -7,10 +7,11 @@ import { PinataImage } from '../images/PinataImage'
 import { EditableTitle } from '../atoms/EditableTitle'
 import { useItemStore, createRefWithItem } from 'app/features/canvas/stores'
 import { MainButton } from '../buttons/Button'
+import type { ImagePickerAsset } from 'expo-image-picker'
 
 const win = Dimensions.get('window')
 
-const AddImage = ({ onAddImage }: { onAddImage: (str) => string }) => {
+const AddImage = ({ onAddImage }: { onAddImage: () => ImagePickerAsset }) => {
   const [picking, setPicking] = useState(false)
 
   return (
@@ -44,13 +45,12 @@ export const NewRef = ({
   onComplete: (i: Item) => void
 }) => {
   const [currentRef, setCurrentRef] = useState<StagedRef>(r)
-  const [imageSource, setImageSource] = useState(r?.image || '')
+  const [imageAsset, setImageAsset] = useState(r?.image || null)
 
   const minHeight = win.height * 0.7
 
   const updateRef = (image) => {
     const u = { ...r, image }
-    setImageSource(image)
     setCurrentRef(u)
   }
 
@@ -60,8 +60,7 @@ export const NewRef = ({
   }
 
   const submit = async () => {
-    const finalRef = prepareRef(currentRef)
-    const { item, ref } = await createRefWithItem(finalRef)
+    const { item, ref } = await createRefWithItem(currentRef)
     console.log(item, ref)
     onComplete(item)
   }
@@ -70,8 +69,12 @@ export const NewRef = ({
     <>
       <View style={{ minHeight }}>
         <YStack gap="$3">
-          {imageSource !== '' ? (
-            <PinataImage source={imageSource} />
+          {imageAsset ? (
+            <PinataImage
+              asset={imageAsset}
+              onSuccess={() => updateRef}
+              onFail={() => console.error('Cant ul')}
+            />
           ) : (
             <AddImage onAddImage={updateRef} />
           )}

@@ -3,15 +3,6 @@ import { Image } from 'expo-image'
 import { View } from 'tamagui'
 
 export const PinataImage = ({ source }: { source: string }) => {
-  // Determine if this image is already on IPFS?
-
-  console.log('Source a string? ', source)
-
-  // Upload
-  const uploadImage = async () => {
-    //
-  }
-
   return (
     <View width="100%" jc="center" ai="center">
       <View

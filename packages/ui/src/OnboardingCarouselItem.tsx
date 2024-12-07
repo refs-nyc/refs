@@ -6,9 +6,17 @@ import { ExampleButtonList } from './atoms/ExpandButtonList'
 import { Grid } from './grid/Grid'
 
 export const OnboardingCarouselItem = styled(
-  ({ index, next, onAddItem }: { index: number; next: () => void; onAddItem: () => void }) => {
-    console.log(index, next, onAddItem)
-
+  ({
+    index,
+    next,
+    onAddItem,
+    done,
+  }: {
+    index: number
+    next: () => void
+    onAddItem: () => void
+    done: () => void
+  }) => {
     if (index === 0)
       return (
         <View style={{ flex: 1 }} mx="$6" my="$4">
@@ -65,6 +73,8 @@ export const OnboardingCarouselItem = styled(
           </YStack>
 
           <ExampleButtonList />
+
+          <MainButton onPress={done}>I'm ready</MainButton>
         </View>
       )
   }

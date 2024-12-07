@@ -2,7 +2,6 @@ import { OnboardingCarouselItem, Drawer, AddRef } from '@my/ui'
 import { ChevronLeft } from '@tamagui/lucide-icons'
 import { Dimensions } from 'react-native'
 import { useRef, useState } from 'react'
-import { useSharedValue } from 'react-native-reanimated'
 import { View, Text, SizableText } from 'tamagui'
 import { useRouter } from 'solito/navigation'
 import Carousel, { ICarouselInstance } from 'react-native-reanimated-carousel'
@@ -14,6 +13,8 @@ export function OnboardingScreen() {
   const data = [{}, {}, {}, {}, {}]
 
   const app = useCanvasContext()
+
+  const router = useRouter()
 
   const [addingIndex, setAddingIndex] = useState(-1)
 
@@ -28,6 +29,8 @@ export function OnboardingScreen() {
     })
   }
 
+  const done = () => router.push('/user/1')
+
   return (
     <View style={{ flex: 1 }}>
       <Carousel
@@ -41,6 +44,7 @@ export function OnboardingScreen() {
           <OnboardingCarouselItem
             index={index}
             next={() => nextSlide(index)}
+            done={done}
             onAddItem={() => {
               setAddingIndex(index)
             }}

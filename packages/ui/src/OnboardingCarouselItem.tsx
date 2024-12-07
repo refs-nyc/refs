@@ -1,6 +1,8 @@
 import { Button, YStack, H2, styled, View, Text } from 'tamagui'
 import { ExampleGrid } from './grid/ExampleGrid'
+import { UseCaseDemo } from './display/UseCaseDemo'
 import { MainButton } from './buttons/Button'
+import { ExampleButtonList } from './atoms/ExpandButtonList'
 import { Grid } from './grid/Grid'
 
 export const OnboardingCarouselItem = styled(
@@ -27,7 +29,7 @@ export const OnboardingCarouselItem = styled(
         <View style={{ flex: 1 }} mx="$6" my="$4">
           <YStack gap="$4" pt="$12" pb="$8">
             <H2 ta="center" col="$color12">
-              Now fill your grid with links, photos, hobbies, places--
+              Fill your grid with links, photos, hobbies, places
             </H2>
           </YStack>
 
@@ -42,11 +44,13 @@ export const OnboardingCarouselItem = styled(
         <View style={{ flex: 1 }} mx="$6" my="$4">
           <YStack gap="$4" pt="$12" pb="$8">
             <H2 ta="center" col="$color12">
-              ...and search for people based on the refs they add.
+              ...then find people based on the refs they add
             </H2>
           </YStack>
 
-          {/* <Grid onAddItem={onAddItem} /> */}
+          <UseCaseDemo />
+
+          <MainButton onPress={next}>Next</MainButton>
         </View>
       )
 
@@ -55,12 +59,12 @@ export const OnboardingCarouselItem = styled(
         <View style={{ flex: 1 }} mx="$6" my="$4">
           <YStack gap="$4" pt="$12" pb="$8">
             <H2 ta="center" col="$color12">
-              ...then get le chateaux by messaging them, starting a group chat, or saving them to a
+              ...and get connected by messaging them, starting a group chat, or saving them to a
               folder.
             </H2>
           </YStack>
 
-          {/* <Grid onAddItem={onAddItem} /> */}
+          <ExampleButtonList />
         </View>
       )
   }

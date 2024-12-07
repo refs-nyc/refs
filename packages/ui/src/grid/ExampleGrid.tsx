@@ -7,25 +7,33 @@ export const ExampleGrid = styled(
   () => (
     <YStack gap="$2">
       <XStack gap="$2">
-        <GridTile>{/* <GridTileActionAdd /> */}</GridTile>
         <GridTile>
-          <GridTileImage source="https://rogerfederer.com/wp-content/themes/roger-federer-2024/assets/graphics/records-bg-v4.1.1.jpg" />
+          <GridTileImage source={require('../../../../apps/expo/assets/1.png')} />
         </GridTile>
-        <GridTile>{/* <GridTileActionAdd /> */}</GridTile>
-      </XStack>
-      <XStack gap="$2">
-        <GridTileList title="Some western films you've never ever seen before" />
-        <GridTile />
         <GridTile>
-          <GridTileImage source="https://rogerfederer.com/wp-content/themes/roger-federer-2024/assets/graphics/records-bg-v4.1.1.jpg" />
+          <GridTileImage source={require('../../../../apps/expo/assets/2.png')} />
+        </GridTile>
+        <GridTile>
+          <GridTileImage source={require('../../../../apps/expo/assets/3.png')} />
         </GridTile>
       </XStack>
       <XStack gap="$2">
         <GridTile>
-          <GridTileImage source="https://rogerfederer.com/wp-content/themes/roger-federer-2024/assets/graphics/records-bg-v4.1.1.jpg" />
+          <GridTileImage source={require('../../../../apps/expo/assets/4.png')} />
         </GridTile>
-        <GridTile />
-        <GridTileList title="Some western films you've never ever seen before" />
+        <GridTileList title="chinatown dumpling tier list" />
+        <GridTile>
+          <GridTileImage source={require('../../../../apps/expo/assets/6.png')} />
+        </GridTile>
+      </XStack>
+      <XStack gap="$2">
+        <GridTile>
+          <GridTileImage source={require('../../../../apps/expo/assets/7.png')} />
+        </GridTile>
+        <GridTile>
+          <GridTileImage source={require('../../../../apps/expo/assets/8.png')} />
+        </GridTile>
+        <GridTileList title="2025 reading list" />
       </XStack>
     </YStack>
   ),

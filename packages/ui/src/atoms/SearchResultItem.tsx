@@ -1,7 +1,7 @@
 import { XStack, View, Text } from 'tamagui'
 import { X } from '@tamagui/lucide-icons'
 
-export const SearchResultItem = ({ r }: { r: RefsItem }) => {
+export const SearchResultItem = ({ r }: { r: CompleteRef }) => {
   return (
     <View px="$2" my="$1.5" py="$2" borderRadius="$2">
       <XStack gap="$3" jc="space-between" ai="center">

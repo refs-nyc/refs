@@ -20,25 +20,53 @@ const init = async () => {
       models,
       actions: {
         // Profiles
-        createProfile(db, firstName, lastName, userName, items = [], image = null) {
-          db.create('profiles', {
-            did: this.did,
-            firstName,
-            lastName,
-            userName,
-            items,
+        // createProfile(db, firstName, lastName, userName, items = [], image = null) {
+        //   db.create('profiles', {
+        //     did: this.did,
+        //     firstName,
+        //     lastName,
+        //     userName,
+        //     items,
+        //     image,
+        //     location: null,
+        //     geolocation: null,
+        //   })
+        // },
+        // updateProfile(db, firstName, lastName, userName, location, image) {
+        //   db.update('profiles', { did: this.did, firstName, lastName, userName, location, image })
+        // },
+        // updateProfileItems(db, items) {
+        //   db.update('profiles', { did: this.did, items })
+        // },
+        //
+        // ***
+        // Refs
+        //
+        //
+        //
+        createRef(
+          db,
+          { title, firstReferral = null, image = null, location = null, referrals = [] }
+        ) {
+          const newRef = db.create('refs', {
+            id: this.id,
+            title,
             image,
-            location: null,
-            geolocation: null,
+            createdAt: new Date().getTime(),
+            deletedAt: null,
+            firstReferral,
+            location,
+            referrals,
           })
+
+          return newRef
         },
-        updateProfile(db, firstName, lastName, userName, location, image) {
-          db.update('profiles', { did: this.did, firstName, lastName, userName, location, image })
-        },
-        updateProfileItems(db, items) {
-          db.update('profiles', { did: this.did, items })
-        },
+        //
+        // ***
         // Items
+        //
+        //
+        //
         createItem(
           db,
           { ref, text = null, image = null, location = null, url = null, children = [] }
@@ -73,25 +101,21 @@ const init = async () => {
 export const appPromise = init()
 
 export function CanvasContract({ children }) {
-  const [ctx, setCtx] = useState(null);
+  const [ctx, setCtx] = useState(null)
 
   useEffect(() => {
     const start = async () => {
       try {
-        const app = await appPromise; // Wait for the app to initialize
-        console.log('App initialized:', app);
-        setCtx(app); // Set the app in the context
+        const app = await appPromise // Wait for the app to initialize
+        console.log('App initialized:', app)
+        setCtx(app) // Set the app in the context
       } catch (error) {
-        console.error('Error initializing app:', error);
+        console.error('Error initializing app:', error)
       }
-    };
+    }
 
-    start(); // Trigger the initialization logic
-  }, []); // Empty dependency array ensures this runs only once
+    start() // Trigger the initialization logic
+  }, []) // Empty dependency array ensures this runs only once
 
-  return (
-    <CanvasContext.Provider value={ctx}>
-      {children}
-    </CanvasContext.Provider>
-  );
+  return <CanvasContext.Provider value={ctx}>{children}</CanvasContext.Provider>
 }

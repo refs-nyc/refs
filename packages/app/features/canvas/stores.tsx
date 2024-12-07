@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { useCanvasContext } from 'app/features/canvas/contract'
+import { appPromise } from 'app/features/canvas/contract'
 
 // ***
 // Refs
@@ -8,10 +8,15 @@ import { useCanvasContext } from 'app/features/canvas/contract'
 export const useRefStore = create((set) => ({
   refs: [],
   push: async (newRef: StagedRef) => {
-    const finalRef = {
-      ...newRef,
-      id: Math.random(),
-    } // will be replaced by canvas
+    const app = await appPromise
+
+    const finalRef = await app.actions.createRef(newRef)
+    console.log('coming from app actions')
+    console.log(finalRef)
+    // const finalRef = {
+    //   ...newRef,
+    //   id: Math.random(),
+    // } // will be replaced by canvas
 
     set((state) => ({ refs: [...state.refs, finalRef] }))
     return finalRef

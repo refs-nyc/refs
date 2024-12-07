@@ -5,7 +5,7 @@ import { Text, View, H2, YStack } from 'tamagui'
 import { Picker } from '../inputs/Picker'
 import { PinataImage } from '../images/PinataImage'
 import { EditableTitle } from '../atoms/EditableTitle'
-import { useItemStore, createRefWithItem } from 'app/features/canvas/models'
+import { useItemStore, createRefWithItem } from 'app/features/canvas/stores'
 import { MainButton } from '../buttons/Button'
 
 const win = Dimensions.get('window')
@@ -61,10 +61,9 @@ export const NewRef = ({
     setCurrentRef(u)
   }
 
-  const submit = () => {
-    console.log('SUBMIT')
+  const submit = async () => {
     const finalRef = prepareRef(currentRef)
-    const { item, ref } = createRefWithItem(finalRef)
+    const { item, ref } = await createRefWithItem(finalRef)
     console.log(item, ref)
     onComplete(finalRef)
   }

@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import { useItemStore } from 'app/features/canvas/models'
+import { useItemStore } from 'app/features/canvas/stores'
 import { YStack, Button, XStack, View, Text } from 'tamagui'
 import { getTokens } from '@tamagui/core'
 import { TextInput, Pressable, FlatList } from 'react-native'

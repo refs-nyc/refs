@@ -9,7 +9,7 @@ import { useState, useMemo } from 'react'
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { NewRef } from '../actions/NewRef'
 import { SearchOrAddRef } from '../actions/SearchOrAddRef'
-import { useItemStore } from 'app/features/canvas/models'
+import { useItemStore } from 'app/features/canvas/stores'
 import { useCanvasContext } from 'app/features/canvas/contract'
 import { useLiveQuery } from '@canvas-js/hooks'
 

@@ -38,6 +38,7 @@
     "expo-sqlite": "~14.0.6",
     "expo-status-bar": "~1.12.1",
     "expo-updates": "~0.25.15",
+    "pinata": "^1.9.1",
     "react": "18.2.0",
     "react-dom": "18.2.0",
     "react-draggable": "^4.4.6",

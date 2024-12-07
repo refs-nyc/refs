@@ -30,6 +30,8 @@ export const pinataSignedUrl = async (cid: string) => {
  * @returns
  */
 export const pinataUpload = async (asset: ImagePicker.ImagePickerAsset) => {
+  console.log('Called pinata with', asset)
+
   const form = new FormData()
 
   form.append('name', asset?.fileName || 'test')

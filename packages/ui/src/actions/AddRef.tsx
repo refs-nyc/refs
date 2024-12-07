@@ -11,6 +11,7 @@ import { NewRef } from '../actions/NewRef'
 import { SearchOrAddRef } from '../actions/SearchOrAddRef'
 import { useCanvasContext } from 'app/features/canvas/contract'
 import { useLiveQuery } from '@canvas-js/hooks'
+import type { ImagePickerAsset } from 'expo-image-picker'
 
 const win = Dimensions.get('window')
 
@@ -38,8 +39,8 @@ export const AddRef = ({ onAddRef, onCancel }: { onAddRef: () => Item; onCancel:
 
   const itemRows = useLiveQuery(app, 'items')
 
-  const addImageRef = async (uri: string) => {
-    const rd = { title: null, image: uri }
+  const addImageRef = async (asset: ImagePickerAsset) => {
+    const rd = { image: asset }
     // TODO; Upload to IPFS etc
     // await push(rd)
     setRefData(rd)
@@ -57,7 +58,7 @@ export const AddRef = ({ onAddRef, onCancel }: { onAddRef: () => Item; onCancel:
   return (
     <Animated.View style={{ minHeight }}>
       {pickerOpen && (
-        <Picker onSuccess={(uri) => addImageRef(uri)} onCancel={() => setPickerOpen(false)} />
+        <Picker onSuccess={(asset) => addImageRef(asset)} onCancel={() => setPickerOpen(false)} />
       )}
 
       {!addingRef && (

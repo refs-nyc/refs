@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { prepareRef } from '../@refs/core'
 import { Pressable, Dimensions } from 'react-native'
-import { Text, View, H2, YStack } from 'tamagui'
+import { Text, View, H2, YStack, Spinner } from 'tamagui'
 import { Picker } from '../inputs/Picker'
 import { PinataImage } from '../images/PinataImage'
 import { EditableTitle } from '../atoms/EditableTitle'
@@ -11,7 +11,7 @@ import type { ImagePickerAsset } from 'expo-image-picker'
 
 const win = Dimensions.get('window')
 
-const AddImage = ({ onAddImage }: { onAddImage: () => ImagePickerAsset }) => {
+const AddImage = ({ onAddImage }: { onAddImage: (a: ImagePickerAsset) => ImagePickerAsset }) => {
   const [picking, setPicking] = useState(false)
 
   return (
@@ -44,12 +44,16 @@ export const NewRef = ({
   placeholder: string
   onComplete: (i: Item) => void
 }) => {
-  const [currentRef, setCurrentRef] = useState<StagedRef>(r)
+  const [currentRef, setCurrentRef] = useState<StagedRef>({ ...r })
   const [imageAsset, setImageAsset] = useState(r?.image || null)
+  const [pinataSource, setPinataSource] = useState('')
 
   const minHeight = win.height * 0.7
 
-  const updateRef = (image) => {
+  const updateRefImage = (image: string) => {
+    console.log(image, typeof image)
+    setPinataSource(image)
+
     const u = { ...r, image }
     setCurrentRef(u)
   }
@@ -60,7 +64,8 @@ export const NewRef = ({
   }
 
   const submit = async () => {
-    const { item, ref } = await createRefWithItem(currentRef)
+    console.log(currentRef)
+    const { item, ref } = await createRefWithItem({ ...currentRef, image: pinataSource })
     console.log(item, ref)
     onComplete(item)
   }
@@ -72,11 +77,16 @@ export const NewRef = ({
           {imageAsset ? (
             <PinataImage
               asset={imageAsset}
-              onSuccess={() => updateRef}
+              onSuccess={updateRefImage}
               onFail={() => console.error('Cant ul')}
             />
           ) : (
-            <AddImage onAddImage={updateRef} />
+            <AddImage
+              onAddImage={(a: ImagePickerAsset) => {
+                console.log('on add IMage', a)
+                setImageAsset(a)
+              }}
+            />
           )}
           {
             <EditableTitle
@@ -89,8 +99,8 @@ export const NewRef = ({
         </YStack>
       </View>
 
-      <MainButton disabled={!currentRef.title} onPress={submit}>
-        Done
+      <MainButton disabled={!currentRef.title || !pinataSource} onPress={submit}>
+        {(!currentRef.title || !pinataSource) && <Spinner size="small" color="$white" />} Done
       </MainButton>
     </>
   )

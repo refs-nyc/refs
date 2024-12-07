@@ -9,21 +9,12 @@ import { useState, useMemo } from 'react'
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { NewRef } from '../actions/NewRef'
 import { SearchOrAddRef } from '../actions/SearchOrAddRef'
-import { useItemStore } from 'app/features/canvas/stores'
 import { useCanvasContext } from 'app/features/canvas/contract'
 import { useLiveQuery } from '@canvas-js/hooks'
 
 const win = Dimensions.get('window')
 
-export const AddRef = ({
-  onAddRef,
-  onCancel,
-}: {
-  onAddRef: () => RefsItem
-  onCancel: () => void
-}) => {
-  const { items, push } = useItemStore()
-
+export const AddRef = ({ onAddRef, onCancel }: { onAddRef: () => Item; onCancel: () => void }) => {
   const [textOpen, setTextOpen] = useState(false)
   const [pickerOpen, setPickerOpen] = useState(false)
   const [cameraOpen, setCameraOpen] = useState(false)

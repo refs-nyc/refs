@@ -8,7 +8,7 @@ import { GridTileActionAdd } from './GridTileActionAdd'
 import { useItemStore } from 'app/features/canvas/stores'
 
 export const Grid = ({ onAddItem }: { onAddItem?: () => void }) => {
-  const { items, push, remove } = useItemStore()
+  const { items } = useItemStore()
 
   return (
     <GridWrapper columns={3} rows={4}>

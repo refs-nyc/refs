@@ -29,6 +29,12 @@ declare global {
     deletedAt?: number
   }
 
+  // Non completed item
+  type StagedItem = {
+    ref: string
+    image?: string
+  }
+
   // Profile's copy of a ref
   type Item = {
     id: string

@@ -72,15 +72,17 @@ const init = async () => {
         ) {
           db.create('items', {
             id: this.id,
+            ref,
             createdAt: new Date().getTime(),
             deletedAt: null,
-            ref,
             text,
             image,
             location,
             url,
             children,
           })
+
+          return this.id
         },
         updateItem(db, id, ref, text, image, location, url, children) {
           db.update('items', { id, ref, text, image, location, url, children })

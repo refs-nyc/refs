@@ -10,13 +10,8 @@ export const useRefStore = create((set) => ({
   push: async (newRef: StagedRef) => {
     const app = await appPromise
 
-    const finalRef = await app.actions.createRef(newRef)
-    console.log('coming from app actions')
-    console.log(finalRef)
-    // const finalRef = {
-    //   ...newRef,
-    //   id: Math.random(),
-    // } // will be replaced by canvas
+    const { result: id } = await app.actions.createRef(newRef)
+    const finalRef = await app.db.get('refs', id)
 
     set((state) => ({ refs: [...state.refs, finalRef] }))
     return finalRef
@@ -57,10 +52,12 @@ export const useItemStore = create((set) => ({
 //
 //
 export const createRefWithItem = async (stagedRef: StagedRef): { ref: CompleteRef; item: Item } => {
+  const app = await appPromise
   const refStore = useRefStore.getState()
   const itemStore = useItemStore.getState()
 
   const newRef = await refStore.push(stagedRef)
+
   const copiedRef = { ...newRef }
 
   delete copiedRef.id

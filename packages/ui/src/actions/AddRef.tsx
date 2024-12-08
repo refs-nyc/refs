@@ -1,12 +1,13 @@
 import { Picker } from '../inputs/Picker'
 import { Camera } from '../inputs/Camera'
 import { YStack, Button, View, SizableText, XStack } from 'tamagui'
+import Ionicons from '@expo/vector-icons/Ionicons'
 import Animated, { useSharedValue, withSpring } from 'react-native-reanimated'
-import { TextInput, Dimensions } from 'react-native'
+import { AddFromCameraRoll } from "../buttons/AddFromCameraRoll"
+import { Dimensions } from 'react-native'
 import { ChevronLeft } from '@tamagui/lucide-icons'
 import { getTokens } from '@tamagui/core'
 import { useState, useMemo } from 'react'
-import Ionicons from '@expo/vector-icons/Ionicons'
 import { NewRef } from '../actions/NewRef'
 import { SearchOrAddRef } from '../actions/SearchOrAddRef'
 import { useCanvasContext } from 'app/features/canvas/contract'
@@ -86,42 +87,11 @@ export const AddRef = ({ onAddRef, onCancel }: { onAddRef: () => Item; onCancel:
 
           {!cameraOpen && !textOpen && (
             <YStack gap="$4">
-              <Button
-                onPress={() => {
+              <AddFromCameraRoll title="Start typing" icon="text-outline" onPress={() => {
                   updateMinHeight(win.height * 0.7)
                   setTextOpen(true)
-                }}
-                borderColor="transparent"
-                borderWidth="$1"
-                borderRadius="$12"
-                jc="flex-start"
-                bg="white"
-              >
-                <Ionicons size={getTokens().size.$2.val} name="text-outline"></Ionicons>
-                <SizableText size="$5">Start typing</SizableText>
-              </Button>
-              <Button
-                onPress={() => setPickerOpen(true)}
-                borderColor="transparent"
-                borderWidth="$1"
-                borderRadius="$12"
-                jc="flex-start"
-                bg="white"
-              >
-                <Ionicons size={getTokens().size.$2.val} name="image-outline"></Ionicons>
-                <SizableText size="$5">Add from camera roll</SizableText>
-              </Button>
-              {/* <Button
-              onPress={() => setCameraOpen(true)}
-              borderColor="transparent"
-              borderWidth="$1"
-              borderRadius="$12"
-              jc="flex-start"
-              bg="white"
-            >
-              <Ionicons size={getTokens().size.$2.val} name="camera-outline"></Ionicons>
-              <SizableText size="$5">Take a photo</SizableText>
-            </Button> */}
+                }} />
+              <AddFromCameraRoll title="Add from Camera Roll" icon="image-outline" onPress={() => setPickerOpen(true)} />
             </YStack>
           )}
         </>

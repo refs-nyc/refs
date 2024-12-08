@@ -10,7 +10,7 @@ import { useCanvasContext } from 'app/features/canvas/contract'
 export function OnboardingScreen() {
   const ref = useRef<ICarouselInstance>(null)
   const win = Dimensions.get('window')
-  const data = [{}, {}, {}, {}, {}]
+  const data = [{}, {}, {}, {}]
 
   const app = useCanvasContext()
 
@@ -19,14 +19,7 @@ export function OnboardingScreen() {
   const [addingIndex, setAddingIndex] = useState(-1)
 
   const nextSlide = (index: number) => {
-    ref.current?.scrollTo({
-      /**
-       * Calculate the difference between the current index and the target index
-       * to ensure that the carousel scrolls to the nearest index
-       */
-      count: index + 1,
-      animated: true,
-    })
+    ref.current?.next()
   }
 
   const done = () => router.push('/user/new')

@@ -7,10 +7,12 @@ import type { ImagePickerAsset } from 'expo-image-picker'
 
 export const PinataImage = ({
   asset,
+  round = false,
   onSuccess,
   onFail,
 }: {
   asset: ImagePickerAsset
+  round?: boolean
   onSuccess: (url: string) => void
   onFail: () => void
 }) => {
@@ -51,7 +53,7 @@ export const PinataImage = ({
         ai="center"
         borderColor="$surface"
         borderWidth="$1"
-        borderRadius={10}
+        borderRadius={round ? 1000 : 10}
       >
         {pinataSource && (
           <Image

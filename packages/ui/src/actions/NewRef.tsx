@@ -1,17 +1,20 @@
 import { useState } from 'react'
-import { prepareRef } from '../@refs/core'
 import { Pressable, Dimensions } from 'react-native'
-import { Text, View, H2, YStack, Spinner } from 'tamagui'
+import { View, H2, YStack, Spinner } from 'tamagui'
 import { Picker } from '../inputs/Picker'
 import { PinataImage } from '../images/PinataImage'
 import { EditableTitle } from '../atoms/EditableTitle'
-import { useItemStore, createRefWithItem } from 'app/features/canvas/stores'
+import { createRefWithItem } from 'app/features/canvas/stores'
 import { MainButton } from '../buttons/Button'
 import type { ImagePickerAsset } from 'expo-image-picker'
 
 const win = Dimensions.get('window')
 
-const AddImage = ({ onAddImage }: { onAddImage: (a: ImagePickerAsset) => ImagePickerAsset }) => {
+export const AddImage = ({
+  onAddImage,
+}: {
+  onAddImage: (a: ImagePickerAsset) => ImagePickerAsset
+}) => {
   const [picking, setPicking] = useState(false)
 
   return (
@@ -51,7 +54,6 @@ export const NewRef = ({
   const minHeight = win.height * 0.7
 
   const updateRefImage = (image: string) => {
-    console.log(image, typeof image)
     setPinataSource(image)
 
     const u = { ...r, image }

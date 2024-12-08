@@ -29,15 +29,19 @@ export const pinataSignedUrl = async (cid: string) => {
  * @param asset
  * @returns
  */
-export const pinataUpload = async (asset: ImagePicker.ImagePickerAsset) => {
+export const pinataUpload = async (
+  asset: ImagePicker.ImagePickerAsset,
+  config: { prefix?: string } = { prefix: 'refs' }
+): Promise<void> => {
   console.log('Called pinata with', asset)
 
   const form = new FormData()
+  const fileName = `${config.prefix}-${Date.now()}`
 
-  form.append('name', asset?.fileName || 'test')
+  form.append('name', fileName)
   form.append('file', {
     uri: asset.uri,
-    name: asset?.fileName || 'testimage',
+    name: fileName,
     type: asset?.mimeType || 'image/jpeg',
   })
 
@@ -56,8 +60,6 @@ export const pinataUpload = async (asset: ImagePicker.ImagePickerAsset) => {
     const result = await response.json()
 
     const { data: url } = await pinataSignedUrl(result.data.cid)
-
-    console.log('url', url)
 
     return url
   } catch (error) {

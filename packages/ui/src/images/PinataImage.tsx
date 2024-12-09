@@ -22,6 +22,8 @@ export const PinataImage = ({
   const [showOriginal, setShowOriginal] = useState(true)
 
   useEffect(() => {
+    console.log('re render ', asset.uri)
+
     const load = async () => {
       try {
         setLoading(true)
@@ -33,12 +35,11 @@ export const PinataImage = ({
         setTimeout(() => {
           setShowOriginal(false)
           console.log('faded out now')
+          setLoading(false)
         }, 200)
       } catch (error) {
         console.error(error)
         onFail()
-      } finally {
-        setLoading(false)
       }
     }
 
@@ -55,13 +56,31 @@ export const PinataImage = ({
         borderWidth="$1"
         borderRadius={round ? 1000 : 10}
       >
+        {loading && (
+          <View
+            style={{
+              width: 200,
+              height: 200,
+              position: 'absolute',
+              zIndex: 1,
+              backgroundColor: 'rgb(243, 242, 237)',
+              opacity: 0.5,
+            }}
+          />
+        )}
         {pinataSource && (
           <Image
             placeholder={source}
             key={pinataSource}
             contentFit="cover"
             placeholderContentFit="cover"
-            style={{ width: '100%', height: '100%' }}
+            style={{
+              width: '100%',
+              height: '100%',
+            }}
+            onDisplay={() => {
+              setLoading(false)
+            }}
             source={pinataSource}
           />
         )}

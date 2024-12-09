@@ -7,6 +7,13 @@ import { Provider } from 'app/provider'
 import { NativeToast } from '@my/ui/src/NativeToast'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { CanvasContract } from 'app/features/canvas/contract'
+import { configureReanimatedLogger, ReanimatedLogLevel } from 'react-native-reanimated'
+
+// This is the default configuration
+configureReanimatedLogger({
+  level: ReanimatedLogLevel.warn,
+  strict: false, // Reanimated runs in strict mode by default
+})
 
 export const unstable_settings = {
   // Ensure that reloading on `/user` keeps a back button present.

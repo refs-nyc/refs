@@ -14,7 +14,7 @@ export const AddImage = ({
   onAddImage,
   hideNew = false,
 }: {
-  onAddImage: (a: ImagePickerAsset) => ImagePickerAssetm
+  onAddImage: (a: ImagePickerAsset) => ImagePickerAsset
   hideNew?: boolean
 }) => {
   const [picking, setPicking] = useState(false)
@@ -64,10 +64,6 @@ export const AvatarPicker = ({
     onComplete(image)
   }
 
-  const submit = async () => {
-    //
-  }
-
   return (
     <View>
       <YStack gap="$3">
@@ -82,7 +78,7 @@ export const AvatarPicker = ({
             <AddImage
               hideNew
               onAddImage={(a: ImagePickerAsset) => {
-                console.log('on add IMage', a)
+                setImageAsset(null)
                 setImageAsset(a)
               }}
             />
@@ -90,7 +86,7 @@ export const AvatarPicker = ({
         ) : (
           <AddImage
             onAddImage={(a: ImagePickerAsset) => {
-              console.log('on add IMage', a)
+              setImageAsset(null)
               setImageAsset(a)
             }}
           />

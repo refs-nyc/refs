@@ -23,8 +23,8 @@ export const Grid = ({ onAddItem }: { onAddItem?: () => void }) => {
         </>
       ))}
       {items.length < 12 && <GridTileActionAdd onAddPress={onAddItem} />}
-      {Array.from({ length: 12 - items.length - 1 }).map(() => (
-        <GridTile />
+      {Array.from({ length: 12 - items.length - 1 }).map((_, i) => (
+        <GridTile key={i} />
       ))}
     </GridWrapper>
   )

@@ -38,8 +38,6 @@ export const AddRef = ({ onAddRef, onCancel }: { onAddRef: () => Item; onCancel:
 
   if (!app) throw new Error('Canvas App not found')
 
-  const itemRows = useLiveQuery(app, 'items')
-
   const addImageRef = async (asset: ImagePickerAsset) => {
     const rd = { image: asset }
     // TODO; Upload to IPFS etc

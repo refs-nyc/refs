@@ -13,7 +13,7 @@ export function UserDetailScreen({ id }: { id: string }) {
     <>
       {id === 'new' && <NewProfile />}
       {/* TBD */}
-      {/* {id !== 'new' && <Profile profile={} />} */}
+      {id !== 'new' && <Profile userName={id} />}
     </>
   )
 }

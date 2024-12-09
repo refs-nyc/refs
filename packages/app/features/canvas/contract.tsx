@@ -19,25 +19,20 @@ const init = async () => {
       models,
       actions: {
         // Profiles
-        // createProfile(db, firstName, lastName, userName, items = [], image = null) {
-        //   db.create('profiles', {
-        //     did: this.did,
-        //     firstName,
-        //     lastName,
-        //     userName,
-        //     items,
-        //     image,
-        //     location: null,
-        //     geolocation: null,
-        //   })
-        // },
-        // updateProfile(db, firstName, lastName, userName, location, image) {
-        //   db.update('profiles', { did: this.did, firstName, lastName, userName, location, image })
-        // },
-        // updateProfileItems(db, items) {
-        //   db.update('profiles', { did: this.did, items })
-        // },
-        //
+        createProfile(db, { firstName, lastName, userName, items = [], image = null }) {
+          db.create('profiles', {
+            did: this.did,
+            firstName,
+            lastName,
+            userName,
+            items,
+            image,
+            location: null,
+            geolocation: null,
+          })
+
+          return { did: this.did, userName }
+        },
         // ***
         // Refs
         //

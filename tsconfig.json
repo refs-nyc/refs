@@ -1,21 +1,17 @@
 {
+  "extends": "expo/tsconfig.base",
   "compilerOptions": {
-    "esModuleInterop": true,
-    "strictNullChecks": true,
-    "noUncheckedIndexedAccess": true,
+    "strict": true,
     "paths": {
-      "app/*": ["./packages/app/*"],
-      "@my/ui/*": ["./packages/ui/*"],
-      "@exp/*": ["./apps/expo/*"]
+      "@/*": [
+        "./*"
+      ]
     }
   },
-  "extends": "./tsconfig.base",
-  "exclude": [
-    "**/node_modules",
-    "**/dist",
-    "**/types",
-    "apps/next/out",
-    "apps/next/.next",
-    "apps/next/.tamagui"
+  "include": [
+    "**/*.ts",
+    "**/*.tsx",
+    ".expo/types/**/*.ts",
+    "expo-env.d.ts"
   ]
 }

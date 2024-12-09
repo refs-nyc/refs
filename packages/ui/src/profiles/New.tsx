@@ -22,7 +22,7 @@ type StepInput3 = {
 }
 
 type StepInput4 = {
-  avatar: string
+  image: string
 }
 
 const ProfileStep = ({ fields, index, onComplete }) => {
@@ -151,10 +151,10 @@ const ProfileStep = ({ fields, index, onComplete }) => {
           </>
         )}
 
-        {fields.includes('avatar') && (
+        {fields.includes('image') && (
           <>
             <Controller
-              name="avatar"
+              name="image"
               control={control}
               rules={{
                 required: true,
@@ -169,7 +169,7 @@ const ProfileStep = ({ fields, index, onComplete }) => {
                 />
               )}
             />
-            {errors.avatar && <Paragraph ta="center">This field is required</Paragraph>}
+            {errors.image && <Paragraph ta="center">This field is required</Paragraph>}
           </>
         )}
       </YStack>
@@ -184,7 +184,7 @@ export const NewProfile = () => {
   const { stagedProfile, updateStagedProfile, register } = useProfileStore()
   const ref = useRef<ICarouselInstance>(null)
   const win = Dimensions.get('window')
-  const data = [['email'], ['firstName', 'lastName'], ['userName'], ['avatar']]
+  const data = [['email'], ['firstName', 'lastName'], ['userName'], ['image']]
   const router = useRouter()
 
   const nextStep = async (formValues) => {

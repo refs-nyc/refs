@@ -12,7 +12,7 @@ export function OnboardingScreen() {
   const win = Dimensions.get('window')
   const data = [{}, {}, {}, {}]
 
-  const { app } = useCanvasContext()
+  const app = useCanvasContext()
 
   const router = useRouter()
 

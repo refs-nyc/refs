@@ -6,7 +6,7 @@ import { TextInput, Pressable, FlatList } from 'react-native'
 import { SearchResultItem } from '../atoms/SearchResultItem'
 import { NewRefListItem } from '../atoms/NewRefListItem'
 
-const SEARCH_ARRAY: CompleteRef[] = [
+const SEARCH_ARRAY: RefsItem[] = [
   {
     id: '1',
     title: 'SOMETHING COOL',
@@ -32,7 +32,7 @@ const SEARCH_ARRAY: CompleteRef[] = [
 
 export const SearchOrAddRef = ({ onComplete }: { onComplete: (r: StagedRef) => void }) => {
   const [searchQuery, setSearchQuery] = useState('')
-  const [searchResults, setSearchResults] = useState<CompleteRef[]>([])
+  const [searchResults, setSearchResults] = useState<RefsItem[]>([])
 
   const { items } = useItemStore()
 

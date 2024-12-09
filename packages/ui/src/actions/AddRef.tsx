@@ -3,7 +3,7 @@ import { Camera } from '../inputs/Camera'
 import { YStack, Button, View, SizableText, XStack } from 'tamagui'
 import Ionicons from '@expo/vector-icons/Ionicons'
 import Animated, { useSharedValue, withSpring } from 'react-native-reanimated'
-import { AddFromCameraRoll } from '../buttons/AddFromCameraRoll'
+import { AddFromCameraRoll } from "../buttons/AddFromCameraRoll"
 import { Dimensions } from 'react-native'
 import { ChevronLeft } from '@tamagui/lucide-icons'
 import { getTokens } from '@tamagui/core'
@@ -34,7 +34,7 @@ export const AddRef = ({ onAddRef, onCancel }: { onAddRef: () => Item; onCancel:
   )
   const addingRef = useMemo(() => refData?.image || refData?.title, [refData])
 
-  const { app } = useCanvasContext()
+  const app = useCanvasContext()
 
   if (!app) throw new Error('Canvas App not found')
 
@@ -87,19 +87,11 @@ export const AddRef = ({ onAddRef, onCancel }: { onAddRef: () => Item; onCancel:
 
           {!cameraOpen && !textOpen && (
             <YStack gap="$4">
-              <AddFromCameraRoll
-                title="Start typing"
-                icon="text-outline"
-                onPress={() => {
+              <AddFromCameraRoll title="Start typing" icon="text-outline" onPress={() => {
                   updateMinHeight(win.height * 0.7)
                   setTextOpen(true)
-                }}
-              />
-              <AddFromCameraRoll
-                title="Add from Camera Roll"
-                icon="image-outline"
-                onPress={() => setPickerOpen(true)}
-              />
+                }} />
+              <AddFromCameraRoll title="Add from Camera Roll" icon="image-outline" onPress={() => setPickerOpen(true)} />
             </YStack>
           )}
         </>

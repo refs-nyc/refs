@@ -2,6 +2,17 @@ import { create } from 'zustand'
 import { appPromise } from 'app/features/canvas/contract'
 
 // ***
+// Profiles
+//
+//
+export const useProfileStore = create((set) => ({
+  refs: [],
+  // push: async (newProfile) => {
+  //   const app = awaitPromise
+  // }
+}))
+
+// ***
 // Refs
 //
 //
@@ -37,10 +48,10 @@ export const useItemStore = create((set) => ({
     const app = await appPromise
 
     const { result: id } = await app.actions.createItem(newItem)
-    const finalItem = await app.db.get("items", id)
-    if (finalItem === null) throw new Error("Could not fetch Item")
-    const ref = await app.db.get("refs", finalItem.ref)
-    if (ref === null) throw new Error("Could not fetch Ref")
+    const finalItem = await app.db.get('items', id)
+    if (finalItem === null) throw new Error('Could not fetch Item')
+    const ref = await app.db.get('refs', finalItem.ref)
+    if (ref === null) throw new Error('Could not fetch Ref')
     const joinedItem = { ...finalItem, title: ref.title, image: ref.image }
 
     console.log(joinedItem)

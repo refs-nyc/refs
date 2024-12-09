@@ -6,7 +6,7 @@ import { useCanvasContext } from 'app/features/canvas/contract'
 export const Profile = ({ userName }) => {
   const app = useCanvasContext()
 
-  const profile = useLiveQuery(app, 'profiles', { where: { userName: userName } })
+  const [profile] = useLiveQuery(app, 'profiles', { where: { userName: userName } }) || [undefined]
   const profiles = useLiveQuery(app, 'profiles')
 
   useEffect(() => console.log(profile), [profile])
@@ -14,7 +14,7 @@ export const Profile = ({ userName }) => {
   return (
     <YStack flex={1} jc="center" ai="center">
       <Text>{userName}</Text>
-      {profile?.avatar && <Text>a{profile.avatar}</Text>}
+      {profile?.image && <Text>{profile.image}</Text>}
       {profiles && <Text>{profiles.length}</Text>}
     </YStack>
   )

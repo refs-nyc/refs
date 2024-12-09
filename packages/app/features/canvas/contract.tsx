@@ -13,7 +13,6 @@ export function useCanvasContext() {
 
 const init = async () => {
   const app = await Canvas.initialize({
-    reset: true,
     //
     contract: {
       models,

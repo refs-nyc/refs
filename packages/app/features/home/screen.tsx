@@ -17,6 +17,18 @@ import { useRouter } from 'solito/router'
 import 'event-target-polyfill'
 import 'fast-text-encoding'
 
+import { useMagicContext } from '../magic/provider'
+
+const magic = useMagicContext()
+
+const login = async () => {
+  try {
+    await magic.auth.loginWithMagicLink({ email: 'raykyri@gmail.com' })
+  } catch (error) {
+    console.error(error)
+  }
+}
+
 export function HomeScreen({ pagesMode = false }: { pagesMode?: boolean }) {
   const router = useRouter()
 
@@ -33,7 +45,13 @@ export function HomeScreen({ pagesMode = false }: { pagesMode?: boolean }) {
       <YStack gap="$4">
         <MainButton onPress={() => router.push('/onboarding')}>Join</MainButton>
         {/* Replace this with local did */}
-        <MainButton secondary onPress={() => router.push('/user/login')}>
+        <MainButton
+          secondary
+          onPress={() => {
+            login()
+            // router.push('/user/login')
+          }}
+        >
           Login
         </MainButton>
       </YStack>

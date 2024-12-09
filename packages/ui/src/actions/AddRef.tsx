@@ -3,7 +3,7 @@ import { Camera } from '../inputs/Camera'
 import { YStack, Button, View, SizableText, XStack } from 'tamagui'
 import Ionicons from '@expo/vector-icons/Ionicons'
 import Animated, { useSharedValue, withSpring } from 'react-native-reanimated'
-import { AddFromCameraRoll } from "../buttons/AddFromCameraRoll"
+import { AddFromCameraRoll } from '../buttons/AddFromCameraRoll'
 import { Dimensions } from 'react-native'
 import { ChevronLeft } from '@tamagui/lucide-icons'
 import { getTokens } from '@tamagui/core'
@@ -25,7 +25,7 @@ export const AddRef = ({ onAddRef, onCancel }: { onAddRef: () => Item; onCancel:
   const minHeight = useSharedValue(0)
 
   const updateMinHeight = (val: number) => {
-    minHeight.value = withSpring(val)
+    minHeight.set(withSpring(val))
   }
 
   const editing = useMemo(
@@ -87,11 +87,19 @@ export const AddRef = ({ onAddRef, onCancel }: { onAddRef: () => Item; onCancel:
 
           {!cameraOpen && !textOpen && (
             <YStack gap="$4">
-              <AddFromCameraRoll title="Start typing" icon="text-outline" onPress={() => {
+              <AddFromCameraRoll
+                title="Start typing"
+                icon="text-outline"
+                onPress={() => {
                   updateMinHeight(win.height * 0.7)
                   setTextOpen(true)
-                }} />
-              <AddFromCameraRoll title="Add from Camera Roll" icon="image-outline" onPress={() => setPickerOpen(true)} />
+                }}
+              />
+              <AddFromCameraRoll
+                title="Add from Camera Roll"
+                icon="image-outline"
+                onPress={() => setPickerOpen(true)}
+              />
             </YStack>
           )}
         </>

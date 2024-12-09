@@ -4,6 +4,7 @@ import 'fast-text-encoding'
 import { models } from './models'
 import { Canvas } from '@canvas-js/core'
 import { createContext, useContext, useEffect, useState } from 'react'
+import { Magic } from '@magic-sdk/react-native-expo'
 
 export const CanvasContext = createContext(null)
 
@@ -12,37 +13,14 @@ export function useCanvasContext() {
 }
 
 const init = async () => {
+  let magic: undefined | Magic
+
   const app = await Canvas.initialize({
     reset: true,
     //
     contract: {
       models,
       actions: {
-        // Profiles
-        // createProfile(db, firstName, lastName, userName, items = [], image = null) {
-        //   db.create('profiles', {
-        //     did: this.did,
-        //     firstName,
-        //     lastName,
-        //     userName,
-        //     items,
-        //     image,
-        //     location: null,
-        //     geolocation: null,
-        //   })
-        // },
-        // updateProfile(db, firstName, lastName, userName, location, image) {
-        //   db.update('profiles', { did: this.did, firstName, lastName, userName, location, image })
-        // },
-        // updateProfileItems(db, items) {
-        //   db.update('profiles', { did: this.did, items })
-        // },
-        //
-        // ***
-        // Refs
-        //
-        //
-        //
         createRef(
           db,
           { title, firstReferral = null, image = null, location = null, referrals = [] }
@@ -101,15 +79,30 @@ const init = async () => {
 
 export const appPromise = init()
 
-export function CanvasContract({ children }) {
+export function CanvasContract({
+  children,
+  withMagic = true,
+}: {
+  children: React.ReactNode
+  withMagic: boolean
+}) {
   const [ctx, setCtx] = useState(null)
+
+  let magic: Magic | undefined
+
+  if (withMagic) {
+    magic = new Magic(process.env.EXPO_PUBLIC_MAGIC_KEY as string)
+
+    if (!magic) throw new Error('Could not initialize Magic')
+  }
 
   useEffect(() => {
     const start = async () => {
       try {
         const app = await appPromise // Wait for the app to initialize
+
         console.log('App initialized:', app)
-        setCtx(app) // Set the app in the context
+        setCtx({ app, magic }) // Set the app in the context
       } catch (error) {
         console.error('Error initializing app:', error)
       }

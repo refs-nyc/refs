@@ -28,7 +28,7 @@ export const ExampleButtonList = () => {
   }, [])
 
   useEffect(() => {
-    width.value = withSpring(expanded ? 230 : 10, { stiffness: expanded ? 100 : 10 })
+    width.set(withSpring(expanded ? 230 : 10, { stiffness: expanded ? 100 : 10 }))
   }, [expanded])
 
   return (

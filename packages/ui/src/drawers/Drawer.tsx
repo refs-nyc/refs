@@ -39,30 +39,32 @@ export function Drawer({
   const [realHeight, setRealHeight] = useState(0)
 
   const toggleSheet = () => {
-    offset.value = 0
+    offset.set(0)
     close()
   }
 
   const pan = Gesture.Pan()
     .onChange((event) => {
-      const offsetDelta = event.changeY + offset.value
+      const offsetDelta = event.changeY + offset.get()
 
       const clamp = Math.max(-OVERDRAG, offsetDelta)
-      offset.value = offsetDelta > 0 ? offsetDelta : withSpring(clamp)
+      offset.set(offsetDelta > 0 ? offsetDelta : withSpring(clamp))
     })
     .onFinalize(() => {
       console.log('finalize', realHeight)
-      if (offset.value < realHeight / 3) {
-        offset.value = withSpring(0)
+      if (offset.get() < realHeight / 3) {
+        offset.set(withSpring(0))
       } else {
-        offset.value = withTiming(realHeight, {}, () => {
-          runOnJS(toggleSheet)()
-        })
+        offset.set(
+          withTiming(realHeight, {}, () => {
+            runOnJS(toggleSheet)()
+          })
+        )
       }
     })
 
   const translateY = useAnimatedStyle(() => ({
-    transform: [{ translateY: offset.value }],
+    transform: [{ translateY: offset.get() }],
   }))
 
   return (

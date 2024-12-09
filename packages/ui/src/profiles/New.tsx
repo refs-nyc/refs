@@ -1,53 +1,51 @@
 import { useRef, useState, useEffect } from 'react'
-import { Form, View, YStack, H2 } from 'tamagui'
+import { Form, View, YStack, H2, Paragraph } from 'tamagui'
 import { FormFieldWithIcon } from '../inputs/FormFieldWithIcon'
 import { AvatarPicker } from '../inputs/AvatarPicker'
-import { MainButton } from '../buttons/Button'
-import { Dimensions } from 'react-native'
-
+import { Button, Dimensions } from 'react-native'
+import { useForm, Controller } from 'react-hook-form'
 import Carousel, { ICarouselInstance } from 'react-native-reanimated-carousel'
 
+type Inputs = {
+  email: string
+  firstName: string
+  lastName: string
+  phone: string
+  userName: string
+  avatar: string
+}
+
 export const NewProfile = () => {
-  const ref = useRef<ICarouselInstance>(null)
+  const {
+    control,
+    handleSubmit,
+    watch,
+    formState: { errors },
+  } = useForm<Inputs>()
 
-  const win = Dimensions.get('window')
-
-  const data = [['firstName', 'lastName', 'email', 'phone'], ['userName'], ['avatar']]
-
-  const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
-    email: '',
-    phone: '',
-    userName: '',
-    avatar: null,
-  })
-
-  const submit = () => {
-    console.log('SUBMIT')
+  const onSubmit = (d) => {
+    console.log('WE GOOD')
+    nextStep()
   }
 
-  const nextStep = (index) => {
-    console.log(index, ref.current.getCurrentIndex() + 1)
+  const ref = useRef<ICarouselInstance>(null)
+  const win = Dimensions.get('window')
+  const data = [['email'], ['firstName', 'lastName'], ['userName'], ['avatar']]
+  const formValues = watch()
+
+  const nextStep = () => {
+    const index = ref.current?.getCurrentIndex()
+    console.log(index)
+
     // Validate fields
 
     if (index < data.length - 1) {
+      // Valid?
       ref.current?.next()
     } else {
-      submit()
+      // submit()
     }
   }
-
-  const handleInputChange = (field, value) => {
-    setFormData((prevData) => ({
-      ...prevData,
-      [field]: value,
-    }))
-  }
-
-  useEffect(() => {
-    console.log(formData)
-  }, [formData])
 
   const renderItem = ({ item, index }) => {
     return (
@@ -55,14 +53,16 @@ export const NewProfile = () => {
         <View style={{ flex: 1 }} mx="$6" my="$4">
           <YStack gap="$4" pt="$12" pb="$8">
             <H2 ta="center" col="$color12">
-              {index === 0 && 'Let us know who you are to wrap up'}
-              {index === 1 && 'Choose a username'}
-              {index === 2 && '...and upload a profile photo'}
+              {index === 0 && 'Login using your email'}
+              {index === 1 && 'Let us know who you are to wrap up'}
+              {index === 2 && 'Choose a username'}
+              {index === 3 && '...and upload a profile photo'}
             </H2>
           </YStack>
-          <Form onSubmit={() => nextStep(index)}>
+
+          <Form onSubmit={handleSubmit(onSubmit)}>
             <YStack gap="$6">
-              {item.includes('firstName') && (
+              {/* {item.includes('firstName') && (
                 <FormFieldWithIcon
                   onChange={(value) => handleInputChange('firstName', value)}
                   type="user"
@@ -77,24 +77,35 @@ export const NewProfile = () => {
                   id="lastName"
                   placeholder="Last Name"
                 />
-              )}
+              )} */}
               {item.includes('email') && (
-                <FormFieldWithIcon
-                  onChange={(value) => handleInputChange('email', value)}
-                  type="email"
-                  id="email"
-                  placeholder="Email"
-                />
+                <>
+                  <Controller
+                    name="email"
+                    control={control}
+                    rules={{ required: true, pattern: /^[^@]+@[^@]+.[^@]+$/ }}
+                    render={({ field: { onChange, value } }) => (
+                      <FormFieldWithIcon
+                        onChange={onChange}
+                        type="email"
+                        id="email"
+                        placeholder="Email"
+                        value={value}
+                      />
+                    )}
+                  />
+                  {errors.email && <Paragraph>This field is required</Paragraph>}
+                </>
               )}
-              {item.includes('phone') && (
+              {/* {item.includes('phone') && (
                 <FormFieldWithIcon
                   onChange={(value) => handleInputChange('phone', value)}
                   type="phone"
                   id="phone"
                   placeholder="Phone number"
                 />
-              )}
-              {item.includes('userName') && (
+              )} */}
+              {/* {item.includes('userName') && (
                 <FormFieldWithIcon
                   onChange={(value) => handleInputChange('userName', value)}
                   type="user"
@@ -107,13 +118,10 @@ export const NewProfile = () => {
                   onComplete={(value) => handleInputChange('avatar', value)}
                   id="avatar"
                 />
-              )}
+              )} */}
             </YStack>
-
-            <Form.Trigger asChild disabled={false}>
-              <MainButton>Looks good</MainButton>
-            </Form.Trigger>
           </Form>
+          <Button title="Submit" onPress={handleSubmit(onSubmit)} />
         </View>
       </>
     )

@@ -14480,6 +14480,7 @@ __metadata:
     crypto-browserify: "npm:^3.12.1"
     event-target-polyfill: "npm:^0.0.4"
     expo: "npm:^51.0.9"
+    expo-application: "npm:~5.9.1"
     expo-camera: "npm:~15.0.16"
     expo-constants: "npm:~16.0.2"
     expo-dev-client: "npm:~4.0.15"
@@ -14522,7 +14523,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"expo-application@npm:^5.0.1":
+"expo-application@npm:^5.0.1, expo-application@npm:~5.9.1":
   version: 5.9.1
   resolution: "expo-application@npm:5.9.1"
   peerDependencies:

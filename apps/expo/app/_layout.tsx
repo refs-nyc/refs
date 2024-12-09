@@ -4,7 +4,7 @@ import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native
 import { useFonts } from 'expo-font'
 import { SplashScreen, Stack } from 'expo-router'
 import { Provider } from 'app/provider'
-import { MagicProvider } from 'app/features/magic/provider'
+// import { MagicProvider } from 'app/features/magic/provider'
 import { NativeToast } from '@my/ui/src/NativeToast'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { CanvasContract } from 'app/features/canvas/contract'
@@ -41,17 +41,17 @@ function RootLayoutNav() {
   const colorScheme = useColorScheme()
 
   return (
+    // <MagicProvider>
     <CanvasContract>
-      <MagicProvider>
-        <Provider>
-          <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-            <GestureHandlerRootView>
-              <Stack />
-              <NativeToast />
-            </GestureHandlerRootView>
-          </ThemeProvider>
-        </Provider>
-      </MagicProvider>
+      <Provider>
+        <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+          <GestureHandlerRootView>
+            <Stack />
+            <NativeToast />
+          </GestureHandlerRootView>
+        </ThemeProvider>
+      </Provider>
     </CanvasContract>
+    // </MagicProvider>
   )
 }

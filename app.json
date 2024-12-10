@@ -8,6 +8,7 @@
     "scheme": "myapp",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
+    "jsEngine": "jsc",
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.anonymous.canvasdemoapp"
@@ -40,8 +41,11 @@
       "typedRoutes": true
     },
     "extra": {
+      "router": {
+        "origin": false
+      },
       "eas": {
-        "projectId": "25839cac-71b4-49e5-b8a8-5f97510fb0a1"
+        "projectId": "c89520a4-2100-4e54-b78a-fbe3abc91c6e"
       }
     }
   }

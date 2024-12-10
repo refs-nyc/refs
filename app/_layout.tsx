@@ -7,6 +7,8 @@ polyfillEncoding()
 import 'event-target-polyfill'
 import '@/features/polyfill/custom-event-polyfill'
 
+import 'react-native-get-random-values'
+
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { useEffect } from 'react'
 import { StatusBar, useColorScheme } from 'react-native'

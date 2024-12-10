@@ -1,4 +1,5 @@
-import { Button, SizableText } from '@/ui'
+import { Pressable } from 'react-native'
+import { SizableText, XStack } from '@/ui'
 import Ionicons from '@expo/vector-icons/Ionicons'
 
 export const AddFromCameraRoll = ({
@@ -10,7 +11,7 @@ export const AddFromCameraRoll = ({
   icon: string
   onPress: () => void
 }) => (
-  <Button
+  <Pressable
     onPress={onPress}
     borderColor="transparent"
     borderWidth="$1"
@@ -18,7 +19,9 @@ export const AddFromCameraRoll = ({
     jc="flex-start"
     bg="white"
   >
-    <Ionicons size={12} name={icon}></Ionicons>
-    <SizableText size="$5">{title}</SizableText>
-  </Button>
+    <XStack>
+      <Ionicons size={12} name={icon}></Ionicons>
+      <SizableText size="$5">{title}</SizableText>
+    </XStack>
+  </Pressable>
 )

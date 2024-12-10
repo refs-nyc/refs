@@ -53,7 +53,7 @@ export const AddRef = ({ onAddRef, onCancel }: { onAddRef: () => Item; onCancel:
   }
 
   return (
-    <Animated.View style={{ minHeight }}>
+    <Animated.View style={{ minHeight, paddingHorizontal: 12, paddingBottom: 56 }}>
       {pickerOpen && (
         <Picker onSuccess={(asset) => addImageRef(asset)} onCancel={() => setPickerOpen(false)} />
       )}
@@ -61,10 +61,11 @@ export const AddRef = ({ onAddRef, onCancel }: { onAddRef: () => Item; onCancel:
       {!addingRef && (
         <>
           {(cameraOpen || textOpen) && (
-            <YStack>
+            <YStack gap={20}>
               <XStack jc="space-between">
                 <Ionicons
                   name="chevron-back"
+                  size={20}
                   onPress={() => {
                     updateMinHeight(0)
                     setCameraOpen(false)

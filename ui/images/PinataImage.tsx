@@ -1,0 +1,103 @@
+import { useState, useEffect, useMemo } from 'react'
+// This component takes a local image uri, displays the image and meanwhile posts the image to Pinata
+import { Image } from 'expo-image'
+import { View, Text } from 'react-native'
+import { pinataUpload } from '../inputs/Picker'
+import type { ImagePickerAsset } from 'expo-image-picker'
+
+export const PinataImage = ({
+  asset,
+  round = false,
+  onSuccess,
+  onFail,
+}: {
+  asset: ImagePickerAsset
+  round?: boolean
+  onSuccess: (url: string) => void
+  onFail: () => void
+}) => {
+  const [loading, setLoading] = useState(false)
+  const [source, setSource] = useState(asset.uri)
+  const [pinataSource, setPinataSource] = useState('')
+  const [showOriginal, setShowOriginal] = useState(true)
+
+  useEffect(() => {
+    console.log('re render ', asset.uri)
+
+    const load = async () => {
+      try {
+        setLoading(true)
+        const url = await pinataUpload(asset)
+        console.log('got signed url')
+        setPinataSource(url)
+        onSuccess(url)
+
+        setTimeout(() => {
+          setShowOriginal(false)
+          console.log('faded out now')
+          setLoading(false)
+        }, 200)
+      } catch (error) {
+        console.error(error)
+        onFail()
+      }
+    }
+
+    load()
+  }, [asset])
+
+  return (
+    <View width="100%" jc="center" ai="center">
+      <View
+        style={{ width: 200, height: 200, overflow: 'hidden' }}
+        jc="center"
+        ai="center"
+        borderColor="$surface"
+        borderWidth="$1"
+        borderRadius={round ? 1000 : 10}
+      >
+        {loading && (
+          <View
+            style={{
+              width: 200,
+              height: 200,
+              position: 'absolute',
+              zIndex: 1,
+              backgroundColor: 'rgb(243, 242, 237)',
+              opacity: 0.5,
+            }}
+          />
+        )}
+        {pinataSource && (
+          <Image
+            placeholder={source}
+            key={pinataSource}
+            contentFit="cover"
+            placeholderContentFit="cover"
+            style={{
+              width: '100%',
+              height: '100%',
+            }}
+            onDisplay={() => {
+              setLoading(false)
+            }}
+            source={pinataSource}
+          />
+        )}
+
+        {source && showOriginal && (
+          <Image
+            key={source}
+            contentFit="cover"
+            style={{
+              position: showOriginal ? 'absolute' : 'relative',
+              width: '100%',
+              height: '100%',
+            }}
+            source={source}
+          />
+        )}
+      </View>
+    </View>
+  )
+}

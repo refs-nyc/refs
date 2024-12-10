@@ -51,7 +51,6 @@
     "expo-web-browser": "~14.0.1",
     "fast-text-encoding": "^1.0.6",
     "metro": "0.81.0",
-    "metro-resolver": "git+ssh://git@github.com/raykyri/metro.git#7a4c6a1854891387c77dbc7cfcb9ac9b4db475b5",
     "multiformats": "^13.3.1",
     "react": "18.3.1",
     "react-dom": "18.3.1",
@@ -73,7 +72,7 @@
   },
   "resolutions": {
     "metro": "0.81.0",
-    "metro-resolver": "https://github.com/raykyri/metro.git#7a4c6a1854891387c77dbc7cfcb9ac9b4db475b5"
+    "metro-resolver": "https://github.com/raykyri/metro.git#ea4d9f5532371d8bfb1d909201d27ac395ed2819"
   },
   "browser": {
     "crypto": false

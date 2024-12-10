@@ -27,16 +27,8 @@ config.resolver.resolveRequest = (context, moduleName, platform) => {
     return { type: 'sourceFile', filePath: __dirname + '/placeholder.js' }
   }
 
-  // chain to the standard Metro resolver, but inject 'import' because
-  // withMetroMultiPlatform.js tries to reset the condition when the platform is 'web'
-  try {
-    return context.resolveRequest(context, moduleName, platform)
-  } catch (err) {
-    if (!context.unstable_conditionNames.includes('import')) {
-      context.unstable_conditionNames.push('import')
-    }
-    return context.resolveRequest(context, moduleName, platform)
-  }
+  // otherwise chain to the standard Metro resolver.
+  return context.resolveRequest(context, moduleName, platform)
 }
 
 module.exports = config

@@ -7,12 +7,14 @@ polyfillEncoding()
 import 'event-target-polyfill'
 import '@/features/polyfill/custom-event-polyfill'
 
+import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { useEffect } from 'react'
 import { StatusBar, useColorScheme } from 'react-native'
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native'
 import { useFonts } from 'expo-font'
 import { SplashScreen, Stack } from 'expo-router'
 import { MagicProvider } from '@/features/magic/index'
+import { CanvasContract } from '@/features/canvas/contract'
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -52,7 +54,13 @@ export default function RootLayout() {
 }
 
 const Providers = ({ children }: { children: React.ReactNode }) => {
-  return <MagicProvider>{children}</MagicProvider>
+  return (
+    <MagicProvider>
+      <CanvasContract>
+        <GestureHandlerRootView>{children}</GestureHandlerRootView>
+      </CanvasContract>
+    </MagicProvider>
+  )
 }
 
 function RootLayoutNav() {

@@ -12,14 +12,14 @@ import './custom-event-polyfill'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
 import { Stack } from 'expo-router'
 
-import { magic } from './shared'
+import { MagicProvider } from '@/features/magic'
 
 export default function RootLayout() {
   return (
     <SafeAreaProvider>
-      {/* Render the Magic iframe! */}
-      <magic.Relayer />
-      <Stack />
+      <MagicProvider>
+        <Stack />
+      </MagicProvider>
     </SafeAreaProvider>
   )
 }

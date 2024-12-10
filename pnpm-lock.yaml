@@ -150,9 +150,6 @@ importers:
       text-encoding:
         specifier: ^0.7.0
         version: 0.7.0
-      yarn:
-        specifier: ^1.22.22
-        version: 1.22.22
     devDependencies:
       '@babel/core':
         specifier: ^7.25.2
@@ -1276,7 +1273,7 @@ packages:
 
   '@expo/bunyan@4.0.1':
     resolution: {integrity: sha512-+Lla7nYSiHZirgK+U/uYzsLv/X+HaJienbD5AKX1UQZHYfWaP+9uuQluRB4GrEVWF0GZ7vEVp/jzaOT9k/SQlg==}
-    engines: {node: '>=0.10.0'}
+    engines: {'0': node >=0.10.0}
 
   '@expo/cli@0.22.3':
     resolution: {integrity: sha512-1HBtqInFDFHUJWzTJ1CJj5MR3JwvOiozmRUWF2kVQAeq/bKzSYM6We6B3XoZBM5XP6z6WtnrG87C7BjeW5E/cA==}
@@ -6461,11 +6458,6 @@ packages:
   yargs@17.7.2:
     resolution: {integrity: sha512-7dSzzRQ++CKnNI/krKnYRV7JKKPUXMEh61soaHKg9mrWEhzFWhFnxPxGl+69cD1Ou63C13NUPCnmIcrvqCuM6w==}
     engines: {node: '>=12'}
-
-  yarn@1.22.22:
-    resolution: {integrity: sha512-prL3kGtyG7o9Z9Sv8IPfBNrWTDmXB4Qbes8A9rEzt6wkJV8mUvoirjU0Mp3GGAU06Y0XQyA3/2/RQFVuK7MTfg==}
-    engines: {node: '>=4.0.0'}
-    hasBin: true
 
   yocto-queue@0.1.0:
     resolution: {integrity: sha512-rVksvsnNCdJ/ohGc6xgPwyN8eheCxsiLM8mxuE/t/mOVqJewPuO1miLpTHQiRgTKCLexL4MeAFVagts7HmNZ2Q==}
@@ -14589,8 +14581,6 @@ snapshots:
       string-width: 4.2.3
       y18n: 5.0.8
       yargs-parser: 21.1.1
-
-  yarn@1.22.22: {}
 
   yocto-queue@0.1.0: {}
 

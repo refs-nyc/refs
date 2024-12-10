@@ -6,11 +6,7 @@ export const GridTileActionAdd = ({ onAddPress }: { onAddPress: () => void }) =>
   }
 
   return (
-    <Pressable
-      ref={ref}
-      style={{ flex: 1, aspectRatio: 1, justifyContent: 'center' }}
-      onPress={add}
-    >
+    <Pressable style={{ flex: 1, aspectRatio: 1, justifyContent: 'center' }} onPress={add}>
       <View
         style={{ flex: 1, aspectRatio: 1, justifyContent: 'center' }}
         borderColor="black"

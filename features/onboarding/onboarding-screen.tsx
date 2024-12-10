@@ -1,11 +1,9 @@
-import { OnboardingCarouselItem, Drawer, AddRef } from '@my/ui'
-import { ChevronLeft } from '@tamagui/lucide-icons'
-import { Dimensions } from 'react-native'
+import { OnboardingCarouselItem, Drawer, AddRef } from '@/ui'
+import { View, Dimensions } from 'react-native'
 import { useRef, useState } from 'react'
-import { View } from 'tamagui'
-import { useRouter } from 'solito/navigation'
+import { router } from 'expo-router'
 import Carousel, { ICarouselInstance } from 'react-native-reanimated-carousel'
-import { useCanvasContext } from 'app/features/canvas/contract'
+import { useCanvasContext } from '@/features/canvas/contract'
 
 export function OnboardingScreen() {
   const ref = useRef<ICarouselInstance>(null)
@@ -13,8 +11,6 @@ export function OnboardingScreen() {
   const data = [{}, {}, {}, {}]
 
   const app = useCanvasContext()
-
-  const router = useRouter()
 
   const [addingIndex, setAddingIndex] = useState(-1)
 

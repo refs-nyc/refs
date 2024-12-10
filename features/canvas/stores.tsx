@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { appPromise } from 'app/features/canvas/contract'
+import { appPromise } from '@/features/canvas/contract'
 
 // ***
 // Refs

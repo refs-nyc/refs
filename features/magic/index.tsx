@@ -1,3 +1,4 @@
+import { SafeAreaProvider } from 'react-native-safe-area-context'
 import { createContext, useContext, useState } from 'react'
 import { Magic } from '@magic-sdk/react-native-expo'
 import { Web3Provider } from '@ethersproject/providers'
@@ -5,7 +6,7 @@ import { ethers } from 'ethers'
 import { SIWESigner } from '@canvas-js/chain-ethereum'
 import { REFS_TOPIC } from '@/features/const'
 
-const magic = new Magic(process.env.EXPO_PUBLIC_MAGIC_KEY)
+export const magic = new Magic(process.env.EXPO_PUBLIC_MAGIC_KEY)
 
 export enum LOGIN_STATE {
   LOGGED_OUT,
@@ -79,20 +80,22 @@ const MagicProvider = ({ children }: { children: React.ReactNode }) => {
   }
 
   return (
-    <MagicContext.Provider
-      value={{
-        magic,
-        sessionSigner,
-        loginState,
-        login,
-        logout,
-        setSessionSigner,
-        LOGIN_STATE,
-      }}
-    >
-      {children}
-      <magic.Relayer />
-    </MagicContext.Provider>
+    <SafeAreaProvider>
+      <MagicContext.Provider
+        value={{
+          magic,
+          sessionSigner,
+          loginState,
+          login,
+          logout,
+          setSessionSigner,
+          LOGIN_STATE,
+        }}
+      >
+        {children}
+        <magic.Relayer />
+      </MagicContext.Provider>
+    </SafeAreaProvider>
   )
 }
 

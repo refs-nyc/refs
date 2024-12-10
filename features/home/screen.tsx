@@ -1,25 +1,10 @@
-import {
-  MainButton,
-  View,
-  Input,
-  Paragraph,
-  SwitchThemeButton,
-  SwitchRouterButton,
-  XStack,
-  YStack,
-  Avatar,
-  Text,
-  H2,
-  Anchor,
-} from '@my/ui'
-import { useRouter } from 'solito/router'
+import { MainButton, View, YStack, H2 } from '@/ui'
+import { router } from 'expo-router'
 
 import 'event-target-polyfill'
 import 'fast-text-encoding'
 
 export function HomeScreen({ pagesMode = false }: { pagesMode?: boolean }) {
-  const router = useRouter()
-
   const linkTarget = pagesMode ? '/pages-example-user' : '/user'
 
   return (
@@ -31,14 +16,9 @@ export function HomeScreen({ pagesMode = false }: { pagesMode?: boolean }) {
       </YStack>
 
       <YStack gap="$4">
-        <MainButton onPress={() => router.push('/onboarding')}>Join</MainButton>
-        {/* Replace this with local did */}
-        <MainButton secondary onPress={() => router.push('/user/new')}>
-          Login
-        </MainButton>
-        <MainButton secondary onPress={() => router.push('/user/Manegame')}>
-          Manus' profile
-        </MainButton>
+        <MainButton title="Join" onPress={() => router.push('/onboarding')} />
+        <MainButton title="Login" onPress={() => router.push('/user/new')} />
+        <MainButton title="Manus' profile" onPress={() => router.push('/user/Manegame')} />
       </YStack>
     </View>
   )

@@ -7,6 +7,7 @@ import { Button, Dimensions } from 'react-native'
 import { useForm, Controller } from 'react-hook-form'
 import { useProfileStore } from '@/features/canvas/stores'
 import { router } from 'expo-router'
+import { useMagicContext } from '@/features/magic'
 import Carousel, { ICarouselInstance } from 'react-native-reanimated-carousel'
 
 type StepInput1 = {
@@ -34,9 +35,20 @@ const ProfileStep = ({ fields, index, onComplete }) => {
     formState: { errors },
   } = useForm<StepInput1 | StepInput2 | StepInput3 | StepInput4>()
 
+  const { login, logout, loginState, LOGIN_STATE } = useMagicContext()
+
   const formValues = watch()
 
-  const onSubmit = (d) => {
+  const onSubmit = async (d) => {
+    if (fields.includes('email')) {
+      try {
+        console.log(formValues.email)
+        await login(formValues.email)
+        onComplete(formValues)
+      } catch (error) {
+        console.error(error)
+      }
+    }
     onComplete(formValues)
   }
 
@@ -59,8 +71,7 @@ const ProfileStep = ({ fields, index, onComplete }) => {
       </YStack>
 
       <YStack gap="$6">
-        {/* Email */}
-        {fields.includes('email') && (
+        {fields.includes('email') && loginState !== LOGIN_STATE.LOGGED_IN && (
           <>
             <Controller
               name="email"
@@ -82,6 +93,9 @@ const ProfileStep = ({ fields, index, onComplete }) => {
             />
             {errors.email && <Paragraph ta="center">This field is required</Paragraph>}
           </>
+        )}
+        {fields.includes('email') && loginState === LOGIN_STATE.LOGGED_IN && (
+          <Button title="Welcome back" onPress={onComplete} />
         )}
 
         {/* FirstName */}
@@ -222,7 +236,7 @@ export const NewProfile = () => {
         data={data}
         width={win.width}
         height={win.height}
-        enabled={true}
+        enabled={false}
         renderItem={renderItem}
       />
     </View>

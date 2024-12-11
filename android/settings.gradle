@@ -21,7 +21,7 @@ extensions.configure(com.facebook.react.ReactSettingsExtension) { ex ->
   }
 }
 
-rootProject.name = 'canvas-demo-app'
+rootProject.name = 'refs'
 
 dependencyResolutionManagement {
   versionCatalogs {

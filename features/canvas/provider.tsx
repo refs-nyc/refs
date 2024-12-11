@@ -2,7 +2,7 @@ import 'event-target-polyfill'
 import 'fast-text-encoding'
 
 import { models } from './models'
-import { contract } from './contract'
+import { init } from './contract'
 import { Canvas, Contract } from '@canvas-js/core'
 import { createContext, useContext, useEffect, useState } from 'react'
 
@@ -10,16 +10,6 @@ export const CanvasContext = createContext(null)
 
 export function useCanvasContext() {
   return useContext(CanvasContext)
-}
-
-const init = async () => {
-  const app = await Canvas.initialize({
-    //
-    contract,
-    topic: 'refsv2.canvas.xyz',
-  })
-
-  return app
 }
 
 export const appPromise = init()

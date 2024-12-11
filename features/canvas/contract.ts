@@ -1,5 +1,5 @@
-import { Canvas, Contract } from '@canvas-js/core'
-import { models } from './models'
+import { Canvas, type Contract } from '@canvas-js/core'
+import { models } from './models.ts' // include .ts extension to make models importable by `npm run server`
 
 export const contract = {
   models,
@@ -68,3 +68,12 @@ export const contract = {
     // Chats
   },
 } satisfies Contract<typeof models>
+
+export const init = async () => {
+  const app = await Canvas.initialize({
+    contract,
+    topic: 'refsv2.canvas.xyz',
+  })
+
+  return app
+}

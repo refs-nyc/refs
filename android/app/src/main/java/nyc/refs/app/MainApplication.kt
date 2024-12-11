@@ -1,4 +1,4 @@
-package com.anonymous.canvasdemoapp
+package nyc.refs.app
 
 import android.app.Application
 import android.content.res.Configuration

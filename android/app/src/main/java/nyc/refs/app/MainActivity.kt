@@ -1,4 +1,4 @@
-package com.anonymous.canvasdemoapp
+package nyc.refs.app
 import expo.modules.splashscreen.SplashScreenManager
 
 import android.os.Build

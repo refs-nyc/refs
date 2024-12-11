@@ -19,12 +19,12 @@ config.resolver.resolveRequest = (context, moduleName, platform) => {
 
   // prevent quickjs-emscripten from importing "node:module"
   if (moduleName === 'module') {
-    return { type: 'sourceFile', filePath: __dirname + '/placeholder.js' }
+    return { type: 'empty' }
   }
 
   // prevent import of @canvas-js/modeldb-sqlite-wasm
   if (moduleName === '@canvas-js/modeldb-sqlite-wasm') {
-    return { type: 'sourceFile', filePath: __dirname + '/placeholder.js' }
+    return { type: 'empty' }
   }
 
   // otherwise chain to the standard Metro resolver.

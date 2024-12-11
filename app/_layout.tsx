@@ -16,7 +16,7 @@ import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native
 import { useFonts } from 'expo-font'
 import { SplashScreen, Stack } from 'expo-router'
 import { MagicProvider } from '@/features/magic/index'
-import { CanvasContract } from '@/features/canvas/contract'
+import { CanvasProvider } from '@/features/canvas/provider'
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -58,9 +58,9 @@ export default function RootLayout() {
 const Providers = ({ children }: { children: React.ReactNode }) => {
   return (
     <MagicProvider>
-      <CanvasContract>
+      <CanvasProvider>
         <GestureHandlerRootView>{children}</GestureHandlerRootView>
-      </CanvasContract>
+      </CanvasProvider>
     </MagicProvider>
   )
 }

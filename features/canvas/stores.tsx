@@ -2,47 +2,7 @@ import { create } from 'zustand'
 import { appPromise } from '@/features/canvas/contract'
 
 // ***
-// Refs
-//
-//
-export const useProfileStore = create((set, get) => ({
-  stagedProfile: {},
-  userProfile: {},
-  profiles: [],
-  //
-  updateStagedProfile: (formFields: any) => {
-    set((state) => ({
-      stagedProfile: { ...state.stagedProfile, ...formFields },
-    }))
-
-    const updatedState = get().stagedProfile
-
-    return updatedState
-  },
-  //
-  // Requirement: staged profile
-  //
-  register: async () => {
-    const app = await appPromise
-
-    try {
-      const {
-        result: { did },
-      } = await app.actions.createProfile(get().stagedProfile)
-      const finalProfile = await app.db.get('profiles', did)
-
-      set(() => ({
-        userProfile: finalProfile,
-      }))
-      return finalProfile
-    } catch (error) {
-      console.error(error)
-    }
-  },
-}))
-
-// ***
-// Refs
+// Profiles
 //
 //
 export const useProfileStore = create((set, get) => ({

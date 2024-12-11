@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "canvas-demo-app",
-    "slug": "canvas-demo-app",
+    "name": "refs",
+    "slug": "refs",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -11,14 +11,14 @@
     "jsEngine": "jsc",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.anonymous.canvasdemoapp"
+      "bundleIdentifier": "nyc.refs.app"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.anonymous.canvasdemoapp"
+      "package": "nyc.refs.app"
     },
     "plugins": [
       "expo-router",
@@ -37,7 +37,7 @@
     },
     "extra": {
       "eas": {
-        "projectId": "25839cac-71b4-49e5-b8a8-5f97510fb0a1"
+        "projectId": "c89520a4-2100-4e54-b78a-fbe3abc91c6e"
       }
     }
   }

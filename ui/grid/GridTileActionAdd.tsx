@@ -9,7 +9,7 @@ export const GridTileActionAdd = ({ onAddPress }: { onAddPress: () => void }) =>
   return (
     <Pressable style={{ flex: 1, aspectRatio: 1, justifyContent: 'center' }} onPress={add}>
       <GridTile borderColor="black">
-        <Heading tag="h1normal" style={{ textAlign: 'center' }}>
+        <Heading tag="h1light" style={{ textAlign: 'center' }}>
           +
         </Heading>
       </GridTile>

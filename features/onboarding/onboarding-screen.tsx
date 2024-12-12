@@ -18,7 +18,10 @@ export function OnboardingScreen() {
     ref.current?.next()
   }
 
-  const done = () => router.push('/user/new')
+  const done = () => {
+    console.log('DONE')
+    router.push('/user/new')
+  }
 
   return (
     <View style={{ flex: 1 }}>

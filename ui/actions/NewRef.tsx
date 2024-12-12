@@ -1,11 +1,11 @@
 import { useState } from 'react'
 import { View, Pressable, Dimensions } from 'react-native'
-import { Heading, YStack, Spinner } from '@/ui'
+import { Heading, YStack } from '@/ui'
 import { Picker } from '../inputs/Picker'
 import { PinataImage } from '../images/PinataImage'
 import { EditableTitle } from '../atoms/EditableTitle'
 import { createRefWithItem } from '@/features/canvas/stores'
-import { MainButton } from '../buttons/Button'
+import { Button } from '../buttons/Button'
 import type { ImagePickerAsset } from 'expo-image-picker'
 
 const win = Dimensions.get('window')
@@ -20,17 +20,13 @@ export const AddImage = ({
   return (
     <>
       {picking && <Picker onSuccess={onAddImage} onCancel={() => setPicking(false)} />}
-      <View width="100%" jc="center" ai="center">
+      <View style={{ width: '100%', justifyContent: 'center', alignItems: 'center' }}>
         <Pressable onPress={() => setPicking(true)}>
-          <View
-            style={{ width: 200, height: 200 }}
-            jc="center"
-            ai="center"
-            borderColor="black"
+          <View style={{ width: 200, height: 200, justifyContent: 'center', alignItems: 'center' }}>
+            {/* borderColor="black"
             borderWidth="$1"
-            borderRadius={10}
-          >
-            <Heading>+</Heading>
+            borderRadius={10} */}
+            <Heading tag="h2light">+</Heading>
           </View>
         </Pressable>
       </View>
@@ -101,7 +97,7 @@ export const NewRef = ({
         </YStack>
       </View>
 
-      <MainButton title="done" disabled={!currentRef.title || !pinataSource} onPress={submit} />
+      <Button title="done" disabled={!currentRef.title || !pinataSource} onPress={submit} />
     </>
   )
 }

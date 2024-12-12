@@ -3,13 +3,14 @@ import { Camera } from '../inputs/Camera'
 import { YStack, XStack } from '@/ui'
 import Ionicons from '@expo/vector-icons/Ionicons'
 import Animated, { useSharedValue, withSpring } from 'react-native-reanimated'
-import { AddFromCameraRoll } from '../buttons/AddFromCameraRoll'
+import { Button } from '../buttons/Button'
 import { Dimensions } from 'react-native'
 import { useState, useMemo } from 'react'
 import { NewRef } from '../actions/NewRef'
 import { SearchOrAddRef } from '../actions/SearchOrAddRef'
 import { useCanvasContext } from '@/features/canvas/contract'
-import { useLiveQuery } from '@canvas-js/hooks'
+import { c } from '@/features/style'
+
 import type { ImagePickerAsset } from 'expo-image-picker'
 
 const win = Dimensions.get('window')
@@ -62,7 +63,7 @@ export const AddRef = ({ onAddRef, onCancel }: { onAddRef: () => Item; onCancel:
         <>
           {(cameraOpen || textOpen) && (
             <YStack gap={20}>
-              <XStack jc="space-between">
+              <XStack style={{ justifyContent: 'space-between' }}>
                 <Ionicons
                   name="chevron-back"
                   size={20}
@@ -85,17 +86,21 @@ export const AddRef = ({ onAddRef, onCancel }: { onAddRef: () => Item; onCancel:
 
           {!cameraOpen && !textOpen && (
             <YStack gap="$4">
-              <AddFromCameraRoll
-                title="Start typing"
-                icon="text-outline"
+              <Button
+                align="flex-start"
+                variant="basic"
+                iconColor={c.black}
+                title="Type anything"
+                iconBefore="text-outline"
                 onPress={() => {
                   updateMinHeight(win.height * 0.7)
                   setTextOpen(true)
                 }}
               />
-              <AddFromCameraRoll
+              <Button
+                align="left"
                 title="Add from Camera Roll"
-                icon="image-outline"
+                iconBefore="image-outline"
                 onPress={() => setPickerOpen(true)}
               />
             </YStack>

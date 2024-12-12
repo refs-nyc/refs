@@ -11,7 +11,6 @@ export function HomeScreen() {
         justifyContent: 'center',
         padding: s.$4,
         height: s.full,
-        backgroundColor: c.surface,
       }}
     >
       <YStack gap={s.$8}>

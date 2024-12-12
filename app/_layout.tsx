@@ -17,6 +17,8 @@ import { useFonts } from 'expo-font'
 import { SplashScreen, Stack } from 'expo-router'
 import { MagicProvider } from '@/features/magic/index'
 import { DeferredFonts } from '@/ui'
+import { c } from '@/features/style'
+import * as SystemUI from 'expo-system-ui'
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -36,6 +38,8 @@ export default function RootLayout() {
     Inter: require('@/assets/fonts/Inter-Medium.ttf'),
     InterBold: require('@/assets/fonts/Inter-Bold.ttf'),
   })
+
+  SystemUI.setBackgroundColorAsync(c.surface)
 
   function loadRemainingFonts() {}
 

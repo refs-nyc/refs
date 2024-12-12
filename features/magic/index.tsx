@@ -19,6 +19,7 @@ type MagicContextFields = {
   magic: Magic
   sessionSigner: SIWESigner | null
   loginState: LOGIN_STATE
+  setLoginState: () => void
   login: (email: string) => void
   logout: () => void
   setSessionSigner: (s: SIWESigner | null) => void
@@ -86,6 +87,7 @@ const MagicProvider = ({ children }: { children: React.ReactNode }) => {
           magic,
           sessionSigner,
           loginState,
+          setLoginState,
           login,
           logout,
           setSessionSigner,

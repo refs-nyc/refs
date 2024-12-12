@@ -8,11 +8,13 @@ import type { ImagePickerAsset } from 'expo-image-picker'
 export const PinataImage = ({
   asset,
   round = false,
+  style,
   onSuccess,
   onFail,
 }: {
   asset: ImagePickerAsset
   round?: boolean
+  style?: any
   onSuccess: (url: string) => void
   onFail: () => void
 }) => {
@@ -22,8 +24,6 @@ export const PinataImage = ({
   const [showOriginal, setShowOriginal] = useState(true)
 
   useEffect(() => {
-    console.log('re render ', asset.uri)
-
     const load = async () => {
       try {
         setLoading(true)
@@ -49,12 +49,15 @@ export const PinataImage = ({
   return (
     <View width="100%" jc="center" ai="center">
       <View
-        style={{ width: 200, height: 200, overflow: 'hidden' }}
-        jc="center"
-        ai="center"
-        borderColor="$surface"
-        borderWidth="$1"
-        borderRadius={round ? 1000 : 10}
+        style={{
+          width: 200,
+          height: 200,
+          overflow: 'hidden',
+          ...style,
+          justifyContent: 'center',
+          alignItems: 'center',
+          borderRadius: round ? 1000 : 10,
+        }}
       >
         {loading && (
           <View
@@ -65,6 +68,7 @@ export const PinataImage = ({
               zIndex: 1,
               backgroundColor: 'rgb(243, 242, 237)',
               opacity: 0.5,
+              ...style,
             }}
           />
         )}

@@ -68,6 +68,12 @@ export const typo = StyleSheet.create({
     lineHeight: s.$3,
     letterSpacing: -0.5,
   },
+  h1light: {
+    fontFamily: 'InterLight',
+    fontSize: s.$2,
+    lineHeight: s.$3,
+    letterSpacing: -0.5,
+  },
   h2: {
     fontFamily: 'InterBold',
     fontSize: s.$1,
@@ -82,6 +88,12 @@ export const typo = StyleSheet.create({
   },
   h2normalitalic: {
     fontFamily: 'InterItalic',
+    fontSize: s.$1,
+    lineHeight: s.$1half,
+    letterSpacing: -0.5,
+  },
+  h2light: {
+    fontFamily: 'InterLight',
     fontSize: s.$1,
     lineHeight: s.$1half,
     letterSpacing: -0.5,

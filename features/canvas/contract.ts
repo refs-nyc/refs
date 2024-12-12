@@ -71,6 +71,7 @@ export const contract = {
 
 export const init = async () => {
   const app = await Canvas.initialize({
+    path: process.env.DATABASE_URL ?? null,
     contract,
     topic: 'refsv2.canvas.xyz',
   })

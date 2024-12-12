@@ -12,6 +12,7 @@ export const Button = (props) => {
     iconAfter = '',
     iconColor = 'white',
     disabled = false,
+    align = 'center',
   } = props
 
   let buttonVariant = null
@@ -25,7 +26,7 @@ export const Button = (props) => {
 
   return (
     <Pressable style={[styles.button, buttonVariant]} onPress={!disabled ? onPress : () => {}}>
-      <XStack gap={s.$08}>
+      <XStack style={{ justifyContent: align }} gap={s.$08}>
         {iconBefore && (
           <Ionicons
             style={[{ height: s.$1half }]}

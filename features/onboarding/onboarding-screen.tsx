@@ -19,7 +19,6 @@ export function OnboardingScreen() {
   }
 
   const done = () => {
-    console.log('DONE')
     router.push('/user/new')
   }
 

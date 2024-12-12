@@ -25,6 +25,8 @@ export const spacing = {
   $025: 2,
   $05: 4,
   $075: 8,
+  $08: 12,
+  $09: 16,
   $1: 20,
   $1half: 24,
   $2: 28,
@@ -63,11 +65,44 @@ export const typo = StyleSheet.create({
   h1normal: {
     fontFamily: 'Inter',
     fontSize: s.$2,
+    lineHeight: s.$3,
+    letterSpacing: -0.5,
+  },
+  h2: {
+    fontFamily: 'InterBold',
+    fontSize: s.$1,
+    lineHeight: s.$1half,
+    letterSpacing: -0.5,
+  },
+  h2normal: {
+    fontFamily: 'Inter',
+    fontSize: s.$1,
+    lineHeight: s.$1half,
+    letterSpacing: -0.5,
+  },
+  h2normalitalic: {
+    fontFamily: 'InterItalic',
+    fontSize: s.$1,
+    lineHeight: s.$1half,
+    letterSpacing: -0.5,
   },
   strong: {
     fontFamily: 'InterBold',
   },
+  boldItalic: {
+    fontFamily: 'InterBoldItalic',
+  },
+  italic: {
+    fontFamily: 'InterItalic',
+  },
+  light: {
+    fontFamily: 'InterLight',
+  },
+  lightItalic: {
+    fontFamily: 'InterLightItalic',
+  },
 })
+export const t = typo
 
 export const base = StyleSheet.create({
   gridTile: {

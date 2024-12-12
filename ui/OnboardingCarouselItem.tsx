@@ -1,11 +1,12 @@
-import { YStack, Heading } from './index'
+import { Heading } from './typo/Heading'
+import { XStack, YStack } from './core/Stacks'
 import { View } from 'react-native'
 import { ExampleGrid } from './grid/ExampleGrid'
 import { UseCaseDemo } from './display/UseCaseDemo'
 import { MainButton } from './buttons/Button'
 import { ExampleButtonList } from './atoms/ExpandButtonList'
 import { Grid } from './grid/Grid'
-import { s, c } from '@/features/style/index'
+import { s, t } from '@/features/style/index'
 
 export const OnboardingCarouselItem = ({
   index,
@@ -29,11 +30,16 @@ export const OnboardingCarouselItem = ({
         }}
       >
         <YStack gap={s.$4}>
-          <Heading tag="h1" style={{ textAlign: 'center' }}>
-            This is your grid. A mural that makes you, you
+          <Heading tag="h2" style={{ textAlign: 'center' }}>
+            This is your grid.{'\n'} {'\n'}{' '}
+            <Heading tag="h2normal">
+              A mural that makes you, <Heading tag="h2normalitalic">you</Heading>
+            </Heading>
           </Heading>
           <ExampleGrid />
-          <MainButton title="Next" onPress={next} />
+          <YStack style={{ justifyContent: 'center', alignItems: 'center' }}>
+            <MainButton title="next" onPress={next} />
+          </YStack>
         </YStack>
       </View>
     )
@@ -49,11 +55,13 @@ export const OnboardingCarouselItem = ({
         }}
       >
         <YStack gap={s.$4}>
-          <Heading tag="h1" style={{ textAlign: 'center' }}>
-            This is your grid. A mural that makes you, you
+          <Heading tag="h2normal" style={{ textAlign: 'center' }}>
+            <Heading tag="h2">Fill your grid</Heading> with links, photos, hobbies, places
           </Heading>
           <Grid onAddItem={onAddItem} />
-          <MainButton title="Next" onPress={next} />
+          <YStack style={{ justifyContent: 'center', alignItems: 'center' }}>
+            <MainButton title="next" onPress={next} />
+          </YStack>
         </YStack>
       </View>
     )
@@ -68,15 +76,15 @@ export const OnboardingCarouselItem = ({
           justifyContent: 'center',
         }}
       >
-        <YStack gap={s.$4} pt="$12" pb="$8">
-          <Heading tag="h1" ta="center" col="$color12">
-            ...then find people based on the refs they add
+        <YStack gap={s.$4}>
+          <Heading tag="h2normal" style={{ textAlign: 'center' }}>
+            ...then <Heading tag="h2">find people</Heading> based on the{'\n'}refs they add
           </Heading>
+          <UseCaseDemo />
+          <YStack style={{ justifyContent: 'center', alignItems: 'center' }}>
+            <MainButton title="next" onPress={next} />
+          </YStack>
         </YStack>
-
-        <UseCaseDemo />
-
-        <MainButton title="Next" onPress={next} />
       </View>
     )
 
@@ -90,16 +98,15 @@ export const OnboardingCarouselItem = ({
           justifyContent: 'center',
         }}
       >
-        <YStack gap={s.$4} pt="$12" pb="$8">
-          <Heading tag="h1" ta="center" col="$color12">
-            ...and get connected by messaging them, starting a group chat, or saving them to a
-            folder.
+        <YStack gap={s.$4}>
+          <Heading tag="h2normal" style={{ textAlign: 'center' }}>
+            ...then <Heading tag="h2">find people</Heading> based on the{'\n'}refs they add
           </Heading>
+          <ExampleButtonList />
+          <YStack style={{ justifyContent: 'center', alignItems: 'center' }}>
+            <MainButton title="I'm ready" onPress={next} />
+          </YStack>
         </YStack>
-
-        <ExampleButtonList />
-
-        <MainButton title="I'm ready" onPress={done} />
       </View>
     )
 }

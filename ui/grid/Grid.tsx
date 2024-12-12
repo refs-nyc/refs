@@ -11,11 +11,11 @@ export const Grid = ({ onAddItem }: { onAddItem?: () => void }) => {
 
   return (
     <GridWrapper columns={3} rows={3}>
-      {items.map((item) => (
+      {items.map((item, i) => (
         <>
           {item.image && <GridTileImage source={item.image} />}
           {!item?.image && (
-            <GridTile>
+            <GridTile key={i}>
               <Text ta="center">{item.title}</Text>
             </GridTile>
           )}

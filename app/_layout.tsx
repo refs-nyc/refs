@@ -17,6 +17,7 @@ import { useFonts } from 'expo-font'
 import { SplashScreen, Stack } from 'expo-router'
 import { MagicProvider } from '@/features/magic/index'
 import { CanvasContract } from '@/features/canvas/contract'
+import { DeferredFonts } from '@/ui'
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -37,10 +38,13 @@ export default function RootLayout() {
     InterBold: require('@/assets/fonts/Inter-Bold.ttf'),
   })
 
+  function loadRemainingFonts() {}
+
   useEffect(() => {
     if (interLoaded || interError) {
       // Hide the splash screen after the fonts have loaded (or an error was returned) and the UI is ready.
       SplashScreen.hideAsync()
+      loadRemainingFonts()
     }
   }, [interLoaded, interError])
 
@@ -51,6 +55,7 @@ export default function RootLayout() {
   return (
     <Providers>
       <RootLayoutNav />
+      {interLoaded && <DeferredFonts />}
     </Providers>
   )
 }

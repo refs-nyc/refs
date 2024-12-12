@@ -1,5 +1,6 @@
 import { Children } from 'react'
 import { YStack, XStack } from '@/ui'
+import { s } from '@/features/style'
 
 export const GridWrapper = ({ children, columns = 3, rows = 4 }) => {
   const count = Children.count(children)
@@ -14,9 +15,9 @@ export const GridWrapper = ({ children, columns = 3, rows = 4 }) => {
   console.log('With', count, ' elements')
 
   return (
-    <YStack style={{ flex: 1 }} gap="$2">
+    <YStack gap={s.$075}>
       {Array.from({ length: rows }).map((_, rowIndex) => (
-        <XStack key={rowIndex} gap="$2">
+        <XStack key={rowIndex} gap={s.$075}>
           {childrenArray
             .slice(rowIndex * columns, (rowIndex + 1) * columns)
             .map((child, colIndex) => (

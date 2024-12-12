@@ -1,3 +1,4 @@
+import { TypedEventEmitter } from "@libp2p/interface"
 import { Canvas, type Contract } from '@canvas-js/core'
 import { models } from './models.ts' // include .ts extension to make models importable by `npm run server`
 

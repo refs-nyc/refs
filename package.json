@@ -2,7 +2,6 @@
   "name": "refs",
   "main": "expo-router/entry",
   "version": "1.0.0",
-  "type": "module",
   "engines": {
     "node": ">=22.11.0"
   },
@@ -20,6 +19,7 @@
     "preset": "jest-expo"
   },
   "dependencies": {
+    "@babel/preset-env": "^7.26.0",
     "@babel/runtime": "^7.26.0",
     "@canvas-js/chain-ethereum": "^0.13.6",
     "@canvas-js/core": "^0.13.6",

@@ -47,9 +47,16 @@ const ProfileStep = ({ fields, index, onComplete }) => {
         setLoginState(LOGIN_STATE.LOGGING_IN)
         console.log(formValues.email)
 
-        await login(formValues.email)
-        setLoginState(LOGIN_STATE.LOGGED_IN)
-        onComplete(formValues)
+        try {
+          await login(formValues.email)
+        } catch (error) {
+          console.error(error)
+        }
+        // setLoginState(LOGIN_STATE.LOGGED_IN)
+
+        if (loginState === LOGIN_STATE.LOGGED_IN) {
+          onComplete(formValues)
+        }
       } catch (error) {
         console.error(error)
       }

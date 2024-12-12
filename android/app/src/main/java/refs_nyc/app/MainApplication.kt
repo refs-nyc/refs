@@ -1,4 +1,4 @@
-package nyc.refs.app
+package refs_nyc.app
 
 import android.app.Application
 import android.content.res.Configuration

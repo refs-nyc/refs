@@ -1,24 +1,27 @@
 {
   "expo": {
     "name": "refs",
-    "slug": "refs",
-    "version": "1.0.0",
+    "slug": "refs-nyc",
+    "version": "0.0.1",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "myapp",
+    "scheme": "refs-nyc",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "jsEngine": "jsc",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "nyc.refs.app"
+      "bundleIdentifier": "refs-nyc.app",
+      "config": {
+        "usesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "nyc.refs.app"
+      "package": "refs_nyc.app"
     },
     "plugins": [
       "expo-router",
@@ -37,7 +40,7 @@
     },
     "extra": {
       "eas": {
-        "projectId": "c89520a4-2100-4e54-b78a-fbe3abc91c6e"
+        "projectId": "23b45cf1-7baf-4149-97b4-ff20b360b530"
       }
     }
   }

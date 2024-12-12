@@ -86,9 +86,9 @@ android {
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
 
-    namespace 'nyc.refs.app'
+    namespace 'refs_nyc.app'
     defaultConfig {
-        applicationId 'nyc.refs.app'
+        applicationId 'refs_nyc.app'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1

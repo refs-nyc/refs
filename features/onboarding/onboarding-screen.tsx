@@ -3,7 +3,7 @@ import { View, Dimensions } from 'react-native'
 import { useRef, useState } from 'react'
 import { router } from 'expo-router'
 import Carousel, { ICarouselInstance } from 'react-native-reanimated-carousel'
-import { useCanvasContext } from '@/features/canvas/contract'
+import { useCanvasContext } from '@/features/canvas/provider'
 
 export function OnboardingScreen() {
   const ref = useRef<ICarouselInstance>(null)

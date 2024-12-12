@@ -1,10 +1,11 @@
-import { YStack, H2 } from './index'
+import { YStack, Heading } from './index'
 import { View } from 'react-native'
 import { ExampleGrid } from './grid/ExampleGrid'
 import { UseCaseDemo } from './display/UseCaseDemo'
 import { MainButton } from './buttons/Button'
 import { ExampleButtonList } from './atoms/ExpandButtonList'
 import { Grid } from './grid/Grid'
+import { s, c } from '@/features/style/index'
 
 export const OnboardingCarouselItem = ({
   index,
@@ -19,41 +20,58 @@ export const OnboardingCarouselItem = ({
 }) => {
   if (index === 0)
     return (
-      <View style={{ flex: 1, paddingVertical: 100, marginHorizontal: 20 }} my="$4">
-        <YStack gap="$4" pt="$12" pb="$8">
-          <H2 ta="center" col="$color12">
+      <View
+        style={{
+          flex: 1,
+          paddingVertical: 100,
+          marginHorizontal: s.$1half,
+          justifyContent: 'center',
+        }}
+      >
+        <YStack gap={s.$4}>
+          <Heading tag="h1" style={{ textAlign: 'center' }}>
             This is your grid. A mural that makes you, you
-          </H2>
+          </Heading>
+          <ExampleGrid />
+          <MainButton title="Next" onPress={next} />
         </YStack>
-
-        <ExampleGrid />
-
-        <MainButton title="Next" onPress={next} />
       </View>
     )
 
   if (index === 1)
     return (
-      <View style={{ flex: 1, paddingVertical: 100, marginHorizontal: 20 }} my="$4">
-        <YStack gap="$4" pt="$12" pb="$8">
-          <H2 ta="center" col="$color12">
-            Fill your grid with links, photos, hobbies, places
-          </H2>
+      <View
+        style={{
+          flex: 1,
+          paddingVertical: 100,
+          marginHorizontal: s.$1half,
+          justifyContent: 'center',
+        }}
+      >
+        <YStack gap={s.$4}>
+          <Heading tag="h1" style={{ textAlign: 'center' }}>
+            This is your grid. A mural that makes you, you
+          </Heading>
+          <Grid onAddItem={onAddItem} />
+          <MainButton title="Next" onPress={next} />
         </YStack>
-
-        <Grid onAddItem={onAddItem} />
-
-        <MainButton title="Next" onPress={next} />
       </View>
     )
 
   if (index === 2)
     return (
-      <View style={{ flex: 1, paddingVertical: 100, marginHorizontal: 20 }} my="$4">
-        <YStack gap="$4" pt="$12" pb="$8">
-          <H2 ta="center" col="$color12">
+      <View
+        style={{
+          flex: 1,
+          paddingVertical: 100,
+          marginHorizontal: s.$1half,
+          justifyContent: 'center',
+        }}
+      >
+        <YStack gap={s.$4} pt="$12" pb="$8">
+          <Heading tag="h1" ta="center" col="$color12">
             ...then find people based on the refs they add
-          </H2>
+          </Heading>
         </YStack>
 
         <UseCaseDemo />
@@ -64,12 +82,19 @@ export const OnboardingCarouselItem = ({
 
   if (index === 3)
     return (
-      <View style={{ flex: 1, paddingVertical: 100, marginHorizontal: 20 }} my="$4">
-        <YStack gap="$4" pt="$12" pb="$8">
-          <H2 ta="center" col="$color12">
+      <View
+        style={{
+          flex: 1,
+          paddingVertical: 100,
+          marginHorizontal: s.$1half,
+          justifyContent: 'center',
+        }}
+      >
+        <YStack gap={s.$4} pt="$12" pb="$8">
+          <Heading tag="h1" ta="center" col="$color12">
             ...and get connected by messaging them, starting a group chat, or saving them to a
             folder.
-          </H2>
+          </Heading>
         </YStack>
 
         <ExampleButtonList />

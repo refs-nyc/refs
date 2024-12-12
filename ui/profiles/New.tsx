@@ -1,5 +1,5 @@
 import { useRef, useState, useEffect } from 'react'
-import { YStack, H2 } from '@/ui'
+import { YStack, Heading } from '@/ui'
 import { View, Text as Paragraph } from 'react-native'
 import { FormFieldWithIcon } from '../inputs/FormFieldWithIcon'
 import { AvatarPicker } from '../inputs/AvatarPicker'
@@ -62,12 +62,12 @@ const ProfileStep = ({ fields, index, onComplete }) => {
   return (
     <View style={{ flex: 1, justifyContent: 'center' }} mx="$6" my="$4">
       <YStack gap="$4" pt="$12" pb="$8">
-        <H2 ta="center" col="$color12">
+        <Heading tag="h1" ta="center" col="$color12">
           {index === 0 && 'Login using your email'}
           {index === 1 && 'Let us know who you are to wrap up'}
           {index === 2 && 'Choose a username'}
           {index === 3 && '...and upload a profile photo'}
-        </H2>
+        </Heading>
       </YStack>
 
       <YStack gap="$6">

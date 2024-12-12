@@ -1,4 +1,5 @@
-import { Pressable, View, Text } from 'react-native'
+import { Pressable, View } from 'react-native'
+import { GridTile, Heading } from '@/ui'
 
 export const GridTileActionAdd = ({ onAddPress }: { onAddPress: () => void }) => {
   const add = () => {
@@ -7,17 +8,11 @@ export const GridTileActionAdd = ({ onAddPress }: { onAddPress: () => void }) =>
 
   return (
     <Pressable style={{ flex: 1, aspectRatio: 1, justifyContent: 'center' }} onPress={add}>
-      <View
-        style={{ flex: 1, aspectRatio: 1, justifyContent: 'center' }}
-        borderColor="black"
-        bg="$surface-2"
-        borderWidth="$1"
-        borderRadius="$4"
-      >
-        <Text fontFamily="$heading" fontSize="$8" style={{ textAlign: 'center' }}>
+      <GridTile borderColor="black">
+        <Heading tag="h1normal" style={{ textAlign: 'center' }}>
           +
-        </Text>
-      </View>
+        </Heading>
+      </GridTile>
     </Pressable>
   )
 }

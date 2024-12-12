@@ -16,6 +16,7 @@ export const c = {
   grey2: '#787676',
   // Rare
   none: 'transparent',
+  red: '#f00',
 }
 
 // Based off Tamagui
@@ -56,6 +57,8 @@ export const typo = StyleSheet.create({
   h1: {
     fontFamily: 'InterBold',
     fontSize: s.$2,
+    lineHeight: s.$3,
+    letterSpacing: -0.5,
   },
   h1normal: {
     fontFamily: 'Inter',

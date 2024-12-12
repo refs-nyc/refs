@@ -1,15 +1,14 @@
 import { SizableText } from '@/ui'
+import { GridTile } from './GridTile'
 import { View } from 'react-native'
+import { s } from '@/features/style'
 
 export const GridTileList = ({ title }: { title: string }) => (
-  <View
-    style={{ flex: 1, aspectRatio: 1, justifyContent: 'start' }}
-    borderColor="black"
-    borderWidth="$1"
-    borderRadius="$4"
-  >
-    <SizableText style={{ fontSize: 12, lineHeight: 14, fontWeight: 700 }} ta="left" m="$2">
-      {title}
-    </SizableText>
-  </View>
+  <GridTile borderColor="black">
+    <View style={{ flex: 1, padding: s.$025 }}>
+      <SizableText style={{ fontSize: 12, lineHeight: 14 }} ta="left" m="$2">
+        {title}
+      </SizableText>
+    </View>
+  </GridTile>
 )

@@ -23,6 +23,7 @@
     "@babel/runtime": "^7.26.0",
     "@canvas-js/chain-ethereum": "^0.13.6",
     "@canvas-js/core": "^0.13.6",
+    "@canvas-js/gossiplog": "^0.13.6",
     "@canvas-js/hooks": "^0.13.6",
     "@ethersproject/providers": "^5.7.2",
     "@expo/vector-icons": "^14.0.2",

@@ -1,8 +1,8 @@
 {
   "expo": {
-    "name": "refs",
+    "name": "refs - the phonebook of the internet",
     "slug": "refs-nyc",
-    "version": "0.0.1",
+    "version": "0.0.2",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "refs-nyc",

@@ -1,4 +1,4 @@
-import { YStack, H2 } from '@/ui'
+import { YStack, H2 } from './index'
 import { View } from 'react-native'
 import { ExampleGrid } from './grid/ExampleGrid'
 import { UseCaseDemo } from './display/UseCaseDemo'

@@ -1,4 +1,5 @@
-import { XStack, YStack, Paragraph, View } from '@/ui'
+import { View } from 'react-native'
+import { XStack, YStack, Paragraph } from '@/ui'
 import { Image } from 'expo-image'
 
 export const UseCaseDemo = () => {

@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { Pressable, Dimensions } from 'react-native'
-import { View, H2, YStack, Spinner } from '@/ui'
+import { View, Pressable, Dimensions } from 'react-native'
+import { Heading, YStack, Spinner } from '@/ui'
 import { Picker } from '../inputs/Picker'
 import { PinataImage } from '../images/PinataImage'
 import { EditableTitle } from '../atoms/EditableTitle'
@@ -30,7 +30,7 @@ export const AddImage = ({
             borderWidth="$1"
             borderRadius={10}
           >
-            <H2>+</H2>
+            <Heading>+</Heading>
           </View>
         </Pressable>
       </View>

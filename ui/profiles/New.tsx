@@ -1,6 +1,6 @@
 import { useRef, useState, useEffect } from 'react'
-import { View, YStack, H2 } from '@/ui'
-import { Text as Paragraph } from 'react-native'
+import { YStack, H2 } from '@/ui'
+import { View, Text as Paragraph } from 'react-native'
 import { FormFieldWithIcon } from '../inputs/FormFieldWithIcon'
 import { AvatarPicker } from '../inputs/AvatarPicker'
 import { Button, Dimensions } from 'react-native'

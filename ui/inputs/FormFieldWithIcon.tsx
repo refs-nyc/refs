@@ -1,16 +1,19 @@
 import { XStack } from '@/ui'
 import Ionicons from '@expo/vector-icons/Ionicons'
-import { TextInput } from 'react-native'
+import { View, TextInput } from 'react-native'
+import { c, s } from '@/features/style'
 
 export const FormFieldWithIcon = ({
   type,
   id,
+  children,
   placeholder,
   onChange,
   value = '',
 }: {
-  type: 'user' | 'phone' | 'email'
+  type: 'user' | 'username' | 'phone' | 'email'
   id: string
+  children: React.ReactNode
   placeholder: string
   onChange: (str) => void
   value: string
@@ -18,26 +21,43 @@ export const FormFieldWithIcon = ({
   // const { color } = getTokens()
 
   return (
-    <XStack
-      alignItems="center"
-      p="$2"
-      bg="$white"
-      borderWidth={1.5}
-      borderColor="$accent"
-      borderRadius="$12"
-      px="$4"
-      gap="$4"
-      width="100%"
-    >
-      {type === 'user' && <Ionicons name="person" col="$accent" />}
-      {type === 'phone' && <Ionicons name="call" col="$accent" />}
-      {type === 'email' && <Ionicons name="at" col="$accent" />}
-      <TextInput
-        style={{ flex: 1, paddingVertical: 10, color: 'red' }}
-        placeholder={placeholder}
-        onChangeText={onChange}
-        value={value}
-      />
-    </XStack>
+    <>
+      <XStack
+        gap={s.$075}
+        style={{
+          alignItems: 'center',
+          paddingHorizontal: s.$09,
+          paddingVertical: s.$05,
+          backgroundColor: c.white,
+          borderWidth: 1.5,
+          borderColor: c.accent,
+          borderRadius: s.$12,
+          width: '100%',
+        }}
+      >
+        {type === 'user' && <Ionicons size={s.$1} color={c.accent} name="person" col="$accent" />}
+        {type === 'phone' && <Ionicons size={s.$1} color={c.accent} name="call" col="$accent" />}
+        {(type === 'email' || type === 'username') && (
+          <Ionicons size={s.$1} color={c.accent} name="at" col="$accent" />
+        )}
+        <TextInput
+          style={{
+            flex: 1,
+            paddingVertical: 10,
+            fontSize: s.$09,
+            fontFamily: 'Inter',
+            width: '100%',
+            color: c.accent,
+          }}
+          autoCapitalize="none"
+          placeholder={placeholder}
+          placeholderTextColor={c.accent}
+          onChangeText={onChange}
+          value={value}
+        />
+      </XStack>
+      {/* Warnings etc */}
+      <View style={{ height: s.$2, width: '100%', justifyContent: 'center' }}>{children}</View>
+    </>
   )
 }

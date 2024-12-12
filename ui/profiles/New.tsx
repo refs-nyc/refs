@@ -1,13 +1,15 @@
 import { useRef, useState, useEffect } from 'react'
-import { YStack, Heading } from '@/ui'
-import { View, Text as Paragraph } from 'react-native'
+import { Button } from '../buttons/Button'
+import { YStack } from '../core/Stacks'
+import { View, Text as SizableText } from 'react-native'
 import { FormFieldWithIcon } from '../inputs/FormFieldWithIcon'
 import { AvatarPicker } from '../inputs/AvatarPicker'
-import { Button, Dimensions } from 'react-native'
+import { Dimensions } from 'react-native'
 import { useForm, Controller } from 'react-hook-form'
 import { useProfileStore } from '@/features/canvas/stores'
 import { router } from 'expo-router'
 import { useMagicContext } from '@/features/magic'
+import { s, c } from '@/features/style'
 import Carousel, { ICarouselInstance } from 'react-native-reanimated-carousel'
 
 type StepInput1 = {
@@ -35,15 +37,18 @@ const ProfileStep = ({ fields, index, onComplete }) => {
     formState: { errors },
   } = useForm<StepInput1 | StepInput2 | StepInput3 | StepInput4>()
 
-  const { login, logout, loginState, LOGIN_STATE } = useMagicContext()
+  const { login, setLoginState, loginState, LOGIN_STATE } = useMagicContext()
 
   const formValues = watch()
 
   const onSubmit = async (d) => {
     if (fields.includes('email')) {
       try {
+        setLoginState(LOGIN_STATE.LOGGING_IN)
         console.log(formValues.email)
+
         await login(formValues.email)
+        setLoginState(LOGIN_STATE.LOGGED_IN)
         onComplete(formValues)
       } catch (error) {
         console.error(error)
@@ -60,16 +65,15 @@ const ProfileStep = ({ fields, index, onComplete }) => {
   }
 
   return (
-    <View style={{ flex: 1, justifyContent: 'center' }} mx="$6" my="$4">
-      <YStack gap="$4" pt="$12" pb="$8">
-        <Heading tag="h1" ta="center" col="$color12">
-          {index === 0 && 'Login using your email'}
-          {index === 1 && 'Let us know who you are to wrap up'}
-          {index === 2 && 'Choose a username'}
-          {index === 3 && '...and upload a profile photo'}
-        </Heading>
-      </YStack>
-
+    <View
+      style={{
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'stretch',
+        width: '100%',
+        paddingHorizontal: s.$1half,
+      }}
+    >
       <YStack gap="$6">
         {fields.includes('email') && loginState !== LOGIN_STATE.LOGGED_IN && (
           <>
@@ -86,12 +90,25 @@ const ProfileStep = ({ fields, index, onComplete }) => {
                   onChange={onChange}
                   type="email"
                   id="email"
-                  placeholder="Email"
+                  placeholder="Login with email"
                   value={value}
-                />
+                >
+                  {errors.email && (
+                    <SizableText
+                      style={{
+                        fontSize: s.$08,
+                        fontFamily: 'Inter',
+                        textAlign: 'center',
+                        color: c.accent,
+                      }}
+                    >
+                      This field is required
+                    </SizableText>
+                  )}
+                  {/* <SizableText>{LOGIN_STATE[loginState]}</SizableText> */}
+                </FormFieldWithIcon>
               )}
             />
-            {errors.email && <Paragraph ta="center">This field is required</Paragraph>}
           </>
         )}
         {fields.includes('email') && loginState === LOGIN_STATE.LOGGED_IN && (
@@ -114,10 +131,22 @@ const ProfileStep = ({ fields, index, onComplete }) => {
                   id="firstName"
                   placeholder="First Name"
                   value={value}
-                />
+                >
+                  {errors.firstName && (
+                    <SizableText
+                      style={{
+                        fontSize: s.$08,
+                        fontFamily: 'Inter',
+                        textAlign: 'center',
+                        color: c.accent,
+                      }}
+                    >
+                      This field is required
+                    </SizableText>
+                  )}
+                </FormFieldWithIcon>
               )}
             />
-            {errors.firstName && <Paragraph ta="center">This field is required</Paragraph>}
           </>
         )}
 
@@ -135,12 +164,24 @@ const ProfileStep = ({ fields, index, onComplete }) => {
                   onChange={onChange}
                   type="user"
                   id="lastName"
-                  placeholder="First Name"
+                  placeholder="Last Name"
                   value={value}
-                />
+                >
+                  {errors.lastName && (
+                    <SizableText
+                      style={{
+                        fontSize: s.$08,
+                        fontFamily: 'Inter',
+                        textAlign: 'center',
+                        color: c.accent,
+                      }}
+                    >
+                      This field is required
+                    </SizableText>
+                  )}
+                </FormFieldWithIcon>
               )}
             />
-            {errors.lastName && <Paragraph ta="center">This field is required</Paragraph>}
           </>
         )}
         {/* UserName */}
@@ -155,14 +196,26 @@ const ProfileStep = ({ fields, index, onComplete }) => {
               render={({ field: { onChange, value } }) => (
                 <FormFieldWithIcon
                   onChange={onChange}
-                  type="user"
+                  type="username"
                   id="userName"
-                  placeholder="@username"
+                  placeholder="username"
                   value={value}
-                />
+                >
+                  {errors.userName && (
+                    <SizableText
+                      style={{
+                        fontSize: s.$08,
+                        fontFamily: 'Inter',
+                        textAlign: 'center',
+                        color: c.accent,
+                      }}
+                    >
+                      This field is required
+                    </SizableText>
+                  )}
+                </FormFieldWithIcon>
               )}
             />
-            {errors.userName && <Paragraph ta="center">This field is required</Paragraph>}
           </>
         )}
 
@@ -181,16 +234,36 @@ const ProfileStep = ({ fields, index, onComplete }) => {
                     onChange(s)
                   }}
                   source={value}
-                />
+                >
+                  {errors.image && (
+                    <SizableText
+                      style={{
+                        fontSize: s.$08,
+                        fontFamily: 'Inter',
+                        textAlign: 'center',
+                        color: c.accent,
+                      }}
+                    >
+                      This field is required
+                    </SizableText>
+                  )}
+                </AvatarPicker>
               )}
             />
-            {errors.image && <Paragraph ta="center">This field is required</Paragraph>}
           </>
         )}
       </YStack>
 
-      {/* <Button title="Submit" onPress={onSubmit} /> */}
-      <Button title="Submit" onPress={handleSubmit(onSubmit, onErrors)} />
+      {fields.includes('email') ? (
+        <Button
+          title={loginState === LOGIN_STATE.LOGGING_IN ? 'Logging in' : 'Login'}
+          disabled={loginState === LOGIN_STATE.LOGGING_IN}
+          variant="basic"
+          onPress={handleSubmit(onSubmit, onErrors)}
+        />
+      ) : (
+        <Button title="Submit" variant="basic" onPress={handleSubmit(onSubmit, onErrors)} />
+      )}
     </View>
   )
 }

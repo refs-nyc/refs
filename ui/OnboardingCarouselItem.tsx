@@ -104,7 +104,7 @@ export const OnboardingCarouselItem = ({
           </Heading>
           <ExampleButtonList />
           <YStack style={{ justifyContent: 'center', alignItems: 'center' }}>
-            <MainButton title="I'm ready" onPress={next} />
+            <MainButton title="I'm ready" onPress={done} />
           </YStack>
         </YStack>
       </View>

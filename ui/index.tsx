@@ -2,6 +2,7 @@ import { View as NativeView, Text } from 'react-native'
 
 export * from './core/Stacks'
 export * from './typo/DeferredFonts'
+export * from './typo/SizableText'
 export * from './typo/Heading'
 export * from './OnboardingCarouselItem'
 export * from './grid/ExampleGrid'

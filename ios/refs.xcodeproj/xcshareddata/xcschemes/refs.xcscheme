@@ -15,9 +15,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "13B07F861A680F5B00A75B9A"
-               BuildableName = "canvasdemoapp.app"
-               BlueprintName = "canvasdemoapp"
-               ReferencedContainer = "container:canvasdemoapp.xcodeproj">
+               BuildableName = "refs.app"
+               BlueprintName = "refs"
+               ReferencedContainer = "container:refs.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -33,9 +33,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "00E356ED1AD99517003FC87E"
-               BuildableName = "canvasdemoappTests.xctest"
-               BlueprintName = "canvasdemoappTests"
-               ReferencedContainer = "container:canvasdemoapp.xcodeproj">
+               BuildableName = "refsTests.xctest"
+               BlueprintName = "refsTests"
+               ReferencedContainer = "container:refs.xcodeproj">
             </BuildableReference>
          </TestableReference>
       </Testables>
@@ -55,9 +55,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "13B07F861A680F5B00A75B9A"
-            BuildableName = "canvasdemoapp.app"
-            BlueprintName = "canvasdemoapp"
-            ReferencedContainer = "container:canvasdemoapp.xcodeproj">
+            BuildableName = "refs.app"
+            BlueprintName = "refs"
+            ReferencedContainer = "container:refs.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </LaunchAction>
@@ -72,9 +72,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "13B07F861A680F5B00A75B9A"
-            BuildableName = "canvasdemoapp.app"
-            BlueprintName = "canvasdemoapp"
-            ReferencedContainer = "container:canvasdemoapp.xcodeproj">
+            BuildableName = "refs.app"
+            BlueprintName = "refs"
+            ReferencedContainer = "container:refs.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>

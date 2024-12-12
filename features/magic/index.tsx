@@ -61,8 +61,6 @@ const MagicProvider = ({ children }: { children: React.ReactNode }) => {
 
       setSessionSigner(sessionSigner)
       setLoginState(LOGIN_STATE.LOGGED_IN)
-
-      console.log('login done', session)
     } catch (error) {
       console.error(error)
       setLoginState(LOGIN_STATE.LOGGED_OUT)

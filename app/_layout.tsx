@@ -16,6 +16,7 @@ import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native
 import { useFonts } from 'expo-font'
 import { SplashScreen, Stack } from 'expo-router'
 import { MagicProvider } from '@/features/magic/index'
+import { CanvasProvider } from '@/features/canvas/provider'
 import { DeferredFonts } from '@/ui'
 import { c } from '@/features/style'
 import * as SystemUI from 'expo-system-ui'
@@ -78,7 +79,11 @@ function RootLayoutNav() {
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <StatusBar barStyle={colorScheme === 'dark' ? 'light-content' : 'dark-content'} />
-      <Stack />
+      <Stack
+        screenOptions={{
+          contentStyle: { backgroundColor: c.surface },
+        }}
+      />
     </ThemeProvider>
   )
 }

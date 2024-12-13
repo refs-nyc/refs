@@ -8,7 +8,8 @@ import { Dimensions } from 'react-native'
 import { useForm, Controller } from 'react-hook-form'
 import { useProfileStore } from '@/features/canvas/stores'
 import { router } from 'expo-router'
-import { useMagicContext } from '@/features/magic'
+import { LOGIN_STATE } from '@/features/magic'
+// import { useMagicContext } from '@/features/magic'
 import { s, c } from '@/features/style'
 import Carousel, { ICarouselInstance } from 'react-native-reanimated-carousel'
 
@@ -37,30 +38,31 @@ const ProfileStep = ({ fields, index, onComplete }) => {
     formState: { errors },
   } = useForm<StepInput1 | StepInput2 | StepInput3 | StepInput4>()
 
-  const { login, setLoginState, loginState, LOGIN_STATE } = useMagicContext()
+  // const { login, setLoginState, loginState, LOGIN_STATE } = useMagicContext()
+  const [loginState, setLoginState] = useState(0)
 
   const formValues = watch()
 
   const onSubmit = async (d) => {
-    if (fields.includes('email')) {
-      try {
-        setLoginState(LOGIN_STATE.LOGGING_IN)
-        console.log(formValues.email)
+    // if (fields.includes('email')) {
+    //   try {
+    //     // setLoginState(LOGIN_STATE.LOGGING_IN)
+    //     console.log(formValues.email)
 
-        try {
-          await login(formValues.email)
-        } catch (error) {
-          console.error(error)
-        }
-        // setLoginState(LOGIN_STATE.LOGGED_IN)
+    //     try {
+    //       // await login(formValues.email)
+    //     } catch (error) {
+    //       console.error(error)
+    //     }
+    //     // setLoginState(LOGIN_STATE.LOGGED_IN)
 
-        if (loginState === LOGIN_STATE.LOGGED_IN) {
-          onComplete(formValues)
-        }
-      } catch (error) {
-        console.error(error)
-      }
-    }
+    //     if (loginState === LOGIN_STATE.LOGGED_IN) {
+    //       onComplete(formValues)
+    //     }
+    //   } catch (error) {
+    //     console.error(error)
+    //   }
+    // }
     onComplete(formValues)
   }
 

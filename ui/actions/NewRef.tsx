@@ -97,7 +97,7 @@ export const NewRef = ({
         </YStack>
       </View>
 
-      <Button title="done" disabled={!currentRef.title || !pinataSource} onPress={submit} />
+      <Button title="done" onPress={submit} />
     </>
   )
 }

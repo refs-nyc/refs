@@ -20,11 +20,11 @@ export function HomeScreen() {
         <YStack style={{ alignItems: 'center' }} gap={s.$05}>
           <Button title="Join" onPress={() => router.push('/onboarding')} />
           <Button variant="basic" title="Login" onPress={() => router.push('/user/new')} />
-          <Button
+          {/* <Button
             variant="basic"
             title="Manus' profile"
             onPress={() => router.push('/user/Manegame')}
-          />
+          /> */}
         </YStack>
       </YStack>
     </View>

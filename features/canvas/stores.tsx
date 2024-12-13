@@ -1,5 +1,6 @@
 import { create } from 'zustand'
-import { appPromise } from '@/features/canvas/provider'
+
+// import { appPromise } from '@/features/canvas/provider'
 
 // ***
 // Profiles
@@ -23,13 +24,15 @@ export const useProfileStore = create((set, get) => ({
   // Requirement: staged profile
   //
   register: async () => {
-    const app = await appPromise
+    // const app = await appPromise
 
     try {
-      const {
-        result: { did },
-      } = await app.actions.createProfile(get().stagedProfile)
-      const finalProfile = await app.db.get('profiles', did)
+      // const {
+      //   result: { did },
+      // } = await app.actions.createProfile(get().stagedProfile)
+      // const finalProfile = await app.db.get('profiles', did)
+
+      const finalProfile = get().stagedProfile
 
       set(() => ({
         userProfile: finalProfile,
@@ -48,13 +51,16 @@ export const useProfileStore = create((set, get) => ({
 export const useRefStore = create((set) => ({
   refs: [],
   push: async (newRef: StagedRef) => {
-    const app = await appPromise
+    // const app = await appPromise
 
-    const { result: id } = await app.actions.createRef(newRef)
-    const finalRef = await app.db.get('refs', id)
+    // const { result: id } = await app.actions.createRef(newRef)
+    // const finalRef = await app.db.get('refs', id)
+    // const finalRef = await app.db.get('refs', id)
 
-    set((state) => ({ refs: [...state.refs, finalRef] }))
-    return finalRef
+    set((state) => ({
+      refs: [...state.refs, { ...newRef, id: JSON.stringify(newRef).substring(0, 128) }],
+    }))
+    return newRef
   },
   // Reference an existing Ref, and create an ref off it
   reference: () => {},
@@ -74,14 +80,16 @@ export const useItemStore = create((set) => ({
   // 1. Create a new Ref
   // 2. Attach Ref to Item and create
   push: async (newItem: StagedItem) => {
-    const app = await appPromise
+    // const app = await appPromise
 
-    const { result: id } = await app.actions.createItem(newItem)
-    const finalItem = await app.db.get('items', id)
-    if (finalItem === null) throw new Error('Could not fetch Item')
-    const ref = await app.db.get('refs', finalItem.ref)
-    if (ref === null) throw new Error('Could not fetch Ref')
-    const joinedItem = { ...finalItem, title: ref.title, image: ref.image }
+    // const { result: id } = await app.actions.createItem(newItem)
+    // const finalItem = await app.db.get('items', id)
+    // if (finalItem === null) throw new Error('Could not fetch Item')
+    // const ref = await app.db.get('refs', finalItem.ref)
+    // if (ref === null) throw new Error('Could not fetch Ref')
+    const refStore = useRefStore.getState()
+    const ref = refStore.refs.find((r) => r.id === newItem.ref)
+    const joinedItem = { ...newItem, title: ref.title, image: ref.image }
 
     console.log(joinedItem)
 

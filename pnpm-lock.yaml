@@ -106,8 +106,8 @@ importers:
         specifier: ~0.29.13
         version: 0.29.18(expo@52.0.18(@babel/core@7.26.0)(@babel/preset-env@7.26.0(@babel/core@7.26.0))(@expo/metro-runtime@4.0.0(react-native@0.76.3(@babel/core@7.26.0)(@babel/preset-env@7.26.0(@babel/core@7.26.0))(@types/react@18.3.16)(bufferutil@4.0.8)(react@18.3.1)(utf-8-validate@5.0.10)))(bufferutil@4.0.8)(react-native-webview@13.12.2(react-native@0.76.3(@babel/core@7.26.0)(@babel/preset-env@7.26.0(@babel/core@7.26.0))(@types/react@18.3.16)(bufferutil@4.0.8)(react@18.3.1)(utf-8-validate@5.0.10))(react@18.3.1))(react-native@0.76.3(@babel/core@7.26.0)(@babel/preset-env@7.26.0(@babel/core@7.26.0))(@types/react@18.3.16)(bufferutil@4.0.8)(react@18.3.1)(utf-8-validate@5.0.10))(react@18.3.1)(utf-8-validate@5.0.10))
       expo-sqlite:
-        specifier: ~14.0.6
-        version: 14.0.6(expo@52.0.18(@babel/core@7.26.0)(@babel/preset-env@7.26.0(@babel/core@7.26.0))(@expo/metro-runtime@4.0.0(react-native@0.76.3(@babel/core@7.26.0)(@babel/preset-env@7.26.0(@babel/core@7.26.0))(@types/react@18.3.16)(bufferutil@4.0.8)(react@18.3.1)(utf-8-validate@5.0.10)))(bufferutil@4.0.8)(react-native-webview@13.12.2(react-native@0.76.3(@babel/core@7.26.0)(@babel/preset-env@7.26.0(@babel/core@7.26.0))(@types/react@18.3.16)(bufferutil@4.0.8)(react@18.3.1)(utf-8-validate@5.0.10))(react@18.3.1))(react-native@0.76.3(@babel/core@7.26.0)(@babel/preset-env@7.26.0(@babel/core@7.26.0))(@types/react@18.3.16)(bufferutil@4.0.8)(react@18.3.1)(utf-8-validate@5.0.10))(react@18.3.1)(utf-8-validate@5.0.10))
+        specifier: ~15.0.3
+        version: 15.0.3(expo@52.0.18(@babel/core@7.26.0)(@babel/preset-env@7.26.0(@babel/core@7.26.0))(@expo/metro-runtime@4.0.0(react-native@0.76.3(@babel/core@7.26.0)(@babel/preset-env@7.26.0(@babel/core@7.26.0))(@types/react@18.3.16)(bufferutil@4.0.8)(react@18.3.1)(utf-8-validate@5.0.10)))(bufferutil@4.0.8)(react-native-webview@13.12.2(react-native@0.76.3(@babel/core@7.26.0)(@babel/preset-env@7.26.0(@babel/core@7.26.0))(@types/react@18.3.16)(bufferutil@4.0.8)(react@18.3.1)(utf-8-validate@5.0.10))(react@18.3.1))(react-native@0.76.3(@babel/core@7.26.0)(@babel/preset-env@7.26.0(@babel/core@7.26.0))(@types/react@18.3.16)(bufferutil@4.0.8)(react@18.3.1)(utf-8-validate@5.0.10))(react@18.3.1)(utf-8-validate@5.0.10))(react-native@0.76.3(@babel/core@7.26.0)(@babel/preset-env@7.26.0(@babel/core@7.26.0))(@types/react@18.3.16)(bufferutil@4.0.8)(react@18.3.1)(utf-8-validate@5.0.10))(react@18.3.1)
       expo-status-bar:
         specifier: ~2.0.0
         version: 2.0.0(react-native@0.76.3(@babel/core@7.26.0)(@babel/preset-env@7.26.0(@babel/core@7.26.0))(@types/react@18.3.16)(bufferutil@4.0.8)(react@18.3.1)(utf-8-validate@5.0.10))(react@18.3.1)
@@ -129,6 +129,9 @@ importers:
       multiformats:
         specifier: ^13.3.1
         version: 13.3.1
+      pocketbase:
+        specifier: ^0.22.1
+        version: 0.22.1
       react:
         specifier: 18.3.1
         version: 18.3.1
@@ -168,6 +171,9 @@ importers:
       react-native-screens:
         specifier: ~4.1.0
         version: 4.1.0(react-native@0.76.3(@babel/core@7.26.0)(@babel/preset-env@7.26.0(@babel/core@7.26.0))(@types/react@18.3.16)(bufferutil@4.0.8)(react@18.3.1)(utf-8-validate@5.0.10))(react@18.3.1)
+      react-native-sse:
+        specifier: ^1.2.1
+        version: 1.2.1
       react-native-web:
         specifier: ~0.19.13
         version: 0.19.13(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -5090,6 +5096,9 @@ packages:
     resolution: {integrity: sha512-NCrCHhWmnQklfH4MtJMRjZ2a8c80qXeMlQMv2uVp9ISJMTt562SbGd6n2oq0PaPgKm7Z6pL9E2UlLIhC+SHL3w==}
     engines: {node: '>=4.0.0'}
 
+  pocketbase@0.22.1:
+    resolution: {integrity: sha512-hnzpDcIx5kbkUJXz6IkiTox6R4nb706u4rPSMy2FYCaI2OqBnFxbY0qwWBSqx1ERz/Xi61Uguf17Gb9bWZ8+kw==}
+
   possible-typed-array-names@1.0.0:
     resolution: {integrity: sha512-d7Uw+eZoloe0EHDIYoe+bQ5WXnGMOpmiZFTuMWCwpjzzkL2nTjcKiAk4hh8TjnGye2TwWOk3UXucZ+3rbmBa8Q==}
     engines: {node: '>= 0.4'}
@@ -5393,6 +5402,9 @@ packages:
     peerDependencies:
       react: '*'
       react-native: '*'
+
+  react-native-sse@1.2.1:
+    resolution: {integrity: sha512-zejanlScF+IB9tYnbdry0MT34qjBXbiV/E72qGz33W/tX1bx8MXsbB4lxiuPETc9v/008vYZ60yjIstW22VlVg==}
 
   react-native-url-polyfill@2.0.0:
     resolution: {integrity: sha512-My330Do7/DvKnEvwQc0WdcBnFPploYKp9CYlefDXzIdEaA+PAhDYllkvGeEroEzvc4Kzzj2O4yVdz8v6fjRvhA==}
@@ -13253,6 +13265,8 @@ snapshots:
 
   pngjs@3.4.0: {}
 
+  pocketbase@0.22.1: {}
+
   possible-typed-array-names@1.0.0: {}
 
   postcss-value-parser@4.2.0: {}
@@ -13592,6 +13606,8 @@ snapshots:
       react-freeze: 1.0.4(react@18.3.1)
       react-native: 0.76.3(@babel/core@7.26.0)(@babel/preset-env@7.26.0(@babel/core@7.26.0))(@types/react@18.3.16)(bufferutil@4.0.8)(react@18.3.1)(utf-8-validate@5.0.10)
       warn-once: 0.1.1
+
+  react-native-sse@1.2.1: {}
 
   react-native-url-polyfill@2.0.0(react-native@0.76.3(@babel/core@7.26.0)(@babel/preset-env@7.26.0(@babel/core@7.26.0))(@types/react@18.3.16)(bufferutil@4.0.8)(react@18.3.1)(utf-8-validate@5.0.10)):
     dependencies:

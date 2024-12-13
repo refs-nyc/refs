@@ -11,14 +11,7 @@
     "jsEngine": "jsc",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.anonymous.canvasdemoapp"
-    },
-    "android": {
-      "adaptiveIcon": {
-        "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
-      },
-      "package": "com.anonymous.canvasdemoapp"
+      "bundleIdentifier": "nyc.refs.app"
     },
     "plugins": [
       "expo-router",

@@ -1,18 +1,24 @@
-import { Text, View } from 'react-native'
 import { Image } from 'expo-image'
 import { Button } from '../buttons/Button'
 import { Heading, XStack, YStack } from '@/ui'
 import { GridTile } from '../grid/GridTile'
-import { useLiveQuery } from '@canvas-js/hooks'
-import { useEffect } from 'react'
-import { useCanvasContext } from '@/features/canvas/contract'
+// import { useLiveQuery } from '@canvas-js/hooks'
+import { useEffect, useState } from 'react'
+// import { useCanvasContext } from '@/features/canvas/contract'
 import { s, c } from '@/features/style'
+import { useProfileStore } from '@/features/canvas/stores'
 
-export const Profile = ({ userName }) => {
-  const app = useCanvasContext()
+export const Profile = ({ userName }: { userName: string }) => {
+  const [profile, setProfile] = useState()
+  const { profiles } = useProfileStore()
 
-  const [profile] = useLiveQuery(app, 'profiles', { where: { userName: userName } }) || [undefined]
-  const profiles = useLiveQuery(app, 'profiles')
+  useEffect(() => {
+    setProfile(profiles.find((p) => p.userName === userName))
+  }, [profiles])
+  // const app = useCanvasContext()
+
+  // const [profile] = useLiveQuery(app, 'profiles', { where: { userName: userName } }) || [undefined]
+  // const profiles = useLiveQuery(app, 'profiles')
 
   useEffect(() => console.log(profile), [profile])
 

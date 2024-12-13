@@ -14,6 +14,7 @@ export const c = {
   // Greys
   grey1: '#D9D9D9',
   grey2: '#787676',
+  muted: '#787676',
   // Rare
   none: 'transparent',
   red: '#f00',

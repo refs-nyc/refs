@@ -1,4 +1,4 @@
-package refs_nyc.app
+package refsnyc2.app
 import expo.modules.splashscreen.SplashScreenManager
 
 import android.os.Build

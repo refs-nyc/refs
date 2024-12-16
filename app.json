@@ -1,27 +1,20 @@
 {
   "expo": {
     "name": "refs - internet phonebook",
-    "slug": "refs-nyc",
+    "slug": "refs-nyc2",
     "version": "0.0.2",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "refs-nyc",
+    "scheme": "refs-nyc2",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "jsEngine": "jsc",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "refs-nyc.app",
+      "bundleIdentifier": "refs-nyc2.app",
       "config": {
         "usesNonExemptEncryption": false
       }
-    },
-    "android": {
-      "adaptiveIcon": {
-        "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
-      },
-      "package": "refs_nyc.app"
     },
     "plugins": [
       "expo-router",
@@ -40,8 +33,11 @@
     },
     "extra": {
       "eas": {
-        "projectId": "23b45cf1-7baf-4149-97b4-ff20b360b530"
+        "projectId": "bfe02552-c1ea-4ff1-9a4e-d3a891016a19"
       }
+    },
+    "android": {
+      "package": "refsnyc2.app"
     }
   }
 }

@@ -27,6 +27,11 @@ config.resolver.resolveRequest = (context, moduleName, platform) => {
     return { type: 'empty' }
   }
 
+  // prevent import of quickjs-emscripten
+  if (moduleName === 'quickjs-emscripten') {
+    return { type: 'empty' }
+  }
+
   // otherwise chain to the standard Metro resolver.
   return context.resolveRequest(context, moduleName, platform)
 }

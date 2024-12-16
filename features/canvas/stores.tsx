@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import Pocketbase from 'pocketbase'
 
-const pocketbase = new Pocketbase('https://refs.enabler.space')
+export const pocketbase = new Pocketbase('https://refs.enabler.space')
 
 // const test = async () => {
 //   try {

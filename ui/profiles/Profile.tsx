@@ -6,17 +6,29 @@ import { GridTile } from '../grid/GridTile'
 import { useEffect, useState } from 'react'
 // import { useCanvasContext } from '@/features/canvas/contract'
 import { s, c } from '@/features/style'
-import { useProfileStore } from '@/features/canvas/stores'
+import { pocketbase, useProfileStore } from '@/features/canvas/stores'
+import { Shareable } from "../atoms/Shareable"
 
 export const Profile = ({ userName }: { userName: string }) => {
   const [profile, setProfile] = useState()
-  const { profiles } = useProfileStore()
 
   useEffect(() => {
-    setProfile(profiles.find((p) => p.userName === userName))
-  }, [profiles])
-  // const app = useCanvasContext()
+    const getProfile = async (user: string) => {
+      try {
+        const record = await pocketbase.collection('profiles').getFirstListItem(`userName = "${user}"`)
+        console.log(record)
+        setProfile(record)
+      } catch (error) {
+        console.error(error)
+      }
+    }
 
+    getProfile(userName)
+    
+  }, [userName])
+
+  // const sub = pocketbase.subscribe()
+  // const app = useCanvasContext()
   // const [profile] = useLiveQuery(app, 'profiles', { where: { userName: userName } }) || [undefined]
   // const profiles = useLiveQuery(app, 'profiles')
 
@@ -61,7 +73,11 @@ export const Profile = ({ userName }: { userName: string }) => {
         </XStack>
       </YStack>
 
-      <Button title="Share" />
+      <Shareable>
+        <Heading tag="h2">
+          Share
+        </Heading>
+      </Shareable>
 
       {!profile && <Heading tag="h1">Profile not found</Heading>}
     </YStack>

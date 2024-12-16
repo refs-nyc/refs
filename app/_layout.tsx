@@ -10,6 +10,7 @@ import '@/features/polyfill/custom-event-polyfill'
 import 'react-native-get-random-values'
 import 'fast-text-encoding'
 
+// For pocketbase
 global.EventSource = eventsource
 
 import { GestureHandlerRootView } from 'react-native-gesture-handler'

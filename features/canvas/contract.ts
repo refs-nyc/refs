@@ -1,5 +1,5 @@
-import { TypedEventEmitter } from "@libp2p/interface"
-import { Canvas, type Contract } from '@canvas-js/core'
+import { TypedEventEmitter } from '@libp2p/interface'
+// import { Canvas, type Contract } from '@canvas-js/core'
 import { models } from './models.ts' // include .ts extension to make models importable by `npm run server`
 
 export const contract = {
@@ -71,11 +71,13 @@ export const contract = {
 } satisfies Contract<typeof models>
 
 export const init = async () => {
-  const app = await Canvas.initialize({
-    path: process.env.DATABASE_URL ?? null,
-    contract,
-    topic: 'refsv2.canvas.xyz',
-  })
+  // const app = await Canvas.initialize({
+  //   path: process.env.DATABASE_URL ?? null,
+  //   contract,
+  //   topic: 'refsv2.canvas.xyz',
+  // })
+
+  const app = {} as any
 
   return app
 }

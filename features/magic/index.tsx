@@ -3,8 +3,10 @@ import { createContext, useContext, useState } from 'react'
 import { Magic } from '@magic-sdk/react-native-expo'
 import { Web3Provider } from '@ethersproject/providers'
 import { ethers } from 'ethers'
-import { SIWESigner } from '@canvas-js/chain-ethereum'
+// import { SIWESigner } from '@canvas-js/chain-ethereum'
 import { REFS_TOPIC } from '@/features/const'
+
+type SIWESigner = any
 
 export const magic = new Magic(process.env.EXPO_PUBLIC_MAGIC_KEY)
 
@@ -51,15 +53,15 @@ const MagicProvider = ({ children }: { children: React.ReactNode }) => {
       const provider = new Web3Provider(magic.rpcProvider)
       const signer = provider.getSigner()
       const checksumAddress = ethers.getAddress(metadata.publicAddress) // checksum-capitalized eth address
-      const sessionSigner = new SIWESigner({ signer })
+      // const sessionSigner = new SIWESigner({ signer })
 
-      let sessionObject = await sessionSigner.getSession(REFS_TOPIC)
-      if (!sessionObject) {
-        sessionObject = await sessionSigner.newSession(REFS_TOPIC)
-      }
-      const session = sessionObject.payload
+      // let sessionObject = await sessionSigner.getSession(REFS_TOPIC)
+      // if (!sessionObject) {
+      //   sessionObject = await sessionSigner.newSession(REFS_TOPIC)
+      // }
+      // const session = sessionObject.payload
 
-      setSessionSigner(sessionSigner)
+      // setSessionSigner(sessionSigner)
       setLoginState(LOGIN_STATE.LOGGED_IN)
     } catch (error) {
       console.error(error)

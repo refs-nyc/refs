@@ -3,7 +3,6 @@ import 'fast-text-encoding'
 
 import { models } from './models'
 import { init } from './contract'
-import { Canvas, Contract } from '@canvas-js/core'
 import { createContext, useContext, useEffect, useState } from 'react'
 
 export const CanvasContext = createContext(null)

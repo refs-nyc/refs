@@ -44,6 +44,7 @@ export function OnboardingScreen() {
         <Drawer close={() => setAddingIndex(-1)}>
           <AddRef
             onAddRef={() => {
+              console.log('we have added ')
               setAddingIndex(-1)
             }}
             onCancel={() => {

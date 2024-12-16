@@ -4,11 +4,11 @@ install()
 import { polyfill as polyfillEncoding } from 'react-native-polyfill-globals/src/encoding'
 polyfillEncoding()
 
+import eventsource from 'react-native-sse'
 import 'event-target-polyfill'
 import '@/features/polyfill/custom-event-polyfill'
 import 'react-native-get-random-values'
 import 'fast-text-encoding'
-import eventsource from 'react-native-sse'
 
 global.EventSource = eventsource
 

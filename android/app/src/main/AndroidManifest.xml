@@ -26,8 +26,6 @@
         <action android:name="android.intent.action.VIEW"/>
         <category android:name="android.intent.category.DEFAULT"/>
         <category android:name="android.intent.category.BROWSABLE"/>
-        <data android:scheme="refs-nyc"/>
-        <data android:scheme="refs_nyc.app"/>
         <data android:scheme="refs-nyc2"/>
         <data android:scheme="refsnyc2.app"/>
       </intent-filter>

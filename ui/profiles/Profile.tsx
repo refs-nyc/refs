@@ -3,7 +3,7 @@ import { Image } from 'expo-image'
 import { Button } from '../buttons/Button'
 import { Heading, XStack, YStack } from '@/ui'
 import { GridTile } from '../grid/GridTile'
-// import { useLiveQuery } from '@canvas-js/hooks'
+import { useLiveQuery } from '@canvas-js/hooks'
 import { useEffect } from 'react'
 import { useCanvasContext } from '@/features/canvas/contract'
 import { s, c } from '@/features/style'
@@ -11,13 +11,10 @@ import { s, c } from '@/features/style'
 export const Profile = ({ userName }) => {
   const app = useCanvasContext()
 
-  // const [profile] = useLiveQuery(app, 'profiles', { where: { userName: userName } }) || [undefined]
-  // const profiles = useLiveQuery(app, 'profiles')
+  const [profile] = useLiveQuery(app, 'profiles', { where: { userName: userName } }) || [undefined]
+  const profiles = useLiveQuery(app, 'profiles')
 
-  const profile = null
-  const profiles = []
-
-  // useEffect(() => console.log(profile), [profile])
+  useEffect(() => console.log(profile), [profile])
 
   return (
     <YStack

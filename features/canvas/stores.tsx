@@ -1,4 +1,22 @@
 import { create } from 'zustand'
+import Pocketbase from 'pocketbase'
+
+const pocketbase = new Pocketbase('https://refs.enabler.space')
+
+// const test = async () => {
+//   try {
+//     const record = await pocketbase
+//       .collection('profiles')
+//       .create({ userName: 'manegame', firstName: 'M', lastName: 'N' })
+
+//     console.log(record)
+//   } catch (error) {
+//     console.log(JSON.stringify(error))
+//     console.log(Object.keys(error))
+//   }
+// }
+
+// test()
 
 // import { appPromise } from '@/features/canvas/provider'
 
@@ -27,17 +45,13 @@ export const useProfileStore = create((set, get) => ({
     // const app = await appPromise
 
     try {
-      // const {
-      //   result: { did },
-      // } = await app.actions.createProfile(get().stagedProfile)
-      // const finalProfile = await app.db.get('profiles', did)
-
       const finalProfile = get().stagedProfile
+      const record = await pocketbase.collection('profiles').create(finalProfile)
 
       set(() => ({
         userProfile: finalProfile,
       }))
-      return finalProfile
+      return record.id
     } catch (error) {
       console.error(error)
     }
@@ -50,21 +64,18 @@ export const useProfileStore = create((set, get) => ({
 //
 export const useRefStore = create((set) => ({
   refs: [],
-  push: async (newRef: StagedRef) => {
-    // const app = await appPromise
-
-    // const { result: id } = await app.actions.createRef(newRef)
-    // const finalRef = await app.db.get('refs', id)
-    // const finalRef = await app.db.get('refs', id)
+  push: async (stagedRef: StagedRef) => {
+    const record = await pocketbase.collection('refs').create(stagedRef)
 
     set((state) => ({
-      refs: [...state.refs, { ...newRef, id: JSON.stringify(newRef).substring(0, 128) }],
+      refs: [...state.refs, record],
     }))
-    return newRef
+    return record.id
   },
   // Reference an existing Ref, and create an ref off it
   reference: () => {},
-  remove: (id) => {
+  remove: async (id) => {
+    await pocketbase.collection('refs').delete(id)
     set((state) => ({
       refs: [...state.refs.filter((i) => i.id !== id)],
     }))
@@ -80,25 +91,16 @@ export const useItemStore = create((set) => ({
   // 1. Create a new Ref
   // 2. Attach Ref to Item and create
   push: async (newItem: StagedItem) => {
-    // const app = await appPromise
-
-    // const { result: id } = await app.actions.createItem(newItem)
-    // const finalItem = await app.db.get('items', id)
-    // if (finalItem === null) throw new Error('Could not fetch Item')
-    // const ref = await app.db.get('refs', finalItem.ref)
-    // if (ref === null) throw new Error('Could not fetch Ref')
-    const refStore = useRefStore.getState()
-    const ref = refStore.refs.find((r) => r.id === newItem.ref)
-    const joinedItem = { ...newItem, title: ref.title, image: ref.image }
-
-    console.log(joinedItem)
+    const record = await pocketbase.collection('items').create(newItem, { expand: 'ref' })
+    console.log("added item")
+    // console.log(record)
 
     set((state) => {
-      const newItems = [...state.items, joinedItem]
+      const newItems = [...state.items, record]
       return { items: newItems }
     })
 
-    return joinedItem
+    return record
   },
   // Reference an existing Ref, and create an item off it
   reference: () => {},

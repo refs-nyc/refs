@@ -62,10 +62,17 @@ export const NewRef = ({
   }
 
   const submit = async () => {
-    console.log(currentRef)
-    const { item, ref } = await createRefWithItem({ ...currentRef, image: pinataSource })
-    console.log(item, ref)
-    onComplete(item)
+    try {
+      console.log(currentRef)
+      const { item, ref } = await createRefWithItem({ ...currentRef, image: pinataSource })
+      console.log(item)
+      console.log(ref)
+      onComplete(item)
+    } catch (e) {
+      console.error(e)
+    } finally {
+      console.log('Done')
+    }
   }
 
   return (

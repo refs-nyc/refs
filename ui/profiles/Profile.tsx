@@ -19,17 +19,36 @@ export const Profile = ({ userName }: { userName: string }) => {
   const { firstVisit } = useLocalSearchParams()
   const [profile, setProfile] = useState()
   const [adding, setAdding] = useState(false)
+  const [gridItems, setGridItems] = useState([])
 
   const { userProfile } = useProfileStore()
+
+  const itemSort = (a: string, b: string) => {
+    return new Date(a.created) - new Date(b.created)
+  }
+
+  const refreshGrid = async () => {
+    try {
+      const record = await pocketbase
+        .collection('profiles')
+        .getFirstListItem(`userName = "${userName}"`, { expand: 'items,items.ref' })
+
+      setGridItems(record?.expand?.items.sort(itemSort))
+    } catch (error) {
+      console.error(error)
+    }
+  }
 
   useEffect(() => {
     const getProfile = async (user: string) => {
       try {
         const record = await pocketbase
           .collection('profiles')
-          .getFirstListItem(`userName = "${user}"`, { expand: 'items' })
-        console.log(record)
+          .getFirstListItem(`userName = "${user}"`, { expand: 'items,items.ref' })
+
         setProfile(record)
+        // Sort the items
+        setGridItems(record?.expand?.items.sort(itemSort))
       } catch (error) {
         console.error(error)
       }
@@ -105,7 +124,7 @@ export const Profile = ({ userName }: { userName: string }) => {
                   setAdding(true)
                 }}
                 columns={3}
-                items={profile?.expand?.items || []}
+                items={gridItems}
                 rows={4}
               ></Grid>
               {/* Backlog toggle */}
@@ -133,7 +152,7 @@ export const Profile = ({ userName }: { userName: string }) => {
         <Drawer close={() => setAdding(false)}>
           <AddRef
             onAddRef={() => {
-              console.log('we have added ')
+              refreshGrid()
               setAdding(false)
             }}
             onCancel={() => {

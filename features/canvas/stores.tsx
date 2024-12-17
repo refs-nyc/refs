@@ -61,7 +61,7 @@ export const useProfileStore = create((set, get) => ({
     try {
       const record = await pocketbase
         .collection('profiles')
-        .getFirstListItem(`userName = "${userName}"`, { expand: 'items' })
+        .getFirstListItem(`userName = "${userName}"`, { expand: 'items,items.ref' })
 
       set(() => ({
         userProfile: record,
@@ -76,18 +76,19 @@ export const useProfileStore = create((set, get) => ({
   //
   attachItem: async (itemId: string) => {
     const userProfile = get().userProfile
-    console.log(userProfile)
     if (!userProfile.id) throw Error('Not logged in')
 
     try {
-      const record = await pocketbase.collection('profiles').getOne(userProfile.id)
       const updatedRecord = await pocketbase
         .collection('profiles')
-        .update(userProfile.id, { items: [...record.items, itemId] })
+        .update(userProfile.id, { '+items': itemId }, { expand: 'items,items.ref' })
+
+      set(() => ({
+        userProfile: updatedRecord,
+      }))
+
       return updatedRecord
-    } catch (error) {
-      console.error(error)
-    }
+    } catch (error) {}
   },
 }))
 
@@ -103,6 +104,7 @@ export const useRefStore = create((set) => ({
     set((state) => ({
       refs: [...state.refs, record],
     }))
+
     return record
   },
   // Reference an existing Ref, and create an ref off it
@@ -165,8 +167,7 @@ export const createRefWithItem = async (stagedRef: StagedRef): { ref: CompleteRe
 
   // If the userProfile is set, attach item ID to items
   if (profileStore.userProfile) {
-    console.log('attach')
-    await profileStore.attachItem(newItem)
+    await profileStore.attachItem(newItem.id)
   }
 
   return { ref: newRef, item: newItem }

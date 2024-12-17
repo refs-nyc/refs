@@ -21,6 +21,7 @@ export const GridTile = ({
           borderRadius: s.$075,
           aspectRatio: 1,
           justifyContent: 'center',
+          alignItems: 'center',
           flex: 1,
         },
       ]}

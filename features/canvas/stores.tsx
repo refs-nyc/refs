@@ -9,10 +9,10 @@ export const pocketbase = new Pocketbase('https://refs.enabler.space')
 //       .collection('profiles')
 //       .create({ userName: 'manegame', firstName: 'M', lastName: 'N' })
 
-//     console.log(record)
+//
 //   } catch (error) {
-//     console.log(JSON.stringify(error))
-//     console.log(Object.keys(error))
+//
+//
 //   }
 // }
 
@@ -52,9 +52,7 @@ export const useProfileStore = create((set, get) => ({
         userProfile: finalProfile,
       }))
       return record.id
-    } catch (error) {
-      console.error(error)
-    }
+    } catch (error) {}
   },
 }))
 
@@ -70,7 +68,7 @@ export const useRefStore = create((set) => ({
     set((state) => ({
       refs: [...state.refs, record],
     }))
-    return record.id
+    return record
   },
   // Reference an existing Ref, and create an ref off it
   reference: () => {},
@@ -92,8 +90,8 @@ export const useItemStore = create((set) => ({
   // 2. Attach Ref to Item and create
   push: async (newItem: StagedItem) => {
     const record = await pocketbase.collection('items').create(newItem, { expand: 'ref' })
-    console.log("added item")
-    // console.log(record)
+
+    //
 
     set((state) => {
       const newItems = [...state.items, record]
@@ -121,19 +119,19 @@ export const createRefWithItem = async (stagedRef: StagedRef): { ref: CompleteRe
 
   const newRef = await refStore.push(stagedRef)
 
+  console.log(newRef)
+
   const copiedRef = { ...newRef }
 
-  delete copiedRef.id
   delete copiedRef.firstReferral
   delete copiedRef.referrals
-  delete copiedRef.createdAt
-  delete copiedRef.deletedAt
 
   const newItem = await itemStore.push({
+    ...copiedRef,
     ref: newRef.id,
   })
 
-  console.log({ ref: newRef, item: newItem })
+  console.log(newItem)
 
   return { ref: newRef, item: newItem }
 }

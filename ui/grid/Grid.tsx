@@ -33,7 +33,7 @@ export const Grid = ({
       {items.map((item, i) => (
         <>
           {item.image ? (
-            <GridTileImage source={item.image} />
+            <GridTileImage key={item.id} source={item.image} />
           ) : (
             <GridTile borderColor="black" key={item.id}>
               <Text style={{ textAlign: 'center' }}>{item.expand.ref.title}</Text>
@@ -42,7 +42,9 @@ export const Grid = ({
         </>
       ))}
 
-      {canAdd && <>{items.length < gridSize && <GridTileActionAdd onAddPress={onAddItem} />}</>}
+      {canAdd && (
+        <>{items.length < gridSize && <GridTileActionAdd key={'add'} onAddPress={onAddItem} />}</>
+      )}
 
       {Array.from({ length: gridSize - items.length - (canAdd ? 1 : 0) }).map((_, i) => (
         <GridTile key={i} />

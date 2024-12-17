@@ -24,7 +24,19 @@ export const Profile = ({ userName }: { userName: string }) => {
 
   const { userProfile } = useProfileStore()
 
-  const itemSort = (a: string, b: string) => {
+  const createdSort = (a: string, b: string) => {
+    return new Date(a.created) - new Date(b.created)
+  }
+
+  const gridSort = (a: string, b: string) => {
+    // Items with order get their exact position (0-11)
+    if (a.order !== undefined && b.order !== undefined) {
+      return a.order - b.order
+    }
+    // Items with order always come before items without
+    if (a.order !== undefined) return -1
+    if (b.order !== undefined) return 1
+    // For items without order, sort by creation date
     return new Date(a.created) - new Date(b.created)
   }
 
@@ -37,7 +49,15 @@ export const Profile = ({ userName }: { userName: string }) => {
       setProfile(record)
 
       // Filter out backlog and normal
-      setGridItems(record?.expand?.items.sort(itemSort))
+      setGridItems(record?.expand?.items.filter((item) => !item.backlog).sort(gridSort))
+      setBacklogItems(
+        record?.expand?.items
+          .filter((item) => {
+            console.log('filtering by backlog', item.backlog)
+            return item.backlog
+          })
+          .sort(createdSort)
+      )
     } catch (error) {
       console.error(error)
     }
@@ -142,16 +162,18 @@ export const Profile = ({ userName }: { userName: string }) => {
                 </Pressable>
               </XStack>
               {/* Backlog */}
-              {backlogItems.length > 0 ? (
-                <Grid
-                  canAdd={userProfile.userName === userName}
-                  onAddItem={() => {
-                    setAddingTo('grid')
-                  }}
-                  columns={3}
-                  items={backlogItems}
-                  rows={Math.ceil(backLogItems / 3)}
-                />
+              {backlogItems.length > 0 || gridItems.length === 12 ? (
+                <View style={{ marginBottom: s.$10 }}>
+                  <Grid
+                    canAdd={userProfile.userName === userName}
+                    onAddItem={() => {
+                      setAddingTo('backlog')
+                    }}
+                    columns={3}
+                    items={backlogItems}
+                    rows={Math.ceil((backlogItems.length + 1) / 3)}
+                  />
+                </View>
               ) : (
                 <Heading style={{ textAlign: 'center' }} tag="mutewarn">
                   Add refs to your backlog. They’ll be searchable to others, but won’t show up on

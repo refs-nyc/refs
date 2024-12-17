@@ -1,4 +1,4 @@
-import { TypedEventEmitter } from "@libp2p/interface"
+import { TypedEventEmitter } from '@libp2p/interface'
 import { Canvas, type Contract } from '@canvas-js/core'
 import { models } from './models.ts' // include .ts extension to make models importable by `npm run server`
 
@@ -76,6 +76,8 @@ export const init = async () => {
     contract,
     topic: 'refsv2.canvas.xyz',
   })
+
+  app.connect("ws://refs.canvas.xyz")
 
   return app
 }

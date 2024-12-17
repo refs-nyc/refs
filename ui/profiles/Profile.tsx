@@ -5,7 +5,7 @@ import { Heading, XStack, YStack } from '@/ui'
 import { GridTile } from '../grid/GridTile'
 import { useLiveQuery } from '@canvas-js/hooks'
 import { useEffect } from 'react'
-import { useCanvasContext } from '@/features/canvas/contract'
+import { useCanvasContext } from '@/features/canvas/provider'
 import { s, c } from '@/features/style'
 
 export const Profile = ({ userName }) => {

@@ -12,14 +12,15 @@ import { s, c } from '@/features/style'
 import { pocketbase, useProfileStore } from '@/features/canvas/stores'
 import { Shareable } from '../atoms/Shareable'
 import Ionicons from '@expo/vector-icons/Ionicons'
-import { ScrollView } from 'react-native-gesture-handler'
+import { Pressable, ScrollView } from 'react-native-gesture-handler'
 
 export const Profile = ({ userName }: { userName: string }) => {
   const insets = useSafeAreaInsets()
   const { firstVisit } = useLocalSearchParams()
   const [profile, setProfile] = useState()
-  const [adding, setAdding] = useState(false)
+  const [addingTo, setAddingTo] = useState<'' | 'grid' | 'backlog'>('')
   const [gridItems, setGridItems] = useState([])
+  const [backlogItems, setBacklogItems] = useState([])
 
   const { userProfile } = useProfileStore()
 
@@ -27,12 +28,15 @@ export const Profile = ({ userName }: { userName: string }) => {
     return new Date(a.created) - new Date(b.created)
   }
 
-  const refreshGrid = async () => {
+  const refreshGrid = async (user: string) => {
     try {
       const record = await pocketbase
         .collection('profiles')
-        .getFirstListItem(`userName = "${userName}"`, { expand: 'items,items.ref' })
+        .getFirstListItem(`userName = "${user}"`, { expand: 'items,items.ref' })
 
+      setProfile(record)
+
+      // Filter out backlog and normal
       setGridItems(record?.expand?.items.sort(itemSort))
     } catch (error) {
       console.error(error)
@@ -42,13 +46,7 @@ export const Profile = ({ userName }: { userName: string }) => {
   useEffect(() => {
     const getProfile = async (user: string) => {
       try {
-        const record = await pocketbase
-          .collection('profiles')
-          .getFirstListItem(`userName = "${user}"`, { expand: 'items,items.ref' })
-
-        setProfile(record)
-        // Sort the items
-        setGridItems(record?.expand?.items.sort(itemSort))
+        await refreshGrid(user)
       } catch (error) {
         console.error(error)
       }
@@ -121,7 +119,7 @@ export const Profile = ({ userName }: { userName: string }) => {
               <Grid
                 canAdd={userProfile.userName === userName}
                 onAddItem={() => {
-                  setAdding(true)
+                  setAddingTo('grid')
                 }}
                 columns={3}
                 items={gridItems}
@@ -139,8 +137,27 @@ export const Profile = ({ userName }: { userName: string }) => {
               >
                 <Heading tag="h3normal">My Backlog</Heading>
                 <View style={{ height: s.$025, backgroundColor: c.black, flex: 1 }}></View>
-                <Ionicons size={s.$3} name="add-circle-outline" />
+                <Pressable onPress={() => setAddingTo('backlog')}>
+                  <Ionicons size={s.$3} name="add-circle-outline" />
+                </Pressable>
               </XStack>
+              {/* Backlog */}
+              {backlogItems.length > 0 ? (
+                <Grid
+                  canAdd={userProfile.userName === userName}
+                  onAddItem={() => {
+                    setAddingTo('grid')
+                  }}
+                  columns={3}
+                  items={backlogItems}
+                  rows={Math.ceil(backLogItems / 3)}
+                />
+              ) : (
+                <Heading style={{ textAlign: 'center' }} tag="mutewarn">
+                  Add refs to your backlog. They’ll be searchable to others, but won’t show up on
+                  your grid.
+                </Heading>
+              )}
             </View>
           )}
 
@@ -148,15 +165,16 @@ export const Profile = ({ userName }: { userName: string }) => {
         </YStack>
       </ScrollView>
 
-      {adding && (
-        <Drawer close={() => setAdding(false)}>
+      {addingTo !== '' && (
+        <Drawer close={() => setAddingTo('')}>
           <AddRef
+            backlog={addingTo === 'backlog'}
             onAddRef={() => {
-              refreshGrid()
-              setAdding(false)
+              refreshGrid(userName)
+              setAddingTo('')
             }}
             onCancel={() => {
-              setAdding(false)
+              setAddingTo('')
             }}
           />
         </Drawer>

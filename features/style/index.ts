@@ -111,6 +111,13 @@ export const typo = StyleSheet.create({
     lineHeight: s.$1half,
     letterSpacing: -0.5,
   },
+  mutewarn: {
+    fontFamily: 'Inter',
+    fontSize: s.$09,
+    lineHeight: s.$1half,
+    letterSpacing: -0.5,
+    color: c.muted,
+  },
   strong: {
     fontFamily: 'InterBold',
   },

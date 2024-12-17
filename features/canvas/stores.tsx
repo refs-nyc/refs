@@ -148,7 +148,7 @@ export const useItemStore = create((set) => ({
 // Create Ref with Item
 //
 //
-export const createRefWithItem = async (stagedRef: StagedRef): { ref: CompleteRef; item: Item } => {
+export const createRefWithItem = async (stagedRef: StagedRef) => {
   const refStore = useRefStore.getState()
   const itemStore = useItemStore.getState()
   const profileStore = useProfileStore.getState()
@@ -162,6 +162,7 @@ export const createRefWithItem = async (stagedRef: StagedRef): { ref: CompleteRe
 
   const newItem = await itemStore.push({
     ...copiedRef,
+    backlog: stagedRef?.backlog,
     ref: newRef.id,
   })
 

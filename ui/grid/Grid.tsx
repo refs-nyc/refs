@@ -12,11 +12,13 @@ export const Grid = ({
   columns = 3,
   rows = 3,
   items,
+  canAdd = true,
 }: {
   onAddItem?: () => void
   columns: number
   rows: number
   items: any[]
+  canAdd?: boolean
 }) => {
   useEffect(() => {
     console.log('items updated', items.length)
@@ -39,9 +41,10 @@ export const Grid = ({
           )}
         </>
       ))}
-      {/* Determine if this is your grid or nah? */}
-      {items.length < gridSize && <GridTileActionAdd onAddPress={onAddItem} />}
-      {Array.from({ length: gridSize - items.length - 1 }).map((_, i) => (
+
+      {canAdd && <>{items.length < gridSize && <GridTileActionAdd onAddPress={onAddItem} />}</>}
+
+      {Array.from({ length: gridSize - items.length - (canAdd ? 1 : 0) }).map((_, i) => (
         <GridTile key={i} />
       ))}
     </GridWrapper>

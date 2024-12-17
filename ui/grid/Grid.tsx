@@ -24,6 +24,8 @@ export const Grid = ({
     items.forEach((itm) => console.log(itm.expand.ref.title))
   }, [items])
 
+  const gridSize = columns * rows
+
   return (
     <GridWrapper columns={columns} rows={rows}>
       {items.map((item, i) => (
@@ -37,8 +39,9 @@ export const Grid = ({
           )}
         </>
       ))}
-      {items.length < 12 && <GridTileActionAdd onAddPress={onAddItem} />}
-      {Array.from({ length: 12 - items.length - 1 }).map((_, i) => (
+      {/* Determine if this is your grid or nah? */}
+      {items.length < gridSize && <GridTileActionAdd onAddPress={onAddItem} />}
+      {Array.from({ length: gridSize - items.length - 1 }).map((_, i) => (
         <GridTile key={i} />
       ))}
     </GridWrapper>

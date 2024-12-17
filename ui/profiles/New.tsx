@@ -100,6 +100,7 @@ const ProfileStep = ({ fields, index, onComplete }) => {
                   id="email"
                   placeholder="Login with email"
                   value={value}
+                  autoFocus={true}
                 >
                   {errors.email && (
                     <SizableText
@@ -139,6 +140,7 @@ const ProfileStep = ({ fields, index, onComplete }) => {
                   id="firstName"
                   placeholder="First Name"
                   value={value}
+                  autoFocus={true}
                 >
                   {errors.firstName && (
                     <SizableText
@@ -208,6 +210,7 @@ const ProfileStep = ({ fields, index, onComplete }) => {
                   id="userName"
                   placeholder="username"
                   value={value}
+                  autoFocus={true}
                 >
                   {errors.userName && (
                     <SizableText

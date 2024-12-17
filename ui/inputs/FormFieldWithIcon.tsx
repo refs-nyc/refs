@@ -10,6 +10,7 @@ export const FormFieldWithIcon = ({
   placeholder,
   onChange,
   value = '',
+  autoFocus = false,
 }: {
   type: 'user' | 'username' | 'phone' | 'email'
   id: string
@@ -17,6 +18,7 @@ export const FormFieldWithIcon = ({
   placeholder: string
   onChange: (str) => void
   value: string
+  autoFocus: boolean
 }) => {
   // const { color } = getTokens()
 
@@ -49,6 +51,7 @@ export const FormFieldWithIcon = ({
             width: '100%',
             color: c.accent,
           }}
+          autoFocus={autoFocus}
           autoCapitalize="none"
           placeholder={placeholder}
           placeholderTextColor={c.accent}

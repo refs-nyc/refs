@@ -54,6 +54,41 @@ export const useProfileStore = create((set, get) => ({
       return record.id
     } catch (error) {}
   },
+  //
+  //
+  //
+  login: async (userName: string) => {
+    try {
+      const record = await pocketbase
+        .collection('profiles')
+        .getFirstListItem(`userName = "${userName}"`, { expand: 'items' })
+
+      set(() => ({
+        userProfile: record,
+      }))
+      return record
+    } catch (error) {
+      throw new Error(error)
+    }
+  },
+  //
+  //
+  //
+  attachItem: async (itemId: string) => {
+    const userProfile = get().userProfile
+    console.log(userProfile)
+    if (!userProfile.id) throw Error('Not logged in')
+
+    try {
+      const record = await pocketbase.collection('profiles').getOne(userProfile.id)
+      const updatedRecord = await pocketbase
+        .collection('profiles')
+        .update(userProfile.id, { items: [...record.items, itemId] })
+      return updatedRecord
+    } catch (error) {
+      console.error(error)
+    }
+  },
 }))
 
 // ***
@@ -91,8 +126,6 @@ export const useItemStore = create((set) => ({
   push: async (newItem: StagedItem) => {
     const record = await pocketbase.collection('items').create(newItem, { expand: 'ref' })
 
-    //
-
     set((state) => {
       const newItems = [...state.items, record]
       return { items: newItems }
@@ -116,10 +149,9 @@ export const useItemStore = create((set) => ({
 export const createRefWithItem = async (stagedRef: StagedRef): { ref: CompleteRef; item: Item } => {
   const refStore = useRefStore.getState()
   const itemStore = useItemStore.getState()
+  const profileStore = useProfileStore.getState()
 
   const newRef = await refStore.push(stagedRef)
-
-  console.log(newRef)
 
   const copiedRef = { ...newRef }
 
@@ -131,7 +163,11 @@ export const createRefWithItem = async (stagedRef: StagedRef): { ref: CompleteRe
     ref: newRef.id,
   })
 
-  console.log(newItem)
+  // If the userProfile is set, attach item ID to items
+  if (profileStore.userProfile) {
+    console.log('attach')
+    await profileStore.attachItem(newItem)
+  }
 
   return { ref: newRef, item: newItem }
 }

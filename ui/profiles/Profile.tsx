@@ -20,6 +20,8 @@ export const Profile = ({ userName }: { userName: string }) => {
   const [profile, setProfile] = useState()
   const [adding, setAdding] = useState(false)
 
+  const { userProfile } = useProfileStore()
+
   useEffect(() => {
     const getProfile = async (user: string) => {
       try {
@@ -98,6 +100,7 @@ export const Profile = ({ userName }: { userName: string }) => {
             >
               <ProfileHeader profile={profile} />
               <Grid
+                canAdd={userProfile.userName === userName}
                 onAddItem={() => {
                   setAdding(true)
                 }}

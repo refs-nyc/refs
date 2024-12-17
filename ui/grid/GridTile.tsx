@@ -10,23 +10,5 @@ export const GridTile = ({
 }) => {
   console.log(children)
 
-  return (
-    <View
-      style={[
-        base.gridTile,
-        {
-          borderWidth: s.$025,
-          backgroundColor: c.surface2,
-          borderColor: borderColor || c.surface2,
-          borderRadius: s.$075,
-          aspectRatio: 1,
-          justifyContent: 'center',
-          alignItems: 'center',
-          flex: 1,
-        },
-      ]}
-    >
-      {children}
-    </View>
-  )
+  return <View style={[base.gridTile, { borderColor: borderColor || c.surface2 }]}>{children}</View>
 }

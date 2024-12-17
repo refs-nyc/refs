@@ -120,6 +120,11 @@ export const t = typo
 export const base = StyleSheet.create({
   gridTile: {
     aspectRatio: 1,
+    borderWidth: s.$025,
+    backgroundColor: c.surface2,
+    borderRadius: s.$075,
+    justifyContent: 'center',
+    alignItems: 'center',
     flex: 1,
   },
 })

@@ -13,6 +13,7 @@ import 'fast-text-encoding'
 // For pocketbase
 global.EventSource = eventsource
 
+import { SafeAreaProvider } from 'react-native-safe-area-context'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { useEffect } from 'react'
 import { StatusBar, useColorScheme } from 'react-native'
@@ -68,7 +69,11 @@ export default function RootLayout() {
 }
 
 const Providers = ({ children }: { children: React.ReactNode }) => {
-  return <GestureHandlerRootView>{children}</GestureHandlerRootView>
+  return (
+    <SafeAreaProvider>
+      <GestureHandlerRootView>{children}</GestureHandlerRootView>
+    </SafeAreaProvider>
+  )
 }
 
 function RootLayoutNav() {

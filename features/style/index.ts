@@ -99,6 +99,18 @@ export const typo = StyleSheet.create({
     lineHeight: s.$1half,
     letterSpacing: -0.5,
   },
+  h3: {
+    fontFamily: 'InterBold',
+    fontSize: s.$1,
+    lineHeight: s.$1half,
+    letterSpacing: -0.5,
+  },
+  h3normal: {
+    fontFamily: 'Inter',
+    fontSize: s.$1,
+    lineHeight: s.$1half,
+    letterSpacing: -0.5,
+  },
   strong: {
     fontFamily: 'InterBold',
   },

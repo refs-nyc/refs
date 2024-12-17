@@ -1,22 +1,11 @@
 import { View } from 'react-native'
 import { Image } from 'expo-image'
+import { base } from '@/features/style'
 
 export const GridTileImage = ({ source }: { source: string }) => (
-  <View
-    style={{
-      flex: 1,
-      aspectRatio: 1,
-      justifyContent: 'center',
-      overflow: 'hidden',
-    }}
-  >
-    <Image
-      style={{
-        flex: 1,
-        width: '100%',
-      }}
-      source={source}
-      contentFit="cover"
-    />
-  </View>
+  <Image
+    style={[base.gridTile, { borderColor: 'transparent' }]}
+    source={source}
+    contentFit="cover"
+  />
 )

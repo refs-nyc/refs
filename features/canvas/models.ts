@@ -35,6 +35,8 @@ export const models = {
     url: 'string?',
     children: '@items[]',
     deletedAt: 'number?',
+    order: 'number', // range 0 - 11
+    backlog: 'number', // 0 or 1
   },
 
   // Later, @raymond to rewrite: https://docs.canvas.xyz/examples-encrypted-chat.html

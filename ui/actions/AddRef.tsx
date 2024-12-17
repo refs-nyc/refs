@@ -15,7 +15,15 @@ import type { ImagePickerAsset } from 'expo-image-picker'
 
 const win = Dimensions.get('window')
 
-export const AddRef = ({ onAddRef, onCancel }: { onAddRef: () => Item; onCancel: () => void }) => {
+export const AddRef = ({
+  onAddRef,
+  onCancel,
+  backlog = false,
+}: {
+  onAddRef: () => Item
+  onCancel: () => void
+  backlog?: boolean
+}) => {
   const [textOpen, setTextOpen] = useState(false)
   const [pickerOpen, setPickerOpen] = useState(false)
   const [cameraOpen, setCameraOpen] = useState(false)
@@ -104,7 +112,9 @@ export const AddRef = ({ onAddRef, onCancel }: { onAddRef: () => Item; onCancel:
         </>
       )}
 
-      {addingRef && <NewRef r={refData} onComplete={onAddRef} onCancel={onCancel} />}
+      {addingRef && (
+        <NewRef r={refData} onComplete={onAddRef} onCancel={onCancel} backlog={backlog} />
+      )}
     </Animated.View>
   )
 }

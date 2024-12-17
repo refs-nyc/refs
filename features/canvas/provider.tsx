@@ -14,6 +14,10 @@ export function useCanvasContext() {
 
 export const appPromise = init()
 
+appPromise.then((app) => {
+  app.connect('ws://refs.canvas.xyz')
+})
+
 export function CanvasProvider({ children }) {
   const [ctx, setCtx] = useState(null)
 

@@ -77,7 +77,5 @@ export const init = async () => {
     topic: 'refsv2.canvas.xyz',
   })
 
-  app.connect("ws://refs.canvas.xyz")
-
   return app
 }

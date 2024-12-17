@@ -23,7 +23,7 @@ export function HomeScreen() {
           <Button
             variant="basic"
             title="Manus' profile"
-            onPress={() => router.push('/user/manegame')}
+            onPress={() => router.push('/user/manegame?firstVisit=true')}
           />
         </YStack>
       </YStack>

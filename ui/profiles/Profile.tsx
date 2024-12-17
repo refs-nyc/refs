@@ -2,6 +2,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Drawer, AddRef, Heading, XStack, YStack } from '@/ui'
 import { Image } from 'expo-image'
 import { ProfileHeader } from './ProfileHeader'
+import { DraggableGridScrollView, DraggableGrid } from '../grid/DraggableGrid'
 import { GridTile } from '../grid/GridTile'
 import { Grid } from '../grid/Grid'
 import { Link, useLocalSearchParams } from 'expo-router'
@@ -79,113 +80,103 @@ export const Profile = ({ userName }: { userName: string }) => {
 
   return (
     <>
-      <ScrollView style={{ paddingTop: Math.max(insets.top, 16) }}>
-        <YStack
-          style={{
-            flex: 1,
-            justifyContent: 'center',
-            alignItems: 'center',
-            paddingHorizontal: s.$1half,
-          }}
-          gap={s.$4}
-        >
-          {firstVisit && (
-            <>
-              <Heading tag="h2normal">Thanks for signing up!</Heading>
-              <Link href={`/user/${userName}`}>
-                <YStack
-                  gap={s.$1}
-                  style={{
-                    minWidth: s.$20,
-                    flexDirection: 'row',
-                    backgroundColor: c.surface2,
-                    padding: s.$1half,
-                    borderRadius: s.$08,
-                  }}
-                >
-                  <XStack style={{ width: '100%', justifyContent: 'space-between' }}>
-                    <Heading tag="h2">{userName}</Heading>
-                    {profile?.image && (
-                      <Image
-                        style={{ width: s.$6, height: s.$6, borderRadius: '100%' }}
-                        source={profile.image}
-                      />
-                    )}
-                  </XStack>
-                  <XStack style={{ width: '100%' }}>
-                    {/* @todo: fill tiles */}
-                    <GridTile />
-                    <GridTile />
-                    <GridTile />
-                  </XStack>
-                </YStack>
-              </Link>
-
-              <Shareable>
-                <Heading tag="h2">Share</Heading>
-              </Shareable>
-            </>
-          )}
-
-          {!firstVisit && profile && (
-            <View
-              style={{
-                flex: 1,
-                width: '100%',
-                marginHorizontal: s.$1half,
-              }}
-            >
-              <ProfileHeader profile={profile} />
-              <Grid
-                canAdd={userProfile.userName === userName}
-                onAddItem={() => {
-                  setAddingTo('grid')
-                }}
-                columns={3}
-                items={gridItems}
-                rows={4}
-              ></Grid>
-              {/* Backlog toggle */}
-              <XStack
+      <DraggableGridScrollView
+        style={{
+          paddingHorizontal: s.$2,
+        }}
+      >
+        {firstVisit && (
+          <>
+            <Heading tag="h2normal">Thanks for signing up!</Heading>
+            <Link href={`/user/${userName}`}>
+              <YStack
+                gap={s.$1}
                 style={{
-                  width: '100%',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  marginVertical: s.$1,
+                  minWidth: s.$20,
+                  flexDirection: 'row',
+                  backgroundColor: c.surface2,
+                  padding: s.$1half,
+                  borderRadius: s.$08,
                 }}
-                gap={s.$08}
               >
-                <Heading tag="h3normal">My Backlog</Heading>
-                <View style={{ height: s.$025, backgroundColor: c.black, flex: 1 }}></View>
-                <Pressable onPress={() => setAddingTo('backlog')}>
-                  <Ionicons size={s.$3} name="add-circle-outline" />
-                </Pressable>
-              </XStack>
-              {/* Backlog */}
-              {backlogItems.length > 0 || gridItems.length === 12 ? (
-                <View style={{ marginBottom: s.$10 }}>
-                  <Grid
-                    canAdd={userProfile.userName === userName}
-                    onAddItem={() => {
-                      setAddingTo('backlog')
-                    }}
-                    columns={3}
-                    items={backlogItems}
-                    rows={Math.ceil((backlogItems.length + 1) / 3)}
-                  />
-                </View>
-              ) : (
-                <Heading style={{ textAlign: 'center' }} tag="mutewarn">
-                  Add refs to your backlog. They’ll be searchable to others, but won’t show up on
-                  your grid.
-                </Heading>
-              )}
-            </View>
-          )}
+                <XStack style={{ width: '100%', justifyContent: 'space-between' }}>
+                  <Heading tag="h2">{userName}</Heading>
+                  {profile?.image && (
+                    <Image
+                      style={{ width: s.$6, height: s.$6, borderRadius: '100%' }}
+                      source={profile.image}
+                    />
+                  )}
+                </XStack>
+                <XStack style={{ width: '100%' }}>
+                  {/* @todo: fill tiles */}
+                  <GridTile />
+                  <GridTile />
+                  <GridTile />
+                </XStack>
+              </YStack>
+            </Link>
 
-          {!profile && <Heading tag="h1">Profile not found</Heading>}
-        </YStack>
-      </ScrollView>
+            <Shareable>
+              <Heading tag="h2">Share</Heading>
+            </Shareable>
+          </>
+        )}
+
+        {!firstVisit && profile && <ProfileHeader profile={profile} />}
+
+        {!firstVisit && profile && (
+          <Grid
+            canAdd={userProfile.userName === userName}
+            onAddItem={() => {
+              setAddingTo('grid')
+            }}
+            columns={3}
+            items={gridItems}
+            rows={4}
+          />
+        )}
+        {!firstVisit && profile && (
+          <XStack
+            style={{
+              width: '100%',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              marginVertical: s.$1,
+            }}
+            gap={s.$08}
+          >
+            <Heading tag="h3normal">My Backlog</Heading>
+            <View style={{ height: s.$025, backgroundColor: c.black, flex: 1 }}></View>
+            <Pressable onPress={() => setAddingTo('backlog')}>
+              <Ionicons size={s.$3} name="add-circle-outline" />
+            </Pressable>
+          </XStack>
+        )}
+
+        {/* {!firstVisit && profile && <DraggableGrid items={gridItems}></DraggableGrid>} */}
+
+        {!firstVisit && profile && (backlogItems.length > 0 || gridItems.length === 12) ? (
+          <View style={{ marginBottom: s.$10 }}>
+            <Grid
+              canAdd={userProfile.userName === userName}
+              onAddItem={() => {
+                setAddingTo('backlog')
+              }}
+              columns={3}
+              items={backlogItems}
+              rows={Math.ceil((backlogItems.length + 1) / 3)}
+            />
+          </View>
+        ) : (
+          <Heading style={{ textAlign: 'center' }} tag="mutewarn">
+            Add refs to your backlog. They’ll be searchable to others, but won’t show up on your
+            grid.
+          </Heading>
+        )}
+
+        {!profile && <Heading tag="h1">Profile not found</Heading>}
+      </DraggableGridScrollView>
 
       {addingTo !== '' && (
         <Drawer close={() => setAddingTo('')}>

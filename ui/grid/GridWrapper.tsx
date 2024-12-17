@@ -1,6 +1,11 @@
 import { Children } from 'react'
+import { FlatList } from 'react-native'
 import { YStack, XStack } from '@/ui'
 import { s } from '@/features/style'
+
+const renderItem = ({ children }) => {
+  ;<>{children}</>
+}
 
 export const GridWrapper = ({ children, columns = 3, rows = 4 }) => {
   const count = Children.count(children)
@@ -10,9 +15,6 @@ export const GridWrapper = ({ children, columns = 3, rows = 4 }) => {
 
   const size = rows * columns
   const empty = Math.max(size - count, 0)
-
-  console.log('Initialising a grid of size', size)
-  console.log('With', count, ' elements')
 
   return (
     <YStack gap={s.$075}>

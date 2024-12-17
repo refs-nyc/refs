@@ -33,9 +33,9 @@ export const Grid = ({
       {items.map((item, i) => (
         <>
           {item.image ? (
-            <GridTileImage key={item.id} source={item.image} />
+            <GridTileImage key={`old-${item.id}`} source={item.image} />
           ) : (
-            <GridTile borderColor="black" key={item.id}>
+            <GridTile borderColor="black" key={`old-${item.id}`}>
               <Text style={{ textAlign: 'center' }}>{item.expand.ref.title}</Text>
             </GridTile>
           )}

@@ -307,7 +307,7 @@ export const NewProfile = () => {
       try {
         const { userName } = await register()
 
-        router.push(`/user/${userName}`)
+        router.push(`/user/${userName}?firstVisit=true`)
       } catch (error) {
         console.error('Nope', error)
       }

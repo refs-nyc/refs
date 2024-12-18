@@ -52,7 +52,7 @@ export const useProfileStore = create((set, get) => ({
       set(() => ({
         userProfile: finalProfile,
       }))
-      return record.id
+      return record
     } catch (error) {}
   },
   //

@@ -1,0 +1,54 @@
+build:
+  name: iOS App Store build
+  steps:
+    - eas/checkout
+
+    - eas/use_npm_token
+
+    - eas/install_node_modules
+
+    - eas/resolve_build_config
+
+    - eas/resolve_apple_team_id_from_credentials:
+        id: resolve_apple_team_id_from_credentials
+
+    - eas/prebuild:
+        inputs:
+          apple_team_id: ${ steps.resolve_apple_team_id_from_credentials.apple_team_id }
+
+    - run:
+        name: Install pods
+        working_directory: ./ios
+        command: pod install
+
+    # if you are not using EAS Update you can remove this step from your config
+    # https://docs.expo.dev/eas-update/introduction/
+    - eas/configure_eas_update:
+        inputs:
+          throw_if_not_configured: false
+
+    # you can skip this step if you are not using remote version management
+    # https://docs.expo.dev/build-reference/app-versions/#remote-version-source
+    - eas/configure_ios_credentials
+
+    - eas/configure_ios_version
+
+    - run:
+        name: Bundle JavaScript
+        command: npx expo export:embed --platform ios --bundle-output ./ios/main.jsbundle --assets-dest ios
+
+    - eas/generate_gymfile_from_template:
+        inputs:
+          credentials: ${ eas.job.secrets.buildCredentials }
+
+    - run:
+        name: Look for ios directory
+        command: ls ios
+
+    - run:
+        name: Look for build directory
+        command: ls ios/build
+
+    - eas/run_fastlane
+
+    - eas/find_and_upload_build_artifacts

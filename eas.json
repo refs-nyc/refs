@@ -12,6 +12,9 @@
       "distribution": "internal"
     },
     "production": {
+      "ios": {
+        "config": "ios.yml",
+      },
       "autoIncrement": true
     }
   },

@@ -1,18 +1,18 @@
-import fs from "node:fs"
-import assert from "node:assert"
-import process from "node:process"
-import http from "node:http"
+import fs from 'node:fs'
+import assert from 'node:assert'
+import process from 'node:process'
+import http from 'node:http'
 
-import { WebSocketServer } from "ws"
-import { NetworkServer } from "@canvas-js/gossiplog/server"
+import { WebSocketServer } from 'ws'
+import { NetworkServer } from '@canvas-js/gossiplog/server'
 
-import path, { dirname } from "path"
-import { fileURLToPath } from "url"
-import { packageDirectorySync } from "pkg-dir" 
-import express from "express"
+import path, { dirname } from 'path'
+import { fileURLToPath } from 'url'
+import { packageDirectorySync } from 'pkg-dir'
+import express from 'express'
 
-import stoppable from "stoppable"
-import { createAPI } from "@canvas-js/core/api"
+import stoppable from 'stoppable'
+import { createAPI } from '@canvas-js/core/api'
 
 import type { CanvasEvents } from '@canvas-js/core'
 import type { GossipLogEvents } from '@canvas-js/gossiplog'
@@ -42,7 +42,7 @@ init().then((app) => {
 
   // network explorer
   const api = express()
-  api.use("/api", createAPI(app))
+  api.use('/api', createAPI(app))
   const currentDirectory = dirname(fileURLToPath(import.meta.url)) // packages/cli/src/commands
   const packageDirectory = packageDirectorySync({ cwd: currentDirectory })
   assert(
@@ -64,8 +64,10 @@ init().then((app) => {
       packageDirectory,
       'node_modules/@canvas-js/network-explorer'
     )
+    console.log(networkExplorer)
     assert(fs.existsSync(networkExplorer), 'Could not find network explorer package')
     const build = path.resolve(networkExplorer, 'dist')
+    console.log(build)
     assert(
       fs.existsSync(build),
       'Invalid directory for network explorer static files (build not found)'
@@ -76,13 +78,12 @@ init().then((app) => {
   const server = http.createServer(api)
   const network = new NetworkServer(app.messageLog)
   const wss = new WebSocketServer({ server, perMessageDeflate: false })
-  wss.on("connection", network.handleConnection)
+  wss.on('connection', network.handleConnection)
 
   const controller = new AbortController()
-  controller.signal.addEventListener("abort", () => {
-    console.log("[canvas] Stopping HTTP API server...")
+  controller.signal.addEventListener('abort', () => {
     network.close()
-    wss.close(() => server.stop(() => console.log("[canvas] HTTP API server stopped.")))
+    wss.close()
   })
 
   server.listen(PORT)

@@ -44,7 +44,6 @@ init().then((app) => {
   const api = express()
   api.use('/api', createAPI(app))
   const currentDirectory = dirname(fileURLToPath(import.meta.url))
-  console.log(currentDirectory)
   const packageDirectory = packageDirectorySync({ cwd: currentDirectory })
   if (packageDirectory === undefined) {
     // production

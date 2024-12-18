@@ -43,17 +43,17 @@ init().then((app) => {
   // network explorer
   const api = express()
   api.use('/api', createAPI(app))
-  const currentDirectory = dirname(fileURLToPath(import.meta.url)) // packages/cli/src/commands
+  const currentDirectory = dirname(fileURLToPath(import.meta.url))
+  console.log(currentDirectory)
   const packageDirectory = packageDirectorySync({ cwd: currentDirectory })
   if (packageDirectory === undefined) {
     // production
     const networkExplorer = path.resolve(
       currentDirectory,
-      'node_modules/@canvas-js/network-explorer'
+      '../node_modules/@canvas-js/network-explorer'
     )
     assert(fs.existsSync(networkExplorer), 'Could not find network explorer package')
     const build = path.resolve(networkExplorer, 'dist')
-    console.log(build)
     assert(
       fs.existsSync(build),
       'Invalid directory for network explorer static files (build not found)'
@@ -66,10 +66,8 @@ init().then((app) => {
       packageDirectory,
       'node_modules/@canvas-js/network-explorer'
     )
-    console.log('networkExplorer', networkExplorer)
     assert(fs.existsSync(networkExplorer), 'Could not find network explorer package')
     const build = path.resolve(networkExplorer, 'dist')
-    console.log(build)
     assert(
       fs.existsSync(build),
       'Invalid directory for network explorer static files (build not found)'

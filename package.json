@@ -13,7 +13,7 @@
     "web": "expo start --web",
     "test": "jest --watchAll",
     "lint": "expo lint",
-    "server": "node --experimental-strip-types server/index.ts"
+    "server": "node --experimental-strip-types server/index.mts"
   },
   "jest": {
     "preset": "jest-expo"
@@ -25,6 +25,7 @@
     "@canvas-js/core": "^0.13.9",
     "@canvas-js/gossiplog": "^0.13.9",
     "@canvas-js/hooks": "^0.13.9",
+    "@canvas-js/network-explorer": "^0.13.9",
     "@ethersproject/providers": "^5.7.2",
     "@expo/vector-icons": "^14.0.2",
     "@ipld/dag-cbor": "^9.2.2",
@@ -58,6 +59,7 @@
     "fast-text-encoding": "^1.0.6",
     "metro": "0.81.0",
     "multiformats": "^13.3.1",
+    "pkg-dir": "^8.0.0",
     "react": "18.3.1",
     "react-dom": "18.3.1",
     "react-hook-form": "^7.54.0",
@@ -73,6 +75,7 @@
     "react-native-screens": "~4.1.0",
     "react-native-web": "~0.19.13",
     "react-native-webview": "13.12.2",
+    "stoppable": "^1.1.0",
     "text-encoding": "^0.7.0",
     "zustand": "^5.0.2"
   },

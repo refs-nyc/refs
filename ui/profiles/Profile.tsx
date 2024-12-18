@@ -195,7 +195,7 @@ export const Profile = ({ userName }: { userName: string }) => {
             </View>
           )}
 
-          {!profile && <Heading tag="h1">Profile not found</Heading>}
+          {!profile && <Heading tag="h1">Profile for {userName} not found</Heading>}
         </YStack>
       </ScrollView>
 

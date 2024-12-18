@@ -1,6 +1,7 @@
 import { XStack } from '@/ui'
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { View, TextInput } from 'react-native'
+
 import { c, s } from '@/features/style'
 
 export const FormFieldWithIcon = ({

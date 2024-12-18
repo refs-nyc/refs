@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { TextInput, Pressable } from 'react-native'
-import { XStack, H2 } from '@/ui'
+import { XStack, Heading } from '@/ui'
 import Ionicons from '@expo/vector-icons/Ionicons'
+import { s, c } from '@/features/style'
 
 export const EditableTitle = ({
   title,
@@ -19,10 +20,13 @@ export const EditableTitle = ({
     <>
       {!editing ? (
         <Pressable onPress={() => setEditing(true)}>
-          <XStack gap="$3" jc="center" ai="center">
-            <H2 ta="center" col={titleState == placeholder ? '$muted' : '$black'}>
+          <XStack gap={s.$3} style={{ justifyContent: 'center', alignItems: 'center' }}>
+            <Heading
+              tag="h1"
+              style={{ textAlign: 'center', color: titleState == placeholder ? c.muted : c.black }}
+            >
               {titleState}
-            </H2>
+            </Heading>
             <Ionicons name="pencil" />
           </XStack>
         </Pressable>
@@ -33,7 +37,7 @@ export const EditableTitle = ({
             onComplete(titleState)
           }}
         >
-          <XStack gap="$3" jc="center" ai="center">
+          <XStack gap={s.$3} style={{ justifyContent: 'center', alignItems: 'center' }}>
             <TextInput
               style={{
                 fontWeight: 'bold',

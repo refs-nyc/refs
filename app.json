@@ -1,8 +1,8 @@
 {
   "expo": {
     "name": "refs - internet phonebook",
-    "slug": "refs-nyc2",
-    "version": "0.0.2",
+    "slug": "refs-nyc",
+    "version": "0.0.4",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "refs-nyc2",
@@ -24,7 +24,7 @@
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 200,
           "resizeMode": "contain",
-          "backgroundColor": "#ffffff"
+          "backgroundColor": "#ffff00"
         }
       ]
     ],
@@ -36,8 +36,6 @@
         "projectId": "bfe02552-c1ea-4ff1-9a4e-d3a891016a19"
       }
     },
-    "android": {
-      "package": "refsnyc2.app"
-    }
+    "owner": "manusnijhoff"
   }
 }

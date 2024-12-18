@@ -1,6 +1,7 @@
 import { Heading } from './typo/Heading'
 import { XStack, YStack } from './core/Stacks'
 import { View } from 'react-native'
+import { useItemStore } from '@/features/canvas/stores'
 import { ExampleGrid } from './grid/ExampleGrid'
 import { UseCaseDemo } from './display/UseCaseDemo'
 import { MainButton } from './buttons/Button'
@@ -19,6 +20,8 @@ export const OnboardingCarouselItem = ({
   onAddItem: () => void
   done: () => void
 }) => {
+  const { items } = useItemStore()
+
   if (index === 0)
     return (
       <View
@@ -58,7 +61,7 @@ export const OnboardingCarouselItem = ({
           <Heading tag="h2normal" style={{ textAlign: 'center' }}>
             <Heading tag="h2">Fill your grid</Heading> with links, photos, hobbies, places
           </Heading>
-          <Grid onAddItem={onAddItem} />
+          <Grid items={items} onAddItem={onAddItem} />
           <YStack style={{ justifyContent: 'center', alignItems: 'center' }}>
             <MainButton title="next" onPress={next} />
           </YStack>

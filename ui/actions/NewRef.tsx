@@ -38,10 +38,12 @@ export const NewRef = ({
   r,
   placeholder = 'What is it',
   onComplete,
+  backlog = false,
 }: {
   r: StagedRef
   placeholder: string
   onComplete: (i: Item) => void
+  backlog?: boolean
 }) => {
   const [currentRef, setCurrentRef] = useState<StagedRef>({ ...r })
   const [imageAsset, setImageAsset] = useState(r?.image || null)
@@ -62,10 +64,17 @@ export const NewRef = ({
   }
 
   const submit = async () => {
-    console.log(currentRef)
-    const { item, ref } = await createRefWithItem({ ...currentRef, image: pinataSource })
-    console.log(item, ref)
-    onComplete(item)
+    try {
+      console.log(currentRef)
+      const { item, ref } = await createRefWithItem({ ...currentRef, image: pinataSource, backlog })
+      console.log(item)
+      console.log(ref)
+      onComplete(item)
+    } catch (e) {
+      console.error(e)
+    } finally {
+      console.log('Done')
+    }
   }
 
   return (
@@ -97,7 +106,7 @@ export const NewRef = ({
         </YStack>
       </View>
 
-      <Button title="done" disabled={!currentRef.title || !pinataSource} onPress={submit} />
+      <Button title="done" onPress={submit} />
     </>
   )
 }

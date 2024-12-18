@@ -4,19 +4,24 @@ install()
 import { polyfill as polyfillEncoding } from 'react-native-polyfill-globals/src/encoding'
 polyfillEncoding()
 
+import eventsource from 'react-native-sse'
 import 'event-target-polyfill'
 import '@/features/polyfill/custom-event-polyfill'
 import 'react-native-get-random-values'
 import 'fast-text-encoding'
 
+// For pocketbase
+global.EventSource = eventsource
+
+import { SafeAreaProvider } from 'react-native-safe-area-context'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { useEffect } from 'react'
 import { StatusBar, useColorScheme } from 'react-native'
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native'
 import { useFonts } from 'expo-font'
 import { SplashScreen, Stack } from 'expo-router'
-import { MagicProvider } from '@/features/magic/index'
-import { CanvasProvider } from '@/features/canvas/provider'
+// import { MagicProvider } from '@/features/magic/index'
+// import { CanvasProvider } from '@/features/canvas/provider'
 import { DeferredFonts } from '@/ui'
 import { c } from '@/features/style'
 import * as SystemUI from 'expo-system-ui'
@@ -40,11 +45,10 @@ export default function RootLayout() {
     InterBold: require('@/assets/fonts/Inter-Bold.ttf'),
   })
 
-  SystemUI.setBackgroundColorAsync(c.surface)
-
   function loadRemainingFonts() {}
 
   useEffect(() => {
+    SystemUI.setBackgroundColorAsync(c.surface)
     if (interLoaded || interError) {
       // Hide the splash screen after the fonts have loaded (or an error was returned) and the UI is ready.
       SplashScreen.hideAsync()
@@ -66,11 +70,9 @@ export default function RootLayout() {
 
 const Providers = ({ children }: { children: React.ReactNode }) => {
   return (
-    <MagicProvider>
-      <CanvasProvider>
-        <GestureHandlerRootView>{children}</GestureHandlerRootView>
-      </CanvasProvider>
-    </MagicProvider>
+    <SafeAreaProvider>
+      <GestureHandlerRootView>{children}</GestureHandlerRootView>
+    </SafeAreaProvider>
   )
 }
 

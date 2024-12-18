@@ -3,14 +3,11 @@ import { View, Dimensions } from 'react-native'
 import { useRef, useState } from 'react'
 import { router } from 'expo-router'
 import Carousel, { ICarouselInstance } from 'react-native-reanimated-carousel'
-import { useCanvasContext } from '@/features/canvas/provider'
 
 export function OnboardingScreen() {
   const ref = useRef<ICarouselInstance>(null)
   const win = Dimensions.get('window')
   const data = [{}, {}, {}, {}]
-
-  const app = useCanvasContext()
 
   const [addingIndex, setAddingIndex] = useState(-1)
 
@@ -47,6 +44,7 @@ export function OnboardingScreen() {
         <Drawer close={() => setAddingIndex(-1)}>
           <AddRef
             onAddRef={() => {
+              console.log('we have added ')
               setAddingIndex(-1)
             }}
             onCancel={() => {

@@ -1,6 +1,43 @@
 # Refs
 
-### iOS Build
+Currently:
+
+New ref flow
+Attaching ref to user flow
+[x]
+Updating a ref flow
+
+Debugging local build
+
+add profile links
+
+improve existing UI
+Make sure the keyboard issue is resolved
+
+test notifications
+
+run
+eas build --profile preview --local && tput bel
+eas build --profile preview --local --non-interactive && tput bel
+
+Step 1 Remove providers
+Result: Still white screen
+
+Step 2 Render just a RED screen by setting background color.
+Note: also moved SystemUI call into useEffect
+Result: Still white screen
+
+Step 3
+Just render a "bare" expo layout. With Splash screen. Remove all else
+Result:
+
+### Building in EAS
+
+```
+eas build --platform ios
+```
+
+### Building in Xcode locally
 
 Install dependencies:
 
@@ -27,7 +64,7 @@ iOS app for.
 Use `Cmd-R` to run the application, or `Cmd-B` to generate a build without
 running the application.
 
-### iOS Rebuild
+### Regenerating the iOS Application
 
 If you ever re-generate the iOS app using `npx expo prebuild`, you will need to
 update the app so that you can build it locally. You should avoid this if possible,

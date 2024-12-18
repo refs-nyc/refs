@@ -1,41 +1,16 @@
 import { useState, useMemo } from 'react'
-import { useItemStore } from '@/features/canvas/stores'
+import { pocketbase, useItemStore } from '@/features/canvas/stores'
 import { YStack, XStack } from '@/ui'
 import { TextInput, Pressable, FlatList, View, Text } from 'react-native'
 import { SearchResultItem } from '@/ui/atoms/SearchResultItem'
 import { NewRefListItem } from '@/ui/atoms/NewRefListItem'
-
-const SEARCH_ARRAY: RefsItem[] = [
-  {
-    id: '1',
-    title: 'SOMETHING COOL',
-    image:
-      'https://rogerfederer.com/wp-content/themes/roger-federer-2024/assets/graphics/records-bg-v4.1.1.jpg',
-    createdAt: Date.now(),
-  },
-  {
-    id: '2',
-    title: 'SOMETHING COOL',
-    image:
-      'https://rogerfederer.com/wp-content/themes/roger-federer-2024/assets/graphics/records-bg-v4.1.1.jpg',
-    createdAt: Date.now(),
-  },
-  {
-    id: '3',
-    title: 'SOMETHING COOL WITH A VERY LONG TITLE',
-    image:
-      'https://rogerfederer.com/wp-content/themes/roger-federer-2024/assets/graphics/records-bg-v4.1.1.jpg',
-    createdAt: Date.now(),
-  },
-]
+import { s, c } from '@/features/style'
 
 export const SearchOrAddRef = ({ onComplete }: { onComplete: (r: StagedRef) => void }) => {
   const [searchQuery, setSearchQuery] = useState('')
   const [searchResults, setSearchResults] = useState<RefsItem[]>([])
 
-  const { items } = useItemStore()
-
-  const searchableItems = useMemo(() => [...SEARCH_ARRAY, ...items], [SEARCH_ARRAY, items])
+  // const { items } = useItemStore()
 
   const renderItem = ({ item }) => {
     return (
@@ -45,24 +20,36 @@ export const SearchOrAddRef = ({ onComplete }: { onComplete: (r: StagedRef) => v
     )
   }
 
-  const updateQuery = (q: string) => {
-    const search = () => {
+  const updateQuery = async (q: string) => {
+    const search = async () => {
       console.log(q == '')
-      if (q == '') return []
-      return searchableItems.filter((item) => {
-        const pattern = new RegExp(q, 'i')
+      if (q === '') return []
 
-        return item?.title?.match(pattern) || item?.image?.match(pattern)
-      })
+      // Search items and refs db
+      const refsResults = await pocketbase
+        .collection('refs')
+        .getFullList({ filter: `title ~ "${q}"` })
+
+      console.log(refsResults)
+
+      return refsResults
     }
 
-    setSearchResults(search())
+    const result = await search()
+    setSearchResults(result)
     setSearchQuery(q)
   }
 
   return (
     <YStack height="100%" jc="space-between">
-      <View my="$2" bg="$surface-2" py="$3" px="$4" borderRadius="$2">
+      <View
+        style={{ backgroundColor: c.surface2 }}
+        my="$2"
+        bg="$surface-2"
+        py="$3"
+        px="$4"
+        borderRadius="$2"
+      >
         <TextInput
           autoFocus={true}
           value={searchQuery}
@@ -78,15 +65,6 @@ export const SearchOrAddRef = ({ onComplete }: { onComplete: (r: StagedRef) => v
       )}
 
       <FlatList data={searchResults} renderItem={renderItem} keyExtractor={(item) => item.id} />
-
-      {/* New ref */}
-      <XStack jc="space-between">
-        <Text>{searchQuery}</Text>
-
-        <Pressable onPress={() => onComplete({ title: searchQuery })}>
-          <Text>New ref</Text>
-        </Pressable>
-      </XStack>
     </YStack>
   )
 }

@@ -1,5 +1,25 @@
 import { create } from 'zustand'
-import { appPromise } from '@/features/canvas/provider'
+import Pocketbase from 'pocketbase'
+
+export const pocketbase = new Pocketbase('https://refs.enabler.space')
+pocketbase.autoCancellation(false)
+
+// const test = async () => {
+//   try {
+//     const record = await pocketbase
+//       .collection('profiles')
+//       .create({ userName: 'manegame', firstName: 'M', lastName: 'N' })
+
+//
+//   } catch (error) {
+//
+//
+//   }
+// }
+
+// test()
+
+// import { appPromise } from '@/features/canvas/provider'
 
 // ***
 // Profiles
@@ -23,21 +43,53 @@ export const useProfileStore = create((set, get) => ({
   // Requirement: staged profile
   //
   register: async () => {
-    const app = await appPromise
+    // const app = await appPromise
 
     try {
-      const {
-        result: { did },
-      } = await app.actions.createProfile(get().stagedProfile)
-      const finalProfile = await app.db.get('profiles', did)
+      const finalProfile = get().stagedProfile
+      const record = await pocketbase.collection('profiles').create(finalProfile)
 
       set(() => ({
         userProfile: finalProfile,
       }))
-      return finalProfile
+      return record.id
+    } catch (error) {}
+  },
+  //
+  //
+  //
+  login: async (userName: string) => {
+    try {
+      const record = await pocketbase
+        .collection('profiles')
+        .getFirstListItem(`userName = "${userName}"`, { expand: 'items,items.ref' })
+
+      set(() => ({
+        userProfile: record,
+      }))
+      return record
     } catch (error) {
-      console.error(error)
+      throw new Error(error)
     }
+  },
+  //
+  //
+  //
+  attachItem: async (itemId: string) => {
+    const userProfile = get().userProfile
+    if (!userProfile.id) throw Error('Not logged in')
+
+    try {
+      const updatedRecord = await pocketbase
+        .collection('profiles')
+        .update(userProfile.id, { '+items': itemId }, { expand: 'items,items.ref' })
+
+      set(() => ({
+        userProfile: updatedRecord,
+      }))
+
+      return updatedRecord
+    } catch (error) {}
   },
 }))
 
@@ -47,18 +99,19 @@ export const useProfileStore = create((set, get) => ({
 //
 export const useRefStore = create((set) => ({
   refs: [],
-  push: async (newRef: StagedRef) => {
-    const app = await appPromise
+  push: async (stagedRef: StagedRef) => {
+    const record = await pocketbase.collection('refs').create(stagedRef)
 
-    const { result: id } = await app.actions.createRef(newRef)
-    const finalRef = await app.db.get('refs', id)
+    set((state) => ({
+      refs: [...state.refs, record],
+    }))
 
-    set((state) => ({ refs: [...state.refs, finalRef] }))
-    return finalRef
+    return record
   },
   // Reference an existing Ref, and create an ref off it
   reference: () => {},
-  remove: (id) => {
+  remove: async (id) => {
+    await pocketbase.collection('refs').delete(id)
     set((state) => ({
       refs: [...state.refs.filter((i) => i.id !== id)],
     }))
@@ -74,23 +127,14 @@ export const useItemStore = create((set) => ({
   // 1. Create a new Ref
   // 2. Attach Ref to Item and create
   push: async (newItem: StagedItem) => {
-    const app = await appPromise
-
-    const { result: id } = await app.actions.createItem(newItem)
-    const finalItem = await app.db.get('items', id)
-    if (finalItem === null) throw new Error('Could not fetch Item')
-    const ref = await app.db.get('refs', finalItem.ref)
-    if (ref === null) throw new Error('Could not fetch Ref')
-    const joinedItem = { ...finalItem, title: ref.title, image: ref.image }
-
-    console.log(joinedItem)
+    const record = await pocketbase.collection('items').create(newItem, { expand: 'ref' })
 
     set((state) => {
-      const newItems = [...state.items, joinedItem]
+      const newItems = [...state.items, record]
       return { items: newItems }
     })
 
-    return joinedItem
+    return record
   },
   // Reference an existing Ref, and create an item off it
   reference: () => {},
@@ -105,25 +149,28 @@ export const useItemStore = create((set) => ({
 // Create Ref with Item
 //
 //
-export const createRefWithItem = async (stagedRef: StagedRef): { ref: CompleteRef; item: Item } => {
+export const createRefWithItem = async (stagedRef: StagedRef) => {
   const refStore = useRefStore.getState()
   const itemStore = useItemStore.getState()
+  const profileStore = useProfileStore.getState()
 
   const newRef = await refStore.push(stagedRef)
 
   const copiedRef = { ...newRef }
 
-  delete copiedRef.id
   delete copiedRef.firstReferral
   delete copiedRef.referrals
-  delete copiedRef.createdAt
-  delete copiedRef.deletedAt
 
   const newItem = await itemStore.push({
+    ...copiedRef,
+    backlog: stagedRef?.backlog,
     ref: newRef.id,
   })
 
-  console.log({ ref: newRef, item: newItem })
+  // If the userProfile is set, attach item ID to items
+  if (profileStore.userProfile) {
+    await profileStore.attachItem(newItem.id)
+  }
 
   return { ref: newRef, item: newItem }
 }

@@ -8,7 +8,8 @@ import { Dimensions } from 'react-native'
 import { useForm, Controller } from 'react-hook-form'
 import { useProfileStore } from '@/features/canvas/stores'
 import { router } from 'expo-router'
-import { useMagicContext } from '@/features/magic'
+import { LOGIN_STATE } from '@/features/magic'
+// import { useMagicContext } from '@/features/magic'
 import { s, c } from '@/features/style'
 import Carousel, { ICarouselInstance } from 'react-native-reanimated-carousel'
 
@@ -37,25 +38,25 @@ const ProfileStep = ({ fields, index, onComplete }) => {
     formState: { errors },
   } = useForm<StepInput1 | StepInput2 | StepInput3 | StepInput4>()
 
-  const { login, setLoginState, loginState, LOGIN_STATE } = useMagicContext()
+  const { login } = useProfileStore()
+  const [loginState, setLoginState] = useState(0)
 
   const formValues = watch()
 
   const onSubmit = async (d) => {
-    if (fields.includes('email')) {
+    if (fields.includes('userName')) {
       try {
-        setLoginState(LOGIN_STATE.LOGGING_IN)
-        console.log(formValues.email)
+        // setLoginState(LOGIN_STATE.LOGGING_IN)
+        console.log(formValues.userName)
 
         try {
-          await login(formValues.email)
+          const record = await login(formValues.userName)
+          console.log(record)
+          console.log('LOGIN SUCCESSful')
+          // If succesful, redirect to the user profile
+          router.push(`/user/${record.userName}`)
         } catch (error) {
           console.error(error)
-        }
-        // setLoginState(LOGIN_STATE.LOGGED_IN)
-
-        if (loginState === LOGIN_STATE.LOGGED_IN) {
-          onComplete(formValues)
         }
       } catch (error) {
         console.error(error)
@@ -99,6 +100,7 @@ const ProfileStep = ({ fields, index, onComplete }) => {
                   id="email"
                   placeholder="Login with email"
                   value={value}
+                  autoFocus={true}
                 >
                   {errors.email && (
                     <SizableText
@@ -138,6 +140,7 @@ const ProfileStep = ({ fields, index, onComplete }) => {
                   id="firstName"
                   placeholder="First Name"
                   value={value}
+                  autoFocus={true}
                 >
                   {errors.firstName && (
                     <SizableText
@@ -207,6 +210,7 @@ const ProfileStep = ({ fields, index, onComplete }) => {
                   id="userName"
                   placeholder="username"
                   value={value}
+                  autoFocus={true}
                 >
                   {errors.userName && (
                     <SizableText
@@ -279,7 +283,7 @@ export const NewProfile = () => {
   const { stagedProfile, updateStagedProfile, register } = useProfileStore()
   const ref = useRef<ICarouselInstance>(null)
   const win = Dimensions.get('window')
-  const data = [['email'], ['firstName', 'lastName'], ['userName'], ['image']]
+  const data = [['userName'], ['email'], ['firstName', 'lastName'], ['image']]
 
   const nextStep = async (formValues) => {
     const index = ref.current?.getCurrentIndex()

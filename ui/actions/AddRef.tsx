@@ -8,14 +8,22 @@ import { Dimensions } from 'react-native'
 import { useState, useMemo } from 'react'
 import { NewRef } from '../actions/NewRef'
 import { SearchOrAddRef } from '../actions/SearchOrAddRef'
-import { useCanvasContext } from '@/features/canvas/provider'
+// import { useCanvasContext } from '@/features/canvas/provider'
 import { c } from '@/features/style'
 
 import type { ImagePickerAsset } from 'expo-image-picker'
 
 const win = Dimensions.get('window')
 
-export const AddRef = ({ onAddRef, onCancel }: { onAddRef: () => Item; onCancel: () => void }) => {
+export const AddRef = ({
+  onAddRef,
+  onCancel,
+  backlog = false,
+}: {
+  onAddRef: () => Item
+  onCancel: () => void
+  backlog?: boolean
+}) => {
   const [textOpen, setTextOpen] = useState(false)
   const [pickerOpen, setPickerOpen] = useState(false)
   const [cameraOpen, setCameraOpen] = useState(false)
@@ -32,10 +40,6 @@ export const AddRef = ({ onAddRef, onCancel }: { onAddRef: () => Item; onCancel:
     [textOpen, pickerOpen, cameraOpen]
   )
   const addingRef = useMemo(() => refData?.image || refData?.title, [refData])
-
-  const app = useCanvasContext()
-
-  if (!app) throw new Error('Canvas App not found')
 
   const addImageRef = async (asset: ImagePickerAsset) => {
     const rd = { image: asset }
@@ -108,7 +112,9 @@ export const AddRef = ({ onAddRef, onCancel }: { onAddRef: () => Item; onCancel:
         </>
       )}
 
-      {addingRef && <NewRef r={refData} onComplete={onAddRef} onCancel={onCancel} />}
+      {addingRef && (
+        <NewRef r={refData} onComplete={onAddRef} onCancel={onCancel} backlog={backlog} />
+      )}
     </Animated.View>
   )
 }

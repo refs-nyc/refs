@@ -1,4 +1,6 @@
-import { StyleSheet } from 'react-native'
+import { Dimensions, StyleSheet } from 'react-native'
+
+const dimensions = Dimensions.get('window')
 
 // From light to dark
 export const c = {
@@ -14,6 +16,7 @@ export const c = {
   // Greys
   grey1: '#D9D9D9',
   grey2: '#787676',
+  muted: '#787676',
   // Rare
   none: 'transparent',
   red: '#f00',
@@ -98,6 +101,25 @@ export const typo = StyleSheet.create({
     lineHeight: s.$1half,
     letterSpacing: -0.5,
   },
+  h3: {
+    fontFamily: 'InterBold',
+    fontSize: s.$1,
+    lineHeight: s.$1half,
+    letterSpacing: -0.5,
+  },
+  h3normal: {
+    fontFamily: 'Inter',
+    fontSize: s.$1,
+    lineHeight: s.$1half,
+    letterSpacing: -0.5,
+  },
+  mutewarn: {
+    fontFamily: 'Inter',
+    fontSize: s.$09,
+    lineHeight: s.$1half,
+    letterSpacing: -0.5,
+    color: c.muted,
+  },
   strong: {
     fontFamily: 'InterBold',
   },
@@ -114,11 +136,20 @@ export const typo = StyleSheet.create({
     fontFamily: 'InterLightItalic',
   },
 })
+
+const TILE_SIZE = (dimensions.width - s.$2 * 2 - s.$075) / 3
+
 export const t = typo
 
 export const base = StyleSheet.create({
   gridTile: {
+    width: TILE_SIZE,
     aspectRatio: 1,
-    flex: 1,
+    backgroundColor: c.surface2,
+    justifyContent: 'center',
+    alignItems: 'center',
+    overflow: 'hidden',
+    borderRadius: s.$075,
+    // flex: 1,
   },
 })

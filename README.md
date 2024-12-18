@@ -1,50 +1,49 @@
-# Welcome to your Expo app 👋
+# Refs
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+### iOS Build
 
-## Get started
+Install dependencies:
 
-1. Install dependencies
-
-   ```bash
-   npm install
-   ```
-
-2. Start the app
-
-   ```bash
-    npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
-
-```bash
-npm run reset-project
+```
+npm i
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+Build the JS bundle that will be deployed in the generated Xcode app:
 
-## Learn more
+```
+npx expo export:embed --platform ios --bundle-output './ios/main.jsbundle' --assets-dest ios
+```
 
-To learn more about developing your project with Expo, look at the following resources:
+Open the iOS application in Xcode. Navigate to the iOS directory and open
+refsinternetphonebook.xcodeproj, or you can do this from the command line:
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+```
+open ios/refsinternetphonebook.xcodeproj
+```
 
-## Join the community
+In Product > Destination, select the destination you would like to build the
+iOS app for.
 
-Join our community of developers creating universal apps.
+Use `Cmd-R` to run the application, or `Cmd-B` to generate a build without
+running the application.
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+### iOS Rebuild
+
+If you ever re-generate the iOS app using `npx expo prebuild`, you will need to
+update the app so that you can build it locally. You should avoid this if possible,
+but if it's necessary, you will need to take these steps after generating a new
+prebuild:
+
+* In Product > Scheme > Edit Scheme, select "Release" as the build configuration.
+* In Xcode, in the application's directory tree, drag main.jsbundle from the `ios`
+  directory to the root of the application directory tree underneath the main app.
+  You will be prompted to add the jsbundle to the application and should accept.
+* Underneath the `refsinternetphonebook` bulid configuration, under
+  Signing & Capabilities, select a valid Team for building the application.
+
+### Server Build
+
+```
+npm i
+npm run server
+```

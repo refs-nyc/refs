@@ -2,9 +2,16 @@ Currently:
 
 New ref flow
 Attaching ref to user flow
+[x]
 Updating a ref flow
 
 Debugging local build
+
+add profile links
+
+improve existing UI
+
+test notifications
 
 run
 eas build --profile preview --local && tput bel

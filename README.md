@@ -10,6 +10,7 @@ Debugging local build
 add profile links
 
 improve existing UI
+Make sure the keyboard issue is resolved
 
 test notifications
 

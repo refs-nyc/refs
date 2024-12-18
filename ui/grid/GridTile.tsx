@@ -1,4 +1,4 @@
-import { View } from 'react-native'
+import { View, TouchableOpacity } from 'react-native'
 import { base, c, s } from '@/features/style'
 
 export const GridTile = ({
@@ -8,7 +8,16 @@ export const GridTile = ({
   children?: React.ReactNode
   borderColor?: string
 }) => {
-  console.log(children)
+  const onLongPress = () => {
+    console.log(children)
+  }
 
-  return <View style={[base.gridTile, { borderColor: borderColor || c.surface2 }]}>{children}</View>
+  return (
+    <View
+      style={[base.gridTile, { borderWidth: 2, borderColor: borderColor || c.surface2 }]}
+      onPress={onLongPress}
+    >
+      {children}
+    </View>
+  )
 }

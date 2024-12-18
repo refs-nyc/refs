@@ -1,4 +1,6 @@
-import { StyleSheet } from 'react-native'
+import { Dimensions, StyleSheet } from 'react-native'
+
+const dimensions = Dimensions.get('window')
 
 // From light to dark
 export const c = {
@@ -134,16 +136,20 @@ export const typo = StyleSheet.create({
     fontFamily: 'InterLightItalic',
   },
 })
+
+const TILE_SIZE = (dimensions.width - s.$2 * 2 - s.$075) / 3
+
 export const t = typo
 
 export const base = StyleSheet.create({
   gridTile: {
+    width: TILE_SIZE,
     aspectRatio: 1,
-    borderWidth: s.$025,
     backgroundColor: c.surface2,
-    borderRadius: s.$075,
     justifyContent: 'center',
     alignItems: 'center',
-    flex: 1,
+    overflow: 'hidden',
+    borderRadius: s.$075,
+    // flex: 1,
   },
 })

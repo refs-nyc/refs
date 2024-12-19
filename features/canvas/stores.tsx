@@ -74,15 +74,9 @@ export const useProfileStore = create((set, get) => ({
       }))
       return record
     } catch (error) {
-      console.log('ERROR FROM LOGIN', typeof error.status, error.status == 404)
       if (error.status == 404) {
-        console.log('Could not get profile. create one?')
         try {
-          const finalProfile = get().stagedProfile
-          console.log(finalProfile)
           const record = await get().register()
-          console.log('created profile', record)
-          console.log('----')
 
           set(() => ({
             userProfile: record,

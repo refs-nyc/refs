@@ -6,12 +6,12 @@ import { GridTile } from '../grid/GridTile'
 import { Link, router } from 'expo-router'
 import { s, c } from '@/features/style'
 
-export const FirstVisitScreen = ({ profile }) => {
+export const FirstVisitScreen = ({ user }) => {
   const [isEnabled, setIsEnabled] = useState(false)
   const toggleSwitch = () => {
     setIsEnabled((previousState) => !previousState)
     // @todo: sign them up
-    router.push(`/user/${profile.userName}`)
+    router.push(`/user/${user.userName}`)
   }
 
   return (
@@ -19,7 +19,7 @@ export const FirstVisitScreen = ({ profile }) => {
       <Heading style={{ textAlign: 'center' }} tag="h2normal">
         Thanks for signing up!
       </Heading>
-      <Link href={`/user/${profile.userName}`}>
+      <Link href={`/user/${user.userName}`}>
         <YStack
           gap={s.$1}
           style={{
@@ -31,11 +31,11 @@ export const FirstVisitScreen = ({ profile }) => {
           }}
         >
           <XStack style={{ width: '100%', justifyContent: 'space-between' }}>
-            <Heading tag="h2">{profile.userName}</Heading>
-            {profile?.image && (
+            <Heading tag="h2">{user.userName}</Heading>
+            {user?.image && (
               <Image
                 style={{ width: s.$6, height: s.$6, borderRadius: '100%' }}
-                source={profile.image}
+                source={user.image}
               />
             )}
           </XStack>

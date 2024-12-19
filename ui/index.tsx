@@ -16,7 +16,6 @@ export * from './drawers/Drawer'
 export * from './actions/AddRef'
 export * from './inputs/Camera'
 export * from './inputs/Picker'
-export * from './profiles/NewProfile'
 export * from './profiles/NewUserProfile'
 export * from './profiles/Profile'
 

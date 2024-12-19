@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect } from 'react'
 // This component takes a local image uri, displays the image and meanwhile posts the image to Pinata
 import { Image } from 'expo-image'
 import { View, Text } from 'react-native'

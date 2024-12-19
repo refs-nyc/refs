@@ -5,7 +5,7 @@ import { FirstVisitScreen } from './FirstVisitScreen'
 import { Grid } from '../grid/Grid'
 import { useLocalSearchParams } from 'expo-router'
 import { RefListItem } from '../atoms/RefListItem'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { View, Text } from 'react-native'
 // import { useCanvasContext } from '@/features/canvas/contract'
 import { s, c } from '@/features/style'
@@ -65,6 +65,8 @@ export const Profile = ({ userName }: { userName: string }) => {
     }
   }
 
+  const canAdd = useMemo(() => userProfile.userName === userName, [userName, userProfile])
+
   useEffect(() => {
     const getProfile = async (user: string) => {
       try {
@@ -102,8 +104,10 @@ export const Profile = ({ userName }: { userName: string }) => {
               }}
             >
               <ProfileHeader profile={profile} />
+
+              {/* THE GRID! */}
               <Grid
-                canAdd={userProfile.userName === userName}
+                canAdd={canAdd}
                 onAddItem={() => {
                   setAddingTo('grid')
                 }}
@@ -111,48 +115,52 @@ export const Profile = ({ userName }: { userName: string }) => {
                 items={gridItems}
                 rows={4}
               ></Grid>
-              {/* Backlog toggle */}
-              <XStack
-                style={{
-                  width: '100%',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  marginVertical: s.$1,
-                }}
-                gap={s.$08}
-              >
-                <Heading tag="h3normal">My Backlog</Heading>
-                <View style={{ height: s.$025, backgroundColor: c.black, flex: 1 }}></View>
-                <Pressable onPress={() => setAddingTo('backlog')}>
-                  <Ionicons size={s.$3} name="add-circle-outline" />
-                </Pressable>
-              </XStack>
-              {/* Backlog */}
-              {backlogItems.length > 0 || gridItems.length === 12 ? (
-                <YStack>
-                  <FlatList
-                    horizontal={false}
-                    data={backlogItems}
-                    keyExtractor={(item) => item.id}
-                    renderItem={({ item }) => <RefListItem r={item.expand.ref} />}
-                  />
-                </YStack>
-              ) : (
-                // <View style={{ marginBottom: s.$10 }}>
-                //   <Grid
-                //     canAdd={userProfile.userName === userName}
-                //     onAddItem={() => {
-                //       setAddingTo('backlog')
-                //     }}
-                //     columns={3}
-                //     items={backlogItems}
-                //     rows={Math.ceil((backlogItems.length + 1) / 3)}
-                //   />
-                // </View>
-                <Heading style={{ textAlign: 'center' }} tag="mutewarn">
-                  Add refs to your backlog. They’ll be searchable to others, but won’t show up on
-                  your grid.
-                </Heading>
+
+              {canAdd && (
+                <>
+                  <XStack
+                    style={{
+                      width: '100%',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      marginVertical: s.$1,
+                    }}
+                    gap={s.$08}
+                  >
+                    <Heading tag="h3normal">My Backlog</Heading>
+                    <View style={{ height: s.$025, backgroundColor: c.black, flex: 1 }}></View>
+                    <Pressable onPress={() => setAddingTo('backlog')}>
+                      <Ionicons size={s.$3} name="add-circle-outline" />
+                    </Pressable>
+                  </XStack>
+
+                  {backlogItems.length > 0 || gridItems.length === 12 ? (
+                    <YStack>
+                      <FlatList
+                        horizontal={false}
+                        data={backlogItems}
+                        keyExtractor={(item) => item.id}
+                        renderItem={({ item }) => <RefListItem r={item.expand.ref} />}
+                      />
+                    </YStack>
+                  ) : (
+                    // <View style={{ marginBottom: s.$10 }}>
+                    //   <Grid
+                    //     canAdd={userProfile.userName === userName}
+                    //     onAddItem={() => {
+                    //       setAddingTo('backlog')
+                    //     }}
+                    //     columns={3}
+                    //     items={backlogItems}
+                    //     rows={Math.ceil((backlogItems.length + 1) / 3)}
+                    //   />
+                    // </View>
+                    <Heading style={{ textAlign: 'center' }} tag="mutewarn">
+                      Add refs to your backlog. They’ll be searchable to others, but won’t show up
+                      on your grid.
+                    </Heading>
+                  )}
+                </>
               )}
             </View>
           )}

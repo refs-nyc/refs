@@ -1,17 +1,24 @@
+import { useState } from 'react'
 import { Heading, XStack, YStack } from '@/ui'
 import { Image } from 'expo-image'
-import { Switch } from 'react-native'
+import { Switch, View } from 'react-native'
 import { GridTile } from '../grid/GridTile'
-import { Link } from 'expo-router'
+import { Link, router } from 'expo-router'
 import { s, c } from '@/features/style'
-import { Shareable } from '../atoms/Shareable'
 
 export const FirstVisitScreen = ({ profile }) => {
   const [isEnabled, setIsEnabled] = useState(false)
-  const toggleSwitch = () => setIsEnabled((previousState) => !previousState)
+  const toggleSwitch = () => {
+    setIsEnabled((previousState) => !previousState)
+    // @todo: sign them up
+    router.push(`/user/${profile.userName}`)
+  }
+
   return (
-    <>
-      <Heading tag="h2normal">Thanks for signing up!</Heading>
+    <YStack gap={s.$3} screenHeight style={{ flex: 1, justifyContent: 'center' }}>
+      <Heading style={{ textAlign: 'center' }} tag="h2normal">
+        Thanks for signing up!
+      </Heading>
       <Link href={`/user/${profile.userName}`}>
         <YStack
           gap={s.$1}
@@ -33,31 +40,35 @@ export const FirstVisitScreen = ({ profile }) => {
             )}
           </XStack>
           <XStack style={{ width: '100%' }}>
-            {/* @todo: fill tiles */}
-            <GridTile />
-            <GridTile />
-            <GridTile />
+            <View style={{ width: '33.33%' }}>
+              <GridTile backgroundColor={c.surface} />
+            </View>
+            <View style={{ width: '33.33%' }}>
+              <GridTile backgroundColor={c.surface} />
+            </View>
+            <View style={{ width: '33.33%' }}>
+              <GridTile backgroundColor={c.surface} />
+            </View>
           </XStack>
-
-          <YStack>
-            <Heading tag="h2">
-              Refs is going live in Jan ‘25. Click below to get notified once it’s launched.
-            </Heading>
-            <Switch
-              trackColor={{ false: '#767577', true: '#81b0ff' }}
-              thumbColor={isEnabled ? '#f5dd4b' : '#f4f3f4'}
-              ios_backgroundColor="#3e3e3e"
-              onValueChange={toggleSwitch}
-              value={isEnabled}
-            />
-            <Heading tag="mutewarn">Push Notifications</Heading>
-          </YStack>
         </YStack>
       </Link>
+      {/* <Shareable style={{ width: '100%' }}>
+        <Button variant="fluid" title="Share"></Button>
+      </Shareable> */}
 
-      <Shareable>
-        <Heading tag="h2">Share</Heading>
-      </Shareable>
-    </>
+      <YStack style={{ justifyContent: 'center', alignItems: 'center' }} gap={s.$2}>
+        <Heading tag="h3normal" style={{ textAlign: 'center' }}>
+          Refs is going live on Jan ‘25. {'\n'} Get notified once it’s launched.
+        </Heading>
+        <Switch
+          trackColor={{ false: c.surface, true: c.accent2 }}
+          thumbColor={isEnabled ? c.accent : c.surface2}
+          ios_backgroundColor={c.white}
+          onValueChange={toggleSwitch}
+          value={isEnabled}
+        />
+        <Heading tag="mutewarn">Push Notifications</Heading>
+      </YStack>
+    </YStack>
   )
 }

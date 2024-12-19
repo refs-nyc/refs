@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { GridWrapper } from './GridWrapper'
 import { GridTile } from './GridTile'
 import { GridItem } from './GridItem'
+import { GridTileWrapper } from './GridTileWrapper'
 import { GridTileActionAdd } from './GridTileActionAdd'
 
 export const Grid = ({
@@ -31,10 +32,20 @@ export const Grid = ({
         <GridItem type={item?.image ? 'image' : 'text'} item={item} i={i} />
       ))}
 
-      {canAdd && <>{items.length < gridSize && <GridItem type={'add'} onPress={onAddItem} />}</>}
+      {canAdd && (
+        <>
+          {items.length < gridSize && (
+            <GridTileWrapper type="add">
+              <GridTileActionAdd onPress={onAddItem}></GridTileActionAdd>
+            </GridTileWrapper>
+          )}
+        </>
+      )}
 
       {Array.from({ length: gridSize - items.length - (canAdd ? 1 : 0) }).map((_, i) => (
-        <GridTile key={i} />
+        <GridTileWrapper type="">
+          <GridTile key={i} />
+        </GridTileWrapper>
       ))}
     </GridWrapper>
   )

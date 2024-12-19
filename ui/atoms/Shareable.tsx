@@ -1,10 +1,22 @@
-import { Pressable, Share, Alert } from "react-native"
+import { Pressable, Share, Alert } from 'react-native'
 
-export const Shareable = ({ children, message = "Refs.nyc", url = "https://refs.nyc", onShare }: { children: React.ReactNode, message?: string, url?: string, onShare?: () => void }) => {
+export const Shareable = ({
+  children,
+  style,
+  message = 'Refs.nyc',
+  url = 'https://refs.nyc',
+  onShare,
+}: {
+  children: React.ReactNode
+  message?: string
+  style?: any
+  url?: string
+  onShare?: () => void
+}) => {
   const onShareFn = async () => {
-    console.log("share")
+    console.log('share')
     try {
-      const result = await Share.share({ message, url });
+      const result = await Share.share({ message, url })
       if (result.action === Share.sharedAction) {
         if (result.activityType) {
           // shared with activity type of result.activityType
@@ -16,11 +28,13 @@ export const Shareable = ({ children, message = "Refs.nyc", url = "https://refs.
         // dismissed
       }
     } catch (error: any) {
-      Alert.alert(error.message);
+      Alert.alert(error.message)
     }
-  };
+  }
 
-  return <Pressable onPress={onShareFn}>
-    {children}
-  </Pressable>
+  return (
+    <Pressable style={style} onPress={onShareFn}>
+      {children}
+    </Pressable>
+  )
 }

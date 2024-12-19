@@ -6,6 +6,7 @@ import { PinataImage } from '../images/PinataImage'
 import { EditableTitle } from '../atoms/EditableTitle'
 import { createRefWithItem } from '@/features/canvas/stores'
 import { Button } from '../buttons/Button'
+import Ionicons from '@expo/vector-icons/Ionicons'
 import type { ImagePickerAsset } from 'expo-image-picker'
 
 const win = Dimensions.get('window')
@@ -38,11 +39,13 @@ export const NewRef = ({
   r,
   placeholder = 'What is it',
   onComplete,
+  onCancel,
   backlog = false,
 }: {
   r: StagedRef
   placeholder: string
   onComplete: (i: Item) => void
+  onCancel: () => void
   backlog?: boolean
 }) => {
   const [currentRef, setCurrentRef] = useState<StagedRef>({ ...r })
@@ -80,6 +83,7 @@ export const NewRef = ({
   return (
     <>
       <View style={{ minHeight }}>
+        <Ionicons name="chevron-back" size={20} onPress={onCancel} />
         <YStack gap="$3">
           {imageAsset ? (
             <PinataImage

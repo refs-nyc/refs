@@ -30,8 +30,6 @@ export const SearchOrAddRef = ({ onComplete }: { onComplete: (r: StagedRef) => v
         .collection('refs')
         .getFullList({ filter: `title ~ "${q}"` })
 
-      console.log(refsResults)
-
       return refsResults
     }
 
@@ -43,12 +41,13 @@ export const SearchOrAddRef = ({ onComplete }: { onComplete: (r: StagedRef) => v
   return (
     <YStack height="100%" jc="space-between">
       <View
-        style={{ backgroundColor: c.surface2 }}
-        my="$2"
-        bg="$surface-2"
-        py="$3"
-        px="$4"
-        borderRadius="$2"
+        style={{
+          backgroundColor: c.surface2,
+          marginVertical: s.$1,
+          paddingVertical: s.$08,
+          paddingHorizontal: s.$1,
+          borderRadius: s.$075,
+        }}
       >
         <TextInput
           autoFocus={true}
@@ -64,7 +63,12 @@ export const SearchOrAddRef = ({ onComplete }: { onComplete: (r: StagedRef) => v
         </Pressable>
       )}
 
-      <FlatList data={searchResults} renderItem={renderItem} keyExtractor={(item) => item.id} />
+      <FlatList
+        style={{ height: 300 }}
+        data={searchResults}
+        renderItem={renderItem}
+        keyExtractor={(item) => item.id}
+      />
     </YStack>
   )
 }

@@ -6,11 +6,13 @@ Attaching ref to user flow
 Updating a ref flow
 
 Debugging local build
+[x]
 
 add profile links
 
 improve existing UI
 Make sure the keyboard issue is resolved
+[x]
 
 test notifications
 

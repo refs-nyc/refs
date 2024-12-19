@@ -49,10 +49,10 @@ tomorrow: auth/notifs + list
 
 AUTH
 
-1. Setup DB to switch over profiles
-2. Adjust UI
-3. API RULES
-4. OTP password integration
+1. [x] Setup DB to switch over profiles
+2. [ ] Adjust UI
+3. [x?] API RULES
+4. [ ] OTP password integration
 
 Switch email sign in
 

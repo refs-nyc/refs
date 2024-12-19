@@ -23,25 +23,24 @@ export const RefListItem = ({ r }: { r: CompleteRef }) => {
   })
 
   return (
-    <View
+    <XStack
+      gap={s.$08}
       style={{
+        justifyContent: 'space-between',
+        alignItems: 'center',
         paddingVertical: s.$08,
         borderRadius: s.$075,
       }}
     >
-      <XStack gap={s.$1} style={{ justifyContent: 'space-between', alignItems: 'center' }}>
-        <XStack gap={s.$1} style={{ justifyContent: 'space-between', alignItems: 'center' }}>
-          <View
-            style={{ width: 20, height: 20, borderRadius: 4, backgroundColor: c.accent }}
-          ></View>
-          <Text>{r.title}</Text>
-        </XStack>
-        {}
-        <XStack gap={s.$1} style={{ justifyContent: 'space-between', alignItems: 'center' }}>
-          <Text>{referenceCount > -1 ? referenceCount : '...'} referencing</Text>
-          <Ionicons name="close" />
-        </XStack>
+      <XStack gap={s.$08} style={{ justifyContent: 'space-between', alignItems: 'center' }}>
+        <View style={{ width: 20, height: 20, borderRadius: 4, backgroundColor: c.accent }}></View>
+        <Text>{r.title}</Text>
       </XStack>
-    </View>
+
+      <XStack gap={s.$08} style={{ justifyContent: 'space-between', alignItems: 'center' }}>
+        <Text>{referenceCount > -1 ? referenceCount : '...'} referencing</Text>
+        <Ionicons name="close" />
+      </XStack>
+    </XStack>
   )
 }

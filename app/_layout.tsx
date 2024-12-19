@@ -13,6 +13,7 @@ import 'fast-text-encoding'
 // For pocketbase
 global.EventSource = eventsource
 
+import { pocketbase } from '@/features/pocketbase'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { useEffect } from 'react'
@@ -20,8 +21,6 @@ import { StatusBar, useColorScheme } from 'react-native'
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native'
 import { useFonts } from 'expo-font'
 import { SplashScreen, Stack } from 'expo-router'
-// import { MagicProvider } from '@/features/magic/index'
-// import { CanvasProvider } from '@/features/canvas/provider'
 import { DeferredFonts } from '@/ui'
 import { c } from '@/features/style'
 import * as SystemUI from 'expo-system-ui'
@@ -52,6 +51,13 @@ export default function RootLayout() {
     if (interLoaded || interError) {
       // Hide the splash screen after the fonts have loaded (or an error was returned) and the UI is ready.
       SplashScreen.hideAsync()
+
+      // Check if the user is already logged in
+      console.log(pocketbase.authStore.isValid)
+      if (pocketbase.authStore.isValid) {
+        console.log('user is logged in')
+      }
+
       loadRemainingFonts()
     }
   }, [interLoaded, interError])

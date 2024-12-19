@@ -47,12 +47,21 @@ Result:
 
 tomorrow: auth/notifs + list
 
-- [] COnvert profiles to users. Use Pb auth
-- [] Be able to add refs in onboarding
+AUTH
+
+1. [x] Setup DB to switch over profiles
+2. [ ] Adjust UI
+3. [x?] API RULES
+4. [ ] OTP password integration
+
+Switch email sign in
+
+- [x] Be able to add refs in onboarding
 - [] Moving refs to Backlog / Deleting them
 - [] Dragging Refs around Profile
   Lists
 - [] Add lists
+- [ ] Notifications test
 
 Friday: place/art/neither flow + feed of refs
 [] Add Ref category to db

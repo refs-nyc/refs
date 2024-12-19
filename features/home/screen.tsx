@@ -1,6 +1,7 @@
 import { View, Dimensions } from 'react-native'
 import { useEffect } from 'react'
 import { Button, YStack, Heading } from '../../ui/index'
+import { pocketbase } from '@/features/pocketbase'
 import Animated, {
   useAnimatedStyle,
   Easing,
@@ -57,7 +58,15 @@ export function HomeScreen() {
         </Heading>
         <YStack style={{ alignItems: 'center' }} gap={s.$05}>
           <Button title="Join" onPress={() => router.push('/onboarding')} />
-          <Button variant="basic" title="Login" onPress={() => router.push('/user/new')} />
+          {pocketbase.authStore.isValid && pocketbase.authStore?.record?.userName ? (
+            <Button
+              variant="basic"
+              title="Profile"
+              onPress={() => router.push(`/user/${pocketbase.authStore?.record?.userName}`)}
+            />
+          ) : (
+            <Button variant="basic" title="Login" onPress={() => router.push('/user/login')} />
+          )}
           {/* <Button
             variant="basic"
             title="Login"

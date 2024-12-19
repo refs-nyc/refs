@@ -10,7 +10,7 @@ import { View, Text } from 'react-native'
 import { s, c } from '@/features/style'
 import { useLiveQuery } from '@canvas-js/hooks'
 import { useCanvasContext } from '@/features/canvas/provider'
-import { pocketbase, useProfileStore } from '@/features/canvas/stores'
+import { pocketbase, useUserStore } from '@/features/pocketbase'
 import { Shareable } from '../atoms/Shareable'
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { FlatList, Pressable, ScrollView } from 'react-native-gesture-handler'
@@ -23,7 +23,7 @@ export const Profile = ({ userName }: { userName: string }) => {
   const [gridItems, setGridItems] = useState([])
   const [backlogItems, setBacklogItems] = useState([])
 
-  const { userProfile } = useProfileStore()
+  const { user } = useUserStore()
 
   const createdSort = (a: string, b: string) => {
     return new Date(a.created) - new Date(b.created)
@@ -41,46 +41,43 @@ export const Profile = ({ userName }: { userName: string }) => {
     return new Date(a.created) - new Date(b.created)
   }
 
-  const refreshGrid = async (user: string) => {
+  const refreshGrid = async (userName: string) => {
     try {
       const record = await pocketbase
-        .collection('profiles')
-        .getFirstListItem(`userName = "${user}"`, { expand: 'items,items.ref' })
+        .collection('users')
+        .getFirstListItem(`userName = "${userName}"`, { expand: 'items,items.ref' })
 
       setProfile(record)
 
-      console.log('refreshed grid, ', record)
+      const itms = record?.expand?.items?.filter((itm) => !itm.backlog).sort(gridSort) || []
+      const bklg = record?.expand?.items?.filter((itm) => itm.backlog).sort(createdSort) || []
 
       // Filter out backlog and normal
-      setGridItems(record?.expand?.items.filter((item) => !item.backlog).sort(gridSort))
-      setBacklogItems(
-        record?.expand?.items
-          .filter((item) => {
-            console.log('filtering by backlog', item.backlog)
-            return item.backlog
-          })
-          .sort(createdSort)
-      )
+      setGridItems(itms)
+      setBacklogItems(bklg)
     } catch (error) {
       console.error(error)
     }
   }
 
-  const canAdd = useMemo(() => userProfile.userName === userName, [userName, userProfile])
+  const canAdd = useMemo(() => {
+    console.log(pocketbase?.authStore?.record?.userName)
+    return pocketbase?.authStore?.record?.userName === userName
+  }, [pocketbase.authStore, userName, user])
 
   useEffect(() => {
-    const getProfile = async (user: string) => {
+    const getProfile = async () => {
       try {
-        await refreshGrid(user)
+        await refreshGrid(userName)
       } catch (error) {
         console.error(error)
       }
     }
 
-    getProfile(userName)
+    getProfile()
   }, [userName])
 
-  useEffect(() => console.log(profile), [profile])
+  useEffect(() => console.log(user), [user])
 
   return (
     <>
@@ -94,7 +91,7 @@ export const Profile = ({ userName }: { userName: string }) => {
           }}
           gap={s.$4}
         >
-          {firstVisit && profile && <FirstVisitScreen profile={profile} />}
+          {firstVisit && user && <FirstVisitScreen user={user} />}
 
           {!firstVisit && profile && (
             <View
@@ -141,13 +138,13 @@ export const Profile = ({ userName }: { userName: string }) => {
                         horizontal={false}
                         data={backlogItems}
                         keyExtractor={(item) => item.id}
-                        renderItem={({ item }) => <RefListItem r={item.expand.ref} />}
+                        renderItem={({ item }) => <RefListItem r={item?.expand?.ref} />}
                       />
                     </YStack>
                   ) : (
                     // <View style={{ marginBottom: s.$10 }}>
                     //   <Grid
-                    //     canAdd={userProfile.userName === userName}
+                    //     canAdd={user.userName === userName}
                     //     onAddItem={() => {
                     //       setAddingTo('backlog')
                     //     }}
@@ -166,7 +163,7 @@ export const Profile = ({ userName }: { userName: string }) => {
             </View>
           )}
 
-          {!profile && <Heading tag="h1">Profile for {userName} not found</Heading>}
+          {!user && <Heading tag="h1">Profile for {userName} not found</Heading>}
         </YStack>
       </ScrollView>
 

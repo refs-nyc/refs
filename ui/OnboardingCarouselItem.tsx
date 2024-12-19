@@ -1,7 +1,7 @@
 import { Heading } from './typo/Heading'
 import { XStack, YStack } from './core/Stacks'
 import { View } from 'react-native'
-import { useItemStore } from '@/features/canvas/stores'
+import { useItemStore } from '@/features/pocketbase'
 import { ExampleGrid } from './grid/ExampleGrid'
 import { UseCaseDemo } from './display/UseCaseDemo'
 import { Button } from './buttons/Button'

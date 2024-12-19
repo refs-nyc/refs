@@ -87,7 +87,14 @@ export function Demo() {
   const notificationListener = useRef<Notifications.EventSubscription>()
   const responseListener = useRef<Notifications.EventSubscription>()
 
+  const projectId = Constants?.expoConfig?.extra?.eas?.projectId ?? Constants?.easConfig?.projectId
+
   useEffect(() => {
+    const logInformation = async () => {
+      const { data: pushTokenString } = await Notifications.getExpoPushTokenAsync({ projectId })
+      console.log(pushTokenString)
+    }
+
     registerForPushNotificationsAsync()
       .then((token) => setExpoPushToken(token ?? ''))
       .catch((error: any) => setExpoPushToken(`${error}`))
@@ -99,6 +106,8 @@ export function Demo() {
     responseListener.current = Notifications.addNotificationResponseReceivedListener((response) => {
       console.log(response)
     })
+
+    logInformation()
 
     return () => {
       notificationListener.current &&

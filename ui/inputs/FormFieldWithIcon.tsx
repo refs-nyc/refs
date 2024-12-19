@@ -13,7 +13,7 @@ export const FormFieldWithIcon = ({
   value = '',
   autoFocus = false,
 }: {
-  type: 'user' | 'username' | 'phone' | 'email'
+  type: 'user' | 'username' | 'phone' | 'email' | 'password'
   id: string
   children: React.ReactNode
   placeholder: string
@@ -43,6 +43,7 @@ export const FormFieldWithIcon = ({
         {(type === 'email' || type === 'username') && (
           <Ionicons size={s.$1} color={c.accent} name="at" col="$accent" />
         )}
+        {type === 'password' && <Ionicons size={s.$1} color={c.accent} name="key" col="$accent" />}
         <TextInput
           style={{
             flex: 1,
@@ -52,6 +53,7 @@ export const FormFieldWithIcon = ({
             width: '100%',
             color: c.accent,
           }}
+          secureTextEntry={type === 'password'}
           autoFocus={autoFocus}
           autoCapitalize="none"
           placeholder={placeholder}
@@ -61,7 +63,11 @@ export const FormFieldWithIcon = ({
         />
       </XStack>
       {/* Warnings etc */}
-      <View style={{ height: s.$2, width: '100%', justifyContent: 'center' }}>{children}</View>
+      <View
+        style={{ height: s.$6, paddingVertical: s.$08, width: '100%', justifyContent: 'start' }}
+      >
+        {children}
+      </View>
     </>
   )
 }

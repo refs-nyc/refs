@@ -16,7 +16,7 @@ export * from './drawers/Drawer'
 export * from './actions/AddRef'
 export * from './inputs/Camera'
 export * from './inputs/Picker'
-export * from './profiles/New'
+export * from './profiles/NewUserProfile'
 export * from './profiles/Profile'
 
 export const Spinner = () => <Text>Loading</Text>

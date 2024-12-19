@@ -39,16 +39,21 @@ const ProfileStep = ({ fields, onComplete }) => {
     formState: { errors },
   } = useForm<StepInput1 | StepInput2 | StepInput3 | StepInput4>()
 
-  const { login } = useProfileStore()
+  // const { login } = useProfileStore()
+  const { stagedProfile, updateStagedProfile, login } = useProfileStore()
   const [loginState, setLoginState] = useState(0)
 
   const formValues = watch()
 
   const onSubmit = async (d) => {
     if (fields.includes('userName')) {
+      // Update
+      const updated = updateStagedProfile(formValues)
       try {
         // setLoginState(LOGIN_STATE.LOGGING_IN)
-        console.log(formValues.userName)
+        console.log('updated')
+        console.log(updated)
+        console.log('---------')
 
         try {
           const record = await login(formValues.userName)
@@ -57,6 +62,7 @@ const ProfileStep = ({ fields, onComplete }) => {
           // If succesful, redirect to the user profile
           router.push(`/user/${record.userName}`)
         } catch (error) {
+          const record = await create
           console.error(error)
         }
       } catch (error) {
@@ -105,7 +111,7 @@ const ProfileStep = ({ fields, onComplete }) => {
                     id="email"
                     placeholder="Login with email"
                     value={value}
-                    autoFocus={true}
+                    autoFocus={false}
                   >
                     {errors.email && (
                       <SizableText
@@ -145,7 +151,7 @@ const ProfileStep = ({ fields, onComplete }) => {
                     id="firstName"
                     placeholder="First Name"
                     value={value}
-                    autoFocus={true}
+                    autoFocus={false}
                   >
                     {errors.firstName && (
                       <SizableText
@@ -215,7 +221,7 @@ const ProfileStep = ({ fields, onComplete }) => {
                     id="userName"
                     placeholder="username"
                     value={value}
-                    autoFocus={true}
+                    autoFocus={false}
                   >
                     {errors.userName && (
                       <SizableText
@@ -296,25 +302,29 @@ export const NewProfile = () => {
   const { stagedProfile, updateStagedProfile, register } = useProfileStore()
   const ref = useRef<ICarouselInstance>(null)
   const win = Dimensions.get('window')
-  const data = [['email', 'userName'], ['firstName', 'lastName'], ['image'], ['userName']]
+  const data = [['email'], ['firstName', 'lastName'], ['image'], ['userName']]
 
   const nextStep = async (formValues) => {
     const index = ref.current?.getCurrentIndex()
     const updated = updateStagedProfile(formValues)
+    console.log(index, 'next step', updated)
 
     if (index < data.length - 1) {
       // Valid?
       ref.current?.next()
     } else {
       // Create a new profile
-      // submit()
 
       console.log('Completely done onboarding', updated, stagedProfile)
 
       try {
-        const { userName } = await register()
+        console.log(stagedProfile)
+        const record = await register()
 
-        router.push(`/user/${userName}?firstVisit=true`)
+        if (record.userName) {
+          console.log('Created record', record)
+          router.push(`/user/${record.userName}?firstVisit=true`)
+        }
       } catch (error) {
         console.error('Nope', error)
       }

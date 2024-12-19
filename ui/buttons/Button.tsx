@@ -26,7 +26,7 @@ export const Button = (props) => {
 
   return (
     <Pressable
-      style={[styles.button, buttonVariant, props?.style]}
+      style={[styles.button, buttonVariant, props?.style, disabled && styles.disabled]}
       onPress={!disabled ? onPress : () => {}}
     >
       <XStack style={{ justifyContent: align }} gap={s.$08}>

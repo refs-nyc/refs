@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { usePathname } from 'expo-router'
 import { View, Pressable, Dimensions } from 'react-native'
 import { Heading, YStack } from '@/ui'
 import { Picker } from '../inputs/Picker'
@@ -56,18 +57,22 @@ export const NewRef = ({
   onComplete,
   onCancel,
   backlog = false,
+  attach = true,
 }: {
   r: StagedRef
   placeholder: string
   onComplete: (i: Item) => void
   onCancel: () => void
   backlog?: boolean
+  attach: boolean
 }) => {
   const [currentRef, setCurrentRef] = useState<StagedRef>({ ...r })
   const [imageAsset, setImageAsset] = useState(r?.image || null)
   const [pinataSource, setPinataSource] = useState('')
 
   const minHeight = win.height * 0.7
+
+  const pathname = usePathname()
 
   const updateRefImage = (image: string) => {
     setPinataSource(image)
@@ -84,7 +89,10 @@ export const NewRef = ({
   const submit = async () => {
     try {
       console.log(currentRef)
-      const { item, ref } = await createRefWithItem({ ...currentRef, image: pinataSource, backlog })
+      const { item, ref } = await createRefWithItem(
+        { ...currentRef, image: pinataSource, backlog },
+        !pathname.includes('onboarding')
+      )
       console.log(item)
       console.log(ref)
       onComplete(item)
@@ -140,6 +148,7 @@ export const NewRef = ({
       <Button
         style={{ position: 'absolute', bottom: s.$4, left: s.$08, width: '100%' }}
         title="done"
+        disabled={pinataSource === 'none'}
         onPress={submit}
       />
     </>

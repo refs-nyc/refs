@@ -1,10 +1,9 @@
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Drawer, AddRef, Heading, XStack, YStack } from '@/ui'
-import { Image } from 'expo-image'
 import { ProfileHeader } from './ProfileHeader'
-import { GridTile } from '../grid/GridTile'
+import { FirstVisitScreen } from './FirstVisitScreen'
 import { Grid } from '../grid/Grid'
-import { Link, useLocalSearchParams } from 'expo-router'
+import { useLocalSearchParams } from 'expo-router'
 import { RefListItem } from '../atoms/RefListItem'
 import { useEffect, useState } from 'react'
 import { View, Text } from 'react-native'
@@ -92,43 +91,7 @@ export const Profile = ({ userName }: { userName: string }) => {
           }}
           gap={s.$4}
         >
-          {firstVisit && (
-            <>
-              <Heading tag="h2normal">Thanks for signing up!</Heading>
-              <Link href={`/user/${userName}`}>
-                <YStack
-                  gap={s.$1}
-                  style={{
-                    minWidth: s.$20,
-                    flexDirection: 'row',
-                    backgroundColor: c.surface2,
-                    padding: s.$1half,
-                    borderRadius: s.$08,
-                  }}
-                >
-                  <XStack style={{ width: '100%', justifyContent: 'space-between' }}>
-                    <Heading tag="h2">{userName}</Heading>
-                    {profile?.image && (
-                      <Image
-                        style={{ width: s.$6, height: s.$6, borderRadius: '100%' }}
-                        source={profile.image}
-                      />
-                    )}
-                  </XStack>
-                  <XStack style={{ width: '100%' }}>
-                    {/* @todo: fill tiles */}
-                    <GridTile />
-                    <GridTile />
-                    <GridTile />
-                  </XStack>
-                </YStack>
-              </Link>
-
-              <Shareable>
-                <Heading tag="h2">Share</Heading>
-              </Shareable>
-            </>
-          )}
+          {firstVisit && profile && <FirstVisitScreen profile={profile} />}
 
           {!firstVisit && profile && (
             <View

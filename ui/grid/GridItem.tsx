@@ -1,9 +1,7 @@
 import { Text } from 'react-native'
-import { TouchableOpacity, Pressable } from 'react-native'
-import { GridTile } from './GridTile'
+import { Pressable } from 'react-native'
+import { GridTileWrapper } from './GridTileWrapper'
 import { GridTileImage } from './GridTileImage'
-import { useItemStore } from '@/features/canvas/stores'
-import { base } from '@/features/style'
 import { Heading } from '../typo/Heading'
 
 export const GridItem = ({
@@ -13,25 +11,12 @@ export const GridItem = ({
   i,
 }: {
   item: any
-  type?: 'add' | 'image' | 'text' | ''
+  type?: GridTileType
   i: number
   onPress?: () => {}
 }) => {
-  const specificStyles = {
-    borderWidth: item?.image ? 0 : 2,
-    borderColor: type !== 'image' ? 'black' : 'transparent',
-  }
-
   return (
-    <TouchableOpacity
-      style={[
-        base.gridTile,
-        {
-          overflow: 'hidden',
-        },
-        specificStyles,
-      ]}
-    >
+    <GridTileWrapper type={type}>
       {item && (
         <>
           {item.image ? (
@@ -49,6 +34,6 @@ export const GridItem = ({
           </Heading>
         </Pressable>
       )}
-    </TouchableOpacity>
+    </GridTileWrapper>
   )
 }

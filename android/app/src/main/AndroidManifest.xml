@@ -28,6 +28,7 @@
         <category android:name="android.intent.category.BROWSABLE"/>
         <data android:scheme="refs-nyc"/>
         <data android:scheme="refs_nyc.app"/>
+        <data android:scheme="exp+refs-nyc"/>
       </intent-filter>
     </activity>
   </application>

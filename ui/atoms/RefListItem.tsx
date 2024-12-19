@@ -2,7 +2,7 @@ import { XStack } from '../core/Stacks'
 import { View, Text } from 'react-native'
 import { useState, useEffect } from 'react'
 import Ionicons from '@expo/vector-icons/Ionicons'
-import { pocketbase } from '@/features/canvas/stores'
+import { pocketbase } from '@/features/canvas'
 import { s, c } from '@/features/style'
 
 export const RefListItem = ({ r }: { r: CompleteRef }) => {

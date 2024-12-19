@@ -31,5 +31,5 @@
 //     start() // Trigger the initialization logic
 //   }, []) // Empty dependency array ensures this runs only once
 
-//   return <CanvasContext.Provider value={ctx}>{children}</CanvasContext.Provider>
+//   return <CanvasContext.Provider value={ctx}>{children}</pocketbaseContext.Provider>
 // }

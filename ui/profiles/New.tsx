@@ -48,19 +48,12 @@ const ProfileStep = ({ fields, onComplete }) => {
   const onSubmit = async (d) => {
     if (fields.includes('userName')) {
       // Update
-      const updated = updateStagedProfile(formValues)
+      updateStagedProfile(formValues)
       try {
-        // setLoginState(LOGIN_STATE.LOGGING_IN)
-        console.log('updated')
-        console.log(updated)
-        console.log('---------')
-
         try {
           const record = await login(formValues.userName)
-          console.log(record)
-          console.log('LOGIN SUCCESSful')
           // If succesful, redirect to the user profile
-          router.push(`/user/${record.userName}`)
+          router.push(`/user/${record.userName}?firstVisit=true`)
         } catch (error) {
           const record = await create
           console.error(error)

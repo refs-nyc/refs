@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { TextInput, Pressable } from 'react-native'
 import { XStack, Heading } from '@/ui'
 import Ionicons from '@expo/vector-icons/Ionicons'
-import { s, c } from '@/features/style'
+import { s, c, t } from '@/features/style'
 
 export const EditableTitle = ({
   title,
@@ -27,7 +27,7 @@ export const EditableTitle = ({
             >
               {titleState}
             </Heading>
-            <Ionicons name="pencil" />
+            <Ionicons size={20} name="pencil" />
           </XStack>
         </Pressable>
       ) : (
@@ -39,16 +39,13 @@ export const EditableTitle = ({
         >
           <XStack gap={s.$3} style={{ justifyContent: 'center', alignItems: 'center' }}>
             <TextInput
-              style={{
-                fontWeight: 'bold',
-                fontSize: 12,
-              }}
+              style={t.h1}
               autoFocus={true}
               value={titleState == placeholder ? '' : titleState}
               placeholder={placeholder}
               onChangeText={setTitleState}
             ></TextInput>
-            <Ionicons name="checkbox" />
+            <Ionicons size={20} name="checkbox" />
           </XStack>
         </Pressable>
       )}

@@ -1,3 +1,5 @@
+import { DismissKeyboard } from '../atoms/DismissKeyboard'
+
 import { Picker } from '../inputs/Picker'
 import { Camera } from '../inputs/Camera'
 import { YStack, XStack } from '@/ui'
@@ -53,68 +55,66 @@ export const AddRef = ({
   }
 
   return (
-    <Animated.View style={{ minHeight, paddingHorizontal: 12, paddingBottom: 56 }}>
-      {pickerOpen && (
-        <Picker onSuccess={(asset) => addImageRef(asset)} onCancel={() => setPickerOpen(false)} />
-      )}
+    <DismissKeyboard>
+      <Animated.View style={{ minHeight, paddingHorizontal: 12, paddingBottom: 56 }}>
+        {pickerOpen && (
+          <Picker onSuccess={(asset) => addImageRef(asset)} onCancel={() => setPickerOpen(false)} />
+        )}
 
-      {!addingRef && (
-        <>
-          {(cameraOpen || textOpen) && (
-            <YStack gap={20}>
-              <XStack style={{ justifyContent: 'space-between' }}>
-                <Ionicons
-                  name="chevron-back"
-                  size={20}
+        {!addingRef && (
+          <>
+            {(cameraOpen || textOpen) && (
+              <YStack gap={20}>
+                <XStack style={{ justifyContent: 'space-between' }}>
+                  <Ionicons
+                    name="chevron-back"
+                    size={20}
+                    onPress={() => {
+                      updateMinHeight(0)
+                      setCameraOpen(false)
+                      setPickerOpen(false)
+                      setTextOpen(false)
+                    }}
+                  />
+                </XStack>
+                {textOpen && <SearchOrAddRef onComplete={addTextRef} />}
+                {cameraOpen && <Camera />}
+              </YStack>
+            )}
+
+            {!cameraOpen && !textOpen && (
+              <YStack gap="$4">
+                <Button
+                  align="flex-start"
+                  variant="basic"
+                  iconColor={c.black}
+                  title="Type anything"
+                  iconBefore="text-outline"
                   onPress={() => {
-                    updateMinHeight(0)
-                    setCameraOpen(false)
-                    setPickerOpen(false)
-                    setTextOpen(false)
+                    updateMinHeight(win.height * 0.9)
+                    setTextOpen(true)
                   }}
                 />
-              </XStack>
-              {textOpen && (
-                <YStack gap="$2">
-                  <SearchOrAddRef onComplete={addTextRef} />
-                </YStack>
-              )}
-              {cameraOpen && <Camera />}
-            </YStack>
-          )}
+                <Button
+                  align="left"
+                  title="Add from Camera Roll"
+                  iconBefore="image-outline"
+                  onPress={() => setPickerOpen(true)}
+                />
+              </YStack>
+            )}
+          </>
+        )}
 
-          {!cameraOpen && !textOpen && (
-            <YStack gap="$4">
-              <Button
-                align="flex-start"
-                variant="basic"
-                iconColor={c.black}
-                title="Type anything"
-                iconBefore="text-outline"
-                onPress={() => {
-                  updateMinHeight(win.height * 0.7)
-                  setTextOpen(true)
-                }}
-              />
-              <Button
-                align="left"
-                title="Add from Camera Roll"
-                iconBefore="image-outline"
-                onPress={() => setPickerOpen(true)}
-              />
-            </YStack>
-          )}
-        </>
-      )}
-
-      {addingRef && (
-        <NewRef
-          r={refData}
-          onComplete={onAddRef}
-          onCancel={() => setRefData({})}
-          backlog={backlog}
-        />
-      )}
-    </Animated.View>
+        {addingRef && (
+          <NewRef
+            r={refData}
+            onComplete={onAddRef}
+            onCancel={() => setRefData({})}
+            backlog={backlog}
+          />
+        )}
+      </Animated.View>
+    </DismissKeyboard>
   )
 }

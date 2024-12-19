@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { pocketbase, useItemStore } from '@/features/canvas/stores'
-import { YStack, XStack } from '@/ui'
-import { TextInput, Pressable, FlatList, View, Text } from 'react-native'
+import { TextInput, Pressable, FlatList, KeyboardAvoidingView, View } from 'react-native'
 import { SearchResultItem } from '@/ui/atoms/SearchResultItem'
 import { NewRefListItem } from '@/ui/atoms/NewRefListItem'
 import { s, c } from '@/features/style'
@@ -9,6 +8,7 @@ import { s, c } from '@/features/style'
 export const SearchOrAddRef = ({ onComplete }: { onComplete: (r: StagedRef) => void }) => {
   const [searchQuery, setSearchQuery] = useState('')
   const [searchResults, setSearchResults] = useState<RefsItem[]>([])
+  const [realHeight, setRealHeight] = useState(400)
 
   // const { items } = useItemStore()
 
@@ -22,7 +22,6 @@ export const SearchOrAddRef = ({ onComplete }: { onComplete: (r: StagedRef) => v
 
   const updateQuery = async (q: string) => {
     const search = async () => {
-      console.log(q == '')
       if (q === '') return []
 
       // Search items and refs db
@@ -30,6 +29,7 @@ export const SearchOrAddRef = ({ onComplete }: { onComplete: (r: StagedRef) => v
         .collection('refs')
         .getFullList({ filter: `title ~ "${q}"` })
 
+      console.log(refsResults.length)
       return refsResults
     }
 
@@ -39,36 +39,44 @@ export const SearchOrAddRef = ({ onComplete }: { onComplete: (r: StagedRef) => v
   }
 
   return (
-    <YStack height="100%" jc="space-between">
-      <View
+    <KeyboardAvoidingView
+      style={{
+        flex: 1,
+        // maxHeight: realHeight * 0.9,
+      }}
+    >
+      <TextInput
         style={{
           backgroundColor: c.surface2,
           marginVertical: s.$1,
           paddingVertical: s.$08,
           paddingHorizontal: s.$1,
           borderRadius: s.$075,
+          color: c.black,
         }}
-      >
-        <TextInput
-          autoFocus={true}
-          value={searchQuery}
-          placeholder="Start typing"
-          onChangeText={updateQuery}
+        autoFocus={true}
+        value={searchQuery}
+        placeholder="Start typing"
+        onChangeText={updateQuery}
+      />
+
+      <View>
+        {searchQuery !== '' && (
+          <Pressable onPress={() => onComplete({ title: searchQuery })}>
+            <NewRefListItem title={searchQuery}></NewRefListItem>
+          </Pressable>
+        )}
+        <FlatList
+          contentContainerStyle={{
+            gap: s.$025,
+            justifyContent: 'flex-start',
+            maxHeight: '100%',
+          }}
+          data={searchResults}
+          renderItem={renderItem}
+          keyExtractor={(item) => item.id}
         />
       </View>
-
-      {searchQuery !== '' && (
-        <Pressable onPress={() => onComplete({ title: searchQuery })}>
-          <NewRefListItem title={searchQuery}></NewRefListItem>
-        </Pressable>
-      )}
-
-      <FlatList
-        style={{ height: 300 }}
-        data={searchResults}
-        renderItem={renderItem}
-        keyExtractor={(item) => item.id}
-      />
-    </YStack>
+    </KeyboardAvoidingView>
   )
 }

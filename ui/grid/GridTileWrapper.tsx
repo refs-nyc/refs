@@ -10,7 +10,7 @@ export const GridTileWrapper = ({
 }) => {
   const specificStyles = {
     borderWidth: type === 'image' ? 0 : 2,
-    borderColor: type !== 'image' ? 'black' : 'transparent',
+    borderColor: type !== 'image' && type !== '' ? 'black' : 'transparent',
   }
 
   return (

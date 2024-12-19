@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState } from 'react'
 import { pocketbase, useItemStore } from '@/features/canvas/stores'
 import { YStack, XStack } from '@/ui'
 import { TextInput, Pressable, FlatList, View, Text } from 'react-native'

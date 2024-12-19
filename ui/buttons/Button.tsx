@@ -22,6 +22,8 @@ export const Button = (props) => {
     buttonVariant = styles?.[variant]
     textVariant = styles?.[`${variant}Text`]
     iconVariant = styles?.[`${variant}Icon`]
+
+    console.log('button variant', buttonVariant)
   }
 
   return (
@@ -80,6 +82,9 @@ const styles = StyleSheet.create({
     paddingVertical: s.$1,
     paddingHorizontal: s.$3,
     minWidth: s.$20,
+  },
+  fluid: {
+    width: '100%',
   },
   // Text
   text: {

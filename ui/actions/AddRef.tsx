@@ -49,11 +49,6 @@ export const AddRef = ({
   }
 
   const addTextRef = async (newRef: StagedRef) => {
-    console.log(newRef)
-    // Replace
-    // const rd = { title: searchQuery, image: null }
-    // push(rd)
-    // onAddRef(null)
     await setRefData(newRef)
   }
 
@@ -113,7 +108,12 @@ export const AddRef = ({
       )}
 
       {addingRef && (
-        <NewRef r={refData} onComplete={onAddRef} onCancel={onCancel} backlog={backlog} />
+        <NewRef
+          r={refData}
+          onComplete={onAddRef}
+          onCancel={() => setRefData({})}
+          backlog={backlog}
+        />
       )}
     </Animated.View>
   )

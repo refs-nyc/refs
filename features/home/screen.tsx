@@ -1,5 +1,5 @@
 import { View } from 'react-native'
-import { Button, MainButton, YStack, Heading } from '../../ui/index'
+import { Button, YStack, Heading } from '../../ui/index'
 import { router } from 'expo-router'
 import { c, s } from '@/features/style/index'
 
@@ -20,6 +20,11 @@ export function HomeScreen() {
         <YStack style={{ alignItems: 'center' }} gap={s.$05}>
           <Button title="Join" onPress={() => router.push('/onboarding')} />
           <Button variant="basic" title="Login" onPress={() => router.push('/user/new')} />
+          <Button
+            variant="basic"
+            title="Login"
+            onPress={() => router.push('/user/munus?firstVisit=true')}
+          />
         </YStack>
       </YStack>
     </View>

@@ -5,7 +5,6 @@ import { Switch, View } from 'react-native'
 import { GridTile } from '../grid/GridTile'
 import { Link, router } from 'expo-router'
 import { s, c } from '@/features/style'
-// import { Demo } from '../notifications/Demo'
 
 export const FirstVisitScreen = ({ profile }) => {
   const [isEnabled, setIsEnabled] = useState(false)
@@ -68,7 +67,6 @@ export const FirstVisitScreen = ({ profile }) => {
           onValueChange={toggleSwitch}
           value={isEnabled}
         />
-        {/* {isEnabled && <Demo />} */}
         <Heading tag="mutewarn">Push Notifications</Heading>
       </YStack>
     </YStack>

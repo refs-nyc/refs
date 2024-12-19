@@ -46,3 +46,4 @@ Result:
    [] Ref category
    [] Moving refs to Backlog / Deleting them
    [] Dragging Refs around Profile
+   [] Swipe for a random other profile

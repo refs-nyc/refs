@@ -25,7 +25,10 @@ export const Button = (props) => {
   }
 
   return (
-    <Pressable style={[styles.button, buttonVariant]} onPress={!disabled ? onPress : () => {}}>
+    <Pressable
+      style={[styles.button, buttonVariant, props?.style, disabled && styles.disabled]}
+      onPress={!disabled ? onPress : () => {}}
+    >
       <XStack style={{ justifyContent: align }} gap={s.$08}>
         {iconBefore && (
           <Ionicons
@@ -80,6 +83,9 @@ const styles = StyleSheet.create({
     paddingVertical: s.$1,
     paddingHorizontal: s.$3,
     minWidth: s.$20,
+  },
+  fluid: {
+    width: '100%',
   },
   // Text
   text: {

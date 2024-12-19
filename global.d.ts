@@ -48,6 +48,8 @@ declare global {
     children?: RefsItem[]
     deletedAt?: number
   }
+
+  type GridTileType = 'add' | 'image' | 'text' | ''
 }
 
 export {}

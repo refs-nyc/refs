@@ -31,7 +31,7 @@ type StepInput4 = {
   image: string
 }
 
-const ProfileStep = ({ fields, index, onComplete }) => {
+const ProfileStep = ({ fields, onComplete }) => {
   const {
     control,
     handleSubmit,
@@ -39,31 +39,31 @@ const ProfileStep = ({ fields, index, onComplete }) => {
     formState: { errors },
   } = useForm<StepInput1 | StepInput2 | StepInput3 | StepInput4>()
 
-  const { login } = useProfileStore()
+  // const { login } = useProfileStore()
+  const { stagedProfile, updateStagedProfile, login } = useProfileStore()
   const [loginState, setLoginState] = useState(0)
 
   const formValues = watch()
 
   const onSubmit = async (d) => {
     if (fields.includes('userName')) {
+      // Update
+      updateStagedProfile(formValues)
       try {
-        // setLoginState(LOGIN_STATE.LOGGING_IN)
-        console.log(formValues.userName)
-
         try {
           const record = await login(formValues.userName)
-          console.log(record)
-          console.log('LOGIN SUCCESSful')
           // If succesful, redirect to the user profile
-          router.push(`/user/${record.userName}`)
+          router.push(`/user/${record.userName}?firstVisit=true`)
         } catch (error) {
+          const record = await create
           console.error(error)
         }
       } catch (error) {
         console.error(error)
       }
+    } else {
+      onComplete(formValues)
     }
-    onComplete(formValues)
   }
 
   const onErrors = (d) => {
@@ -83,7 +83,7 @@ const ProfileStep = ({ fields, index, onComplete }) => {
           width: '100%',
           paddingHorizontal: s.$1half,
         }}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        behavior={'height'}
       >
         {/* <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'}> */}
         <YStack gap="$6">
@@ -104,7 +104,7 @@ const ProfileStep = ({ fields, index, onComplete }) => {
                     id="email"
                     placeholder="Login with email"
                     value={value}
-                    autoFocus={true}
+                    autoFocus={false}
                   >
                     {errors.email && (
                       <SizableText
@@ -144,7 +144,7 @@ const ProfileStep = ({ fields, index, onComplete }) => {
                     id="firstName"
                     placeholder="First Name"
                     value={value}
-                    autoFocus={true}
+                    autoFocus={false}
                   >
                     {errors.firstName && (
                       <SizableText
@@ -214,7 +214,7 @@ const ProfileStep = ({ fields, index, onComplete }) => {
                     id="userName"
                     placeholder="username"
                     value={value}
-                    autoFocus={true}
+                    autoFocus={false}
                   >
                     {errors.userName && (
                       <SizableText
@@ -272,13 +272,19 @@ const ProfileStep = ({ fields, index, onComplete }) => {
 
         {fields.includes('email') ? (
           <Button
+            style={{ position: 'absolute', bottom: s.$3, left: s.$1half }}
             title={loginState === LOGIN_STATE.LOGGING_IN ? 'Logging in' : 'Login'}
             disabled={loginState === LOGIN_STATE.LOGGING_IN}
-            variant="basic"
+            variant="fluid"
             onPress={handleSubmit(onSubmit, onErrors)}
           />
         ) : (
-          <Button title="Submit" variant="basic" onPress={handleSubmit(onSubmit, onErrors)} />
+          <Button
+            style={{ position: 'absolute', bottom: s.$3, left: s.$1half }}
+            title="Submit"
+            variant="fluid"
+            onPress={handleSubmit(onSubmit, onErrors)}
+          />
         )}
       </KeyboardAvoidingView>
     </DismissKeyboard>
@@ -289,25 +295,29 @@ export const NewProfile = () => {
   const { stagedProfile, updateStagedProfile, register } = useProfileStore()
   const ref = useRef<ICarouselInstance>(null)
   const win = Dimensions.get('window')
-  const data = [['userName'], ['email'], ['firstName', 'lastName'], ['image']]
+  const data = [['email'], ['firstName', 'lastName'], ['image'], ['userName']]
 
   const nextStep = async (formValues) => {
     const index = ref.current?.getCurrentIndex()
     const updated = updateStagedProfile(formValues)
+    console.log(index, 'next step', updated)
 
     if (index < data.length - 1) {
       // Valid?
       ref.current?.next()
     } else {
       // Create a new profile
-      // submit()
 
       console.log('Completely done onboarding', updated, stagedProfile)
 
       try {
-        const { userName } = await register()
+        console.log(stagedProfile)
+        const record = await register()
 
-        router.push(`/user/${userName}?firstVisit=true`)
+        if (record.userName) {
+          console.log('Created record', record)
+          router.push(`/user/${record.userName}?firstVisit=true`)
+        }
       } catch (error) {
         console.error('Nope', error)
       }

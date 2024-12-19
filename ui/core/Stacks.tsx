@@ -1,19 +1,32 @@
-import { View } from 'react-native'
+import { View, Dimensions } from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
+
+const dims = Dimensions.get('window')
+let vh = dims.height
 
 export const YStack = ({
   children,
   gap,
   style,
+  screenHeight,
 }: {
   children: React.ReactNode
   style?: any
   gap?: string | number
-}) => (
-  <View style={[style, { gap }]} flexDirection="column">
-    {children}
-  </View>
-)
-// export const YStack = () => <Text>Missing YStack</Text>
+  screenHeight?: boolean
+}) => {
+  const insets = useSafeAreaInsets()
+
+  console.log(vh, insets)
+  return (
+    <View
+      style={[style, { flexDirection: 'column', gap }, screenHeight && { height: vh - insets.top }]}
+    >
+      {children}
+    </View>
+  )
+}
+
 export const XStack = ({
   children,
   gap,
@@ -22,8 +35,4 @@ export const XStack = ({
   children: React.ReactNode
   style?: any
   gap?: string | number
-}) => (
-  <View style={[style, { gap }]} flexDirection="row">
-    {children}
-  </View>
-)
+}) => <View style={[style, { flexDirection: 'row', gap }]}>{children}</View>

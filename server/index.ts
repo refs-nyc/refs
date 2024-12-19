@@ -1,7 +1,7 @@
 // import type { CanvasEvents } from '@canvas-js/core'
 // import type { GossipLogEvents } from '@canvas-js/gossiplog'
 // import type { Action, Message, Session } from '@canvas-js/interfaces'
-// import { contract, init } from '../features/canvas/contract.ts'
+// import { contract, init } from '../features/pocketbase/contract.ts'
 // import { TypedEventEmitter } from '@libp2p/interface'
 
 // const DATABASE_URL = process.env.DATABASE_URL

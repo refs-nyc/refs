@@ -21,7 +21,7 @@ import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native
 import { useFonts } from 'expo-font'
 import { SplashScreen, Stack } from 'expo-router'
 // import { MagicProvider } from '@/features/magic/index'
-// import { CanvasProvider } from '@/features/canvas/provider'
+// import { CanvasProvider } from '@/features/pocketbase/provider'
 import { DeferredFonts } from '@/ui'
 import { c } from '@/features/style'
 import * as SystemUI from 'expo-system-ui'

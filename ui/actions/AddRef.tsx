@@ -10,7 +10,7 @@ import { Dimensions } from 'react-native'
 import { useState, useMemo } from 'react'
 import { NewRef } from '../actions/NewRef'
 import { SearchOrAddRef } from '../actions/SearchOrAddRef'
-// import { useCanvasContext } from '@/features/canvas/provider'
+// import { useCanvasContext } from '@/features/pocketbase/provider'
 import { c } from '@/features/style'
 
 import type { ImagePickerAsset } from 'expo-image-picker'

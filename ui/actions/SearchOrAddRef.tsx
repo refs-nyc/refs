@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { pocketbase, useItemStore } from '@/features/canvas'
+import { pocketbase, useItemStore } from '@/features/pocketbase'
 import { TextInput, Pressable, FlatList, KeyboardAvoidingView, View } from 'react-native'
 import { SearchResultItem } from '@/ui/atoms/SearchResultItem'
 import { NewRefListItem } from '@/ui/atoms/NewRefListItem'

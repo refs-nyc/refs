@@ -38,13 +38,23 @@ Result:
 
 1. Onboarding flow
    [x] Landing Page Design
-   [] Be able to add refs in onboarding
 1. Add ref flow
    [] Empty search results
    [] Weird search result typing
    [] FOrm validation
 1. Nice to have
-   [] Ref category
-   [] Moving refs to Backlog / Deleting them
-   [] Dragging Refs around Profile
    [] Swipe for a random other profile
+
+tomorrow: auth/notifs + list
+
+- [] COnvert profiles to users. Use Pb auth
+- [] Be able to add refs in onboarding
+- [] Moving refs to Backlog / Deleting them
+- [] Dragging Refs around Profile
+  Lists
+- [] Add lists
+
+Friday: place/art/neither flow + feed of refs
+[] Add Ref category to db
+Sat: tuning it all up, squashing bugs
+3m

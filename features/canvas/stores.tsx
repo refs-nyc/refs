@@ -47,13 +47,18 @@ export const useProfileStore = create((set, get) => ({
 
     try {
       const finalProfile = get().stagedProfile
-      const record = await pocketbase.collection('profiles').create(finalProfile)
+
+      const record = await pocketbase
+        .collection('profiles')
+        .create(finalProfile, { expand: 'items,items.ref' })
 
       set(() => ({
-        userProfile: finalProfile,
+        userProfile: record,
       }))
       return record
-    } catch (error) {}
+    } catch (error) {
+      console.error(error)
+    }
   },
   //
   //
@@ -69,7 +74,26 @@ export const useProfileStore = create((set, get) => ({
       }))
       return record
     } catch (error) {
-      throw new Error(error)
+      console.log('ERROR FROM LOGIN', typeof error.status, error.status == 404)
+      if (error.status == 404) {
+        console.log('Could not get profile. create one?')
+        try {
+          const finalProfile = get().stagedProfile
+          console.log(finalProfile)
+          const record = await get().register()
+          console.log('created profile', record)
+          console.log('----')
+
+          set(() => ({
+            userProfile: record,
+          }))
+
+          return record
+        } catch (err) {
+          console.error(err)
+        }
+      }
+      console.error(error)
     }
   },
   //
@@ -149,7 +173,7 @@ export const useItemStore = create((set) => ({
 // Create Ref with Item
 //
 //
-export const createRefWithItem = async (stagedRef: StagedRef) => {
+export const createRefWithItem = async (stagedRef: StagedRef, attach = true) => {
   const refStore = useRefStore.getState()
   const itemStore = useItemStore.getState()
   const profileStore = useProfileStore.getState()
@@ -168,8 +192,14 @@ export const createRefWithItem = async (stagedRef: StagedRef) => {
   })
 
   // If the userProfile is set, attach item ID to items
-  if (profileStore.userProfile) {
+  if (attach) {
     await profileStore.attachItem(newItem.id)
+  } else {
+    let items = profileStore.stagedProfile?.items || []
+
+    await profileStore.updateStagedProfile({ items: [...items, newItem.id] })
+
+    console.log('staged items')
   }
 
   return { ref: newRef, item: newItem }

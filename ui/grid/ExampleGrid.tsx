@@ -19,7 +19,7 @@ export const ExampleGrid = () => (
     <GridTileWrapper type="image">
       <GridTileImage source={require('@/assets/4.png')} />
     </GridTileWrapper>
-    <GridTileWrapper type="text">
+    <GridTileWrapper type="">
       <GridTileList title="chinatown dumpling tier list" />
     </GridTileWrapper>
     <GridTileWrapper type="image">
@@ -31,7 +31,7 @@ export const ExampleGrid = () => (
     <GridTileWrapper type="image">
       <GridTileImage source={require('@/assets/8.png')} />
     </GridTileWrapper>
-    <GridTileWrapper type="text">
+    <GridTileWrapper type="">
       <GridTileList title="2025 reading list" />
     </GridTileWrapper>
   </GridWrapper>

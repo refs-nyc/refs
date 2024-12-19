@@ -22,12 +22,13 @@ export const Button = (props) => {
     buttonVariant = styles?.[variant]
     textVariant = styles?.[`${variant}Text`]
     iconVariant = styles?.[`${variant}Icon`]
-
-    console.log('button variant', buttonVariant)
   }
 
   return (
-    <Pressable style={[styles.button, buttonVariant]} onPress={!disabled ? onPress : () => {}}>
+    <Pressable
+      style={[styles.button, buttonVariant, props?.style]}
+      onPress={!disabled ? onPress : () => {}}
+    >
       <XStack style={{ justifyContent: align }} gap={s.$08}>
         {iconBefore && (
           <Ionicons

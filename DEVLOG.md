@@ -37,10 +37,11 @@ Result:
    [] Store Push Token
 
 1. Onboarding flow
-   [] Landing Page Design
+   [x] Landing Page Design
    [] Be able to add refs in onboarding
 1. Add ref flow
    [] Empty search results
+   [] Weird search result typing
    [] FOrm validation
 1. Nice to have
    [] Ref category

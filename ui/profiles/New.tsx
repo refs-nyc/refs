@@ -31,7 +31,7 @@ type StepInput4 = {
   image: string
 }
 
-const ProfileStep = ({ fields, index, onComplete }) => {
+const ProfileStep = ({ fields, onComplete }) => {
   const {
     control,
     handleSubmit,
@@ -62,8 +62,9 @@ const ProfileStep = ({ fields, index, onComplete }) => {
       } catch (error) {
         console.error(error)
       }
+    } else {
+      onComplete(formValues)
     }
-    onComplete(formValues)
   }
 
   const onErrors = (d) => {
@@ -83,7 +84,7 @@ const ProfileStep = ({ fields, index, onComplete }) => {
           width: '100%',
           paddingHorizontal: s.$1half,
         }}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        behavior={'height'}
       >
         {/* <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'}> */}
         <YStack gap="$6">
@@ -272,13 +273,19 @@ const ProfileStep = ({ fields, index, onComplete }) => {
 
         {fields.includes('email') ? (
           <Button
+            style={{ position: 'absolute', bottom: s.$3, left: s.$1half }}
             title={loginState === LOGIN_STATE.LOGGING_IN ? 'Logging in' : 'Login'}
             disabled={loginState === LOGIN_STATE.LOGGING_IN}
-            variant="basic"
+            variant="fluid"
             onPress={handleSubmit(onSubmit, onErrors)}
           />
         ) : (
-          <Button title="Submit" variant="basic" onPress={handleSubmit(onSubmit, onErrors)} />
+          <Button
+            style={{ position: 'absolute', bottom: s.$3, left: s.$1half }}
+            title="Submit"
+            variant="fluid"
+            onPress={handleSubmit(onSubmit, onErrors)}
+          />
         )}
       </KeyboardAvoidingView>
     </DismissKeyboard>
@@ -289,7 +296,7 @@ export const NewProfile = () => {
   const { stagedProfile, updateStagedProfile, register } = useProfileStore()
   const ref = useRef<ICarouselInstance>(null)
   const win = Dimensions.get('window')
-  const data = [['userName'], ['email'], ['firstName', 'lastName'], ['image']]
+  const data = [['email', 'userName'], ['firstName', 'lastName'], ['image'], ['userName']]
 
   const nextStep = async (formValues) => {
     const index = ref.current?.getCurrentIndex()

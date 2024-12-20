@@ -91,6 +91,12 @@ const styles = StyleSheet.create({
   fluid: {
     width: '100%',
   },
+  outlineFluid: {
+    width: '100%',
+    backgroundColor: c.none,
+    borderColor: c.black,
+    borderWidth: 2,
+  },
   // Text
   text: {
     fontSize: s.$1,
@@ -110,6 +116,9 @@ const styles = StyleSheet.create({
   },
   basicText: {
     color: 'black',
+  },
+  outlineFluidText: {
+    color: c.black,
   },
   outlineText: {
     color: c.black,

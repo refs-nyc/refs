@@ -45,4 +45,26 @@ const addToProfile = async (stagedRef: StagedRef, attach = true) => {
   return { ref: newRef, item: newItem }
 }
 
-export { pocketbase, useUserStore, useProfileStore, useRefStore, useItemStore, addToProfile }
+//
+//
+//
+const removeFromProfile = async (itemId: string) => {
+  const userStore = useUserStore.getState()
+
+  try {
+    await userStore.removeItem(itemId)
+    await pocketbase.collection('items').delete(itemId)
+  } catch (error) {
+    throw Error(error)
+  }
+}
+
+export {
+  pocketbase,
+  useUserStore,
+  useProfileStore,
+  useRefStore,
+  useItemStore,
+  addToProfile,
+  removeFromProfile,
+}

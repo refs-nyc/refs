@@ -20,8 +20,6 @@ export const Grid = ({
 }) => {
   useEffect(() => {
     console.log('items updated', items.length)
-
-    items.forEach((itm) => console.log(itm.expand.ref.title))
   }, [items])
 
   const gridSize = columns * rows

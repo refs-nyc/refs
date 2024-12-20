@@ -6,6 +6,8 @@ export const useUserStore = create((set, get) => ({
   user: {},
   users: [],
   //
+  //
+  //
   updateStagedUser: (formFields: any) => {
     set((state) => ({
       stagedUser: { ...state.stagedUser, ...formFields },
@@ -92,14 +94,23 @@ export const useUserStore = create((set, get) => ({
   //
   //
   //
+  logout: async () => {
+    set(() => ({
+      stagedUser: {},
+    }))
+    await pocketbase.authStore.clear()
+  },
+  //
+  //
+  //
   attachItem: async (itemId: string) => {
     const user = get().user
-    if (!user.id) throw Error('Not logged in')
+    if (!pocketbase.authStore.isValid || !pocketbase.authStore.record) throw Error('Not logged in')
 
     try {
       const updatedRecord = await pocketbase
         .collection('users')
-        .update(user.id, { '+items': itemId }, { expand: 'items,items.ref' })
+        .update(pocketbase.authStore.record.id, { '+items': itemId }, { expand: 'items,items.ref' })
 
       set(() => ({
         user: updatedRecord,

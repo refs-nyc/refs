@@ -7,12 +7,14 @@ import { GridTileActionAdd } from './GridTileActionAdd'
 
 export const Grid = ({
   onAddItem,
+  onRemoveItem,
   columns = 3,
   rows = 3,
   items,
   canAdd = true,
 }: {
   onAddItem?: () => void
+  onRemoveItem?: (id: string) => void
   columns: number
   rows: number
   items: any[]
@@ -27,7 +29,14 @@ export const Grid = ({
   return (
     <GridWrapper columns={columns} rows={rows}>
       {items.map((item, i) => (
-        <GridItem type={item?.image ? 'image' : 'text'} item={item} i={i} />
+        <GridTileWrapper
+          onRemove={() => {
+            if (onRemoveItem) onRemoveItem(item.id)
+          }}
+          type={item?.image ? 'image' : 'text'}
+        >
+          <GridItem item={item} i={i} />
+        </GridTileWrapper>
       ))}
 
       {canAdd && (

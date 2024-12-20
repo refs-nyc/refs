@@ -4,14 +4,15 @@ import { TextInput, Pressable, FlatList, KeyboardAvoidingView, View } from 'reac
 import { SearchResultItem } from '@/ui/atoms/SearchResultItem'
 import { NewRefListItem } from '@/ui/atoms/NewRefListItem'
 import { s, c } from '@/features/style'
+import { CompleteRef, StagedRef } from "../../features/pocketbase/stores/types"
 
-export const SearchOrAddRef = ({ onComplete }: { onComplete: (r: StagedRef) => void }) => {
+export const SearchOrAddRef = ({ onComplete }: { onComplete: (r: { title: string }) => void }) => {
   const [searchQuery, setSearchQuery] = useState('')
-  const [searchResults, setSearchResults] = useState<RefsItem[]>([])
+  const [searchResults, setSearchResults] = useState<CompleteRef[]>([])
 
   // const { items } = useItemStore()
 
-  const renderItem = ({ item }) => {
+  const renderItem = ({ item }: { item: CompleteRef }) => {
     return (
       <Pressable onPress={() => onComplete(item)}>
         <SearchResultItem r={item} />
@@ -25,7 +26,7 @@ export const SearchOrAddRef = ({ onComplete }: { onComplete: (r: StagedRef) => v
 
       // Search items and refs db
       const refsResults = await pocketbase
-        .collection('refs')
+        .collection<CompleteRef>('refs')
         .getFullList({ filter: `title ~ "${q}"` })
 
       console.log(refsResults.length)
@@ -73,7 +74,7 @@ export const SearchOrAddRef = ({ onComplete }: { onComplete: (r: StagedRef) => v
           }}
           data={searchResults}
           renderItem={renderItem}
-          keyExtractor={(item) => item.id}
+          keyExtractor={(item: any) => item.id}
         />
       </View>
     </KeyboardAvoidingView>

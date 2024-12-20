@@ -21,9 +21,7 @@ export const UseCaseDemo = () => {
         >
           <Image style={{ width: 54, height: 54 }} source={require('@/assets/l11.png')}></Image>
           <View style={{ justifyContent: 'center' }}>
-            <Heading size="$2" lh="$0.5">
-              Start a book club with people{'\n'}who read the same essay
-            </Heading>
+            <Heading>Start a book club with people{'\n'}who read the same essay</Heading>
           </View>
         </XStack>
         <XStack
@@ -32,9 +30,7 @@ export const UseCaseDemo = () => {
         >
           <Image style={{ width: 54, height: 54 }} source={require('@/assets/l2.png')}></Image>
           <View style={{ justifyContent: 'center' }}>
-            <Heading size="$2" lh="$0.5">
-              Find someone who loves cooking{'\n'}and rock climbs at the same gym
-            </Heading>
+            <Heading>Find someone who loves cooking{'\n'}and rock climbs at the same gym</Heading>
           </View>
         </XStack>
         <XStack
@@ -43,9 +39,7 @@ export const UseCaseDemo = () => {
         >
           <Image style={{ width: 54, height: 54 }} source={require('@/assets/l3.png')}></Image>
           <View style={{ justifyContent: 'center' }}>
-            <Heading size="$2" lh="$0.5">
-              Start a book club with people who{'\n'}read the same essay
-            </Heading>
+            <Heading>Start a book club with people who{'\n'}read the same essay</Heading>
           </View>
         </XStack>
       </YStack>

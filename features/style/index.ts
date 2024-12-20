@@ -148,7 +148,7 @@ export const base = StyleSheet.create({
     backgroundColor: c.surface2,
     justifyContent: 'center',
     alignItems: 'center',
-    overflow: 'hidden',
+    // overflow: 'hidden',
     borderRadius: s.$075,
     // flex: 1,
   },

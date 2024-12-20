@@ -6,7 +6,7 @@ import { init } from './contract'
 import { Canvas, Contract } from '@canvas-js/core'
 import { createContext, useContext, useEffect, useState } from 'react'
 
-export const CanvasContext = createContext(null)
+export const CanvasContext = createContext<Canvas | null>(null)
 
 export function useCanvasContext() {
   return useContext(CanvasContext)

@@ -32,7 +32,7 @@ export const pinataSignedUrl = async (cid: string) => {
 export const pinataUpload = async (
   asset: ImagePicker.ImagePickerAsset,
   config: { prefix?: string } = { prefix: 'refs' }
-): Promise<void> => {
+): Promise<string> => {
   console.log('Called pinata with', asset)
 
   const form = new FormData()
@@ -51,9 +51,8 @@ export const pinataUpload = async (
       Authorization: `Bearer ${process.env.EXPO_PUBLIC_PIN_JWT}`,
       'Content-Type': 'multipart/form-data',
     },
+    body: form
   }
-
-  options.body = form
 
   try {
     const response = await fetch('https://uploads.pinata.cloud/v3/files', options)
@@ -64,6 +63,7 @@ export const pinataUpload = async (
     return url
   } catch (error) {
     console.error(error)
+    throw error
   }
 }
 
@@ -107,6 +107,8 @@ export function Picker({
 
     pickImage()
   }, [])
+
+  return <></>
 }
 
 const styles = StyleSheet.create({

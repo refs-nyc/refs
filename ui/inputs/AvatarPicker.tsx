@@ -65,7 +65,7 @@ export const AvatarPicker = ({
   onComplete: (s: string) => void
 }) => {
   const [currentSource, setCurrentSource] = useState(source)
-  const [imageAsset, setImageAsset] = useState(null)
+  const [imageAsset, setImageAsset] = useState<ImagePickerAsset | null>(null)
   const [pinataSource, setPinataSource] = useState('')
 
   const updatePinata = (image: string) => {
@@ -92,6 +92,7 @@ export const AvatarPicker = ({
               onAddImage={(a: ImagePickerAsset) => {
                 setImageAsset(null)
                 setImageAsset(a)
+                return a
               }}
             >
               {children}
@@ -102,6 +103,7 @@ export const AvatarPicker = ({
             onAddImage={(a: ImagePickerAsset) => {
               setImageAsset(null)
               setImageAsset(a)
+              return a
             }}
           >
             {children}

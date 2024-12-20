@@ -10,7 +10,12 @@ import '@/features/polyfill/custom-event-polyfill'
 import 'react-native-get-random-values'
 import 'fast-text-encoding'
 
+// Disable strict mode warnings caused by carousel
+import { configureReanimatedLogger } from 'react-native-reanimated'
+configureReanimatedLogger({ strict: false })
+
 // For pocketbase
+// @ts-ignore
 global.EventSource = eventsource
 
 import { pocketbase } from '@/features/pocketbase'

@@ -10,24 +10,33 @@ import { View, Text } from 'react-native'
 import { s, c } from '@/features/style'
 import { useLiveQuery } from '@canvas-js/hooks'
 import { useCanvasContext } from '@/features/canvas/provider'
-import { pocketbase, useUserStore } from '@/features/pocketbase'
+import { pocketbase, useUserStore, removeFromProfile, useItemStore } from '@/features/pocketbase'
 import { Shareable } from '../atoms/Shareable'
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { FlatList, Pressable, ScrollView } from 'react-native-gesture-handler'
+import { Profile as ProfileType } from '@/features/pocketbase/stores/types'
+
+type GridItem = {
+  created: number
+  order: number
+  backlog: boolean
+}
 
 export const Profile = ({ userName }: { userName: string }) => {
   const { firstVisit } = useLocalSearchParams()
 
   const insets = useSafeAreaInsets()
-  const [profile, setProfile] = useState()
+  const [profile, setProfile] = useState<ProfileType>()
   const [addingTo, setAddingTo] = useState<'' | 'grid' | 'backlog'>('')
   const [gridItems, setGridItems] = useState([])
   const [backlogItems, setBacklogItems] = useState([])
+  const [removingId, setRemovingId] = useState('')
 
   const { user, logout } = useUserStore()
+  const { moveToBacklog } = useItemStore()
 
-  const createdSort = (a: string, b: string) => {
-    return new Date(a.created) - new Date(b.created)
+  const createdSort = (a: GridItem, b: GridItem) => {
+    return new Date(a.created).valueOf() - new Date(b.created).valueOf()
   }
 
   const handleLogout = async () => {
@@ -35,16 +44,26 @@ export const Profile = ({ userName }: { userName: string }) => {
     router.push('/')
   }
 
-  const gridSort = (a: string, b: string) => {
+  const handleMoveToBacklog = async () => {
+    try {
+      const updatedRecord = await moveToBacklog(removingId)
+      setRemovingId('')
+      await refreshGrid(userName)
+    } catch (error) {
+      console.error(error)
+    }
+  }
+
+  const gridSort = (a: GridItem, b: GridItem) => {
     // Items with order get their exact position (0-11)
-    if (a.order !== undefined && b.order !== undefined) {
+    if (a.order !== 0 && b.order !== 0) {
       return a.order - b.order
     }
     // Items with order always come before items without
     if (a.order !== undefined) return -1
     if (b.order !== undefined) return 1
     // For items without order, sort by creation date
-    return new Date(a.created) - new Date(b.created)
+    return new Date(a.created).valueOf() - new Date(b.created).valueOf()
   }
 
   const refreshGrid = async (userName: string) => {
@@ -55,8 +74,10 @@ export const Profile = ({ userName }: { userName: string }) => {
 
       setProfile(record)
 
-      const itms = record?.expand?.items?.filter((itm) => !itm.backlog).sort(gridSort) || []
-      const bklg = record?.expand?.items?.filter((itm) => itm.backlog).sort(createdSort) || []
+      const itms =
+        record?.expand?.items?.filter((itm: GridItem) => !itm.backlog).sort(gridSort) || []
+      const bklg =
+        record?.expand?.items?.filter((itm: GridItem) => itm.backlog).sort(createdSort) || []
 
       // Filter out backlog and normal
       setGridItems(itms)
@@ -112,6 +133,7 @@ export const Profile = ({ userName }: { userName: string }) => {
               {/* THE GRID! */}
               <Grid
                 canAdd={canAdd}
+                onRemoveItem={setRemovingId}
                 onAddItem={() => {
                   setAddingTo('grid')
                 }}
@@ -143,22 +165,11 @@ export const Profile = ({ userName }: { userName: string }) => {
                       <FlatList
                         horizontal={false}
                         data={backlogItems}
-                        keyExtractor={(item) => item.id}
+                        keyExtractor={(item: Item) => item.id}
                         renderItem={({ item }) => <RefListItem r={item?.expand?.ref} />}
                       />
                     </YStack>
                   ) : (
-                    // <View style={{ marginBottom: s.$10 }}>
-                    //   <Grid
-                    //     canAdd={user.userName === userName}
-                    //     onAddItem={() => {
-                    //       setAddingTo('backlog')
-                    //     }}
-                    //     columns={3}
-                    //     items={backlogItems}
-                    //     rows={Math.ceil((backlogItems.length + 1) / 3)}
-                    //   />
-                    // </View>
                     <Heading style={{ textAlign: 'center' }} tag="mutewarn">
                       Add refs to your backlog. They’ll be searchable to others, but won’t show up
                       on your grid.
@@ -179,6 +190,27 @@ export const Profile = ({ userName }: { userName: string }) => {
           />
         </YStack>
       </ScrollView>
+
+      {removingId !== '' && (
+        <Drawer close={() => setRemovingId('')}>
+          <YStack gap={s.$08} style={{ marginTop: s.$3, marginBottom: s.$6 }}>
+            <Button
+              onPress={handleMoveToBacklog}
+              title={`Move to backlog`}
+              variant="outlineFluid"
+            />
+            <Button
+              onPress={async () => {
+                await removeFromProfile(removingId)
+                setRemovingId('')
+                await refreshGrid(userName)
+              }}
+              title="Remove"
+              variant="fluid"
+            />
+          </YStack>
+        </Drawer>
+      )}
 
       {addingTo !== '' && (
         <Drawer close={() => setAddingTo('')}>

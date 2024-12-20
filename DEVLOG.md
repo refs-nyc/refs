@@ -53,12 +53,14 @@ tomorrow: auth/notifs + list
 AUTH
 
 1. [x] Setup DB to switch over profiles
-2. [ ] Adjust UI
+2. [x] Adjust UI
 3. [x?] API RULES
 
 LISTS
 
 1. Add UI to start a list
+
+<!-- Bug: on first join, make sure we can add to grid -->
 
 Switch email sign in
 

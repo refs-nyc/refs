@@ -3,6 +3,7 @@ import { useUserStore } from './stores/users'
 import { useProfileStore } from './stores/profiles'
 import { useRefStore } from './stores/refs'
 import { useItemStore } from './stores/items'
+import { StagedRef } from './stores/types'
 
 // Combined
 //
@@ -20,7 +21,8 @@ const addToProfile = async (stagedRef: StagedRef, attach = true) => {
       ref: stagedRef.id,
       backlog: stagedRef?.backlog,
       title: stagedRef?.title,
-      image: stagedRef?.image,
+      text: stagedRef?.text,
+      image: stagedRef?.image?.uri,
     })
   } else {
     // Add a new ref and link it
@@ -28,6 +30,7 @@ const addToProfile = async (stagedRef: StagedRef, attach = true) => {
 
     newItem = await itemStore.push({
       ...newRef,
+      text: stagedRef?.text,
       backlog: stagedRef?.backlog,
       ref: newRef.id,
     })
@@ -45,4 +48,26 @@ const addToProfile = async (stagedRef: StagedRef, attach = true) => {
   return { ref: newRef, item: newItem }
 }
 
-export { pocketbase, useUserStore, useProfileStore, useRefStore, useItemStore, addToProfile }
+//
+//
+//
+const removeFromProfile = async (itemId: string) => {
+  const userStore = useUserStore.getState()
+
+  try {
+    await userStore.removeItem(itemId)
+    await pocketbase.collection('items').delete(itemId)
+  } catch (error) {
+    throw Error(error)
+  }
+}
+
+export {
+  pocketbase,
+  useUserStore,
+  useProfileStore,
+  useRefStore,
+  useItemStore,
+  addToProfile,
+  removeFromProfile,
+}

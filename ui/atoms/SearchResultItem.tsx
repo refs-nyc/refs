@@ -4,8 +4,9 @@ import { XStack } from '@/ui'
 import { View, Text } from 'react-native'
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { s, c } from '@/features/style'
+import { CompleteRef } from "@/features/pocketbase/stores/types"
 
-export const SearchResultItem = ({ r }: { r }) => {
+export const SearchResultItem = ({ r }: { r: CompleteRef }) => {
   const [count, setCount] = useState<string | number>('...')
 
   useEffect(() => {

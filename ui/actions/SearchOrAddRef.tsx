@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { pocketbase, useItemStore } from '@/features/pocketbase'
 import { TextInput, Pressable, FlatList, KeyboardAvoidingView, View } from 'react-native'
 import { SearchResultItem } from '@/ui/atoms/SearchResultItem'
@@ -8,13 +8,12 @@ import { s, c } from '@/features/style'
 export const SearchOrAddRef = ({ onComplete }: { onComplete: (r: StagedRef) => void }) => {
   const [searchQuery, setSearchQuery] = useState('')
   const [searchResults, setSearchResults] = useState<RefsItem[]>([])
-  const [realHeight, setRealHeight] = useState(400)
 
   // const { items } = useItemStore()
 
   const renderItem = ({ item }) => {
     return (
-      <Pressable onPress={() => onComplete({ title: searchQuery })}>
+      <Pressable onPress={() => onComplete(item)}>
         <SearchResultItem r={item} />
       </Pressable>
     )

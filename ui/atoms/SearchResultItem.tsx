@@ -1,9 +1,25 @@
+import { useState, useEffect } from 'react'
+import { pocketbase } from '@/features/pocketbase'
 import { XStack } from '@/ui'
 import { View, Text } from 'react-native'
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { s, c } from '@/features/style'
 
-export const SearchResultItem = ({ r }: { r: CompleteRef }) => {
+export const SearchResultItem = ({ r }: { r }) => {
+  const [count, setCount] = useState<string | number>('...')
+
+  useEffect(() => {
+    const getCount = async () => {
+      // Get reference count
+      const results = await pocketbase
+        .collection('items')
+        .getFullList({ filter: `ref = "${r.id}"` })
+      console.log(results)
+      setCount(results.length)
+    }
+
+    getCount()
+  }, [])
   return (
     <View
       style={{
@@ -21,9 +37,8 @@ export const SearchResultItem = ({ r }: { r: CompleteRef }) => {
           <Text>{r.title}</Text>
         </XStack>
         <XStack gap={s.$09} style={{ justifyContent: 'space-between', alignItems: 'center' }}>
-          {/* TODO: get count of people referencing */}
-          <Text>1 referencing</Text>
-          <Ionicons name="close" />
+          <Text>{count} referencing</Text>
+          {/* <Ionicons name="close" /> */}
         </XStack>
       </XStack>
     </View>

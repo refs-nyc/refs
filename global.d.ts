@@ -13,6 +13,7 @@ declare global {
 
   // Non completed ref
   type StagedRef = {
+    id?: string
     image?: ImagePicker.ImagePickerAsset
     backlog?: boolean
     title?: string

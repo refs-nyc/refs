@@ -50,7 +50,8 @@ export const AddRef = ({
     setRefData(rd)
   }
 
-  const addTextRef = async (newRef: StagedRef) => {
+  const addRefFromResults = async (newRef: StagedRef) => {
+    console.log(newRef)
     await setRefData(newRef)
   }
 
@@ -77,7 +78,7 @@ export const AddRef = ({
                     }}
                   />
                 </XStack>
-                {textOpen && <SearchOrAddRef onComplete={addTextRef} />}
+                {textOpen && <SearchOrAddRef onComplete={addRefFromResults} />}
                 {cameraOpen && <Camera />}
               </YStack>
             )}

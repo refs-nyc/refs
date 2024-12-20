@@ -25,7 +25,7 @@ export default function Screen() {
     try {
       const response = await loginWithPassword(stagedUser.email, password)
 
-      router.push(`/users/${pocketbase.authStore.record.userName}`)
+      router.push(`/user/${pocketbase.authStore.record.userName}`)
     } catch (error) {
       // console.error(error)
     }

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { pocketbase } from '@/features/pocketbase'
 import { s, c } from '@/features/style'
+import type { CompleteRef } from '@/features/pocketbase/stores/types'
 
 export const RefListItem = ({ r }: { r: CompleteRef }) => {
   let [count, setCount] = useState(-1)

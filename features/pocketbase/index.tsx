@@ -21,6 +21,7 @@ const addToProfile = async (stagedRef: StagedRef, attach = true) => {
       ref: stagedRef.id,
       backlog: stagedRef?.backlog,
       title: stagedRef?.title,
+      text: stagedRef?.text,
       image: stagedRef?.image,
     })
   } else {
@@ -29,6 +30,7 @@ const addToProfile = async (stagedRef: StagedRef, attach = true) => {
 
     newItem = await itemStore.push({
       ...newRef,
+      text: stagedRef?.text,
       backlog: stagedRef?.backlog,
       ref: newRef.id,
     })

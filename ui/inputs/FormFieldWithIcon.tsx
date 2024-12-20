@@ -17,7 +17,7 @@ export const FormFieldWithIcon = ({
   id: string
   children: React.ReactNode
   placeholder: string
-  onChange: (str) => void
+  onChange: (str: string) => void
   value: string
   autoFocus: boolean
 }) => {
@@ -64,7 +64,7 @@ export const FormFieldWithIcon = ({
       </XStack>
       {/* Warnings etc */}
       <View
-        style={{ height: s.$6, paddingVertical: s.$08, width: '100%', justifyContent: 'start' }}
+        style={{ height: s.$6, paddingVertical: s.$08, width: '100%', justifyContent: 'flex-start' }}
       >
         {children}
       </View>

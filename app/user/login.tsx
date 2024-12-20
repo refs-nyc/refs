@@ -3,7 +3,7 @@ import { useUserStore } from '@/features/pocketbase'
 import { router } from 'expo-router'
 import { ProfileStep } from '@/ui/profiles/ProfileStep'
 import { View, Dimensions } from 'react-native'
-import { Stack, useLocalSearchParams } from 'expo-router'
+import { Stack } from 'expo-router'
 import { pocketbase } from '@/features/pocketbase'
 import Carousel, { ICarouselInstance } from 'react-native-reanimated-carousel'
 
@@ -25,6 +25,7 @@ export default function Screen() {
     try {
       const response = await loginWithPassword(stagedUser.email, password)
 
+      if (pocketbase.authStore.record === null) throw new Error("Invalid username")
       router.push(`/user/${pocketbase.authStore.record.userName}`)
     } catch (error) {
       // console.error(error)
@@ -33,7 +34,7 @@ export default function Screen() {
 
   const nextStep = async (formValues) => {
     console.log(formValues)
-    const index = ref.current?.getCurrentIndex()
+    const index = ref.current?.getCurrentIndex() ?? 0
 
     if (index < data.length - 1) {
       const updated = updateStagedUser(formValues)
@@ -48,7 +49,7 @@ export default function Screen() {
     }
   }
 
-  const renderItem = ({ item, index }) => (
+  const renderItem = ({ item, index }: { item: string[], index: number }) => (
     <ProfileStep fields={item} index={index} overrideSubmit={nextStep} />
   )
 

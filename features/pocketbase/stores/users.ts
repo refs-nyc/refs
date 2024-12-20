@@ -1,7 +1,18 @@
 import { pocketbase } from '../pocketbase'
 import { create } from 'zustand'
+import { Profile, EmptyProfile } from './types'
+import { ClientResponseError } from 'pocketbase'
 
-export const useUserStore = create((set, get) => ({
+export const useUserStore = create<{
+  stagedUser: Partial<Profile>
+  user: Profile | EmptyProfile
+  register: () => Promise<Profile>
+  updateStagedUser: (formFields: any) => void
+  loginWithPassword: (email: string, password: string) => void
+  getUserByEmail: (email: string) => Promise<Profile>
+  login: (userName: string) => Promise<Profile>
+  logout: () => Promise<void>
+}>((set, get) => ({
   stagedUser: {},
   user: {},
   users: [],
@@ -21,7 +32,7 @@ export const useUserStore = create((set, get) => ({
   //
   //
   getUserByEmail: async (email: string) => {
-    const userRecord = await pocketbase.collection('users').getFirstListItem(`email = "${email}"`)
+    const userRecord = await pocketbase.collection<Profile>('users').getFirstListItem(`email = "${email}"`)
     set(() => ({
       stagedUser: userRecord,
     }))
@@ -39,7 +50,7 @@ export const useUserStore = create((set, get) => ({
 
     try {
       const record = await pocketbase
-        .collection('users')
+        .collection<Profile>('users')
         .create(finalUser, { expand: 'items,items.ref' })
 
       set(() => ({
@@ -48,11 +59,13 @@ export const useUserStore = create((set, get) => ({
       return record
     } catch (error) {
       console.error(error)
+      throw error
     }
   },
   loginWithPassword: async (email: string, password: string) => {
     try {
       const record = await pocketbase.collection('users').authWithPassword(email, password)
+      // TODO: unexpected
       set(() => ({
         user: record,
       }))
@@ -67,7 +80,7 @@ export const useUserStore = create((set, get) => ({
   login: async (userName: string) => {
     try {
       const record = await pocketbase
-        .collection('users')
+        .collection<Profile>('users')
         .getFirstListItem(`userName = "${userName}"`, { expand: 'items,items.ref' })
 
       set(() => ({
@@ -75,7 +88,7 @@ export const useUserStore = create((set, get) => ({
       }))
       return record
     } catch (error) {
-      if (error.status == 404) {
+      if ((error as ClientResponseError).status === 404) {
         try {
           const record = await get().register()
 
@@ -108,7 +121,7 @@ export const useUserStore = create((set, get) => ({
 
     try {
       const updatedRecord = await pocketbase
-        .collection('users')
+        .collection<Profile>('users')
         .update(pocketbase.authStore.record.id, { '+items': itemId }, { expand: 'items,items.ref' })
 
       set(() => ({

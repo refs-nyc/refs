@@ -12,6 +12,7 @@ import { NewRef } from '../actions/NewRef'
 import { SearchOrAddRef } from '../actions/SearchOrAddRef'
 // import { useCanvasContext } from '@/features/pocketbase/provider'
 import { c } from '@/features/style'
+import { StagedRef } from '@/features/pocketbase/stores/types'
 
 import type { ImagePickerAsset } from 'expo-image-picker'
 
@@ -22,7 +23,7 @@ export const AddRef = ({
   onCancel,
   backlog = false,
 }: {
-  onAddRef: () => Item
+  onAddRef: () => void
   onCancel: () => void
   backlog?: boolean
 }) => {
@@ -97,7 +98,7 @@ export const AddRef = ({
                   }}
                 />
                 <Button
-                  align="left"
+                  align="flex-start"
                   title="Add from Camera Roll"
                   iconBefore="image-outline"
                   onPress={() => setPickerOpen(true)}

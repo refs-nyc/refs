@@ -1,8 +1,16 @@
-import { Children } from 'react'
+import React, { Children } from 'react'
 import { YStack, XStack } from '@/ui'
 import { s } from '@/features/style'
 
-export const GridWrapper = ({ children, columns = 3, rows = 4 }) => {
+export const GridWrapper = ({
+  children,
+  columns = 3,
+  rows = 4,
+}: {
+  children: React.ReactNode
+  columns?: number
+  rows?: number
+}) => {
   const count = Children.count(children)
   const childrenArray = Children.toArray(children)
 
@@ -21,7 +29,7 @@ export const GridWrapper = ({ children, columns = 3, rows = 4 }) => {
           {childrenArray
             .slice(rowIndex * columns, (rowIndex + 1) * columns)
             .map((child, colIndex) => (
-              <>{child}</>
+              <React.Fragment key={colIndex}>{child}</React.Fragment>
             ))}
         </XStack>
       ))}

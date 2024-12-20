@@ -1,8 +1,9 @@
 import { Image } from 'expo-image'
 import { YStack, XStack, Heading } from '@/ui'
 import { s, c } from '@/features/style'
+import { Profile } from '@/features/pocketbase/stores/types'
 
-export const ProfileHeader = ({ profile }) => (
+export const ProfileHeader = ({ profile }: { profile: Profile }) => (
   <YStack
     gap={s.$1}
     style={{

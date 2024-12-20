@@ -48,6 +48,10 @@ Result:
 IDES
 [] Swipe for a random other profile
 
+1. Detail view Carousel
+2. Quick feed
+3. Lists
+
 tomorrow: auth/notifs + list
 
 AUTH

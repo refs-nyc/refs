@@ -1,3 +1,4 @@
+import type { Item } from '@/features/pocketbase/stores/types'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Drawer, AddRef, Heading, XStack, YStack, Button } from '@/ui'
 import { ProfileHeader } from './ProfileHeader'
@@ -7,19 +8,12 @@ import { useLocalSearchParams, router } from 'expo-router'
 import { RefListItem } from '../atoms/RefListItem'
 import { useEffect, useState, useMemo } from 'react'
 import { View, Text } from 'react-native'
-// import { useCanvasContext } from '@/features/pocketbase/contract'
 import { s, c } from '@/features/style'
 import { pocketbase, useUserStore, removeFromProfile, useItemStore } from '@/features/pocketbase'
-import { Shareable } from '../atoms/Shareable'
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { FlatList, Pressable, ScrollView } from 'react-native-gesture-handler'
 import { Profile as ProfileType } from '@/features/pocketbase/stores/types'
-
-type GridItem = {
-  created: number
-  order: number
-  backlog: boolean
-}
+import { gridSort, createdSort } from '@/ui/profiles/sorts'
 
 export const Profile = ({ userName }: { userName: string }) => {
   const { firstVisit } = useLocalSearchParams()
@@ -33,10 +27,6 @@ export const Profile = ({ userName }: { userName: string }) => {
 
   const { user, logout } = useUserStore()
   const { moveToBacklog } = useItemStore()
-
-  const createdSort = (a: GridItem, b: GridItem) => {
-    return new Date(a.created).valueOf() - new Date(b.created).valueOf()
-  }
 
   const handleLogout = async () => {
     await logout()
@@ -53,18 +43,6 @@ export const Profile = ({ userName }: { userName: string }) => {
     }
   }
 
-  const gridSort = (a: GridItem, b: GridItem) => {
-    // Items with order get their exact position (0-11)
-    if (a.order !== 0 && b.order !== 0) {
-      return a.order - b.order
-    }
-    // Items with order always come before items without
-    if (a.order !== undefined) return -1
-    if (b.order !== undefined) return 1
-    // For items without order, sort by creation date
-    return new Date(a.created).valueOf() - new Date(b.created).valueOf()
-  }
-
   const refreshGrid = async (userName: string) => {
     try {
       const record = await pocketbase
@@ -73,10 +51,8 @@ export const Profile = ({ userName }: { userName: string }) => {
 
       setProfile(record)
 
-      const itms =
-        record?.expand?.items?.filter((itm: GridItem) => !itm.backlog).sort(gridSort) || []
-      const bklg =
-        record?.expand?.items?.filter((itm: GridItem) => itm.backlog).sort(createdSort) || []
+      const itms = record?.expand?.items?.filter((itm: Item) => !itm.backlog).sort(gridSort) || []
+      const bklg = record?.expand?.items?.filter((itm: Item) => itm.backlog).sort(createdSort) || []
 
       // Filter out backlog and normal
       setGridItems(itms)
@@ -102,8 +78,6 @@ export const Profile = ({ userName }: { userName: string }) => {
 
     getProfile()
   }, [userName])
-
-  useEffect(() => console.log(user), [user])
 
   return (
     <>

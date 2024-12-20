@@ -24,7 +24,7 @@ export function HomeScreen() {
       rotation.value = withTiming(
         rotation.value + 450,
         {
-          duration: 10000,
+          duration: 20000,
           easing: Easing.inOut(Easing.cubic),
         },
         () => {
@@ -67,11 +67,6 @@ export function HomeScreen() {
           ) : (
             <Button variant="basic" title="Login" onPress={() => router.push('/user/login')} />
           )}
-          {/* <Button
-            variant="basic"
-            title="Login"
-            onPress={() => router.push('/user/munus?firstVisit=true')}
-          /> */}
         </YStack>
       </YStack>
       <Animated.Image

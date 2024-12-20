@@ -337,6 +337,7 @@ export const ProfileStep = ({
                 control={control}
                 rules={{
                   required: true,
+                  validate: (value) => !['new'].includes(value.toLowerCase()),
                 }}
                 render={({ field: { onChange, value } }) => (
                   <FormFieldWithIcon
@@ -380,7 +381,7 @@ export const ProfileStep = ({
                       onChange(s)
                     }}
                     source={value}
-                    placeholder=''
+                    placeholder=""
                   >
                     {errors.image && (
                       <SizableText

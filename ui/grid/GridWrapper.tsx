@@ -1,4 +1,4 @@
-import { Children } from 'react'
+import React, { Children } from 'react'
 import { YStack, XStack } from '@/ui'
 import { s } from '@/features/style'
 
@@ -29,7 +29,7 @@ export const GridWrapper = ({
           {childrenArray
             .slice(rowIndex * columns, (rowIndex + 1) * columns)
             .map((child, colIndex) => (
-              <>{child}</>
+              <React.Fragment key={colIndex}>{child}</React.Fragment>
             ))}
         </XStack>
       ))}

@@ -13,12 +13,19 @@ import { pocketbase, useUserStore, removeFromProfile, useItemStore } from '@/fea
 import { Shareable } from '../atoms/Shareable'
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { FlatList, Pressable, ScrollView } from 'react-native-gesture-handler'
+import { Profile as ProfileType } from '@/features/pocketbase/stores/types'
+
+type GridItem = {
+  created: number
+  order: number
+  backlog: boolean
+}
 
 export const Profile = ({ userName }: { userName: string }) => {
   const { firstVisit } = useLocalSearchParams()
 
   const insets = useSafeAreaInsets()
-  const [profile, setProfile] = useState()
+  const [profile, setProfile] = useState<ProfileType>()
   const [addingTo, setAddingTo] = useState<'' | 'grid' | 'backlog'>('')
   const [gridItems, setGridItems] = useState([])
   const [backlogItems, setBacklogItems] = useState([])
@@ -27,9 +34,8 @@ export const Profile = ({ userName }: { userName: string }) => {
   const { user, logout } = useUserStore()
   const { moveToBacklog } = useItemStore()
 
-  const createdSort = (a: string, b: string) => {
-    console.log(a)
-    return new Date(a.created_at) - new Date(b.created_at)
+  const createdSort = (a: GridItem, b: GridItem) => {
+    return new Date(a.created).valueOf() - new Date(b.created).valueOf()
   }
 
   const handleLogout = async () => {
@@ -47,8 +53,7 @@ export const Profile = ({ userName }: { userName: string }) => {
     }
   }
 
-  const gridSort = (a: string, b: string) => {
-    console.log(a.order)
+  const gridSort = (a: GridItem, b: GridItem) => {
     // Items with order get their exact position (0-11)
     if (a.order !== 0 && b.order !== 0) {
       return a.order - b.order
@@ -57,7 +62,7 @@ export const Profile = ({ userName }: { userName: string }) => {
     if (a.order !== undefined) return -1
     if (b.order !== undefined) return 1
     // For items without order, sort by creation date
-    return new Date(a.created) - new Date(b.created)
+    return new Date(a.created).valueOf() - new Date(b.created).valueOf()
   }
 
   const refreshGrid = async (userName: string) => {
@@ -68,8 +73,10 @@ export const Profile = ({ userName }: { userName: string }) => {
 
       setProfile(record)
 
-      const itms = record?.expand?.items?.filter((itm) => !itm.backlog).sort(gridSort) || []
-      const bklg = record?.expand?.items?.filter((itm) => itm.backlog).sort(createdSort) || []
+      const itms =
+        record?.expand?.items?.filter((itm: GridItem) => !itm.backlog).sort(gridSort) || []
+      const bklg =
+        record?.expand?.items?.filter((itm: GridItem) => itm.backlog).sort(createdSort) || []
 
       // Filter out backlog and normal
       setGridItems(itms)
@@ -157,7 +164,7 @@ export const Profile = ({ userName }: { userName: string }) => {
                       <FlatList
                         horizontal={false}
                         data={backlogItems}
-                        keyExtractor={(item) => item.id}
+                        keyExtractor={(item: Item) => item.id}
                         renderItem={({ item }) => <RefListItem r={item?.expand?.ref} />}
                       />
                     </YStack>

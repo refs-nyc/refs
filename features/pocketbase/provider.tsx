@@ -6,7 +6,7 @@
 // import { Canvas, Contract } from '@canvas-js/core'
 // import { createContext, useContext, useEffect, useState } from 'react'
 
-// export const CanvasContext = createContext(null)
+// export const CanvasContext = createContext<Canvas | null>(null)
 
 // export function useCanvasContext() {
 //   return useContext(CanvasContext)
@@ -27,6 +27,8 @@
 //         console.error('Error initializing app:', error)
 //       }
 //     }
+// export function CanvasProvider({ children }: { children: React.ReactNode }) {
+//   const [ctx, setCtx] = useState<Canvas | null>(null)
 
 //     start() // Trigger the initialization logic
 //   }, []) // Empty dependency array ensures this runs only once

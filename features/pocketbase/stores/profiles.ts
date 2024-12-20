@@ -1,7 +1,14 @@
 import { pocketbase } from '../pocketbase'
 import { create } from 'zustand'
+import { Profile, EmptyProfile } from './types'
+import { ClientResponseError } from 'pocketbase'
 
-export const useProfileStore = create((set, get) => ({
+export const useProfileStore = create<{ 
+  stagedProfile?: Partial<Profile>, 
+  userProfile?: Profile | EmptyProfile,
+  profiles?: Profile[], 
+  register: () => Promise<Profile>
+}>((set, get) => ({
   stagedProfile: {},
   userProfile: {},
   profiles: [],
@@ -25,7 +32,7 @@ export const useProfileStore = create((set, get) => ({
       const finalProfile = get().stagedProfile
 
       const record = await pocketbase
-        .collection('profiles')
+        .collection<Profile>('profiles')
         .create(finalProfile, { expand: 'items,items.ref' })
 
       set(() => ({
@@ -34,6 +41,7 @@ export const useProfileStore = create((set, get) => ({
       return record
     } catch (error) {
       console.error(error)
+      throw error
     }
   },
   //
@@ -42,7 +50,7 @@ export const useProfileStore = create((set, get) => ({
   login: async (userName: string) => {
     try {
       const record = await pocketbase
-        .collection('profiles')
+        .collection<Profile>('profiles')
         .getFirstListItem(`userName = "${userName}"`, { expand: 'items,items.ref' })
 
       set(() => ({
@@ -50,7 +58,7 @@ export const useProfileStore = create((set, get) => ({
       }))
       return record
     } catch (error) {
-      if (error.status == 404) {
+      if ((error as ClientResponseError).status == 404) {
         try {
           const record = await get().register()
 
@@ -71,7 +79,7 @@ export const useProfileStore = create((set, get) => ({
   //
   attachItem: async (itemId: string) => {
     const userProfile = get().userProfile
-    if (!userProfile.id) throw Error('Not logged in')
+    if (!userProfile || !("id" in userProfile)) throw Error('Not logged in')
 
     try {
       const updatedRecord = await pocketbase

@@ -11,6 +11,7 @@ import Ionicons from '@expo/vector-icons/Ionicons'
 import { useItemStore } from '@/features/pocketbase/stores/items'
 import type { ImagePickerAsset } from 'expo-image-picker'
 import { c, s } from '@/features/style'
+import { CompleteRef, StagedRef } from '@/features/pocketbase/stores/types'
 
 const win = Dimensions.get('window')
 
@@ -61,11 +62,11 @@ export const NewRef = ({
   attach = true,
 }: {
   r: StagedRef
-  placeholder: string
-  onComplete: (i: Item) => void
+  placeholder?: string
+  onComplete: (i: CompleteRef) => void
   onCancel: () => void
   backlog?: boolean
-  attach: boolean
+  attach?: boolean
 }) => {
   const [currentRef, setCurrentRef] = useState<StagedRef>({ ...r })
   const [imageAsset, setImageAsset] = useState(r?.image || null)
@@ -84,7 +85,7 @@ export const NewRef = ({
     setCurrentRef(u)
   }
 
-  const updateRefTitle = (title) => {
+  const updateRefTitle = (title: string) => {
     const u = { ...r, title }
     setCurrentRef(u)
   }
@@ -109,7 +110,7 @@ export const NewRef = ({
   return (
     <>
       <Ionicons name="chevron-back" size={20} onPress={onCancel} />
-      <View style={{ minHeight, justifyContent: 'start', paddingTop: s.$4 }}>
+      <View style={{ minHeight, justifyContent: 'flex-start', paddingTop: s.$4 }}>
         <YStack gap={s.$3}>
           {imageAsset ? (
             <View style={{ width: '100%', alignItems: 'center' }}>
@@ -135,12 +136,12 @@ export const NewRef = ({
               onAddImage={(a: ImagePickerAsset) => {
                 console.log('on add IMage', a)
                 setImageAsset(a)
+                return a
               }}
             />
           )}
           <EditableTitle
             onComplete={updateRefTitle}
-            onChangeTitle={updateRefTitle}
             placeholder={placeholder}
             title={r?.title || placeholder}
           />

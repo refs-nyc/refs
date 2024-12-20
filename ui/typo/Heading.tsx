@@ -1,6 +1,9 @@
 import { Text } from 'react-native'
 import { typo } from '@/features/style/index'
 
+// Add this type definition
+type TypoTag = keyof typeof typo
+
 export const Heading = ({
   children,
   style,
@@ -8,7 +11,7 @@ export const Heading = ({
 }: {
   children: React.ReactNode
   style?: any
-  tag: string
+  tag: TypoTag
 }) => {
   let typeStyle = null
 

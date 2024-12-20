@@ -20,5 +20,5 @@ export * from './profiles/NewUserProfile'
 export * from './profiles/Profile'
 
 export const Spinner = () => <Text>Loading</Text>
-export const SizableText = ({ children }) => <Text>{children}</Text>
-export const Paragraph = ({ children }) => <Text>{children}</Text>
+export const SizableText = ({ children }: { children: React.ReactNode }) => <Text>{children}</Text>
+export const Paragraph = ({ children }: { children: React.ReactNode }) => <Text>{children}</Text>

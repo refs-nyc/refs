@@ -3,7 +3,20 @@ import { Button as NativeButton, Text, StyleSheet, Pressable } from 'react-nativ
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { c, s } from '@/features/style'
 
-export const Button = (props) => {
+type ButtonVariant = keyof typeof styles
+type ButtonProps = {
+  onPress: () => void
+  title?: string
+  variant?: ButtonVariant
+  iconBefore?: keyof typeof Ionicons.glyphMap
+  iconAfter?: keyof typeof Ionicons.glyphMap
+  iconColor?: string
+  disabled?: boolean
+  align?: 'center' | 'flex-start' | 'flex-end'
+  style?: any
+}
+
+export const Button = (props: ButtonProps) => {
   const {
     onPress,
     title = 'Save',
@@ -18,10 +31,10 @@ export const Button = (props) => {
   let buttonVariant = null
   let textVariant = null
   let iconVariant = null
-  if (variant in styles) {
-    buttonVariant = styles?.[variant]
-    textVariant = styles?.[`${variant}Text`]
-    iconVariant = styles?.[`${variant}Icon`]
+  if (variant && variant in styles) {
+    buttonVariant = styles[variant]
+    textVariant = styles[`${variant}Text` as keyof typeof styles]
+    iconVariant = styles[`${variant}Icon` as keyof typeof styles]
   }
 
   return (
@@ -47,7 +60,9 @@ export const Button = (props) => {
   )
 }
 
-export const MainButton = ({ title, onPress }) => <Button title={title} onPress={onPress} />
+export const MainButton = ({ title, onPress }: { title: string; onPress: () => void }) => (
+  <Button title={title} onPress={onPress} />
+)
 
 const styles = StyleSheet.create({
   button: {

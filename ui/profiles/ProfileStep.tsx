@@ -17,17 +17,19 @@ export const ProfileStep = ({
   fields,
   onComplete,
   overrideSubmit,
+  index,
 }: {
   fields: string[]
-  onComplete: () => {}
+  onComplete?: (formValues?: any) => {}
   overrideSubmit?: (formValues: any) => any
+  index: number
 }) => {
   const {
     control,
     handleSubmit,
     watch,
     formState: { errors },
-  } = useForm<StepInput1 | StepInput2 | StepInput3 | StepInput4 | StepInput5>()
+  } = useForm()
 
   // const { login } = useUserStore()
   const { getUserByEmail, updateStagedUser, login } = useUserStore()
@@ -35,7 +37,7 @@ export const ProfileStep = ({
 
   const formValues = watch()
 
-  const onSubmit = async (d) => {
+  const onSubmit = async () => {
     console.log('ON SUBMIT', fields)
     if (overrideSubmit) {
       await overrideSubmit(formValues)
@@ -67,20 +69,20 @@ export const ProfileStep = ({
           // Redirect to login
           router.push(`/user/login`)
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error(error)
         if (error.status == 404) {
           // Not existing
-          onComplete(formValues)
+          onComplete?.(formValues)
           return
         }
       }
     } else {
-      onComplete(formValues)
+      onComplete?.(formValues)
     }
   }
 
-  const onErrors = (d) => {
+  const onErrors = (d: any) => {
     console.log('Failure')
 
     console.log(formValues)
@@ -100,6 +102,19 @@ export const ProfileStep = ({
         behavior={'height'}
       >
         {/* <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'}> */}
+        <SizableText
+          onPress={() => router.back()}
+          style={{
+            position: 'absolute',
+            top: s.$6,
+            right: s.$2,
+            fontSize: s.$09,
+            color: c.grey2,
+            zIndex: 1000,
+          }}
+        >
+          Back
+        </SizableText>
         <YStack gap="$6">
           {fields.includes('login') && (
             <>
@@ -240,7 +255,7 @@ export const ProfileStep = ({
             </>
           )}
           {fields.includes('email') && loginState === LOGIN_STATE.LOGGED_IN && (
-            <Button title="Welcome back" onPress={onComplete} />
+            <Button title="Welcome back" onPress={onComplete ?? (() => {})} />
           )}
 
           {/* FirstName */}
@@ -295,6 +310,7 @@ export const ProfileStep = ({
                     id="lastName"
                     placeholder="Last Name"
                     value={value}
+                    autoFocus={false}
                   >
                     {errors.lastName && (
                       <SizableText
@@ -364,6 +380,7 @@ export const ProfileStep = ({
                       onChange(s)
                     }}
                     source={value}
+                    placeholder=''
                   >
                     {errors.image && (
                       <SizableText

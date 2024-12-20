@@ -264,7 +264,7 @@ export const OnboardingCarouselItem = ({
         </YStack>
 
         <Button
-          style={{ position: 'absolute', bottom: s.$3 }}
+          style={{ position: 'absolute', bottom: s.$4 }}
           variant="fluid"
           title="I'm ready"
           onPress={done}

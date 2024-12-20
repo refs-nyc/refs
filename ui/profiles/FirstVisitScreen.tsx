@@ -5,8 +5,9 @@ import { Switch, View } from 'react-native'
 import { GridTile } from '../grid/GridTile'
 import { Link, router } from 'expo-router'
 import { s, c } from '@/features/style'
+import { Profile } from "@/features/pocketbase/stores/types"
 
-export const FirstVisitScreen = ({ user }) => {
+export const FirstVisitScreen = ({ user }: { user: Profile}) => {
   const [isEnabled, setIsEnabled] = useState(false)
   const toggleSwitch = () => {
     setIsEnabled((previousState) => !previousState)

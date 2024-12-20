@@ -1,4 +1,4 @@
-import { View, Dimensions } from 'react-native'
+import { View, Dimensions, DimensionValue } from 'react-native'
 import { useEffect } from 'react'
 import { Button, YStack, Heading } from '../../ui/index'
 import { pocketbase } from '@/features/pocketbase'
@@ -46,9 +46,9 @@ export function HomeScreen() {
     <View
       style={{
         flex: 1,
-        justifyContent: 'start',
+        justifyContent: 'flex-start',
         padding: s.$4,
-        height: s.full,
+        height: s.full as DimensionValue,
         marginTop: dims.height * 0.2,
       }}
     >

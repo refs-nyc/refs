@@ -11,6 +11,7 @@ import 'react-native-get-random-values'
 import 'fast-text-encoding'
 
 // For pocketbase
+// @ts-ignore
 global.EventSource = eventsource
 
 import { pocketbase } from '@/features/pocketbase'

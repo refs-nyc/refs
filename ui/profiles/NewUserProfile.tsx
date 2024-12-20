@@ -27,7 +27,7 @@ export const NewUserProfile = () => {
   ]
 
   const nextStep = async (formValues) => {
-    const index = ref.current?.getCurrentIndex()
+    const index = ref.current?.getCurrentIndex() ?? 0
     const updated = updateStagedUser(formValues)
 
     if (index < data.length - 1) {
@@ -47,7 +47,7 @@ export const NewUserProfile = () => {
     }
   }
 
-  const renderItem = ({ item, index }) => (
+  const renderItem = ({ item, index }: { item: string[], index: number }) => (
     <ProfileStep fields={item} index={index} onComplete={nextStep} />
   )
 

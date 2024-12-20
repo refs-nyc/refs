@@ -1,11 +1,13 @@
 import React, { useState, useRef } from 'react'
-import { ScrollView, TouchableOpacity, View, Text, FlatList } from 'react-native'
+import { ScrollView, TouchableOpacity, View, Text, FlatList, ScrollViewProps } from 'react-native'
 import { GridTile } from '../grid/GridTile'
 import { s } from '@/features/style'
+import { CompleteRef } from '@/features/pocketbase/stores/types'
 
+// @ts-ignore
 import { DraggableGrid as DraggableGridComponent } from 'react-native-draggable-grid'
 
-export const FlatListGrid = ({ items }) => {
+export const FlatListGrid = ({ items }: { items: CompleteRef[] }) => {
   console.log(items.length)
 
   return (
@@ -26,9 +28,15 @@ export const FlatListGrid = ({ items }) => {
   )
 }
 
-export const DraggableGridScrollView = ({ children, style }) => {
+export const DraggableGridScrollView = ({
+  children,
+  style,
+}: {
+  children: React.ReactNode
+  style?: any
+}) => {
   console.log(style)
-  const scrollViewRef = useRef(null)
+  const scrollViewRef = useRef<ScrollView>(null)
 
   const onDragStart = () => {
     console.log('on drag start')
@@ -48,10 +56,17 @@ export const DraggableGridScrollView = ({ children, style }) => {
 
   return (
     <ScrollView ref={scrollViewRef} style={style}>
-      {React.Children.map(children, (child) => {
+      {React.Children.map(children, (child: any) => {
         console.log(child?.type, child?.displayName, child?.type.name)
         console.log(child?.type === DraggableGrid)
-        if (React.isValidElement(child) && child?.type.name === 'DraggableGrid') {
+        if (
+          React.isValidElement<{
+            onDragStart: () => void
+            onDragEnd: () => void
+          }>(child) &&
+          typeof child.type !== 'string' &&
+          child?.type.name === 'DraggableGrid'
+        ) {
           console.log('Attaching those things')
           return React.cloneElement(child, {
             onDragStart,
@@ -69,13 +84,13 @@ export const DraggableGrid = ({
   onDragEnd,
   onDragStart,
 }: {
-  items: any[]
+  items: Array<{ id: string, key: string }>
   onDragEnd: () => void
   onDragStart: () => void
 }) => {
   const [data, setData] = useState(items.map((item) => ({ ...item, key: item.id })))
 
-  const renderItem = (item) => {
+  const renderItem = (item: { id: string, key: string }) => {
     return (
       <View
         key={item.key}
@@ -106,11 +121,11 @@ export const DraggableGrid = ({
       }}
     >
       <DraggableGridComponent
-        onDragRelease={(newData) => {
+        onDragRelease={(newData: Array<{ id: string, key: string }>) => {
           setData(newData)
           onDragEnd() //This activates the above onDragEnd function when you stop dragging and just turns scrolling back on
         }}
-        onDragStart={(e) => {
+        onDragStart={(e: { eventName: string }) => {
           console.log('')
           console.log('start')
           console.log(e)

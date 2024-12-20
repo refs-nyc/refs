@@ -100,6 +100,19 @@ export const ProfileStep = ({
         behavior={'height'}
       >
         {/* <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'}> */}
+        <SizableText
+          onPress={() => router.back()}
+          style={{
+            position: 'absolute',
+            top: s.$6,
+            right: s.$2,
+            fontSize: s.$09,
+            color: c.grey2,
+            zIndex: 1000,
+          }}
+        >
+          Back
+        </SizableText>
         <YStack gap="$6">
           {fields.includes('login') && (
             <>

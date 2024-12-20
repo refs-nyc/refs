@@ -33,9 +33,9 @@ export const SearchOrAddRef = ({ onComplete }: { onComplete: (r: StagedRef) => v
       return refsResults
     }
 
+    setSearchQuery(q)
     const result = await search()
     setSearchResults(result)
-    setSearchQuery(q)
   }
 
   return (

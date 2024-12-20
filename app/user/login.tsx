@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { useUserStore } from '@/features/pocketbase'
 import { router } from 'expo-router'
-import { ProfileStep } from '@/ui/profiles/NewUserProfile'
+import { ProfileStep } from '@/ui/profiles/ProfileStep'
 import { View, Dimensions } from 'react-native'
 import { Stack, useLocalSearchParams } from 'expo-router'
 import { pocketbase } from '@/features/pocketbase'

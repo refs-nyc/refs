@@ -1,7 +1,8 @@
 import { OnboardingCarouselItem, Drawer, AddRef } from '@/ui'
-import { View, Dimensions } from 'react-native'
+import { View, Dimensions, Text } from 'react-native'
 import { useRef, useState } from 'react'
 import { router } from 'expo-router'
+import { s, c } from '@/features/style/index'
 import Carousel, { ICarouselInstance } from 'react-native-reanimated-carousel'
 
 export function OnboardingScreen() {
@@ -21,6 +22,19 @@ export function OnboardingScreen() {
 
   return (
     <View style={{ flex: 1 }}>
+      <Text
+          onPress={() => router.back()}
+          style={{
+            position: 'absolute',
+            top: s.$6,
+            right: s.$1,
+            fontSize: s.$09,
+            color: c.grey2,
+            zIndex: 1000,
+          }}
+        >
+          Back
+      </Text>
       <Carousel
         loop={false}
         ref={ref}

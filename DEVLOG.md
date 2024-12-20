@@ -43,7 +43,10 @@ Result:
    [] Weird search result typing
    [] FOrm validation
 1. Nice to have
-   [] Swipe for a random other profile
+1. [ ] OTP password integration
+
+IDES
+[] Swipe for a random other profile
 
 tomorrow: auth/notifs + list
 
@@ -52,7 +55,6 @@ AUTH
 1. [x] Setup DB to switch over profiles
 2. [ ] Adjust UI
 3. [x?] API RULES
-4. [ ] OTP password integration
 
 Switch email sign in
 

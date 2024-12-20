@@ -9,6 +9,7 @@ export type EmptyProfile = {}
 export type StagedRef = {
   id?: string
   image?: ImagePickerAsset
+  text?: string
   backlog?: boolean
   title?: string
 }

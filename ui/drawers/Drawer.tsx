@@ -13,13 +13,14 @@ import Animated, {
   FadeOut,
 } from 'react-native-reanimated'
 import { useRef, useState } from 'react'
+import { c } from '@/features/style'
 
 const win = Dimensions.get('window')
 const HEIGHT = 'auto'
 const OVERDRAG = 20
 const ACCENT_COLOR = '#FFF0FF'
 const BACKDROP_COLOR = '#FFF0FF'
-const BACKGROUND_COLOR = '#FFF0FF'
+const BACKGROUND_COLOR = c.surface
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable)
 
@@ -97,7 +98,7 @@ const styles = StyleSheet.create({
     backgroundColor: BACKGROUND_COLOR,
   },
   sheet: {
-    backgroundColor: 'white',
+    backgroundColor: BACKGROUND_COLOR,
     padding: 16,
     height: HEIGHT,
     width: '100%',

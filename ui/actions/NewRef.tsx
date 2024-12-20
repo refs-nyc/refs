@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { usePathname } from 'expo-router'
-import { View, Pressable, Dimensions } from 'react-native'
+import { View, Pressable, Dimensions, TextInput } from 'react-native'
 import { Heading, XStack, YStack } from '@/ui'
 import { Picker } from '../inputs/Picker'
 import { PinataImage } from '../images/PinataImage'
@@ -71,6 +71,7 @@ export const NewRef = ({
   const [currentRef, setCurrentRef] = useState<StagedRef>({ ...r })
   const [imageAsset, setImageAsset] = useState(r?.image || null)
   const [pinataSource, setPinataSource] = useState('')
+  const [text, setTextState] = useState('')
 
   const { push } = useItemStore()
 
@@ -92,9 +93,7 @@ export const NewRef = ({
 
   const submit = async () => {
     try {
-      console.log('currentRef')
-      console.log(currentRef)
-
+      console.log('submitting', currentRef)
       const { item, ref } = await addToProfile(
         { ...currentRef, image: pinataSource, backlog },
         !pathname.includes('onboarding') // don't attach to profile if there is no profile
@@ -106,6 +105,10 @@ export const NewRef = ({
       console.log('Done')
     }
   }
+
+  useEffect(() => {
+    setCurrentRef({ ...currentRef, text })
+  }, [text])
 
   return (
     <>
@@ -146,14 +149,19 @@ export const NewRef = ({
             title={r?.title || placeholder}
           />
           {/* Notes */}
-          {/* <View
+          <TextInput
+            multiline={true}
+            numberOfLines={4}
+            placeholder="Care to comment?"
+            onChangeText={setTextState}
             style={{
-              backgroundColor: c.surface2,
-              height: s.$12,
+              backgroundColor: c.white,
               borderRadius: s.$075,
               width: '100%',
+              padding: s.$1,
+              minHeight: s.$12,
             }}
-          ></View> */}
+          ></TextInput>
         </YStack>
       </View>
       <View
@@ -169,13 +177,14 @@ export const NewRef = ({
           variant="outline"
           title="Start a list"
         /> */}
-        <Button
-          style={{ minWidth: 0, width: (win.width - s.$2 * 2 - s.$1) / 2 }}
-          title="Add Ref"
-          disabled={pinataSource === 'none'}
-          onPress={submit}
-        />
       </View>
+      <Button
+        style={{ position: 'absolute', bottom: s.$3, left: s.$08, minWidth: 0, width: '100%' }}
+        title="Add Ref"
+        variant="fluid"
+        disabled={pinataSource === 'none'}
+        onPress={submit}
+      />
     </>
   )
 }

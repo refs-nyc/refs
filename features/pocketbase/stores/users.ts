@@ -104,7 +104,6 @@ export const useUserStore = create((set, get) => ({
   //
   //
   attachItem: async (itemId: string) => {
-    const user = get().user
     if (!pocketbase.authStore.isValid || !pocketbase.authStore.record) throw Error('Not logged in')
 
     try {
@@ -118,5 +117,25 @@ export const useUserStore = create((set, get) => ({
 
       return updatedRecord
     } catch (error) {}
+  },
+  //
+  //
+  //
+  removeItem: async (itemId: string) => {
+    if (!pocketbase.authStore.isValid || !pocketbase.authStore.record) throw Error('Not logged in')
+
+    try {
+      const updatedRecord = await pocketbase
+        .collection('users')
+        .update(pocketbase.authStore.record.id, { 'items-': itemId }, { expand: 'items,items.ref' })
+
+      set(() => ({
+        user: updatedRecord,
+      }))
+
+      return updatedRecord
+    } catch (error) {
+      throw Error(error)
+    }
   },
 }))

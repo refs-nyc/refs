@@ -16,7 +16,7 @@ export const GridItem = ({
   onPress?: () => {}
 }) => {
   return (
-    <GridTileWrapper type={type}>
+    <>
       {item && (
         <>
           {item.image ? (
@@ -34,6 +34,6 @@ export const GridItem = ({
           </Heading>
         </Pressable>
       )}
-    </GridTileWrapper>
+    </>
   )
 }

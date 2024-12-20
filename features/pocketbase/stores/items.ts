@@ -26,4 +26,14 @@ export const useItemStore = create((set) => ({
       items: [...state.items.filter((i) => i.id !== id)],
     }))
   },
+  moveToBacklog: async (id: string) => {
+    try {
+      const record = await pocketbase.collection('items').update(id, { backlog: true })
+
+      return record
+    } catch (error) {
+      console.error(error)
+      throw Error(error)
+    }
+  },
 }))

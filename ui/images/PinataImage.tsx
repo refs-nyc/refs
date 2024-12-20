@@ -20,7 +20,7 @@ export const PinataImage = ({
 }) => {
   const [loading, setLoading] = useState(false)
   const [source, setSource] = useState(asset?.uri || asset)
-  const [pinataSource, setPinataSource] = useState(asset?.includes('pinata') ? asset : '')
+  const [pinataSource, setPinataSource] = useState(typeof asset === 'string' ? asset : '')
   const [showOriginal, setShowOriginal] = useState(true)
 
   useEffect(() => {

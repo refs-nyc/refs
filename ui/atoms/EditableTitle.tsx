@@ -20,7 +20,7 @@ export const EditableTitle = ({
     <>
       {!editing ? (
         <Pressable onPress={() => setEditing(true)}>
-          <XStack gap={s.$3} style={{ justifyContent: 'center', alignItems: 'center' }}>
+          <XStack gap={s.$1} style={{ justifyContent: 'center', alignItems: 'center' }}>
             <Heading
               tag="h1"
               style={{ textAlign: 'center', color: titleState == placeholder ? c.muted : c.black }}

@@ -39,7 +39,7 @@ export const useItemStore = create<{
       return record
     } catch (error) {
       console.error(error)
-      throw Error(error)
+      throw error
     }
   },
 }))

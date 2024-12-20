@@ -79,10 +79,14 @@ const styles = StyleSheet.create({
   },
   large: {
     backgroundColor: c.none,
-    color: c.black,
     paddingVertical: s.$1,
     paddingHorizontal: s.$3,
     minWidth: s.$20,
+  },
+  outline: {
+    backgroundColor: c.none,
+    borderColor: c.black,
+    borderWidth: 2,
   },
   fluid: {
     width: '100%',
@@ -106,5 +110,8 @@ const styles = StyleSheet.create({
   },
   basicText: {
     color: 'black',
+  },
+  outlineText: {
+    color: c.black,
   },
 })

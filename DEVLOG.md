@@ -56,13 +56,17 @@ AUTH
 2. [ ] Adjust UI
 3. [x?] API RULES
 
+LISTS
+
+1. Add UI to start a list
+
 Switch email sign in
 
 - [x] Be able to add refs in onboarding
-- [] Moving refs to Backlog / Deleting them
-- [] Dragging Refs around Profile
-  Lists
-- [] Add lists
+- [ ] Moving refs to Backlog / Deleting them
+- [ ] Dragging Refs around Profile
+      Lists
+- [ ] Add lists
 - [ ] Notifications test
 
 Friday: place/art/neither flow + feed of refs

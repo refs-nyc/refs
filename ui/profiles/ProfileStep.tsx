@@ -28,10 +28,10 @@ export const ProfileStep = ({
     control,
     handleSubmit,
     watch,
+    reset,
     formState: { errors },
   } = useForm()
 
-  // const { login } = useUserStore()
   const { getUserByEmail, updateStagedUser, login } = useUserStore()
   const [loginState, setLoginState] = useState(0)
 
@@ -89,6 +89,17 @@ export const ProfileStep = ({
     console.log(d)
   }
 
+  const handleBackPress = () => {
+    // Check if any field has a value
+    const hasValues = Object.values(formValues).some((value) => value)
+
+    if (hasValues) {
+      reset() // Reset form if there are values
+    } else {
+      router.back() // Go back if form is empty
+    }
+  }
+
   return (
     <DismissKeyboard>
       <KeyboardAvoidingView
@@ -103,7 +114,7 @@ export const ProfileStep = ({
       >
         {/* <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'}> */}
         <SizableText
-          onPress={() => router.back()}
+          onPress={handleBackPress}
           style={{
             position: 'absolute',
             top: s.$6,
@@ -152,6 +163,17 @@ export const ProfileStep = ({
           )}
           {fields.includes('password') && (
             <>
+              <SizableText
+                style={{
+                  fontSize: s.$1,
+                  fontFamily: 'Inter',
+                  textAlign: 'center',
+                  color: c.accent,
+                  marginBottom: s.$6,
+                }}
+              >
+                Welcome! Please provide a password for your account:
+              </SizableText>
               <Controller
                 name="password"
                 control={control}
@@ -178,7 +200,8 @@ export const ProfileStep = ({
                         }}
                       >
                         Password must include at least one upper case letter,{'\n'}
-                        one lower case letter, one number, and one special character
+                        one lower case letter, one number, one special character, and be at least
+                        eight letters long
                       </SizableText>
                     )}
                   </FormFieldWithIcon>
@@ -196,7 +219,7 @@ export const ProfileStep = ({
                     onChange={onChange}
                     type="password"
                     id="email"
-                    placeholder="Password"
+                    placeholder="Confirm Password"
                     value={value}
                     autoFocus={false}
                   >
@@ -248,7 +271,6 @@ export const ProfileStep = ({
                         This field is required
                       </SizableText>
                     )}
-                    {/* <SizableText>{LOGIN_STATE[loginState]}</SizableText> */}
                   </FormFieldWithIcon>
                 )}
               />
@@ -376,11 +398,10 @@ export const ProfileStep = ({
                 render={({ field: { onChange, value } }) => (
                   <AvatarPicker
                     onComplete={(s) => {
-                      console.log(s)
                       onChange(s)
                     }}
                     source={value}
-                    placeholder=''
+                    placeholder=""
                   >
                     {errors.image && (
                       <SizableText
@@ -400,7 +421,6 @@ export const ProfileStep = ({
             </>
           )}
         </YStack>
-        {/* </KeyboardAvoidingView> */}
 
         {fields.includes('email') ? (
           <Button

@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { useUserStore } from '@/features/pocketbase'
 import { router } from 'expo-router'
-import { ProfileStep } from '@/ui/profiles/NewUserProfile'
+import { ProfileStep } from '@/ui/profiles/ProfileStep'
 import { View, Dimensions } from 'react-native'
 import { Stack, useLocalSearchParams } from 'expo-router'
 import { pocketbase } from '@/features/pocketbase'
@@ -25,7 +25,7 @@ export default function Screen() {
     try {
       const response = await loginWithPassword(stagedUser.email, password)
 
-      router.push(`/users/${pocketbase.authStore.record.userName}`)
+      router.push(`/user/${pocketbase.authStore.record.userName}`)
     } catch (error) {
       // console.error(error)
     }

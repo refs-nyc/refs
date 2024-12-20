@@ -56,6 +56,9 @@ export default function RootLayout() {
       console.log(pocketbase.authStore.isValid)
       if (pocketbase.authStore.isValid) {
         console.log('user is logged in')
+      } else {
+        pocketbase.authStore.clear()
+        console.log('user is not logged in')
       }
 
       loadRemainingFonts()

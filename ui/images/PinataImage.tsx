@@ -12,15 +12,15 @@ export const PinataImage = ({
   onSuccess,
   onFail,
 }: {
-  asset: ImagePickerAsset
+  asset: ImagePickerAsset | string
   round?: boolean
   style?: any
   onSuccess: (url: string) => void
   onFail: () => void
 }) => {
   const [loading, setLoading] = useState(false)
-  const [source, setSource] = useState(asset.uri)
-  const [pinataSource, setPinataSource] = useState('')
+  const [source, setSource] = useState(asset?.uri || asset)
+  const [pinataSource, setPinataSource] = useState(typeof asset === 'string' ? asset : '')
   const [showOriginal, setShowOriginal] = useState(true)
 
   useEffect(() => {
@@ -43,7 +43,9 @@ export const PinataImage = ({
       }
     }
 
-    load()
+    console.log(asset)
+
+    if (!pinataSource) load()
   }, [asset])
 
   return (

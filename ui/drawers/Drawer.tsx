@@ -85,9 +85,7 @@ export function Drawer({
           </View>
         </GestureDetector>
 
-        <View mt="$4" pb="$10" onLayout={(event) => setRealHeight(event.nativeEvent.layout.height)}>
-          {children}
-        </View>
+        <View onLayout={(event) => setRealHeight(event.nativeEvent.layout.height)}>{children}</View>
       </Animated.View>
     </>
   )

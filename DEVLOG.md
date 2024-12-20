@@ -43,7 +43,10 @@ Result:
    [] Weird search result typing
    [] FOrm validation
 1. Nice to have
-   [] Swipe for a random other profile
+1. [ ] OTP password integration
+
+IDES
+[] Swipe for a random other profile
 
 tomorrow: auth/notifs + list
 
@@ -52,15 +55,18 @@ AUTH
 1. [x] Setup DB to switch over profiles
 2. [ ] Adjust UI
 3. [x?] API RULES
-4. [ ] OTP password integration
+
+LISTS
+
+1. Add UI to start a list
 
 Switch email sign in
 
 - [x] Be able to add refs in onboarding
-- [] Moving refs to Backlog / Deleting them
-- [] Dragging Refs around Profile
-  Lists
-- [] Add lists
+- [ ] Moving refs to Backlog / Deleting them
+- [ ] Dragging Refs around Profile
+      Lists
+- [ ] Add lists
 - [ ] Notifications test
 
 Friday: place/art/neither flow + feed of refs

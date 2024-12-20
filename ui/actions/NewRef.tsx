@@ -1,13 +1,14 @@
 import { useState } from 'react'
 import { usePathname } from 'expo-router'
 import { View, Pressable, Dimensions } from 'react-native'
-import { Heading, YStack } from '@/ui'
+import { Heading, XStack, YStack } from '@/ui'
 import { Picker } from '../inputs/Picker'
 import { PinataImage } from '../images/PinataImage'
 import { EditableTitle } from '../atoms/EditableTitle'
-import { createRefWithItem } from '@/features/pocketbase'
+import { addToProfile } from '@/features/pocketbase'
 import { Button } from '../buttons/Button'
 import Ionicons from '@expo/vector-icons/Ionicons'
+import { useItemStore } from '@/features/pocketbase/stores/items'
 import type { ImagePickerAsset } from 'expo-image-picker'
 import { c, s } from '@/features/style'
 
@@ -70,6 +71,8 @@ export const NewRef = ({
   const [imageAsset, setImageAsset] = useState(r?.image || null)
   const [pinataSource, setPinataSource] = useState('')
 
+  const { push } = useItemStore()
+
   const minHeight = win.height * 0.7
 
   const pathname = usePathname()
@@ -88,13 +91,13 @@ export const NewRef = ({
 
   const submit = async () => {
     try {
+      console.log('currentRef')
       console.log(currentRef)
-      const { item, ref } = await createRefWithItem(
+
+      const { item, ref } = await addToProfile(
         { ...currentRef, image: pinataSource, backlog },
-        !pathname.includes('onboarding')
+        !pathname.includes('onboarding') // don't attach to profile if there is no profile
       )
-      console.log(item)
-      console.log(ref)
       onComplete(item)
     } catch (e) {
       console.error(e)
@@ -135,22 +138,43 @@ export const NewRef = ({
               }}
             />
           )}
-          {
-            <EditableTitle
-              onComplete={updateRefTitle}
-              onChangeTitle={updateRefTitle}
-              placeholder={placeholder}
-              title={r?.title || placeholder}
-            />
-          }
+          <EditableTitle
+            onComplete={updateRefTitle}
+            onChangeTitle={updateRefTitle}
+            placeholder={placeholder}
+            title={r?.title || placeholder}
+          />
+          {/* Notes */}
+          {/* <View
+            style={{
+              backgroundColor: c.surface2,
+              height: s.$12,
+              borderRadius: s.$075,
+              width: '100%',
+            }}
+          ></View> */}
         </YStack>
       </View>
-      <Button
-        style={{ position: 'absolute', bottom: s.$4, left: s.$08, width: '100%' }}
-        title="done"
-        disabled={pinataSource === 'none'}
-        onPress={submit}
-      />
+      <View
+        style={{
+          flexDirection: 'row',
+          justifyContent: 'space-evenly',
+          alignItems: 'stretch',
+          gap: s.$1,
+        }}
+      >
+        {/* <Button
+          style={{ minWidth: 0, width: (win.width - s.$2 * 2 - s.$1) / 2 }}
+          variant="outline"
+          title="Start a list"
+        /> */}
+        <Button
+          style={{ minWidth: 0, width: (win.width - s.$2 * 2 - s.$1) / 2 }}
+          title="Add Ref"
+          disabled={pinataSource === 'none'}
+          onPress={submit}
+        />
+      </View>
     </>
   )
 }

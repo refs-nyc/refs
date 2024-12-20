@@ -7,23 +7,31 @@ import { useItemStore } from './stores/items'
 // Combined
 //
 //
-const createRefWithItem = async (stagedRef: StagedRef, attach = true) => {
+const addToProfile = async (stagedRef: StagedRef, attach = true) => {
   const refStore = useRefStore.getState()
   const itemStore = useItemStore.getState()
   const userStore = useUserStore.getState()
 
-  const newRef = await refStore.push(stagedRef)
+  let newItem = {}
+  let newRef = {}
 
-  const copiedRef = { ...newRef }
+  if (stagedRef.id) {
+    newItem = await itemStore.push({
+      ref: stagedRef.id,
+      backlog: stagedRef?.backlog,
+      title: stagedRef?.title,
+      image: stagedRef?.image,
+    })
+  } else {
+    // Add a new ref and link it
+    newRef = await refStore.push(stagedRef)
 
-  // delete copiedRef.firstReferral
-  // delete copiedRef.referrals
-
-  const newItem = await itemStore.push({
-    ...copiedRef,
-    backlog: stagedRef?.backlog,
-    ref: newRef.id,
-  })
+    newItem = await itemStore.push({
+      ...newRef,
+      backlog: stagedRef?.backlog,
+      ref: newRef.id,
+    })
+  }
 
   // If the userProfile is set, attach item ID to items
   if (attach) {
@@ -37,4 +45,4 @@ const createRefWithItem = async (stagedRef: StagedRef, attach = true) => {
   return { ref: newRef, item: newItem }
 }
 
-export { pocketbase, useUserStore, useProfileStore, useRefStore, useItemStore, createRefWithItem }
+export { pocketbase, useUserStore, useProfileStore, useRefStore, useItemStore, addToProfile }

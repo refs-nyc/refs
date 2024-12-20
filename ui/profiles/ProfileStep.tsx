@@ -129,6 +129,17 @@ export const ProfileStep = ({
         <YStack gap="$6">
           {fields.includes('login') && (
             <>
+              <SizableText
+                style={{
+                  fontSize: s.$1,
+                  fontFamily: 'Inter',
+                  textAlign: 'center',
+                  color: c.accent,
+                  marginBottom: s.$6,
+                }}
+              >
+                Welcome back! Please enter your password to continue:
+              </SizableText>
               <Controller
                 name="login"
                 control={control}
@@ -199,9 +210,8 @@ export const ProfileStep = ({
                           color: c.accent,
                         }}
                       >
-                        Password must include at least one upper case letter,{'\n'}
-                        one lower case letter, one number, one special character, and be at least
-                        eight letters long
+                        Password must include an uppercase letter, lowercase letter, {'\n'} number,
+                        and special character, and be at least 8 characters long
                       </SizableText>
                     )}
                   </FormFieldWithIcon>
@@ -283,6 +293,17 @@ export const ProfileStep = ({
           {/* FirstName */}
           {fields.includes('firstName') && (
             <>
+              <SizableText
+                style={{
+                  fontSize: s.$1,
+                  fontFamily: 'Inter',
+                  textAlign: 'center',
+                  color: c.accent,
+                  marginBottom: s.$6,
+                }}
+              >
+                What should we call you?
+              </SizableText>
               <Controller
                 name="firstName"
                 control={control}

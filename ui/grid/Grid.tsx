@@ -12,9 +12,9 @@ export const Grid = ({
   items,
   canAdd = true,
 }: {
-  onAddItem?: () => void
-  columns: number
-  rows: number
+  onAddItem: () => void
+  columns?: number
+  rows?: number
   items: any[]
   canAdd?: boolean
 }) => {

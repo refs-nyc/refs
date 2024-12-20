@@ -11,7 +11,7 @@ export const EditableTitle = ({
 }: {
   title: string
   placeholder: string
-  onComplete: (str: string) => string
+  onComplete: (str: string) => void
 }) => {
   const [titleState, setTitleState] = useState(title)
   const [editing, setEditing] = useState(false)

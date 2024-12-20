@@ -3,6 +3,7 @@ import { useUserStore } from './stores/users'
 import { useProfileStore } from './stores/profiles'
 import { useRefStore } from './stores/refs'
 import { useItemStore } from './stores/items'
+import { StagedRef } from './stores/types'
 
 // Combined
 //

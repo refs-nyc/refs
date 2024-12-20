@@ -17,7 +17,7 @@ export const GridTile = ({
   }
 
   return (
-    <View
+    <TouchableOpacity
       style={[
         base.gridTile,
         {
@@ -30,6 +30,6 @@ export const GridTile = ({
       onPress={onLongPress}
     >
       {children}
-    </View>
+    </TouchableOpacity>
   )
 }

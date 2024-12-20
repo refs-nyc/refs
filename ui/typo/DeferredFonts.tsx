@@ -14,4 +14,6 @@ export const DeferredFonts = () => {
     if (deferredFonts) console.log(deferredFonts)
     if (deferredError) console.error(deferredError)
   }, [deferredFonts, deferredError])
+
+  return <></>
 }

@@ -19,7 +19,7 @@ export const PinataImage = ({
   onFail: () => void
 }) => {
   const [loading, setLoading] = useState(false)
-  const [source, setSource] = useState(asset?.uri || asset)
+  const [source, setSource] = useState(typeof asset === 'string' ? asset : asset?.uri)
   const [pinataSource, setPinataSource] = useState(typeof asset === 'string' ? asset : '')
   const [showOriginal, setShowOriginal] = useState(true)
 
@@ -27,7 +27,7 @@ export const PinataImage = ({
     const load = async () => {
       try {
         setLoading(true)
-        const url = await pinataUpload(asset)
+        const url = typeof asset === 'string' ? asset : await pinataUpload(asset)
         console.log('got signed url')
         setPinataSource(url)
         onSuccess(url)
@@ -49,7 +49,13 @@ export const PinataImage = ({
   }, [asset])
 
   return (
-    <View width="100%" jc="center" ai="center">
+    <View
+      style={{
+        width: '100%',
+        justifyContent: 'center',
+        alignItems: 'center',
+      }}
+    >
       <View
         style={{
           width: 200,

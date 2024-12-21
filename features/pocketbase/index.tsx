@@ -22,7 +22,7 @@ const addToProfile = async (stagedRef: StagedRef, attach = true) => {
       backlog: stagedRef?.backlog,
       title: stagedRef?.title,
       text: stagedRef?.text,
-      image: stagedRef?.image,
+      image: stagedRef?.image?.uri,
     })
   } else {
     // Add a new ref and link it

@@ -18,6 +18,8 @@ export type StagedRef = {
 export type StagedItem = {
   ref: string
   image?: string
+  text?: string
+  backlog?: boolean
 }
 
 // Data types

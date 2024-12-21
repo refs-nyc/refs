@@ -28,10 +28,10 @@ export const ProfileStep = ({
     control,
     handleSubmit,
     watch,
+    reset,
     formState: { errors },
   } = useForm()
 
-  // const { login } = useUserStore()
   const { getUserByEmail, updateStagedUser, login } = useUserStore()
   const [loginState, setLoginState] = useState(0)
 
@@ -89,6 +89,17 @@ export const ProfileStep = ({
     console.log(d)
   }
 
+  const handleBackPress = () => {
+    // Check if any field has a value
+    const hasValues = Object.values(formValues).some((value) => value)
+
+    if (hasValues) {
+      reset() // Reset form if there are values
+    } else {
+      router.back() // Go back if form is empty
+    }
+  }
+
   return (
     <DismissKeyboard>
       <KeyboardAvoidingView
@@ -103,7 +114,7 @@ export const ProfileStep = ({
       >
         {/* <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'}> */}
         <SizableText
-          onPress={() => router.back()}
+          onPress={handleBackPress}
           style={{
             position: 'absolute',
             top: s.$6,
@@ -118,6 +129,17 @@ export const ProfileStep = ({
         <YStack gap="$6">
           {fields.includes('login') && (
             <>
+              <SizableText
+                style={{
+                  fontSize: s.$1,
+                  fontFamily: 'Inter',
+                  textAlign: 'center',
+                  color: c.accent,
+                  marginBottom: s.$6,
+                }}
+              >
+                Welcome back! Please enter your password to continue:
+              </SizableText>
               <Controller
                 name="login"
                 control={control}
@@ -152,6 +174,17 @@ export const ProfileStep = ({
           )}
           {fields.includes('password') && (
             <>
+              <SizableText
+                style={{
+                  fontSize: s.$1,
+                  fontFamily: 'Inter',
+                  textAlign: 'center',
+                  color: c.accent,
+                  marginBottom: s.$6,
+                }}
+              >
+                Welcome! Please provide a password for your account:
+              </SizableText>
               <Controller
                 name="password"
                 control={control}
@@ -177,8 +210,8 @@ export const ProfileStep = ({
                           color: c.accent,
                         }}
                       >
-                        Password must include at least one upper case letter,{'\n'}
-                        one lower case letter, one number, and one special character
+                        Password must include an uppercase letter, lowercase letter, {'\n'} number,
+                        and special character, and be at least 8 characters long
                       </SizableText>
                     )}
                   </FormFieldWithIcon>
@@ -196,7 +229,7 @@ export const ProfileStep = ({
                     onChange={onChange}
                     type="password"
                     id="email"
-                    placeholder="Password"
+                    placeholder="Confirm Password"
                     value={value}
                     autoFocus={false}
                   >
@@ -248,7 +281,6 @@ export const ProfileStep = ({
                         This field is required
                       </SizableText>
                     )}
-                    {/* <SizableText>{LOGIN_STATE[loginState]}</SizableText> */}
                   </FormFieldWithIcon>
                 )}
               />
@@ -261,6 +293,17 @@ export const ProfileStep = ({
           {/* FirstName */}
           {fields.includes('firstName') && (
             <>
+              <SizableText
+                style={{
+                  fontSize: s.$1,
+                  fontFamily: 'Inter',
+                  textAlign: 'center',
+                  color: c.accent,
+                  marginBottom: s.$6,
+                }}
+              >
+                What should we call you?
+              </SizableText>
               <Controller
                 name="firstName"
                 control={control}
@@ -377,7 +420,6 @@ export const ProfileStep = ({
                 render={({ field: { onChange, value } }) => (
                   <AvatarPicker
                     onComplete={(s) => {
-                      console.log(s)
                       onChange(s)
                     }}
                     source={value}
@@ -401,7 +443,6 @@ export const ProfileStep = ({
             </>
           )}
         </YStack>
-        {/* </KeyboardAvoidingView> */}
 
         {fields.includes('email') ? (
           <Button

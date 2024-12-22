@@ -120,6 +120,30 @@ export const typo = StyleSheet.create({
     letterSpacing: -0.5,
     color: c.muted,
   },
+  p: {
+    fontFamily: 'Inter',
+    fontSize: s.$09,
+    lineHeight: s.$1half,
+    letterSpacing: -0.5,
+    color: c.black,
+  },
+  pmuted: {
+    fontFamily: 'Inter',
+    fontSize: s.$09,
+    lineHeight: s.$1half,
+    letterSpacing: -0.5,
+    color: c.muted,
+  },
+  small: {
+    fontSize: 14,
+    lineHeight: 18,
+    color: c.black,
+  },
+  smallmuted: {
+    fontSize: 14,
+    lineHeight: 18,
+    color: c.muted,
+  },
   strong: {
     fontFamily: 'InterBold',
   },

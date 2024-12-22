@@ -17,7 +17,6 @@ export default function Screen() {
           headerShown: false,
         }}
       />
-      <Text>{userName}</Text>
       <UserProfileScreen userName={userName} />
     </>
   )

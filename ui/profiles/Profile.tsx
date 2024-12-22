@@ -158,7 +158,13 @@ export const Profile = ({ userName }: { userName: string }) => {
           {!user && <Heading tag="h1">Profile for {userName} not found</Heading>}
 
           <Button
-            style={{ marginTop: s.$12, marginBottom: s.$4 }}
+            style={{ marginTop: s.$12, marginBottom: 0 }}
+            title="Home"
+            variant="basic"
+            onPress={() => router.push('/')}
+          />
+          <Button
+            style={{ marginBottom: s.$4 }}
             title="Logout"
             variant="basic"
             onPress={() => handleLogout()}

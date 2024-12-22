@@ -2,6 +2,7 @@ import { View, Dimensions, DimensionValue } from 'react-native'
 import { useEffect } from 'react'
 import { Button, YStack, Heading } from '../../ui/index'
 import { pocketbase } from '@/features/pocketbase'
+import { Feed } from '@/features/home/feed'
 import Animated, {
   useAnimatedStyle,
   Easing,
@@ -43,45 +44,51 @@ export function HomeScreen() {
   })
 
   return (
-    <View
-      style={{
-        flex: 1,
-        justifyContent: 'flex-start',
-        padding: s.$4,
-        height: s.full as DimensionValue,
-        marginTop: dims.height * 0.2,
-      }}
-    >
-      <YStack gap={s.$3}>
-        <Heading tag="h1normal" style={{ textAlign: 'center', color: c.black }}>
-          <Heading tag="strong">Refs</Heading> is the phonebook for the internet.
-        </Heading>
-        <YStack style={{ alignItems: 'center' }} gap={s.$05}>
-          <Button title="Join" onPress={() => router.push('/onboarding')} />
-          {pocketbase.authStore.isValid && pocketbase.authStore?.record?.userName ? (
-            <Button
-              variant="basic"
-              title="Profile"
-              onPress={() => router.push(`/user/${pocketbase.authStore?.record?.userName}`)}
-            />
-          ) : (
-            <Button variant="basic" title="Login" onPress={() => router.push('/user/login')} />
-          )}
-        </YStack>
-      </YStack>
-      <Animated.Image
-        style={[
-          {
-            width: dims.width * 1.2,
-            height: dims.width * 1.2,
-            position: 'absolute',
-            right: -dims.width / 3,
-            bottom: -dims.width / 4,
-          },
-          animatedStyle,
-        ]}
-        source={require('@/assets/images/homepage.png')}
-      />
-    </View>
+    <>
+      {pocketbase.authStore.isValid && pocketbase.authStore?.record?.userName ? (
+        <Feed />
+      ) : (
+        <View
+          style={{
+            flex: 1,
+            justifyContent: 'flex-start',
+            padding: s.$4,
+            height: s.full as DimensionValue,
+            marginTop: dims.height * 0.2,
+          }}
+        >
+          <YStack gap={s.$3}>
+            <Heading tag="h1normal" style={{ textAlign: 'center', color: c.black }}>
+              <Heading tag="strong">Refs</Heading> is the phonebook for the internet.
+            </Heading>
+            <YStack style={{ alignItems: 'center' }} gap={s.$05}>
+              <Button title="Join" onPress={() => router.push('/onboarding')} />
+              {pocketbase.authStore.isValid && pocketbase.authStore?.record?.userName ? (
+                <Button
+                  variant="basic"
+                  title="Profile"
+                  onPress={() => router.push(`/user/${pocketbase.authStore?.record?.userName}`)}
+                />
+              ) : (
+                <Button variant="basic" title="Login" onPress={() => router.push('/user/login')} />
+              )}
+            </YStack>
+          </YStack>
+          <Animated.Image
+            style={[
+              {
+                width: dims.width * 1.2,
+                height: dims.width * 1.2,
+                position: 'absolute',
+                right: -dims.width / 3,
+                bottom: -dims.width / 4,
+              },
+              animatedStyle,
+            ]}
+            source={require('@/assets/images/homepage.png')}
+          />
+        </View>
+      )}
+    </>
   )
 }

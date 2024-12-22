@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react'
 import { XStack, YStack } from '@/ui/core/Stacks'
 import { Heading } from '@/ui/typo/Heading'
+import { Button } from '@/ui/buttons/Button'
 import { pocketbase } from '@/features/pocketbase'
 import type { Item } from '@/features/pocketbase/stores/types'
-import { Link } from 'expo-router'
+import { Link, router } from 'expo-router'
 import { FlatList } from 'react-native-gesture-handler'
 import { ScrollView, View, Dimensions } from 'react-native'
 import { s } from '@/features/style'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 const win = Dimensions.get('window')
 
@@ -21,6 +23,7 @@ const win = Dimensions.get('window')
 
 export const Feed = () => {
   const [items, setItems] = useState<Item[]>([])
+  const insets = useSafeAreaInsets()
 
   useEffect(() => {
     // The initial data we are looking for is
@@ -54,11 +57,18 @@ export const Feed = () => {
     <ScrollView
       contentContainerStyle={{ justifyContent: 'flex-end' }}
       style={{
+        paddingTop: Math.max(insets.top, 16),
         width: win.width,
         height: win.height,
         flex: 1,
       }}
     >
+      <Button
+        variant="basic"
+        title="Profile"
+        onPress={() => router.push(`/user/${pocketbase.authStore?.record?.userName}`)}
+      />
+
       <YStack
         style={{
           gap: s.$025,

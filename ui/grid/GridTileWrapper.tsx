@@ -10,11 +10,13 @@ export const GridTileWrapper = ({
   type,
   children,
   id,
+  index,
   onRemove,
 }: {
   type: GridTileType
   children: React.ReactNode
   id?: string
+  index?: number
   onRemove?: () => void
 }) => {
   const pathname = usePathname()
@@ -28,7 +30,7 @@ export const GridTileWrapper = ({
   }
 
   const openDetailScreen = () => {
-    router.replace(`${pathname}/details${id && `?initialId=${id}`}`)
+    router.push(`${pathname}/details${id && `?initialId=${id}`}`)
   }
 
   const showActions = () => {

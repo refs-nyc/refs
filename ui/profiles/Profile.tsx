@@ -53,6 +53,8 @@ export const Profile = ({ userName }: { userName: string }) => {
 
       const itms = record?.expand?.items?.filter((itm: Item) => !itm.backlog).sort(gridSort) || []
       const bklg = record?.expand?.items?.filter((itm: Item) => itm.backlog).sort(createdSort) || []
+      console.log('items')
+      console.log(itms.map((i) => i.expand.ref.title))
 
       // Filter out backlog and normal
       setGridItems(itms)

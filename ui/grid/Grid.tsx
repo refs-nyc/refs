@@ -31,6 +31,7 @@ export const Grid = ({
       {items.map((item, i) => (
         <GridTileWrapper
           id={item.id}
+          index={i}
           onRemove={() => {
             if (onRemoveItem) onRemoveItem(item.id)
           }}

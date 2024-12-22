@@ -8,6 +8,7 @@ export const Heading = ({
   children,
   style,
   tag,
+  ...props
 }: {
   children: React.ReactNode
   style?: any
@@ -17,5 +18,9 @@ export const Heading = ({
 
   if (tag in typo) typeStyle = typo[tag]
 
-  return <Text style={[style, typeStyle]}>{children}</Text>
+  return (
+    <Text style={[style, typeStyle]} {...props}>
+      {children}
+    </Text>
+  )
 }

@@ -95,14 +95,6 @@ export const Details = ({ profile, initialId = '' }: { profile: Profile; intialI
 
   const defaultIndex = data.findIndex((itm) => itm.id == initialId)
 
-  // useEffect(() => {
-  //   console.log(ref.current?.getCurrentIndex())
-  //   console.log(defaultIndex, initialId)
-  //   ref.current?.scrollTo({ index: defaultIndex, animated: false })
-  //   console.log(ref.current?.getCurrentIndex())
-  //   console.log('----')
-  // }, [])
-
   return (
     <View style={{ paddingTop: Math.max(insets.top, 16) }}>
       <Link

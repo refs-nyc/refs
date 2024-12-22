@@ -23,6 +23,7 @@ const addToProfile = async (stagedRef: StagedRef, attach = true) => {
       title: stagedRef?.title,
       text: stagedRef?.text,
       image: stagedRef?.image?.uri,
+      creator: pocketbase.authStore?.record?.id,
     })
   } else {
     // Add a new ref and link it
@@ -33,6 +34,7 @@ const addToProfile = async (stagedRef: StagedRef, attach = true) => {
       text: stagedRef?.text,
       backlog: stagedRef?.backlog,
       ref: newRef.id,
+      creator: pocketbase.authStore?.record?.id,
     })
   }
 

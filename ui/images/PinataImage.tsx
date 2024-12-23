@@ -4,6 +4,7 @@ import { Image } from 'expo-image'
 import { View, Text } from 'react-native'
 import { pinataUpload } from '@/features/pinata'
 import type { ImagePickerAsset } from 'expo-image-picker'
+import { useNetInfo } from '@react-native-community/netinfo'
 
 export const PinataImage = ({
   asset,
@@ -22,8 +23,10 @@ export const PinataImage = ({
   const [source, setSource] = useState(typeof asset === 'string' ? asset : asset?.uri)
   const [pinataSource, setPinataSource] = useState(typeof asset === 'string' ? asset : '')
   const [showOriginal, setShowOriginal] = useState(true)
+  const { type, isConnected } = useNetInfo()
 
   useEffect(() => {
+    console.log('is connected from pinata ,', isConnected)
     const load = async () => {
       try {
         setLoading(true)

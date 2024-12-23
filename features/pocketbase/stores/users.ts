@@ -1,6 +1,6 @@
 import { pocketbase } from '../pocketbase'
 import { create } from 'zustand'
-import { Profile, EmptyProfile } from './types'
+import { Profile, EmptyProfile, Item } from './types'
 import { ClientResponseError } from 'pocketbase'
 
 export const useUserStore = create<{
@@ -8,6 +8,7 @@ export const useUserStore = create<{
   user: Profile | EmptyProfile
   register: () => Promise<Profile>
   updateStagedUser: (formFields: any) => void
+  attachItem: (item: Item) => void
   loginWithPassword: (email: string, password: string) => void
   getUserByEmail: (email: string) => Promise<Profile>
   login: (userName: string) => Promise<Profile>
@@ -32,7 +33,9 @@ export const useUserStore = create<{
   //
   //
   getUserByEmail: async (email: string) => {
-    const userRecord = await pocketbase.collection<Profile>('users').getFirstListItem(`email = "${email}"`)
+    const userRecord = await pocketbase
+      .collection<Profile>('users')
+      .getFirstListItem(`email = "${email}"`)
     set(() => ({
       stagedUser: userRecord,
     }))
@@ -52,6 +55,8 @@ export const useUserStore = create<{
       const record = await pocketbase
         .collection<Profile>('users')
         .create(finalUser, { expand: 'items,items.ref' })
+
+      await get().loginWithPassword(finalUser.email, get().stagedUser.password)
 
       set(() => ({
         user: record,

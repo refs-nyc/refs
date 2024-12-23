@@ -16,6 +16,7 @@ export const useItemStore = create<{
   // 1. Create a new Ref
   // 2. Attach Ref to Item and create
   push: async (newItem: StagedItem) => {
+    console.log('new ref')
     const record = await pocketbase.collection<Item>('items').create(newItem, { expand: 'ref' })
 
     set((state) => {

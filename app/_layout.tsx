@@ -18,6 +18,7 @@ configureReanimatedLogger({ strict: false })
 // @ts-ignore
 global.EventSource = eventsource
 
+import NetInfo from '@react-native-community/netinfo'
 import { pocketbase } from '@/features/pocketbase'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
@@ -52,7 +53,17 @@ export default function RootLayout() {
   function loadRemainingFonts() {}
 
   useEffect(() => {
+    const unsubscribe = NetInfo.addEventListener((state) => {
+      console.log('Connection type', state.type)
+      console.log('Is connected?', state.isConnected)
+    })
+
+    return unsubscribe
+  }, [])
+
+  useEffect(() => {
     SystemUI.setBackgroundColorAsync(c.surface)
+
     if (interLoaded || interError) {
       // Hide the splash screen after the fonts have loaded (or an error was returned) and the UI is ready.
       SplashScreen.hideAsync()

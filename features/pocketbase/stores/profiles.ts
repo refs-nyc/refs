@@ -3,17 +3,17 @@ import { create } from 'zustand'
 import { Profile, EmptyProfile } from './types'
 import { ClientResponseError } from 'pocketbase'
 
-export const useProfileStore = create<{ 
-  stagedProfile?: Partial<Profile>, 
-  userProfile?: Profile | EmptyProfile,
-  profiles?: Profile[], 
+export const useProfileStore = create<{
+  stagedProfile?: Partial<Profile>
+  userProfile?: Profile | EmptyProfile
+  profiles?: Profile[]
   register: () => Promise<Profile>
 }>((set, get) => ({
   stagedProfile: {},
   userProfile: {},
   profiles: [],
   //
-  updateStagedProfile: (formFields: any) => {
+  updateStagedUser: (formFields: any) => {
     set((state) => ({
       stagedProfile: { ...state.stagedProfile, ...formFields },
     }))
@@ -79,7 +79,7 @@ export const useProfileStore = create<{
   //
   attachItem: async (itemId: string) => {
     const userProfile = get().userProfile
-    if (!userProfile || !("id" in userProfile)) throw Error('Not logged in')
+    if (!userProfile || !('id' in userProfile)) throw Error('Not logged in')
 
     try {
       const updatedRecord = await pocketbase

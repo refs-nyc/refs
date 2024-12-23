@@ -94,6 +94,7 @@ export const NewRef = ({
   const submit = async () => {
     try {
       console.log('submitting', currentRef)
+      console.log('from onboarding? ', pathname.includes('onboarding'))
       const { item, ref } = await addToProfile(
         { ...currentRef, image: pinataSource, backlog },
         !pathname.includes('onboarding') // don't attach to profile if there is no profile

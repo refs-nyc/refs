@@ -25,7 +25,7 @@ export default function Screen() {
     try {
       const response = await loginWithPassword(stagedUser.email, password)
 
-      if (pocketbase.authStore.record === null) throw new Error("Invalid username")
+      if (pocketbase.authStore.record === null) console.error('Invalid username')
       router.push(`/user/${pocketbase.authStore.record.userName}`)
     } catch (error) {
       // console.error(error)
@@ -49,7 +49,7 @@ export default function Screen() {
     }
   }
 
-  const renderItem = ({ item, index }: { item: string[], index: number }) => (
+  const renderItem = ({ item, index }: { item: string[]; index: number }) => (
     <ProfileStep fields={item} index={index} overrideSubmit={nextStep} />
   )
 

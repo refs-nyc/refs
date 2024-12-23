@@ -415,7 +415,7 @@ export const ProfileStep = ({
                 name="image"
                 control={control}
                 rules={{
-                  required: true,
+                  required: false,
                 }}
                 render={({ field: { onChange, value } }) => (
                   <AvatarPicker

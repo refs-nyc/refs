@@ -13,6 +13,10 @@ const addToProfile = async (stagedRef: StagedRef, attach = true) => {
   const itemStore = useItemStore.getState()
   const userStore = useUserStore.getState()
 
+  console.log('userStore')
+  console.log(userStore)
+  console.log('---')
+
   let newItem = {}
   let newRef = {}
 
@@ -26,25 +30,37 @@ const addToProfile = async (stagedRef: StagedRef, attach = true) => {
       creator: pocketbase.authStore?.record?.id,
     })
   } else {
-    // Add a new ref and link it
-    newRef = await refStore.push(stagedRef)
+    try {
+      // Add a new ref and link it
+      newRef = await refStore.push(stagedRef)
 
-    newItem = await itemStore.push({
-      ...newRef,
-      text: stagedRef?.text,
-      backlog: stagedRef?.backlog,
-      ref: newRef.id,
-      creator: pocketbase.authStore?.record?.id,
-    })
+      newItem = await itemStore.push({
+        ...newRef,
+        text: stagedRef?.text,
+        backlog: stagedRef?.backlog,
+        ref: newRef.id,
+        creator: pocketbase.authStore?.record?.id,
+      })
+    } catch (error) {
+      console.error(error)
+    }
   }
 
   // If the userProfile is set, attach item ID to items
   if (attach) {
-    await userStore.attachItem(newItem.id)
+    try {
+      await userStore.attachItem(newItem.id)
+    } catch (error) {
+      console.error(error)
+    }
   } else {
     let items = userStore.stagedProfile?.items || []
 
-    await userStore.updateStagedProfile({ items: [...items, newItem.id] })
+    try {
+      await userStore.updateStagedUser({ items: [...items, newItem.id] })
+    } catch (error) {
+      console.error(error)
+    }
   }
 
   return { ref: newRef, item: newItem }

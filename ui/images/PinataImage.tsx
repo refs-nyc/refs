@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 // This component takes a local image uri, displays the image and meanwhile posts the image to Pinata
 import { Image } from 'expo-image'
 import { View, Text } from 'react-native'
-import { pinataUpload } from '../inputs/Picker'
+import { pinataUpload } from '@/features/pinata'
 import type { ImagePickerAsset } from 'expo-image-picker'
 
 export const PinataImage = ({
@@ -34,7 +34,6 @@ export const PinataImage = ({
 
         setTimeout(() => {
           setShowOriginal(false)
-          console.log('faded out now')
           setLoading(false)
         }, 200)
       } catch (error) {
@@ -42,8 +41,6 @@ export const PinataImage = ({
         onFail()
       }
     }
-
-    console.log(asset)
 
     if (!pinataSource) load()
   }, [asset])

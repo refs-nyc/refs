@@ -45,3 +45,5 @@ ios
 
 android
 
+# Local pocketbase instance
+.pocketbase/

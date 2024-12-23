@@ -6,6 +6,14 @@ const { getDefaultConfig } = require('expo/metro-config')
 
 const config = getDefaultConfig(__dirname)
 
+const { transformer, resolver } = config
+
+// SVG Support
+config.transformer = {
+  ...transformer,
+  babelTransformerPath: require.resolve('react-native-svg-transformer/expo'),
+}
+
 config.resolver.unstable_enablePackageExports = true
 
 config.resolver.unstable_conditionNames = ['require', 'import', 'react-native', 'ios', 'default']
@@ -29,6 +37,13 @@ config.resolver.resolveRequest = (context, moduleName, platform) => {
 
   // otherwise chain to the standard Metro resolver.
   return context.resolveRequest(context, moduleName, platform)
+}
+
+// SVG Support
+config.resolver = {
+  ...resolver,
+  assetExts: resolver.assetExts.filter((ext) => ext !== 'svg'),
+  sourceExts: [...resolver.sourceExts, 'svg'],
 }
 
 module.exports = config

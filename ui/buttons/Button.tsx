@@ -39,10 +39,16 @@ export const Button = (props: ButtonProps) => {
 
   return (
     <Pressable
-      style={[styles.button, buttonVariant, props?.style, disabled && styles.disabled]}
+      style={[
+        { alignItems: align },
+        styles.button,
+        buttonVariant,
+        props?.style,
+        disabled && styles.disabled,
+      ]}
       onPress={!disabled ? onPress : () => {}}
     >
-      <XStack style={{ justifyContent: align }} gap={s.$08}>
+      <XStack style={{ justifyContent: 'align' }} gap={s.$08}>
         {iconBefore && (
           <Ionicons
             style={[{ height: s.$1half }]}
@@ -92,6 +98,12 @@ const styles = StyleSheet.create({
     backgroundColor: c.none,
     color: c.black,
   },
+  basicLeft: {
+    backgroundColor: c.none,
+    color: c.black,
+    paddingHorizontal: 0,
+    alignItems: 'flex-start',
+  },
   large: {
     backgroundColor: c.none,
     paddingVertical: s.$1,
@@ -131,6 +143,10 @@ const styles = StyleSheet.create({
   },
   basicText: {
     color: 'black',
+  },
+  basicLeftText: {
+    color: 'black',
+    textAlign: 'left',
   },
   outlineFluidText: {
     color: c.black,

@@ -87,8 +87,7 @@ export const AddRef = ({
             {!cameraOpen && !textOpen && (
               <YStack gap="$4">
                 <Button
-                  align="flex-start"
-                  variant="basic"
+                  variant="basicLeft"
                   iconColor={c.black}
                   title="Type anything"
                   iconBefore="text-outline"
@@ -98,9 +97,11 @@ export const AddRef = ({
                   }}
                 />
                 <Button
+                  variant="basicLeft"
                   align="flex-start"
                   title="Add from Camera Roll"
                   iconBefore="image-outline"
+                  iconColor={c.black}
                   onPress={() => setPickerOpen(true)}
                 />
               </YStack>

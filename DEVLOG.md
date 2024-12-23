@@ -71,8 +71,8 @@ LISTS
 Switch email sign in
 
 - [x] Be able to add refs in onboarding
-- [ ] Moving refs to Backlog / Deleting them
-- [ ] Dragging Refs around Profile
+- [x] Moving refs to Backlog / Deleting them
+- [ ] Dragging Refs around Profile -> on branch
       Lists
 - [ ] Add lists
 - [ ] Notifications test
@@ -81,3 +81,11 @@ Friday: place/art/neither flow + feed of refs
 [] Add Ref category to db
 Sat: tuning it all up, squashing bugs
 3m
+
+Mini Roadmap
+
+- [ ] Integrate Lists
+- [ ] Improve lacking parts of the new ref UI
+- [ ] Implement a basic search so the search bar does something
+
+- [ ] Universal links for easy sharing of profile / profile item

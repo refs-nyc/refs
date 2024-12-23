@@ -137,12 +137,15 @@ export const Profile = ({ userName }: { userName: string }) => {
 
                   {backlogItems.length > 0 || gridItems.length === 12 ? (
                     <YStack>
-                      <FlatList
+                      {backlogItems.map((itm) => (
+                        <RefListItem key={itm.id} r={itm?.expand?.ref} />
+                      ))}
+                      {/* <FlatList
                         horizontal={false}
                         data={backlogItems}
                         keyExtractor={(item: Item) => item.id}
                         renderItem={({ item }) => <RefListItem r={item?.expand?.ref} />}
-                      />
+                      /> */}
                     </YStack>
                   ) : (
                     <Heading style={{ textAlign: 'center' }} tag="mutewarn">

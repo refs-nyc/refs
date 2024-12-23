@@ -30,6 +30,7 @@ export const Grid = ({
     <GridWrapper columns={columns} rows={rows}>
       {items.map((item, i) => (
         <GridTileWrapper
+          key={item.id}
           id={item.id}
           index={i}
           onRemove={() => {
@@ -44,7 +45,7 @@ export const Grid = ({
       {canAdd && (
         <>
           {items.length < gridSize && (
-            <GridTileWrapper type="add">
+            <GridTileWrapper key="add" type="add">
               <GridTileActionAdd onPress={onAddItem}></GridTileActionAdd>
             </GridTileWrapper>
           )}
@@ -52,7 +53,7 @@ export const Grid = ({
       )}
 
       {Array.from({ length: gridSize - items.length - (canAdd ? 1 : 0) }).map((_, i) => (
-        <GridTileWrapper type="">
+        <GridTileWrapper key={`empty-${i}`} type="">
           <GridTile key={i} />
         </GridTileWrapper>
       ))}

@@ -80,7 +80,7 @@ export const PinataImage = ({
         {pinataSource && (
           <Image
             placeholder={source}
-            key={pinataSource}
+            key={`pinata-${pinataSource}`}
             contentFit="cover"
             placeholderContentFit="cover"
             style={{
@@ -96,7 +96,7 @@ export const PinataImage = ({
 
         {source && showOriginal && (
           <Image
-            key={source}
+            key={`source-${source}`}
             contentFit="cover"
             style={{
               position: showOriginal ? 'absolute' : 'relative',

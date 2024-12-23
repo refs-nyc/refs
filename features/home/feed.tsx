@@ -58,6 +58,16 @@ export const Feed = () => {
         </Heading>
 
         <SearchRef />
+
+        <Link
+          style={{ width: '100%', textAlign: 'center' }}
+          href={{
+            pathname: '/user/[userName]',
+            params: { userName: pocketbase.authStore.record.userName },
+          }}
+        >
+          My Profile
+        </Link>
       </YStack>
 
       <YStack
@@ -78,7 +88,7 @@ export const Feed = () => {
             }}
           >
             {items.map((item) => (
-              <XStack gap={s.$1} style={{ paddingVertical: s.$05 }}>
+              <XStack key={item.id} gap={s.$1} style={{ paddingVertical: s.$05 }}>
                 {item?.image ? (
                   <SimplePinataImage
                     originalSource={item.image}

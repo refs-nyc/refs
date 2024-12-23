@@ -161,7 +161,7 @@ export const NewRef = ({
               padding: s.$1,
               minHeight: s.$12,
             }}
-          ></TextInput>
+          />
         </YStack>
       </View>
       <View

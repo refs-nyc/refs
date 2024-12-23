@@ -16,9 +16,11 @@ export * from './drawers/Drawer'
 export * from './actions/AddRef'
 export * from './inputs/Camera'
 export * from './inputs/Picker'
+export * from './inputs/SearchRef'
 export * from './profiles/NewUserProfile'
 export * from './profiles/Details'
 export * from './profiles/Profile'
+export * from './icons/RefsLogo'
 
 export const Spinner = () => <Text>Loading</Text>
 export const SizableText = ({ children }: { children: React.ReactNode }) => <Text>{children}</Text>

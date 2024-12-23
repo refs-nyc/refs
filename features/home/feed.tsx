@@ -1,7 +1,5 @@
 import { useState, useEffect } from 'react'
-import { XStack, YStack } from '@/ui/core/Stacks'
-import { Heading } from '@/ui/typo/Heading'
-import { Button } from '@/ui/buttons/Button'
+import { SearchRef, XStack, YStack, Heading } from '@/ui'
 import { pocketbase } from '@/features/pocketbase'
 import type { Item } from '@/features/pocketbase/stores/types'
 import { Link, router } from 'expo-router'
@@ -12,15 +10,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { SimplePinataImage } from '@/ui/images/SimplePinataImage'
 
 const win = Dimensions.get('window')
-
-// const renderItem = ({ item }) => (
-//   <XStack style={{ paddingHorizontal: s.$1half, paddingVertical: s.$025 }}>
-//     <Heading tag="p">
-//       <Heading tag="strong">{item.expand?.creator?.userName || 'Anonymous'}</Heading> added{' '}
-//       <Heading tag="strong">{item.expand?.ref?.title}</Heading>
-//     </Heading>
-//   </XStack>
-// )
 
 export const Feed = () => {
   const [items, setItems] = useState<Item[]>([])
@@ -55,61 +44,74 @@ export const Feed = () => {
   }, [])
 
   return (
-    <ScrollView
-      contentContainerStyle={{ justifyContent: 'flex-end' }}
-      style={{
-        paddingTop: Math.max(insets.top, 16),
-        width: win.width,
-        height: win.height,
-        flex: 1,
-      }}
-    >
-      <Button
-        variant="basic"
-        title="Profile"
-        onPress={() => router.push(`/user/${pocketbase.authStore?.record?.userName}`)}
-      />
-
+    <View style={{ flex: 1, height: win.height, paddingTop: Math.max(insets.top, 16) }}>
       <YStack
+        gap={s.$2}
         style={{
-          gap: s.$025,
-          paddingTop: win.height * 0.666,
-          paddingBottom: s.$12,
+          height: win.height * 0.4,
+          paddingTop: s.$2,
+          textAlign: 'center',
         }}
       >
-        {items.map((item) => (
-          <XStack gap={s.$1} style={{ paddingHorizontal: s.$1half, paddingVertical: s.$05 }}>
-            {item?.image ? (
-              <SimplePinataImage
-                originalSource={item.image}
-                imageOptions={{ width: s.$3, height: s.$3 }}
-                style={{
-                  width: s.$3,
-                  height: s.$3,
-                  backgroundColor: c.accent,
-                  borderRadius: s.$075,
-                }}
-              />
-            ) : (
-              <View
-                style={{
-                  width: s.$3,
-                  height: s.$3,
-                  backgroundColor: c.accent,
-                  borderRadius: s.$075,
-                }}
-              />
-            )}
+        <Heading style={{ textAlign: 'center' }} tag="h1">
+          Refs
+        </Heading>
 
-            <Link href={item.expand?.creator ? `/user/${item.expand.creator?.userName}` : '/'}>
-              <Heading tag="p">
-                <Heading tag="strong">{item.expand?.creator?.userName || 'Anonymous'}</Heading>{' '}
-                added <Heading tag="strong">{item.expand?.ref?.title}</Heading>
-              </Heading>
-            </Link>
-          </XStack>
-        ))}
+        <SearchRef />
       </YStack>
-    </ScrollView>
+
+      <YStack
+        gap={s.$09}
+        style={{
+          paddingHorizontal: s.$1half,
+          width: win.width,
+          height: win.height * 0.6,
+        }}
+      >
+        <Heading tag="p">Activity</Heading>
+        <ScrollView style={{ flex: 1 }}>
+          <YStack
+            style={{
+              flex: 1,
+              gap: s.$025,
+              paddingBottom: s.$4,
+            }}
+          >
+            {items.map((item) => (
+              <XStack gap={s.$1} style={{ paddingVertical: s.$05 }}>
+                {item?.image ? (
+                  <SimplePinataImage
+                    originalSource={item.image}
+                    imageOptions={{ width: s.$3, height: s.$3 }}
+                    style={{
+                      width: s.$3,
+                      height: s.$3,
+                      backgroundColor: c.accent,
+                      borderRadius: s.$075,
+                    }}
+                  />
+                ) : (
+                  <View
+                    style={{
+                      width: s.$3,
+                      height: s.$3,
+                      backgroundColor: c.accent,
+                      borderRadius: s.$075,
+                    }}
+                  />
+                )}
+
+                <Link href={item.expand?.creator ? `/user/${item.expand.creator?.userName}` : '/'}>
+                  <Heading tag="p">
+                    <Heading tag="strong">{item.expand?.creator?.userName || 'Anonymous'}</Heading>{' '}
+                    added <Heading tag="strong">{item.expand?.ref?.title}</Heading>
+                  </Heading>
+                </Link>
+              </XStack>
+            ))}
+          </YStack>
+        </ScrollView>
+      </YStack>
+    </View>
   )
 }

@@ -51,7 +51,7 @@ IDES
 1. Detail view Carousel
    [x]
 2. Quick feed
-   [ ]
+   [x]
 3. Lists
 
 tomorrow: auth/notifs + list

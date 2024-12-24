@@ -30,6 +30,8 @@ export const AddRef = ({
   const [textOpen, setTextOpen] = useState(false)
   const [pickerOpen, setPickerOpen] = useState(false)
   const [cameraOpen, setCameraOpen] = useState(false)
+  const [step, setStep] = useState<'' | 'add' | 'editList' | 'categorise'>('')
+  const [itemData, setItemData] = useState<StagedRef>({})
   const [refData, setRefData] = useState<StagedRef>({})
 
   const minHeight = useSharedValue(0)
@@ -38,21 +40,26 @@ export const AddRef = ({
     minHeight.set(withSpring(val))
   }
 
-  const editing = useMemo(
-    () => textOpen || pickerOpen || cameraOpen,
-    [textOpen, pickerOpen, cameraOpen]
-  )
-  const addingRef = useMemo(() => refData?.image || refData?.title, [refData])
-
   const addImageRef = async (asset: ImagePickerAsset) => {
-    const rd = { image: asset }
     // TODO; Upload to IPFS etc
     // await push(rd)
-    setRefData(rd)
+    setRefData({ image: asset })
+    setStep('add')
   }
 
   const addRefFromResults = (newRef: StagedRef) => {
     setRefData(newRef)
+    setStep('add')
+  }
+
+  const handleNewRefCreated = ({ item, ref }) => {
+    setItemData(item)
+    setRefData(ref)
+    if (item.type === 'list') {
+      setStep('editList')
+    } else {
+      setStep('categorise')
+    }
   }
 
   return (
@@ -62,7 +69,7 @@ export const AddRef = ({
           <Picker onSuccess={(asset) => addImageRef(asset)} onCancel={() => setPickerOpen(false)} />
         )}
 
-        {!addingRef && (
+        {step === '' && (
           <>
             {(cameraOpen || textOpen) && (
               <YStack gap={20}>
@@ -75,6 +82,7 @@ export const AddRef = ({
                       setCameraOpen(false)
                       setPickerOpen(false)
                       setTextOpen(false)
+                      setStep('')
                     }}
                   />
                 </XStack>
@@ -83,7 +91,7 @@ export const AddRef = ({
               </YStack>
             )}
 
-            {!cameraOpen && !textOpen && (
+            {step === '' && !textOpen && !cameraOpen && (
               <YStack gap="$4">
                 <Button
                   variant="basicLeft"
@@ -108,14 +116,18 @@ export const AddRef = ({
           </>
         )}
 
-        {addingRef && (
+        {step === 'add' && (
           <NewRef
             r={refData}
-            onComplete={onAddRef}
+            onComplete={handleNewRefCreated}
             onCancel={() => setRefData({})}
             backlog={backlog}
           />
         )}
+
+        {step === 'categorise' && <Button onPress={() => {}} title="Categorise" />}
+
+        {step === 'editList' && <Button onPress={() => {}} title="Edit List" />}
       </Animated.View>
     </DismissKeyboard>
   )

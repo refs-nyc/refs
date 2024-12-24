@@ -103,7 +103,7 @@ export const NewRef = ({
         },
         !pathname.includes('onboarding') // don't attach to profile if there is no profile
       )
-      onComplete(item)
+      onComplete({ item, ref })
     } catch (e) {
       console.error(e)
     } finally {

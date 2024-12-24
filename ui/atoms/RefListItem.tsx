@@ -6,7 +6,13 @@ import { pocketbase } from '@/features/pocketbase'
 import { s, c } from '@/features/style'
 import type { CompleteRef } from '@/features/pocketbase/stores/types'
 
-export const RefListItem = ({ r }: { r: CompleteRef }) => {
+export const RefListItem = ({
+  r,
+  backgroundColor,
+}: {
+  r: CompleteRef
+  backgroundColor?: string
+}) => {
   let [count, setCount] = useState(-1)
 
   useEffect(() => {
@@ -30,6 +36,7 @@ export const RefListItem = ({ r }: { r: CompleteRef }) => {
         paddingVertical: s.$08,
         paddingHorizontal: s.$08,
         borderRadius: s.$075,
+        backgroundColor: backgroundColor || c.surface,
       }}
     >
       <XStack gap={s.$09} style={{ justifyContent: 'space-between', alignItems: 'center' }}>

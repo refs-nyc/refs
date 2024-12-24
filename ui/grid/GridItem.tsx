@@ -19,8 +19,8 @@ export const GridItem = ({
     <>
       {item && (
         <>
-          {item.image ? (
-            <GridTileImage key={item.id} source={item.image} />
+          {item.expand.ref.image ? (
+            <GridTileImage key={item.id} source={item.expand.ref.image} />
           ) : (
             <Text style={{ textAlign: 'center' }}>{item.expand.ref.title}</Text>
           )}

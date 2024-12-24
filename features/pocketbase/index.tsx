@@ -18,6 +18,9 @@ const addToProfile = async (stagedRef: StagedRef, attach = true) => {
   let newItem = {}
   let newRef = {}
 
+  console.log('stagedR', 'ef.image')
+  console.log(stagedRef.image)
+
   if (stagedRef.id) {
     newItem = await itemStore.push({
       ref: stagedRef.id,

@@ -3,6 +3,7 @@ import { Pressable } from 'react-native'
 import { GridTileWrapper } from './GridTileWrapper'
 import { GridTileImage } from './GridTileImage'
 import { Heading } from '../typo/Heading'
+import { s } from '@/features/style'
 
 export const GridItem = ({
   item,
@@ -22,7 +23,9 @@ export const GridItem = ({
           {item.expand.ref.image ? (
             <GridTileImage key={item.id} source={item.expand.ref.image} />
           ) : (
-            <Text style={{ textAlign: 'center' }}>{item.expand.ref.title}</Text>
+            <Text numberOfLines={3} style={{ textAlign: 'center', padding: s.$08 }}>
+              {item.expand.ref.title}
+            </Text>
           )}
         </>
       )}

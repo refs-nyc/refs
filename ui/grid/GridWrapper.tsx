@@ -19,9 +19,6 @@ export const GridWrapper = ({
   const size = rows * columns
   const empty = Math.max(size - count, 0)
 
-  console.log('Initialising a grid of size', size)
-  console.log('With', count, ' elements')
-
   return (
     <YStack gap={s.$075}>
       {Array.from({ length: rows }).map((_, rowIndex) => (

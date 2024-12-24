@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { Children, useState } from 'react'
 import { YStack } from '../core/Stacks'
 import { TouchableOpacity, Pressable } from 'react-native'
 import { base } from '@/features/style'
@@ -22,6 +22,7 @@ export const GridTileWrapper = ({
   index?: number
   onRemove?: () => void
 }) => {
+  console.log(id)
   const pathname = usePathname()
   const { editingProfile, startEditProfile, stopEditProfile } = useUIStore()
 
@@ -53,7 +54,7 @@ export const GridTileWrapper = ({
       onLongPress={handleLongPress}
       style={[base.gridTile, specificStyles]}
     >
-      {editingProfile && type !== 'add' && (
+      {editingProfile && type !== 'add' && id && (
         <YStack style={{ position: 'absolute', zIndex: 999, top: 0, right: 0 }}>
           <Pressable
             onPress={() => {

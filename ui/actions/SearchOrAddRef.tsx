@@ -4,9 +4,9 @@ import { TextInput, Pressable, FlatList, KeyboardAvoidingView, View } from 'reac
 import { SearchResultItem } from '@/ui/atoms/SearchResultItem'
 import { NewRefListItem } from '@/ui/atoms/NewRefListItem'
 import { s, c } from '@/features/style'
-import { CompleteRef, StagedRef } from "../../features/pocketbase/stores/types"
+import { CompleteRef, Item } from '../../features/pocketbase/stores/types'
 
-export const SearchOrAddRef = ({ onComplete }: { onComplete: (r: { title: string }) => void }) => {
+export const SearchOrAddRef = ({ onComplete }: { onComplete: (r: Item) => void }) => {
   const [searchQuery, setSearchQuery] = useState('')
   const [searchResults, setSearchResults] = useState<CompleteRef[]>([])
 
@@ -42,7 +42,6 @@ export const SearchOrAddRef = ({ onComplete }: { onComplete: (r: { title: string
     <KeyboardAvoidingView
       style={{
         flex: 1,
-        // maxHeight: realHeight * 0.9,
       }}
     >
       <TextInput
@@ -63,7 +62,7 @@ export const SearchOrAddRef = ({ onComplete }: { onComplete: (r: { title: string
       <View>
         {searchQuery !== '' && (
           <Pressable onPress={() => onComplete({ title: searchQuery })}>
-            <NewRefListItem title={searchQuery}></NewRefListItem>
+            <NewRefListItem title={searchQuery} />
           </Pressable>
         )}
         <FlatList

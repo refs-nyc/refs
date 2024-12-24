@@ -12,6 +12,7 @@ export type StagedRef = {
   text?: string
   backlog?: boolean
   title?: string
+  list?: boolean
 }
 
 // Non completed item

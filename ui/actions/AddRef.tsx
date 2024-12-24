@@ -51,9 +51,8 @@ export const AddRef = ({
     setRefData(rd)
   }
 
-  const addRefFromResults = async (newRef: StagedRef) => {
-    console.log(newRef)
-    await setRefData(newRef)
+  const addRefFromResults = (newRef: StagedRef) => {
+    setRefData(newRef)
   }
 
   return (

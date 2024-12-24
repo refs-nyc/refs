@@ -72,6 +72,7 @@ export const NewRef = ({
   const [imageAsset, setImageAsset] = useState(r?.image || null)
   const [pinataSource, setPinataSource] = useState('')
   const [text, setTextState] = useState('')
+  const [addItems, setAddItems] = useState(false)
 
   const { push } = useItemStore()
 
@@ -91,12 +92,15 @@ export const NewRef = ({
     setCurrentRef(u)
   }
 
-  const submit = async () => {
+  const submit = async (extraFields: Item) => {
     try {
-      console.log('submitting', currentRef)
-      console.log('from onboarding? ', pathname.includes('onboarding'))
       const { item, ref } = await addToProfile(
-        { ...currentRef, image: pinataSource, backlog },
+        {
+          ...currentRef,
+          image: pinataSource,
+          backlog,
+          ...extraFields,
+        },
         !pathname.includes('onboarding') // don't attach to profile if there is no profile
       )
       onComplete(item)
@@ -179,13 +183,32 @@ export const NewRef = ({
           title="Start a list"
         /> */}
       </View>
-      <Button
-        style={{ position: 'absolute', bottom: s.$3, left: s.$08, minWidth: 0, width: '100%' }}
-        title="Add Ref"
-        variant="fluid"
-        disabled={pinataSource === 'none'}
-        onPress={submit}
-      />
+      <View
+        style={{
+          position: 'absolute',
+          bottom: s.$3,
+          left: s.$08,
+          minWidth: 0,
+          width: '100%',
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+        }}
+      >
+        <Button
+          title="Create List"
+          variant="outlineFluid"
+          style={{ width: '48%', minWidth: 0 }}
+          disabled={pinataSource === 'none'}
+          onPress={() => submit({ type: 'list' })}
+        />
+        <Button
+          title="Add Ref"
+          variant="fluid"
+          style={{ width: '48%', minWidth: 0 }}
+          disabled={pinataSource === 'none'}
+          onPress={submit}
+        />
+      </View>
     </>
   )
 }

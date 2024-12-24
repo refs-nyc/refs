@@ -12,10 +12,6 @@ export const GridTile = ({
   backgroundColor?: string
   flex?: boolean
 }) => {
-  const onLongPress = () => {
-    console.log(children)
-  }
-
   return (
     <TouchableOpacity
       style={[
@@ -27,7 +23,6 @@ export const GridTile = ({
           width: flex ? base.gridTile.width : '100%',
         },
       ]}
-      onPress={onLongPress}
     >
       {children}
     </TouchableOpacity>

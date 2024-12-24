@@ -1,6 +1,5 @@
 import { pocketbase } from './pocketbase'
 import { useUserStore } from './stores/users'
-import { useProfileStore } from './stores/profiles'
 import { useRefStore } from './stores/refs'
 import { useItemStore } from './stores/items'
 import { StagedRef } from './stores/types'
@@ -9,13 +8,12 @@ import { StagedRef } from './stores/types'
 //
 //
 const addToProfile = async (stagedRef: StagedRef, attach = true) => {
+  if (!pocketbase.authStore.isValid || !pocketbase.authStore.record)
+    throw new Error('Not enough permissions')
+
   const refStore = useRefStore.getState()
   const itemStore = useItemStore.getState()
   const userStore = useUserStore.getState()
-
-  console.log('userStore')
-  console.log(userStore)
-  console.log('---')
 
   let newItem = {}
   let newRef = {}
@@ -28,11 +26,12 @@ const addToProfile = async (stagedRef: StagedRef, attach = true) => {
       text: stagedRef?.text,
       image: stagedRef?.image?.uri,
       creator: pocketbase.authStore?.record?.id,
+      type: stagedRef?.type,
     })
   } else {
     try {
       // Add a new ref and link it
-      newRef = await refStore.push(stagedRef)
+      newRef = await refStore.push({ ...stagedRef, creator: pocketbase.authStore.record.id })
 
       newItem = await itemStore.push({
         ...newRef,
@@ -40,6 +39,7 @@ const addToProfile = async (stagedRef: StagedRef, attach = true) => {
         backlog: stagedRef?.backlog,
         ref: newRef.id,
         creator: pocketbase.authStore?.record?.id,
+        type: stagedRef?.type,
       })
     } catch (error) {
       console.error(error)
@@ -80,12 +80,4 @@ const removeFromProfile = async (itemId: string) => {
   }
 }
 
-export {
-  pocketbase,
-  useUserStore,
-  useProfileStore,
-  useRefStore,
-  useItemStore,
-  addToProfile,
-  removeFromProfile,
-}
+export { pocketbase, useUserStore, useRefStore, useItemStore, addToProfile, removeFromProfile }

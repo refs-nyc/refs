@@ -33,6 +33,7 @@ export const Grid = ({
           key={item.id}
           id={item.id}
           index={i}
+          canEdit={true}
           onRemove={() => {
             if (onRemoveItem) onRemoveItem(item.id)
           }}
@@ -45,7 +46,7 @@ export const Grid = ({
       {canAdd && (
         <>
           {items.length < gridSize && (
-            <GridTileWrapper key="add" type="add">
+            <GridTileWrapper canEdit={false} key="add" type="add">
               <GridTileActionAdd onPress={onAddItem}></GridTileActionAdd>
             </GridTileWrapper>
           )}
@@ -53,7 +54,7 @@ export const Grid = ({
       )}
 
       {Array.from({ length: gridSize - items.length - (canAdd ? 1 : 0) }).map((_, i) => (
-        <GridTileWrapper key={`empty-${i}`} type="">
+        <GridTileWrapper canEdit={false} key={`empty-${i}`} type="">
           <GridTile key={i} />
         </GridTileWrapper>
       ))}

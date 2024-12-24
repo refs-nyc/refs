@@ -1,4 +1,4 @@
-import { View, Text } from 'react-native'
+import { View, Text, Pressable } from 'react-native'
 import { XStack } from '@/ui'
 import { s, c } from '@/features/style'
 
@@ -19,7 +19,6 @@ export const NewRefListItem = ({ title }: { title: string }) => {
           <Text>{title}</Text>
         </XStack>
         <XStack gap={s.$09} style={{ justifyContent: 'space-between', alignItems: 'center' }}>
-          {/* TODO: get count of people referencing */}
           <Text>New Ref</Text>
         </XStack>
       </XStack>

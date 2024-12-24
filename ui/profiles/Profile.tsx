@@ -1,6 +1,7 @@
 import type { Item } from '@/features/pocketbase/stores/types'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Drawer, AddRef, Heading, XStack, YStack, Button } from '@/ui'
+import { useUIStore } from '../state'
 import { ProfileHeader } from './ProfileHeader'
 import { FirstVisitScreen } from './FirstVisitScreen'
 import { Grid } from '../grid/Grid'
@@ -18,6 +19,8 @@ import { gridSort, createdSort } from '@/ui/profiles/sorts'
 export const Profile = ({ userName }: { userName: string }) => {
   const { firstVisit } = useLocalSearchParams()
 
+  const { editingBacklog, stopEditBacklog, startEditBacklog } = useUIStore()
+
   const insets = useSafeAreaInsets()
   const [profile, setProfile] = useState<ProfileType>()
   const [addingTo, setAddingTo] = useState<'' | 'grid' | 'backlog'>('')
@@ -26,7 +29,7 @@ export const Profile = ({ userName }: { userName: string }) => {
   const [removingId, setRemovingId] = useState('')
 
   const { user, logout } = useUserStore()
-  const { moveToBacklog } = useItemStore()
+  const { remove, moveToBacklog } = useItemStore()
 
   const handleLogout = async () => {
     await logout()
@@ -138,7 +141,37 @@ export const Profile = ({ userName }: { userName: string }) => {
                   {backlogItems.length > 0 || gridItems.length === 12 ? (
                     <YStack>
                       {backlogItems.map((itm) => (
-                        <RefListItem key={itm.id} r={itm?.expand?.ref} />
+                        <Pressable
+                          onPress={stopEditBacklog}
+                          onLongPress={() => {
+                            console.log('on long Press')
+                            startEditBacklog()
+                          }}
+                        >
+                          {editingBacklog && (
+                            <YStack style={{ position: 'absolute', zIndex: 999, top: 0, right: 0 }}>
+                              <Pressable
+                                onPress={async () => {
+                                  stopEditBacklog()
+                                  await remove(itm.id)
+                                  await refreshGrid(userName)
+                                }}
+                                style={{
+                                  transform: 'translate(8px, -8px)',
+                                  backgroundColor: c.grey1,
+                                  borderRadius: '100%',
+                                }}
+                              >
+                                <Ionicons size={12} style={{ padding: 6 }} name="close" />
+                              </Pressable>
+                            </YStack>
+                          )}
+                          <RefListItem
+                            backgroundColor={editingBacklog ? c.surface2 : c.surface}
+                            key={itm.id}
+                            r={itm?.expand?.ref}
+                          />
+                        </Pressable>
                       ))}
                       {/* <FlatList
                         horizontal={false}

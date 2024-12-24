@@ -28,7 +28,8 @@ export const useItemStore = create<{
   },
   // Reference an existing Ref, and create an item off it
   reference: () => {},
-  remove: (id: string) => {
+  remove: async (id: string) => {
+    await pocketbase.collection('items').delete(id)
     set((state) => ({
       items: [...state.items.filter((i) => i.id !== id)],
     }))

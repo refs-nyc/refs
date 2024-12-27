@@ -23,7 +23,7 @@ import { pocketbase } from '@/features/pocketbase'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { useEffect } from 'react'
-import { StatusBar, useColorScheme } from 'react-native'
+import { StatusBar, useColorScheme, KeyboardAvoidingView, Platform } from 'react-native'
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native'
 import { useFonts } from 'expo-font'
 import { SplashScreen, Stack } from 'expo-router'
@@ -96,7 +96,14 @@ export default function RootLayout() {
 const Providers = ({ children }: { children: React.ReactNode }) => {
   return (
     <SafeAreaProvider>
-      <GestureHandlerRootView>{children}</GestureHandlerRootView>
+      <GestureHandlerRootView>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          style={{ flex: 1 }}
+        >
+          {children}
+        </KeyboardAvoidingView>
+      </GestureHandlerRootView>
     </SafeAreaProvider>
   )
 }

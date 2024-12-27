@@ -1,7 +1,7 @@
 import { useRef, useState, useEffect } from 'react'
 import { Button } from '../buttons/Button'
 import { YStack } from '../core/Stacks'
-import { KeyboardAvoidingView, View, Text as SizableText } from 'react-native'
+import { View, Text as SizableText } from 'react-native'
 import { FormFieldWithIcon } from '../inputs/FormFieldWithIcon'
 import { AvatarPicker } from '../inputs/AvatarPicker'
 import { Dimensions } from 'react-native'
@@ -47,7 +47,7 @@ export const NewUserProfile = () => {
     }
   }
 
-  const renderItem = ({ item, index }: { item: string[], index: number }) => (
+  const renderItem = ({ item, index }: { item: string[]; index: number }) => (
     <ProfileStep fields={item} index={index} onComplete={nextStep} />
   )
 

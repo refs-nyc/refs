@@ -6,7 +6,7 @@ import { YStack, XStack } from '@/ui'
 import Ionicons from '@expo/vector-icons/Ionicons'
 import Animated, { useSharedValue, withSpring } from 'react-native-reanimated'
 import { Button } from '../buttons/Button'
-import { Dimensions, KeyboardAvoidingView } from 'react-native'
+import { Dimensions } from 'react-native'
 import { useState, useMemo } from 'react'
 import { NewRef } from '../actions/NewRef'
 import { SearchOrAddRef } from '../actions/SearchOrAddRef'
@@ -15,6 +15,7 @@ import { StagedRef, CompleteRef, Item } from '@/features/pocketbase/stores/types
 import type { ImagePickerAsset } from 'expo-image-picker'
 import { EditableList } from '../lists/EditableList'
 import { CategoriseRef } from './CategoriseRef'
+import { s } from '@/features/style'
 
 const win = Dimensions.get('window')
 
@@ -33,12 +34,6 @@ export const AddRef = ({
   const [step, setStep] = useState<'' | 'add' | 'editList' | 'categorise'>('')
   const [itemData, setItemData] = useState<Item>({})
   const [refData, setRefData] = useState<StagedRef | CompleteRef>({})
-
-  const minHeight = useSharedValue(0)
-
-  const updateMinHeight = (val: number) => {
-    minHeight.set(withSpring(val))
-  }
 
   const addImageRef = async (asset: ImagePickerAsset) => {
     // TODO; Upload to IPFS etc
@@ -68,77 +63,71 @@ export const AddRef = ({
 
   return (
     <DismissKeyboard>
-      <Animated.View style={{ minHeight, paddingHorizontal: 12, paddingBottom: 56 }}>
-        <KeyboardAvoidingView>
-          {pickerOpen && (
-            <Picker
-              onSuccess={(asset) => addImageRef(asset)}
-              onCancel={() => setPickerOpen(false)}
-            />
-          )}
+      <Animated.View style={{ paddingHorizontal: 12, paddingBottom: s.$12 }}>
+        {pickerOpen && (
+          <Picker onSuccess={(asset) => addImageRef(asset)} onCancel={() => setPickerOpen(false)} />
+        )}
 
-          {step === '' && (
-            <>
-              {(cameraOpen || textOpen) && (
-                <YStack gap={20}>
-                  <XStack style={{ justifyContent: 'space-between' }}>
-                    <Ionicons
-                      name="chevron-back"
-                      size={20}
-                      onPress={() => {
-                        updateMinHeight(0)
-                        setCameraOpen(false)
-                        setPickerOpen(false)
-                        setTextOpen(false)
-                        setStep('')
-                      }}
-                    />
-                  </XStack>
-                  {textOpen && <SearchOrAddRef onComplete={addRefFromResults} />}
-                  {cameraOpen && <Camera />}
-                </YStack>
-              )}
-
-              {step === '' && !textOpen && !cameraOpen && (
-                <YStack gap="$4">
-                  <Button
-                    variant="basicLeft"
-                    iconColor={c.black}
-                    title="Type anything"
-                    iconBefore="text-outline"
+        {step === '' && (
+          <>
+            {(cameraOpen || textOpen) && (
+              <YStack gap={20}>
+                <XStack style={{ justifyContent: 'space-between' }}>
+                  <Ionicons
+                    name="chevron-back"
+                    size={20}
                     onPress={() => {
-                      updateMinHeight(win.height * 0.9)
-                      setTextOpen(true)
+                      setCameraOpen(false)
+                      setPickerOpen(false)
+                      setTextOpen(false)
+                      setStep('')
                     }}
                   />
-                  <Button
-                    variant="basicLeft"
-                    align="flex-start"
-                    title="Add from Camera Roll"
-                    iconBefore="image-outline"
-                    iconColor={c.black}
-                    onPress={() => setPickerOpen(true)}
-                  />
-                </YStack>
-              )}
-            </>
-          )}
+                </XStack>
+                {textOpen && <SearchOrAddRef onComplete={addRefFromResults} />}
+                {cameraOpen && <Camera />}
+              </YStack>
+            )}
 
-          {step === 'add' && (
-            <NewRef
-              r={refData}
-              onComplete={handleNewRefCreated}
-              onCancel={() => setRefData({})}
-              backlog={backlog}
-            />
-          )}
+            {step === '' && !textOpen && !cameraOpen && (
+              <YStack gap="$4">
+                <Button
+                  variant="basicLeft"
+                  iconColor={c.black}
+                  title="Type anything"
+                  iconBefore="text-outline"
+                  onPress={() => {
+                    setTextOpen(true)
+                  }}
+                />
+                <Button
+                  variant="basicLeft"
+                  align="flex-start"
+                  title="Add from Camera Roll"
+                  iconBefore="image-outline"
+                  iconColor={c.black}
+                  onPress={() => setPickerOpen(true)}
+                />
+              </YStack>
+            )}
+          </>
+        )}
 
-          {step === 'categorise' && (
-            <CategoriseRef item={itemData} completeRef={refData} onComplete={onAddRef} />
-          )}
+        {step === 'add' && (
+          <NewRef
+            style={{ height: '100%' }}
+            r={refData}
+            onComplete={handleNewRefCreated}
+            onCancel={() => setRefData({})}
+            backlog={backlog}
+          />
+        )}
 
-          {step === 'editList' && <EditableList item={itemData} />}
-        </KeyboardAvoidingView>
+        {step === 'categorise' && (
+          <CategoriseRef item={itemData} completeRef={refData} onComplete={onAddRef} />
+        )}
+
+        {step === 'editList' && <EditableList item={itemData} />}
       </Animated.View>
     </DismissKeyboard>
   )

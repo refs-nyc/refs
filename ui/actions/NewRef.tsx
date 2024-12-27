@@ -72,11 +72,6 @@ export const NewRef = ({
   const [imageAsset, setImageAsset] = useState(r?.image || null)
   const [pinataSource, setPinataSource] = useState('')
   const [text, setTextState] = useState('')
-  const [addItems, setAddItems] = useState(false)
-
-  const { push } = useItemStore()
-
-  const minHeight = win.height * 0.7
 
   const pathname = usePathname()
 
@@ -118,7 +113,7 @@ export const NewRef = ({
   return (
     <>
       <Ionicons name="chevron-back" size={20} onPress={onCancel} />
-      <View style={{ minHeight, justifyContent: 'flex-start', paddingTop: s.$4 }}>
+      <View style={{ justifyContent: 'flex-start', paddingTop: s.$4 }}>
         <YStack gap={s.$3}>
           {imageAsset ? (
             <View style={{ width: '100%', alignItems: 'center' }}>

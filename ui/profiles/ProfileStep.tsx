@@ -102,7 +102,7 @@ export const ProfileStep = ({
 
   return (
     <DismissKeyboard>
-      <KeyboardAvoidingView
+      <View
         style={{
           flex: 1,
           justifyContent: 'center',
@@ -110,7 +110,6 @@ export const ProfileStep = ({
           width: '100%',
           paddingHorizontal: s.$1half,
         }}
-        behavior={'height'}
       >
         {/* <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'}> */}
         <SizableText
@@ -459,7 +458,7 @@ export const ProfileStep = ({
             onPress={handleSubmit(onSubmit, onErrors)}
           />
         )}
-      </KeyboardAvoidingView>
+      </View>
     </DismissKeyboard>
   )
 }

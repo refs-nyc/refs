@@ -5,6 +5,7 @@ import { SearchResultItem } from '@/ui/atoms/SearchResultItem'
 import { NewRefListItem } from '@/ui/atoms/NewRefListItem'
 import { s, c } from '@/features/style'
 import { CompleteRef, Item } from '../../features/pocketbase/stores/types'
+import { ScrollView } from 'react-native-gesture-handler'
 
 export const SearchOrAddRef = ({ onComplete }: { onComplete: (r: CompleteRef) => void }) => {
   const [searchQuery, setSearchQuery] = useState('')
@@ -14,7 +15,7 @@ export const SearchOrAddRef = ({ onComplete }: { onComplete: (r: CompleteRef) =>
 
   const renderItem = ({ item }: { item: CompleteRef }) => {
     return (
-      <Pressable onPress={() => onComplete(item)}>
+      <Pressable key={item.id} onPress={() => onComplete(item)}>
         <SearchResultItem r={item} />
       </Pressable>
     )
@@ -29,7 +30,11 @@ export const SearchOrAddRef = ({ onComplete }: { onComplete: (r: CompleteRef) =>
         .collection<CompleteRef>('refs')
         .getFullList({ filter: `title ~ "${q}"` })
 
+      console.log('refsResults.length')
+      console.log('refsResults.length')
       console.log(refsResults.length)
+      console.log('---')
+      console.log('---')
       return refsResults
     }
 
@@ -66,18 +71,23 @@ export const SearchOrAddRef = ({ onComplete }: { onComplete: (r: CompleteRef) =>
           <NewRefListItem title={searchQuery} />
         </Pressable>
       )}
-      <FlatList
-        contentContainerStyle={{
+      <ScrollView
+        style={{
           flex: 1,
           gap: s.$025,
-          justifyContent: 'flex-start',
+          // justifyContent: 'flex-start',
           overflow: 'scroll',
           // backgroundColor: 'blue',
         }}
+      >
+        {searchResults.map((r) => renderItem({ item: r }))}
+      </ScrollView>
+      {/* <FlatList
+        contentContainerStyle={{}}
         data={searchResults}
         renderItem={renderItem}
         keyExtractor={(item: any) => item.id}
-      />
+      /> */}
     </View>
   )
 }

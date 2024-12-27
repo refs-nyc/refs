@@ -6,7 +6,7 @@ import { NewRefListItem } from '@/ui/atoms/NewRefListItem'
 import { s, c } from '@/features/style'
 import { CompleteRef, Item } from '../../features/pocketbase/stores/types'
 
-export const SearchOrAddRef = ({ onComplete }: { onComplete: (r: Item) => void }) => {
+export const SearchOrAddRef = ({ onComplete }: { onComplete: (r: CompleteRef) => void }) => {
   const [searchQuery, setSearchQuery] = useState('')
   const [searchResults, setSearchResults] = useState<CompleteRef[]>([])
 

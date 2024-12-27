@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { pocketbase, useItemStore } from '@/features/pocketbase'
-import { TextInput, Pressable, FlatList, View } from 'react-native'
+import { TextInput, Pressable, FlatList, KeyboardAvoidingView, View } from 'react-native'
 import { SearchResultItem } from '@/ui/atoms/SearchResultItem'
 import { NewRefListItem } from '@/ui/atoms/NewRefListItem'
 import { s, c } from '@/features/style'
@@ -42,6 +42,8 @@ export const SearchOrAddRef = ({ onComplete }: { onComplete: (r: CompleteRef) =>
     <View
       style={{
         flex: 1,
+        overflow: 'scroll',
+        // backgroundColor: 'green'
       }}
     >
       <TextInput
@@ -59,23 +61,23 @@ export const SearchOrAddRef = ({ onComplete }: { onComplete: (r: CompleteRef) =>
         onChangeText={updateQuery}
       />
 
-      <View>
-        {searchQuery !== '' && (
-          <Pressable onPress={() => onComplete({ title: searchQuery })}>
-            <NewRefListItem title={searchQuery} />
-          </Pressable>
-        )}
-        <FlatList
-          contentContainerStyle={{
-            gap: s.$025,
-            justifyContent: 'flex-start',
-            maxHeight: '100%',
-          }}
-          data={searchResults}
-          renderItem={renderItem}
-          keyExtractor={(item: any) => item.id}
-        />
-      </View>
+      {searchQuery !== '' && (
+        <Pressable onPress={() => onComplete({ title: searchQuery })}>
+          <NewRefListItem title={searchQuery} />
+        </Pressable>
+      )}
+      <FlatList
+        contentContainerStyle={{
+          flex: 1,
+          gap: s.$025,
+          justifyContent: 'flex-start',
+          overflow: 'scroll',
+          // backgroundColor: 'blue',
+        }}
+        data={searchResults}
+        renderItem={renderItem}
+        keyExtractor={(item: any) => item.id}
+      />
     </View>
   )
 }

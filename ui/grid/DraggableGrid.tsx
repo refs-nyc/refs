@@ -84,13 +84,13 @@ export const DraggableGrid = ({
   onDragEnd,
   onDragStart,
 }: {
-  items: Array<{ id: string, key: string }>
+  items: Array<{ id: string; key: string }>
   onDragEnd: () => void
   onDragStart: () => void
 }) => {
   const [data, setData] = useState(items.map((item) => ({ ...item, key: item.id })))
 
-  const renderItem = (item: { id: string, key: string }) => {
+  const renderItem = (item: { id: string; key: string }) => {
     return (
       <View
         key={item.key}
@@ -98,7 +98,7 @@ export const DraggableGrid = ({
           {
             flex: 1,
             borderRadius: 8,
-            backgroundColor: 'blue',
+            // backgroundColor: 'blue',
             justifyContent: 'center',
             alignItems: 'center',
             marginBottom: s.$075,
@@ -121,7 +121,7 @@ export const DraggableGrid = ({
       }}
     >
       <DraggableGridComponent
-        onDragRelease={(newData: Array<{ id: string, key: string }>) => {
+        onDragRelease={(newData: Array<{ id: string; key: string }>) => {
           setData(newData)
           onDragEnd() //This activates the above onDragEnd function when you stop dragging and just turns scrolling back on
         }}

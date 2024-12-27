@@ -94,3 +94,5 @@ Mini Roadmap
   New data structure to add notes and type on refs
   Moved the type field to the ref instead of on the item.
   An item can now have a boolean that says it's a list.
+
+UI: we now wrap the entire app in a `<KeyboardAvoidingView>` component, so we can always be sure that the content we are currently interfacing with, moves up

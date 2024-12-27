@@ -1,6 +1,7 @@
 import 'react-native-gesture-handler'
-import { Dimensions, StyleSheet, Pressable, View } from 'react-native'
+import { StyleSheet, Pressable, View, Dimensions } from 'react-native'
 import { Gesture, GestureDetector } from 'react-native-gesture-handler'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -11,17 +12,16 @@ import Animated, {
   SlideOutDown,
   FadeIn,
   FadeOut,
+  useAnimatedKeyboard,
 } from 'react-native-reanimated'
+import { s, c } from '@/features/style'
 import { useRef, useState } from 'react'
-import { c } from '@/features/style'
 
 const win = Dimensions.get('window')
 const HEIGHT = 'auto'
 const OVERDRAG = 20
 const ACCENT_COLOR = '#FFF0FF'
-const BACKDROP_COLOR = '#FFF0FF'
 const BACKGROUND_COLOR = c.surface
-
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable)
 
 export function Drawer({
@@ -43,6 +43,9 @@ export function Drawer({
     close()
   }
 
+  const insets = useSafeAreaInsets()
+
+  const keyboard = useAnimatedKeyboard()
   const pan = Gesture.Pan()
     .onChange((event) => {
       const offsetDelta = event.changeY + offset.get()
@@ -67,6 +70,10 @@ export function Drawer({
     transform: [{ translateY: offset.get() }],
   }))
 
+  const maxHeight = useAnimatedStyle(() => ({
+    maxHeight: win.height - keyboard.height.get() - insets.top - insets.bottom,
+  }))
+
   return (
     <>
       <AnimatedPressable
@@ -76,7 +83,7 @@ export function Drawer({
         onPress={toggleSheet}
       />
       <Animated.View
-        style={[styles.sheet, translateY]}
+        style={[styles.sheet, translateY, maxHeight]}
         entering={SlideInDown.springify().damping(15)}
         exiting={SlideOutDown}
       >

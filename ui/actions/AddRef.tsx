@@ -1,11 +1,10 @@
 import { DismissKeyboard } from '../atoms/DismissKeyboard'
-
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Picker } from '../inputs/Picker'
 import { Camera } from '../inputs/Camera'
-import { YStack, XStack } from '@/ui'
+import { YStack } from '@/ui'
 import Ionicons from '@expo/vector-icons/Ionicons'
-import Animated, { useSharedValue, withSpring } from 'react-native-reanimated'
+import Animated, { useAnimatedKeyboard, useAnimatedStyle } from 'react-native-reanimated'
 import { Button } from '../buttons/Button'
 import { Dimensions, KeyboardAvoidingView } from 'react-native'
 import { useState, useMemo } from 'react'
@@ -17,7 +16,6 @@ import type { ImagePickerAsset } from 'expo-image-picker'
 import { EditableList } from '../lists/EditableList'
 import { CategoriseRef } from './CategoriseRef'
 import { s } from '@/features/style'
-import { useAnimatedKeyboard, useAnimatedStyle } from 'react-native-reanimated'
 
 const win = Dimensions.get('window')
 
@@ -43,8 +41,7 @@ export const AddRef = ({
 
   const animatedStyle = useAnimatedStyle(() => {
     return {
-      // backgroundColor: 'yellow',
-      marginBottom: s.$8,
+      // marginBottom: s.$8,
       height: win.height - s.$10 - keyboard.height.value - insets.top - insets.bottom,
     }
   })
@@ -82,7 +79,6 @@ export const AddRef = ({
         style={{
           marginHorizontal: 12,
           flex: 1,
-          // backgroundColor: 'red',
         }}
       >
         {pickerOpen && (

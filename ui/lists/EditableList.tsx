@@ -4,10 +4,12 @@ import type { Item, CompleteRef } from '@/features/pocketbase/stores/types'
 
 export const EditableList = ({ item }: { item: Item }) => {
   const { addToList } = useItemStore()
+
   return (
     <SearchOrAddRef
       onComplete={async (ref: CompleteRef) => {
-        await addToList(item.id, ref)
+        const record = await addToList(item.id, ref)
+        console.log(record)
       }}
     />
   )

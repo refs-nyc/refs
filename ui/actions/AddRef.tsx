@@ -1,12 +1,13 @@
 import { DismissKeyboard } from '../atoms/DismissKeyboard'
 
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Picker } from '../inputs/Picker'
 import { Camera } from '../inputs/Camera'
 import { YStack, XStack } from '@/ui'
 import Ionicons from '@expo/vector-icons/Ionicons'
 import Animated, { useSharedValue, withSpring } from 'react-native-reanimated'
 import { Button } from '../buttons/Button'
-import { Dimensions } from 'react-native'
+import { Dimensions, KeyboardAvoidingView } from 'react-native'
 import { useState, useMemo } from 'react'
 import { NewRef } from '../actions/NewRef'
 import { SearchOrAddRef } from '../actions/SearchOrAddRef'
@@ -16,6 +17,7 @@ import type { ImagePickerAsset } from 'expo-image-picker'
 import { EditableList } from '../lists/EditableList'
 import { CategoriseRef } from './CategoriseRef'
 import { s } from '@/features/style'
+import { useAnimatedKeyboard, useAnimatedStyle } from 'react-native-reanimated'
 
 const win = Dimensions.get('window')
 
@@ -34,6 +36,18 @@ export const AddRef = ({
   const [step, setStep] = useState<'' | 'add' | 'editList' | 'categorise'>('')
   const [itemData, setItemData] = useState<Item>({})
   const [refData, setRefData] = useState<StagedRef | CompleteRef>({})
+
+  const insets = useSafeAreaInsets()
+
+  const keyboard = useAnimatedKeyboard()
+
+  const animatedStyle = useAnimatedStyle(() => {
+    return {
+      // backgroundColor: 'yellow',
+      marginBottom: s.$8,
+      height: win.height - s.$10 - keyboard.height.value - insets.top - insets.bottom,
+    }
+  })
 
   const addImageRef = async (asset: ImagePickerAsset) => {
     // TODO; Upload to IPFS etc
@@ -63,31 +77,33 @@ export const AddRef = ({
 
   return (
     <DismissKeyboard>
-      <Animated.View style={{ paddingHorizontal: 12, paddingBottom: s.$12 }}>
+      <KeyboardAvoidingView
+        behavior="height"
+        style={{
+          marginHorizontal: 12,
+          flex: 1,
+          // backgroundColor: 'red',
+        }}
+      >
         {pickerOpen && (
           <Picker onSuccess={(asset) => addImageRef(asset)} onCancel={() => setPickerOpen(false)} />
         )}
 
         {step === '' && (
-          <>
-            {(cameraOpen || textOpen) && (
-              <YStack gap={20}>
-                <XStack style={{ justifyContent: 'space-between' }}>
-                  <Ionicons
-                    name="chevron-back"
-                    size={20}
-                    onPress={() => {
-                      setCameraOpen(false)
-                      setPickerOpen(false)
-                      setTextOpen(false)
-                      setStep('')
-                    }}
-                  />
-                </XStack>
-                {textOpen && <SearchOrAddRef onComplete={addRefFromResults} />}
-                {cameraOpen && <Camera />}
-              </YStack>
-            )}
+          <Animated.View style={animatedStyle}>
+            <Ionicons
+              name="chevron-back"
+              size={20}
+              onPress={() => {
+                setCameraOpen(false)
+                setPickerOpen(false)
+                setTextOpen(false)
+                setStep('')
+              }}
+            />
+
+            {textOpen && <SearchOrAddRef onComplete={addRefFromResults} />}
+            {cameraOpen && <Camera />}
 
             {step === '' && !textOpen && !cameraOpen && (
               <YStack gap="$4">
@@ -110,7 +126,7 @@ export const AddRef = ({
                 />
               </YStack>
             )}
-          </>
+          </Animated.View>
         )}
 
         {step === 'add' && (
@@ -128,7 +144,7 @@ export const AddRef = ({
         )}
 
         {step === 'editList' && <EditableList item={itemData} />}
-      </Animated.View>
+      </KeyboardAvoidingView>
     </DismissKeyboard>
   )
 }

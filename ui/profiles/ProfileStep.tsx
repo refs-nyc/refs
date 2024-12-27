@@ -1,7 +1,7 @@
 import { useRef, useState, useEffect } from 'react'
 import { Button } from '../buttons/Button'
 import { YStack } from '../core/Stacks'
-import { KeyboardAvoidingView, View, Text as SizableText } from 'react-native'
+import { KeyboardAvoidingView, View, Text as SizableText, Platform } from 'react-native'
 import { FormFieldWithIcon } from '../inputs/FormFieldWithIcon'
 import { AvatarPicker } from '../inputs/AvatarPicker'
 import { Dimensions } from 'react-native'
@@ -102,7 +102,8 @@ export const ProfileStep = ({
 
   return (
     <DismissKeyboard>
-      <View
+      <KeyboardAvoidingView
+        behavior={'height'}
         style={{
           flex: 1,
           justifyContent: 'center',
@@ -111,7 +112,6 @@ export const ProfileStep = ({
           paddingHorizontal: s.$1half,
         }}
       >
-        {/* <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'}> */}
         <SizableText
           onPress={handleBackPress}
           style={{
@@ -458,7 +458,7 @@ export const ProfileStep = ({
             onPress={handleSubmit(onSubmit, onErrors)}
           />
         )}
-      </View>
+      </KeyboardAvoidingView>
     </DismissKeyboard>
   )
 }

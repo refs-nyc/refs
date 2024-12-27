@@ -139,7 +139,7 @@ export const Profile = ({ userName }: { userName: string }) => {
                   </XStack>
 
                   {backlogItems.length > 0 || gridItems.length === 12 ? (
-                    <YStack>
+                    <YStack gap={s.$075}>
                       {backlogItems.map((itm) => (
                         <Pressable
                           onPress={stopEditBacklog}

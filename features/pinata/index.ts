@@ -94,6 +94,8 @@ export const pinataUpload = async (
     const response = await fetch('https://uploads.pinata.cloud/v3/files', options)
     const result = await response.json()
 
+    console.log(result)
+
     const { data: url } = await pinataSignedUrl(result.data.cid)
 
     return url

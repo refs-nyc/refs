@@ -16,10 +16,6 @@ const addToProfile = async (stagedRef: StagedRef, attach = true) => {
   const userStore = useUserStore.getState()
 
   let newItem = {}
-  let newRef = {}
-
-  console.log('stagedR', 'ef.image')
-  console.log(stagedRef.image)
 
   if (stagedRef.id) {
     newItem = await itemStore.push({
@@ -34,16 +30,20 @@ const addToProfile = async (stagedRef: StagedRef, attach = true) => {
   } else {
     try {
       // Add a new ref and link it
-      newRef = await refStore.push({ ...stagedRef, creator: pocketbase.authStore.record.id })
-
+      console.log('NEW REF')
+      const newRef = await refStore.push({ ...stagedRef, creator: pocketbase.authStore.record.id })
+      console.log('NEW REF', newRef)
+      console.log('----')
+      console.log('NEW ITEM')
       newItem = await itemStore.push({
         ...newRef,
         text: stagedRef?.text,
         backlog: stagedRef?.backlog,
         ref: newRef.id,
         creator: pocketbase.authStore?.record?.id,
-        type: stagedRef?.type,
+        list: stagedRef?.list,
       })
+      console.log('NEW ITEM,', newItem)
     } catch (error) {
       console.error(error)
     }
@@ -66,7 +66,9 @@ const addToProfile = async (stagedRef: StagedRef, attach = true) => {
     }
   }
 
-  return { ref: newRef, item: newItem }
+  console.log(newItem)
+
+  return newItem
 }
 
 //

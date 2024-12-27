@@ -11,7 +11,7 @@ import Ionicons from '@expo/vector-icons/Ionicons'
 import { useItemStore } from '@/features/pocketbase/stores/items'
 import type { ImagePickerAsset } from 'expo-image-picker'
 import { c, s } from '@/features/style'
-import { CompleteRef, StagedRef } from '@/features/pocketbase/stores/types'
+import { CompleteRef, StagedRef, Item } from '@/features/pocketbase/stores/types'
 
 const win = Dimensions.get('window')
 
@@ -63,7 +63,7 @@ export const NewRef = ({
 }: {
   r: StagedRef
   placeholder?: string
-  onComplete: (i: CompleteRef) => void
+  onComplete: (i: Item) => void
   onCancel: () => void
   backlog?: boolean
   attach?: boolean
@@ -92,9 +92,9 @@ export const NewRef = ({
     setCurrentRef(u)
   }
 
-  const submit = async (extraFields: Item) => {
+  const submit = async (extraFields?: Item) => {
     try {
-      const { item, ref } = await addToProfile(
+      const item = await addToProfile(
         {
           ...currentRef,
           image: pinataSource,
@@ -103,7 +103,7 @@ export const NewRef = ({
         },
         !pathname.includes('onboarding') // don't attach to profile if there is no profile
       )
-      onComplete({ item, ref })
+      onComplete(item)
     } catch (e) {
       console.error(e)
     } finally {
@@ -199,14 +199,14 @@ export const NewRef = ({
           variant="outlineFluid"
           style={{ width: '48%', minWidth: 0 }}
           disabled={pinataSource === 'none'}
-          onPress={() => submit({ type: 'list' })}
+          onPress={() => submit({ list: true })}
         />
         <Button
           title="Add Ref"
           variant="fluid"
           style={{ width: '48%', minWidth: 0 }}
           disabled={pinataSource === 'none'}
-          onPress={submit}
+          onPress={() => submit()}
         />
       </View>
     </>

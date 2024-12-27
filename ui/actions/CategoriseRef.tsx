@@ -52,6 +52,12 @@ export const CategoriseRef = ({
         {category === 'place' && (
           <>
             <TextInput
+              style={{
+                backgroundColor: c.white,
+                borderRadius: s.$075,
+                width: '100%',
+                padding: s.$1,
+              }}
               placeholder="Enter a location (eg Clinton Hill, Brooklyn)"
               onChangeText={setMeta}
             ></TextInput>
@@ -70,6 +76,12 @@ export const CategoriseRef = ({
         {category === 'artwork' && (
           <>
             <TextInput
+              style={{
+                backgroundColor: c.white,
+                borderRadius: s.$075,
+                width: '100%',
+                padding: s.$1,
+              }}
               placeholder="Enter an author (eg Arlo Parks, Kubrick)"
               onChangeText={setMeta}
             ></TextInput>

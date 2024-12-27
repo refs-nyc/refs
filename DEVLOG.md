@@ -72,9 +72,9 @@ Switch email sign in
 
 - [x] Be able to add refs in onboarding
 - [x] Moving refs to Backlog / Deleting them
+- [ ] Add lists
 - [ ] Dragging Refs around Profile -> on branch
       Lists
-- [ ] Add lists
 - [ ] Notifications test
 
 Friday: place/art/neither flow + feed of refs
@@ -87,10 +87,10 @@ Mini Roadmap
 - [ ] Integrate Lists
 - [ ] Improve lacking parts of the new ref UI
 - [ ] Implement a basic search so the search bar does something
-
 - [ ] Universal links for easy sharing of profile / profile item
 
   28.12.2024
+  Created a bunch of fixes
   New data structure to add notes and type on refs
   Moved the type field to the ref instead of on the item.
   An item can now have a boolean that says it's a list.

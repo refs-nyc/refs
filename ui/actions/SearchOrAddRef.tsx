@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { pocketbase, useItemStore } from '@/features/pocketbase'
-import { TextInput, Pressable, FlatList, KeyboardAvoidingView, View } from 'react-native'
+import { TextInput, Pressable, FlatList, View } from 'react-native'
 import { SearchResultItem } from '@/ui/atoms/SearchResultItem'
 import { NewRefListItem } from '@/ui/atoms/NewRefListItem'
 import { s, c } from '@/features/style'
@@ -39,7 +39,7 @@ export const SearchOrAddRef = ({ onComplete }: { onComplete: (r: CompleteRef) =>
   }
 
   return (
-    <KeyboardAvoidingView
+    <View
       style={{
         flex: 1,
       }}
@@ -76,6 +76,6 @@ export const SearchOrAddRef = ({ onComplete }: { onComplete: (r: CompleteRef) =>
           keyExtractor={(item: any) => item.id}
         />
       </View>
-    </KeyboardAvoidingView>
+    </View>
   )
 }

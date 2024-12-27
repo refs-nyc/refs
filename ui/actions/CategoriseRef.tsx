@@ -50,12 +50,32 @@ export const CategoriseRef = ({
           title="Place"
         />
         {category === 'place' && (
-          <TextInput
-            placeholder="Enter a location (eg Clinton Hill, Brooklyn)"
-            onChangeText={setMeta}
-          ></TextInput>
+          <>
+            <TextInput
+              placeholder="Enter a location (eg Clinton Hill, Brooklyn)"
+              onChangeText={setMeta}
+            ></TextInput>
+            <Button variant="fluid" onPress={done} title="Done" />
+          </>
         )}
-        <Button variant="fluid" onPress={done} title="Done" />
+      </YStack>
+      <YStack gap={s.$2}>
+        <Button
+          variant="basicLeft"
+          iconColor={c.black}
+          onPress={() => categorise('place')}
+          iconBefore="color-palette-outline"
+          title="Artwork"
+        />
+        {category === 'artwork' && (
+          <>
+            <TextInput
+              placeholder="Enter an author (eg Arlo Parks, Kubrick)"
+              onChangeText={setMeta}
+            ></TextInput>
+            <Button variant="fluid" onPress={done} title="Done" />
+          </>
+        )}
       </YStack>
     </View>
   )

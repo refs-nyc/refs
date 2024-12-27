@@ -89,3 +89,8 @@ Mini Roadmap
 - [ ] Implement a basic search so the search bar does something
 
 - [ ] Universal links for easy sharing of profile / profile item
+
+  28.12.2024
+  New data structure to add notes and type on refs
+  Moved the type field to the ref instead of on the item.
+  An item can now have a boolean that says it's a list.

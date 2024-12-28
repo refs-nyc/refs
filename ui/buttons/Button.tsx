@@ -1,7 +1,7 @@
 import { XStack, SizableText } from '@/ui'
 import { Button as NativeButton, Text, StyleSheet, Pressable } from 'react-native'
 import Ionicons from '@expo/vector-icons/Ionicons'
-import { c, s } from '@/features/style'
+import { c, s, t } from '@/features/style'
 
 type ButtonVariant = keyof typeof styles
 type ButtonProps = {
@@ -91,6 +91,9 @@ const styles = StyleSheet.create({
     minWidth: s.$8,
     backgroundColor: c.accent,
   },
+  smallMuted: {
+    backgroundColor: 'transparent',
+  },
   disabled: {
     backgroundColor: c.accent2,
   },
@@ -143,6 +146,9 @@ const styles = StyleSheet.create({
   },
   basicText: {
     color: 'black',
+  },
+  smallMutedText: {
+    ...t.smallmuted,
   },
   basicLeftText: {
     color: 'black',

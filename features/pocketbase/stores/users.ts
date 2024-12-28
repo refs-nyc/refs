@@ -2,11 +2,16 @@ import { pocketbase } from '../pocketbase'
 import { create } from 'zustand'
 import { Profile, EmptyProfile, Item } from './types'
 import { ClientResponseError } from 'pocketbase'
+import { gridSort, createdSort } from '@/ui/profiles/sorts'
 
 export const useUserStore = create<{
   stagedUser: Partial<Profile>
   user: Profile | EmptyProfile
+  profile: Profile | EmptyProfile
+  profileItems: Item[]
+  backlogItems: Item[]
   register: () => Promise<Profile>
+  getProfile: (userName: string) => Promise<Profile>
   updateStagedUser: (formFields: any) => void
   attachItem: (item: Item) => void
   loginWithPassword: (email: string, password: string) => void
@@ -15,8 +20,31 @@ export const useUserStore = create<{
   logout: () => Promise<void>
 }>((set, get) => ({
   stagedUser: {},
-  user: {},
+  user: {}, // user is ALWAYS the user of the app
+  profile: {}, // profile can be any page you are currently viewing
+  profileItems: [],
+  backlogItems: [],
   users: [],
+  //
+  //
+  //
+  getProfile: async (userName: string) => {
+    try {
+      const record = await pocketbase
+        .collection('users')
+        .getFirstListItem(`userName = "${userName}"`, { expand: 'items,items.ref,items.children' })
+
+      set(() => ({
+        profile: record,
+        profileItems:
+          record?.expand?.items?.filter((itm: Item) => !itm.backlog).sort(gridSort) || [],
+        profileBacklog:
+          record?.expand?.items?.filter((itm: Item) => itm.backlog).sort(createdSort) || [],
+      }))
+    } catch (error) {
+      console.error(error)
+    }
+  },
   //
   //
   //

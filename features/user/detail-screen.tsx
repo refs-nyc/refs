@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { pocketbase } from '@/features/pocketbase'
 import { Profile as ProfileType } from '@/features/pocketbase/stores/types'
 import { Details } from '@/ui'
-import { gridSort, createdSort } from '@/ui/profiles/sorts'
+import { useUserStore } from '@/features/pocketbase/stores/users'
 
 export function UserDetailsScreen({
   userName,
@@ -11,39 +11,19 @@ export function UserDetailsScreen({
   userName: string
   initialId: string
 }) {
-  const [profile, setProfile] = useState<ProfileType>()
-  const getProfileData = async (userName: string) => {
-    try {
-      console.log('fetching profile')
-      const record = await pocketbase
-        .collection('users')
-        .getFirstListItem(`userName = "${userName}"`, { expand: 'items,items.ref' })
-
-      console.log('setting profile')
-      console.log(record)
-      setProfile(record)
-
-      console.log('setting profile items')
-      const itms = record?.expand?.items?.filter((itm: Item) => !itm.backlog).sort(gridSort) || []
-      const bklg = record?.expand?.items?.filter((itm: Item) => itm.backlog).sort(createdSort) || []
-      console.log('done')
-      console.log('-----')
-    } catch (error) {
-      console.error(error)
-    }
-  }
+  const { profile, getProfile } = useUserStore()
 
   useEffect(() => {
-    const getProfile = async () => {
+    const getProfileAsync = async () => {
       try {
-        await getProfileData(userName)
+        await getProfile(userName)
       } catch (error) {
         console.error(error)
       }
     }
 
-    getProfile()
+    getProfileAsync()
   }, [userName])
 
-  return <>{profile && <Details profile={profile} initialId={initialId}></Details>}</>
+  return <>{profile?.id && <Details initialId={initialId}></Details>}</>
 }

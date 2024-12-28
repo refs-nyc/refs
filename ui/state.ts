@@ -3,6 +3,8 @@ import { create } from 'zustand'
 export const useUIStore = create<{
   editingProfile: boolean
   editingBacklog: boolean
+  addingToList: string
+  setAddingToList: (newState: string) => void
   toggleEditProfile: () => void
   stopEditProfile: () => void
   startEditProfile: () => void
@@ -11,6 +13,12 @@ export const useUIStore = create<{
   startEditBacklog: () => void
 }>((set) => ({
   editingBacklog: false,
+  addingToList: '',
+  setAddingToList: (newState: string) => {
+    set(() => ({
+      addingToList: newState,
+    }))
+  },
   toggleEditBacklog: () => {
     set((state) => ({
       editingBacklog: !state.editingBacklog,

@@ -16,6 +16,7 @@ export const GridItem = ({
   i: number
   onPress?: () => {}
 }) => {
+  console.log(item.expand.ref)
   return (
     <>
       {item && (
@@ -24,6 +25,7 @@ export const GridItem = ({
             <GridTileImage key={item.id} source={item.expand.ref.image} />
           ) : (
             <Text numberOfLines={3} style={{ textAlign: 'center', padding: s.$08 }}>
+              {/* {item.list && 'L: '} */}
               {item.expand.ref.title}
             </Text>
           )}

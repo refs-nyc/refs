@@ -31,7 +31,7 @@ export const AddRef = ({
   const [textOpen, setTextOpen] = useState(false)
   const [pickerOpen, setPickerOpen] = useState(false)
   const [cameraOpen, setCameraOpen] = useState(false)
-  const [step, setStep] = useState<'' | 'add' | 'editList' | 'categorise'>('')
+  const [step, setStep] = useState<'' | 'add' | 'search' | 'editList' | 'categorise'>('')
   const [itemData, setItemData] = useState<Item>({})
   const [refData, setRefData] = useState<StagedRef | CompleteRef>({})
 
@@ -40,15 +40,13 @@ export const AddRef = ({
   const keyboard = useAnimatedKeyboard()
 
   const animatedStyle = useAnimatedStyle(() => {
+    if (step === '') return { height: 200 }
     return {
-      // marginBottom: s.$8,
       height: win.height - s.$10 - keyboard.height.value - insets.top - insets.bottom,
     }
   })
 
   const addImageRef = async (asset: ImagePickerAsset) => {
-    // TODO; Upload to IPFS etc
-    // await push(rd)
     setRefData({ image: asset })
     setStep('add')
   }
@@ -85,8 +83,8 @@ export const AddRef = ({
           <Picker onSuccess={(asset) => addImageRef(asset)} onCancel={() => setPickerOpen(false)} />
         )}
 
-        {step === '' && (
-          <Animated.View style={animatedStyle}>
+        <Animated.View style={animatedStyle}>
+          {
             <Ionicons
               name="chevron-back"
               size={20}
@@ -97,49 +95,57 @@ export const AddRef = ({
                 setStep('')
               }}
             />
+          }
 
-            {textOpen && <SearchOrAddRef onComplete={addRefFromResults} />}
-            {cameraOpen && <Camera />}
+          {step === '' && (
+            <YStack gap="$4">
+              <Button
+                variant="basicLeft"
+                iconColor={c.black}
+                title="Type anything"
+                iconBefore="text-outline"
+                onPress={() => {
+                  setStep('search')
+                  setTextOpen(true)
+                }}
+              />
+              <Button
+                variant="basicLeft"
+                align="flex-start"
+                title="Add from Camera Roll"
+                iconBefore="image-outline"
+                iconColor={c.black}
+                onPress={() => {
+                  setStep('search')
+                  setPickerOpen(true)
+                }}
+              />
+            </YStack>
+          )}
 
-            {step === '' && !textOpen && !cameraOpen && (
-              <YStack gap="$4">
-                <Button
-                  variant="basicLeft"
-                  iconColor={c.black}
-                  title="Type anything"
-                  iconBefore="text-outline"
-                  onPress={() => {
-                    setTextOpen(true)
-                  }}
-                />
-                <Button
-                  variant="basicLeft"
-                  align="flex-start"
-                  title="Add from Camera Roll"
-                  iconBefore="image-outline"
-                  iconColor={c.black}
-                  onPress={() => setPickerOpen(true)}
-                />
-              </YStack>
-            )}
-          </Animated.View>
-        )}
+          {step === 'search' && (
+            <>
+              {textOpen && <SearchOrAddRef onComplete={addRefFromResults} />}
+              {cameraOpen && <Camera />}
+            </>
+          )}
 
-        {step === 'add' && (
-          <NewRef
-            style={{ height: '100%' }}
-            r={refData}
-            onComplete={handleNewRefCreated}
-            onCancel={() => setRefData({})}
-            backlog={backlog}
-          />
-        )}
+          {step === 'add' && (
+            <NewRef
+              style={{ height: '100%' }}
+              r={refData}
+              onComplete={handleNewRefCreated}
+              onCancel={() => setRefData({})}
+              backlog={backlog}
+            />
+          )}
 
-        {step === 'categorise' && (
-          <CategoriseRef item={itemData} completeRef={refData} onComplete={onAddRef} />
-        )}
+          {step === 'categorise' && (
+            <CategoriseRef item={itemData} completeRef={refData} onComplete={onAddRef} />
+          )}
 
-        {step === 'editList' && <EditableList item={itemData} />}
+          {step === 'editList' && <EditableList item={itemData} onComplete={() => {}} />}
+        </Animated.View>
       </KeyboardAvoidingView>
     </DismissKeyboard>
   )

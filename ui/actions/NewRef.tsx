@@ -87,17 +87,19 @@ export const NewRef = ({
     setCurrentRef(u)
   }
 
-  const submit = async (extraFields?: Item) => {
+  const submit = async (extraFields?: any) => {
+    console.log('EXTRA FIELDS', extraFields)
+    const data = {
+      ...currentRef,
+      image: pinataSource,
+      backlog,
+      ...extraFields,
+    }
+
+    console.log('DATA:', data)
+
     try {
-      const item = await addToProfile(
-        {
-          ...currentRef,
-          image: pinataSource,
-          backlog,
-          ...extraFields,
-        },
-        !pathname.includes('onboarding') // don't attach to profile if there is no profile
-      )
+      const item = await addToProfile(data, !pathname.includes('onboarding'))
       onComplete(item)
     } catch (e) {
       console.error(e)
@@ -112,7 +114,6 @@ export const NewRef = ({
 
   return (
     <>
-      <Ionicons name="chevron-back" size={20} onPress={onCancel} />
       <View style={{ justifyContent: 'flex-start', paddingTop: s.$4 }}>
         <YStack gap={s.$3}>
           {imageAsset ? (
@@ -194,7 +195,10 @@ export const NewRef = ({
           variant="outlineFluid"
           style={{ width: '48%', minWidth: 0 }}
           disabled={pinataSource === 'none'}
-          onPress={() => submit({ list: true })}
+          onPress={() => {
+            console.log('ABOUT TO ADD A LIST')
+            submit({ list: true })
+          }}
         />
         <Button
           title="Add Ref"

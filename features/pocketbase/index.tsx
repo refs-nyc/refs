@@ -26,6 +26,7 @@ const addToProfile = async (stagedRef: StagedRef, attach = true) => {
       image: stagedRef?.image?.uri,
       creator: pocketbase.authStore?.record?.id,
       type: stagedRef?.type,
+      list: stagedRef?.list,
     })
   } else {
     try {
@@ -35,14 +36,17 @@ const addToProfile = async (stagedRef: StagedRef, attach = true) => {
       console.log('NEW REF', newRef)
       console.log('----')
       console.log('NEW ITEM')
-      newItem = await itemStore.push({
+      const data = {
         ...newRef,
         text: stagedRef?.text,
         backlog: stagedRef?.backlog,
         ref: newRef.id,
-        creator: pocketbase.authStore?.record?.id,
         list: stagedRef?.list,
-      })
+        creator: pocketbase.authStore?.record?.id,
+      }
+      console.log(data)
+      newItem = await itemStore.push(data)
+      console.log('LIST? ', stagedRef?.list)
       console.log('NEW ITEM,', newItem)
     } catch (error) {
       console.error(error)

@@ -7,15 +7,25 @@ import { s, c } from '@/features/style'
 import { CompleteRef, Item } from '../../features/pocketbase/stores/types'
 import { ScrollView } from 'react-native-gesture-handler'
 
-export const SearchOrAddRef = ({ onComplete }: { onComplete: (r: CompleteRef) => void }) => {
+export const SearchOrAddRef = ({
+  noNewRef,
+  onComplete,
+}: {
+  noNewRef?: boolean
+  onComplete: (r: CompleteRef) => void
+}) => {
   const [searchQuery, setSearchQuery] = useState('')
   const [searchResults, setSearchResults] = useState<CompleteRef[]>([])
 
-  // const { items } = useItemStore()
-
   const renderItem = ({ item }: { item: CompleteRef }) => {
     return (
-      <Pressable key={item.id} onPress={() => onComplete(item)}>
+      <Pressable
+        key={item.id}
+        onPress={() => {
+          console.log('ON COMPLETE', item.id)
+          onComplete(item)
+        }}
+      >
         <SearchResultItem r={item} />
       </Pressable>
     )
@@ -66,7 +76,7 @@ export const SearchOrAddRef = ({ onComplete }: { onComplete: (r: CompleteRef) =>
         onChangeText={updateQuery}
       />
 
-      {searchQuery !== '' && (
+      {searchQuery !== '' && !noNewRef && (
         <Pressable onPress={() => onComplete({ title: searchQuery })}>
           <NewRefListItem title={searchQuery} />
         </Pressable>
@@ -75,9 +85,8 @@ export const SearchOrAddRef = ({ onComplete }: { onComplete: (r: CompleteRef) =>
         style={{
           flex: 1,
           gap: s.$025,
-          // justifyContent: 'flex-start',
           overflow: 'scroll',
-          // backgroundColor: 'blue',
+          minHeight: s.$12,
         }}
       >
         {searchResults.map((r) => renderItem({ item: r }))}

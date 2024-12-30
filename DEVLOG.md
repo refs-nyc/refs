@@ -95,6 +95,11 @@ Mini Roadmap
   Moved the type field to the ref instead of on the item.
   An item can now have a boolean that says it's a list.
 
+  LAST DAY:
+
+  1. Univeral links
+  2. Notifications
+
 UI: we now wrap the entire app in a `<KeyboardAvoidingView>` component, so we can always be sure that the content we are currently interfacing with, moves up
 
 Make sure the UI is authorized properly

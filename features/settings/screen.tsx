@@ -1,6 +1,5 @@
-// import { Demo } from '@/ui/notifications/Demo'
+import { RegisterPushNotifications } from '@/ui/notifications/RegisterPushNotifications'
 
 export const SettingsScreen = () => {
-  return <></>
-  // return <Demo />
+  return <RegisterPushNotifications />
 }

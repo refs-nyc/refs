@@ -47,3 +47,6 @@ android
 
 # Local pocketbase instance
 .pocketbase/
+
+# Google config for push
+google-services.json

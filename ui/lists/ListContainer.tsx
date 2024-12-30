@@ -16,7 +16,7 @@ export const ListContainer = ({ item }: { item: Item }) => {
     <ScrollView style={{ flex: 1, padding: s.$075 }}>
       <YStack gap={s.$075}>
         {item?.expand?.children.map((itm) => (
-          <ListItem key={itm.id} r={itm} />
+          <ListItem key={itm.id} r={itm} showMeta={false} />
         ))}
       </YStack>
       <Button

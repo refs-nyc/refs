@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { usePathname } from 'expo-router'
-import { View, Pressable, Dimensions, TextInput } from 'react-native'
+import { View, Pressable, Dimensions, TextInput, ScrollView } from 'react-native'
 import { Heading, XStack, YStack } from '@/ui'
 import { Picker } from '../inputs/Picker'
 import { PinataImage } from '../images/PinataImage'
@@ -14,44 +14,6 @@ import { c, s } from '@/features/style'
 import { CompleteRef, StagedRef, Item } from '@/features/pocketbase/stores/types'
 
 const win = Dimensions.get('window')
-
-export const AddImage = ({
-  onAddImage,
-}: {
-  onAddImage: (a: ImagePickerAsset) => ImagePickerAsset
-}) => {
-  const [picking, setPicking] = useState(false)
-
-  return (
-    <>
-      {picking && <Picker onSuccess={onAddImage} onCancel={() => setPicking(false)} />}
-      <View
-        style={{
-          width: '100%',
-          flex: 1,
-          justifyContent: 'center',
-          alignItems: 'center',
-        }}
-      >
-        <Pressable onPress={() => setPicking(true)}>
-          <View
-            style={{
-              width: 200,
-              height: 200,
-              justifyContent: 'center',
-              alignItems: 'center',
-              borderWidth: 2,
-              borderColor: c.black,
-              borderRadius: s.$075,
-            }}
-          >
-            <Heading tag="h1light">+</Heading>
-          </View>
-        </Pressable>
-      </View>
-    </>
-  )
-}
 
 export const NewRef = ({
   r,
@@ -72,6 +34,7 @@ export const NewRef = ({
   const [imageAsset, setImageAsset] = useState(r?.image || null)
   const [pinataSource, setPinataSource] = useState('')
   const [text, setTextState] = useState('')
+  const [picking, setPicking] = useState(false)
 
   const pathname = usePathname()
 
@@ -113,63 +76,89 @@ export const NewRef = ({
   }, [text])
 
   return (
-    <>
-      <View style={{ justifyContent: 'flex-start', paddingTop: s.$4 }}>
-        <YStack gap={s.$3}>
-          {imageAsset ? (
-            <View style={{ width: '100%', alignItems: 'center' }}>
-              <View
-                style={{
-                  width: 200,
-                  height: 200,
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  borderWidth: 0,
-                  borderRadius: s.$075,
+    <YStack
+      style={{
+        // paddingTop: s.$2,
+        marginBottom: s.$4,
+        flex: 1,
+        alignItems: 'center',
+      }}
+      gap={s.$4}
+    >
+      <ScrollView
+        contentContainerStyle={{
+          alignItems: 'center',
+          gap: s.$2,
+          paddingVertical: s.$2,
+        }}
+        style={{ flex: 1, width: '100%' }}
+      >
+        {imageAsset ? (
+          <PinataImage
+            asset={imageAsset}
+            onSuccess={updateRefImage}
+            onFail={() => console.error('Cant ul')}
+          />
+        ) : (
+          <>
+            {picking && (
+              <Picker
+                onSuccess={(a: ImagePickerAsset) => {
+                  setImageAsset(a)
                 }}
-              >
-                <PinataImage
-                  asset={imageAsset}
-                  onSuccess={updateRefImage}
-                  onFail={() => console.error('Cant ul')}
-                />
-              </View>
-            </View>
-          ) : (
-            <AddImage
-              onAddImage={(a: ImagePickerAsset) => {
-                console.log('on add IMage', a)
-                setImageAsset(a)
-                return a
+                onCancel={() => setPicking(false)}
+              />
+            )}
+            <View
+              style={{
+                width: 200,
+                height: 200,
               }}
-            />
-          )}
-          <EditableTitle
-            onComplete={updateRefTitle}
-            placeholder={placeholder}
-            title={r?.title || placeholder}
-          />
-          {/* Notes */}
-          <TextInput
-            multiline={true}
-            numberOfLines={4}
-            placeholder="Care to comment?"
-            onChangeText={setTextState}
-            style={{
-              backgroundColor: c.white,
-              borderRadius: s.$075,
-              width: '100%',
-              padding: s.$1,
-              minHeight: s.$12,
-            }}
-          />
-        </YStack>
-      </View>
+            >
+              <Pressable style={{ flex: 1 }} onPress={() => setPicking(true)}>
+                <View
+                  style={{
+                    flex: 1,
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    borderWidth: 2,
+                    borderColor: c.black,
+                    borderRadius: s.$075,
+                  }}
+                >
+                  <Heading tag="h1light">+</Heading>
+                </View>
+              </Pressable>
+            </View>
+          </>
+        )}
+        <EditableTitle
+          onComplete={updateRefTitle}
+          placeholder={placeholder}
+          title={r?.title || placeholder}
+        />
+        {/* Notes */}
+        <TextInput
+          multiline={true}
+          numberOfLines={4}
+          placeholder="Care to comment?"
+          onChangeText={setTextState}
+          style={{
+            backgroundColor: c.white,
+            borderRadius: s.$075,
+            width: '100%',
+            padding: s.$1,
+            minHeight: s.$12,
+            // minHeight: 2000,
+          }}
+        />
+      </ScrollView>
       <View
         style={{
           flexDirection: 'row',
           justifyContent: 'space-evenly',
           alignItems: 'stretch',
+          backgroundColor: 'green',
           gap: s.$1,
         }}
       >
@@ -182,8 +171,7 @@ export const NewRef = ({
       <View
         style={{
           position: 'absolute',
-          bottom: s.$3,
-          left: s.$08,
+          bottom: 0,
           minWidth: 0,
           width: '100%',
           flexDirection: 'row',
@@ -208,6 +196,6 @@ export const NewRef = ({
           onPress={() => submit()}
         />
       </View>
-    </>
+    </YStack>
   )
 }

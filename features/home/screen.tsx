@@ -81,7 +81,7 @@ export function HomeScreen() {
                 height: dims.width * 1.2,
                 position: 'absolute',
                 right: -dims.width / 3,
-                bottom: -dims.width / 4,
+                bottom: -dims.width / 2,
               },
               animatedStyle,
             ]}

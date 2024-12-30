@@ -27,6 +27,7 @@ import { StatusBar, useColorScheme, KeyboardAvoidingView, Platform } from 'react
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native'
 import { useFonts } from 'expo-font'
 import { SplashScreen, Stack } from 'expo-router'
+import * as Notifications from 'expo-notifications'
 import { DeferredFonts } from '@/ui'
 import { c } from '@/features/style'
 import * as SystemUI from 'expo-system-ui'
@@ -40,6 +41,15 @@ export const unstable_settings = {
   // Ensure that reloading on `/modal` keeps a back button present.
   initialRouteName: '(tabs)',
 }
+
+// Notifications setup
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: true,
+    shouldSetBadge: true,
+  }),
+})
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync()

@@ -51,7 +51,8 @@ export const PinataImage = ({
   return (
     <View
       style={{
-        width: '100%',
+        width: 200,
+        height: 200,
         justifyContent: 'center',
         alignItems: 'center',
       }}
@@ -87,8 +88,8 @@ export const PinataImage = ({
             contentFit="cover"
             placeholderContentFit="cover"
             style={{
-              width: '100%',
-              height: '100%',
+              width: 200,
+              height: 200,
             }}
             onDisplay={() => {
               setLoading(false)
@@ -103,8 +104,8 @@ export const PinataImage = ({
             contentFit="cover"
             style={{
               position: showOriginal ? 'absolute' : 'relative',
-              width: '100%',
-              height: '100%',
+              width: 200,
+              height: 200,
             }}
             source={source}
           />

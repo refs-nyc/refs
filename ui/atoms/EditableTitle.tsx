@@ -27,7 +27,7 @@ export const EditableTitle = ({
             >
               {titleState}
             </Heading>
-            <Ionicons size={20} name="pencil" />
+            <Ionicons size={20} name="pencil" color={c.muted} />
           </XStack>
         </Pressable>
       ) : (
@@ -45,7 +45,7 @@ export const EditableTitle = ({
               placeholder={placeholder}
               onChangeText={setTitleState}
             ></TextInput>
-            <Ionicons size={20} name="checkbox" />
+            <Ionicons size={20} name="checkbox" color={c.muted} />
           </XStack>
         </Pressable>
       )}

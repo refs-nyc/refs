@@ -41,8 +41,11 @@ export const useUserStore = create<{
         profileBacklog:
           record?.expand?.items?.filter((itm: Item) => itm.backlog).sort(createdSort) || [],
       }))
+
+      return record
     } catch (error) {
       console.error(error)
+      throw new Error(error)
     }
   },
   //

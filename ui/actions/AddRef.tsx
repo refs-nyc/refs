@@ -42,7 +42,7 @@ export const AddRef = ({
   const animatedStyle = useAnimatedStyle(() => {
     if (step === '') return { height: 200 }
     return {
-      height: win.height - s.$10 - keyboard.height.value - insets.top - insets.bottom,
+      height: win.height - s.$2 - keyboard.height.value - insets.top - insets.bottom,
     }
   })
 
@@ -83,8 +83,10 @@ export const AddRef = ({
           <Picker onSuccess={(asset) => addImageRef(asset)} onCancel={() => setPickerOpen(false)} />
         )}
 
-        <Animated.View style={animatedStyle}>
-          {
+        <Animated.View
+          style={[animatedStyle, { justifyContent: 'flex-start', alignItems: 'stretch' }]}
+        >
+          {/* {
             <Ionicons
               name="chevron-back"
               size={20}
@@ -95,7 +97,7 @@ export const AddRef = ({
                 setStep('')
               }}
             />
-          }
+          } */}
 
           {step === '' && (
             <YStack gap="$4">
@@ -132,7 +134,6 @@ export const AddRef = ({
 
           {step === 'add' && (
             <NewRef
-              style={{ height: '100%' }}
               r={refData}
               onComplete={handleNewRefCreated}
               onCancel={() => setRefData({})}

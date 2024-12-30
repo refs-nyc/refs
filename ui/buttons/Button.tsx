@@ -76,7 +76,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderRadius: s.$4,
     elevation: 3,
-    paddingVertical: s.$09,
+    paddingVertical: s.$08,
     paddingHorizontal: s.$2,
     minWidth: s.$16,
     backgroundColor: c.accent,
@@ -98,7 +98,7 @@ const styles = StyleSheet.create({
     backgroundColor: c.accent2,
   },
   basic: {
-    backgroundColor: c.none,
+    backgroundColor: c.surface,
     color: c.black,
   },
   basicLeft: {
@@ -114,7 +114,7 @@ const styles = StyleSheet.create({
     minWidth: s.$20,
   },
   outline: {
-    backgroundColor: c.none,
+    backgroundColor: c.surface,
     borderColor: c.black,
     borderWidth: 2,
   },
@@ -123,15 +123,16 @@ const styles = StyleSheet.create({
   },
   outlineFluid: {
     width: '100%',
-    backgroundColor: c.none,
+    backgroundColor: c.surface,
     borderColor: c.black,
     borderWidth: 2,
   },
   // Text
   text: {
-    fontSize: s.$1,
-    lineHeight: 22,
-    fontFamily: 'Inter',
+    // fontSize: s.$1,
+    // lineHeight: 22,
+    // fontFamily: 'Inter',
+    ...t.p,
     color: 'white',
   },
   smallText: {

@@ -6,7 +6,15 @@ import { pocketbase } from '@/features/pocketbase'
 import { s, c } from '@/features/style'
 import type { CompleteRef } from '@/features/pocketbase/stores/types'
 
-export const ListItem = ({ r, backgroundColor }: { r: CompleteRef; backgroundColor?: string }) => {
+export const ListItem = ({
+  r,
+  backgroundColor,
+  showMeta = true,
+}: {
+  r: CompleteRef
+  backgroundColor?: string
+  showMeta?: boolean
+}) => {
   let [count, setCount] = useState(-1)
 
   useEffect(() => {
@@ -40,10 +48,13 @@ export const ListItem = ({ r, backgroundColor }: { r: CompleteRef; backgroundCol
           ></View>
           <Text>{r.title}</Text>
         </XStack>
-        <XStack gap={s.$09} style={{ justifyContent: 'space-between', alignItems: 'center' }}>
-          <Text>{count === 1 ? 'You are' : count} referencing</Text>
-          {/* <Ionicons name="close" /> */}
-        </XStack>
+
+        {showMeta && (
+          <XStack gap={s.$09} style={{ justifyContent: 'space-between', alignItems: 'center' }}>
+            <Text>{count === 1 ? 'You are' : count} referencing</Text>
+            {/* <Ionicons name="close" /> */}
+          </XStack>
+        )}
       </XStack>
     </View>
   )

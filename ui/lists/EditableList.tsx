@@ -11,6 +11,7 @@ export const EditableList = ({ item, onComplete }: { item: Item; onComplete: () 
       noNewRef
       onComplete={async (ref: CompleteRef) => {
         const record = await addToList(item.id, ref)
+        console.log(record.id)
         onComplete && onComplete()
       }}
     />

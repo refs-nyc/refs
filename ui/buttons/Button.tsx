@@ -14,6 +14,7 @@ type ButtonProps = {
   disabled?: boolean
   align?: 'center' | 'flex-start' | 'flex-end'
   style?: any
+  iconSize: number
 }
 
 export const Button = (props: ButtonProps) => {
@@ -26,6 +27,7 @@ export const Button = (props: ButtonProps) => {
     iconColor = 'white',
     disabled = false,
     align = 'center',
+    iconSize = s.$1,
   } = props
 
   let buttonVariant = null
@@ -48,13 +50,13 @@ export const Button = (props: ButtonProps) => {
       ]}
       onPress={!disabled ? onPress : () => {}}
     >
-      <XStack style={{ justifyContent: 'align' }} gap={s.$08}>
+      <XStack style={{ alignItems: 'center' }} gap={s.$08}>
         {iconBefore && (
           <Ionicons
-            style={[{ height: s.$1half }]}
+            style={[{ height: iconSize }]}
             color={iconColor}
             name={iconBefore}
-            size={s.$1}
+            size={iconSize}
           />
         )}
         <Text style={[styles.text, textVariant]}>{title}</Text>

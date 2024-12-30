@@ -23,17 +23,17 @@ export function OnboardingScreen() {
   return (
     <View style={{ flex: 1 }}>
       <Text
-          onPress={() => router.back()}
-          style={{
-            position: 'absolute',
-            top: s.$6,
-            right: s.$1,
-            fontSize: s.$09,
-            color: c.grey2,
-            zIndex: 1000,
-          }}
-        >
-          Back
+        onPress={() => router.back()}
+        style={{
+          position: 'absolute',
+          top: s.$6,
+          right: s.$1,
+          fontSize: s.$09,
+          color: c.grey2,
+          zIndex: 1000,
+        }}
+      >
+        Back
       </Text>
       <Carousel
         loop={false}
@@ -58,7 +58,6 @@ export function OnboardingScreen() {
         <Drawer close={() => setAddingIndex(-1)}>
           <AddRef
             onAddRef={() => {
-              console.log('we have added ')
               setAddingIndex(-1)
             }}
             onCancel={() => {

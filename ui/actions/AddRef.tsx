@@ -3,7 +3,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Picker } from '../inputs/Picker'
 import { Camera } from '../inputs/Camera'
 import { YStack } from '@/ui'
-import Ionicons from '@expo/vector-icons/Ionicons'
+import { router } from 'expo-router'
+import { useUserStore } from '@/features/pocketbase/stores/users'
 import Animated, { useAnimatedKeyboard, useAnimatedStyle } from 'react-native-reanimated'
 import { Button } from '../buttons/Button'
 import { Dimensions, KeyboardAvoidingView } from 'react-native'
@@ -24,7 +25,7 @@ export const AddRef = ({
   onCancel,
   backlog = false,
 }: {
-  onAddRef: () => void
+  onAddRef: (itm: Item) => void
   onCancel: () => void
   backlog?: boolean
 }) => {
@@ -34,6 +35,8 @@ export const AddRef = ({
   const [step, setStep] = useState<'' | 'add' | 'search' | 'editList' | 'categorise'>('')
   const [itemData, setItemData] = useState<Item>({})
   const [refData, setRefData] = useState<StagedRef | CompleteRef>({})
+
+  const { user } = useUserStore()
 
   const insets = useSafeAreaInsets()
 
@@ -60,8 +63,6 @@ export const AddRef = ({
     console.log('HANDLE NEW REF CREATED', item)
     setItemData(item)
     setRefData(item.expand.ref)
-
-    console.log(item, item.expand.ref)
 
     if (item.list) {
       setStep('editList')
@@ -145,7 +146,15 @@ export const AddRef = ({
             <CategoriseRef item={itemData} completeRef={refData} onComplete={onAddRef} />
           )}
 
-          {step === 'editList' && <EditableList item={itemData} onComplete={() => {}} />}
+          {step === 'editList' && (
+            <EditableList
+              item={itemData}
+              onComplete={() => {
+                if (!user.userName) onCancel()
+                onAddRef(itemData)
+              }}
+            />
+          )}
         </Animated.View>
       </KeyboardAvoidingView>
     </DismissKeyboard>

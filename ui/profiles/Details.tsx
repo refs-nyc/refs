@@ -101,14 +101,26 @@ export const Details = ({ initialId = '' }: { intialId: string }) => {
   const { addingToList, setAddingToList } = useUIStore()
 
   const data = [...profile.expand.items].filter((itm) => !itm.backlog).sort(gridSort)
+  console.log('data, initialId')
+  console.log(data, initialId)
+  console.log('---')
 
-  const defaultIndex = data.findIndex((itm) => itm.id == initialId)
+  const defaultIndex = Math.max(
+    0,
+    data.findIndex((itm) => itm.id == initialId)
+  )
 
   return (
     <>
       <View style={{ paddingTop: Math.max(insets.top, 16) }}>
         <Link
-          style={{ position: 'absolute', top: insets.top + s.$1, left: s.$1, zIndex: 99 }}
+          style={{
+            position: 'absolute',
+            top: insets.top + s.$1,
+            left: s.$1,
+            padding: s.$1,
+            zIndex: 99,
+          }}
           href={`/user/${userName}`}
         >
           <Ionicons size={s.$1} name="close" color={c.muted} />

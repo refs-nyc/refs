@@ -72,7 +72,7 @@ Switch email sign in
 
 - [x] Be able to add refs in onboarding
 - [x] Moving refs to Backlog / Deleting them
-- [ ] Add lists
+- [ ] Add lists§
 - [ ] Dragging Refs around Profile -> on branch
       Lists
 - [ ] Notifications test
@@ -96,3 +96,5 @@ Mini Roadmap
   An item can now have a boolean that says it's a list.
 
 UI: we now wrap the entire app in a `<KeyboardAvoidingView>` component, so we can always be sure that the content we are currently interfacing with, moves up
+
+Make sure the UI is authorized properly

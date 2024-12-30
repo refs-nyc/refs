@@ -233,8 +233,10 @@ export const Profile = ({ userName }: { userName: string }) => {
         <Drawer close={() => setAddingTo('')}>
           <AddRef
             backlog={addingTo === 'backlog'}
-            onAddRef={() => {
-              refreshGrid(userName)
+            onAddRef={async (itm) => {
+              await refreshGrid(userName)
+              if (itm.list) router.push(`/user/${userName}/details?initialId=${itm.id}`)
+              console.log(itm.id)
               setAddingTo('')
             }}
             onCancel={() => {

@@ -3,7 +3,7 @@ import { Pressable, Share, Alert } from 'react-native'
 export const Shareable = ({
   children,
   style,
-  message = 'Refs.nyc',
+  message = 'Refs - internet phonebook',
   url = 'https://refs.nyc',
   onShare,
 }: {
@@ -15,6 +15,7 @@ export const Shareable = ({
 }) => {
   const onShareFn = async () => {
     console.log('share')
+    message += ` ${url}`
     try {
       const result = await Share.share({ message, url })
       if (result.action === Share.sharedAction) {

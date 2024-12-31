@@ -75,7 +75,7 @@ Switch email sign in
 - [ ] Add lists§
 - [ ] Dragging Refs around Profile -> on branch
       Lists
-- [ ] Notifications test
+- [x] Notifications test
 
 Friday: place/art/neither flow + feed of refs
 [] Add Ref category to db
@@ -103,3 +103,10 @@ Mini Roadmap
 UI: we now wrap the entire app in a `<KeyboardAvoidingView>` component, so we can always be sure that the content we are currently interfacing with, moves up
 
 Make sure the UI is authorized properly
+
+<!-- Steps -->
+
+1. Register push token into database
+2. Share profile link
+3. Homepage search results
+4. Ability to post a url

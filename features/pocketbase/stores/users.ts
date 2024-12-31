@@ -12,6 +12,7 @@ export const useUserStore = create<{
   backlogItems: Item[]
   register: () => Promise<Profile>
   getProfile: (userName: string) => Promise<Profile>
+  updateUser: (fields: any) => Promise<Profile>
   updateStagedUser: (formFields: any) => void
   attachItem: (item: Item) => void
   loginWithPassword: (email: string, password: string) => void
@@ -59,6 +60,22 @@ export const useUserStore = create<{
     const updatedState = get().stagedUser
 
     return updatedState
+  },
+  //
+  //
+  //
+  updateUser: async (fields: any) => {
+    try {
+      console.log(pocketbase.authStore.record.id)
+      const userRecord = await pocketbase.collection('users').getOne(pocketbase.authStore.record.id)
+      console.log(userRecord)
+      const record = await pocketbase
+        .collection('users')
+        .update(pocketbase.authStore.record.id, { ...fields })
+      return record
+    } catch (err) {
+      console.error(err)
+    }
   },
   //
   //

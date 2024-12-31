@@ -1,5 +1,5 @@
-import { RegisterPushNotifications } from '@/ui/notifications/RegisterPushNotifications'
+import { PushNotificationsSetupDemo } from '@/ui/notifications/PushNotificationsSetupDemo'
 
 export const SettingsScreen = () => {
-  return <RegisterPushNotifications />
+  return <PushNotificationsSetupDemo />
 }

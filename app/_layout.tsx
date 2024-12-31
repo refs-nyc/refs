@@ -31,6 +31,7 @@ import * as Notifications from 'expo-notifications'
 import { DeferredFonts } from '@/ui'
 import { c } from '@/features/style'
 import * as SystemUI from 'expo-system-ui'
+import { RegisterPushNotifications } from '@/ui/notifications/RegisterPushNotifications'
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -123,6 +124,7 @@ function RootLayoutNav() {
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <StatusBar barStyle={colorScheme === 'dark' ? 'light-content' : 'dark-content'} />
+      <RegisterPushNotifications />
       <Stack
         screenOptions={{
           contentStyle: { backgroundColor: c.surface },

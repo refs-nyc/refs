@@ -84,8 +84,8 @@ Sat: tuning it all up, squashing bugs
 
 Mini Roadmap
 
-- [ ] Integrate Lists
-- [ ] Improve lacking parts of the new ref UI
+- [x] Integrate Lists
+- [x] Improve lacking parts of the new ref UI
 - [ ] Implement a basic search so the search bar does something
 - [ ] Universal links for easy sharing of profile / profile item
 

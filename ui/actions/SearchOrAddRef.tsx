@@ -91,12 +91,6 @@ export const SearchOrAddRef = ({
       >
         {searchResults.map((r) => renderItem({ item: r }))}
       </ScrollView>
-      {/* <FlatList
-        contentContainerStyle={{}}
-        data={searchResults}
-        renderItem={renderItem}
-        keyExtractor={(item: any) => item.id}
-      /> */}
     </View>
   )
 }

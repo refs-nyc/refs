@@ -4,7 +4,7 @@ import { XStack } from '@/ui'
 import { View, Text } from 'react-native'
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { s, c } from '@/features/style'
-import { CompleteRef } from "@/features/pocketbase/stores/types"
+import { CompleteRef } from '@/features/pocketbase/stores/types'
 
 export const SearchResultItem = ({ r }: { r: CompleteRef }) => {
   const [count, setCount] = useState<string | number>('...')
@@ -35,7 +35,7 @@ export const SearchResultItem = ({ r }: { r: CompleteRef }) => {
           <View
             style={{ width: 20, height: 20, borderRadius: 4, backgroundColor: c.accent }}
           ></View>
-          <Text>{r.title}</Text>
+          <Text>{r?.title}</Text>
         </XStack>
         <XStack gap={s.$09} style={{ justifyContent: 'space-between', alignItems: 'center' }}>
           <Text>{count} referencing</Text>

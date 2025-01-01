@@ -44,7 +44,7 @@ export const RefListItem = ({
           <View
             style={{ width: 20, height: 20, borderRadius: 4, backgroundColor: c.accent }}
           ></View>
-          <Text>{r.title}</Text>
+          <Text>{r?.title}</Text>
         </XStack>
         <XStack gap={s.$09} style={{ justifyContent: 'space-between', alignItems: 'center' }}>
           <Text>{count === 1 ? 'You are' : count} referencing</Text>

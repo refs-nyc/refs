@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { pocketbase } from '@/features/pocketbase'
 import { s, c } from '@/features/style'
+import { SimplePinataImage } from '@/ui/images/SimplePinataImage'
 import type { CompleteRef } from '@/features/pocketbase/stores/types'
 
 export const ListItem = ({
@@ -43,10 +44,28 @@ export const ListItem = ({
     >
       <XStack gap={s.$09} style={{ justifyContent: 'space-between', alignItems: 'center' }}>
         <XStack gap={s.$09} style={{ justifyContent: 'space-between', alignItems: 'center' }}>
-          <View
-            style={{ width: 20, height: 20, borderRadius: 4, backgroundColor: c.accent }}
-          ></View>
-          <Text>{r.title}</Text>
+          {r?.image ? (
+            <SimplePinataImage
+              originalSource={r.image}
+              imageOptions={{ width: s.$3, height: s.$3 }}
+              style={{
+                width: s.$3,
+                height: s.$3,
+                backgroundColor: c.accent,
+                borderRadius: s.$075,
+              }}
+            />
+          ) : (
+            <View
+              style={{
+                width: s.$3,
+                height: s.$3,
+                backgroundColor: c.accent,
+                borderRadius: s.$075,
+              }}
+            ></View>
+          )}
+          <Text>{r?.title}</Text>
         </XStack>
 
         {showMeta && (

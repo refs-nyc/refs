@@ -134,6 +134,7 @@ export type RefsRecord = {
 	title?: string
 	type?: RefsTypeOptions
 	updated?: IsoDateString
+	url?: string
 }
 
 export type UsersRecord = {
@@ -148,6 +149,7 @@ export type UsersRecord = {
 	lastName?: string
 	location?: string
 	password: string
+	pushToken?: string
 	tokenKey: string
 	updated?: IsoDateString
 	userName: string

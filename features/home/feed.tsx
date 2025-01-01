@@ -68,9 +68,9 @@ export const Feed = () => {
         >
           My Profile
         </Link>
-        <Link style={{ width: '100%', textAlign: 'center' }} href="/settings">
+        {/* <Link style={{ width: '100%', textAlign: 'center' }} href="/settings">
           Settings
-        </Link>
+        </Link> */}
       </YStack>
 
       <YStack

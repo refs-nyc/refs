@@ -21,12 +21,12 @@ export const GridItem = ({
     <>
       {item && (
         <>
-          {item.expand.ref.image ? (
+          {item?.expand?.ref?.image ? (
             <GridTileImage key={item.id} source={item.expand.ref.image} />
           ) : (
             <Text numberOfLines={3} style={{ textAlign: 'center', padding: s.$08 }}>
               {/* {item.list && 'L: '} */}
-              {item.expand.ref.title}
+              {item?.expand?.ref?.title}
             </Text>
           )}
         </>

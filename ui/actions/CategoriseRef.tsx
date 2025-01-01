@@ -32,6 +32,7 @@ export const CategoriseRef = ({
   const done = async () => {
     try {
       const record = await addMetaData(completeRef.id, { cat: category, meta })
+      console.log('completed categorisation: ', record)
       if (record) onComplete(record)
     } catch (error) {
       console.error(error)
@@ -48,7 +49,7 @@ export const CategoriseRef = ({
           {item?.expand?.ref?.image && (
             <SimplePinatatImage originalSource={item.expand.ref.image} />
           )}
-          <Heading tag="h1">{item?.expand.ref.title}</Heading>
+          <Heading tag="h1">{item?.expand?.ref.title}</Heading>
         </View>
         <Heading style={{ width: '100%', marginBottom: s.$2 }} tag="p">
           Is it a

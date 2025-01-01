@@ -56,8 +56,6 @@ export const Profile = ({ userName }: { userName: string }) => {
 
       const itms = record?.expand?.items?.filter((itm: Item) => !itm.backlog).sort(gridSort) || []
       const bklg = record?.expand?.items?.filter((itm: Item) => itm.backlog).sort(createdSort) || []
-      console.log('items')
-      console.log(itms.map((i) => i.expand.ref.title))
 
       // Filter out backlog and normal
       setGridItems(itms)
@@ -233,9 +231,10 @@ export const Profile = ({ userName }: { userName: string }) => {
         <Drawer close={() => setAddingTo('')}>
           <AddRef
             backlog={addingTo === 'backlog'}
-            onAddRef={async (itm) => {
+            onAddRef={async (itm: Item) => {
+              console.log(itm)
               await refreshGrid(userName)
-              if (itm.list) router.push(`/user/${userName}/details?initialId=${itm.id}`)
+              if (itm?.list) router.push(`/user/${userName}/details?initialId=${itm.id}`)
               console.log(itm.id)
               setAddingTo('')
             }}

@@ -13,6 +13,7 @@ const win = Dimensions.get('window')
 
 export const Feed = () => {
   const [items, setItems] = useState<Item[]>([])
+  const [searching, setSearching] = useState<boolean>(false)
   const [results, setResults] = useState<Item[]>([])
   const [searchTerm, setSearchTerm] = useState<string>('')
   const insets = useSafeAreaInsets()
@@ -24,9 +25,7 @@ export const Feed = () => {
       try {
         const records = await pocketbase
           .collection('refs')
-          .getFullList({ filter: `title ~ "${q}"` })
-
-        console.log(records)
+          .getFullList({ filter: `title ~ "${q}"`, expand: 'creator' })
 
         setResults(records)
       } catch (err) {
@@ -78,13 +77,31 @@ export const Feed = () => {
             textAlign: 'center',
           }}
         >
-          <Heading style={{ textAlign: 'center' }} tag="h1">
-            Refs
-          </Heading>
+          <YStack
+            gap={s.$2}
+            style={{
+              position: 'absolute',
+              width: '100%',
+              zIndex: 9,
+              height: win.height * 0.4,
+              paddingTop: s.$2,
+              textAlign: 'center',
+            }}
+          >
+            {!searching && (
+              <Heading style={{ textAlign: 'center' }} tag="h1">
+                Refs
+              </Heading>
+            )}
 
-          <SearchRef onChange={setSearchTerm} />
+            <SearchRef
+              onFocus={() => setSearching(true)}
+              onBlur={() => setSearching(false)}
+              onChange={setSearchTerm}
+            />
+          </YStack>
 
-          <Link
+          {/* <Link
             style={{ width: '100%', textAlign: 'center' }}
             href={{
               pathname: '/user/[userName]',
@@ -92,7 +109,7 @@ export const Feed = () => {
             }}
           >
             My Profile
-          </Link>
+          </Link> */}
         </YStack>
 
         {searchTerm === '' ? <Activity items={items} /> : <SearchResults results={results} />}

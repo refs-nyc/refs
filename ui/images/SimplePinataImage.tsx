@@ -12,7 +12,7 @@ export const SimplePinataImage = ({
 }: {
   originalSource: string
   imageOptions: OptimizeImageOptions
-  props: {}
+  props?: {}
 }) => {
   const [loading, setLoading] = useState(true)
   const [source, setSource] = useState('')

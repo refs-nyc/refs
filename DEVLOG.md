@@ -109,7 +109,18 @@ Make sure the UI is authorized properly
 1. [ ] Register push token into database
 2. [ ] Share profile link
 3. [ ] Homepage search results
+       WIP
+
 4. [ ] Ability to post a url
 5. [ ] More opinionated folders and so on
+6. [ ] Geolocation filtered results
 
-BTW
+SEARCH
+
+User Profile name
+
+Normal results:
+User X created ref Y at time Z
+
+Comments results:
+User X commented on Y: excerpt Z...

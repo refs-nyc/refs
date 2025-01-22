@@ -7,7 +7,15 @@ import Animated, { useAnimatedStyle, withSpring, useSharedValue } from 'react-na
 import { Pressable, TouchableWithoutFeedback } from 'react-native-gesture-handler'
 import Ionicons from '@expo/vector-icons/Ionicons'
 
-export const SearchRef = ({ onChange }: { onChange: (str: string) => void }) => {
+export const SearchRef = ({
+  onChange,
+  onFocus,
+  onBlur,
+}: {
+  onChange: (str: string) => void
+  onFocus: () => void
+  onBlur: () => void
+}) => {
   const [textState, setTextState] = useState('')
   const [searching, setSearching] = useState(false)
   const y = useSharedValue(0)
@@ -91,15 +99,12 @@ export const SearchRef = ({ onChange }: { onChange: (str: string) => void }) => 
               onFocus={() => {
                 y.set(withSpring(6))
                 scaleY.set(withSpring(0.8))
-                setSearching(true)
+                onFocus()
               }}
               onBlur={() => {
                 y.set(withSpring(0))
                 scaleY.set(withSpring(1))
-                setSearching(false)
-                setTextState('')
-                console.log('Text State', textState)
-                console.log('')
+                onBlur()
               }}
               autoFocus={false}
               placeholder="Search anything"

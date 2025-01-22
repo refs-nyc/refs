@@ -4,7 +4,7 @@ import { Image } from 'expo-image'
 import { Drawer } from '../drawers/Drawer'
 import { Link, useGlobalSearchParams } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { View, Text, Dimensions } from 'react-native'
+import { View, Text, Dimensions, Pressable } from 'react-native'
 import Carousel, { ICarouselInstance } from 'react-native-reanimated-carousel'
 import { useSharedValue } from 'react-native-reanimated'
 import { Heading } from '../typo/Heading'
@@ -76,9 +76,11 @@ const renderItem = ({ item }) => {
             <Heading tag="h2">{item.expand.ref.title}</Heading>
             <Heading tag="smallmuted">{item.expand.ref?.meta}</Heading>
           </View>
-          <View style={{ transformOrigin: 'center', transform: 'rotate(-45deg)' }}>
-            <Ionicons color={c.muted} size={s.$1} name="arrow-forward-outline" />
-          </View>
+          <Pressable onPress={() => {}}>
+            <View style={{ transformOrigin: 'center', transform: 'rotate(-45deg)' }}>
+              <Ionicons color={c.muted} size={s.$1} name="arrow-forward-outline" />
+            </View>
+          </Pressable>
         </View>
         {/* Comments */}
         <View style={{ width: '100%' }}>
@@ -97,14 +99,8 @@ export const Details = ({ initialId = '' }: { intialId: string }) => {
   const { profile, getProfile } = useUserStore()
   const ref = useRef<ICarouselInstance>(null)
   const insets = useSafeAreaInsets()
-
   const { addingToList, setAddingToList } = useUIStore()
-
   const data = [...profile.expand.items].filter((itm) => !itm.backlog).sort(gridSort)
-  console.log('data, initialId')
-  console.log(data, initialId)
-  console.log('---')
-
   const defaultIndex = Math.max(
     0,
     data.findIndex((itm) => itm.id == initialId)

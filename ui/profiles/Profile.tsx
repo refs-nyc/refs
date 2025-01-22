@@ -198,7 +198,7 @@ export const Profile = ({ userName }: { userName: string }) => {
             onPress={() => router.push('/')}
           />
           <Button
-            style={{ marginBottom: s.$4 }}
+            style={{ marginBottom: s.$12 }}
             title="Logout"
             variant="basic"
             onPress={() => handleLogout()}

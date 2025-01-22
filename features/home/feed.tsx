@@ -1,19 +1,43 @@
-import { useState, useEffect } from 'react'
-import { SearchRef, XStack, YStack, Heading } from '@/ui'
-import { pocketbase } from '@/features/pocketbase'
 import type { Item } from '@/features/pocketbase/stores/types'
-import { Link, router } from 'expo-router'
-import { FlatList } from 'react-native-gesture-handler'
-import { ScrollView, View, Dimensions } from 'react-native'
-import { s, c } from '@/features/style'
+import { useState, useEffect } from 'react'
+import { SearchRef, YStack, Heading, DismissKeyboard } from '@/ui'
+import { pocketbase } from '@/features/pocketbase'
+import { Link } from 'expo-router'
+import { View, Dimensions } from 'react-native'
+import { s } from '@/features/style'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { SimplePinataImage } from '@/ui/images/SimplePinataImage'
+import { Activity } from './activity'
+import { SearchResults } from './results'
 
 const win = Dimensions.get('window')
 
 export const Feed = () => {
   const [items, setItems] = useState<Item[]>([])
+  const [results, setResults] = useState<Item[]>([])
+  const [searchTerm, setSearchTerm] = useState<string>('')
   const insets = useSafeAreaInsets()
+
+  useEffect(() => {
+    if (searchTerm === '') return
+
+    const search = async (q: string) => {
+      try {
+        const records = await pocketbase
+          .collection('refs')
+          .getFullList({ filter: `title ~ "${q}"` })
+
+        console.log(records)
+
+        setResults(records)
+      } catch (err) {
+        console.error(err)
+        console.dir(err)
+        setResults([])
+      }
+    }
+
+    search(searchTerm)
+  }, [searchTerm])
 
   useEffect(() => {
     // The initial data we are looking for is
@@ -26,7 +50,7 @@ export const Feed = () => {
         const records = await pocketbase
           .collection('items')
           .getList(1, 30, { filter: ``, sort: '-created', expand: 'ref,creator' })
-        console.log(records.items)
+
         setItems(records.items)
         console.log('done')
       } catch (error) {
@@ -44,87 +68,35 @@ export const Feed = () => {
   }, [])
 
   return (
-    <View style={{ flex: 1, height: win.height, paddingTop: Math.max(insets.top, 16) }}>
-      <YStack
-        gap={s.$2}
-        style={{
-          height: win.height * 0.4,
-          paddingTop: s.$2,
-          textAlign: 'center',
-        }}
-      >
-        <Heading style={{ textAlign: 'center' }} tag="h1">
-          Refs
-        </Heading>
-
-        <SearchRef />
-
-        <Link
-          style={{ width: '100%', textAlign: 'center' }}
-          href={{
-            pathname: '/user/[userName]',
-            params: { userName: pocketbase.authStore.record.userName },
+    <DismissKeyboard>
+      <View style={{ flex: 1, height: win.height, paddingTop: Math.max(insets.top, 16) }}>
+        <YStack
+          gap={s.$2}
+          style={{
+            height: win.height * 0.4,
+            paddingTop: s.$2,
+            textAlign: 'center',
           }}
         >
-          My Profile
-        </Link>
-        {/* <Link style={{ width: '100%', textAlign: 'center' }} href="/settings">
-          Settings
-        </Link> */}
-      </YStack>
+          <Heading style={{ textAlign: 'center' }} tag="h1">
+            Refs
+          </Heading>
 
-      <YStack
-        gap={s.$09}
-        style={{
-          paddingHorizontal: s.$1half,
-          width: win.width,
-          height: win.height * 0.6,
-        }}
-      >
-        <Heading tag="p">Activity</Heading>
-        <ScrollView style={{ flex: 1 }}>
-          <YStack
-            style={{
-              flex: 1,
-              gap: s.$025,
-              paddingBottom: s.$4,
+          <SearchRef onChange={setSearchTerm} />
+
+          <Link
+            style={{ width: '100%', textAlign: 'center' }}
+            href={{
+              pathname: '/user/[userName]',
+              params: { userName: pocketbase.authStore.record.userName },
             }}
           >
-            {items.map((item) => (
-              <XStack key={item.id} gap={s.$1} style={{ paddingVertical: s.$05 }}>
-                {item?.image ? (
-                  <SimplePinataImage
-                    originalSource={item.image}
-                    imageOptions={{ width: s.$3, height: s.$3 }}
-                    style={{
-                      width: s.$3,
-                      height: s.$3,
-                      backgroundColor: c.accent,
-                      borderRadius: s.$075,
-                    }}
-                  />
-                ) : (
-                  <View
-                    style={{
-                      width: s.$3,
-                      height: s.$3,
-                      backgroundColor: c.accent,
-                      borderRadius: s.$075,
-                    }}
-                  />
-                )}
+            My Profile
+          </Link>
+        </YStack>
 
-                <Link href={item.expand?.creator ? `/user/${item.expand.creator?.userName}` : '/'}>
-                  <Heading tag="p">
-                    <Heading tag="strong">{item.expand?.creator?.userName || 'Anonymous'}</Heading>{' '}
-                    added <Heading tag="strong">{item.expand?.ref?.title}</Heading>
-                  </Heading>
-                </Link>
-              </XStack>
-            ))}
-          </YStack>
-        </ScrollView>
-      </YStack>
-    </View>
+        {searchTerm === '' ? <Activity items={items} /> : <SearchResults results={results} />}
+      </View>
+    </DismissKeyboard>
   )
 }

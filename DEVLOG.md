@@ -106,7 +106,10 @@ Make sure the UI is authorized properly
 
 <!-- Steps -->
 
-1. Register push token into database
-2. Share profile link
-3. Homepage search results
-4. Ability to post a url
+1. [ ] Register push token into database
+2. [ ] Share profile link
+3. [ ] Homepage search results
+4. [ ] Ability to post a url
+5. [ ] More opinionated folders and so on
+
+BTW

@@ -1,15 +1,24 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { View, TextInput } from 'react-native'
 import { s, c } from '@/features/style'
-import { XStack } from '@/ui'
+import { Heading } from '@/ui'
 import { Image } from 'expo-image'
 import Animated, { useAnimatedStyle, withSpring, useSharedValue } from 'react-native-reanimated'
-import { TouchableWithoutFeedback } from 'react-native-gesture-handler'
+import { Pressable, TouchableWithoutFeedback } from 'react-native-gesture-handler'
+import Ionicons from '@expo/vector-icons/Ionicons'
 
-export const SearchRef = () => {
+export const SearchRef = ({ onChange }: { onChange: (str: string) => void }) => {
   const [textState, setTextState] = useState('')
+  const [searching, setSearching] = useState(false)
   const y = useSharedValue(0)
   const scaleY = useSharedValue(1)
+
+  const ref = useRef<TextInput>(null)
+
+  const reset = () => {
+    setTextState('')
+    ref.current?.clear()
+  }
 
   const translateY = useAnimatedStyle(() => ({
     transform: [{ translateY: y.get() }],
@@ -17,6 +26,8 @@ export const SearchRef = () => {
   const height = useAnimatedStyle(() => ({
     transform: [{ scaleY: scaleY.get() }],
   }))
+
+  useEffect(() => onChange(textState), [textState])
 
   return (
     <>
@@ -75,20 +86,42 @@ export const SearchRef = () => {
             ></Image>
 
             <TextInput
+              ref={ref}
               style={{ flex: 1 }}
               onFocus={() => {
                 y.set(withSpring(6))
                 scaleY.set(withSpring(0.8))
+                setSearching(true)
               }}
               onBlur={() => {
                 y.set(withSpring(0))
                 scaleY.set(withSpring(1))
+                setSearching(false)
+                setTextState('')
+                console.log('Text State', textState)
+                console.log('')
               }}
               autoFocus={false}
               placeholder="Search anything"
               onChangeText={setTextState}
               placeholderTextColor={c.black}
             />
+
+            {textState !== '' && (
+              <Pressable
+                onPress={reset}
+                style={{
+                  width: s.$2,
+                  height: s.$2,
+                  paddingRight: s.$05,
+                  flexDirection: 'column',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                }}
+              >
+                <Ionicons size={s.$09} name="close" />
+              </Pressable>
+            )}
           </Animated.View>
         </TouchableWithoutFeedback>
       </View>

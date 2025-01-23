@@ -1,5 +1,5 @@
 import { XStack, YStack, Heading } from '@/ui'
-import type { Item } from '@/features/pocketbase/stores/types'
+import type { ExpandedItem } from '@/features/pocketbase/stores/types'
 import { Link, router } from 'expo-router'
 import { ScrollView, View, Dimensions, KeyboardAvoidingView } from 'react-native'
 import { s, c } from '@/features/style'
@@ -7,7 +7,7 @@ import { SimplePinataImage } from '@/ui/images/SimplePinataImage'
 
 const win = Dimensions.get('window')
 
-export const SearchResults = ({ results }: { results: Item[] }) => {
+export const SearchResults = ({ results }: { results: ExpandedItem[] }) => {
   return (
     <KeyboardAvoidingView
       style={{

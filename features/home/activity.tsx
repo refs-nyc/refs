@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { SearchRef, XStack, YStack, Heading } from '@/ui'
 import { pocketbase } from '@/features/pocketbase'
-import type { Item } from '@/features/pocketbase/stores/types'
+import type { ExpandedItem } from '@/features/pocketbase/stores/types'
 import { Link, router } from 'expo-router'
 import { FlatList } from 'react-native-gesture-handler'
 import { ScrollView, View, Dimensions } from 'react-native'
@@ -11,7 +11,7 @@ import { SimplePinataImage } from '@/ui/images/SimplePinataImage'
 
 const win = Dimensions.get('window')
 
-export const Activity = ({ items }: { items: Item[] }) => {
+export const Activity = ({ items }: { items: ExpandedItem[] }) => {
   return (
     <YStack
       gap={s.$09}

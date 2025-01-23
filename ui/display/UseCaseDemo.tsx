@@ -39,7 +39,7 @@ export const UseCaseDemo = () => {
         >
           <Image style={{ width: 54, height: 54 }} source={require('@/assets/l3.png')}></Image>
           <View style={{ justifyContent: 'center' }}>
-            <Heading>Start a book club with people who{'\n'}read the same essay</Heading>
+            <Heading tag="h3">Start a book club with people who{'\n'}read the same essay</Heading>
           </View>
         </XStack>
       </YStack>

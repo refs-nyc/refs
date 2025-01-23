@@ -14,12 +14,12 @@ import Ionicons from '@expo/vector-icons/Ionicons'
 import { useUIStore } from '@/ui/state'
 import { ListContainer } from '../lists/ListContainer'
 import { EditableList } from '../lists/EditableList'
-import { useUserStore } from '@/features/pocketbase/stores/users'
-import { Item } from '@/features/pocketbase/stores/types'
+import { useUserStore, isExpandedProfile } from '@/features/pocketbase/stores/users'
+import { ExpandedItem } from '@/features/pocketbase/stores/types'
 
 const win = Dimensions.get('window')
 
-const renderItem = ({ item }: { item: Item }) => {
+const renderItem = ({ item }: { item: ExpandedItem }) => {
   return (
     <View
       style={{
@@ -48,7 +48,7 @@ const renderItem = ({ item }: { item: Item }) => {
       {/* Content */}
       <View style={{ width: '100%', aspectRatio: 1, overflow: 'hidden' }}>
         {item.image ? (
-          item.expand.ref.image && (
+          item.expand?.ref.image && (
             <Image
               style={{ width: '100%', aspectRatio: 1 }}
               source={item.image || item.expand.ref.image}
@@ -74,8 +74,8 @@ const renderItem = ({ item }: { item: Item }) => {
       <View style={{ width: '100%', paddingHorizontal: s.$1 }}>
         <View style={{ marginBottom: s.$1, flexDirection: 'row', justifyContent: 'space-between' }}>
           <View style={{ gap: s.$05 }}>
-            <Heading tag="h2">{item.expand.ref.title}</Heading>
-            <Heading tag="smallmuted">{item.expand.ref?.meta}</Heading>
+            <Heading tag="h2">{item.expand?.ref.title}</Heading>
+            <Heading tag="smallmuted">{item.expand?.ref?.meta}</Heading>
           </View>
           <Pressable onPress={() => {}}>
             <View style={{ transformOrigin: 'center', transform: 'rotate(-45deg)' }}>
@@ -103,11 +103,13 @@ export const Details = ({ initialId = '' }: { initialId: string }) => {
   const ref = useRef<ICarouselInstance>(null)
   const insets = useSafeAreaInsets()
   const { addingToList, setAddingToList } = useUIStore()
-  const data = [...profile.expand.items].filter((itm) => !itm.backlog).sort(gridSort)
+  const data = ((isExpandedProfile(profile) && profile.expand?.items) ? [...profile.expand.items].filter((itm) => !itm.backlog).sort(gridSort) : []) as ExpandedItem[]
   const defaultIndex = Math.max(
     0,
     data.findIndex((itm) => itm.id == initialId)
   )
+
+  const addingItem = data.find((itm) => itm.id === addingToList)
 
   return (
     <>
@@ -138,10 +140,10 @@ export const Details = ({ initialId = '' }: { initialId: string }) => {
         />
       </View>
 
-      {addingToList !== '' && (
+      {addingToList !== '' && addingItem && (
         <Drawer close={() => setAddingToList('')}>
           <EditableList
-            item={data.find((itm) => itm.id === addingToList)}
+            item={addingItem}
             onComplete={async () => {
               setAddingToList('')
               await getProfile(userNameParam)

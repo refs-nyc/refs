@@ -1,4 +1,4 @@
-import type { Item } from '@/features/pocketbase/stores/types'
+import type { ExpandedItem } from '@/features/pocketbase/stores/types'
 import { useState, useEffect } from 'react'
 import { SearchRef, YStack, Heading, DismissKeyboard } from '@/ui'
 import { pocketbase } from '@/features/pocketbase'
@@ -12,9 +12,9 @@ import { SearchResults } from './results'
 const win = Dimensions.get('window')
 
 export const Feed = () => {
-  const [items, setItems] = useState<Item[]>([])
+  const [items, setItems] = useState<ExpandedItem[]>([])
   const [searching, setSearching] = useState<boolean>(false)
-  const [results, setResults] = useState<Item[]>([])
+  const [results, setResults] = useState<ExpandedItem[]>([])
   const [searchTerm, setSearchTerm] = useState<string>('')
   const insets = useSafeAreaInsets()
 
@@ -25,7 +25,7 @@ export const Feed = () => {
       try {
         const records = await pocketbase
           .collection('refs')
-          .getFullList({ filter: `title ~ "${q}"`, expand: 'creator' })
+          .getFullList<ExpandedItem>({ filter: `title ~ "${q}"`, expand: 'ref,creator' })
 
         setResults(records)
       } catch (err) {
@@ -48,7 +48,7 @@ export const Feed = () => {
       try {
         const records = await pocketbase
           .collection('items')
-          .getList(1, 30, { filter: ``, sort: '-created', expand: 'ref,creator' })
+          .getList<ExpandedItem>(1, 30, { filter: ``, sort: '-created', expand: 'ref,creator' })
 
         setItems(records.items)
         console.log('done')

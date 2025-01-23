@@ -12,7 +12,7 @@ import { useState, useMemo } from 'react'
 import { NewRef } from '../actions/NewRef'
 import { SearchOrAddRef } from '../actions/SearchOrAddRef'
 import { c } from '@/features/style'
-import { StagedRef, CompleteRef, Item } from '@/features/pocketbase/stores/types'
+import { StagedRef, CompleteRef, Item, ExpandedItem } from '@/features/pocketbase/stores/types'
 import type { ImagePickerAsset } from 'expo-image-picker'
 import { EditableList } from '../lists/EditableList'
 import { CategoriseRef } from './CategoriseRef'
@@ -33,7 +33,7 @@ export const AddRef = ({
   const [pickerOpen, setPickerOpen] = useState(false)
   const [cameraOpen, setCameraOpen] = useState(false)
   const [step, setStep] = useState<'' | 'add' | 'search' | 'editList' | 'categorise'>('')
-  const [itemData, setItemData] = useState<Item | null>(null)
+  const [itemData, setItemData] = useState<ExpandedItem | null>(null)
   const [refData, setRefData] = useState<StagedRef | CompleteRef>({})
 
   const { user } = useUserStore()
@@ -58,10 +58,11 @@ export const AddRef = ({
     setStep('add')
   }
 
-  const handleNewRefCreated = (item: Item) => {
+  const handleNewRefCreated = (item: ExpandedItem) => {
     console.log('HANDLE NEW REF CREATED', item)
+    if (!item.expand?.ref) throw new Error("unexpected: handleNewRefCreated should always be called with ExpandedItem")
     setItemData(item)
-    setRefData(item.expand.ref)
+    setRefData(item.expand?.ref)
 
     if (item.list) {
       setStep('editList')

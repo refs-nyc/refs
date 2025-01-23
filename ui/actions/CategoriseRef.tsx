@@ -1,4 +1,4 @@
-import type { Item, CompleteRef, StagedRef } from '@/features/pocketbase/stores/types'
+import type { ExpandedItem, CompleteRef, StagedRef } from '@/features/pocketbase/stores/types'
 import { useState } from 'react'
 import { Heading } from '../typo/Heading'
 import { TextInput } from 'react-native'
@@ -14,7 +14,7 @@ export const CategoriseRef = ({
   existingRef,
   onComplete,
 }: {
-  item: Item | null | undefined
+  item: ExpandedItem | null | undefined
   existingRef: CompleteRef | StagedRef
   onComplete: (r: CompleteRef) => void
 }) => {

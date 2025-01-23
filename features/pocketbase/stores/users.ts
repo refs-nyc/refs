@@ -1,11 +1,15 @@
 import { pocketbase } from '../pocketbase'
 import { create } from 'zustand'
-import { Profile, EmptyProfile, Item } from './types'
+import { Profile, EmptyProfile, ExpandedProfile, Item } from './types'
 import { UsersRecord, UsersResponse, ItemsResponse } from './pocketbase-types'
 import { ClientResponseError } from 'pocketbase'
 import { gridSort, createdSort } from '@/ui/profiles/sorts'
 
 export const isProfile = (profile: Profile | EmptyProfile): profile is Profile => {
+  return Object.keys(profile).length > 0
+}
+
+export const isExpandedProfile = (profile: ExpandedProfile | EmptyProfile): profile is ExpandedProfile => {
   return Object.keys(profile).length > 0
 }
 
@@ -15,8 +19,8 @@ export const useUserStore = create<{
   profile: Profile | EmptyProfile
   profileItems: Item[]
   backlogItems: Item[]
-  register: () => Promise<Profile>
-  getProfile: (userName: string) => Promise<Profile>
+  register: () => Promise<ExpandedProfile>
+  getProfile: (userName: string) => Promise<ExpandedProfile>
   updateUser: (fields: Partial<Profile>) => Promise<Profile>
   updateStagedUser: (formFields: Partial<Profile>) => void
   attachItem: (itemId: string) => void
@@ -24,7 +28,7 @@ export const useUserStore = create<{
   getUserByEmail: (email: string) => Promise<Profile>
   login: (userName: string) => Promise<Profile>
   logout: () => Promise<void>
-  removeItem: (itemId: string) => Promise<Profile>
+  removeItem: (itemId: string) => Promise<ExpandedProfile>
 }>((set, get) => ({
   stagedUser: {},
   user: {}, // user is ALWAYS the user of the app
@@ -40,7 +44,7 @@ export const useUserStore = create<{
       const record = await pocketbase
         .collection('users')
         .getFirstListItem<
-          UsersResponse<{ items?: ItemsResponse[] }>
+          ExpandedProfile
         >(`userName = "${userName}"`, { expand: 'items,items.ref,items.children' })
 
       set(() => ({
@@ -119,8 +123,8 @@ export const useUserStore = create<{
 
     try {
       const record = await pocketbase
-        .collection<Profile>('users')
-        .create(finalUser, { expand: 'items,items.ref' })
+        .collection('users')
+        .create<ExpandedProfile>(finalUser, { expand: 'items,items.ref' })
 
       await get().loginWithPassword(finalUser.email, userPassword)
 
@@ -213,8 +217,8 @@ export const useUserStore = create<{
 
     try {
       const updatedRecord = await pocketbase
-        .collection<UsersRecord>('users')
-        .update(pocketbase.authStore.record.id, { 'items-': itemId }, { expand: 'items,items.ref' })
+        .collection('users')
+        .update<ExpandedProfile>(pocketbase.authStore.record.id, { 'items-': itemId }, { expand: 'items,items.ref' })
 
       set(() => ({
         user: updatedRecord,

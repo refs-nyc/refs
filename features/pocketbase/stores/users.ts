@@ -13,8 +13,8 @@ export const useUserStore = create<{
   backlogItems: Item[]
   register: () => Promise<Profile>
   getProfile: (userName: string) => Promise<Profile>
-  updateUser: (fields: any) => Promise<Profile>
-  updateStagedUser: (formFields: any) => void
+  updateUser: (fields: Partial<Profile>) => Promise<Profile>
+  updateStagedUser: (formFields: Partial<Profile>) => void
   attachItem: (itemId: string) => void
   loginWithPassword: (email: string, password: string) => void
   getUserByEmail: (email: string) => Promise<Profile>
@@ -34,7 +34,9 @@ export const useUserStore = create<{
     try {
       const record = await pocketbase
         .collection('users')
-        .getFirstListItem<UsersResponse<{ items?: ItemsResponse[] }>>(`userName = "${userName}"`, { expand: 'items,items.ref,items.children' })
+        .getFirstListItem<
+          UsersResponse<{ items?: ItemsResponse[] }>
+        >(`userName = "${userName}"`, { expand: 'items,items.ref,items.children' })
 
       set(() => ({
         profile: record,
@@ -53,7 +55,7 @@ export const useUserStore = create<{
   //
   //
   //
-  updateStagedUser: (formFields: any) => {
+  updateStagedUser: (formFields: Partial<Profile>) => {
     set((state) => ({
       stagedUser: { ...state.stagedUser, ...formFields },
     }))
@@ -65,13 +67,15 @@ export const useUserStore = create<{
   //
   //
   //
-  updateUser: async (fields: any) => {
+  updateUser: async (fields: Partial<User>) => {
     try {
       if (!pocketbase.authStore.record) {
-        throw new Error("not logged in")
+        throw new Error('not logged in')
       }
       console.log(pocketbase.authStore.record.id)
-      const userRecord = await pocketbase.collection<UsersRecord>('users').getOne(pocketbase.authStore.record.id)
+      const userRecord = await pocketbase
+        .collection<UsersRecord>('users')
+        .getOne(pocketbase.authStore.record.id)
       console.log(userRecord)
       const record = await pocketbase
         .collection<UsersRecord>('users')

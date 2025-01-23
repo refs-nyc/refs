@@ -23,6 +23,7 @@ export default function Screen() {
 
   const attemptLogin = async (password: string) => {
     try {
+      if (!stagedUser.email) throw new Error('email required')
       const response = await loginWithPassword(stagedUser.email, password)
 
       if (pocketbase.authStore.record === null) console.error('Invalid username')

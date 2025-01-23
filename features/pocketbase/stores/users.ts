@@ -1,6 +1,7 @@
 import { pocketbase } from '../pocketbase'
 import { create } from 'zustand'
 import { Profile, EmptyProfile, Item } from './types'
+import { UsersRecord } from './pocketbase-types'
 import { ClientResponseError } from 'pocketbase'
 import { gridSort, createdSort } from '@/ui/profiles/sorts'
 
@@ -14,7 +15,7 @@ export const useUserStore = create<{
   getProfile: (userName: string) => Promise<Profile>
   updateUser: (fields: any) => Promise<Profile>
   updateStagedUser: (formFields: any) => void
-  attachItem: (item: Item) => void
+  attachItem: (itemId: string) => void
   loginWithPassword: (email: string, password: string) => void
   getUserByEmail: (email: string) => Promise<Profile>
   login: (userName: string) => Promise<Profile>
@@ -32,7 +33,7 @@ export const useUserStore = create<{
   getProfile: async (userName: string) => {
     try {
       const record = await pocketbase
-        .collection('users')
+        .collection<UsersRecord>('users')
         .getFirstListItem(`userName = "${userName}"`, { expand: 'items,items.ref,items.children' })
 
       set(() => ({
@@ -46,7 +47,7 @@ export const useUserStore = create<{
       return record
     } catch (error) {
       console.error(error)
-      throw new Error(error)
+      throw error
     }
   },
   //
@@ -66,15 +67,19 @@ export const useUserStore = create<{
   //
   updateUser: async (fields: any) => {
     try {
+      if (!pocketbase.authStore.record) {
+        throw new Error("not logged in")
+      }
       console.log(pocketbase.authStore.record.id)
-      const userRecord = await pocketbase.collection('users').getOne(pocketbase.authStore.record.id)
+      const userRecord = await pocketbase.collection<UsersRecord>('users').getOne(pocketbase.authStore.record.id)
       console.log(userRecord)
       const record = await pocketbase
-        .collection('users')
+        .collection<UsersRecord>('users')
         .update(pocketbase.authStore.record.id, { ...fields })
       return record
     } catch (err) {
       console.error(err)
+      throw err
     }
   },
   //
@@ -98,13 +103,17 @@ export const useUserStore = create<{
     const finalUser = { ...get().stagedUser, emailVisibility: true }
 
     if (!finalUser) throw Error('No user data')
+    if (!finalUser.email) throw Error('User must have email')
+
+    const userPassword = get().stagedUser.password
+    if (!userPassword) throw Error('User must have password')
 
     try {
       const record = await pocketbase
         .collection<Profile>('users')
         .create(finalUser, { expand: 'items,items.ref' })
 
-      await get().loginWithPassword(finalUser.email, get().stagedUser.password)
+      await get().loginWithPassword(finalUser.email, userPassword)
 
       set(() => ({
         user: record,
@@ -155,6 +164,7 @@ export const useUserStore = create<{
         }
       }
       console.error(error)
+      throw error
     }
   },
   //
@@ -182,7 +192,9 @@ export const useUserStore = create<{
       }))
 
       return updatedRecord
-    } catch (error) {}
+    } catch (error) {
+      throw error
+    }
   },
   //
   //
@@ -201,7 +213,7 @@ export const useUserStore = create<{
 
       return updatedRecord
     } catch (error) {
-      throw Error(error)
+      throw error
     }
   },
 }))

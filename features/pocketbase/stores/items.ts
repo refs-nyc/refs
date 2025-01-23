@@ -29,6 +29,7 @@ export const useItemStore = create<{
       return record
     } catch (error) {
       console.error(error)
+      throw error
     }
   },
   // Reference an existing Ref, and create an item off it

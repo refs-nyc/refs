@@ -59,22 +59,29 @@ export const Feed = () => {
 
     getInitialData()
 
-    pocketbase.collection('items').subscribe('*', (e) => {
-      console.log(e.action)
-      console.log(e.record)
-    })
-    return () => {
-      pocketbase.collection('items').unsubscribe('*')
-    }
+    // console.log('SUBSCRIBING')
+    // Subscribe to realtime updates
+    // pocketbase.collection('items').subscribe('*', (e) => {
+    //   console.log(e)
+    //   // console.log(e.action)
+    //   // console.log(e.record)
+    // })
+    // return () => {
+    //   console.log('UNSUBSCRIBING')
+    //   pocketbase.collection('items').unsubscribe('*')
+    // }
   }, [])
 
   return (
     <DismissKeyboard>
-      <View style={{ flex: 1, height: win.height, paddingTop: Math.max(insets.top, 16) }}>
+      <View style={{ flex: 1, height: win.height }}>
         <YStack
           gap={s.$2}
           style={{
             height: win.height * 0.4,
+            position: 'absolute',
+            width: '100%',
+            top: Math.max(insets.top, 16),
             paddingTop: s.$2,
             textAlign: 'center',
           }}

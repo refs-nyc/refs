@@ -87,19 +87,6 @@ export const AddRef = ({
         <Animated.View
           style={[animatedStyle, { justifyContent: 'flex-start', alignItems: 'stretch' }]}
         >
-          {/* {
-            <Ionicons
-              name="chevron-back"
-              size={20}
-              onPress={() => {
-                setCameraOpen(false)
-                setPickerOpen(false)
-                setTextOpen(false)
-                setStep('')
-              }}
-            />
-          } */}
-
           {step === '' && (
             <YStack gap="$4">
               <Button

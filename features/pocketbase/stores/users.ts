@@ -20,6 +20,7 @@ export const useUserStore = create<{
   getUserByEmail: (email: string) => Promise<Profile>
   login: (userName: string) => Promise<Profile>
   logout: () => Promise<void>
+  removeItem: (itemId: string) => Promise<Profile>
 }>((set, get) => ({
   stagedUser: {},
   user: {}, // user is ALWAYS the user of the app
@@ -67,7 +68,7 @@ export const useUserStore = create<{
   //
   //
   //
-  updateUser: async (fields: Partial<User>) => {
+  updateUser: async (fields: Partial<Profile>) => {
     try {
       if (!pocketbase.authStore.record) {
         throw new Error('not logged in')
@@ -208,7 +209,7 @@ export const useUserStore = create<{
 
     try {
       const updatedRecord = await pocketbase
-        .collection('users')
+        .collection<UsersRecord>('users')
         .update(pocketbase.authStore.record.id, { 'items-': itemId }, { expand: 'items,items.ref' })
 
       set(() => ({

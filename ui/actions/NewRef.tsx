@@ -31,9 +31,9 @@ export const NewRef = ({
   attach?: boolean
 }) => {
   const [currentRef, setCurrentRef] = useState<StagedRef>({ ...r })
+  const [currentRefComment, setCurrentRefComment] = useState<string>()
   const [imageAsset, setImageAsset] = useState(r?.image || null)
   const [pinataSource, setPinataSource] = useState('')
-  const [text, setTextState] = useState('')
   const [picking, setPicking] = useState(false)
 
   const pathname = usePathname()
@@ -62,7 +62,7 @@ export const NewRef = ({
     console.log('DATA:', data)
 
     try {
-      const item = await addToProfile(data, !pathname.includes('onboarding'))
+      const item = await addToProfile(data, !pathname.includes('onboarding'), { comment: currentRefComment })
       onComplete(item)
     } catch (e) {
       console.error(e)
@@ -70,10 +70,6 @@ export const NewRef = ({
       console.log('Done')
     }
   }
-
-  useEffect(() => {
-    setCurrentRef({ ...currentRef, text })
-  }, [text])
 
   return (
     <YStack
@@ -142,7 +138,7 @@ export const NewRef = ({
           multiline={true}
           numberOfLines={4}
           placeholder="Care to comment?"
-          onChangeText={setTextState}
+          onChangeText={setCurrentRefComment}
           style={{
             backgroundColor: c.white,
             borderRadius: s.$075,

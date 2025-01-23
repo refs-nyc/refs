@@ -101,7 +101,7 @@ export const OnboardingCarouselItem = ({
           <Heading tag="h2normal" style={{ textAlign: 'center' }}>
             <Heading tag="h2">Fill your grid</Heading> with links, photos, hobbies, places
           </Heading>
-          <Grid items={items} onAddItem={onAddItem} />
+          <Grid items={items} onAddItem={onAddItem} columns={3} rows={3} />
           <YStack style={{ paddingVertical: s.$4, flex: 1 }}>
             <XStack gap={s.$1} style={{ width: '100%', justifyContent: 'center' }}>
               <View

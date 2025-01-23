@@ -4,7 +4,8 @@ import { Text } from 'react-native'
 
 export default function Screen() {
   const { userName } = useGlobalSearchParams()
-  console.log('USER PROFILE', userName)
+  const userNameParam = typeof userName === "string" ? userName : userName[0]
+
   return (
     <>
       <Stack.Screen
@@ -17,7 +18,7 @@ export default function Screen() {
           headerShown: false,
         }}
       />
-      <UserProfileScreen userName={userName} />
+      <UserProfileScreen userName={userNameParam} />
     </>
   )
 }

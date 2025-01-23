@@ -75,6 +75,8 @@ export const pinataUpload = async (
   const fileName = `${config.prefix}-${Date.now()}`
 
   form.append('name', fileName)
+  // TODO: uri isn't supposed to be on Blob?
+  // @ts-ignore
   form.append('file', {
     uri: asset.uri,
     name: fileName,

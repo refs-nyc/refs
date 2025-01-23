@@ -59,7 +59,7 @@ export const SearchResults = ({ results }: { results: Item[] }) => {
                 <Link href={item.expand?.creator ? `/user/${item.expand.creator?.userName}` : '/'}>
                   <Heading tag="p">
                     <Heading tag="strong">{item.expand?.creator?.userName || 'Anonymous'}</Heading>{' '}
-                    added <Heading tag="strong">{item.title}</Heading>
+                    added <Heading tag="strong">{item.expand?.ref?.title}</Heading>
                   </Heading>
                 </Link>
               </XStack>

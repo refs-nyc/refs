@@ -14,7 +14,7 @@ type ButtonProps = {
   disabled?: boolean
   align?: 'center' | 'flex-start' | 'flex-end'
   style?: any
-  iconSize: number
+  iconSize?: number
 }
 
 export const Button = (props: ButtonProps) => {

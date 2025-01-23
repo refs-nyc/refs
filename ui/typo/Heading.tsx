@@ -10,9 +10,10 @@ export const Heading = ({
   tag,
   ...props
 }: {
-  children: React.ReactNode
+  children?: React.ReactNode
   style?: any
   tag: TypoTag
+  numberOfLines?: number
 }) => {
   let typeStyle = null
 

@@ -14,6 +14,7 @@ import { pocketbase, useUserStore, removeFromProfile, useItemStore } from '@/fea
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { FlatList, Pressable, ScrollView } from 'react-native-gesture-handler'
 import { Profile as ProfileType } from '@/features/pocketbase/stores/types'
+import { isProfile } from '@/features/pocketbase/stores/users'
 import { gridSort, createdSort } from '@/ui/profiles/sorts'
 
 export const Profile = ({ userName }: { userName: string }) => {
@@ -24,8 +25,8 @@ export const Profile = ({ userName }: { userName: string }) => {
   const insets = useSafeAreaInsets()
   const [profile, setProfile] = useState<ProfileType>()
   const [addingTo, setAddingTo] = useState<'' | 'grid' | 'backlog'>('')
-  const [gridItems, setGridItems] = useState([])
-  const [backlogItems, setBacklogItems] = useState([])
+  const [gridItems, setGridItems] = useState<Item[]>([])
+  const [backlogItems, setBacklogItems] = useState<Item[]>([])
   const [removingId, setRemovingId] = useState('')
 
   const { user, logout } = useUserStore()
@@ -49,7 +50,7 @@ export const Profile = ({ userName }: { userName: string }) => {
   const refreshGrid = async (userName: string) => {
     try {
       const record = await pocketbase
-        .collection('users')
+        .collection<ProfileType>('users')
         .getFirstListItem(`userName = "${userName}"`, { expand: 'items,items.ref' })
 
       setProfile(record)
@@ -94,7 +95,7 @@ export const Profile = ({ userName }: { userName: string }) => {
           }}
           gap={s.$4}
         >
-          {firstVisit && user && <FirstVisitScreen user={user} />}
+          {firstVisit && user && isProfile(user) && <FirstVisitScreen user={user} />}
 
           {!firstVisit && profile && (
             <View

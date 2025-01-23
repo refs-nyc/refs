@@ -63,7 +63,9 @@ export const Feed = () => {
       console.log(e.action)
       console.log(e.record)
     })
-    return () => pocketbase.collection('items').unsubscribe('*')
+    return () => {
+      pocketbase.collection('items').unsubscribe('*')
+    }
   }, [])
 
   return (

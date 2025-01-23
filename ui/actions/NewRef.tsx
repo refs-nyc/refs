@@ -4,7 +4,7 @@ import { View, Pressable, Dimensions, TextInput, ScrollView } from 'react-native
 import { Heading, XStack, YStack } from '@/ui'
 import { Picker } from '../inputs/Picker'
 import { PinataImage } from '../images/PinataImage'
-import { EditableTitle } from '../atoms/EditableTitle'
+import { EditableHeader } from '../atoms/EditableHeader'
 import { addToProfile } from '@/features/pocketbase'
 import { Button } from '../buttons/Button'
 import Ionicons from '@expo/vector-icons/Ionicons'
@@ -128,10 +128,11 @@ export const NewRef = ({
             </View>
           </>
         )}
-        <EditableTitle
+        <EditableHeader
           onComplete={updateRefTitle}
           placeholder={placeholder}
           title={r?.title || placeholder}
+          url={r?.url || ''}
         />
         {/* Notes */}
         <TextInput

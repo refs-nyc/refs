@@ -6,6 +6,7 @@ import type PocketBase from 'pocketbase'
 import type { RecordService } from 'pocketbase'
 
 export enum Collections {
+	Signups = "Signups",
 	Authorigins = "_authOrigins",
 	Externalauths = "_externalAuths",
 	Mfas = "_mfas",
@@ -38,6 +39,19 @@ export type AuthSystemFields<T = never> = {
 } & BaseSystemFields<T>
 
 // Record types for each collection
+
+export enum SignupsOsOptions {
+	"android" = "android",
+	"ios" = "ios",
+}
+export type SignupsRecord = {
+	cell?: string
+	created?: IsoDateString
+	email?: string
+	id: string
+	os?: SignupsOsOptions
+	updated?: IsoDateString
+}
 
 export type AuthoriginsRecord = {
 	collectionRef: string
@@ -92,9 +106,11 @@ export type ItemsRecord = {
 	backlog?: boolean
 	children?: RecordIdString[]
 	created?: IsoDateString
+	creator?: RecordIdString
 	deleted?: IsoDateString
 	id: string
 	image?: string
+	list?: boolean
 	location?: string
 	order?: number
 	ref?: RecordIdString
@@ -116,15 +132,23 @@ export type ProfilesRecord = {
 	userName: string
 }
 
+export enum RefsTypeOptions {
+	"place" = "place",
+	"artwork" = "artwork",
+	"other" = "other",
+}
 export type RefsRecord = {
 	created?: IsoDateString
+	creator?: RecordIdString
 	deleted?: IsoDateString
-	firstref?: RecordIdString
 	id: string
 	image?: string
 	location?: string
+	meta?: string
 	title?: string
+	type?: RefsTypeOptions
 	updated?: IsoDateString
+	url?: string
 }
 
 export type UsersRecord = {
@@ -139,6 +163,7 @@ export type UsersRecord = {
 	lastName?: string
 	location?: string
 	password: string
+	pushToken?: string
 	tokenKey: string
 	updated?: IsoDateString
 	userName: string
@@ -146,6 +171,7 @@ export type UsersRecord = {
 }
 
 // Response types include system fields and match responses from the PocketBase API
+export type SignupsResponse<Texpand = unknown> = Required<SignupsRecord> & BaseSystemFields<Texpand>
 export type AuthoriginsResponse<Texpand = unknown> = Required<AuthoriginsRecord> & BaseSystemFields<Texpand>
 export type ExternalauthsResponse<Texpand = unknown> = Required<ExternalauthsRecord> & BaseSystemFields<Texpand>
 export type MfasResponse<Texpand = unknown> = Required<MfasRecord> & BaseSystemFields<Texpand>
@@ -159,6 +185,7 @@ export type UsersResponse<Texpand = unknown> = Required<UsersRecord> & AuthSyste
 // Types containing all Records and Responses, useful for creating typing helper functions
 
 export type CollectionRecords = {
+	Signups: SignupsRecord
 	_authOrigins: AuthoriginsRecord
 	_externalAuths: ExternalauthsRecord
 	_mfas: MfasRecord
@@ -171,6 +198,7 @@ export type CollectionRecords = {
 }
 
 export type CollectionResponses = {
+	Signups: SignupsResponse
 	_authOrigins: AuthoriginsResponse
 	_externalAuths: ExternalauthsResponse
 	_mfas: MfasResponse
@@ -186,6 +214,7 @@ export type CollectionResponses = {
 // https://github.com/pocketbase/js-sdk#specify-typescript-definitions
 
 export type TypedPocketBase = PocketBase & {
+	collection(idOrName: 'Signups'): RecordService<SignupsResponse>
 	collection(idOrName: '_authOrigins'): RecordService<AuthoriginsResponse>
 	collection(idOrName: '_externalAuths'): RecordService<ExternalauthsResponse>
 	collection(idOrName: '_mfas'): RecordService<MfasResponse>

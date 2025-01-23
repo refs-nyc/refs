@@ -106,11 +106,10 @@ Make sure the UI is authorized properly
 
 <!-- Steps -->
 
-1. [ ] Register push token into database
-2. [ ] Share profile link
-3. [ ] Homepage search results
+1. [x] Register push token into database
+2. [x] Share profile link
+3. [x] Homepage search results
        WIP
-
 4. [ ] Ability to post a url
 5. [ ] More opinionated folders and so on
 6. [ ] Geolocation filtered results

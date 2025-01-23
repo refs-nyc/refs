@@ -5,25 +5,9 @@ import * as PBTypes from './pocketbase-types'
 // Logged out user
 export type EmptyProfile = {}
 
-// Non completed ref
-export type StagedRef = {
-  id?: string
-  image?: ImagePickerAsset
-  text?: string
-  backlog?: boolean
-  title?: string
-  list?: boolean
-}
+export type StagedRef = Partial<PBTypes.RefsRecord>
+export type StagedItem = Partial<PBTypes.ItemsRecord>
 
-// Non completed item
-export type StagedItem = {
-  ref: string
-  image?: string
-  text?: string
-  backlog?: boolean
-}
-
-// Data types
 export type CompleteRef = PBTypes.RefsRecord
 export type Profile = PBTypes.UsersRecord
 export type Item = PBTypes.ItemsRecord

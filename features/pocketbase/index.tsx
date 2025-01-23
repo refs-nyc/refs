@@ -21,6 +21,7 @@ const addToProfile = async (stagedRef: StagedRef | CompleteRef, attach = true, o
       ref: existingRef.id,
       image: existingRef?.image,
       creator: pocketbase.authStore?.record?.id,
+      text: options.comment,
     })
   } else {
     // create a new item, with a new ref
@@ -29,6 +30,7 @@ const addToProfile = async (stagedRef: StagedRef | CompleteRef, attach = true, o
       ref: newRef.id,
       image: newRef.image,
       creator: pocketbase.authStore?.record?.id,
+      text: options.comment,
     })
   }
 

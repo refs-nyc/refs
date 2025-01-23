@@ -1,6 +1,6 @@
 import { pocketbase } from '../pocketbase'
 import { create } from 'zustand'
-import { StagedItem, Item, CompleteRef } from './types'
+import { StagedItem, Item, ExpandedItem, CompleteRef } from './types'
 import { ItemsRecord } from "./pocketbase-types"
 
 // ***
@@ -9,7 +9,7 @@ import { ItemsRecord } from "./pocketbase-types"
 //
 export const useItemStore = create<{
   items: Item[]
-  push: (newItem: StagedItem) => Promise<Item>
+  push: (newItem: StagedItem) => Promise<ExpandedItem>
   addToList: (id: string, ref: CompleteRef) => Promise<Item>
   removeFromList: (id: string, ref: CompleteRef) => Promise<Item>
   reference: () => void
@@ -20,7 +20,7 @@ export const useItemStore = create<{
   push: async (newItem: StagedItem) => {
     console.log('ITEMS PUSH')
     try {
-      const record = await pocketbase.collection<Item>('items').create(newItem, { expand: 'ref' })
+      const record = await pocketbase.collection('items').create<ExpandedItem>(newItem, { expand: 'ref' })
       set((state) => {
         const newItems = [...state.items, record]
         return { items: newItems }

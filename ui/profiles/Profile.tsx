@@ -13,7 +13,7 @@ import { s, c } from '@/features/style'
 import { pocketbase, useUserStore, removeFromProfile, useItemStore } from '@/features/pocketbase'
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { FlatList, Pressable, ScrollView } from 'react-native-gesture-handler'
-import { Profile as ProfileType } from '@/features/pocketbase/stores/types'
+import { Profile as ProfileType, ExpandedProfile, ExpandedItem } from '@/features/pocketbase/stores/types'
 import { isProfile } from '@/features/pocketbase/stores/users'
 import { gridSort, createdSort } from '@/ui/profiles/sorts'
 
@@ -26,7 +26,7 @@ export const Profile = ({ userName }: { userName: string }) => {
   const [profile, setProfile] = useState<ProfileType>()
   const [addingTo, setAddingTo] = useState<'' | 'grid' | 'backlog'>('')
   const [gridItems, setGridItems] = useState<Item[]>([])
-  const [backlogItems, setBacklogItems] = useState<Item[]>([])
+  const [backlogItems, setBacklogItems] = useState<ExpandedItem[]>([])
   const [removingId, setRemovingId] = useState('')
 
   const { user, logout } = useUserStore()
@@ -51,7 +51,7 @@ export const Profile = ({ userName }: { userName: string }) => {
     try {
       const record = await pocketbase
         .collection<ProfileType>('users')
-        .getFirstListItem(`userName = "${userName}"`, { expand: 'items,items.ref' })
+        .getFirstListItem<ExpandedProfile>(`userName = "${userName}"`, { expand: 'items,items.ref' })
 
       setProfile(record)
 
@@ -60,7 +60,7 @@ export const Profile = ({ userName }: { userName: string }) => {
 
       // Filter out backlog and normal
       setGridItems(itms)
-      setBacklogItems(bklg)
+      setBacklogItems(bklg as ExpandedItem[])
     } catch (error) {
       console.error(error)
     }
@@ -165,11 +165,11 @@ export const Profile = ({ userName }: { userName: string }) => {
                               </Pressable>
                             </YStack>
                           )}
-                          <RefListItem
+                          {itm?.expand?.ref && <RefListItem
                             backgroundColor={editingBacklog ? c.surface2 : c.surface}
                             key={itm.id}
                             r={itm?.expand?.ref}
-                          />
+                          />}
                         </Pressable>
                       ))}
                       {/* <FlatList

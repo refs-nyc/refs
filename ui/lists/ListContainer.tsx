@@ -1,4 +1,4 @@
-import type { Item } from '@/features/pocketbase/stores/types'
+import type { ExpandedItem } from '@/features/pocketbase/stores/types'
 import { useItemStore } from '@/features/pocketbase/stores/items'
 import { useUIStore } from '@/ui/state'
 import { useState } from 'react'
@@ -8,11 +8,11 @@ import { ListItem } from './ListItem'
 import { s } from '@/features/style'
 import { YStack } from '../core/Stacks'
 
-export const ListContainer = ({ item }: { item: Item }) => {
+export const ListContainer = ({ item }: { item: ExpandedItem }) => {
   const { addingToList, setAddingToList } = useUIStore()
   const { addToList, removeFromList } = useItemStore()
 
-  return item?.expand?.children?.length > 0 ? (
+  return (item?.expand?.children ?? []).length > 0 ? (
     <ScrollView style={{ flex: 1, padding: s.$075 }}>
       <YStack gap={s.$075}>
         {item?.expand?.children.map((itm) => (

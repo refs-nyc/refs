@@ -18,9 +18,12 @@ export const SearchRef = ({
 }) => {
   const [textState, setTextState] = useState('')
   const [searching, setSearching] = useState(false)
+
+  // Variables
   const y = useSharedValue(0)
   const scaleY = useSharedValue(1)
 
+  // Refs
   const ref = useRef<TextInput>(null)
 
   const reset = () => {

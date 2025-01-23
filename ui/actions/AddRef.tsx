@@ -8,7 +8,7 @@ import { useUserStore, isProfile } from '@/features/pocketbase/stores/users'
 import Animated, { useAnimatedKeyboard, useAnimatedStyle } from 'react-native-reanimated'
 import { Button } from '../buttons/Button'
 import { Dimensions, KeyboardAvoidingView } from 'react-native'
-import { useState, useMemo } from 'react'
+import { useState, useEffect } from 'react'
 import { NewRef } from '../actions/NewRef'
 import { SearchOrAddRef } from '../actions/SearchOrAddRef'
 import { c } from '@/features/style'
@@ -17,6 +17,7 @@ import type { ImagePickerAsset } from 'expo-image-picker'
 import { EditableList } from '../lists/EditableList'
 import { CategoriseRef } from './CategoriseRef'
 import { s } from '@/features/style'
+import * as Clipboard from 'expo-clipboard'
 
 const win = Dimensions.get('window')
 
@@ -30,16 +31,18 @@ export const AddRef = ({
   backlog?: boolean
 }) => {
   const [textOpen, setTextOpen] = useState(false)
+  const [urlOpen, setUrlOpen] = useState(false)
+  const [hasUrl, setHasUrl] = useState(false)
   const [pickerOpen, setPickerOpen] = useState(false)
   const [cameraOpen, setCameraOpen] = useState(false)
   const [step, setStep] = useState<'' | 'add' | 'search' | 'editList' | 'categorise'>('')
   const [itemData, setItemData] = useState<Item | null>(null)
   const [refData, setRefData] = useState<StagedRef | CompleteRef>({})
 
-  const { user } = useUserStore()
-
   const insets = useSafeAreaInsets()
   const keyboard = useAnimatedKeyboard()
+
+  const { user } = useUserStore()
 
   const animatedStyle = useAnimatedStyle(() => {
     if (step === '') return { height: 200 }
@@ -70,6 +73,18 @@ export const AddRef = ({
     }
   }
 
+  useEffect(() => {
+    const detectUrl = async () => {
+      const hasUrl = await Clipboard.hasUrlAsync()
+
+      if (hasUrl) {
+        setHasUrl(true)
+      }
+    }
+
+    detectUrl()
+  }, [step])
+
   return (
     <DismissKeyboard>
       <KeyboardAvoidingView
@@ -98,6 +113,19 @@ export const AddRef = ({
                   setTextOpen(true)
                 }}
               />
+              {hasUrl && (
+                <Button
+                  variant="basicLeft"
+                  align="flex-start"
+                  title="Add from clipboard"
+                  iconBefore="clipboard-outline"
+                  iconColor={c.black}
+                  onPress={() => {
+                    setStep('search')
+                    setUrlOpen(true)
+                  }}
+                />
+              )}
               <Button
                 variant="basicLeft"
                 align="flex-start"
@@ -115,6 +143,7 @@ export const AddRef = ({
           {step === 'search' && (
             <>
               {textOpen && <SearchOrAddRef onComplete={addRefFromResults} />}
+              {urlOpen && <Camera />}
               {cameraOpen && <Camera />}
             </>
           )}

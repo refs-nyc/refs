@@ -1,7 +1,7 @@
 import { pocketbase } from '../pocketbase'
 import { create } from 'zustand'
 import { Profile, EmptyProfile, Item } from './types'
-import { UsersRecord } from './pocketbase-types'
+import { UsersRecord, UsersResponse, ItemsResponse } from './pocketbase-types'
 import { ClientResponseError } from 'pocketbase'
 import { gridSort, createdSort } from '@/ui/profiles/sorts'
 
@@ -33,8 +33,8 @@ export const useUserStore = create<{
   getProfile: async (userName: string) => {
     try {
       const record = await pocketbase
-        .collection<UsersRecord>('users')
-        .getFirstListItem(`userName = "${userName}"`, { expand: 'items,items.ref,items.children' })
+        .collection('users')
+        .getFirstListItem<UsersResponse<{ items?: ItemsResponse[] }>>(`userName = "${userName}"`, { expand: 'items,items.ref,items.children' })
 
       set(() => ({
         profile: record,

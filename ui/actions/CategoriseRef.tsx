@@ -1,4 +1,4 @@
-import type { Item, CompleteRef } from '@/features/pocketbase/stores/types'
+import type { Item, CompleteRef, StagedRef } from '@/features/pocketbase/stores/types'
 import { useState } from 'react'
 import { Heading } from '../typo/Heading'
 import { TextInput } from 'react-native'
@@ -7,22 +7,22 @@ import { Button } from '../buttons/Button'
 import { View, ScrollView } from 'react-native'
 import { s, c } from '@/features/style'
 import { useRefStore } from '@/features/pocketbase/stores/refs'
-import { SimplePinatatImage } from '@/ui/images/SimplePinataImage'
+import { SimplePinataImage } from '@/ui/images/SimplePinataImage'
 
 export const CategoriseRef = ({
   item,
-  completeRef,
+  existingRef,
   onComplete,
 }: {
-  item: Item
-  completeRef: CompleteRef
+  item: Item | null | undefined
+  existingRef: CompleteRef | StagedRef
   onComplete: (r: CompleteRef) => void
 }) => {
   const { addMetaData } = useRefStore()
   const [category, setCategory] = useState('')
   const [meta, setMeta] = useState('')
 
-  console.log('categorise ref with ID: ', completeRef.id)
+  console.log('categorise ref with ID: ', existingRef.id)
 
   const categorise = (cat: string) => {
     setMeta('')
@@ -30,13 +30,15 @@ export const CategoriseRef = ({
   }
 
   const done = async () => {
+    if (!existingRef.id) return
+
     try {
-      const record = await addMetaData(completeRef.id, { cat: category, meta })
+      const record = await addMetaData(existingRef.id, { cat: category, meta })
       console.log('completed categorisation: ', record)
       if (record) onComplete(record)
     } catch (error) {
       console.error(error)
-      throw new Error(error)
+      throw error
     }
   }
 
@@ -47,7 +49,7 @@ export const CategoriseRef = ({
       >
         <View>
           {item?.expand?.ref?.image && (
-            <SimplePinatatImage originalSource={item.expand.ref.image} />
+            <SimplePinataImage originalSource={item.expand.ref.image} />
           )}
           <Heading tag="h1">{item?.expand?.ref.title}</Heading>
         </View>

@@ -5,6 +5,10 @@ import { UsersRecord, UsersResponse, ItemsResponse } from './pocketbase-types'
 import { ClientResponseError } from 'pocketbase'
 import { gridSort, createdSort } from '@/ui/profiles/sorts'
 
+export const isProfile = (profile: Profile | EmptyProfile): profile is Profile => {
+  return Object.keys(profile).length > 0
+}
+
 export const useUserStore = create<{
   stagedUser: Partial<Profile>
   user: Profile | EmptyProfile

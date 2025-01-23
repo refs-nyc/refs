@@ -4,7 +4,7 @@ import { useRefStore } from './stores/refs'
 import { useItemStore } from './stores/items'
 import { StagedRef, CompleteRef, Item } from './stores/types'
 
-const addToProfile = async (stagedRef: StagedRef | CompleteRef, attach = true) => {
+const addToProfile = async (stagedRef: StagedRef | CompleteRef, attach = true, options: { comment?: string } = {}) => {
   if (!pocketbase.authStore.isValid || !pocketbase.authStore.record)
     throw new Error('Not enough permissions')
 

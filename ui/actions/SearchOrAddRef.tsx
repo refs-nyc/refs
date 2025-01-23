@@ -4,7 +4,7 @@ import { TextInput, Pressable, FlatList, KeyboardAvoidingView, View } from 'reac
 import { SearchResultItem } from '@/ui/atoms/SearchResultItem'
 import { NewRefListItem } from '@/ui/atoms/NewRefListItem'
 import { s, c } from '@/features/style'
-import { CompleteRef, Item } from '../../features/pocketbase/stores/types'
+import { CompleteRef, StagedRef, Item } from '../../features/pocketbase/stores/types'
 import { ScrollView } from 'react-native-gesture-handler'
 
 export const SearchOrAddRef = ({

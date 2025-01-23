@@ -25,5 +25,5 @@ export function UserDetailsScreen({
     getProfileAsync()
   }, [userName])
 
-  return <>{profile?.id && <Details initialId={initialId}></Details>}</>
+  return <>{profile && ("id" in profile) && <Details initialId={initialId}></Details>}</>
 }

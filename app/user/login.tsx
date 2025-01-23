@@ -22,19 +22,17 @@ export default function Screen() {
   }, [stagedUser])
 
   const attemptLogin = async (password: string) => {
-    try {
-      if (!stagedUser.email) throw new Error('email required')
-      const response = await loginWithPassword(stagedUser.email, password)
+    if (!stagedUser.email) throw new Error('email required')
+    const response = await loginWithPassword(stagedUser.email, password)
 
-      if (pocketbase.authStore.record === null) console.error('Invalid username')
-      router.push(`/user/${pocketbase.authStore.record.userName}`)
-    } catch (error) {
-      // console.error(error)
+    if (pocketbase.authStore.record === null) {
+      console.error('Invalid username')
+      return
     }
+    router.push(`/user/${pocketbase.authStore.record.userName}`)
   }
 
-  const nextStep = async (formValues) => {
-    console.log(formValues)
+  const nextStep = async (formValues: any) => {
     const index = ref.current?.getCurrentIndex() ?? 0
 
     if (index < data.length - 1) {

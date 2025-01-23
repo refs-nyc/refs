@@ -3,6 +3,8 @@ import { Stack, useLocalSearchParams } from 'expo-router'
 
 export default function Screen() {
   const { userName, initialId } = useLocalSearchParams()
+  const initialIdParam = typeof initialId === "string" ? initialId : initialId[0]
+
   return (
     <>
       <Stack.Screen
@@ -15,7 +17,7 @@ export default function Screen() {
           headerShown: false,
         }}
       />
-      <UserDetailsScreen userName={userName as string} initialId={initialId || ''} />
+      <UserDetailsScreen userName={userName as string} initialId={initialIdParam} />
     </>
   )
 }

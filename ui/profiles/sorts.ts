@@ -7,7 +7,7 @@ export const createdSort = (a: Item, b: Item) => {
 export const gridSort = (a: Item, b: Item) => {
   // Items with order get their exact position (0-11)
   if (a.order !== 0 && b.order !== 0) {
-    return ((a.order as number) - b.order) as number
+    return (a.order ?? 0) - (b.order ?? 0)
   }
   // Items with order always come before items without
   if (a.order !== undefined) return -1

@@ -4,7 +4,7 @@ import { Picker } from '../inputs/Picker'
 import { Camera } from '../inputs/Camera'
 import { YStack } from '@/ui'
 import { router } from 'expo-router'
-import { useUserStore } from '@/features/pocketbase/stores/users'
+import { useUserStore, isProfile } from '@/features/pocketbase/stores/users'
 import Animated, { useAnimatedKeyboard, useAnimatedStyle } from 'react-native-reanimated'
 import { Button } from '../buttons/Button'
 import { Dimensions, KeyboardAvoidingView } from 'react-native'
@@ -33,13 +33,12 @@ export const AddRef = ({
   const [pickerOpen, setPickerOpen] = useState(false)
   const [cameraOpen, setCameraOpen] = useState(false)
   const [step, setStep] = useState<'' | 'add' | 'search' | 'editList' | 'categorise'>('')
-  const [itemData, setItemData] = useState<Item>({})
+  const [itemData, setItemData] = useState<Item | null>(null)
   const [refData, setRefData] = useState<StagedRef | CompleteRef>({})
 
   const { user } = useUserStore()
 
   const insets = useSafeAreaInsets()
-
   const keyboard = useAnimatedKeyboard()
 
   const animatedStyle = useAnimatedStyle(() => {
@@ -59,7 +58,7 @@ export const AddRef = ({
     setStep('add')
   }
 
-  const handleNewRefCreated = (item) => {
+  const handleNewRefCreated = (item: Item) => {
     console.log('HANDLE NEW REF CREATED', item)
     setItemData(item)
     setRefData(item.expand.ref)
@@ -143,14 +142,14 @@ export const AddRef = ({
           )}
 
           {step === 'categorise' && (
-            <CategoriseRef item={itemData} completeRef={refData} onComplete={onAddRef} />
+            <CategoriseRef item={itemData} existingRef={refData} onComplete={onAddRef} />
           )}
 
-          {step === 'editList' && (
+          {step === 'editList' && itemData && (
             <EditableList
               item={itemData}
               onComplete={() => {
-                if (!user.userName) onCancel()
+                if (!isProfile(user) || !user.userName) onCancel()
                 onAddRef(itemData)
               }}
             />

@@ -15,10 +15,11 @@ import { useUIStore } from '@/ui/state'
 import { ListContainer } from '../lists/ListContainer'
 import { EditableList } from '../lists/EditableList'
 import { useUserStore } from '@/features/pocketbase/stores/users'
+import { Item } from '@/features/pocketbase/stores/types'
 
 const win = Dimensions.get('window')
 
-const renderItem = ({ item }) => {
+const renderItem = ({ item }: { item: Item }) => {
   return (
     <View
       style={{
@@ -28,7 +29,7 @@ const renderItem = ({ item }) => {
         padding: s.$075,
         paddingTop: s.$6,
         gap: s.$1,
-        justifyContent: 'start',
+        justifyContent: 'start' as any,
       }}
       key={item.id}
     >
@@ -93,9 +94,11 @@ const renderItem = ({ item }) => {
   )
 }
 
-export const Details = ({ initialId = '' }: { intialId: string }) => {
+export const Details = ({ initialId = '' }: { initialId: string }) => {
   const scrollOffsetValue = useSharedValue<number>(10)
   const { userName } = useGlobalSearchParams()
+  const userNameParam = typeof userName === "string" ? userName : userName[0]
+
   const { profile, getProfile } = useUserStore()
   const ref = useRef<ICarouselInstance>(null)
   const insets = useSafeAreaInsets()
@@ -141,7 +144,7 @@ export const Details = ({ initialId = '' }: { intialId: string }) => {
             item={data.find((itm) => itm.id === addingToList)}
             onComplete={async () => {
               setAddingToList('')
-              await getProfile(userName)
+              await getProfile(userNameParam)
             }}
           />
         </Drawer>

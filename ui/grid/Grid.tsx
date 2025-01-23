@@ -23,7 +23,6 @@ export const Grid = ({
   useEffect(() => {
     console.log('items updated', items.length)
   }, [items])
-
   const gridSize = columns * rows
 
   return (
@@ -47,7 +46,7 @@ export const Grid = ({
         <>
           {items.length < gridSize && (
             <GridTileWrapper canEdit={false} key="add" type="add">
-              <GridTileActionAdd onPress={onAddItem}></GridTileActionAdd>
+              <GridTileActionAdd onPress={onAddItem ?? (() => {})}></GridTileActionAdd>
             </GridTileWrapper>
           )}
         </>

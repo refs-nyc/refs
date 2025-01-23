@@ -1,6 +1,7 @@
 import { pocketbase } from '../pocketbase'
 import { create } from 'zustand'
 import { StagedItem, Item, CompleteRef } from './types'
+import { ItemsRecord } from "./pocketbase-types"
 
 // ***
 // Items
@@ -13,6 +14,7 @@ export const useItemStore = create<{
   removeFromList: (id: string, ref: CompleteRef) => Promise<Item>
   reference: () => void
   remove: (id: string) => void
+  moveToBacklog: (id: string) => Promise<ItemsRecord>
 }>((set) => ({
   items: [],
   push: async (newItem: StagedItem) => {
@@ -66,7 +68,7 @@ export const useItemStore = create<{
   },
   moveToBacklog: async (id: string) => {
     try {
-      const record = await pocketbase.collection('items').update(id, { backlog: true })
+      const record = await pocketbase.collection<ItemsRecord>('items').update(id, { backlog: true })
 
       return record
     } catch (error) {

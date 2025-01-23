@@ -26,7 +26,8 @@ export const NewUserProfile = () => {
     ['userName'],
   ]
 
-  const nextStep = async (formValues) => {
+  // TODO: remove any type
+  const nextStep = async (formValues: any) => {
     const index = ref.current?.getCurrentIndex() ?? 0
     const updated = updateStagedUser(formValues)
 

@@ -46,20 +46,24 @@ export const Navigation = () => {
       }}
     >
       {pocketbase.authStore.record ? (
-        <Link href={`/user/${pocketbase.authStore.record.userName}`}>
-          <Avatar source={pocketbase.authStore.record.image} size={s.$3} />
-        </Link>
+        <View style={{ position: 'relative', marginTop: 4, marginLeft: 4 }}>
+          <Link href={`/user/${pocketbase.authStore.record.userName}`}>
+              <Avatar source={pocketbase.authStore.record.image} size={33} />
+          </Link>
+        </View>
       ) : (
-        <View style={{ width: s.$3, height: s.$3 }}>
+        <View style={{ width: 36, height: 36 }}>
           <Ionicons name="person" size={s.$3} color={c.accent} />
         </View>
       )}
       <Link href="/">
-        <Ionicons name="globe" size={s.$3} color={c.accent} />
+        <Ionicons name="globe" size={36} color={c.accent} />
       </Link>
-      <Link href="/">
-        <Ionicons name="paper-plane" size={s.$3} />
-      </Link>
+      <View style={{ position: 'relative', marginLeft: -2, marginTop: 2, paddingRight: 3 }}>
+        <Link href="/">
+          <Ionicons name="paper-plane" size={33} />
+        </Link>
+      </View>
     </XStack>
   )
 }

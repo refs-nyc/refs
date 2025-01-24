@@ -13,13 +13,13 @@ const win = Dimensions.get('window')
 
 export const Activity = ({ items }: { items: Item[] }) => {
   return (
-    <ScrollView
+    <View
       style={{
+        flex: 1,
         gap: s.$09,
-        paddingTop: win.height * 0.4,
+        // paddingTop: win.height * 0.4,
         paddingHorizontal: s.$1half,
         width: win.width,
-        height: win.height,
       }}
     >
       <Heading tag="p" style={{ marginBottom: s.$1 }}>
@@ -66,6 +66,6 @@ export const Activity = ({ items }: { items: Item[] }) => {
           </XStack>
         ))}
       </YStack>
-    </ScrollView>
+    </View>
   )
 }

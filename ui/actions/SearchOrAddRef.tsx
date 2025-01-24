@@ -5,16 +5,23 @@ import { SearchResultItem } from '@/ui/atoms/SearchResultItem'
 import { NewRefListItem } from '@/ui/atoms/NewRefListItem'
 import { s, c } from '@/features/style'
 import { CompleteRef, StagedRef, Item } from '../../features/pocketbase/stores/types'
+import { getLinkPreview, getPreviewFromContent } from 'link-preview-js'
 import { ScrollView } from 'react-native-gesture-handler'
 
 export const SearchOrAddRef = ({
   noNewRef,
+  url,
+  image,
   onComplete,
 }: {
   noNewRef?: boolean
+  url: string
+  image: string
   onComplete: (r: CompleteRef) => void
 }) => {
   const [searchQuery, setSearchQuery] = useState('')
+  const [urlState, setUrlState] = useState(url)
+  const [imageState, setImageState] = useState(image)
   const [searchResults, setSearchResults] = useState<CompleteRef[]>([])
 
   const renderItem = ({ item }: { item: CompleteRef }) => {
@@ -22,7 +29,6 @@ export const SearchOrAddRef = ({
       <Pressable
         key={item.id}
         onPress={() => {
-          console.log('ON COMPLETE', item.id)
           onComplete(item)
         }}
       >
@@ -40,11 +46,16 @@ export const SearchOrAddRef = ({
         .collection<CompleteRef>('refs')
         .getFullList({ filter: `title ~ "${q}"` })
 
-      console.log('refsResults.length')
-      console.log('refsResults.length')
-      console.log(refsResults.length)
-      console.log('---')
-      console.log('---')
+      if (q.includes('http')) {
+        const data = await getLinkPreview(q)
+        setUrlState(q)
+        if (data?.title) {
+          setSearchQuery(data.title)
+        }
+        if (data?.images?.length > 0) {
+          setImageState(data.images[0])
+        }
+      }
       return refsResults
     }
 
@@ -77,8 +88,10 @@ export const SearchOrAddRef = ({
       />
 
       {searchQuery !== '' && !noNewRef && (
-        <Pressable onPress={() => onComplete({ title: searchQuery })}>
-          <NewRefListItem title={searchQuery} />
+        <Pressable
+          onPress={() => onComplete({ title: searchQuery, image: imageState, url: urlState })}
+        >
+          <NewRefListItem title={searchQuery} image={image} />
         </Pressable>
       )}
       <ScrollView

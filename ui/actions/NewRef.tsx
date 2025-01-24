@@ -1,6 +1,13 @@
 import { useState, useEffect } from 'react'
 import { usePathname } from 'expo-router'
-import { View, Pressable, Dimensions, TextInput, ScrollView } from 'react-native'
+import {
+  View,
+  Pressable,
+  Dimensions,
+  TextInput,
+  ScrollView,
+  KeyboardAvoidingView,
+} from 'react-native'
 import { Heading, XStack, YStack } from '@/ui'
 import { Picker } from '../inputs/Picker'
 import { PinataImage } from '../images/PinataImage'
@@ -88,14 +95,15 @@ export const NewRef = ({
   }
 
   return (
-    <YStack
+    <KeyboardAvoidingView
+      behavior="height"
       style={{
         // paddingTop: s.$2,
         marginBottom: s.$4,
         flex: 1,
         alignItems: 'center',
+        gap: s.$4,
       }}
-      gap={s.$4}
     >
       <ScrollView
         contentContainerStyle={{
@@ -166,50 +174,34 @@ export const NewRef = ({
             // minHeight: 2000,
           }}
         />
-      </ScrollView>
-      <View
-        style={{
-          flexDirection: 'row',
-          justifyContent: 'space-evenly',
-          alignItems: 'stretch',
-          backgroundColor: 'green',
-          gap: s.$1,
-        }}
-      >
-        {/* <Button
-          style={{ minWidth: 0, width: (win.width - s.$2 * 2 - s.$1) / 2 }}
-          variant="outline"
-          title="Start a list"
-        /> */}
-      </View>
-      <View
-        style={{
-          position: 'absolute',
-          bottom: 0,
-          minWidth: 0,
-          width: '100%',
-          flexDirection: 'row',
-          justifyContent: 'space-between',
-        }}
-      >
-        <Button
-          title="Create List"
-          variant="outlineFluid"
-          style={{ width: '48%', minWidth: 0 }}
-          disabled={pinataSource === 'none'}
-          onPress={() => {
-            console.log('ABOUT TO ADD A LIST')
-            submit({ list: true })
+        <View
+          style={{
+            width: '100%',
+            flexDirection: 'row',
+            justifyContent: 'space-between',
           }}
-        />
-        <Button
-          title="Add Ref"
-          variant="fluid"
-          style={{ width: '48%', minWidth: 0 }}
-          disabled={pinataSource === 'none'}
-          onPress={() => submit()}
-        />
-      </View>
-    </YStack>
+        >
+          {currentRef.url === '' && (
+            <Button
+              title="Create List"
+              variant="outlineFluid"
+              style={{ width: '48%', minWidth: 0 }}
+              disabled={pinataSource === 'none'}
+              onPress={() => {
+                console.log('ABOUT TO ADD A LIST')
+                submit({ list: true })
+              }}
+            />
+          )}
+          <Button
+            title="Add Ref"
+            variant="fluid"
+            style={{ width: currentRef.url ? '100%' : '48%', minWidth: 0 }}
+            disabled={pinataSource === 'none'}
+            onPress={() => submit()}
+          />
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   )
 }

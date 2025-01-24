@@ -24,6 +24,7 @@ export * from './profiles/NewUserProfile'
 export * from './profiles/Details'
 export * from './profiles/Profile'
 export * from './icons/RefsLogo'
+export * from './SwipeToGoBack'
 
 export const Spinner = () => <Text>Loading</Text>
 export const SizableText = ({ children }: { children: React.ReactNode }) => <Text>{children}</Text>

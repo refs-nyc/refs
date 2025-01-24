@@ -78,9 +78,14 @@ const renderItem = ({ item }: { item: Item }) => {
             <Heading tag="smallmuted">{item.expand.ref?.meta}</Heading>
           </View>
           <Pressable onPress={() => {}}>
-            <View style={{ transformOrigin: 'center', transform: 'rotate(-45deg)' }}>
-              <Ionicons color={c.muted} size={s.$1} name="arrow-forward-outline" />
-            </View>
+            {item.expand.ref.url && (
+              <Link
+                href={item.expand.ref.url}
+                style={{ transformOrigin: 'center', transform: 'rotate(-45deg)' }}
+              >
+                <Ionicons color={c.muted} size={s.$1} name="arrow-forward-outline" />
+              </Link>
+            )}
           </Pressable>
         </View>
         {/* Comments */}
@@ -97,12 +102,13 @@ const renderItem = ({ item }: { item: Item }) => {
 export const Details = ({ initialId = '' }: { initialId: string }) => {
   const scrollOffsetValue = useSharedValue<number>(10)
   const { userName } = useGlobalSearchParams()
-  const userNameParam = typeof userName === "string" ? userName : userName[0]
 
   const { profile, getProfile } = useUserStore()
+  const { addingToList, setAddingToList } = useUIStore()
+
+  const userNameParam = typeof userName === 'string' ? userName : userName?.[0]
   const ref = useRef<ICarouselInstance>(null)
   const insets = useSafeAreaInsets()
-  const { addingToList, setAddingToList } = useUIStore()
   const data = [...profile.expand.items].filter((itm) => !itm.backlog).sort(gridSort)
   const defaultIndex = Math.max(
     0,

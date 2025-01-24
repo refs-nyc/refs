@@ -4,23 +4,51 @@ import { XStack, Heading } from '@/ui'
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { s, c, t } from '@/features/style'
 import * as Clipboard from 'expo-clipboard'
+import { getLinkPreview, getPreviewFromContent } from 'link-preview-js'
 
 export const EditableHeader = ({
   title,
   url,
+  image,
   placeholder = '',
   onComplete,
+  onDataChange,
 }: {
   title: string
   url: string
+  image: string
   placeholder: string
   onComplete: (str: string) => void
+  onDataChange: (d: { url: string; image: string; title: string }) => void
 }) => {
   const [titleState, setTitleState] = useState(title)
   const [urlState, setUrlState] = useState(url)
+  const [imageState, setImageState] = useState(image)
   const [hasUrl, setHasUrl] = useState(false)
   const [editing, setEditing] = useState(false)
   const [addingUrl, setAddingUrl] = useState(false)
+
+  const analyseUrl = async (u: string) => {
+    // pass the link directly
+    getLinkPreview(u).then((data) => {
+      if (data.title) {
+        setTitleState(data.title)
+      }
+
+      if (data?.images?.length > 0) {
+        console.log('IUMAGE', data.images[0])
+        setImageState(data.images[0])
+      }
+    })
+  }
+
+  useEffect(() => {
+    onDataChange({ title: titleState, url: urlState, image: imageState })
+  }, [titleState, imageState, urlState])
+
+  useEffect(() => {
+    if (urlState !== '') analyseUrl(urlState)
+  }, [urlState])
 
   useEffect(() => {
     const detectUrl = async () => {

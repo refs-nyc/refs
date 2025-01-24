@@ -45,7 +45,7 @@ export const AddRef = ({
   const { user } = useUserStore()
 
   const animatedStyle = useAnimatedStyle(() => {
-    if (step === '') return { height: 200 }
+    if (step === '') return { height: 500 }
     return {
       height: win.height - s.$2 - keyboard.height.value - insets.top - insets.bottom,
     }

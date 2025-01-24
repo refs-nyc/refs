@@ -141,9 +141,9 @@ export const Profile = ({ userName }: { userName: string }) => {
                     <YStack gap={s.$075}>
                       {backlogItems.map((itm) => (
                         <Pressable
+                          key={itm.id}
                           onPress={stopEditBacklog}
                           onLongPress={() => {
-                            console.log('on long Press')
                             startEditBacklog()
                           }}
                         >

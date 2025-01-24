@@ -50,6 +50,20 @@ export const NewRef = ({
     setCurrentRef(u)
   }
 
+  const updateRefUrl = (url: string) => {
+    const u = { ...r, url }
+    setCurrentRef(u)
+  }
+
+  const updateData = (d: { title: string; url: string; image: string }) => {
+    console.log('UPDATE')
+    console.log(d.image)
+    updateRefTitle(d.title)
+    updateRefImage(d.image)
+    updateRefUrl(d.url)
+    setImageAsset(d.image)
+  }
+
   const submit = async (extraFields?: any) => {
     console.log('EXTRA FIELDS', extraFields)
     const data = {
@@ -62,7 +76,9 @@ export const NewRef = ({
     console.log('DATA:', data)
 
     try {
-      const item = await addToProfile(data, !pathname.includes('onboarding'), { comment: currentRefComment })
+      const item = await addToProfile(data, !pathname.includes('onboarding'), {
+        comment: currentRefComment,
+      })
       onComplete(item)
     } catch (e) {
       console.error(e)
@@ -130,6 +146,7 @@ export const NewRef = ({
         )}
         <EditableHeader
           onComplete={updateRefTitle}
+          onDataChange={updateData}
           placeholder={placeholder}
           title={r?.title || placeholder}
           url={r?.url || ''}

@@ -21,9 +21,10 @@ export const Navigation = () => {
 
   if (
     (pathName === '/' && !pocketbase.authStore.isValid) ||
-    pathName.includes('onboarding') ||
-    pathName.includes('login') ||
-    pathName.includes('details')
+    pathName.includes('/onboarding') ||
+    pathName.includes('/user/login') ||
+    pathName.includes('/user/new') ||
+    pathName.includes('/details') // /user/[username]/details
   )
     return <></>
 

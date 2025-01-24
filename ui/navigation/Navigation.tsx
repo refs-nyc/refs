@@ -49,7 +49,9 @@ export const Navigation = () => {
           <Avatar source={pocketbase.authStore.record.image} size={s.$3} />
         </Link>
       ) : (
-        <View style={{ width: s.$3, height: s.$3 }} />
+        <View style={{ width: s.$3, height: s.$3 }}>
+          <Ionicons name="person" size={s.$3} color={c.accent} />
+        </View>
       )}
       <Link href="/">
         <Ionicons name="globe" size={s.$3} color={c.accent} />

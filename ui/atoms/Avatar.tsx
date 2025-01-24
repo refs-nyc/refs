@@ -8,7 +8,7 @@ export const Avatar = ({ source, size = s.$3 }: { source: string; size: number }
     <>
       <View style={{ width: size, height: size }}>
         <SimplePinataImage
-          style={{ width: '100%', height: '100%', borderRadius: '100%', backgroundColor: "#ddd" }}
+          style={{ width: '100%', height: '100%', borderRadius: size / 2, backgroundColor: "#ddd" }}
           originalSource={source}
           imageOptions={{ width: size * 2, height: size * 2 }}
         />

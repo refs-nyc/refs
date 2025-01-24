@@ -12,7 +12,9 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "refs-nyc.app",
-      "associatedDomains": ["applinks:refs.nyc"],
+      "associatedDomains": [
+        "applinks:refs.nyc"
+      ],
       "config": {
         "usesNonExemptEncryption": false
       },
@@ -38,7 +40,8 @@
           "resizeMode": "contain",
           "backgroundColor": "#F3F2ED"
         }
-      ]
+      ],
+      "expo-share-intent"
     ],
     "experiments": {
       "typedRoutes": true

@@ -48,9 +48,7 @@ export const CategoriseRef = ({
         contentContainerStyle={{ alignItems: 'center', paddingTop: s.$4, paddingBottom: s.$8 }}
       >
         <View>
-          {item?.expand?.ref?.image && (
-            <SimplePinataImage originalSource={item.expand.ref.image} />
-          )}
+          {item?.expand?.ref?.image && <SimplePinataImage originalSource={item.expand.ref.image} />}
           <Heading tag="h1">{item?.expand?.ref.title}</Heading>
         </View>
         <Heading style={{ width: '100%', marginBottom: s.$2 }} tag="p">
@@ -82,7 +80,7 @@ export const CategoriseRef = ({
                 placeholder="Enter a location (eg Clinton Hill, Brooklyn)"
                 onChangeText={setMeta}
               ></TextInput>
-              {/* <Button variant="fluid" onPress={done} title="Done" /> */}
+              <Button variant="fluid" onPress={done} title="Done" />
             </>
           )}
         </YStack>
@@ -112,7 +110,7 @@ export const CategoriseRef = ({
                 placeholder="Enter an author (eg Arlo Parks, Kubrick)"
                 onChangeText={setMeta}
               ></TextInput>
-              {/* <Button variant="fluid" onPress={done} title="Done" /> */}
+              <Button variant="fluid" onPress={done} title="Done" />
             </>
           )}
         </YStack>
@@ -142,6 +140,7 @@ export const CategoriseRef = ({
                 placeholder="Explain its essence"
                 onChangeText={setMeta}
               ></TextInput>
+              <Button variant="fluid" onPress={done} title="Done" />
             </>
           )}
         </YStack>

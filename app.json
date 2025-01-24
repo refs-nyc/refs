@@ -20,14 +20,6 @@
         "aps-environment": "development"
       }
     },
-    "android": {
-      "adaptiveIcon": {
-        "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#F3F2ED"
-      },
-      "googleServicesFile": "./google-services.json",
-      "package": "refs_nyc.app"
-    },
     "plugins": [
       "expo-router",
       [

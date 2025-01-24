@@ -79,11 +79,13 @@ const renderItem = ({ item }: { item: ExpandedItem }) => {
           </View>
           <Pressable onPress={() => {}}>
             {item.expand.ref.url && (
-              <Link
-                href={item.expand.ref.url}
-                style={{ transformOrigin: 'center', transform: 'rotate(-45deg)' }}
-              >
-                <Ionicons color={c.muted} size={s.$1} name="arrow-forward-outline" />
+              <Link href={item.expand.ref.url}>
+                <Ionicons
+                  style={{ transformOrigin: 'center', transform: 'rotate(-45deg)' }}
+                  color={c.muted}
+                  size={s.$1}
+                  name="arrow-forward-outline"
+                />
               </Link>
             )}
           </Pressable>

@@ -1,6 +1,9 @@
 import React, { Children } from 'react'
 import { YStack, XStack } from '@/ui'
+import { Dimensions } from 'react-native'
 import { s } from '@/features/style'
+
+const win = Dimensions.get('window')
 
 export const GridWrapper = ({
   children,
@@ -20,7 +23,7 @@ export const GridWrapper = ({
   const empty = Math.max(size - count, 0)
 
   return (
-    <YStack gap={s.$075}>
+    <YStack gap={s.$075} style={{ width: '100%', minHeight: win.width / 3 }}>
       {Array.from({ length: rows }).map((_, rowIndex) => (
         <XStack key={rowIndex} gap={s.$075}>
           {childrenArray

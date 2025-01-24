@@ -145,7 +145,7 @@ export const AddRef = ({
           {step === 'search' && (
             <>
               {textOpen && <SearchOrAddRef onComplete={addRefFromResults} />}
-              {urlOpen && <Camera />}
+              {urlOpen && <SearchOrAddRef paste={true} onComplete={addRefFromResults} />}
               {cameraOpen && <Camera />}
             </>
           )}

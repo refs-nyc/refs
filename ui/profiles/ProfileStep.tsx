@@ -264,7 +264,7 @@ export const ProfileStep = ({
                     onChange={onChange}
                     type="email"
                     id="email"
-                    placeholder="Login or register with email"
+                    placeholder="Login with email"
                     value={value}
                     autoFocus={false}
                   >

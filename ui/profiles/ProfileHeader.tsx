@@ -1,8 +1,9 @@
 import { Image } from 'expo-image'
 import { YStack, XStack, Heading, Shareable } from '@/ui'
 import { s, c } from '@/features/style'
-import { usePathname } from 'expo-router'
+import { Link, usePathname } from 'expo-router'
 import { Profile } from '@/features/pocketbase/stores/types'
+import { pocketbase } from '@/features/pocketbase'
 import Ionicons from '@expo/vector-icons/Ionicons'
 
 export const ProfileHeader = ({ profile }: { profile: Profile }) => {
@@ -31,7 +32,14 @@ export const ProfileHeader = ({ profile }: { profile: Profile }) => {
           </XStack>
           <Heading tag="h2">{profile.userName}</Heading>
         </YStack>
-        {profile?.image && (
+        {profile.id === pocketbase?.authStore?.record?.id ? (
+          <Link href={`/user/${pocketbase.authStore.record.userName}/settings`}>
+            <Image
+              style={{ width: s.$8, height: s.$8, borderRadius: '100%' }}
+              source={profile.image}
+            />
+          </Link>
+        ) : (
           <Image
             style={{ width: s.$8, height: s.$8, borderRadius: '100%' }}
             source={profile.image}

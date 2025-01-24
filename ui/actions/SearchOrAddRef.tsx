@@ -3,20 +3,24 @@ import { pocketbase, useItemStore } from '@/features/pocketbase'
 import { TextInput, Pressable, FlatList, KeyboardAvoidingView, View } from 'react-native'
 import { SearchResultItem } from '@/ui/atoms/SearchResultItem'
 import { NewRefListItem } from '@/ui/atoms/NewRefListItem'
+import { YStack } from '@/ui/core/Stacks'
 import { s, c } from '@/features/style'
 import { CompleteRef, StagedRef, Item } from '../../features/pocketbase/stores/types'
 import { getLinkPreview, getPreviewFromContent } from 'link-preview-js'
 import { ScrollView } from 'react-native-gesture-handler'
+import * as Clipboard from 'expo-clipboard'
 
 export const SearchOrAddRef = ({
   noNewRef,
   url,
   image,
+  paste,
   onComplete,
 }: {
   noNewRef?: boolean
   url: string
   image: string
+  paste: boolean
   onComplete: (r: CompleteRef) => void
 }) => {
   const [searchQuery, setSearchQuery] = useState('')
@@ -37,6 +41,16 @@ export const SearchOrAddRef = ({
     )
   }
 
+  const updateState = (u: string, data: any) => {
+    setUrlState(u)
+    if (data?.title) {
+      setSearchQuery(data.title)
+    }
+    if (data?.images?.length > 0) {
+      setImageState(data.images[0])
+    }
+  }
+
   const updateQuery = async (q: string) => {
     const search = async () => {
       if (q === '') return []
@@ -48,13 +62,7 @@ export const SearchOrAddRef = ({
 
       if (q.includes('http')) {
         const data = await getLinkPreview(q)
-        setUrlState(q)
-        if (data?.title) {
-          setSearchQuery(data.title)
-        }
-        if (data?.images?.length > 0) {
-          setImageState(data.images[0])
-        }
+        updateState(q, data)
       }
       return refsResults
     }
@@ -64,12 +72,26 @@ export const SearchOrAddRef = ({
     setSearchResults(result)
   }
 
+  useEffect(() => {
+    console.log('PASTE URL')
+    const doPaste = async () => {
+      const u = await Clipboard.getUrlAsync()
+      console.log(u)
+      setSearchQuery(u)
+      if (u) {
+        const data = await getLinkPreview(u)
+        updateState(u, data)
+      }
+    }
+    if (paste) {
+      doPaste()
+    }
+  }, [paste])
+
   return (
     <View
       style={{
         flex: 1,
-        overflow: 'scroll',
-        // backgroundColor: 'green'
       }}
     >
       <TextInput
@@ -94,16 +116,16 @@ export const SearchOrAddRef = ({
           <NewRefListItem title={searchQuery} image={image} />
         </Pressable>
       )}
-      <ScrollView
+      <YStack
         style={{
           flex: 1,
           gap: s.$025,
-          overflow: 'scroll',
           minHeight: s.$12,
+          // backgroundColor: 'blue',
         }}
       >
         {searchResults.map((r) => renderItem({ item: r }))}
-      </ScrollView>
+      </YStack>
     </View>
   )
 }

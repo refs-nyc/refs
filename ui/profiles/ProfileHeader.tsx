@@ -26,7 +26,7 @@ export const ProfileHeader = ({ profile }: { profile: Profile }) => {
         <YStack gap={s.$08}>
           <XStack gap={s.$09}>
             <Shareable url={url}>
-              <Ionicons name="share-outline" size={s.$09} color={c.muted} />
+              <Ionicons name="share-outline" size={s.$2} color={c.muted} />
             </Shareable>
           </XStack>
           <Heading tag="h2">{profile.userName}</Heading>

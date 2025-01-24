@@ -4,7 +4,7 @@ import { Text } from 'react-native'
 
 export default function Screen() {
   const { userName } = useGlobalSearchParams()
-  const userNameParam = typeof userName === "string" ? userName : userName[0]
+  const userNameParam = typeof userName === 'string' ? userName : userName?.[0]
 
   return (
     <>

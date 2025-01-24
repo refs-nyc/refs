@@ -1,10 +1,17 @@
 import { useState, useEffect } from 'react'
 import { usePathname } from 'expo-router'
-import { View, Pressable, Dimensions, TextInput, ScrollView } from 'react-native'
+import {
+  View,
+  Pressable,
+  Dimensions,
+  TextInput,
+  ScrollView,
+  KeyboardAvoidingView,
+} from 'react-native'
 import { Heading, XStack, YStack } from '@/ui'
 import { Picker } from '../inputs/Picker'
 import { PinataImage } from '../images/PinataImage'
-import { EditableTitle } from '../atoms/EditableTitle'
+import { EditableHeader } from '../atoms/EditableHeader'
 import { addToProfile } from '@/features/pocketbase'
 import { Button } from '../buttons/Button'
 import Ionicons from '@expo/vector-icons/Ionicons'
@@ -50,6 +57,20 @@ export const NewRef = ({
     setCurrentRef(u)
   }
 
+  const updateRefUrl = (url: string) => {
+    const u = { ...r, url }
+    setCurrentRef(u)
+  }
+
+  const updateData = (d: { title: string; url: string; image: string }) => {
+    console.log('UPDATE')
+    console.log(d.image)
+    updateRefTitle(d.title)
+    updateRefImage(d.image)
+    updateRefUrl(d.url)
+    setImageAsset(d.image)
+  }
+
   const submit = async (extraFields?: any) => {
     console.log('EXTRA FIELDS', extraFields)
     const data = {
@@ -62,7 +83,9 @@ export const NewRef = ({
     console.log('DATA:', data)
 
     try {
-      const item = await addToProfile(data, !pathname.includes('onboarding'), { comment: currentRefComment })
+      const item = await addToProfile(data, !pathname.includes('onboarding'), {
+        comment: currentRefComment,
+      })
       onComplete(item)
     } catch (e) {
       console.error(e)
@@ -72,14 +95,15 @@ export const NewRef = ({
   }
 
   return (
-    <YStack
+    <KeyboardAvoidingView
+      behavior="height"
       style={{
         // paddingTop: s.$2,
         marginBottom: s.$4,
         flex: 1,
         alignItems: 'center',
+        gap: s.$4,
       }}
-      gap={s.$4}
     >
       <ScrollView
         contentContainerStyle={{
@@ -128,10 +152,12 @@ export const NewRef = ({
             </View>
           </>
         )}
-        <EditableTitle
+        <EditableHeader
           onComplete={updateRefTitle}
+          onDataChange={updateData}
           placeholder={placeholder}
           title={r?.title || placeholder}
+          url={r?.url || ''}
         />
         {/* Notes */}
         <TextInput
@@ -148,50 +174,34 @@ export const NewRef = ({
             // minHeight: 2000,
           }}
         />
-      </ScrollView>
-      <View
-        style={{
-          flexDirection: 'row',
-          justifyContent: 'space-evenly',
-          alignItems: 'stretch',
-          backgroundColor: 'green',
-          gap: s.$1,
-        }}
-      >
-        {/* <Button
-          style={{ minWidth: 0, width: (win.width - s.$2 * 2 - s.$1) / 2 }}
-          variant="outline"
-          title="Start a list"
-        /> */}
-      </View>
-      <View
-        style={{
-          position: 'absolute',
-          bottom: 0,
-          minWidth: 0,
-          width: '100%',
-          flexDirection: 'row',
-          justifyContent: 'space-between',
-        }}
-      >
-        <Button
-          title="Create List"
-          variant="outlineFluid"
-          style={{ width: '48%', minWidth: 0 }}
-          disabled={pinataSource === 'none'}
-          onPress={() => {
-            console.log('ABOUT TO ADD A LIST')
-            submit({ list: true })
+        <View
+          style={{
+            width: '100%',
+            flexDirection: 'row',
+            justifyContent: 'space-between',
           }}
-        />
-        <Button
-          title="Add Ref"
-          variant="fluid"
-          style={{ width: '48%', minWidth: 0 }}
-          disabled={pinataSource === 'none'}
-          onPress={() => submit()}
-        />
-      </View>
-    </YStack>
+        >
+          {currentRef.url === '' && (
+            <Button
+              title="Create List"
+              variant="outlineFluid"
+              style={{ width: '48%', minWidth: 0 }}
+              disabled={pinataSource === 'none'}
+              onPress={() => {
+                console.log('ABOUT TO ADD A LIST')
+                submit({ list: true })
+              }}
+            />
+          )}
+          <Button
+            title="Add Ref"
+            variant="fluid"
+            style={{ width: currentRef.url ? '100%' : '48%', minWidth: 0 }}
+            disabled={pinataSource === 'none'}
+            onPress={() => submit()}
+          />
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   )
 }

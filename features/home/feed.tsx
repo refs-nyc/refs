@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react'
 import { SearchRef, YStack, Heading, DismissKeyboard } from '@/ui'
 import { pocketbase } from '@/features/pocketbase'
 import { Link } from 'expo-router'
-import { View, Dimensions } from 'react-native'
+import { View, ScrollView, Dimensions } from 'react-native'
 import { s } from '@/features/style'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Activity } from './activity'
@@ -74,12 +74,12 @@ export const Feed = () => {
 
   return (
     <DismissKeyboard>
-      <View style={{ flex: 1, height: win.height }}>
+      <ScrollView style={{ flex: 1, height: win.height }}>
         <YStack
           gap={s.$2}
           style={{
             height: win.height * 0.4,
-            position: 'absolute',
+            // position: 'absolute',
             width: '100%',
             top: Math.max(insets.top, 16),
             paddingTop: s.$2,
@@ -89,7 +89,7 @@ export const Feed = () => {
           <YStack
             gap={s.$2}
             style={{
-              position: 'absolute',
+              // position: 'absolute',
               width: '100%',
               zIndex: 9,
               height: win.height * 0.4,
@@ -122,7 +122,7 @@ export const Feed = () => {
         </YStack>
 
         {searchTerm === '' ? <Activity items={items} /> : <SearchResults results={results} />}
-      </View>
+      </ScrollView>
     </DismissKeyboard>
   )
 }

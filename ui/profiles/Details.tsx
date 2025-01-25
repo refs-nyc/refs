@@ -72,7 +72,7 @@ const renderItem = ({ item }: { item: ExpandedItem }) => {
       </View>
       {/* Information */}
       <View style={{ width: '100%', paddingHorizontal: s.$1 }}>
-        <View style={{ marginBottom: s.$1, flexDirection: 'row', justifyContent: 'space-between' }}>
+        <View style={{ marginBottom: 0, flexDirection: 'row', justifyContent: 'space-between' }}>
           <View style={{ gap: s.$05 }}>
             <Heading tag="h2">{item.expand?.ref.title}</Heading>
             <Heading tag="smallmuted">{item.expand?.ref?.meta}</Heading>
@@ -92,7 +92,7 @@ const renderItem = ({ item }: { item: ExpandedItem }) => {
         </View>
         {/* Comments */}
         <View style={{ width: '100%' }}>
-          <Heading numberOfLines={6} tag="pmuted">
+          <Heading numberOfLines={4} tag="pmuted">
             {item.text}
           </Heading>
         </View>

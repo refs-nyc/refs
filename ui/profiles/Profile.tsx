@@ -23,20 +23,24 @@ import { isProfile } from '@/features/pocketbase/stores/users'
 import { gridSort, createdSort } from '@/ui/profiles/sorts'
 
 export const Profile = ({ userName }: { userName: string }) => {
-  const { firstVisit } = useLocalSearchParams()
+  const { firstVisit, addingTo } = useLocalSearchParams()
 
   const { editingBacklog, stopEditBacklog, startEditBacklog } = useUIStore()
   const { hasShareIntent } = useShareIntentContext()
 
   const insets = useSafeAreaInsets()
   const [profile, setProfile] = useState<ProfileType>()
-  const [addingTo, setAddingTo] = useState<'' | 'grid' | 'backlog'>('')
+  // const [addingTo, setAddingTo] = useState<'' | 'grid' | 'backlog'>('')
   const [gridItems, setGridItems] = useState<Item[]>([])
   const [backlogItems, setBacklogItems] = useState<ExpandedItem[]>([])
   const [removingId, setRemovingId] = useState('')
 
   const { user, getProfile } = useUserStore()
   const { remove, moveToBacklog } = useItemStore()
+
+  const setAddingTo = (str: string) => {
+    router.setParams({ addingTo: str })
+  }
 
   const handleMoveToBacklog = async () => {
     try {
@@ -225,7 +229,7 @@ export const Profile = ({ userName }: { userName: string }) => {
         </Drawer>
       )}
 
-      {addingTo !== '' && (
+      {(addingTo === 'grid' || addingTo === 'backlog') && (
         <Drawer close={() => setAddingTo('')}>
           <NewRef
             backlog={addingTo === 'backlog'}

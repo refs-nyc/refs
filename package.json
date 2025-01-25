@@ -85,6 +85,7 @@
     "react-native-web": "~0.19.13",
     "react-native-webview": "13.12.2",
     "text-encoding": "^0.7.0",
+    "xcode": "3.0.1",
     "zustand": "^5.0.2"
   },
   "resolutions": {
@@ -105,5 +106,10 @@
     "react-test-renderer": "18.3.1",
     "typescript": "^5.3.3"
   },
-  "private": true
+  "private": true,
+  "pnpm": {
+    "patchedDependencies": {
+      "xcode@3.0.1": "patches/xcode@3.0.1.patch"
+    }
+  }
 }

@@ -17,7 +17,6 @@ export const YStack = ({
 }) => {
   const insets = useSafeAreaInsets()
 
-  console.log(vh, insets)
   return (
     <View
       style={[style, { flexDirection: 'column', gap }, screenHeight && { height: vh - insets.top }]}

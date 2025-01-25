@@ -1,10 +1,8 @@
 import { View } from 'react-native'
-import { runOnJS } from 'react-native-reanimated'
 import { useNavigation } from '@react-navigation/native';
 import { NewUserProfile, Profile, SwipeToGoBack } from '@/ui'
 
 export function UserProfileScreen({ userName }: { userName: string }) {
-  console.log('LOAD PROFILE', userName)
   if (!userName) {
     return null
   }

@@ -11,8 +11,6 @@ export const ProfileHeader = ({ profile }: { profile: Profile }) => {
 
   const url = 'https://refs.nyc' + pathname
 
-  console.log(url)
-
   return (
     <YStack
       gap={s.$1}

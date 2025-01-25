@@ -23,7 +23,6 @@ export const GridTileWrapper = ({
   index?: number
   onRemove?: () => void
 }) => {
-  console.log(id)
   const pathname = usePathname()
   const { editingProfile, startEditProfile, stopEditProfile } = useUIStore()
 

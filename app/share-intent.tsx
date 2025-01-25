@@ -21,11 +21,8 @@ const WebUrlComponent = ({ shareIntent }: { shareIntent: ShareIntentType }) => {
 }
 
 export default function ShareIntent() {
-  console.log('We have intent')
   const router = useRouter()
   const { hasShareIntent, shareIntent, error, resetShareIntent } = useShareIntentContext()
-
-  console.log(shareIntent)
 
   return (
     <View style={styles.container}>

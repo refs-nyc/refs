@@ -28,7 +28,6 @@ export const NewUserProfile = () => {
       ref.current?.next()
     } else {
       try {
-        console.log(stagedUser)
         const record = await register()
 
         if (record.userName) {

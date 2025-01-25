@@ -37,6 +37,7 @@ export const Profile = ({ userName }: { userName: string }) => {
   // const [addingTo, setAddingTo] = useState<'' | 'grid' | 'backlog'>('')
   const [gridItems, setGridItems] = useState<Item[]>([])
   const [backlogItems, setBacklogItems] = useState<ExpandedItem[]>([])
+  const [canAdd, setCanAdd] = useState<boolean>(false)
   // const [removingId, setRemovingId] = useState('')
 
   const { user, getProfile } = useUserStore()
@@ -61,6 +62,8 @@ export const Profile = ({ userName }: { userName: string }) => {
 
   const refreshGrid = async (userName: string) => {
     try {
+      setGridItems([])
+      setBacklogItems([])
       const record = await pocketbase
         .collection<ProfileType>('users')
         .getFirstListItem<ExpandedProfile>(`userName = "${userName}"`, {
@@ -80,10 +83,6 @@ export const Profile = ({ userName }: { userName: string }) => {
     }
   }
 
-  const canAdd = useMemo(() => {
-    return pocketbase?.authStore?.record?.userName === userName
-  }, [pocketbase.authStore, pocketbase, userName, user])
-
   useEffect(() => {
     if (hasShareIntent) {
       setAddingTo(gridItems.length < 12 ? 'grid' : 'backlog')
@@ -95,6 +94,7 @@ export const Profile = ({ userName }: { userName: string }) => {
       try {
         await getProfile(userName)
         await refreshGrid(userName)
+        setCanAdd(pocketbase?.authStore?.record?.userName === userName)
       } catch (error) {
         console.error(error)
       }

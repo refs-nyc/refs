@@ -1,18 +1,29 @@
 import { getShareExtensionKey } from 'expo-share-intent'
 import { router } from 'expo-router'
+import { pocketbase } from '@/features/pocketbase'
 
 export function redirectSystemPath({ path, initial }: { path: string; initial: string }) {
+  let returnValue = '/'
   try {
     if (path.includes(`dataUrl=${getShareExtensionKey()}`)) {
-      // redirect to the ShareIntent Screen to handle data with the hook
       console.debug('[expo-router-native-intent] redirect to ShareIntent screen')
-      // router.push('/share-intent')
-      // console.debug('Call to push done')
-      console.log(path)
-      return '/share-intent'
+
+      console.log(!pocketbase.authStore.isValid || !pocketbase.authStore.record?.userName)
+      console.log(!pocketbase.authStore.isValid, !pocketbase.authStore.record?.userName)
+
+      if (!pocketbase.authStore.isValid) returnValue = '/login'
+
+      console.log(`/user/${pocketbase.authStore.record.userName}`)
+
+      returnValue = `/user/${pocketbase.authStore.record.userName}`
+    } else {
+      returnValue = path
     }
-    return path
   } catch {
-    return '/'
+    returnValue = '/'
   }
+
+  console.log(returnValue)
+
+  return returnValue
 }

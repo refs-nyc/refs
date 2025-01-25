@@ -16,7 +16,9 @@ import { StagedRef, CompleteRef, Item, ExpandedItem } from '@/features/pocketbas
 import type { ImagePickerAsset } from 'expo-image-picker'
 import { EditableList } from '../lists/EditableList'
 import { CategoriseRef } from './CategoriseRef'
+import { ShareIntent as ShareIntentType, useShareIntentContext } from 'expo-share-intent'
 import { s } from '@/features/style'
+
 import * as Clipboard from 'expo-clipboard'
 
 const win = Dimensions.get('window')
@@ -38,6 +40,7 @@ export const AddRef = ({
   const [step, setStep] = useState<'' | 'add' | 'search' | 'editList' | 'categorise'>('')
   const [itemData, setItemData] = useState<ExpandedItem | null>(null)
   const [refData, setRefData] = useState<StagedRef | CompleteRef>({})
+  const { hasShareIntent } = useShareIntentContext()
 
   const insets = useSafeAreaInsets()
   const keyboard = useAnimatedKeyboard()
@@ -74,6 +77,12 @@ export const AddRef = ({
       setStep('categorise')
     }
   }
+
+  useEffect(() => {
+    if (hasShareIntent) {
+      setStep('search')
+    }
+  }, [hasShareIntent])
 
   useEffect(() => {
     const detectUrl = async () => {
@@ -146,6 +155,7 @@ export const AddRef = ({
             <>
               {textOpen && <SearchOrAddRef onComplete={addRefFromResults} />}
               {urlOpen && <SearchOrAddRef paste={true} onComplete={addRefFromResults} />}
+              {hasShareIntent && <SearchOrAddRef onComplete={addRefFromResults} />}
               {cameraOpen && <Camera />}
             </>
           )}

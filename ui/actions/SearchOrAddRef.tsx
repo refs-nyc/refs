@@ -7,7 +7,7 @@ import { YStack } from '@/ui/core/Stacks'
 import { s, c } from '@/features/style'
 import { CompleteRef, StagedRef, Item } from '../../features/pocketbase/stores/types'
 import { getLinkPreview, getPreviewFromContent } from 'link-preview-js'
-import { ScrollView } from 'react-native-gesture-handler'
+import { ShareIntent as ShareIntentType, useShareIntentContext } from 'expo-share-intent'
 import * as Clipboard from 'expo-clipboard'
 
 export const SearchOrAddRef = ({
@@ -27,6 +27,7 @@ export const SearchOrAddRef = ({
   const [urlState, setUrlState] = useState(url)
   const [imageState, setImageState] = useState(image)
   const [searchResults, setSearchResults] = useState<CompleteRef[]>([])
+  const { hasShareIntent, shareIntent, resetShareIntent } = useShareIntentContext()
 
   const renderItem = ({ item }: { item: CompleteRef }) => {
     return (
@@ -73,7 +74,16 @@ export const SearchOrAddRef = ({
   }
 
   useEffect(() => {
-    console.log('PASTE URL')
+    const useIntent = async (u: string) => {
+      const data = await getLinkPreview(u)
+      updateState(u, data)
+    }
+    if (hasShareIntent && shareIntent.webUrl) {
+      useIntent(shareIntent.webUrl)
+    }
+  }, [hasShareIntent, shareIntent])
+
+  useEffect(() => {
     const doPaste = async () => {
       const u = await Clipboard.getUrlAsync()
       console.log(u)
@@ -87,6 +97,13 @@ export const SearchOrAddRef = ({
       doPaste()
     }
   }, [paste])
+
+  useEffect(() => {
+    return () => {
+      console.log('reset')
+      // resetShareIntent()
+    }
+  }, [])
 
   return (
     <View

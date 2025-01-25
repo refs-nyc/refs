@@ -12,6 +12,7 @@ export function Picker({
   disablePinata?: boolean
 }) {
   useEffect(() => {
+    console.log('PICKER')
     const pickImage = async () => {
       // No permissions request is necessary for launching the image library
       try {
@@ -41,6 +42,10 @@ export function Picker({
     }
 
     pickImage()
+
+    return () => {
+      console.log('picker is done')
+    }
   }, [])
 
   return <></>

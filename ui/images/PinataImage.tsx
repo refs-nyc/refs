@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 // This component takes a local image uri, displays the image and meanwhile posts the image to Pinata
 import { Image } from 'expo-image'
-import { View, Text } from 'react-native'
+import { View, TouchableOpacity } from 'react-native'
 import { pinataUpload } from '@/features/pinata'
 import type { ImagePickerAsset } from 'expo-image-picker'
 import { useNetInfo } from '@react-native-community/netinfo'
@@ -11,12 +11,14 @@ export const PinataImage = ({
   round = false,
   style,
   onSuccess,
+  onReplace,
   onFail,
 }: {
   asset: ImagePickerAsset | string
   round?: boolean
   style?: any
   onSuccess: (url: string) => void
+  onReplace: () => void
   onFail: () => void
 }) => {
   const [loading, setLoading] = useState(false)
@@ -24,6 +26,10 @@ export const PinataImage = ({
   const [pinataSource, setPinataSource] = useState(typeof asset === 'string' ? asset : '')
   const [showOriginal, setShowOriginal] = useState(true)
   const { type, isConnected } = useNetInfo()
+
+  const handleLongpress = () => {
+    if (source || pinataSource) onReplace()
+  }
 
   useEffect(() => {
     console.log('is connected from pinata ,', isConnected)
@@ -49,7 +55,8 @@ export const PinataImage = ({
   }, [asset])
 
   return (
-    <View
+    <TouchableOpacity
+      onLongPress={handleLongpress}
       style={{
         width: 200,
         height: 200,
@@ -111,6 +118,6 @@ export const PinataImage = ({
           />
         )}
       </View>
-    </View>
+    </TouchableOpacity>
   )
 }

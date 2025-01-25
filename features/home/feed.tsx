@@ -1,3 +1,4 @@
+import Animated, { FadeInUp, FadeOutUp } from 'react-native-reanimated'
 import type { ExpandedItem } from '@/features/pocketbase/stores/types'
 import { useState, useEffect } from 'react'
 import { SearchRef, YStack, Heading, DismissKeyboard } from '@/ui'
@@ -98,9 +99,11 @@ export const Feed = () => {
             }}
           >
             {!searching && (
-              <Heading style={{ textAlign: 'center' }} tag="h1">
-                Refs
-              </Heading>
+              <Animated.View entering={FadeInUp.duration(200)} exiting={FadeOutUp.duration(200)}>
+                <Heading style={{ textAlign: 'center' }} tag="h1">
+                  Refs
+                </Heading>
+              </Animated.View>
             )}
 
             <SearchRef
@@ -109,16 +112,6 @@ export const Feed = () => {
               onChange={setSearchTerm}
             />
           </YStack>
-
-          {/* <Link
-            style={{ width: '100%', textAlign: 'center' }}
-            href={{
-              pathname: '/user/[userName]',
-              params: { userName: pocketbase.authStore.record.userName },
-            }}
-          >
-            My Profile
-          </Link> */}
         </YStack>
 
         {searchTerm === '' ? <Activity items={items} /> : <SearchResults results={results} />}

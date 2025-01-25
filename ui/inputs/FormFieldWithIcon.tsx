@@ -1,4 +1,4 @@
-import { XStack } from '@/ui'
+import { XStack } from '@/ui/core/Stacks'
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { View, TextInput } from 'react-native'
 

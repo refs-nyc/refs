@@ -1,5 +1,5 @@
 import { Pressable } from 'react-native'
-import { Heading } from '@/ui'
+import { Heading } from '@/ui/typo/Heading'
 
 export const GridTileActionAdd = ({ onPress }: { onPress: () => void }) => {
   const add = () => {

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Pressable, Dimensions, View } from 'react-native'
-import { Heading, YStack } from '@/ui'
+import { YStack } from '@/ui/core/Stacks'
+import { Heading } from "@/ui/typo/Heading"
 import { Picker } from '../inputs/Picker'
 import { PinataImage } from '../images/PinataImage'
 import { Button } from '../buttons/Button'

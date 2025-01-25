@@ -1,6 +1,10 @@
 import type { Item } from '@/features/pocketbase/stores/types'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { Drawer, NewRef, Heading, XStack, YStack, Button } from '@/ui'
+import { XStack, YStack } from '@/ui/core/Stacks'
+import { Drawer } from '@/ui/drawers/Drawer'
+import { Button } from '@/ui/buttons/Button'
+import { Heading } from '@/ui/typo/Heading'
+import { NewRef } from "@/ui/actions/NewRef"
 import { useUIStore } from '../state'
 import { ProfileHeader } from './ProfileHeader'
 import { FirstVisitScreen } from './FirstVisitScreen'

@@ -8,7 +8,7 @@ import {
   ScrollView,
   KeyboardAvoidingView,
 } from 'react-native'
-import { Heading, XStack, YStack } from '@/ui'
+import { Heading } from '@/ui/typo/Heading'
 import { Picker } from '../inputs/Picker'
 import { PinataImage } from '../images/PinataImage'
 import { EditableHeader } from '../atoms/EditableHeader'

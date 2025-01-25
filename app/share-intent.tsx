@@ -25,6 +25,8 @@ export default function ShareIntent() {
   const router = useRouter()
   const { hasShareIntent, shareIntent, error, resetShareIntent } = useShareIntentContext()
 
+  console.log(shareIntent)
+
   return (
     <View style={styles.container}>
       <Image source={require('../assets/icon.png')} style={[styles.logo, styles.gap]} />

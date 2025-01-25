@@ -12,6 +12,7 @@ import 'fast-text-encoding'
 
 // Disable strict mode warnings caused by carousel
 import { configureReanimatedLogger } from 'react-native-reanimated'
+import { ShareIntentProvider } from 'expo-share-intent'
 configureReanimatedLogger({ strict: false })
 
 // For pocketbase
@@ -107,16 +108,18 @@ export default function RootLayout() {
 
 const Providers = ({ children }: { children: React.ReactNode }) => {
   return (
-    <SafeAreaProvider>
-      <GestureHandlerRootView>
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-          style={{ flex: 1 }}
-        >
-          {children}
-        </KeyboardAvoidingView>
-      </GestureHandlerRootView>
-    </SafeAreaProvider>
+    <ShareIntentProvider>
+      <SafeAreaProvider>
+        <GestureHandlerRootView>
+          <KeyboardAvoidingView
+            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+            style={{ flex: 1 }}
+          >
+            {children}
+          </KeyboardAvoidingView>
+        </GestureHandlerRootView>
+      </SafeAreaProvider>
+    </ShareIntentProvider>
   )
 }
 

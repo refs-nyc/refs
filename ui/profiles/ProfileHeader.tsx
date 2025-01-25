@@ -36,13 +36,13 @@ export const ProfileHeader = ({ profile }: { profile: Profile }) => {
         {profile.id === pocketbase?.authStore?.record?.id ? (
           <Link href={`/user/${pocketbase.authStore.record.userName}/settings`}>
             <Image
-              style={{ width: s.$6, height: s.$6, borderRadius: '100%' }}
+              style={{ width: s.$6, height: s.$6, borderRadius: s.$6 / 2 }}
               source={profile.image}
             />
           </Link>
         ) : (
           <Image
-            style={{ width: s.$6, height: s.$6, borderRadius: '100%' }}
+            style={{ width: s.$6, height: s.$6, borderRadius: s.$6 / 2 }}
             source={profile.image}
           />
         )}

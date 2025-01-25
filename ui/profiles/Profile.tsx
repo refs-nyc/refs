@@ -11,6 +11,7 @@ import { useEffect, useState, useMemo } from 'react'
 import { View, Text } from 'react-native'
 import { s, c } from '@/features/style'
 import { pocketbase, useUserStore, removeFromProfile, useItemStore } from '@/features/pocketbase'
+import { ShareIntent as ShareIntentType, useShareIntentContext } from 'expo-share-intent'
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { FlatList, Pressable, ScrollView } from 'react-native-gesture-handler'
 import {
@@ -25,6 +26,7 @@ export const Profile = ({ userName }: { userName: string }) => {
   const { firstVisit } = useLocalSearchParams()
 
   const { editingBacklog, stopEditBacklog, startEditBacklog } = useUIStore()
+  const { hasShareIntent } = useShareIntentContext()
 
   const insets = useSafeAreaInsets()
   const [profile, setProfile] = useState<ProfileType>()
@@ -68,9 +70,14 @@ export const Profile = ({ userName }: { userName: string }) => {
   }
 
   const canAdd = useMemo(() => {
-    console.log(pocketbase?.authStore?.record?.userName)
     return pocketbase?.authStore?.record?.userName === userName
   }, [pocketbase.authStore, pocketbase, userName, user])
+
+  useEffect(() => {
+    if (hasShareIntent) {
+      setAddingTo(gridItems.length < 12 ? 'grid' : 'backlog')
+    }
+  }, [hasShareIntent])
 
   useEffect(() => {
     const getProfile = async () => {

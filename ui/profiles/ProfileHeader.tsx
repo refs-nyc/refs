@@ -21,6 +21,7 @@ export const ProfileHeader = ({ profile }: { profile: Profile }) => {
         flexDirection: 'row',
         borderRadius: s.$08,
         marginBottom: s.$2,
+        paddingVertical: s.$1,
       }}
     >
       <XStack style={{ width: '100%', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -35,13 +36,13 @@ export const ProfileHeader = ({ profile }: { profile: Profile }) => {
         {profile.id === pocketbase?.authStore?.record?.id ? (
           <Link href={`/user/${pocketbase.authStore.record.userName}/settings`}>
             <Image
-              style={{ width: s.$8, height: s.$8, borderRadius: '100%' }}
+              style={{ width: s.$6, height: s.$6, borderRadius: '100%' }}
               source={profile.image}
             />
           </Link>
         ) : (
           <Image
-            style={{ width: s.$8, height: s.$8, borderRadius: '100%' }}
+            style={{ width: s.$6, height: s.$6, borderRadius: '100%' }}
             source={profile.image}
           />
         )}

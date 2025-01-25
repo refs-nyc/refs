@@ -163,7 +163,7 @@ export const RefForm = ({
         <TextInput
           multiline={true}
           numberOfLines={4}
-          placeholder="Care to comment?"
+          placeholder="Add a caption for your profile"
           onChangeText={setCurrentRefComment}
           style={{
             backgroundColor: c.white,

@@ -36,6 +36,7 @@ export const GridTileWrapper = ({
   }
 
   const openDetailScreen = () => {
+    stopEditProfile()
     router.push(`${pathname}/details${id && `?initialId=${id}`}`)
   }
 
@@ -43,7 +44,7 @@ export const GridTileWrapper = ({
     if (canEdit) {
       clearTimeout(timeout)
       timeout = setTimeout(() => {
-        setActions(false)
+        stopEditProfile()
       }, 10000)
       startEditProfile()
     }

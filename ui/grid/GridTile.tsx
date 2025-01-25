@@ -1,5 +1,6 @@
 import { View, TouchableOpacity } from 'react-native'
 import { base, c, s } from '@/features/style'
+import { useUIStore } from '@/ui/state'
 
 export const GridTile = ({
   children,
@@ -12,8 +13,11 @@ export const GridTile = ({
   backgroundColor?: string
   flex?: boolean
 }) => {
+  const { stopEditProfile } = useUIStore()
+
   return (
     <TouchableOpacity
+      onPress={stopEditProfile}
       style={[
         base.gridTile,
         {

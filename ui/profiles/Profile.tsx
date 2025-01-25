@@ -1,6 +1,6 @@
 import type { Item } from '@/features/pocketbase/stores/types'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { Drawer, AddRef, Heading, XStack, YStack, Button } from '@/ui'
+import { Drawer, NewRef, Heading, XStack, YStack, Button } from '@/ui'
 import { useUIStore } from '../state'
 import { ProfileHeader } from './ProfileHeader'
 import { FirstVisitScreen } from './FirstVisitScreen'
@@ -99,7 +99,8 @@ export const Profile = ({ userName }: { userName: string }) => {
             flex: 1,
             justifyContent: 'center',
             alignItems: 'center',
-            paddingHorizontal: s.$1half,
+            paddingHorizontal: s.$08,
+            marginBottom: s.$12,
           }}
           gap={s.$4}
         >
@@ -226,9 +227,9 @@ export const Profile = ({ userName }: { userName: string }) => {
 
       {addingTo !== '' && (
         <Drawer close={() => setAddingTo('')}>
-          <AddRef
+          <NewRef
             backlog={addingTo === 'backlog'}
-            onAddRef={async (itm: Item) => {
+            onNewRef={async (itm: Item) => {
               console.log(itm)
               await refreshGrid(userName)
               if (itm?.list) router.push(`/user/${userName}/details?initialId=${itm.id}`)

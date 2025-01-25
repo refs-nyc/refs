@@ -1,4 +1,4 @@
-import { OnboardingCarouselItem, Drawer, AddRef } from '@/ui'
+import { OnboardingCarouselItem, Drawer, NewRef } from '@/ui'
 import { View, Dimensions, Text } from 'react-native'
 import { useRef, useState } from 'react'
 import { router } from 'expo-router'
@@ -56,8 +56,8 @@ export function OnboardingScreen() {
 
       {addingIndex > -1 && (
         <Drawer close={() => setAddingIndex(-1)}>
-          <AddRef
-            onAddRef={() => {
+          <NewRef
+            onNewRef={() => {
               setAddingIndex(-1)
             }}
             onCancel={() => {

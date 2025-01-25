@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { usePathname } from 'expo-router'
 import {
   View,
-  Pressable,
+  TouchableOpacity,
   Dimensions,
   TextInput,
   ScrollView,
@@ -113,45 +113,51 @@ export const RefForm = ({
         }}
         style={{ flex: 1, width: '100%' }}
       >
-        {imageAsset ? (
+        {imageAsset && (
           <PinataImage
             asset={imageAsset}
+            onReplace={() => {
+              console.log('WE NEED TO PICK SOMETHING ELSE')
+              setPicking(true)
+            }}
             onSuccess={updateRefImage}
             onFail={() => console.error('Cant ul')}
           />
-        ) : (
-          <>
-            {picking && (
-              <Picker
-                onSuccess={(a: ImagePickerAsset) => {
-                  setImageAsset(a)
-                }}
-                onCancel={() => setPicking(false)}
-              />
-            )}
-            <View
-              style={{
-                width: 200,
-                height: 200,
-              }}
-            >
-              <Pressable style={{ flex: 1 }} onPress={() => setPicking(true)}>
-                <View
-                  style={{
-                    flex: 1,
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    borderWidth: 2,
-                    borderColor: c.black,
-                    borderRadius: s.$075,
-                  }}
-                >
-                  <Heading tag="h1light">+</Heading>
-                </View>
-              </Pressable>
-            </View>
-          </>
         )}
+
+        {!picking && !imageAsset && (
+          <View
+            style={{
+              width: 200,
+              height: 200,
+            }}
+          >
+            <TouchableOpacity style={{ flex: 1 }} onPress={() => setPicking(true)}>
+              <View
+                style={{
+                  flex: 1,
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  borderWidth: 2,
+                  borderColor: c.black,
+                  borderRadius: s.$075,
+                }}
+              >
+                <Heading tag="h1light">+</Heading>
+              </View>
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {picking && (
+          <Picker
+            onSuccess={(a: ImagePickerAsset) => {
+              setImageAsset(a)
+            }}
+            onCancel={() => setPicking(false)}
+          />
+        )}
+
         <EditableHeader
           onComplete={updateRefTitle}
           onDataChange={updateData}

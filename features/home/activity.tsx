@@ -57,7 +57,10 @@ export const Activity = ({ items }: { items: ExpandedItem[] }) => {
               />
             )}
 
-            <Link href={item.expand?.creator ? `/user/${item.expand.creator?.userName}` : '/'}>
+            <Link
+              href={item.expand?.creator ? `/user/${item.expand.creator?.userName}` : '/'}
+              style={{ overflow: 'hidden', width: win.width - s.$9 }}
+            >
               <Heading tag="p">
                 <Heading tag="strong">{item.expand?.creator?.userName || 'Anonymous'}</Heading>{' '}
                 added <Heading tag="strong">{item.expand?.ref?.title}</Heading>

@@ -17,7 +17,6 @@ export const SearchRef = ({
   onBlur: () => void
 }) => {
   const [textState, setTextState] = useState('')
-  const [searching, setSearching] = useState(false)
 
   // Variables
   const y = useSharedValue(0)

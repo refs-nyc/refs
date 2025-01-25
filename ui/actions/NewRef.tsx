@@ -21,13 +21,19 @@ import { s } from '@/features/style'
 
 import * as Clipboard from 'expo-clipboard'
 
+type NewRefStep = '' | 'add' | 'search' | 'editList' | 'categorise'
+
 const win = Dimensions.get('window')
 
 export const NewRef = ({
+  initialStep = '',
+  initialRefData = {},
   onNewRef,
   onCancel,
   backlog = false,
 }: {
+  initialStep?: NewRefStep
+  initialRefData?: StagedRef | CompleteRef
   onNewRef: (itm: Item) => void
   onCancel: () => void
   backlog?: boolean
@@ -37,9 +43,9 @@ export const NewRef = ({
   const [hasUrl, setHasUrl] = useState(false)
   const [pickerOpen, setPickerOpen] = useState(false)
   const [cameraOpen, setCameraOpen] = useState(false)
-  const [step, setStep] = useState<'' | 'add' | 'search' | 'editList' | 'categorise'>('')
+  const [step, setStep] = useState<NewRefStep>(initialStep)
   const [itemData, setItemData] = useState<ExpandedItem | null>(null)
-  const [refData, setRefData] = useState<StagedRef | CompleteRef>({})
+  const [refData, setRefData] = useState<StagedRef | CompleteRef>(initialRefData)
   const { hasShareIntent } = useShareIntentContext()
 
   const insets = useSafeAreaInsets()

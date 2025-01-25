@@ -4,7 +4,11 @@ import { useRefStore } from './stores/refs'
 import { useItemStore } from './stores/items'
 import { StagedRef, CompleteRef, Item } from './stores/types'
 
-const addToProfile = async (stagedRef: StagedRef | CompleteRef, attach = true, options: { comment?: string } = {}) => {
+const addToProfile = async (
+  stagedRef: StagedRef | CompleteRef,
+  attach = true,
+  options: { comment?: string; backlog?: boolean } = {}
+) => {
   if (!pocketbase.authStore.isValid || !pocketbase.authStore.record)
     throw new Error('Not enough permissions')
 
@@ -22,6 +26,7 @@ const addToProfile = async (stagedRef: StagedRef | CompleteRef, attach = true, o
       image: existingRef?.image,
       creator: pocketbase.authStore?.record?.id,
       text: options.comment,
+      backlog: !!options.backlog,
     })
   } else {
     // create a new item, with a new ref
@@ -31,6 +36,7 @@ const addToProfile = async (stagedRef: StagedRef | CompleteRef, attach = true, o
       image: newRef.image,
       creator: pocketbase.authStore?.record?.id,
       text: options.comment,
+      backlog: !!options.backlog,
     })
   }
 
@@ -41,7 +47,7 @@ const addToProfile = async (stagedRef: StagedRef | CompleteRef, attach = true, o
     const items = userStore.stagedUser.items || []
     await userStore.updateStagedUser({ items: [...items, newItem.id] })
   }
-  
+
   return newItem
 }
 

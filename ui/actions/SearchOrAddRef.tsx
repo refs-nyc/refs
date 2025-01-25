@@ -24,11 +24,13 @@ export const SearchOrAddRef = ({
   onComplete: (r: CompleteRef) => void
 }) => {
   const [searchQuery, setSearchQuery] = useState('')
+  const [disableNewRef, setDisableNewRef] = useState(false)
   const [urlState, setUrlState] = useState(url)
   const [imageState, setImageState] = useState(image)
   const [searchResults, setSearchResults] = useState<CompleteRef[]>([])
   const { hasShareIntent, shareIntent, resetShareIntent } = useShareIntentContext()
 
+  // Search result item
   const renderItem = ({ item }: { item: CompleteRef }) => {
     return (
       <Pressable
@@ -42,6 +44,7 @@ export const SearchOrAddRef = ({
     )
   }
 
+  // Update current ref
   const updateState = (u: string, data: any) => {
     setUrlState(u)
     if (data?.title) {
@@ -52,6 +55,7 @@ export const SearchOrAddRef = ({
     }
   }
 
+  // Update the search query
   const updateQuery = async (q: string) => {
     const search = async () => {
       if (q === '') return []
@@ -74,6 +78,17 @@ export const SearchOrAddRef = ({
   }
 
   useEffect(() => {
+    const titles = searchResults.map((r) => r.title?.toLowerCase())
+
+    if (titles.includes(searchQuery.toLowerCase())) {
+      setDisableNewRef(true)
+    } else {
+      setDisableNewRef(false)
+    }
+  }, [searchQuery, searchResults])
+
+  // Handle incoming share intent
+  useEffect(() => {
     const useIntent = async (u: string) => {
       const data = await getLinkPreview(u)
       updateState(u, data)
@@ -83,6 +98,7 @@ export const SearchOrAddRef = ({
     }
   }, [hasShareIntent, shareIntent])
 
+  // Handle paste
   useEffect(() => {
     const doPaste = async () => {
       const u = await Clipboard.getUrlAsync()
@@ -97,13 +113,6 @@ export const SearchOrAddRef = ({
       doPaste()
     }
   }, [paste])
-
-  useEffect(() => {
-    return () => {
-      console.log('reset')
-      // resetShareIntent()
-    }
-  }, [])
 
   return (
     <View
@@ -126,7 +135,7 @@ export const SearchOrAddRef = ({
         onChangeText={updateQuery}
       />
 
-      {searchQuery !== '' && !noNewRef && (
+      {searchQuery !== '' && !noNewRef && !disableNewRef && (
         <Pressable
           onPress={() => onComplete({ title: searchQuery, image: imageState, url: urlState })}
         >

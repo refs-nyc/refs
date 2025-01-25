@@ -145,12 +145,6 @@ export const CategoriseRef = ({
           )}
         </YStack>
       </ScrollView>
-      <Button
-        style={{ position: 'absolute', bottom: s.$2 }}
-        variant="fluid"
-        onPress={done}
-        title="Done"
-      />
     </>
   )
 }

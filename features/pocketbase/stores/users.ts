@@ -9,7 +9,9 @@ export const isProfile = (profile: Profile | EmptyProfile): profile is Profile =
   return Object.keys(profile).length > 0
 }
 
-export const isExpandedProfile = (profile: ExpandedProfile | EmptyProfile): profile is ExpandedProfile => {
+export const isExpandedProfile = (
+  profile: ExpandedProfile | EmptyProfile
+): profile is ExpandedProfile => {
   return Object.keys(profile).length > 0
 }
 
@@ -43,15 +45,15 @@ export const useUserStore = create<{
     try {
       const record = await pocketbase
         .collection('users')
-        .getFirstListItem<
-          ExpandedProfile
-        >(`userName = "${userName}"`, { expand: 'items,items.ref,items.children' })
+        .getFirstListItem<ExpandedProfile>(`userName = "${userName}"`, {
+          expand: 'items,items.ref,items.children',
+        })
 
       set(() => ({
         profile: record,
         profileItems:
           record?.expand?.items?.filter((itm: Item) => !itm.backlog).sort(gridSort) || [],
-        profileBacklog:
+        backlogItems:
           record?.expand?.items?.filter((itm: Item) => itm.backlog).sort(createdSort) || [],
       }))
 
@@ -218,7 +220,11 @@ export const useUserStore = create<{
     try {
       const updatedRecord = await pocketbase
         .collection('users')
-        .update<ExpandedProfile>(pocketbase.authStore.record.id, { 'items-': itemId }, { expand: 'items,items.ref' })
+        .update<ExpandedProfile>(
+          pocketbase.authStore.record.id,
+          { 'items-': itemId },
+          { expand: 'items,items.ref' }
+        )
 
       set(() => ({
         user: updatedRecord,

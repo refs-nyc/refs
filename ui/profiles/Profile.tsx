@@ -35,7 +35,7 @@ export const Profile = ({ userName }: { userName: string }) => {
   const [backlogItems, setBacklogItems] = useState<ExpandedItem[]>([])
   const [removingId, setRemovingId] = useState('')
 
-  const { user } = useUserStore()
+  const { user, getProfile } = useUserStore()
   const { remove, moveToBacklog } = useItemStore()
 
   const handleMoveToBacklog = async () => {
@@ -80,15 +80,15 @@ export const Profile = ({ userName }: { userName: string }) => {
   }, [hasShareIntent])
 
   useEffect(() => {
-    const getProfile = async () => {
+    const init = async () => {
       try {
+        await getProfile(userName)
         await refreshGrid(userName)
       } catch (error) {
         console.error(error)
       }
     }
-
-    getProfile()
+    init()
   }, [userName])
 
   return (
@@ -140,7 +140,12 @@ export const Profile = ({ userName }: { userName: string }) => {
                   >
                     <Heading tag="h3normal">My Backlog</Heading>
                     <View style={{ height: s.$025, backgroundColor: c.black, flex: 1 }}></View>
-                    <Pressable onPress={() => setAddingTo('backlog')}>
+                    <Pressable
+                      onPress={() => {
+                        console.log('set adding to backlog')
+                        setAddingTo('backlog')
+                      }}
+                    >
                       <Ionicons size={s.$3} name="add-circle-outline" />
                     </Pressable>
                   </XStack>
@@ -182,12 +187,6 @@ export const Profile = ({ userName }: { userName: string }) => {
                           )}
                         </Pressable>
                       ))}
-                      {/* <FlatList
-                        horizontal={false}
-                        data={backlogItems}
-                        keyExtractor={(item: Item) => item.id}
-                        renderItem={({ item }) => <RefListItem r={item?.expand?.ref} />}
-                      /> */}
                     </YStack>
                   ) : (
                     <Heading style={{ textAlign: 'center' }} tag="mutewarn">

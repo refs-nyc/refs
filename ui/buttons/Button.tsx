@@ -39,6 +39,8 @@ export const Button = (props: ButtonProps) => {
     iconVariant = styles[`${variant}Icon` as keyof typeof styles]
   }
 
+  console.log(disabled)
+
   return (
     <Pressable
       style={[

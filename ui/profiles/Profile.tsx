@@ -23,7 +23,7 @@ import { isProfile } from '@/features/pocketbase/stores/users'
 import { gridSort, createdSort } from '@/ui/profiles/sorts'
 
 export const Profile = ({ userName }: { userName: string }) => {
-  const { firstVisit, addingTo } = useLocalSearchParams()
+  const { firstVisit, addingTo, removingId } = useLocalSearchParams()
 
   const { editingBacklog, stopEditBacklog, startEditBacklog } = useUIStore()
   const { hasShareIntent } = useShareIntentContext()
@@ -33,13 +33,16 @@ export const Profile = ({ userName }: { userName: string }) => {
   // const [addingTo, setAddingTo] = useState<'' | 'grid' | 'backlog'>('')
   const [gridItems, setGridItems] = useState<Item[]>([])
   const [backlogItems, setBacklogItems] = useState<ExpandedItem[]>([])
-  const [removingId, setRemovingId] = useState('')
+  // const [removingId, setRemovingId] = useState('')
 
   const { user, getProfile } = useUserStore()
   const { remove, moveToBacklog } = useItemStore()
 
   const setAddingTo = (str: string) => {
     router.setParams({ addingTo: str })
+  }
+  const setRemovingId = (str: string) => {
+    router.setParams({ removingId: str })
   }
 
   const handleMoveToBacklog = async () => {
@@ -208,7 +211,7 @@ export const Profile = ({ userName }: { userName: string }) => {
         </YStack>
       </ScrollView>
 
-      {removingId !== '' && (
+      {removingId && (
         <Drawer close={() => setRemovingId('')}>
           <YStack gap={s.$08} style={{ marginTop: s.$3, marginBottom: s.$6 }}>
             <Button

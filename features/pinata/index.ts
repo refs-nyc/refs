@@ -9,7 +9,7 @@ export const getPinataImage = async (url: string, imageOptions: OptimizeImageOpt
   console.log(url)
   const cid = /files\/(.*)(?:\?)/g.exec(url)
 
-  if (!cid?.[1] || !imageOptions.width || !imageOptions.height) return url
+  if (!cid?.[1] || !imageOptions?.width || !imageOptions?.height) return url
 
   const constructedUrl = `https://violet-fashionable-blackbird-836.mypinata.cloud/files/${cid[1]}?img-width=${imageOptions.width}&img-height=${imageOptions.height}`
 

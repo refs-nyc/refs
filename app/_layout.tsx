@@ -82,7 +82,6 @@ export default function RootLayout() {
       SplashScreen.hideAsync()
 
       // Check if the user is already logged in
-      console.log(pocketbase.authStore.isValid)
       if (pocketbase.authStore.isValid) {
         console.log('user is logged in')
       } else {

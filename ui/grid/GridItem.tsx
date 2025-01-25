@@ -17,7 +17,6 @@ export const GridItem = ({
   i: number
   onPress?: () => {}
 }) => {
-  console.log(item.expand.ref)
   return (
     <>
       {item && (

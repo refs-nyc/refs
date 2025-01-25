@@ -1,4 +1,4 @@
-import { SizableText } from '@/ui'
+import { SizableText } from '@/ui/typo/SizableText'
 import { GridTile } from './GridTile'
 import { View } from 'react-native'
 import { s } from '@/features/style'

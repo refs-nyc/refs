@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { pocketbase } from '@/features/pocketbase'
-import { XStack } from '@/ui'
+import { XStack } from '@/ui/core/Stacks'
 import { View, Text } from 'react-native'
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { s, c } from '@/features/style'

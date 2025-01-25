@@ -1,5 +1,5 @@
 import { View, Text, Pressable } from 'react-native'
-import { XStack } from '@/ui'
+import { XStack } from '@/ui/core/Stacks'
 import { Image } from 'expo-image'
 import { s, c } from '@/features/style'
 

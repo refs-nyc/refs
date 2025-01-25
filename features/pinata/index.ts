@@ -6,14 +6,11 @@ export type OptimizeImageOptions = {
 import * as ImagePicker from 'expo-image-picker'
 
 export const getPinataImage = async (url: string, imageOptions: OptimizeImageOptions) => {
-  console.log(url)
   const cid = /files\/(.*)(?:\?)/g.exec(url)
 
   if (!cid?.[1] || !imageOptions?.width || !imageOptions?.height) return url
 
   const constructedUrl = `https://violet-fashionable-blackbird-836.mypinata.cloud/files/${cid[1]}?img-width=${imageOptions.width}&img-height=${imageOptions.height}`
-
-  console.log(constructedUrl)
 
   const options = {
     method: 'POST',
@@ -27,9 +24,6 @@ export const getPinataImage = async (url: string, imageOptions: OptimizeImageOpt
   try {
     const response = await fetch('https://api.pinata.cloud/v3/files/sign', options)
     const result = await response.json()
-
-    console.log(result.data)
-
     return result.data
   } catch (error) {
     console.error(error)
@@ -95,8 +89,6 @@ export const pinataUpload = async (
   try {
     const response = await fetch('https://uploads.pinata.cloud/v3/files', options)
     const result = await response.json()
-
-    console.log(result)
 
     const { data: url } = await pinataSignedUrl(result.data.cid)
 

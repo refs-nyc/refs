@@ -1,4 +1,4 @@
-import { XStack, SizableText } from '@/ui'
+import { XStack } from '@/ui/core/Stacks'
 import { Button as NativeButton, Text, StyleSheet, Pressable } from 'react-native'
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { c, s, t } from '@/features/style'
@@ -38,8 +38,6 @@ export const Button = (props: ButtonProps) => {
     textVariant = styles[`${variant}Text` as keyof typeof styles]
     iconVariant = styles[`${variant}Icon` as keyof typeof styles]
   }
-
-  console.log(disabled)
 
   return (
     <Pressable

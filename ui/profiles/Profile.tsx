@@ -1,6 +1,10 @@
 import type { Item } from '@/features/pocketbase/stores/types'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { Drawer, NewRef, Heading, XStack, YStack, Button } from '@/ui'
+import { XStack, YStack } from '@/ui/core/Stacks'
+import { Drawer } from '@/ui/drawers/Drawer'
+import { Button } from '@/ui/buttons/Button'
+import { Heading } from '@/ui/typo/Heading'
+import { NewRef } from "@/ui/actions/NewRef"
 import { useUIStore } from '../state'
 import { ProfileHeader } from './ProfileHeader'
 import { FirstVisitScreen } from './FirstVisitScreen'
@@ -33,6 +37,7 @@ export const Profile = ({ userName }: { userName: string }) => {
   // const [addingTo, setAddingTo] = useState<'' | 'grid' | 'backlog'>('')
   const [gridItems, setGridItems] = useState<Item[]>([])
   const [backlogItems, setBacklogItems] = useState<ExpandedItem[]>([])
+  const [canAdd, setCanAdd] = useState<boolean>(false)
   // const [removingId, setRemovingId] = useState('')
 
   const { user, getProfile } = useUserStore()
@@ -57,6 +62,8 @@ export const Profile = ({ userName }: { userName: string }) => {
 
   const refreshGrid = async (userName: string) => {
     try {
+      setGridItems([])
+      setBacklogItems([])
       const record = await pocketbase
         .collection<ProfileType>('users')
         .getFirstListItem<ExpandedProfile>(`userName = "${userName}"`, {
@@ -76,10 +83,6 @@ export const Profile = ({ userName }: { userName: string }) => {
     }
   }
 
-  const canAdd = useMemo(() => {
-    return pocketbase?.authStore?.record?.userName === userName
-  }, [pocketbase.authStore, pocketbase, userName, user])
-
   useEffect(() => {
     if (hasShareIntent) {
       setAddingTo(gridItems.length < 12 ? 'grid' : 'backlog')
@@ -91,6 +94,7 @@ export const Profile = ({ userName }: { userName: string }) => {
       try {
         await getProfile(userName)
         await refreshGrid(userName)
+        setCanAdd(pocketbase?.authStore?.record?.userName === userName)
       } catch (error) {
         console.error(error)
       }
@@ -237,10 +241,8 @@ export const Profile = ({ userName }: { userName: string }) => {
           <NewRef
             backlog={addingTo === 'backlog'}
             onNewRef={async (itm: Item) => {
-              console.log(itm)
               await refreshGrid(userName)
               if (itm?.list) router.push(`/user/${userName}/details?initialId=${itm.id}`)
-              console.log(itm.id)
               setAddingTo('')
             }}
             onCancel={() => {

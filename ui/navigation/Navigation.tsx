@@ -17,9 +17,7 @@ export const Navigation = () => {
   const { addingTo, removingId } = useGlobalSearchParams()
 
   useEffect(() => {
-    console.log('user')
-    console.log(user)
-    console.log(user)
+    console.log('user:', user)
   }, [user])
 
   if (

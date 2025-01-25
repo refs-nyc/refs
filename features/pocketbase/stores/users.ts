@@ -83,11 +83,9 @@ export const useUserStore = create<{
       if (!pocketbase.authStore.record) {
         throw new Error('not logged in')
       }
-      console.log(pocketbase.authStore.record.id)
       const userRecord = await pocketbase
         .collection<UsersRecord>('users')
         .getOne(pocketbase.authStore.record.id)
-      console.log(userRecord)
       const record = await pocketbase
         .collection<UsersRecord>('users')
         .update(pocketbase.authStore.record.id, { ...fields })

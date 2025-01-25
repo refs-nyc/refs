@@ -20,7 +20,6 @@ export const useRefStore = create<{
     console.log('STAGED REF', stagedRef)
     const record = await pocketbase.collection('refs').create(stagedRef)
     console.log('REF RECORD,', record)
-    console.log(record)
 
     set((state) => ({
       refs: [...state.refs, record],

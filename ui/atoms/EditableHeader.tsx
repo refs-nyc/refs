@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { TextInput, Pressable } from 'react-native'
-import { XStack, Heading } from '@/ui'
+import { XStack } from '@/ui/core/Stacks'
+import { Heading } from "@/ui/typo/Heading"
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { s, c, t } from '@/features/style'
 import * as Clipboard from 'expo-clipboard'

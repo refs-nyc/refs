@@ -1,5 +1,7 @@
 import { Image } from 'expo-image'
-import { YStack, XStack, Heading, Shareable } from '@/ui'
+import { YStack, XStack } from '@/ui/core/Stacks'
+import { Heading } from '@/ui/typo/Heading'
+import { Shareable } from '@/ui/atoms/Shareable'
 import { s, c } from '@/features/style'
 import { Link, usePathname } from 'expo-router'
 import { Profile } from '@/features/pocketbase/stores/types'

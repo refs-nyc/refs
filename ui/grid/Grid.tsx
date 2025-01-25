@@ -21,7 +21,7 @@ export const Grid = ({
   canAdd?: boolean
 }) => {
   useEffect(() => {
-    console.log('items updated', items.length)
+    // console.log('grid: items updated', items.length)
   }, [items])
   const gridSize = columns * rows
 

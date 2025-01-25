@@ -36,7 +36,7 @@ export const EditableHeader = ({
       }
 
       if (data?.images?.length > 0) {
-        console.log('IUMAGE', data.images[0])
+        console.log('IMAGE', data.images[0])
         setImageState(data.images[0])
       }
     })

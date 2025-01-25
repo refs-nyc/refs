@@ -24,7 +24,7 @@ const win = Dimensions.get('window')
 
 export const RefForm = ({
   r,
-  placeholder = 'What is it',
+  placeholder = 'Add a title',
   onComplete,
   onCancel,
   backlog = false,
@@ -181,7 +181,7 @@ export const RefForm = ({
             justifyContent: 'space-between',
           }}
         >
-          {currentRef.url === '' && (
+          {!currentRef?.url && (
             <Button
               title="Create List"
               variant="outlineFluid"
@@ -197,7 +197,7 @@ export const RefForm = ({
             title="Add Ref"
             variant="fluid"
             style={{ width: currentRef.url ? '100%' : '48%', minWidth: 0 }}
-            disabled={pinataSource === 'none'}
+            disabled={!currentRef?.image || !currentRef?.title}
             onPress={() => submit()}
           />
         </View>

@@ -130,7 +130,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     width: '100%',
-    height: 10,
+    height: 20,
+    // backgroundColor: 'red',
   },
   grip: {
     flex: 0,

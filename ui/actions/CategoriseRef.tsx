@@ -120,29 +120,14 @@ export const CategoriseRef = ({
               variant="basicLeft"
               iconColor={c.accent}
               iconSize={s.$2}
-              onPress={() => categorise('other')}
+              onPress={() => {
+                categorise('other')
+                done()
+              }}
               iconBefore="infinite"
               title="Other"
             />
           </View>
-          {category === 'other' && (
-            <>
-              <TextInput
-                autoFocus={true}
-                style={{
-                  backgroundColor: c.white,
-                  borderRadius: s.$075,
-                  width: '100%',
-                  paddingVertical: s.$08,
-                  paddingHorizontal: s.$1,
-                  marginBottom: s.$08,
-                }}
-                placeholder="Explain its essence"
-                onChangeText={setMeta}
-              ></TextInput>
-              <Button variant="fluid" onPress={done} title="Done" />
-            </>
-          )}
         </YStack>
       </ScrollView>
     </>

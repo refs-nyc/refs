@@ -14,7 +14,7 @@ export const Navigation = () => {
   const { user } = useUserStore()
 
   const pathName = usePathname()
-  const { addingTo } = useGlobalSearchParams()
+  const { addingTo, removingId } = useGlobalSearchParams()
 
   useEffect(() => {
     console.log('user')
@@ -29,7 +29,8 @@ export const Navigation = () => {
     pathName.includes('/user/new') ||
     pathName.includes('/details') ||
     addingTo === 'grid' ||
-    addingTo === 'backlog'
+    addingTo === 'backlog' ||
+    !!removingId
   ) {
     return <></>
   }
@@ -41,7 +42,7 @@ export const Navigation = () => {
         zIndex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        bottom: s.$4,
+        bottom: s.$5,
         right: 0,
         left: 0,
       }}
@@ -56,14 +57,14 @@ export const Navigation = () => {
           gap: s.$1,
           flexDirection: 'row',
           backgroundColor: c.surface,
-          paddingVertical: s.$075,
+          paddingVertical: s.$08,
           paddingHorizontal: s.$1,
         }}
       >
         {pocketbase.authStore.record ? (
-          <View style={{ position: 'relative', marginTop: 4, marginLeft: 4 }}>
+          <View>
             <Link href={`/user/${pocketbase.authStore.record.userName}`}>
-              <Avatar source={pocketbase.authStore.record.image} size={33} />
+              <Avatar source={pocketbase.authStore.record.image} size={36} />
             </Link>
           </View>
         ) : (
@@ -74,11 +75,11 @@ export const Navigation = () => {
         <Link href="/">
           <Ionicons name="globe" size={36} color={c.accent} />
         </Link>
-        <View style={{ position: 'relative', marginLeft: -2, marginTop: 2, paddingRight: 3 }}>
+        {/* <View style={{ position: 'relative', marginLeft: -2, marginTop: 2, paddingRight: 3 }}>
           <Link href="/">
             <Ionicons name="paper-plane" size={33} />
           </Link>
-        </View>
+        </View> */}
       </View>
     </Animated.View>
   )

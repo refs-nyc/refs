@@ -68,23 +68,31 @@ export const EditableHeader = ({
           justifyContent: 'space-between',
           alignItems: 'start',
           minHeight: 44,
+          // backgroundColor: 'green',
         }}
       >
         {!editing && !addingUrl && (
-          <XStack gap={s.$08} style={{ flexShrink: 1, flexDirection: 'row', alignItems: 'center' }}>
+          <XStack
+            gap={s.$08}
+            style={{
+              // backgroundColor: 'blue',
+              flexShrink: 1,
+              flexDirection: 'row',
+              alignItems: 'start',
+              // width: 200,
+            }}
+          >
             <Pressable onPress={() => setEditing(true)}>
               <Heading
                 tag="h1"
                 style={{
                   textAlign: 'left',
+                  // backgroundColor: 'blue',
                   color: titleState == placeholder ? c.muted : c.black,
                 }}
               >
                 {titleState}
               </Heading>
-            </Pressable>
-            <Pressable onPress={() => setEditing(true)}>
-              <Ionicons size={28} name="pencil" color={c.muted} />
             </Pressable>
           </XStack>
         )}
@@ -92,7 +100,13 @@ export const EditableHeader = ({
           <TextInput
             style={[
               t.h1,
-              { flexShrink: 1, padding: 0, margin: 0, transform: 'translate(0, -1px)' },
+              {
+                flexShrink: 1,
+                // backgroundColor: 'blue',
+                padding: 0,
+                margin: 0,
+                transform: 'translate(0, -1px)',
+              },
             ]}
             autoFocus={true}
             value={titleState == placeholder ? '' : titleState}
@@ -124,8 +138,8 @@ export const EditableHeader = ({
           />
         )}
 
-        <XStack style={{ alignItems: 'center', paddingTop: s.$05 }} gap={s.$09}>
-          {editing && (
+        <XStack style={{ alignItems: 'center', paddingTop: s.$025 }} gap={s.$09}>
+          {editing ? (
             <Pressable
               onPress={() => {
                 setEditing(false)
@@ -134,8 +148,30 @@ export const EditableHeader = ({
             >
               <Ionicons size={28} name="checkbox" color={c.muted} />
             </Pressable>
+          ) : (
+            <Pressable
+              style={{
+                width: 28,
+                // backgroundColor: 'red',
+                flexShrink: 0,
+              }}
+              onPress={() => setEditing(true)}
+            >
+              <Ionicons
+                size={28}
+                name={titleState === 'placeholder' || titleState === '' ? 'add' : 'pencil'}
+                color={c.muted}
+              />
+            </Pressable>
           )}
-          <Pressable onPress={() => setAddingUrl(true)}>
+          <Pressable
+            style={{
+              width: 28,
+              // backgroundColor: 'red',
+              flexShrink: 0,
+            }}
+            onPress={() => setAddingUrl(true)}
+          >
             {!addingUrl && (
               <Ionicons
                 name="link-outline"

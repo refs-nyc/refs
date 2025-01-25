@@ -2,7 +2,7 @@ import { useState, useRef } from 'react'
 import type { Profile } from '@/features/pocketbase/stores/types'
 import { Image } from 'expo-image'
 import { Drawer } from '../drawers/Drawer'
-import { Link, useGlobalSearchParams } from 'expo-router'
+import { Link, useGlobalSearchParams, useRouter } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { View, Text, Dimensions, Pressable } from 'react-native'
 import Carousel, { ICarouselInstance } from 'react-native-reanimated-carousel'
@@ -102,8 +102,10 @@ const renderItem = ({ item }: { item: ExpandedItem }) => {
 }
 
 export const Details = ({ initialId = '' }: { initialId: string }) => {
+  const [isCarouselVisible, setIsCarouselVisible] = useState(true)
   const scrollOffsetValue = useSharedValue<number>(10)
   const { userName } = useGlobalSearchParams()
+  const router = useRouter()
 
   const { profile, getProfile } = useUserStore()
 
@@ -126,7 +128,7 @@ export const Details = ({ initialId = '' }: { initialId: string }) => {
   return (
     <>
       <View style={{ paddingTop: Math.max(insets.top, 16) }}>
-        <Link
+        <Pressable
           style={{
             position: 'absolute',
             top: insets.top + s.$1,
@@ -134,22 +136,27 @@ export const Details = ({ initialId = '' }: { initialId: string }) => {
             padding: s.$1,
             zIndex: 99,
           }}
-          href={`/user/${userName}`}
+          onPress={() => {
+            setIsCarouselVisible(false)
+            setTimeout(() => router.back(), 0)
+          }}
         >
           <Ionicons size={s.$1} name="close" color={c.muted} />
-        </Link>
-        <Carousel
-          loop={true}
-          ref={ref}
-          data={data}
-          height={win.height}
-          width={win.width * 0.8}
-          defaultIndex={defaultIndex}
-          style={{ overflow: 'visible', top: 0 }}
-          defaultScrollOffsetValue={scrollOffsetValue}
-          onSnapToItem={(index) => console.log('current index:', index)}
-          renderItem={renderItem}
-        />
+        </Pressable>
+        {isCarouselVisible && (
+          <Carousel
+            loop={true}
+            ref={ref}
+            data={data}
+            height={win.height}
+            width={win.width * 0.8}
+            defaultIndex={defaultIndex}
+            style={{ overflow: 'visible', top: 0 }}
+            defaultScrollOffsetValue={scrollOffsetValue}
+            onSnapToItem={(index) => console.log('current index:', index)}
+            renderItem={renderItem}
+          />
+        )}
       </View>
 
       {addingToList !== '' && addingItem && (

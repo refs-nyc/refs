@@ -10,7 +10,7 @@ import { getLinkPreview, getPreviewFromContent } from 'link-preview-js'
 import { ShareIntent as ShareIntentType, useShareIntentContext } from 'expo-share-intent'
 import * as Clipboard from 'expo-clipboard'
 
-export const SearchOrAddRef = ({
+export const SearchRef = ({
   noNewRef,
   url,
   image,

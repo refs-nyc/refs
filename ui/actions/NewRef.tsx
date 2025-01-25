@@ -1,208 +1,189 @@
-import { useState, useEffect } from 'react'
-import { usePathname } from 'expo-router'
-import {
-  View,
-  Pressable,
-  Dimensions,
-  TextInput,
-  ScrollView,
-  KeyboardAvoidingView,
-} from 'react-native'
-import { Heading, XStack, YStack } from '@/ui'
+import { DismissKeyboard } from '../atoms/DismissKeyboard'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Picker } from '../inputs/Picker'
-import { PinataImage } from '../images/PinataImage'
-import { EditableHeader } from '../atoms/EditableHeader'
-import { addToProfile } from '@/features/pocketbase'
+import { Camera } from '../inputs/Camera'
+import { YStack } from '@/ui'
+import { router } from 'expo-router'
+import { useUserStore, isProfile } from '@/features/pocketbase/stores/users'
+import Animated, { useAnimatedKeyboard, useAnimatedStyle } from 'react-native-reanimated'
 import { Button } from '../buttons/Button'
-import Ionicons from '@expo/vector-icons/Ionicons'
-import { useItemStore } from '@/features/pocketbase/stores/items'
+import { Dimensions, KeyboardAvoidingView } from 'react-native'
+import { useState, useEffect } from 'react'
+import { RefForm } from '../actions/RefForm'
+import { SearchRef } from '../actions/SearchRef'
+import { c } from '@/features/style'
+import { StagedRef, CompleteRef, Item, ExpandedItem } from '@/features/pocketbase/stores/types'
 import type { ImagePickerAsset } from 'expo-image-picker'
-import { c, s } from '@/features/style'
-import { CompleteRef, StagedRef, Item } from '@/features/pocketbase/stores/types'
+import { EditableList } from '../lists/EditableList'
+import { CategoriseRef } from './CategoriseRef'
+import { ShareIntent as ShareIntentType, useShareIntentContext } from 'expo-share-intent'
+import { s } from '@/features/style'
+
+import * as Clipboard from 'expo-clipboard'
 
 const win = Dimensions.get('window')
 
 export const NewRef = ({
-  r,
-  placeholder = 'What is it',
-  onComplete,
+  onNewRef,
   onCancel,
   backlog = false,
-  attach = true,
 }: {
-  r: StagedRef
-  placeholder?: string
-  onComplete: (i: Item) => void
+  onNewRef: (itm: Item) => void
   onCancel: () => void
   backlog?: boolean
-  attach?: boolean
 }) => {
-  const [currentRef, setCurrentRef] = useState<StagedRef>({ ...r })
-  const [currentRefComment, setCurrentRefComment] = useState<string>()
-  const [imageAsset, setImageAsset] = useState(r?.image || null)
-  const [pinataSource, setPinataSource] = useState('')
-  const [picking, setPicking] = useState(false)
+  const [textOpen, setTextOpen] = useState(false)
+  const [urlOpen, setUrlOpen] = useState(false)
+  const [hasUrl, setHasUrl] = useState(false)
+  const [pickerOpen, setPickerOpen] = useState(false)
+  const [cameraOpen, setCameraOpen] = useState(false)
+  const [step, setStep] = useState<'' | 'add' | 'search' | 'editList' | 'categorise'>('')
+  const [itemData, setItemData] = useState<ExpandedItem | null>(null)
+  const [refData, setRefData] = useState<StagedRef | CompleteRef>({})
+  const { hasShareIntent } = useShareIntentContext()
 
-  const pathname = usePathname()
+  const insets = useSafeAreaInsets()
+  const keyboard = useAnimatedKeyboard()
 
-  const updateRefImage = (image: string) => {
-    setPinataSource(image)
+  const { user } = useUserStore()
 
-    const u = { ...r, image }
-    setCurrentRef(u)
-  }
-
-  const updateRefTitle = (title: string) => {
-    const u = { ...r, title }
-    setCurrentRef(u)
-  }
-
-  const updateRefUrl = (url: string) => {
-    const u = { ...r, url }
-    setCurrentRef(u)
-  }
-
-  const updateData = (d: { title: string; url: string; image: string }) => {
-    console.log('UPDATE')
-    console.log(d.image)
-    updateRefTitle(d.title)
-    updateRefImage(d.image)
-    updateRefUrl(d.url)
-    setImageAsset(d.image)
-  }
-
-  const submit = async (extraFields?: any) => {
-    console.log('EXTRA FIELDS', extraFields, backlog)
-    const data = {
-      ...currentRef,
-      image: pinataSource,
-      backlog,
-      ...extraFields,
+  const animatedStyle = useAnimatedStyle(() => {
+    if (step === '') return { height: 500 }
+    return {
+      height: win.height - s.$2,
     }
+  })
 
-    console.log('DATA:', data)
+  const addImageRef = async (asset: ImagePickerAsset) => {
+    setRefData({ image: asset })
+    setStep('add')
+  }
 
-    try {
-      const item = await addToProfile(data, !pathname.includes('onboarding'), {
-        comment: currentRefComment,
-        backlog,
-      })
-      onComplete(item)
-    } catch (e) {
-      console.error(e)
-    } finally {
-      console.log('Done')
+  const addRefFromResults = (newRef: StagedRef) => {
+    setRefData(newRef)
+    setStep('add')
+  }
+
+  const handleNewRefCreated = (item: ExpandedItem) => {
+    console.log('HANDLE NEW REF CREATED', item)
+    if (!item.expand?.ref)
+      throw new Error('unexpected: handleNewRefCreated should always be called with ExpandedItem')
+    setItemData(item)
+    setRefData(item.expand?.ref)
+
+    if (item.list) {
+      setStep('editList')
+    } else {
+      setStep('categorise')
     }
   }
+
+  useEffect(() => {
+    if (hasShareIntent) {
+      setStep('search')
+    }
+  }, [hasShareIntent])
+
+  useEffect(() => {
+    const detectUrl = async () => {
+      const hasUrl = await Clipboard.hasUrlAsync()
+
+      if (hasUrl) {
+        setHasUrl(true)
+      }
+    }
+
+    detectUrl()
+  }, [step])
 
   return (
-    <KeyboardAvoidingView
-      behavior="height"
-      style={{
-        // paddingTop: s.$2,
-        marginBottom: s.$4,
-        flex: 1,
-        alignItems: 'center',
-        gap: s.$4,
-      }}
-    >
-      <ScrollView
-        contentContainerStyle={{
-          alignItems: 'center',
-          gap: s.$2,
-          paddingVertical: s.$2,
+    <DismissKeyboard>
+      <KeyboardAvoidingView
+        behavior="height"
+        style={{
+          marginHorizontal: 12,
+          flex: 1,
         }}
-        style={{ flex: 1, width: '100%' }}
       >
-        {imageAsset ? (
-          <PinataImage
-            asset={imageAsset}
-            onSuccess={updateRefImage}
-            onFail={() => console.error('Cant ul')}
-          />
-        ) : (
-          <>
-            {picking && (
-              <Picker
-                onSuccess={(a: ImagePickerAsset) => {
-                  setImageAsset(a)
-                }}
-                onCancel={() => setPicking(false)}
-              />
-            )}
-            <View
-              style={{
-                width: 200,
-                height: 200,
-              }}
-            >
-              <Pressable style={{ flex: 1 }} onPress={() => setPicking(true)}>
-                <View
-                  style={{
-                    flex: 1,
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    borderWidth: 2,
-                    borderColor: c.black,
-                    borderRadius: s.$075,
-                  }}
-                >
-                  <Heading tag="h1light">+</Heading>
-                </View>
-              </Pressable>
-            </View>
-          </>
+        {pickerOpen && (
+          <Picker onSuccess={(asset) => addImageRef(asset)} onCancel={() => setPickerOpen(false)} />
         )}
-        <EditableHeader
-          onComplete={updateRefTitle}
-          onDataChange={updateData}
-          placeholder={placeholder}
-          title={r?.title || placeholder}
-          url={r?.url || ''}
-        />
-        {/* Notes */}
-        <TextInput
-          multiline={true}
-          numberOfLines={4}
-          placeholder="Care to comment?"
-          onChangeText={setCurrentRefComment}
-          style={{
-            backgroundColor: c.white,
-            borderRadius: s.$075,
-            width: '100%',
-            padding: s.$1,
-            minHeight: s.$12,
-            // minHeight: 2000,
-          }}
-        />
-        <View
-          style={{
-            width: '100%',
-            flexDirection: 'row',
-            justifyContent: 'space-between',
-          }}
+
+        <Animated.View
+          style={[animatedStyle, { justifyContent: 'flex-start', alignItems: 'stretch' }]}
         >
-          {currentRef.url === '' && (
-            <Button
-              title="Create List"
-              variant="outlineFluid"
-              style={{ width: '48%', minWidth: 0 }}
-              disabled={pinataSource === 'none'}
-              onPress={() => {
-                console.log('ABOUT TO ADD A LIST')
-                submit({ list: true })
+          {step === '' && (
+            <YStack gap="$4">
+              <Button
+                variant="basicLeft"
+                iconColor={c.black}
+                title="Type anything"
+                iconBefore="text-outline"
+                onPress={() => {
+                  setStep('search')
+                  setTextOpen(true)
+                }}
+              />
+              {hasUrl && (
+                <Button
+                  variant="basicLeft"
+                  align="flex-start"
+                  title="Add from clipboard"
+                  iconBefore="clipboard-outline"
+                  iconColor={c.black}
+                  onPress={() => {
+                    setStep('search')
+                    setUrlOpen(true)
+                  }}
+                />
+              )}
+              <Button
+                variant="basicLeft"
+                align="flex-start"
+                title="Add from Camera Roll"
+                iconBefore="image-outline"
+                iconColor={c.black}
+                onPress={() => {
+                  setStep('search')
+                  setPickerOpen(true)
+                }}
+              />
+            </YStack>
+          )}
+
+          {step === 'search' && (
+            <>
+              {textOpen && <SearchRef onComplete={addRefFromResults} />}
+              {urlOpen && <SearchRef paste={true} onComplete={addRefFromResults} />}
+              {hasShareIntent && <SearchRef onComplete={addRefFromResults} />}
+              {cameraOpen && <Camera />}
+            </>
+          )}
+
+          {step === 'add' && (
+            <RefForm
+              r={refData}
+              onComplete={handleNewRefCreated}
+              onCancel={() => setRefData({})}
+              backlog={backlog}
+            />
+          )}
+
+          {step === 'categorise' && (
+            <CategoriseRef item={itemData} existingRef={refData} onComplete={onNewRef} />
+          )}
+
+          {step === 'editList' && itemData && (
+            <EditableList
+              item={itemData}
+              onComplete={() => {
+                if (!isProfile(user) || !user.userName) onCancel()
+                onNewRef(itemData)
               }}
             />
           )}
-          <Button
-            title="Add Ref"
-            variant="fluid"
-            style={{ width: currentRef.url ? '100%' : '48%', minWidth: 0 }}
-            disabled={pinataSource === 'none'}
-            onPress={() => submit()}
-          />
-        </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+        </Animated.View>
+      </KeyboardAvoidingView>
+    </DismissKeyboard>
   )
 }

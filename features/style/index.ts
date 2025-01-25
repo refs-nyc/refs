@@ -161,7 +161,7 @@ export const typo = StyleSheet.create({
   },
 })
 
-const TILE_SIZE = (dimensions.width - s.$2 * 2 - s.$075) / 3
+const TILE_SIZE = (dimensions.width - s.$09 * 2 - s.$075) / 3
 
 export const t = typo
 

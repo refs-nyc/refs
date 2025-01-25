@@ -12,9 +12,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "refs-nyc.app",
-      "associatedDomains": [
-        "applinks:refs.nyc"
-      ],
+      "associatedDomains": ["applinks:refs.nyc"],
       "config": {
         "usesNonExemptEncryption": false
       },
@@ -43,6 +41,9 @@
         "projectId": "23b45cf1-7baf-4149-97b4-ff20b360b530"
       }
     },
-    "owner": "manusnijhoff"
+    "owner": "manusnijhoff",
+    "android": {
+      "package": "refsnyc.app"
+    }
   }
 }

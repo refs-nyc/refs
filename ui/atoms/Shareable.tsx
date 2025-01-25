@@ -3,7 +3,7 @@ import { Pressable, Share, Alert } from 'react-native'
 export const Shareable = ({
   children,
   style,
-  message = 'Refs - internet phonebook',
+  message = 'Refs - phonebook',
   url = 'https://refs.nyc',
   onShare,
 }: {

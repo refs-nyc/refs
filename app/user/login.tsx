@@ -37,13 +37,11 @@ export default function Screen() {
 
     if (index < data.length - 1) {
       const updated = updateStagedUser(formValues)
-      console.log(updated)
       // Valid?
       ref.current?.next()
     } else {
       if (formValues.login) {
         const result = await attemptLogin(formValues.login)
-        console.log(result)
       }
     }
   }

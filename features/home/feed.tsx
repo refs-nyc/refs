@@ -52,7 +52,6 @@ export const Feed = () => {
           .getList<ExpandedItem>(1, 30, { filter: ``, sort: '-created', expand: 'ref,creator' })
 
         setItems(records.items)
-        console.log('done')
       } catch (error) {
         console.error(error)
       }

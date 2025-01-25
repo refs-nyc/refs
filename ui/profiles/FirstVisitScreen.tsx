@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { Heading, XStack, YStack } from '@/ui'
+import { XStack, YStack } from '@/ui/core/Stacks'
+import { Heading } from "@/ui/typo/Heading"
 import { Image } from 'expo-image'
 import { Switch, View } from 'react-native'
 import { GridTile } from '../grid/GridTile'

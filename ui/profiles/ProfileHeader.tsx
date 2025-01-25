@@ -1,5 +1,7 @@
 import { Image } from 'expo-image'
-import { YStack, XStack, Heading, Shareable } from '@/ui'
+import { YStack, XStack } from '@/ui/core/Stacks'
+import { Heading } from '@/ui/typo/Heading'
+import { Shareable } from '@/ui/atoms/Shareable'
 import { s, c } from '@/features/style'
 import { Link, usePathname } from 'expo-router'
 import { Profile } from '@/features/pocketbase/stores/types'
@@ -10,8 +12,6 @@ export const ProfileHeader = ({ profile }: { profile: Profile }) => {
   const pathname = usePathname()
 
   const url = 'https://refs.nyc' + pathname
-
-  console.log(url)
 
   return (
     <YStack
@@ -36,13 +36,13 @@ export const ProfileHeader = ({ profile }: { profile: Profile }) => {
         {profile.id === pocketbase?.authStore?.record?.id ? (
           <Link href={`/user/${pocketbase.authStore.record.userName}/settings`}>
             <Image
-              style={{ width: s.$6, height: s.$6, borderRadius: '100%' }}
+              style={{ width: s.$6, height: s.$6, borderRadius: s.$6 / 2 }}
               source={profile.image}
             />
           </Link>
         ) : (
           <Image
-            style={{ width: s.$6, height: s.$6, borderRadius: '100%' }}
+            style={{ width: s.$6, height: s.$6, borderRadius: s.$6 / 2 }}
             source={profile.image}
           />
         )}

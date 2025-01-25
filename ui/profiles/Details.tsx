@@ -2,7 +2,7 @@ import { useState, useRef } from 'react'
 import type { Profile } from '@/features/pocketbase/stores/types'
 import { Image } from 'expo-image'
 import { Drawer } from '../drawers/Drawer'
-import { Link, useGlobalSearchParams, useRouter } from 'expo-router'
+import { Link, useGlobalSearchParams, usePathname, useRouter } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { View, Text, Dimensions, Pressable } from 'react-native'
 import Carousel, { ICarouselInstance } from 'react-native-reanimated-carousel'
@@ -104,12 +104,13 @@ const renderItem = ({ item }: { item: ExpandedItem }) => {
 export const Details = ({ initialId = '' }: { initialId: string }) => {
   const [isCarouselVisible, setIsCarouselVisible] = useState(true)
   const scrollOffsetValue = useSharedValue<number>(10)
+  const pathname = usePathname()
   const { userName } = useGlobalSearchParams()
   const router = useRouter()
 
   const { profile, getProfile } = useUserStore()
 
-  const userNameParam = typeof userName === 'string' ? userName : userName?.[0]
+  const userNameParam = pathname === '/' ? undefined : typeof userName === 'string' ? userName : userName?.[0]
   const ref = useRef<ICarouselInstance>(null)
   const insets = useSafeAreaInsets()
   const { addingToList, setAddingToList } = useUIStore()

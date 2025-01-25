@@ -3,7 +3,6 @@ import { View } from 'react-native'
 import { s } from '@/features/style'
 
 export const Avatar = ({ source, size = s.$3 }: { source: string; size: number }) => {
-  console.log('AVATAR', source)
   return (
     <>
       <View style={{ width: size, height: size }}>

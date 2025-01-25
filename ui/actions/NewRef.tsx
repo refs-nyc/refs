@@ -72,7 +72,7 @@ export const NewRef = ({
   }
 
   const submit = async (extraFields?: any) => {
-    console.log('EXTRA FIELDS', extraFields)
+    console.log('EXTRA FIELDS', extraFields, backlog)
     const data = {
       ...currentRef,
       image: pinataSource,
@@ -85,6 +85,7 @@ export const NewRef = ({
     try {
       const item = await addToProfile(data, !pathname.includes('onboarding'), {
         comment: currentRefComment,
+        backlog,
       })
       onComplete(item)
     } catch (e) {

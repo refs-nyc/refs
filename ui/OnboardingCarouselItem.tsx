@@ -28,7 +28,7 @@ export const OnboardingCarouselItem = ({
         style={{
           flex: 1,
           paddingVertical: 100,
-          marginHorizontal: s.$1half,
+          marginHorizontal: s.$08,
           justifyContent: 'center',
         }}
       >
@@ -93,7 +93,7 @@ export const OnboardingCarouselItem = ({
         style={{
           flex: 1,
           paddingVertical: 100,
-          marginHorizontal: s.$1half,
+          marginHorizontal: s.$08,
           justifyContent: 'center',
         }}
       >
@@ -154,7 +154,7 @@ export const OnboardingCarouselItem = ({
         style={{
           flex: 1,
           paddingVertical: 100,
-          marginHorizontal: s.$1half,
+          marginHorizontal: s.$08,
           justifyContent: 'center',
         }}
       >
@@ -216,7 +216,7 @@ export const OnboardingCarouselItem = ({
         style={{
           flex: 1,
           paddingVertical: 100,
-          marginHorizontal: s.$1half,
+          marginHorizontal: s.$075,
           justifyContent: 'center',
         }}
       >

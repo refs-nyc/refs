@@ -29,21 +29,12 @@ config.resolver.resolveRequest = (context, moduleName, platform) => {
   if (moduleName === 'module') {
     return { type: 'empty' }
   }
+  if (moduleName === 'quickjs-emscripten') {
+    return { type: 'empty' }
+  }
 
   // prevent import of canvas packages that are unused, but cause react native errors
   if (moduleName === '@canvas-js/modeldb-sqlite-wasm') {
-    return { type: 'empty' }
-  }
-  if (moduleName === '@canvas-js/network-explorer') {
-    return { type: 'empty' }
-  }
-  if (moduleName === '@canvas-js/cli') {
-    return { type: 'empty' }
-  }
-  if (moduleName === '@canvas-js/vm') {
-    return { type: 'empty' }
-  }
-  if (moduleName === 'quickjs-emscripten') {
     return { type: 'empty' }
   }
 

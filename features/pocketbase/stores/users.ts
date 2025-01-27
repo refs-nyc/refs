@@ -2,6 +2,7 @@ import { pocketbase } from '../pocketbase'
 import { create } from 'zustand'
 import { Profile, EmptyProfile, ExpandedProfile, Item } from './types'
 import { UsersRecord, UsersResponse, ItemsResponse } from './pocketbase-types'
+import { canvasApp } from './canvas'
 import { ClientResponseError } from 'pocketbase'
 import { gridSort, createdSort } from '@/ui/profiles/sorts'
 
@@ -89,6 +90,9 @@ export const useUserStore = create<{
       const record = await pocketbase
         .collection<UsersRecord>('users')
         .update(pocketbase.authStore.record.id, { ...fields })
+
+      await canvasApp.actions.updateUser(pocketbase.authStore.record.id, fields)
+
       return record
     } catch (err) {
       console.error(err)
@@ -127,6 +131,10 @@ export const useUserStore = create<{
         .create<ExpandedProfile>(finalUser, { expand: 'items,items.ref' })
 
       await get().loginWithPassword(finalUser.email, userPassword)
+
+      if (pocketbase?.authStore?.record?.id) {
+        await canvasApp.actions.registerUser({ id: pocketbase.authStore.record.id, ...finalUser, email: '', password: '', tokenKey: '', userName: record.userName })
+      }
 
       set(() => ({
         user: record,
@@ -199,6 +207,8 @@ export const useUserStore = create<{
       const updatedRecord = await pocketbase
         .collection<Profile>('users')
         .update(pocketbase.authStore.record.id, { '+items': itemId }, { expand: 'items,items.ref' })
+      await canvasApp.actions.attachItem(pocketbase.authStore.record.id, itemId)
+      
 
       set(() => ({
         user: updatedRecord,
@@ -223,6 +233,7 @@ export const useUserStore = create<{
           { 'items-': itemId },
           { expand: 'items,items.ref' }
         )
+        await canvasApp.actions.removeUserItemAssociation(pocketbase.authStore.record.id, itemId)
 
       set(() => ({
         user: updatedRecord,

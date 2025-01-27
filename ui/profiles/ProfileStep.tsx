@@ -11,7 +11,6 @@ import { DismissKeyboard } from '../atoms/DismissKeyboard'
 import { router } from 'expo-router'
 import { LOGIN_STATE } from '@/features/magic'
 import { s, c } from '@/features/style'
-import Carousel, { ICarouselInstance } from 'react-native-reanimated-carousel'
 
 export const ProfileStep = ({
   fields,
@@ -355,6 +354,77 @@ export const ProfileStep = ({
                     autoFocus={false}
                   >
                     {errors.lastName && (
+                      <SizableText
+                        style={{
+                          fontSize: s.$08,
+                          fontFamily: 'Inter',
+                          textAlign: 'center',
+                          color: c.accent,
+                        }}
+                      >
+                        This field is required
+                      </SizableText>
+                    )}
+                  </FormFieldWithIcon>
+                )}
+              />
+            </>
+          )}
+          {/* LastName */}
+          {fields.includes('lastName') && (
+            <>
+              <Controller
+                name="lastName"
+                control={control}
+                rules={{
+                  required: true,
+                }}
+                render={({ field: { onChange, value } }) => (
+                  <FormFieldWithIcon
+                    onChange={onChange}
+                    type="user"
+                    id="lastName"
+                    placeholder="Last Name"
+                    value={value}
+                    autoFocus={false}
+                  >
+                    {errors.lastName && (
+                      <SizableText
+                        style={{
+                          fontSize: s.$08,
+                          fontFamily: 'Inter',
+                          textAlign: 'center',
+                          color: c.accent,
+                        }}
+                      >
+                        This field is required
+                      </SizableText>
+                    )}
+                  </FormFieldWithIcon>
+                )}
+              />
+            </>
+          )}
+
+          {/* LastName */}
+          {fields.includes('location') && (
+            <>
+              <Controller
+                name="location"
+                control={control}
+                rules={{
+                  required: true,
+                }}
+                render={({ field: { onChange, value } }) => (
+                  <FormFieldWithIcon
+                    onChange={onChange}
+                    type="location"
+                    id="location"
+                    placeholder="Location"
+                    value={value}
+                    autoFocus={false}
+                  >
+                    {errors.location && (
                       <SizableText
                         style={{
                           fontSize: s.$08,

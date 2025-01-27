@@ -9,6 +9,7 @@ import { Avatar } from '../atoms/Avatar'
 import { c, s } from '@/features/style'
 import { pocketbase } from '@/features/pocketbase'
 import { useUserStore } from '@/features/pocketbase/stores/users'
+import { Icon } from '@/assets/icomoon/IconFont'
 
 export const Navigation = () => {
   const { user } = useUserStore()
@@ -71,7 +72,8 @@ export const Navigation = () => {
           </View>
         )}
         <Link href="/">
-          <Ionicons name="globe" size={36} color={c.accent} />
+          {/* <Ionicons name="globe" size={36} color={c.accent} /> */}
+          <Icon name="Globe" size={36} color={c.accent} />
         </Link>
         {/* <View style={{ position: 'relative', marginLeft: -2, marginTop: 2, paddingRight: 3 }}>
           <Link href="/">

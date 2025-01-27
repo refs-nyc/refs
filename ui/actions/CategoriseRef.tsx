@@ -61,7 +61,8 @@ export const CategoriseRef = ({
               iconColor={c.accent}
               iconSize={s.$2}
               onPress={() => categorise('place')}
-              iconBefore="location"
+              iconBefore="Castle"
+              iconBeforeCustom={true}
               title="Place"
             />
           </View>
@@ -91,7 +92,8 @@ export const CategoriseRef = ({
               iconColor={c.accent}
               iconSize={s.$2}
               onPress={() => categorise('artwork')}
-              iconBefore="color-palette-outline"
+              iconBefore="Palette"
+              iconBeforeCustom={true}
               title="Work of art"
             />
           </View>
@@ -124,7 +126,8 @@ export const CategoriseRef = ({
                 categorise('other')
                 done()
               }}
-              iconBefore="infinite"
+              iconBefore="Infinity"
+              iconBeforeCustom={true}
               title="Other"
             />
           </View>

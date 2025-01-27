@@ -299,6 +299,9 @@ PODS:
     - libavif/core
     - libdav1d (>= 0.6.0)
   - libdav1d (1.2.0)
+  - MMKV (2.0.2):
+    - MMKVCore (~> 2.0.2)
+  - MMKVCore (2.0.2)
   - OpenSSL-Universal (3.3.2000)
   - RCT-Folly (2024.01.01.00):
     - boost
@@ -1511,9 +1514,10 @@ PODS:
     - Yoga
   - react-native-get-random-values (1.11.0):
     - React-Core
-  - react-native-mmkv (3.1.0):
+  - react-native-mmkv (2.12.2):
     - DoubleConversion
     - glog
+    - MMKV (>= 1.3.3)
     - RCT-Folly (= 2024.01.01.00)
     - RCTRequired
     - RCTTypeSafety
@@ -2092,6 +2096,8 @@ SPEC REPOS:
   trunk:
     - libavif
     - libdav1d
+    - MMKV
+    - MMKVCore
     - OpenSSL-Universal
     - SDWebImage
     - SDWebImageAVIFCoder
@@ -2349,6 +2355,8 @@ SPEC CHECKSUMS:
   glog: 08b301085f15bcbb6ff8632a8ebaf239aae04e6a
   libavif: 84bbb62fb232c3018d6f1bab79beea87e35de7b7
   libdav1d: 23581a4d8ec811ff171ed5e2e05cd27bad64c39f
+  MMKV: 3eacda84cd1c4fc95cf848d3ecb69d85ed56006c
+  MMKVCore: 508b4d3a8ce031f1b5c8bd235f0517fb3f4c73a9
   OpenSSL-Universal: b60a3702c9fea8b3145549d421fdb018e53ab7b4
   RCT-Folly: 84578c8756030547307e4572ab1947de1685c599
   RCTDeprecation: 2c5e1000b04ab70b53956aa498bf7442c3c6e497
@@ -2380,7 +2388,7 @@ SPEC CHECKSUMS:
   React-Mapbuffer: bd6a2ffbf401f11cfc8b5e8f38acab9fe117620c
   React-microtasksnativemodule: 75d0a3c81d447ba8b7547c75baaf8a6cfec7e016
   react-native-get-random-values: d16467cf726c618e9c7a8c3c39c31faa2244bbba
-  react-native-mmkv: 757a7a035628ea5ef3d91b9ae0bc36409fda646b
+  react-native-mmkv: 59afde8e858765df83cb92dfeeca35a18420b503
   react-native-netinfo: cec9c4e86083cb5b6aba0e0711f563e2fbbff187
   react-native-quick-crypto: 8210a52a623c5eb33ddf24ef236a0fb0c2570c43
   react-native-safe-area-context: 8b8404e70b0cbf2a56428a17017c14c1dcc16448

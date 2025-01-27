@@ -12,9 +12,11 @@ export function UserDetailsScreen({
   initialId: string
 }) {
   const { profile, getProfile } = useUserStore()
+  const [canAdd, setCanAdd] = useState(false)
 
   useEffect(() => {
     const getProfileAsync = async () => {
+      setCanAdd(pocketbase?.authStore?.record?.userName === userName)
       try {
         await getProfile(userName)
       } catch (error) {
@@ -25,5 +27,7 @@ export function UserDetailsScreen({
     getProfileAsync()
   }, [userName])
 
-  return <>{profile && ("id" in profile) && <Details initialId={initialId}></Details>}</>
+  return (
+    <>{profile && 'id' in profile && <Details canAdd={canAdd} initialId={initialId}></Details>}</>
+  )
 }

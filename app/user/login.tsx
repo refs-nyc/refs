@@ -26,7 +26,7 @@ export default function Screen() {
     const response = await loginWithPassword(stagedUser.email, password)
 
     if (pocketbase.authStore.record === null) {
-      console.error('Invalid username')
+      console.error('Login unsuccessful')
       return
     }
     router.push(`/user/${pocketbase.authStore.record.userName}`)

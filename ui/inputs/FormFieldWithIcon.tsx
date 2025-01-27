@@ -40,9 +40,8 @@ export const FormFieldWithIcon = ({
       >
         {type === 'user' && <Ionicons size={s.$1} color={c.accent} name="person" col="$accent" />}
         {type === 'phone' && <Ionicons size={s.$1} color={c.accent} name="call" col="$accent" />}
-        {(type === 'email' || type === 'username') && (
-          <Ionicons size={s.$1} color={c.accent} name="at" col="$accent" />
-        )}
+        {type === 'username' && <Ionicons size={s.$1} color={c.accent} name="at" col="$accent" />}
+        {type === 'email' && <Ionicons size={s.$1} color={c.accent} name="mail" col="$accent" />}
         {type === 'password' && <Ionicons size={s.$1} color={c.accent} name="key" col="$accent" />}
         <TextInput
           style={{
@@ -64,7 +63,12 @@ export const FormFieldWithIcon = ({
       </XStack>
       {/* Warnings etc */}
       <View
-        style={{ height: s.$6, paddingVertical: s.$08, width: '100%', justifyContent: 'flex-start' }}
+        style={{
+          height: s.$6,
+          paddingVertical: s.$08,
+          width: '100%',
+          justifyContent: 'flex-start',
+        }}
       >
         {children}
       </View>

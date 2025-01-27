@@ -19,7 +19,7 @@ import { ExpandedItem } from '@/features/pocketbase/stores/types'
 
 const win = Dimensions.get('window')
 
-const renderItem = ({ item }: { item: ExpandedItem }) => {
+const renderItem = ({ item, canAdd }: { item: ExpandedItem; canAdd?: boolean }) => {
   return (
     <View
       style={{
@@ -65,7 +65,7 @@ const renderItem = ({ item }: { item: ExpandedItem }) => {
                 // borderColor: c.black
               }}
             >
-              {item.list && <ListContainer item={item} />}
+              {item.list && <ListContainer canAdd={canAdd} item={item} />}
             </View>
           </>
         )}
@@ -101,7 +101,13 @@ const renderItem = ({ item }: { item: ExpandedItem }) => {
   )
 }
 
-export const Details = ({ initialId = '' }: { initialId: string }) => {
+export const Details = ({
+  canAdd = false,
+  initialId = '',
+}: {
+  canAdd?: boolean
+  initialId: string
+}) => {
   const [isCarouselVisible, setIsCarouselVisible] = useState(true)
   const scrollOffsetValue = useSharedValue<number>(10)
   const pathname = usePathname()
@@ -110,7 +116,8 @@ export const Details = ({ initialId = '' }: { initialId: string }) => {
 
   const { profile, getProfile } = useUserStore()
 
-  const userNameParam = pathname === '/' ? undefined : typeof userName === 'string' ? userName : userName?.[0]
+  const userNameParam =
+    pathname === '/' ? undefined : typeof userName === 'string' ? userName : userName?.[0]
   const ref = useRef<ICarouselInstance>(null)
   const insets = useSafeAreaInsets()
   const { addingToList, setAddingToList } = useUIStore()
@@ -155,7 +162,7 @@ export const Details = ({ initialId = '' }: { initialId: string }) => {
             style={{ overflow: 'visible', top: 0 }}
             defaultScrollOffsetValue={scrollOffsetValue}
             onSnapToItem={(index) => console.log('current index:', index)}
-            renderItem={renderItem}
+            renderItem={({ item }) => renderItem({ item, canAdd })}
           />
         )}
       </View>

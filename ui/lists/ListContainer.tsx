@@ -8,7 +8,7 @@ import { ListItem } from './ListItem'
 import { s } from '@/features/style'
 import { YStack } from '../core/Stacks'
 
-export const ListContainer = ({ item }: { item: ExpandedItem }) => {
+export const ListContainer = ({ item, canAdd }: { item: ExpandedItem; canAdd: boolean }) => {
   const { addingToList, setAddingToList } = useUIStore()
   const { addToList, removeFromList } = useItemStore()
 
@@ -19,11 +19,14 @@ export const ListContainer = ({ item }: { item: ExpandedItem }) => {
           <ListItem key={itm.id} r={itm} showMeta={false} />
         ))}
       </YStack>
-      <Button
-        onPress={() => setAddingToList(item.id)}
-        variant="smallMuted"
-        title={`Add to this list`}
-      />
+
+      {canAdd && (
+        <Button
+          onPress={() => setAddingToList(item.id)}
+          variant="smallMuted"
+          title={`Add to this list`}
+        />
+      )}
     </ScrollView>
   ) : (
     <View style={{ flex: 1 }}>
@@ -31,11 +34,13 @@ export const ListContainer = ({ item }: { item: ExpandedItem }) => {
         onPress={() => setAddingToList(item.id)}
         style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}
       >
-        <Button
-          onPress={() => setAddingToList(item.id)}
-          variant="smallMuted"
-          title={`Add to this list`}
-        />
+        {canAdd && (
+          <Button
+            onPress={() => setAddingToList(item.id)}
+            variant="smallMuted"
+            title={`Add to this list`}
+          />
+        )}
       </Pressable>
     </View>
   )

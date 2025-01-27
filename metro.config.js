@@ -40,6 +40,12 @@ config.resolver.resolveRequest = (context, moduleName, platform) => {
   if (moduleName === '@canvas-js/cli') {
     return { type: 'empty' }
   }
+  if (moduleName === '@canvas-js/vm') {
+    return { type: 'empty' }
+  }
+  if (moduleName === 'quickjs-emscripten') {
+    return { type: 'empty' }
+  }
 
   // otherwise chain to the standard Metro resolver.
   return context.resolveRequest(context, moduleName, platform)

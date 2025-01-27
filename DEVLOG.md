@@ -111,8 +111,6 @@ Make sure the UI is authorized properly
 3. [x] Homepage search results
        WIP
 4. [x] Ability to post a url
-5. [ ] More opinionated folders and so on
-6. [ ] Geolocation filtered results
 
 SEARCH
 

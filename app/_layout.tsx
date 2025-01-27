@@ -34,6 +34,7 @@ import { DeferredFonts } from '@/ui'
 import { c } from '@/features/style'
 import * as SystemUI from 'expo-system-ui'
 import { RegisterPushNotifications } from '@/ui/notifications/RegisterPushNotifications'
+import { Icon } from '@/assets/icomoon/IconFont'
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -61,6 +62,7 @@ export default function RootLayout() {
   const [interLoaded, interError] = useFonts({
     Inter: require('@/assets/fonts/Inter-Medium.ttf'),
     InterBold: require('@/assets/fonts/Inter-Bold.ttf'),
+    IcoMoon: require('@/assets/icomoon/fonts/icomoon.ttf'),
   })
 
   function loadRemainingFonts() {}

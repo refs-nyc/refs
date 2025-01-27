@@ -65,8 +65,8 @@ export const ExampleButtonList = () => {
               <View
                 style={{
                   borderRadius: s.$10,
-                  height: 48,
-                  width: '100%',
+                  height: 46,
+                  width: 242,
                   backgroundColor: c.white,
                   overflow: 'hidden',
                   borderColor: c.accent,
@@ -82,7 +82,7 @@ export const ExampleButtonList = () => {
                     </SizableText>
                   </View>
                   <View style={{ width: 2, height: '70%', backgroundColor: c.accent2 }}></View>
-                  <View style={{ width: s.$8 }}>
+                  <View style={{ width: s.$7 }}>
                     <SizableText style={{ color: c.accent, textAlign: 'center' }}>DM</SizableText>
                   </View>
                 </XStack>
@@ -110,8 +110,8 @@ export const ExampleButtonList = () => {
               <View
                 style={{
                   borderRadius: s.$10,
-                  height: 48,
-                  width: '100%',
+                  height: 46,
+                  width: 294,
                   backgroundColor: c.white,
                   overflow: 'hidden',
                   borderColor: c.accent,
@@ -123,12 +123,14 @@ export const ExampleButtonList = () => {
                 >
                   <View style={{ width: s.$8 }}>
                     <SizableText style={{ color: c.accent, textAlign: 'center' }}>
-                      Group
+                      Dates
                     </SizableText>
                   </View>
                   <View style={{ width: 2, height: '70%', backgroundColor: c.accent2 }}></View>
-                  <View style={{ width: s.$8 }}>
-                    <SizableText style={{ color: c.accent, textAlign: 'center' }}>DM</SizableText>
+                  <View style={{ width: s.$11 }}>
+                    <SizableText style={{ color: c.accent, textAlign: 'center' }}>
+                      Dinner Invites
+                    </SizableText>
                   </View>
                 </XStack>
               </View>

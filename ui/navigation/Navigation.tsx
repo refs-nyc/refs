@@ -50,18 +50,18 @@ export const Navigation = () => {
     >
       <View
         style={{
-          borderColor: c.black,
-          borderWidth: 2,
+          borderColor: '#555',
+          borderWidth: 1.5,
           borderRadius: s.$3,
           gap: s.$1,
           flexDirection: 'row',
           backgroundColor: c.surface,
-          paddingVertical: s.$08,
-          paddingHorizontal: s.$1,
+          paddingVertical: 8,
+          paddingHorizontal: 10,
         }}
       >
         {pocketbase.authStore.record ? (
-          <View>
+          <View style={{ position: 'relative', marginTop: 4, left: 5 }}>
             <Link href={`/user/${pocketbase.authStore.record.userName}`}>
               <Avatar source={pocketbase.authStore.record.image} size={36} />
             </Link>
@@ -71,10 +71,12 @@ export const Navigation = () => {
             <Ionicons name="person" size={s.$3} color={c.accent} />
           </View>
         )}
-        <Link href="/">
-          {/* <Ionicons name="globe" size={36} color={c.accent} /> */}
-          <Icon name="Globe" size={36} color={c.accent} />
-        </Link>
+        <View style={{ position: 'relative', left: -2, marginTop: 3, paddingRight: 3 }}>
+          <Link href="/">
+            {/* <Ionicons name="globe" size={36} color={c.accent} /> */}
+            <Icon name="Globe" size={33} color={c.accent} />
+          </Link>
+        </View>
         {/* <View style={{ position: 'relative', marginLeft: -2, marginTop: 2, paddingRight: 3 }}>
           <Link href="/">
             <Ionicons name="paper-plane" size={33} />

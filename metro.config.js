@@ -30,8 +30,14 @@ config.resolver.resolveRequest = (context, moduleName, platform) => {
     return { type: 'empty' }
   }
 
-  // prevent import of @canvas-js/modeldb-sqlite-wasm
+  // prevent import of canvas packages that are unused, but cause react native errors
   if (moduleName === '@canvas-js/modeldb-sqlite-wasm') {
+    return { type: 'empty' }
+  }
+  if (moduleName === '@canvas-js/network-explorer') {
+    return { type: 'empty' }
+  }
+  if (moduleName === '@canvas-js/cli') {
     return { type: 'empty' }
   }
 

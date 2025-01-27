@@ -13,7 +13,11 @@ install! 'cocoapods',
 
 prepare_react_native_project!
 
+<<<<<<< HEAD
 target 'Refs' do
+=======
+target 'refsphonebook' do
+>>>>>>> eed7534ee04cef234c98a459700f4ff0626697bc
   use_expo_modules!
 
   if ENV['EXPO_USE_COMMUNITY_AUTOLINKING'] == '1'

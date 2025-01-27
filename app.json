@@ -7,7 +7,7 @@
     "icon": "./assets/images/icon.png",
     "scheme": "refs-nyc",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": true,
+    "newArchEnabled": false,
     "jsEngine": "jsc",
     "ios": {
       "supportsTablet": true,

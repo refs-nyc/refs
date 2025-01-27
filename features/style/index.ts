@@ -177,3 +177,5 @@ export const base = StyleSheet.create({
     // flex: 1,
   },
 })
+
+export { Icon } from '@/assets/icomoon/IconFont'

@@ -1,5 +1,5 @@
 import { Button, Image, StyleSheet, Text, View } from 'react-native'
-
+import { Icon } from '@/features/style'
 import { useRouter } from 'expo-router'
 import { ShareIntent as ShareIntentType, useShareIntentContext } from 'expo-share-intent'
 
@@ -26,7 +26,7 @@ export default function ShareIntent() {
 
   return (
     <View style={styles.container}>
-      <Image source={require('../assets/icon.png')} style={[styles.logo, styles.gap]} />
+      <Icon name="Logo" size={75} />
       {!hasShareIntent && <Text>No Share intent detected</Text>}
       {hasShareIntent && (
         <Text style={[styles.gap, { fontSize: 20 }]}>

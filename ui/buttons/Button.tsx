@@ -1,6 +1,7 @@
 import { XStack } from '@/ui/core/Stacks'
 import { Button as NativeButton, Text, StyleSheet, Pressable } from 'react-native'
 import Ionicons from '@expo/vector-icons/Ionicons'
+import { Icon } from '@/features/style'
 import { c, s, t } from '@/features/style'
 
 type ButtonVariant = keyof typeof styles
@@ -9,7 +10,9 @@ type ButtonProps = {
   title?: string
   variant?: ButtonVariant
   iconBefore?: keyof typeof Ionicons.glyphMap
+  iconBeforeCustom?: boolean
   iconAfter?: keyof typeof Ionicons.glyphMap
+  iconAfterCustom?: boolean
   iconColor?: string
   disabled?: boolean
   align?: 'center' | 'flex-start' | 'flex-end'
@@ -23,6 +26,8 @@ export const Button = (props: ButtonProps) => {
     title = 'Save',
     variant = '',
     iconBefore = '',
+    iconBeforeCustom = false,
+    iconAfterCustom = false,
     iconAfter = '',
     iconColor = 'white',
     disabled = false,
@@ -51,7 +56,9 @@ export const Button = (props: ButtonProps) => {
       onPress={!disabled ? onPress : () => {}}
     >
       <XStack style={{ alignItems: 'center' }} gap={s.$08}>
-        {iconBefore && (
+        {iconBefore && iconBeforeCustom ? (
+          <Icon size={iconSize} name={iconBefore} color={iconColor} />
+        ) : (
           <Ionicons
             style={[{ height: iconSize }]}
             color={iconColor}
@@ -60,8 +67,15 @@ export const Button = (props: ButtonProps) => {
           />
         )}
         <Text style={[styles.text, textVariant]}>{title}</Text>
-        {iconAfter && (
-          <Ionicons style={[{ height: s.$1half }]} color={iconColor} name={iconAfter} size={s.$1} />
+        {iconAfter && iconAfterCustom ? (
+          <Icon size={iconSize} name={iconAfter} color={iconColor} />
+        ) : (
+          <Ionicons
+            style={[{ height: iconSize }]}
+            color={iconColor}
+            name={iconAfter}
+            size={iconSize}
+          />
         )}
       </XStack>
     </Pressable>

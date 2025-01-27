@@ -254,6 +254,8 @@ PODS:
     - ExpoModulesCore
   - ExpoLinking (7.0.4):
     - ExpoModulesCore
+  - ExpoLocation (18.0.5):
+    - ExpoModulesCore
   - ExpoModulesCore (2.1.1):
     - DoubleConversion
     - glog
@@ -2154,6 +2156,7 @@ DEPENDENCIES:
   - ExpoImagePicker (from `../node_modules/expo-image-picker/ios`)
   - ExpoKeepAwake (from `../node_modules/expo-keep-awake/ios`)
   - ExpoLinking (from `../node_modules/expo-linking/ios`)
+  - ExpoLocation (from `../node_modules/expo-location/ios`)
   - ExpoModulesCore (from `../node_modules/expo-modules-core`)
   - ExpoShareIntentModule (from `../node_modules/expo-share-intent/ios`)
   - ExpoSplashScreen (from `../node_modules/expo-splash-screen/ios`)
@@ -2300,6 +2303,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/expo-keep-awake/ios"
   ExpoLinking:
     :path: "../node_modules/expo-linking/ios"
+  ExpoLocation:
+    :path: "../node_modules/expo-location/ios"
   ExpoModulesCore:
     :path: "../node_modules/expo-modules-core"
   ExpoShareIntentModule:
@@ -2484,6 +2489,7 @@ SPEC CHECKSUMS:
   ExpoImagePicker: 440a560c9bfc63edae854d08b9f12f75bd11c112
   ExpoKeepAwake: 783e68647b969b210a786047c3daa7b753dcac1f
   ExpoLinking: a9e64f08d2bb4fc42e7441174f15cc535bb390ba
+  ExpoLocation: a4b472b3cb2d42f1a3f3d7e2ec0e7a4db061ea22
   ExpoModulesCore: bf5690b56940ac900f02069c206dd299945f7e31
   ExpoShareIntentModule: 2b82e4d36695c813b82c5ca25614409879fc7577
   ExpoSplashScreen: 5818efe67bdbcc862b97fef589571c5b4d53fa7d
@@ -2571,6 +2577,6 @@ SPEC CHECKSUMS:
   Yoga: 3deb2471faa9916c8a82dda2a22d3fba2620ad37
   ZXingObjC: 8898711ab495761b2dbbdec76d90164a6d7e14c5
 
-PODFILE CHECKSUM: aa523b56bd221ea89e8ce0f98f745ec6e5438b76
+PODFILE CHECKSUM: 2b9944e1fe827467bdb006c87cefc75b8566040d
 
 COCOAPODS: 1.15.2

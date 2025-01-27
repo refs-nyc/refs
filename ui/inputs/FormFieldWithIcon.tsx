@@ -1,8 +1,12 @@
 import { XStack } from '@/ui/core/Stacks'
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { View, TextInput } from 'react-native'
+import { Dropdown } from '../inputs/Dropdown'
+import { DeviceLocation } from '../inputs/DeviceLocation'
+import { setGeolocation } from '@/features/location'
 
 import { c, s } from '@/features/style'
+import { Button } from '../buttons/Button'
 
 export const FormFieldWithIcon = ({
   type,
@@ -13,7 +17,7 @@ export const FormFieldWithIcon = ({
   value = '',
   autoFocus = false,
 }: {
-  type: 'user' | 'username' | 'phone' | 'email' | 'password'
+  type: 'user' | 'username' | 'phone' | 'email' | 'password' | 'location'
   id: string
   children: React.ReactNode
   placeholder: string
@@ -21,7 +25,8 @@ export const FormFieldWithIcon = ({
   value: string
   autoFocus: boolean
 }) => {
-  // const { color } = getTokens()
+  const onSelect = (s: string) => {}
+  const onCancel = () => {}
 
   return (
     <>
@@ -43,6 +48,7 @@ export const FormFieldWithIcon = ({
         {(type === 'email' || type === 'username') && (
           <Ionicons size={s.$1} color={c.accent} name="at" col="$accent" />
         )}
+        {type === 'location' && <Ionicons size={s.$1} color={c.accent} name="map" col="$accent" />}
         {type === 'password' && <Ionicons size={s.$1} color={c.accent} name="key" col="$accent" />}
         <TextInput
           style={{
@@ -64,10 +70,24 @@ export const FormFieldWithIcon = ({
       </XStack>
       {/* Warnings etc */}
       <View
-        style={{ height: s.$6, paddingVertical: s.$08, width: '100%', justifyContent: 'flex-start' }}
+        style={{
+          height: s.$6,
+          paddingVertical: s.$08,
+          width: '100%',
+          justifyContent: 'flex-start',
+        }}
       >
         {children}
       </View>
+
+      {type === 'location' && value !== '' && (
+        <Dropdown
+          options={[{ id: 'a', title: 'ShittyTown' }]}
+          onSelect={onSelect}
+          onCancel={onCancel}
+        ></Dropdown>
+      )}
+      {type === 'location' && value === '' && <DeviceLocation />}
     </>
   )
 }

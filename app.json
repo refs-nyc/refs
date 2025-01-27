@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "refs - phonebook",
+    "name": "Refs",
     "slug": "refs-nyc",
     "version": "0.0.12",
     "orientation": "portrait",
@@ -31,7 +31,13 @@
           "backgroundColor": "#F3F2ED"
         }
       ],
-      "expo-share-intent"
+      "expo-share-intent",
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Allow Refs to use your location."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true

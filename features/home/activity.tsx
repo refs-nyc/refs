@@ -1,12 +1,8 @@
-import { useState, useEffect } from 'react'
-import { SearchRef, XStack, YStack, Heading } from '@/ui'
-import { pocketbase } from '@/features/pocketbase'
+import { XStack, YStack, Heading } from '@/ui'
 import type { ExpandedItem } from '@/features/pocketbase/stores/types'
-import { Link, router } from 'expo-router'
-import { FlatList } from 'react-native-gesture-handler'
-import { ScrollView, View, Dimensions } from 'react-native'
+import { Link } from 'expo-router'
+import { View, Dimensions } from 'react-native'
 import { s, c } from '@/features/style'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { SimplePinataImage } from '@/ui/images/SimplePinataImage'
 
 const win = Dimensions.get('window')
@@ -62,12 +58,7 @@ export const Activity = ({ items }: { items: ExpandedItem[] }) => {
               style={{ overflow: 'hidden', width: win.width - s.$9 }}
             >
               <Heading tag="p">
-                <Link
-                  href={item.expand?.creator ? `/user/${item.expand.creator?.userName}` : '/'}
-                  style={{ overflow: 'hidden', width: win.width - s.$9 }}
-                >
-                  <Heading tag="strong">{item.expand?.creator?.userName || 'Anonymous'}</Heading>
-                </Link>{' '}
+                <Heading tag="strong">{item.expand?.creator?.userName || 'Anonymous'} </Heading>
                 added <Heading tag="strong">{item.expand?.ref?.title}</Heading>
               </Heading>
             </Link>

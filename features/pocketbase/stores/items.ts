@@ -2,6 +2,7 @@ import { pocketbase } from '../pocketbase'
 import { create } from 'zustand'
 import { StagedItem, Item, ExpandedItem, CompleteRef } from './types'
 import { ItemsRecord } from "./pocketbase-types"
+import { canvasApp } from "./canvas"
 
 // ***
 // Items
@@ -21,6 +22,8 @@ export const useItemStore = create<{
     console.log('ITEMS PUSH')
     try {
       const record = await pocketbase.collection('items').create<ExpandedItem>(newItem, { expand: 'ref' })
+      await canvasApp.actions.pushItem({ ...newItem, id: record.id })
+
       set((state) => {
         const newItems = [...state.items, record]
         return { items: newItems }
@@ -38,6 +41,8 @@ export const useItemStore = create<{
   reference: () => {},
   remove: async (id: string) => {
     await pocketbase.collection('items').delete(id)
+    await canvasApp.actions.removeItem(id)
+
     set((state) => ({
       items: [...state.items.filter((i) => i.id !== id)],
     }))
@@ -47,6 +52,7 @@ export const useItemStore = create<{
       const record = await pocketbase
         .collection('items')
         .update(id, { '+children': ref.id, expand: 'children' })
+      await canvasApp.actions.addItemToList(id, ref)
 
       return record
     } catch (error) {
@@ -59,6 +65,7 @@ export const useItemStore = create<{
       const record = await pocketbase
         .collection('items')
         .update(id, { 'children-': ref.id, expand: 'children' })
+      await canvasApp.actions.removeItemFromList(id, ref)
 
       return record
     } catch (error) {
@@ -69,6 +76,7 @@ export const useItemStore = create<{
   moveToBacklog: async (id: string) => {
     try {
       const record = await pocketbase.collection<ItemsRecord>('items').update(id, { backlog: true })
+      await canvasApp.actions.moveItemToBacklog(id)
 
       return record
     } catch (error) {

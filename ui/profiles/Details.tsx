@@ -16,6 +16,7 @@ import { ListContainer } from '../lists/ListContainer'
 import { EditableList } from '../lists/EditableList'
 import { useUserStore, isExpandedProfile } from '@/features/pocketbase/stores/users'
 import { ExpandedItem } from '@/features/pocketbase/stores/types'
+import { DrawerContent } from '../drawers/DrawerContent'
 
 const win = Dimensions.get('window')
 
@@ -169,13 +170,15 @@ export const Details = ({
 
       {addingToList !== '' && addingItem && (
         <Drawer close={() => setAddingToList('')}>
-          <EditableList
-            item={addingItem}
-            onComplete={async () => {
-              setAddingToList('')
-              await getProfile(userNameParam)
-            }}
-          />
+          <DrawerContent>
+            <EditableList
+              item={addingItem}
+              onComplete={async () => {
+                setAddingToList('')
+                await getProfile(userNameParam)
+              }}
+            />
+          </DrawerContent>
         </Drawer>
       )}
     </>

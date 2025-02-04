@@ -4,7 +4,7 @@ import { XStack, YStack } from '@/ui/core/Stacks'
 import { Drawer } from '@/ui/drawers/Drawer'
 import { Button } from '@/ui/buttons/Button'
 import { Heading } from '@/ui/typo/Heading'
-import { NewRef } from "@/ui/actions/NewRef"
+import { NewRef } from '@/ui/actions/NewRef'
 import { useUIStore } from '../state'
 import { ProfileHeader } from './ProfileHeader'
 import { FirstVisitScreen } from './FirstVisitScreen'
@@ -25,6 +25,7 @@ import {
 } from '@/features/pocketbase/stores/types'
 import { isProfile } from '@/features/pocketbase/stores/users'
 import { gridSort, createdSort } from '@/ui/profiles/sorts'
+import { DrawerContent } from '@/ui/drawers/DrawerContent'
 
 export const Profile = ({ userName }: { userName: string }) => {
   const { firstVisit, addingTo, removingId } = useLocalSearchParams()
@@ -202,7 +203,7 @@ export const Profile = ({ userName }: { userName: string }) => {
                     </YStack>
                   ) : (
                     <Heading style={{ textAlign: 'center' }} tag="mutewarn">
-                      Add refs to your backlog. They’ll be searchable to others, but won’t show up
+                      Add refs to your backlog. They'll be searchable to others, but won't show up
                       on your grid.
                     </Heading>
                   )}
@@ -217,38 +218,42 @@ export const Profile = ({ userName }: { userName: string }) => {
 
       {removingId && (
         <Drawer close={() => setRemovingId('')}>
-          <YStack gap={s.$08} style={{ marginTop: s.$3, marginBottom: s.$6 }}>
-            <Button
-              onPress={handleMoveToBacklog}
-              title={`Move to backlog`}
-              variant="outlineFluid"
-            />
-            <Button
-              onPress={async () => {
-                await removeFromProfile(removingId)
-                setRemovingId('')
-                await refreshGrid(userName)
-              }}
-              title="Remove"
-              variant="fluid"
-            />
-          </YStack>
+          <DrawerContent>
+            <YStack gap={s.$08} style={{ marginTop: s.$3, marginBottom: s.$6 }}>
+              <Button
+                onPress={handleMoveToBacklog}
+                title={`Move to backlog`}
+                variant="outlineFluid"
+              />
+              <Button
+                onPress={async () => {
+                  await removeFromProfile(removingId)
+                  setRemovingId('')
+                  await refreshGrid(userName)
+                }}
+                title="Remove"
+                variant="fluid"
+              />
+            </YStack>
+          </DrawerContent>
         </Drawer>
       )}
 
       {(addingTo === 'grid' || addingTo === 'backlog') && (
         <Drawer close={() => setAddingTo('')}>
-          <NewRef
-            backlog={addingTo === 'backlog'}
-            onNewRef={async (itm: Item) => {
-              await refreshGrid(userName)
-              if (itm?.list) router.push(`/user/${userName}/details?initialId=${itm.id}`)
-              setAddingTo('')
-            }}
-            onCancel={() => {
-              setAddingTo('')
-            }}
-          />
+          <DrawerContent>
+            <NewRef
+              backlog={addingTo === 'backlog'}
+              onNewRef={async (itm: Item) => {
+                await refreshGrid(userName)
+                if (itm?.list) router.push(`/user/${userName}/details?initialId=${itm.id}`)
+                setAddingTo('')
+              }}
+              onCancel={() => {
+                setAddingTo('')
+              }}
+            />
+          </DrawerContent>
         </Drawer>
       )}
     </>

@@ -125,7 +125,7 @@ export const RefForm = ({
           />
         )}
 
-        {!picking && !imageAsset && (
+        {!imageAsset && (
           <View
             style={{
               width: 200,

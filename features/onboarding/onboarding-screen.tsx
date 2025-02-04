@@ -4,6 +4,7 @@ import { useRef, useState } from 'react'
 import { router } from 'expo-router'
 import { s, c } from '@/features/style/index'
 import Carousel, { ICarouselInstance } from 'react-native-reanimated-carousel'
+import { DrawerContent } from '@/ui/drawers/DrawerContent'
 
 export function OnboardingScreen() {
   const ref = useRef<ICarouselInstance>(null)
@@ -56,14 +57,16 @@ export function OnboardingScreen() {
 
       {addingIndex > -1 && (
         <Drawer close={() => setAddingIndex(-1)}>
-          <NewRef
-            onNewRef={() => {
-              setAddingIndex(-1)
-            }}
-            onCancel={() => {
-              setAddingIndex(-1)
-            }}
-          />
+          <DrawerContent>
+            <NewRef
+              onNewRef={() => {
+                setAddingIndex(-1)
+              }}
+              onCancel={() => {
+                setAddingIndex(-1)
+              }}
+            />
+          </DrawerContent>
         </Drawer>
       )}
     </View>

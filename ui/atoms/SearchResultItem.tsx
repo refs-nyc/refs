@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { pocketbase } from '@/features/pocketbase'
 import { XStack } from '@/ui/core/Stacks'
 import { View, Text } from 'react-native'
+import { SimplePinataImage } from '@/ui/images/SimplePinataImage'
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { s, c } from '@/features/style'
 import { CompleteRef } from '@/features/pocketbase/stores/types'
@@ -41,9 +42,27 @@ export const SearchResultItem = ({ r }: { r: CompleteRef }) => {
     >
       <XStack gap={s.$09} style={{ justifyContent: 'space-between', alignItems: 'center' }}>
         <XStack gap={s.$09} style={{ justifyContent: 'space-between', alignItems: 'center' }}>
-          <View
-            style={{ width: 20, height: 20, borderRadius: 4, backgroundColor: c.accent }}
-          ></View>
+          {r?.image ? (
+            <SimplePinataImage
+              originalSource={r.image}
+              imageOptions={{ width: s.$3, height: s.$3 }}
+              style={{
+                width: s.$3,
+                height: s.$3,
+                backgroundColor: c.accent,
+                borderRadius: s.$075,
+              }}
+            />
+          ) : (
+            <View
+              style={{
+                width: s.$3,
+                height: s.$3,
+                backgroundColor: c.accent,
+                borderRadius: s.$075,
+              }}
+            ></View>
+          )}
           <Text>{r?.title}</Text>
         </XStack>
         <XStack gap={s.$09} style={{ justifyContent: 'space-between', alignItems: 'center' }}>

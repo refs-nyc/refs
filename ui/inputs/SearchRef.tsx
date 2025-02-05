@@ -25,6 +25,7 @@ export const SearchRef = ({
   // Refs
   const ref = useRef<TextInput>(null)
 
+  // Reset
   const reset = () => {
     setTextState('')
     ref.current?.clear()

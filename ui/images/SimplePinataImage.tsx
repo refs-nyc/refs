@@ -18,14 +18,18 @@ export const SimplePinataImage = ({
 
   useEffect(() => {
     const load = async () => {
-      try {
-        const newSource = await getPinataImage(originalSource, imageOptions)
+      if (originalSource.includes('pinata')) {
+        setSource(originalSource)
+      } else {
+        try {
+          const newSource = await getPinataImage(originalSource, imageOptions)
 
-        setSource(newSource)
+          setSource(newSource)
 
-        setLoading(false)
-      } catch (error) {
-        console.error(error)
+          setLoading(false)
+        } catch (error) {
+          console.error(error)
+        }
       }
     }
 

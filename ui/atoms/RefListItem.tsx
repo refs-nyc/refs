@@ -5,6 +5,7 @@ import Ionicons from '@expo/vector-icons/Ionicons'
 import { pocketbase } from '@/features/pocketbase'
 import { s, c } from '@/features/style'
 import type { CompleteRef } from '@/features/pocketbase/stores/types'
+import { SimplePinataImage } from '@/ui/images/SimplePinataImage'
 
 export const RefListItem = ({
   r,
@@ -41,9 +42,27 @@ export const RefListItem = ({
     >
       <XStack gap={s.$09} style={{ justifyContent: 'space-between', alignItems: 'center' }}>
         <XStack gap={s.$09} style={{ justifyContent: 'space-between', alignItems: 'center' }}>
-          <View
-            style={{ width: 20, height: 20, borderRadius: 4, backgroundColor: c.accent }}
-          ></View>
+          {r?.image ? (
+            <SimplePinataImage
+              originalSource={r.image}
+              imageOptions={{ width: s.$2, height: s.$2 }}
+              style={{
+                width: s.$2,
+                height: s.$2,
+                backgroundColor: c.accent,
+                borderRadius: s.$075,
+              }}
+            />
+          ) : (
+            <View
+              style={{
+                width: s.$2,
+                height: s.$2,
+                backgroundColor: c.accent,
+                borderRadius: s.$075,
+              }}
+            ></View>
+          )}
           <Text>{r?.title}</Text>
         </XStack>
         <XStack gap={s.$09} style={{ justifyContent: 'space-between', alignItems: 'center' }}>

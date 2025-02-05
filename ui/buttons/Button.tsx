@@ -111,7 +111,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
   },
   disabled: {
-    backgroundColor: c.accent2,
+    opacity: 0.6,
   },
   basic: {
     backgroundColor: c.surface,

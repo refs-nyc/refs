@@ -11,7 +11,7 @@ export const EditableList = ({ item, onComplete }: { item: Item; onComplete: () 
   const { addToList } = useItemStore()
 
   return (
-    <View style={{ minHeight: 400 }}>
+    <View>
       {JSON.stringify(initialRefData) !== '{}' ? (
         <NewRef
           initialRefData={initialRefData}

@@ -5,12 +5,15 @@ import {
   TouchableOpacity,
   Dimensions,
   TextInput,
+  Text,
   ScrollView,
   KeyboardAvoidingView,
 } from 'react-native'
+
 import { Heading } from '@/ui/typo/Heading'
 import { Picker } from '../inputs/Picker'
 import { PinataImage } from '../images/PinataImage'
+import { SimplePinataImage } from '../images/SimplePinataImage'
 import { EditableHeader } from '../atoms/EditableHeader'
 import { addToProfile } from '@/features/pocketbase'
 import { Button } from '../buttons/Button'
@@ -40,10 +43,13 @@ export const RefForm = ({
   const [currentRef, setCurrentRef] = useState<StagedRef>({ ...r })
   const [currentRefComment, setCurrentRefComment] = useState<string>()
   const [imageAsset, setImageAsset] = useState(r?.image || null)
-  const [pinataSource, setPinataSource] = useState('')
+  const [pinataSource, setPinataSource] = useState(typeof r?.image === 'string' ? r.image : '')
   const [picking, setPicking] = useState(false)
 
   const pathname = usePathname()
+
+  console.log('REF FORM', r)
+  console.log('REF FORM', r?.image)
 
   // Mandatory
   // Ref title
@@ -94,6 +100,10 @@ export const RefForm = ({
     }
   }
 
+  useEffect(() => {
+    console.log('Begin', imageAsset)
+  }, [])
+
   return (
     <KeyboardAvoidingView
       behavior="height"
@@ -113,17 +123,31 @@ export const RefForm = ({
         }}
         style={{ flex: 1, width: '100%' }}
       >
-        {imageAsset && (
-          <PinataImage
-            asset={imageAsset}
-            onReplace={() => {
-              console.log('WE NEED TO PICK SOMETHING ELSE')
-              setPicking(true)
-            }}
-            onSuccess={updateRefImage}
-            onFail={() => console.error('Cant ul')}
-          />
-        )}
+        {imageAsset &&
+          (!!pinataSource ? (
+            <TouchableOpacity style={{ flex: 1 }} onLongPress={() => setPicking(true)}>
+              <SimplePinataImage
+                originalSource={pinataSource}
+                style={{ flex: 1 }}
+                imageOptions={{ width: 400, height: 400 }}
+              />
+            </TouchableOpacity>
+          ) : (
+            <PinataImage
+              asset={imageAsset}
+              onReplace={() => {
+                console.log('WE NEED TO PICK SOMETHING ELSE')
+                setPicking(true)
+              }}
+              onSuccess={updateRefImage}
+              onFail={() => console.error('Cant ul')}
+            />
+          ))}
+
+        <Text>
+          {JSON.stringify(imageAsset)}
+          {pinataSource}
+        </Text>
 
         {!imageAsset && (
           <View
@@ -132,20 +156,30 @@ export const RefForm = ({
               height: 200,
             }}
           >
-            <TouchableOpacity style={{ flex: 1 }} onPress={() => setPicking(true)}>
-              <View
-                style={{
-                  flex: 1,
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  borderWidth: 2,
-                  borderColor: c.black,
-                  borderRadius: s.$075,
-                }}
-              >
-                <Heading tag="h1light">+</Heading>
-              </View>
-            </TouchableOpacity>
+            {!!pinataSource ? (
+              <TouchableOpacity style={{ flex: 1 }} onLongPress={() => setPicking(true)}>
+                <SimplePinataImage
+                  originalSource={pinataSource}
+                  style={{ flex: 1 }}
+                  imageOptions={{ width: 400, height: 400 }}
+                />
+              </TouchableOpacity>
+            ) : (
+              <TouchableOpacity style={{ flex: 1 }} onPress={() => setPicking(true)}>
+                <View
+                  style={{
+                    flex: 1,
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    borderWidth: 2,
+                    borderColor: c.black,
+                    borderRadius: s.$075,
+                  }}
+                >
+                  <Heading tag="h1light">+</Heading>
+                </View>
+              </TouchableOpacity>
+            )}
           </View>
         )}
 
@@ -162,7 +196,7 @@ export const RefForm = ({
           onComplete={updateRefTitle}
           onDataChange={updateData}
           placeholder={placeholder}
-          title={r?.title || placeholder}
+          title={r?.title + String(r?.image) || placeholder}
           url={r?.url || ''}
         />
         {/* Notes */}

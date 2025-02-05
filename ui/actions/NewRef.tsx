@@ -66,6 +66,7 @@ export const NewRef = ({
   }
 
   const addRefFromResults = (newRef: StagedRef) => {
+    console.log(newRef)
     setRefData(newRef)
     setStep('add')
   }

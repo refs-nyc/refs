@@ -71,7 +71,10 @@ export function Drawer({
   }))
 
   const maxHeight = useAnimatedStyle(() => ({
-    maxHeight: win.height - keyboard.height.get() - insets.top - insets.bottom,
+    maxHeight: withSpring(win.height - keyboard.height.get() - insets.top - insets.bottom, {
+      damping: 15,
+      stiffness: 100,
+    }),
   }))
 
   return (
@@ -83,7 +86,14 @@ export function Drawer({
         onPress={toggleSheet}
       />
       <Animated.View
-        style={[styles.sheet, translateY, maxHeight]}
+        style={[
+          styles.sheet,
+          translateY,
+          maxHeight,
+          {
+            paddingBottom: Math.max(insets.bottom, keyboard.height.get() > 0 ? 8 : 0),
+          },
+        ]}
         entering={SlideInDown.springify().damping(15)}
         exiting={SlideOutDown}
       >

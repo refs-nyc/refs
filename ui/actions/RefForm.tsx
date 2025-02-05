@@ -192,7 +192,7 @@ export const RefForm = ({
               title="Create List"
               variant="outlineFluid"
               style={{ width: '48%', minWidth: 0 }}
-              disabled={pinataSource === 'none'}
+              disabled={!currentRef?.image || !currentRef?.title}
               onPress={() => {
                 console.log('ABOUT TO ADD A LIST')
                 submit({ list: true })

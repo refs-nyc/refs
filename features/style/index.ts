@@ -176,6 +176,11 @@ export const base = StyleSheet.create({
     borderRadius: s.$075,
     // flex: 1,
   },
+  smallSquare: {
+    width: s.$2,
+    height: s.$2,
+    borderRadius: 4,
+  },
 })
 
 export { Icon } from '@/assets/icomoon/IconFont'

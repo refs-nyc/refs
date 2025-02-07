@@ -1,7 +1,7 @@
 import Animated, { FadeInUp, FadeOutUp } from 'react-native-reanimated'
 import type { ExpandedItem } from '@/features/pocketbase/stores/types'
 import { useState, useEffect } from 'react'
-import { SearchRef, YStack, Heading, DismissKeyboard } from '@/ui'
+import { SearchBar, YStack, Heading, DismissKeyboard } from '@/ui'
 import { pocketbase } from '@/features/pocketbase'
 import { Link } from 'expo-router'
 import { View, ScrollView, Dimensions } from 'react-native'
@@ -40,11 +40,6 @@ export const Feed = () => {
   }, [searchTerm])
 
   useEffect(() => {
-    // The initial data we are looking for is
-    // (for now) LOOSELY based off of the user's interests.
-    //
-    // The subscription at the moment is VERY LOOSE
-    // We just serve all new item creations.
     const getInitialData = async () => {
       try {
         const records = await pocketbase
@@ -58,18 +53,6 @@ export const Feed = () => {
     }
 
     getInitialData()
-
-    // console.log('SUBSCRIBING')
-    // Subscribe to realtime updates
-    // pocketbase.collection('items').subscribe('*', (e) => {
-    //   console.log(e)
-    //   // console.log(e.action)
-    //   // console.log(e.record)
-    // })
-    // return () => {
-    //   console.log('UNSUBSCRIBING')
-    //   pocketbase.collection('items').unsubscribe('*')
-    // }
   }, [])
 
   return (
@@ -105,7 +88,7 @@ export const Feed = () => {
               </Animated.View>
             )}
 
-            <SearchRef
+            <SearchBar
               onFocus={() => setSearching(true)}
               onBlur={() => setSearching(false)}
               onChange={setSearchTerm}

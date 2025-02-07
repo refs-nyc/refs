@@ -1,10 +1,10 @@
-import { OnboardingCarouselItem, Drawer, NewRef } from '@/ui'
+import { OnboardingCarouselItem, NewRef } from '@/ui'
 import { View, Dimensions, Text } from 'react-native'
-import { useRef, useState } from 'react'
+import { useRef, useState, useCallback } from 'react'
 import { router } from 'expo-router'
 import { s, c } from '@/features/style/index'
 import Carousel, { ICarouselInstance } from 'react-native-reanimated-carousel'
-import { DrawerContent } from '@/ui/drawers/DrawerContent'
+import { Sheet } from '@/ui'
 
 export function OnboardingScreen() {
   const ref = useRef<ICarouselInstance>(null)
@@ -23,19 +23,6 @@ export function OnboardingScreen() {
 
   return (
     <View style={{ flex: 1 }}>
-      <Text
-        onPress={() => router.back()}
-        style={{
-          position: 'absolute',
-          top: s.$6,
-          right: s.$1,
-          fontSize: s.$09,
-          color: c.grey2,
-          zIndex: 1000,
-        }}
-      >
-        Back
-      </Text>
       <Carousel
         loop={false}
         ref={ref}
@@ -56,18 +43,16 @@ export function OnboardingScreen() {
       />
 
       {addingIndex > -1 && (
-        <Drawer close={() => setAddingIndex(-1)}>
-          <DrawerContent>
-            <NewRef
-              onNewRef={() => {
-                setAddingIndex(-1)
-              }}
-              onCancel={() => {
-                setAddingIndex(-1)
-              }}
-            />
-          </DrawerContent>
-        </Drawer>
+        <Sheet onChange={(e) => e === -1 && setAddingIndex(-1)}>
+          <NewRef
+            onNewRef={() => {
+              setAddingIndex(-1)
+            }}
+            onCancel={() => {
+              setAddingIndex(-1)
+            }}
+          />
+        </Sheet>
       )}
     </View>
   )

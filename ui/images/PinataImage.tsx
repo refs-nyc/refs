@@ -25,7 +25,7 @@ export const PinataImage = ({
   const [source, setSource] = useState(typeof asset === 'string' ? asset : asset?.uri)
   const [pinataSource, setPinataSource] = useState(typeof asset === 'string' ? asset : '')
   const [showOriginal, setShowOriginal] = useState(true)
-  const { type, isConnected } = useNetInfo()
+  const { isConnected } = useNetInfo()
 
   const handleLongpress = () => {
     if (source || pinataSource) onReplace()

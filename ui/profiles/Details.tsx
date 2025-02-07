@@ -1,10 +1,8 @@
 import { useState, useRef } from 'react'
-import type { Profile } from '@/features/pocketbase/stores/types'
 import { Image } from 'expo-image'
-import { Drawer } from '../drawers/Drawer'
 import { Link, useGlobalSearchParams, usePathname, useRouter } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { View, Text, Dimensions, Pressable } from 'react-native'
+import { View, Dimensions, Pressable, ScrollView } from 'react-native'
 import Carousel, { ICarouselInstance } from 'react-native-reanimated-carousel'
 import { useSharedValue } from 'react-native-reanimated'
 import { Heading } from '../typo/Heading'
@@ -14,9 +12,9 @@ import Ionicons from '@expo/vector-icons/Ionicons'
 import { useUIStore } from '@/ui/state'
 import { ListContainer } from '../lists/ListContainer'
 import { EditableList } from '../lists/EditableList'
+import { Sheet } from '../core/Sheets'
 import { useUserStore, isExpandedProfile } from '@/features/pocketbase/stores/users'
 import { ExpandedItem } from '@/features/pocketbase/stores/types'
-import { DrawerContent } from '../drawers/DrawerContent'
 
 const win = Dimensions.get('window')
 
@@ -134,6 +132,11 @@ export const Details = ({
 
   const addingItem = data.find((itm) => itm.id === addingToList)
 
+  const close = async () => {
+    setAddingToList('')
+    await getProfile(userNameParam)
+  }
+
   return (
     <>
       <View style={{ paddingTop: Math.max(insets.top, 16) }}>
@@ -169,17 +172,11 @@ export const Details = ({
       </View>
 
       {addingToList !== '' && addingItem && (
-        <Drawer close={() => setAddingToList('')}>
-          <DrawerContent>
-            <EditableList
-              item={addingItem}
-              onComplete={async () => {
-                setAddingToList('')
-                await getProfile(userNameParam)
-              }}
-            />
-          </DrawerContent>
-        </Drawer>
+        <Sheet full={true} onChange={(e) => e === -1 && close()}>
+          <ScrollView style={{ height: '100%' }}>
+            <EditableList item={addingItem} onComplete={() => {}} />
+          </ScrollView>
+        </Sheet>
       )}
     </>
   )

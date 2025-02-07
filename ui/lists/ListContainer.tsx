@@ -10,7 +10,6 @@ import { YStack } from '../core/Stacks'
 
 export const ListContainer = ({ item, canAdd }: { item: ExpandedItem; canAdd: boolean }) => {
   const { addingToList, setAddingToList } = useUIStore()
-  const { addToList, removeFromList } = useItemStore()
 
   return (item?.expand?.children ?? []).length > 0 ? (
     <ScrollView style={{ flex: 1, padding: s.$075 }}>

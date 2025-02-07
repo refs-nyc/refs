@@ -7,7 +7,7 @@ import Animated, { useAnimatedStyle, withSpring, useSharedValue } from 'react-na
 import { Pressable, TouchableWithoutFeedback } from 'react-native-gesture-handler'
 import Ionicons from '@expo/vector-icons/Ionicons'
 
-export const SearchRef = ({
+export const SearchBar = ({
   onChange,
   onFocus,
   onBlur,

@@ -3,8 +3,7 @@ import { pocketbase } from '@/features/pocketbase'
 import { XStack } from '@/ui/core/Stacks'
 import { View, Text } from 'react-native'
 import { SimplePinataImage } from '@/ui/images/SimplePinataImage'
-import Ionicons from '@expo/vector-icons/Ionicons'
-import { s, c } from '@/features/style'
+import { s, c, base } from '@/features/style'
 import { CompleteRef } from '@/features/pocketbase/stores/types'
 import { useUserStore } from '@/features/pocketbase/stores/users'
 
@@ -46,22 +45,10 @@ export const SearchResultItem = ({ r }: { r: CompleteRef }) => {
             <SimplePinataImage
               originalSource={r.image}
               imageOptions={{ width: s.$3, height: s.$3 }}
-              style={{
-                width: s.$3,
-                height: s.$3,
-                backgroundColor: c.accent,
-                borderRadius: s.$075,
-              }}
+              style={base.smallSquare}
             />
           ) : (
-            <View
-              style={{
-                width: s.$3,
-                height: s.$3,
-                backgroundColor: c.accent,
-                borderRadius: s.$075,
-              }}
-            ></View>
+            <View style={[base.smallSquare, { backgroundColor: c.accent }]}></View>
           )}
           <Text>{r?.title}</Text>
         </XStack>

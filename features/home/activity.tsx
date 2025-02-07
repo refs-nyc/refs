@@ -34,10 +34,10 @@ export const Activity = ({ items }: { items: ExpandedItem[] }) => {
             {item?.image ? (
               <SimplePinataImage
                 originalSource={item.image}
-                imageOptions={{ width: s.$3, height: s.$3 }}
+                imageOptions={{ width: s.$2, height: s.$2 }}
                 style={{
-                  width: s.$3,
-                  height: s.$3,
+                  width: s.$2,
+                  height: s.$2,
                   backgroundColor: c.accent,
                   borderRadius: s.$075,
                 }}
@@ -45,8 +45,8 @@ export const Activity = ({ items }: { items: ExpandedItem[] }) => {
             ) : (
               <View
                 style={{
-                  width: s.$3,
-                  height: s.$3,
+                  width: s.$2,
+                  height: s.$2,
                   backgroundColor: c.accent,
                   borderRadius: s.$075,
                 }}

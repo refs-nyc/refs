@@ -1,7 +1,6 @@
 import type { Item } from '@/features/pocketbase/stores/types'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { XStack, YStack } from '@/ui/core/Stacks'
-import { Drawer } from '@/ui/drawers/Drawer'
 import { Button } from '@/ui/buttons/Button'
 import { Heading } from '@/ui/typo/Heading'
 import { NewRef } from '@/ui/actions/NewRef'
@@ -9,15 +8,16 @@ import { useUIStore } from '../state'
 import { ProfileHeader } from './ProfileHeader'
 import { FirstVisitScreen } from './FirstVisitScreen'
 import { Grid } from '../grid/Grid'
+import { Sheet } from '../core/Sheets'
 import { useLocalSearchParams, router } from 'expo-router'
 import { RefListItem } from '../atoms/RefListItem'
-import { useEffect, useState, useMemo } from 'react'
-import { View, Text } from 'react-native'
+import { useEffect, useState, useCallback, useMemo } from 'react'
+import { View, Dimensions, KeyboardAvoidingView } from 'react-native'
 import { s, c } from '@/features/style'
 import { pocketbase, useUserStore, removeFromProfile, useItemStore } from '@/features/pocketbase'
 import { ShareIntent as ShareIntentType, useShareIntentContext } from 'expo-share-intent'
 import Ionicons from '@expo/vector-icons/Ionicons'
-import { FlatList, Pressable, ScrollView } from 'react-native-gesture-handler'
+import { Pressable, ScrollView } from 'react-native-gesture-handler'
 import {
   Profile as ProfileType,
   ExpandedProfile,
@@ -25,7 +25,8 @@ import {
 } from '@/features/pocketbase/stores/types'
 import { isProfile } from '@/features/pocketbase/stores/users'
 import { gridSort, createdSort } from '@/ui/profiles/sorts'
-import { DrawerContent } from '@/ui/drawers/DrawerContent'
+
+const win = Dimensions.get('window')
 
 export const Profile = ({ userName }: { userName: string }) => {
   const { firstVisit, addingTo, removingId } = useLocalSearchParams()
@@ -39,7 +40,11 @@ export const Profile = ({ userName }: { userName: string }) => {
   const [gridItems, setGridItems] = useState<Item[]>([])
   const [backlogItems, setBacklogItems] = useState<ExpandedItem[]>([])
   const [canAdd, setCanAdd] = useState<boolean>(false)
-  // const [removingId, setRemovingId] = useState('')
+
+  const maxDynamicContentSize = win.height - insets.top
+  const snapPointWithoutKeys = maxDynamicContentSize - 300
+
+  const snapPoints = useMemo<number[]>(() => [snapPointWithoutKeys, maxDynamicContentSize], [])
 
   const { user, getProfile } = useUserStore()
   const { remove, moveToBacklog } = useItemStore()
@@ -184,7 +189,7 @@ export const Profile = ({ userName }: { userName: string }) => {
                                 style={{
                                   transform: 'translate(8px, -8px)',
                                   backgroundColor: c.grey1,
-                                  borderRadius: '100%',
+                                  borderRadius: 12,
                                 }}
                               >
                                 <Ionicons size={12} style={{ padding: 6 }} name="close" />
@@ -217,44 +222,40 @@ export const Profile = ({ userName }: { userName: string }) => {
       </ScrollView>
 
       {removingId && (
-        <Drawer close={() => setRemovingId('')}>
-          <DrawerContent>
-            <YStack gap={s.$08} style={{ marginTop: s.$3, marginBottom: s.$6 }}>
-              <Button
-                onPress={handleMoveToBacklog}
-                title={`Move to backlog`}
-                variant="outlineFluid"
-              />
-              <Button
-                onPress={async () => {
-                  await removeFromProfile(removingId)
-                  setRemovingId('')
-                  await refreshGrid(userName)
-                }}
-                title="Remove"
-                variant="fluid"
-              />
-            </YStack>
-          </DrawerContent>
-        </Drawer>
+        <Sheet onChange={(e) => e === -1 && setRemovingId('')}>
+          <YStack gap={s.$08} style={{ marginTop: s.$3, marginBottom: s.$6 }}>
+            <Button
+              onPress={handleMoveToBacklog}
+              title={`Move to backlog`}
+              variant="outlineFluid"
+            />
+            <Button
+              onPress={async () => {
+                await removeFromProfile(removingId)
+                setRemovingId('')
+                await refreshGrid(userName)
+              }}
+              title="Remove"
+              variant="fluid"
+            />
+          </YStack>
+        </Sheet>
       )}
 
       {(addingTo === 'grid' || addingTo === 'backlog') && (
-        <Drawer close={() => setAddingTo('')}>
-          <DrawerContent>
-            <NewRef
-              backlog={addingTo === 'backlog'}
-              onNewRef={async (itm: Item) => {
-                await refreshGrid(userName)
-                if (itm?.list) router.push(`/user/${userName}/details?initialId=${itm.id}`)
-                setAddingTo('')
-              }}
-              onCancel={() => {
-                setAddingTo('')
-              }}
-            />
-          </DrawerContent>
-        </Drawer>
+        <Sheet onChange={(e) => e === -1 && setAddingTo('')}>
+          <NewRef
+            backlog={addingTo === 'backlog'}
+            onNewRef={async (itm: Item) => {
+              await refreshGrid(userName)
+              if (itm?.list) router.push(`/user/${userName}/details?initialId=${itm.id}`)
+              setAddingTo('')
+            }}
+            onCancel={() => {
+              setAddingTo('')
+            }}
+          />
+        </Sheet>
       )}
     </>
   )

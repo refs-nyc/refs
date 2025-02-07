@@ -65,7 +65,7 @@ export const GridTileWrapper = ({
             style={{
               transform: 'translate(8px, -8px)',
               backgroundColor: c.grey1,
-              borderRadius: '100%',
+              borderRadius: 100,
             }}
           >
             <Ionicons size={12} style={{ padding: 6 }} name="close" />

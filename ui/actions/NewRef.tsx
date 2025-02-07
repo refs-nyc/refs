@@ -5,9 +5,9 @@ import { Camera } from '../inputs/Camera'
 import { YStack } from '@/ui/core/Stacks'
 import { router } from 'expo-router'
 import { useUserStore, isProfile } from '@/features/pocketbase/stores/users'
-import Animated, { useAnimatedKeyboard, useAnimatedStyle } from 'react-native-reanimated'
+import Animated, { useAnimatedStyle } from 'react-native-reanimated'
 import { Button } from '../buttons/Button'
-import { Dimensions, KeyboardAvoidingView } from 'react-native'
+import { Dimensions, View } from 'react-native'
 import { useState, useEffect } from 'react'
 import { RefForm } from '../actions/RefForm'
 import { SearchRef } from '../actions/SearchRef'
@@ -47,9 +47,6 @@ export const NewRef = ({
   const [itemData, setItemData] = useState<ExpandedItem | null>(null)
   const [refData, setRefData] = useState<StagedRef | CompleteRef>(initialRefData)
   const { hasShareIntent } = useShareIntentContext()
-
-  const insets = useSafeAreaInsets()
-  const keyboard = useAnimatedKeyboard()
 
   const { user } = useUserStore()
 
@@ -105,13 +102,7 @@ export const NewRef = ({
 
   return (
     <DismissKeyboard>
-      <KeyboardAvoidingView
-        behavior="height"
-        style={{
-          marginHorizontal: 12,
-          flex: 1,
-        }}
-      >
+      <View>
         {pickerOpen && (
           <Picker onSuccess={(asset) => addImageRef(asset)} onCancel={() => setPickerOpen(false)} />
         )}
@@ -190,7 +181,7 @@ export const NewRef = ({
             />
           )}
         </Animated.View>
-      </KeyboardAvoidingView>
+      </View>
     </DismissKeyboard>
   )
 }

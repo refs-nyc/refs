@@ -144,11 +144,6 @@ export const RefForm = ({
             />
           ))}
 
-        <Text>
-          {JSON.stringify(imageAsset)}
-          {pinataSource}
-        </Text>
-
         {!imageAsset && (
           <View
             style={{

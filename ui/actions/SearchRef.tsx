@@ -124,7 +124,7 @@ export const SearchRef = ({
         style={{
           backgroundColor: c.surface2,
           marginVertical: s.$1,
-          paddingVertical: s.$08,
+          paddingVertical: s.$1,
           paddingHorizontal: s.$1,
           borderRadius: s.$075,
           color: c.black,
@@ -147,7 +147,6 @@ export const SearchRef = ({
           flex: 1,
           gap: s.$025,
           minHeight: s.$12,
-          // backgroundColor: 'blue',
         }}
       >
         {searchResults.map((r) => renderItem({ item: r }))}

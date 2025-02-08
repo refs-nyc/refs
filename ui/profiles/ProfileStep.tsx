@@ -4,9 +4,9 @@ import { YStack } from '../core/Stacks'
 import { KeyboardAvoidingView, View, Text as SizableText, Platform } from 'react-native'
 import { FormFieldWithIcon } from '../inputs/FormFieldWithIcon'
 import { AvatarPicker } from '../inputs/AvatarPicker'
-import { Dimensions } from 'react-native'
 import { useForm, Controller } from 'react-hook-form'
 import { useUserStore } from '@/features/pocketbase'
+import { usePathname } from 'expo-router'
 import { DismissKeyboard } from '../atoms/DismissKeyboard'
 import { router } from 'expo-router'
 import { LOGIN_STATE } from '@/features/magic'
@@ -33,6 +33,7 @@ export const ProfileStep = ({
 
   const { getUserByEmail, updateStagedUser, login } = useUserStore()
   const [loginState, setLoginState] = useState(0)
+  const pathname = usePathname()
 
   const formValues = watch()
 
@@ -263,7 +264,9 @@ export const ProfileStep = ({
                     onChange={onChange}
                     type="email"
                     id="email"
-                    placeholder="Login with email"
+                    placeholder={
+                      pathname.includes('/user/login') ? 'Login with email' : 'Register with email'
+                    }
                     value={value}
                     autoFocus={false}
                   >
@@ -370,43 +373,8 @@ export const ProfileStep = ({
               />
             </>
           )}
-          {/* LastName */}
-          {fields.includes('lastName') && (
-            <>
-              <Controller
-                name="lastName"
-                control={control}
-                rules={{
-                  required: true,
-                }}
-                render={({ field: { onChange, value } }) => (
-                  <FormFieldWithIcon
-                    onChange={onChange}
-                    type="user"
-                    id="lastName"
-                    placeholder="Last Name"
-                    value={value}
-                    autoFocus={false}
-                  >
-                    {errors.lastName && (
-                      <SizableText
-                        style={{
-                          fontSize: s.$08,
-                          fontFamily: 'Inter',
-                          textAlign: 'center',
-                          color: c.accent,
-                        }}
-                      >
-                        This field is required
-                      </SizableText>
-                    )}
-                  </FormFieldWithIcon>
-                )}
-              />
-            </>
-          )}
 
-          {/* LastName */}
+          {/* Location */}
           {fields.includes('location') && (
             <>
               <Controller
@@ -516,7 +484,15 @@ export const ProfileStep = ({
         {fields.includes('email') ? (
           <Button
             style={{ position: 'absolute', bottom: s.$3, left: s.$1half }}
-            title={loginState === LOGIN_STATE.LOGGING_IN ? 'Logging in' : 'Login'}
+            title={
+              pathname.includes('/user/login')
+                ? loginState === LOGIN_STATE.LOGGING_IN
+                  ? 'Logging in'
+                  : 'Login'
+                : loginState === LOGIN_STATE.LOGGING_IN
+                ? 'Registering'
+                : 'Register'
+            }
             variant="fluid"
             onPress={handleSubmit(onSubmit, onErrors)}
           />

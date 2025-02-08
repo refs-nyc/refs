@@ -35,6 +35,7 @@ export const GridTileWrapper = ({
   }
 
   const openDetailScreen = () => {
+    if (pathname.includes('onboarding')) return
     stopEditProfile()
     router.push(`${pathname}/details${id && `?initialId=${id}`}`)
   }

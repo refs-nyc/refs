@@ -12,12 +12,15 @@ export const NewUserProfile = () => {
   const win = Dimensions.get('window')
   const data = [
     ['email'],
-    ['location'],
+    // ['location'],
     ['password', 'passwordConfirm'],
     ['firstName', 'lastName'],
     ['image'],
     ['userName'],
   ]
+
+  // climber@manusnijhoff.nl
+  // !!!Abc123
 
   // TODO: remove any type
   const nextStep = async (formValues: any) => {

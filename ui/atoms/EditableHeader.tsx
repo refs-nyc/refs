@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { TextInput, Pressable } from 'react-native'
 import { XStack } from '@/ui/core/Stacks'
-import { Heading } from "@/ui/typo/Heading"
+import { Heading } from '@/ui/typo/Heading'
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { s, c, t } from '@/features/style'
 import * as Clipboard from 'expo-clipboard'
@@ -17,12 +17,13 @@ export const EditableHeader = ({
 }: {
   title: string
   url: string
-  image: string
+  image?: string
   placeholder: string
   onComplete: (str: string) => void
   onDataChange: (d: { url: string; image: string; title: string }) => void
 }) => {
-  const [titleState, setTitleState] = useState(title)
+  console.log(title || '')
+  const [titleState, setTitleState] = useState(title || '')
   const [urlState, setUrlState] = useState(url)
   const [imageState, setImageState] = useState(image)
   const [hasUrl, setHasUrl] = useState(false)
@@ -32,7 +33,7 @@ export const EditableHeader = ({
   const analyseUrl = async (u: string) => {
     // pass the link directly
     getLinkPreview(u).then((data) => {
-      if (data.title) {
+      if (data?.title) {
         setTitleState(data.title)
       }
 
@@ -48,7 +49,7 @@ export const EditableHeader = ({
   }, [titleState, imageState, urlState])
 
   useEffect(() => {
-    if (urlState !== '') analyseUrl(urlState)
+    if (urlState && urlState !== '') analyseUrl(urlState)
   }, [urlState])
 
   useEffect(() => {
@@ -76,11 +77,9 @@ export const EditableHeader = ({
           <XStack
             gap={s.$08}
             style={{
-              // backgroundColor: 'blue',
               flexShrink: 1,
               flexDirection: 'row',
               alignItems: 'start',
-              // width: 200,
             }}
           >
             <Pressable onPress={() => setEditing(true)}>
@@ -92,7 +91,7 @@ export const EditableHeader = ({
                   color: titleState == placeholder ? c.muted : c.black,
                 }}
               >
-                {titleState}
+                {titleState && titleState}
               </Heading>
             </Pressable>
           </XStack>
@@ -112,7 +111,10 @@ export const EditableHeader = ({
             autoFocus={true}
             value={titleState == placeholder ? '' : titleState}
             placeholder={placeholder}
-            onChangeText={setTitleState}
+            onChangeText={(e) => {
+              console.log('set title state', e)
+              setTitleState(e)
+            }}
             multiline={true}
             onBlur={() => {
               setEditing(false)

@@ -9,7 +9,7 @@ const addToProfile = async (
   attach = true,
   options: { comment?: string; backlog?: boolean } = {}
 ) => {
-  if (!pocketbase.authStore.isValid || !pocketbase.authStore.record)
+  if ((!pocketbase.authStore?.isValid || !pocketbase.authStore?.record) && attach)
     throw new Error('Not enough permissions')
 
   const refStore = useRefStore.getState()
@@ -30,11 +30,11 @@ const addToProfile = async (
     })
   } else {
     // create a new item, with a new ref
-    const newRef = await refStore.push({ ...stagedRef, creator: pocketbase.authStore.record.id })
+    const newRef = await refStore.push({ ...stagedRef, creator: pocketbase.authStore?.record?.id })
     newItem = await itemStore.push({
       ref: newRef.id,
       image: newRef.image,
-      creator: pocketbase.authStore?.record?.id,
+      creator: pocketbase.authStore?.record?.id || '',
       text: options.comment,
       backlog: !!options.backlog,
     })

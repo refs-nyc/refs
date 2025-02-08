@@ -46,7 +46,7 @@ export const OnboardingCarouselItem = ({
                 style={{
                   width: s.$075,
                   height: s.$075,
-                  borderRadius: '100%',
+                  borderRadius: s.$075 / 2,
                   backgroundColor: c.muted,
                 }}
               />
@@ -54,7 +54,7 @@ export const OnboardingCarouselItem = ({
                 style={{
                   width: s.$075,
                   height: s.$075,
-                  borderRadius: '100%',
+                  borderRadius: s.$075 / 2,
                   backgroundColor: c.grey1,
                 }}
               />
@@ -62,7 +62,7 @@ export const OnboardingCarouselItem = ({
                 style={{
                   width: s.$075,
                   height: s.$075,
-                  borderRadius: '100%',
+                  borderRadius: s.$075 / 2,
                   backgroundColor: c.grey1,
                 }}
               />
@@ -70,7 +70,7 @@ export const OnboardingCarouselItem = ({
                 style={{
                   width: s.$075,
                   height: s.$075,
-                  borderRadius: '100%',
+                  borderRadius: s.$075 / 2,
                   backgroundColor: c.grey1,
                 }}
               />
@@ -108,7 +108,7 @@ export const OnboardingCarouselItem = ({
                 style={{
                   width: s.$075,
                   height: s.$075,
-                  borderRadius: '100%',
+                  borderRadius: s.$075 / 2,
                   backgroundColor: c.grey1,
                 }}
               />
@@ -116,7 +116,7 @@ export const OnboardingCarouselItem = ({
                 style={{
                   width: s.$075,
                   height: s.$075,
-                  borderRadius: '100%',
+                  borderRadius: s.$075 / 2,
                   backgroundColor: c.muted,
                 }}
               />
@@ -124,7 +124,7 @@ export const OnboardingCarouselItem = ({
                 style={{
                   width: s.$075,
                   height: s.$075,
-                  borderRadius: '100%',
+                  borderRadius: s.$075 / 2,
                   backgroundColor: c.grey1,
                 }}
               />
@@ -132,7 +132,7 @@ export const OnboardingCarouselItem = ({
                 style={{
                   width: s.$075,
                   height: s.$075,
-                  borderRadius: '100%',
+                  borderRadius: s.$075 / 2,
                   backgroundColor: c.grey1,
                 }}
               />
@@ -169,7 +169,7 @@ export const OnboardingCarouselItem = ({
                 style={{
                   width: s.$075,
                   height: s.$075,
-                  borderRadius: '100%',
+                  borderRadius: s.$075 / 2,
                   backgroundColor: c.grey1,
                 }}
               />
@@ -177,7 +177,7 @@ export const OnboardingCarouselItem = ({
                 style={{
                   width: s.$075,
                   height: s.$075,
-                  borderRadius: '100%',
+                  borderRadius: s.$075 / 2,
                   backgroundColor: c.grey1,
                 }}
               />
@@ -185,7 +185,7 @@ export const OnboardingCarouselItem = ({
                 style={{
                   width: s.$075,
                   height: s.$075,
-                  borderRadius: '100%',
+                  borderRadius: s.$075 / 2,
                   backgroundColor: c.muted,
                 }}
               />
@@ -193,7 +193,7 @@ export const OnboardingCarouselItem = ({
                 style={{
                   width: s.$075,
                   height: s.$075,
-                  borderRadius: '100%',
+                  borderRadius: s.$075 / 2,
                   backgroundColor: c.grey1,
                 }}
               />
@@ -231,7 +231,7 @@ export const OnboardingCarouselItem = ({
                 style={{
                   width: s.$075,
                   height: s.$075,
-                  borderRadius: '100%',
+                  borderRadius: s.$075 / 2,
                   backgroundColor: c.grey1,
                 }}
               />
@@ -239,7 +239,7 @@ export const OnboardingCarouselItem = ({
                 style={{
                   width: s.$075,
                   height: s.$075,
-                  borderRadius: '100%',
+                  borderRadius: s.$075 / 2,
                   backgroundColor: c.grey1,
                 }}
               />
@@ -247,7 +247,7 @@ export const OnboardingCarouselItem = ({
                 style={{
                   width: s.$075,
                   height: s.$075,
-                  borderRadius: '100%',
+                  borderRadius: s.$075 / 2,
                   backgroundColor: c.grey1,
                 }}
               />
@@ -255,7 +255,7 @@ export const OnboardingCarouselItem = ({
                 style={{
                   width: s.$075,
                   height: s.$075,
-                  borderRadius: '100%',
+                  borderRadius: s.$075 / 2,
                   backgroundColor: c.muted,
                 }}
               />

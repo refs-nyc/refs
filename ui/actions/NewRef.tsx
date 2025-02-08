@@ -51,7 +51,7 @@ export const NewRef = ({
   const { user } = useUserStore()
 
   const animatedStyle = useAnimatedStyle(() => {
-    if (step === '') return { height: 500 }
+    if (step === '') return { height: 'auto' }
     return {
       height: win.height - s.$2,
     }
@@ -111,7 +111,7 @@ export const NewRef = ({
           style={[animatedStyle, { justifyContent: 'flex-start', alignItems: 'stretch' }]}
         >
           {step === '' && (
-            <YStack gap="$4">
+            <YStack gap="$4" style={{ paddingBottom: s.$6 }}>
               <Button
                 variant="basicLeft"
                 iconColor={c.black}

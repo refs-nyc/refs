@@ -17,11 +17,9 @@ import { SimplePinataImage } from '../images/SimplePinataImage'
 import { EditableHeader } from '../atoms/EditableHeader'
 import { addToProfile } from '@/features/pocketbase'
 import { Button } from '../buttons/Button'
-import Ionicons from '@expo/vector-icons/Ionicons'
-import { useItemStore } from '@/features/pocketbase/stores/items'
 import type { ImagePickerAsset } from 'expo-image-picker'
 import { c, s } from '@/features/style'
-import { CompleteRef, StagedRef, Item } from '@/features/pocketbase/stores/types'
+import { StagedRef, Item } from '@/features/pocketbase/stores/types'
 
 const win = Dimensions.get('window')
 
@@ -42,18 +40,26 @@ export const RefForm = ({
 }) => {
   const [currentRef, setCurrentRef] = useState<StagedRef>({ ...r })
   const [currentRefComment, setCurrentRefComment] = useState<string>()
-  const [imageAsset, setImageAsset] = useState(r?.image || null)
-  const [pinataSource, setPinataSource] = useState(typeof r?.image === 'string' ? r.image : '')
+  const [imageAsset, setImageAsset] = useState<ImagePickerAsset | null>(null)
+  const [pinataSource, setPinataSource] = useState('')
   const [picking, setPicking] = useState(false)
 
   const pathname = usePathname()
 
-  console.log('REF FORM', r)
-  console.log('REF FORM', r?.image)
-
   // Mandatory
   // Ref title
   // Ref image
+
+  useEffect(() => {
+    // Initialize image state based on incoming ref
+    if (r?.image) {
+      if (typeof r.image === 'string') {
+        setPinataSource(r.image)
+      } else {
+        setImageAsset(r.image)
+      }
+    }
+  }, [r])
 
   const updateRefImage = (image: string) => {
     setPinataSource(image)
@@ -123,60 +129,43 @@ export const RefForm = ({
         }}
         style={{ flex: 1, width: '100%' }}
       >
-        {imageAsset &&
-          (!!pinataSource ? (
+        <View style={{ width: 200, height: 200 }}>
+          {pinataSource ? (
             <TouchableOpacity style={{ flex: 1 }} onLongPress={() => setPicking(true)}>
               <SimplePinataImage
+                placeholder={imageAsset?.uri}
+                placeholderContentFit="cover"
                 originalSource={pinataSource}
-                style={{ flex: 1 }}
+                style={{ flex: 1, borderRadius: 10 }}
                 imageOptions={{ width: 400, height: 400 }}
               />
             </TouchableOpacity>
-          ) : (
+          ) : imageAsset ? (
             <PinataImage
               asset={imageAsset}
-              onReplace={() => {
-                console.log('WE NEED TO PICK SOMETHING ELSE')
-                setPicking(true)
+              onReplace={() => setPicking(true)}
+              onSuccess={(url) => {
+                setPinataSource(url)
               }}
-              onSuccess={updateRefImage}
-              onFail={() => console.error('Cant ul')}
+              onFail={() => console.error('Upload failed')}
             />
-          ))}
-
-        {!imageAsset && (
-          <View
-            style={{
-              width: 200,
-              height: 200,
-            }}
-          >
-            {!!pinataSource ? (
-              <TouchableOpacity style={{ flex: 1 }} onLongPress={() => setPicking(true)}>
-                <SimplePinataImage
-                  originalSource={pinataSource}
-                  style={{ flex: 1 }}
-                  imageOptions={{ width: 400, height: 400 }}
-                />
-              </TouchableOpacity>
-            ) : (
-              <TouchableOpacity style={{ flex: 1 }} onPress={() => setPicking(true)}>
-                <View
-                  style={{
-                    flex: 1,
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    borderWidth: 2,
-                    borderColor: c.black,
-                    borderRadius: s.$075,
-                  }}
-                >
-                  <Heading tag="h1light">+</Heading>
-                </View>
-              </TouchableOpacity>
-            )}
-          </View>
-        )}
+          ) : (
+            <TouchableOpacity style={{ flex: 1 }} onPress={() => setPicking(true)}>
+              <View
+                style={{
+                  flex: 1,
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  borderWidth: 2,
+                  borderColor: c.black,
+                  borderRadius: s.$075,
+                }}
+              >
+                <Heading tag="h1light">+</Heading>
+              </View>
+            </TouchableOpacity>
+          )}
+        </View>
 
         {picking && (
           <Picker
@@ -191,7 +180,7 @@ export const RefForm = ({
           onComplete={updateRefTitle}
           onDataChange={updateData}
           placeholder={placeholder}
-          title={r?.title + String(r?.image) || placeholder}
+          title={r?.title || placeholder}
           url={r?.url || ''}
         />
         {/* Notes */}
@@ -221,7 +210,7 @@ export const RefForm = ({
               title="Create List"
               variant="outlineFluid"
               style={{ width: '48%', minWidth: 0 }}
-              disabled={!currentRef?.image || !currentRef?.title}
+              disabled={!pinataSource || !currentRef?.title}
               onPress={() => {
                 console.log('ABOUT TO ADD A LIST')
                 submit({ list: true })
@@ -232,7 +221,7 @@ export const RefForm = ({
             title="Add Ref"
             variant="fluid"
             style={{ width: currentRef.url ? '100%' : '48%', minWidth: 0 }}
-            disabled={!currentRef?.image || !currentRef?.title}
+            disabled={!pinataSource || !currentRef?.title}
             onPress={() => submit()}
           />
         </View>

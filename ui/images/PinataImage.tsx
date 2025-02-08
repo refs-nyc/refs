@@ -66,10 +66,10 @@ export const PinataImage = ({
     >
       <View
         style={{
+          ...style,
           width: 200,
           height: 200,
           overflow: 'hidden',
-          ...style,
           justifyContent: 'center',
           alignItems: 'center',
           borderRadius: round ? 1000 : 10,

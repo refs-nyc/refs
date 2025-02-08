@@ -2,6 +2,7 @@ import { YStack, XStack } from '@/ui'
 import { GridTile } from './GridTile'
 import { GridTileImage } from './GridTileImage'
 import { GridTileList } from './GridTileList'
+import { GridItem } from './GridItem'
 import { GridWrapper } from './GridWrapper'
 import { GridTileWrapper } from './GridTileWrapper'
 
@@ -19,8 +20,9 @@ export const ExampleGrid = () => (
     <GridTileWrapper canEdit={false} type="image">
       <GridTileImage source={require('@/assets/4.png')} />
     </GridTileWrapper>
-    <GridTileWrapper canEdit={false} type="">
-      <GridTileList title="chinatown dumpling tier list" />
+    <GridTileWrapper canEdit={false} type="text">
+      <GridItem item={{ expand: { ref: { title: 'chinatown dumpling tier list' } } }} i={0} />
+      {/* <GridTileList title="chinatown dumpling tier list" /> */}
     </GridTileWrapper>
     <GridTileWrapper canEdit={false} type="image">
       <GridTileImage source={require('@/assets/6.png')} />
@@ -31,8 +33,8 @@ export const ExampleGrid = () => (
     <GridTileWrapper canEdit={false} type="image">
       <GridTileImage source={require('@/assets/8.png')} />
     </GridTileWrapper>
-    <GridTileWrapper canEdit={false} type="">
-      <GridTileList title="2025 reading list" />
+    <GridTileWrapper canEdit={false} type="text">
+      <GridItem item={{ expand: { ref: { title: '2025 reading list' } } }} i={0} />
     </GridTileWrapper>
   </GridWrapper>
 )

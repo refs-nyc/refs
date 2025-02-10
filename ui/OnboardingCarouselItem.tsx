@@ -222,7 +222,10 @@ export const OnboardingCarouselItem = ({
       >
         <YStack gap={s.$4}>
           <Heading tag="h2normal" style={{ textAlign: 'center' }}>
-            ...then <Heading tag="h2">find people</Heading> based on the{'\n'}refs they add
+            ...and get connected by <Heading tag="h2">messaging </Heading> them, starting a{' '}
+            <Heading tag="h2">group chat</Heading>, or saving them to a{' '}
+            <Heading tag="h2">folder</Heading>.
+            {/* ...then <Heading tag="h2">find people</Heading> based on the{'\n'}refs they add */}
           </Heading>
           <ExampleButtonList />
           <YStack style={{ paddingVertical: s.$4, flex: 1 }}>

@@ -133,6 +133,7 @@ function RootLayoutNav() {
       <Navigation />
       <Stack
         screenOptions={{
+          headerShown: false,
           contentStyle: { backgroundColor: c.surface },
         }}
       />

@@ -24,9 +24,10 @@ export const Feed = () => {
 
     const search = async (q: string) => {
       try {
-        const records = await pocketbase
-          .collection('refs')
-          .getFullList<ExpandedItem>({ filter: `title ~ "${q}"`, expand: 'ref,creator' })
+        const records = await pocketbase.collection('refs').getFullList<ExpandedItem>({
+          filter: `title ~ "${q}" && creator != null`,
+          expand: 'ref,creator',
+        })
 
         setResults(records)
       } catch (err) {
@@ -44,7 +45,11 @@ export const Feed = () => {
       try {
         const records = await pocketbase
           .collection('items')
-          .getList<ExpandedItem>(1, 30, { filter: ``, sort: '-created', expand: 'ref,creator' })
+          .getList<ExpandedItem>(1, 30, {
+            filter: `creator != null`,
+            sort: '-created',
+            expand: 'ref,creator',
+          })
 
         setItems(records.items)
       } catch (error) {

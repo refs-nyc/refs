@@ -139,7 +139,7 @@ export const Details = ({
 
   return (
     <>
-      <View style={{ paddingTop: Math.max(insets.top, 16) }}>
+      <View style={{ paddingTop: Math.max(insets.top, 16), backgroundColor: 'red' }}>
         <Pressable
           style={{
             position: 'absolute',

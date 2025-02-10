@@ -13,6 +13,10 @@ export type Profile = PBTypes.UsersRecord
 export type Item = PBTypes.ItemsRecord
 
 export type ExpandedProfile = PBTypes.UsersResponse<{ items: PBTypes.ItemsRecord[] }>
-export type ExpandedItem = PBTypes.ItemsResponse<{ ref: PBTypes.RefsRecord, creator: PBTypes.UsersRecord, children: PBTypes.ItemsRecord[] }>
+export type ExpandedItem = PBTypes.ItemsResponse<{
+  ref: PBTypes.RefsRecord
+  creator: PBTypes.UsersRecord
+  children: PBTypes.ItemsRecord[]
+}>
 
-export type GridTileType = 'add' | 'image' | 'text' | ''
+export type GridTileType = 'add' | 'image' | 'text' | 'list' | ''

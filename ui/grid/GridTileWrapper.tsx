@@ -1,6 +1,6 @@
 import { Children, useState } from 'react'
 import { YStack } from '../core/Stacks'
-import { TouchableOpacity, Pressable } from 'react-native'
+import { TouchableOpacity, Pressable, Text } from 'react-native'
 import { base } from '@/features/style'
 import { GridTileType } from '@/features/pocketbase/stores/types'
 import { useUIStore } from '../state'
@@ -30,8 +30,8 @@ export const GridTileWrapper = ({
   const [actions, setActions] = useState(false)
 
   const specificStyles = {
-    borderWidth: type === 'image' ? 0 : 2,
-    borderColor: type !== 'image' && type !== '' ? 'black' : 'transparent',
+    borderWidth: type !== 'image' && type !== '' ? 2 : 0,
+    borderColor: 'black',
   }
 
   const openDetailScreen = () => {

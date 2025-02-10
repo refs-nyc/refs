@@ -2,7 +2,7 @@ import { Text } from 'react-native'
 import { Pressable } from 'react-native'
 import { GridTileWrapper } from './GridTileWrapper'
 import { GridTileImage } from './GridTileImage'
-import { GridTileType } from "@/features/pocketbase/stores/types"
+import { GridTileType } from '@/features/pocketbase/stores/types'
 import { Heading } from '../typo/Heading'
 import { s } from '@/features/style'
 
@@ -21,13 +21,12 @@ export const GridItem = ({
     <>
       {item && (
         <>
-          {item?.expand?.ref?.image ? (
-            <GridTileImage key={item.id} source={item.expand.ref.image} />
-          ) : (
+          {item.list || !item?.expand?.ref?.image ? (
             <Text numberOfLines={3} style={{ textAlign: 'center', padding: s.$08 }}>
-              {/* {item.list && 'L: '} */}
               {item?.expand?.ref?.title}
             </Text>
+          ) : (
+            <GridTileImage key={item.id} source={item.expand.ref.image} />
           )}
         </>
       )}

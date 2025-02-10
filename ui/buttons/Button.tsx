@@ -106,6 +106,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: s.$2,
     minWidth: s.$8,
     backgroundColor: c.accent,
+    width: 'auto',
   },
   smallMuted: {
     backgroundColor: 'transparent',

@@ -1,9 +1,9 @@
 import type { Item } from '@/features/pocketbase/stores/types'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { XStack, YStack } from '@/ui/core/Stacks'
-import { Button } from '@/ui/buttons/Button'
-import { Heading } from '@/ui/typo/Heading'
-import { NewRef } from '@/ui/actions/NewRef'
+import { XStack, YStack } from '../core/Stacks'
+import { Button } from '../buttons/Button'
+import { Heading } from '../typo/Heading'
+import { NewRef } from '../actions/NewRef'
 import { useUIStore } from '../state'
 import { ProfileHeader } from './ProfileHeader'
 import { FirstVisitScreen } from './FirstVisitScreen'
@@ -24,7 +24,7 @@ import {
   ExpandedItem,
 } from '@/features/pocketbase/stores/types'
 import { isProfile } from '@/features/pocketbase/stores/users'
-import { gridSort, createdSort } from '@/ui/profiles/sorts'
+import { gridSort, createdSort } from '../profiles/sorts'
 
 const win = Dimensions.get('window')
 

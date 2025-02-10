@@ -1,152 +1,183 @@
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import Animated, { useSharedValue, withSpring } from 'react-native-reanimated'
-import { View, Text, Pressable } from 'react-native'
+import { View, Text, Pressable, LayoutChangeEvent } from 'react-native'
 import { XStack, YStack } from '../core/Stacks'
 import { SizableText } from '../typo/SizableText'
 import { Button } from '../buttons/Button'
 import { c, s, t } from '@/features/style'
+import Ionicons from '@expo/vector-icons/Ionicons'
 
-// Used in the onboarding
-export const ExampleButtonList = () => {
-  const [expanded, setExpanded] = useState(false)
-  const [expanded2, setExpanded2] = useState(false)
-  let timeout: ReturnType<typeof setTimeout>
+type ExpandOption = {
+  label: string
+  width?: number // Optional fixed width for the option
+  fillRemaining?: boolean // Add this new property
+}
 
-  const width = useSharedValue(0)
-  const width2 = useSharedValue(0)
+type ExpandButtonProps = {
+  title: string
+  icon?: string
+  iconPosition?: 'before' | 'after'
+  options: ExpandOption[]
+  expandDirection?: 'left' | 'right'
+  onOptionSelect?: (option: ExpandOption) => void
+  containerWidth?: number // Add this to know total available width
+  fillRemaining?: boolean // Add this as a component prop instead
+}
 
-  const updateWidth = () => {
-    setExpanded(!expanded)
-  }
-  const updateWidth2 = () => {
-    setExpanded2(!expanded2)
-  }
+export const ExpandButton = ({
+  title,
+  expandDirection = 'right',
+  options,
+  icon,
+  fillRemaining = false, // Add default value
+}: ExpandButtonProps) => {
+  const [expand, setExpand] = useState(false)
+  const translateX = useSharedValue(1000)
+  const [buttonWidth, setButtonWidth] = useState(0)
+  const [optionsWidth, setOptionsWidth] = useState(0)
+  const [containerWidth, setContainerWidth] = useState(0)
+  const [availableSpace, setAvailableSpace] = useState(0)
 
-  const onPress = () => {
-    console.log('on Press')
-    clearTimeout(timeout)
-    updateWidth()
-  }
-  const onPress2 = () => {
-    console.log('on Press 2')
-    clearTimeout(timeout)
-    updateWidth2()
-  }
+  const height = 54
+  const borderRadius = 100
+  const paddingHorizontal = 32
 
   useEffect(() => {
-    timeout = setTimeout(() => {
-      setExpanded(true)
-    }, 3000)
-    timeout = setTimeout(() => {
-      setExpanded2(true)
-    }, 5000)
-  }, [])
+    // Calculate the offset based on container widths
+    const offset = expandDirection === 'right' ? optionsWidth : -optionsWidth
+    translateX.value = withSpring(expand ? 0 : offset, {
+      stiffness: 100,
+      overshootClamping: true,
+    })
+  }, [expand, expandDirection, optionsWidth])
 
   useEffect(() => {
-    width.set(withSpring(expanded ? 250 : 10, { stiffness: expanded ? 100 : 10 }))
-    width2.set(withSpring(expanded2 ? 280 : 10, { stiffness: expanded2 ? 100 : 10 }))
-  }, [expanded, expanded2])
+    // Calculate available space for filling
+    if (containerWidth && optionsWidth) {
+      const usedSpace = optionsWidth
+      const remaining = containerWidth - usedSpace
+      setAvailableSpace(Math.max(0, remaining))
+    }
+  }, [containerWidth, optionsWidth])
+
+  const toggleExpand = () => {
+    setExpand(!expand)
+  }
+
+  const onContainerLayout = (event: LayoutChangeEvent) => {
+    if (containerWidth === 0) {
+      setContainerWidth(event.nativeEvent.layout.width)
+    }
+  }
+
+  const onButtonLayout = (event: LayoutChangeEvent) => {
+    if (buttonWidth === 0) {
+      setButtonWidth(event.nativeEvent.layout.width)
+    }
+  }
+
+  const onOptionsLayout = (event: LayoutChangeEvent) => {
+    if (optionsWidth === 0) {
+      setOptionsWidth(event.nativeEvent.layout.width)
+    }
+  }
+
+  const onItemPress = (o, i) => {
+    console.log(o.label)
+  }
 
   return (
-    <View style={{ width: '100%', aspectRatio: 1, justifyContent: 'center' }}>
-      <YStack gap={s.$4} style={{ justifyContent: 'center' }}>
-        <Pressable onPress={onPress}>
-          <XStack>
-            <View style={{ position: 'relative', zIndex: 1 }}>
-              <Button
-                onPress={onPress}
-                title="Message"
-                variant="small"
-                iconAfter="send"
-                iconColor={c.white}
-              />
-            </View>
-            <Animated.View style={{ width: width, position: 'relative', left: -60 }}>
-              <View
-                style={{
-                  borderRadius: s.$10,
-                  height: 46,
-                  width: 242,
-                  backgroundColor: c.white,
-                  overflow: 'hidden',
-                  borderColor: c.accent,
-                  borderWidth: s.$025,
-                }}
-              >
-                <XStack
-                  style={{ alignItems: 'center', justifyContent: 'flex-end', height: '100%' }}
-                >
-                  <View style={{ width: s.$8 }}>
-                    <SizableText style={{ color: c.accent, textAlign: 'center' }}>
-                      Group
-                    </SizableText>
-                  </View>
-                  <View style={{ width: 2, height: '70%', backgroundColor: c.accent2 }}></View>
-                  <View style={{ width: s.$7 }}>
-                    <SizableText style={{ color: c.accent, textAlign: 'center' }}>DM</SizableText>
-                  </View>
-                </XStack>
-              </View>
-            </Animated.View>
-          </XStack>
-        </Pressable>
-        {/* Save */}
-        <Pressable onPress={onPress2}>
-          <XStack
-            style={{
-              justifyContent: 'flex-end',
-              flexDirection: 'row-reverse',
-            }}
-          >
-            <Animated.View
-              style={{
-                width: width2,
-                alignSelf: 'flex-end',
-                flexDirection: 'row-reverse',
-                position: 'relative',
-                right: 60,
-              }}
-            >
-              <View
-                style={{
-                  borderRadius: s.$10,
-                  height: 46,
-                  width: 294,
-                  backgroundColor: c.white,
-                  overflow: 'hidden',
-                  borderColor: c.accent,
-                  borderWidth: s.$025,
-                }}
-              >
-                <XStack
-                  style={{ alignItems: 'center', justifyContent: 'flex-start', height: '100%' }}
-                >
-                  <View style={{ width: s.$8 }}>
-                    <SizableText style={{ color: c.accent, textAlign: 'center' }}>
-                      Dates
-                    </SizableText>
-                  </View>
-                  <View style={{ width: 2, height: '70%', backgroundColor: c.accent2 }}></View>
-                  <View style={{ width: s.$11 }}>
-                    <SizableText style={{ color: c.accent, textAlign: 'center' }}>
-                      Dinner Invites
-                    </SizableText>
-                  </View>
-                </XStack>
-              </View>
-            </Animated.View>
-            <View style={{ position: 'absolute', zIndex: 1, right: 0 }}>
-              <Button
-                onPress={onPress2}
-                title="Save"
-                variant="small"
-                iconBefore="bookmark"
-                iconColor={c.white}
-              />
-            </View>
-          </XStack>
-        </Pressable>
-      </YStack>
+    <View
+      onLayout={onContainerLayout}
+      style={{
+        width: '100%',
+        height: height,
+        borderRadius: borderRadius,
+        overflow: 'hidden',
+      }}
+    >
+      <Pressable
+        onLayout={onButtonLayout}
+        style={{
+          position: 'absolute',
+          alignSelf: expandDirection === 'left' ? 'flex-start' : 'flex-end',
+          backgroundColor: c.accent,
+          height: height,
+          alignItems: 'center',
+          flexDirection: expandDirection === 'left' ? 'row-reverse' : 'row',
+          justifyContent: 'center',
+          paddingHorizontal: paddingHorizontal,
+          borderRadius: borderRadius,
+          gap: 16,
+          zIndex: 1,
+        }}
+        onPress={toggleExpand}
+      >
+        <Ionicons size={20} color={c.white} name={icon} />
+        <Text style={{ color: 'white' }}>{title}</Text>
+      </Pressable>
+
+      {/* The items */}
+      <Animated.View
+        onLayout={onOptionsLayout}
+        style={{
+          position: 'absolute',
+          flexDirection: expandDirection === 'left' ? 'row' : 'row-reverse',
+          backgroundColor: c.white,
+          borderRadius: borderRadius,
+          alignSelf: expandDirection === 'left' ? 'flex-start' : 'flex-end',
+          height: height,
+          borderWidth: 2,
+          borderColor: c.accent2,
+          paddingLeft:
+            paddingHorizontal +
+            (expandDirection === 'left'
+              ? buttonWidth + (fillRemaining ? availableSpace - 4 : 0) // -4 magic number for rounded borders
+              : 0),
+          paddingRight:
+            paddingHorizontal +
+            (expandDirection === 'right'
+              ? buttonWidth + (fillRemaining ? availableSpace - 4 : 0)
+              : 0),
+          alignItems: 'center',
+          gap: 20,
+          zIndex: 0,
+          transform: [{ translateX }],
+        }}
+      >
+        {options.map((o, i) => (
+          <React.Fragment key={o.label + i}>
+            <Pressable onPress={() => onItemPress(o, i)}>
+              <SizableText style={{ color: c.accent, textAlign: 'center' }}>{o.label}</SizableText>
+            </Pressable>
+            {i !== options.length - 1 && (
+              <View style={{ width: 2, height: height - 20, backgroundColor: c.accent2 }}></View>
+            )}
+          </React.Fragment>
+        ))}
+      </Animated.View>
     </View>
+  )
+}
+
+// Example usage:
+export const ExampleButtonList = () => {
+  return (
+    <YStack gap={s.$1}>
+      <ExpandButton
+        title="Message"
+        icon="send"
+        options={[{ label: 'Group' }, { label: 'DM' }]}
+        expandDirection="left"
+      />
+
+      <ExpandButton
+        title="Save"
+        icon="bookmark"
+        iconPosition="before"
+        options={[{ label: 'Dates' }, { label: 'Dinner Invites' }]}
+        expandDirection="right"
+      />
+    </YStack>
   )
 }

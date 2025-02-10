@@ -139,12 +139,12 @@ export const Details = ({
 
   return (
     <>
-      <View style={{ paddingTop: Math.max(insets.top, 16), backgroundColor: 'red' }}>
+      <View style={{ paddingTop: Math.max(insets.top, 16) }}>
         <Pressable
           style={{
             position: 'absolute',
-            top: insets.top + s.$1,
-            left: s.$1,
+            top: s.$1,
+            right: s.$1,
             padding: s.$1,
             zIndex: 99,
           }}

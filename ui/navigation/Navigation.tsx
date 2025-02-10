@@ -1,4 +1,4 @@
-import Animated, { SlideInDown, SlideOutDown } from 'react-native-reanimated'
+import Animated, { SlideInDown, SlideOutDown, FadeOut } from 'react-native-reanimated'
 
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { useEffect } from 'react'
@@ -17,16 +17,12 @@ export const Navigation = () => {
   const pathName = usePathname()
   const { addingTo, removingId } = useGlobalSearchParams()
 
-  useEffect(() => {
-    console.log('user:', user)
-  }, [user])
-
   if (
     (pathName === '/' && !pocketbase.authStore.isValid) ||
     pathName.includes('/onboarding') ||
     pathName.includes('/user/login') ||
     pathName.includes('/user/new') ||
-    pathName.includes('/details') ||
+    pathName.includes('/modal') ||
     addingTo === 'grid' ||
     addingTo === 'backlog' ||
     !!removingId
@@ -46,7 +42,7 @@ export const Navigation = () => {
         left: 0,
       }}
       entering={SlideInDown.duration(200)}
-      exiting={SlideOutDown.duration(200)}
+      exiting={FadeOut.duration(200)}
     >
       <View
         style={{

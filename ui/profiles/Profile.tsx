@@ -169,7 +169,7 @@ export const Profile = ({ userName }: { userName: string }) => {
                   </XStack>
 
                   {backlogItems.length > 0 || gridItems.length === 12 ? (
-                    <YStack gap={s.$075}>
+                    <YStack gap={s.$075} style={{ marginBottom: s.$4 }}>
                       {backlogItems.map((itm) => (
                         <Pressable
                           key={itm.id}
@@ -248,7 +248,7 @@ export const Profile = ({ userName }: { userName: string }) => {
             backlog={addingTo === 'backlog'}
             onNewRef={async (itm: Item) => {
               await refreshGrid(userName)
-              if (itm?.list) router.push(`/user/${userName}/details?initialId=${itm.id}`)
+              if (itm?.list) router.push(`/user/${userName}/modal?initialId=${itm.id}`)
               setAddingTo('')
             }}
             onCancel={() => {

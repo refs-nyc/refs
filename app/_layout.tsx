@@ -136,7 +136,16 @@ function RootLayoutNav() {
           headerShown: false,
           contentStyle: { backgroundColor: c.surface },
         }}
-      />
+      >
+        <Stack.Screen
+          name="user/[userName]/modal"
+          options={{
+            presentation: 'modal',
+            // presentation: 'fullScreenModal',
+            animation: 'slide_from_bottom',
+          }}
+        />
+      </Stack>
     </ThemeProvider>
   )
 }

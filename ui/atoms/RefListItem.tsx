@@ -49,7 +49,7 @@ export const RefListItem = ({
               style={base.smallSquare}
             />
           ) : (
-            <View style={base.smallSquare}></View>
+            <View style={[base.smallSquare, { backgroundColor: c.accent }]}></View>
           )}
           <Text>{r?.title}</Text>
         </XStack>

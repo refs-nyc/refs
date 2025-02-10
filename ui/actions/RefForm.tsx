@@ -8,6 +8,7 @@ import {
   Text,
   ScrollView,
   KeyboardAvoidingView,
+  Image,
 } from 'react-native'
 
 import { Heading } from '@/ui/typo/Heading'
@@ -145,7 +146,13 @@ export const RefForm = ({
               asset={imageAsset}
               onReplace={() => setPicking(true)}
               onSuccess={(url) => {
-                setPinataSource(url)
+                Image.prefetch(url)
+                  .then(() => {
+                    setPinataSource(url)
+                  })
+                  .catch((err) => {
+                    console.error('Failed to prefetch image:', err)
+                  })
               }}
               onFail={() => console.error('Upload failed')}
             />

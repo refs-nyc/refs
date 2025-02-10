@@ -78,9 +78,9 @@ export const SearchRef = ({
   }
 
   useEffect(() => {
-    const titles = searchResults.map((r) => r.title?.toLowerCase())
+    const titles = searchResults.map((r) => r?.title?.toLowerCase())
 
-    if (titles.includes(searchQuery.toLowerCase())) {
+    if (titles?.includes(searchQuery?.toLowerCase())) {
       setDisableNewRef(true)
     } else {
       setDisableNewRef(false)

@@ -70,11 +70,12 @@ export const ProfileStep = ({
           router.push(`/user/login`)
         }
       } catch (error: any) {
-        console.error(error)
         if (error.status == 404) {
           // Not existing
           onComplete?.(formValues)
           return
+        } else {
+          console.error(error)
         }
       }
     } else {

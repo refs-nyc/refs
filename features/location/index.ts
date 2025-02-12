@@ -15,6 +15,11 @@ export const getNeighborhoodFromCoordinates = async ({ long, lat }) => {
       delete feature.geometry.coordinates
       delete feature.properties.bbox
 
+      console.log('feature.properties.neighborhood')
+      console.log(feature.properties.name)
+      console.log(feature.properties.preferred_name)
+      console.log(JSON.stringify(feature, null, 2))
+
       return feature
     }
 

@@ -181,7 +181,7 @@ export const OnboardingCarouselItem = ({
                   width: s.$075,
                   height: s.$075,
                   borderRadius: s.$075 / 2,
-                  backgroundColor: c.muted,
+                  backgroundColor: c.grey1,
                 }}
               />
               <View
@@ -189,7 +189,7 @@ export const OnboardingCarouselItem = ({
                   width: s.$075,
                   height: s.$075,
                   borderRadius: s.$075 / 2,
-                  backgroundColor: c.grey1,
+                  backgroundColor: c.muted,
                 }}
               />
               <View

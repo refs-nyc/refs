@@ -1,10 +1,11 @@
-import { useState, useEffect } from 'react'
-import { Platform, Text, View, StyleSheet } from 'react-native'
-import { getNeighborhoodsInNYC, getNeighborhoodFromCoordinates } from '@/features/location'
+import { useState } from 'react'
+import { Platform, StyleSheet, View, Text } from 'react-native'
+import { getNeighborhoodFromCoordinates } from '@/features/location'
 import { Button } from '../buttons/Button'
+import { c, t } from '@/features/style'
+import DropDownPicker from 'react-native-dropdown-picker'
 
 import * as Device from 'expo-device'
-
 import * as Location from 'expo-location'
 
 const hoodList = [
@@ -57,15 +58,14 @@ const hoodList = [
 
 export const DeviceLocation = () => {
   const [locationState, setLocation] = useState<Location.LocationObject | null>(null)
-  const [hoods, getHoods] = useState<any[]>([])
+  const [hoods, setHoods] = useState<string[]>(hoodList)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
-
-  const getList = async () => {
-    const list = await getNeighborhoodsInNYC()
-    // console.log(list)
-
-    console.log(JSON.stringify(list, null, 2))
-  }
+  const [open, setOpen] = useState(false)
+  const [value, setValue] = useState(null)
+  const [items, setItems] = useState([
+    { label: 'New York', value: 'newyork' },
+    ...hoodList.map((itm) => ({ label: itm, value: itm, parent: 'newyork' })),
+  ])
 
   async function getCurrentLocation() {
     console.log('GET LOCATIONE')
@@ -91,13 +91,35 @@ export const DeviceLocation = () => {
       long: location?.coords.longitude,
       lat: location?.coords.latitude,
     })
-    console.log(location)
   }
 
   return (
     <>
-      <Button onPress={getList} title="Get NYC hoods" />
+      <DropDownPicker
+        open={open}
+        value={value}
+        items={items}
+        setOpen={setOpen}
+        setValue={setValue}
+        setItems={setItems}
+        theme={'LIGHT'}
+        searchTextInputStyle={{ ...t.p, color: c.accent, borderWidth: 0 }}
+        searchContainerStyle={{ borderBottomColor: c.white }}
+        searchable={true}
+        ListEmptyComponent={() => <View style={[t.p, { color: c.accent, opacity: 0 }]}></View>}
+        style={{ borderColor: c.accent, borderRadius: 30, borderWidth: 2 }}
+        labelStyle={{ ...t.p, color: c.accent, paddingHorizontal: 12 }}
+        listParentLabelStyle={{ ...t.p, color: c.accent }}
+        listChildLabelStyle={{ ...t.p, color: c.accent }}
+        dropDownContainerStyle={{
+          backgroundColor: 'white',
+          borderColor: c.accent,
+          borderRadius: 30,
+          borderWidth: 2,
+        }}
+      />
       <Button onPress={getCurrentLocation} variant="basic" title="Use my current location"></Button>
+      {/* <View style={styles.overlay} pointerEvents="none" /> */}
     </>
   )
 }
@@ -113,4 +135,8 @@ const styles = StyleSheet.create({
     fontSize: 18,
     textAlign: 'center',
   },
+  // overlay: {
+  //   ...StyleSheet.absoluteFillObject,
+  //   backgroundColor: c.accent,
+  // },
 })

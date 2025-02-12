@@ -80,15 +80,11 @@ export const FormFieldWithIcon = ({
         {children}
       </View>
 
-      {type === 'location' && value !== '' && (
-        <Dropdown
-          options={[{ id: 'a', title: 'New York' }]}
-          onSelect={onSelect}
-          onCancel={onCancel}
-        ></Dropdown>
+      {type === 'location' && (
+        <View>
+          <DeviceLocation />
+        </View>
       )}
-
-      {type === 'location' && value === '' && <DeviceLocation />}
     </>
   )
 }

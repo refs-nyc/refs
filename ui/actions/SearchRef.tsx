@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { pocketbase, useItemStore } from '@/features/pocketbase'
-import { TextInput, Pressable, FlatList, KeyboardAvoidingView, View } from 'react-native'
+import { Pressable, FlatList, KeyboardAvoidingView, View } from 'react-native'
+import { BottomSheetTextInput as TextInput } from '@gorhom/bottom-sheet'
 import { SearchResultItem } from '@/ui/atoms/SearchResultItem'
 import { NewRefListItem } from '@/ui/atoms/NewRefListItem'
 import { YStack } from '@/ui/core/Stacks'
@@ -115,11 +116,7 @@ export const SearchRef = ({
   }, [paste])
 
   return (
-    <View
-      style={{
-        flex: 1,
-      }}
-    >
+    <>
       <TextInput
         style={{
           backgroundColor: c.surface2,
@@ -151,6 +148,6 @@ export const SearchRef = ({
       >
         {searchResults.map((r) => renderItem({ item: r }))}
       </YStack>
-    </View>
+    </>
   )
 }

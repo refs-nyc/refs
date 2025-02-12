@@ -17,6 +17,7 @@ export const c = {
   grey1: '#D9D9D9',
   grey2: '#787676',
   muted: '#787676',
+  muted2: '#414040',
   // Rare
   none: 'transparent',
   red: '#f00',
@@ -107,6 +108,12 @@ export const typo = StyleSheet.create({
     lineHeight: s.$1half,
     letterSpacing: -0.5,
   },
+  h3semi: {
+    fontFamily: 'InterSemiBold',
+    fontSize: s.$1,
+    lineHeight: s.$1half,
+    letterSpacing: -0.5,
+  },
   h3normal: {
     fontFamily: 'Inter',
     fontSize: s.$1,
@@ -125,7 +132,7 @@ export const typo = StyleSheet.create({
     fontSize: s.$09,
     lineHeight: s.$1half,
     letterSpacing: -0.5,
-    color: c.black,
+    // color: c.black,
   },
   pmuted: {
     fontFamily: 'Inter',
@@ -143,6 +150,9 @@ export const typo = StyleSheet.create({
     fontSize: 14,
     lineHeight: 18,
     color: c.muted,
+  },
+  semistrong: {
+    fontFamily: 'InterSemiBold',
   },
   strong: {
     fontFamily: 'InterBold',

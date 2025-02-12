@@ -46,38 +46,60 @@ export const Navigation = () => {
     >
       <View
         style={{
-          borderColor: '#555',
-          borderWidth: 1.5,
-          borderRadius: s.$3,
-          gap: s.$1,
-          flexDirection: 'row',
-          backgroundColor: c.surface,
-          paddingVertical: 8,
-          paddingHorizontal: 10,
+          position: 'relative',
+          overflow: 'hidden',
+          paddingBottom: 6,
         }}
       >
-        {pocketbase.authStore.record ? (
-          <View style={{ position: 'relative', marginTop: 4, left: 5 }}>
-            <Link href={`/user/${pocketbase.authStore.record.userName}`}>
-              <Avatar source={pocketbase.authStore.record.image} size={36} />
+        <View
+          style={{
+            borderColor: c.black,
+            borderWidth: 2,
+            borderRadius: s.$3,
+            gap: 28,
+            flexDirection: 'row',
+            backgroundColor: c.surface,
+            paddingVertical: 8,
+            paddingHorizontal: 16,
+            zIndex: 1,
+          }}
+        >
+          {pocketbase.authStore.record ? (
+            <View style={{ position: 'relative', marginTop: 4, left: 5 }}>
+              <Link href={`/user/${pocketbase.authStore.record.userName}`}>
+                <Avatar source={pocketbase.authStore.record.image} size={42} />
+              </Link>
+            </View>
+          ) : (
+            <View style={{ width: 42, height: 42 }}>
+              <Ionicons name="person" size={42} color={c.accent} />
+            </View>
+          )}
+          <View style={{ position: 'relative', left: -2, marginTop: 3, paddingRight: 3 }}>
+            <Link href="/">
+              {/* <Ionicons name="globe" size={42} color={c.accent} /> */}
+              <Icon name="Globe" size={39} color={c.accent} />
             </Link>
           </View>
-        ) : (
-          <View style={{ width: 36, height: 36 }}>
-            <Ionicons name="person" size={s.$3} color={c.accent} />
-          </View>
-        )}
-        <View style={{ position: 'relative', left: -2, marginTop: 3, paddingRight: 3 }}>
-          <Link href="/">
-            {/* <Ionicons name="globe" size={36} color={c.accent} /> */}
-            <Icon name="Globe" size={33} color={c.accent} />
-          </Link>
         </View>
-        {/* <View style={{ position: 'relative', marginLeft: -2, marginTop: 2, paddingRight: 3 }}>
-          <Link href="/">
-            <Ionicons name="paper-plane" size={33} />
-          </Link>
-        </View> */}
+        <View
+          style={[
+            {
+              // paddingHorizontal: s.$2,
+              // width: '100%',
+              height: '100%',
+              backgroundColor: c.black,
+              position: 'absolute',
+              zIndex: 0,
+              left: 0,
+              right: 0,
+              top: 6,
+              borderRadius: s.$3,
+              transformOrigin: 'bottom',
+              transform: 'scaleY(1.05)',
+            },
+          ]}
+        />
       </View>
     </Animated.View>
   )

@@ -146,9 +146,6 @@ const styles = StyleSheet.create({
   },
   // Text
   text: {
-    // fontSize: s.$1,
-    // lineHeight: 22,
-    // fontFamily: 'Inter',
     ...t.p,
     color: 'white',
   },
@@ -169,6 +166,7 @@ const styles = StyleSheet.create({
     ...t.smallmuted,
   },
   basicLeftText: {
+    ...t.h3normal,
     color: 'black',
     textAlign: 'left',
   },

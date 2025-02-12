@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
-import { TextInput, Pressable } from 'react-native'
+import { Pressable } from 'react-native'
+import { BottomSheetTextInput as TextInput } from '@gorhom/bottom-sheet'
 import { XStack } from '@/ui/core/Stacks'
 import { Heading } from '@/ui/typo/Heading'
 import Ionicons from '@expo/vector-icons/Ionicons'
@@ -149,7 +150,7 @@ export const EditableHeader = ({
                 onComplete(titleState)
               }}
             >
-              <Ionicons size={28} name="checkbox" color={c.muted} />
+              <Ionicons size={28} name="checkbox" color={c.accent2} />
             </Pressable>
           ) : (
             <Pressable

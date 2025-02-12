@@ -1,6 +1,7 @@
 import { XStack } from '@/ui/core/Stacks'
 import Ionicons from '@expo/vector-icons/Ionicons'
-import { View, TextInput } from 'react-native'
+import { View } from 'react-native'
+import { BottomSheetTextInput as TextInput } from '@gorhom/bottom-sheet'
 import { Dropdown } from '../inputs/Dropdown'
 import { DeviceLocation } from '../inputs/DeviceLocation'
 import { setGeolocation } from '@/features/location'

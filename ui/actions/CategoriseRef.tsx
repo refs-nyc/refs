@@ -1,7 +1,7 @@
 import type { ExpandedItem, CompleteRef, StagedRef } from '@/features/pocketbase/stores/types'
 import { useState } from 'react'
 import { Heading } from '../typo/Heading'
-import { TextInput } from 'react-native'
+import { BottomSheetTextInput as TextInput } from '@gorhom/bottom-sheet'
 import { YStack } from '../core/Stacks'
 import { Button } from '../buttons/Button'
 import { View, ScrollView } from 'react-native'

@@ -40,6 +40,7 @@ export const Profile = ({ userName }: { userName: string }) => {
   const [gridItems, setGridItems] = useState<Item[]>([])
   const [backlogItems, setBacklogItems] = useState<ExpandedItem[]>([])
   const [canAdd, setCanAdd] = useState<boolean>(false)
+  const [step, setStep] = useState('')
 
   const maxDynamicContentSize = win.height - insets.top
   const snapPointWithoutKeys = maxDynamicContentSize - 300
@@ -243,9 +244,10 @@ export const Profile = ({ userName }: { userName: string }) => {
       )}
 
       {(addingTo === 'grid' || addingTo === 'backlog') && (
-        <Sheet full={true} onChange={(e) => e === -1 && setAddingTo('')}>
+        <Sheet full={step !== ''} onChange={(e) => e === -1 && setAddingTo('')}>
           <NewRef
             backlog={addingTo === 'backlog'}
+            onStep={setStep}
             onNewRef={async (itm: Item) => {
               await refreshGrid(userName)
               if (itm?.list) router.push(`/user/${userName}/modal?initialId=${itm.id}`)

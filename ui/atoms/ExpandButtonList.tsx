@@ -31,7 +31,7 @@ export const ExpandButton = ({
   icon,
   fillRemaining = false, // Add default value
 }: ExpandButtonProps) => {
-  const [expand, setExpand] = useState(false)
+  const [expand, setExpand] = useState(true)
   const translateX = useSharedValue(1000)
   const [buttonWidth, setButtonWidth] = useState(0)
   const [optionsWidth, setOptionsWidth] = useState(0)
@@ -163,7 +163,7 @@ export const ExpandButton = ({
 // Example usage:
 export const ExampleButtonList = () => {
   return (
-    <YStack gap={s.$1}>
+    <YStack gap={s.$4} style={{ aspectRatio: 1, justifyContent: 'center' }}>
       <ExpandButton
         title="Message"
         icon="send"

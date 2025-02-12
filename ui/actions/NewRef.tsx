@@ -29,12 +29,14 @@ export const NewRef = ({
   initialStep = '',
   initialRefData = {},
   onNewRef,
+  onStep = (s) => console.log(s),
   onCancel,
   backlog = false,
 }: {
   initialStep?: NewRefStep
   initialRefData?: StagedRef | CompleteRef
   onNewRef: (itm: Item) => void
+  onStep: (step: string) => void
   onCancel: () => void
   backlog?: boolean
 }) => {
@@ -80,6 +82,10 @@ export const NewRef = ({
       setStep('search')
     }
   }, [hasShareIntent])
+
+  useEffect(() => {
+    onStep(step)
+  }, [step])
 
   useEffect(() => {
     const detectUrl = async () => {

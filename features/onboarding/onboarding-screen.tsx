@@ -12,6 +12,7 @@ export function OnboardingScreen() {
   const data = [{}, {}, {}, {}]
 
   const [addingIndex, setAddingIndex] = useState(-1)
+  const [step, setStep] = useState('')
 
   const nextSlide = (index: number) => {
     ref.current?.next()
@@ -43,11 +44,12 @@ export function OnboardingScreen() {
       />
 
       {addingIndex > -1 && (
-        <Sheet onChange={(e) => e === -1 && setAddingIndex(-1)}>
+        <Sheet full={step !== ''} onChange={(e) => e === -1 && setAddingIndex(-1)}>
           <NewRef
             onNewRef={() => {
               setAddingIndex(-1)
             }}
+            onStep={setStep}
             onCancel={() => {
               setAddingIndex(-1)
             }}

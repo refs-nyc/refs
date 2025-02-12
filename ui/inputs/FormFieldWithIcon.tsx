@@ -1,7 +1,6 @@
 import { XStack } from '@/ui/core/Stacks'
 import Ionicons from '@expo/vector-icons/Ionicons'
-import { View } from 'react-native'
-import { BottomSheetTextInput as TextInput } from '@gorhom/bottom-sheet'
+import { TextInput, View } from 'react-native'
 import { Dropdown } from '../inputs/Dropdown'
 import { DeviceLocation } from '../inputs/DeviceLocation'
 import { setGeolocation } from '@/features/location'
@@ -83,11 +82,12 @@ export const FormFieldWithIcon = ({
 
       {type === 'location' && value !== '' && (
         <Dropdown
-          options={[{ id: 'a', title: 'ShittyTown' }]}
+          options={[{ id: 'a', title: 'New York' }]}
           onSelect={onSelect}
           onCancel={onCancel}
         ></Dropdown>
       )}
+
       {type === 'location' && value === '' && <DeviceLocation />}
     </>
   )

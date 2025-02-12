@@ -23,9 +23,9 @@ export const Activity = ({ items }: { items: ExpandedItem[] }) => {
       </Heading>
 
       <YStack
+        gap={s.$075}
         style={{
           flex: 1,
-          gap: s.$025,
           paddingBottom: s.$12,
         }}
       >
@@ -34,10 +34,10 @@ export const Activity = ({ items }: { items: ExpandedItem[] }) => {
             {item?.image ? (
               <SimplePinataImage
                 originalSource={item.image}
-                imageOptions={{ width: s.$2, height: s.$2 }}
+                imageOptions={{ width: s.$5, height: s.$5 }}
                 style={{
-                  width: s.$2,
-                  height: s.$2,
+                  width: s.$5,
+                  height: s.$5,
                   backgroundColor: c.accent,
                   borderRadius: s.$075,
                 }}
@@ -45,8 +45,8 @@ export const Activity = ({ items }: { items: ExpandedItem[] }) => {
             ) : (
               <View
                 style={{
-                  width: s.$2,
-                  height: s.$2,
+                  width: s.$5,
+                  height: s.$5,
                   backgroundColor: c.accent,
                   borderRadius: s.$075,
                 }}
@@ -55,11 +55,14 @@ export const Activity = ({ items }: { items: ExpandedItem[] }) => {
 
             <Link
               href={item.expand?.creator ? `/user/${item.expand.creator?.userName}` : '/'}
-              style={{ overflow: 'hidden', width: win.width - s.$9 }}
+              style={{ overflow: 'hidden', width: win.width - s.$12 }}
             >
               <Heading tag="p">
-                <Heading tag="strong">{item.expand?.creator?.userName || 'Anonymous'} </Heading>
-                added <Heading tag="strong">{item.expand?.ref?.title}</Heading>
+                <Heading tag="semistrong">{item.expand?.creator?.userName || 'Anonymous'} </Heading>
+                <Heading style={{ color: c.muted2 }} tag="p">
+                  added{' '}
+                </Heading>
+                <Heading tag="semistrong">{item.expand?.ref?.title}</Heading>
               </Heading>
             </Link>
           </XStack>

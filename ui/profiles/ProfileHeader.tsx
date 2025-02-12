@@ -15,7 +15,7 @@ export const ProfileHeader = ({ profile }: { profile: Profile }) => {
 
   return (
     <YStack
-      gap={s.$1}
+      gap={0}
       style={{
         minWidth: s.$20,
         flexDirection: 'row',
@@ -24,25 +24,26 @@ export const ProfileHeader = ({ profile }: { profile: Profile }) => {
         paddingVertical: s.$1,
       }}
     >
+      <XStack gap={s.$09}>
+        <Shareable url={url}>
+          <Ionicons name="share-outline" size={s.$2} color={c.muted} />
+        </Shareable>
+      </XStack>
       <XStack style={{ width: '100%', justifyContent: 'space-between', alignItems: 'center' }}>
-        <YStack gap={s.$08}>
-          <XStack gap={s.$09}>
-            <Shareable url={url}>
-              <Ionicons name="share-outline" size={s.$2} color={c.muted} />
-            </Shareable>
-          </XStack>
-          <Heading tag="h2">{profile.userName}</Heading>
+        <YStack gap={s.$05}>
+          <Heading tag="h2">{profile.firstName}</Heading>
+          <Heading tag="small">{profile?.location || profile.userName}</Heading>
         </YStack>
         {profile.id === pocketbase?.authStore?.record?.id ? (
           <Link href={`/user/${pocketbase.authStore.record.userName}/settings`}>
             <Image
-              style={{ width: s.$6, height: s.$6, borderRadius: s.$6 / 2 }}
+              style={{ width: s.$8, height: s.$8, borderRadius: s.$8 / 2 }}
               source={profile.image}
             />
           </Link>
         ) : (
           <Image
-            style={{ width: s.$6, height: s.$6, borderRadius: s.$6 / 2 }}
+            style={{ width: s.$8, height: s.$8, borderRadius: s.$8 / 2 }}
             source={profile.image}
           />
         )}

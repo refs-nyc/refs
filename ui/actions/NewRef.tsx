@@ -5,7 +5,6 @@ import { Camera } from '../inputs/Camera'
 import { YStack } from '../core/Stacks'
 import { router } from 'expo-router'
 import { useUserStore, isProfile } from '@/features/pocketbase/stores/users'
-import Animated, { useAnimatedStyle } from 'react-native-reanimated'
 import { Button } from '../buttons/Button'
 import { Dimensions, View } from 'react-native'
 import { useState, useEffect } from 'react'
@@ -20,6 +19,7 @@ import { ShareIntent as ShareIntentType, useShareIntentContext } from 'expo-shar
 import { s } from '@/features/style'
 
 import * as Clipboard from 'expo-clipboard'
+import { BottomSheetScrollView } from '@gorhom/bottom-sheet'
 
 type NewRefStep = '' | 'add' | 'search' | 'editList' | 'categorise'
 
@@ -49,13 +49,6 @@ export const NewRef = ({
   const { hasShareIntent } = useShareIntentContext()
 
   const { user } = useUserStore()
-
-  const animatedStyle = useAnimatedStyle(() => {
-    if (step === '') return { height: 'auto' }
-    return {
-      height: win.height - s.$2,
-    }
-  })
 
   const addImageRef = async (asset: ImagePickerAsset) => {
     setRefData({ image: asset })
@@ -101,87 +94,77 @@ export const NewRef = ({
   }, [step])
 
   return (
-    <DismissKeyboard>
-      <View>
-        {pickerOpen && (
-          <Picker onSuccess={(asset) => addImageRef(asset)} onCancel={() => setPickerOpen(false)} />
-        )}
-
-        <Animated.View
-          style={[animatedStyle, { justifyContent: 'flex-start', alignItems: 'stretch' }]}
-        >
-          {step === '' && (
-            <YStack gap="$4" style={{ paddingBottom: s.$6 }}>
-              <Button
-                variant="basicLeft"
-                iconColor={c.black}
-                title="Type anything"
-                iconBefore="text-outline"
-                onPress={() => {
-                  setStep('search')
-                  setTextOpen(true)
-                }}
-              />
-              {hasUrl && (
-                <Button
-                  variant="basicLeft"
-                  align="flex-start"
-                  title="Add from clipboard"
-                  iconBefore="clipboard-outline"
-                  iconColor={c.black}
-                  onPress={() => {
-                    setStep('search')
-                    setUrlOpen(true)
-                  }}
-                />
-              )}
-              <Button
-                variant="basicLeft"
-                align="flex-start"
-                title="Add from Camera Roll"
-                iconBefore="image-outline"
-                iconColor={c.black}
-                onPress={() => {
-                  setStep('search')
-                  setPickerOpen(true)
-                }}
-              />
-            </YStack>
-          )}
-
-          {step === 'search' && (
-            <>
-              {textOpen && <SearchRef onComplete={addRefFromResults} />}
-              {urlOpen && <SearchRef paste={true} onComplete={addRefFromResults} />}
-              {hasShareIntent && <SearchRef onComplete={addRefFromResults} />}
-              {cameraOpen && <Camera />}
-            </>
-          )}
-
-          {step === 'add' && (
-            <RefForm
-              r={refData}
-              onComplete={handleNewRefCreated}
-              onCancel={() => setRefData({})}
-              backlog={backlog}
-            />
-          )}
-
-          {step === 'categorise' && (
-            <CategoriseRef item={itemData} existingRef={refData} onComplete={onNewRef} />
-          )}
-
-          {step === 'editList' && itemData && (
-            <EditableList
-              item={itemData}
-              onComplete={() => {
-                if (!isProfile(user) || !user.userName) onCancel()
-                onNewRef(itemData)
+    <>
+      {step === '' && (
+        <YStack gap={s.$08} style={{ paddingTop: s.$1, paddingBottom: s.$6 }}>
+          <Button
+            variant="basicLeft"
+            iconColor={c.black}
+            title="Type anything"
+            iconBefore="text-outline"
+            onPress={() => {
+              setStep('search')
+              setTextOpen(true)
+            }}
+          />
+          {hasUrl && (
+            <Button
+              variant="basicLeft"
+              align="flex-start"
+              title="Add from clipboard"
+              iconBefore="clipboard-outline"
+              iconColor={c.black}
+              onPress={() => {
+                setStep('search')
+                setUrlOpen(true)
               }}
             />
           )}
-        </Animated.View>
-      </View>
-    </DismissKeyboard>
+          <Button
+            variant="basicLeft"
+            align="flex-start"
+            title="Add from Camera Roll"
+            iconBefore="image-outline"
+            iconColor={c.black}
+            onPress={() => {
+              setStep('search')
+              setPickerOpen(true)
+            }}
+          />
+        </YStack>
+      )}
+
+      {step === 'search' && (
+        <>
+          {textOpen && <SearchRef onComplete={addRefFromResults} />}
+          {urlOpen && <SearchRef paste={true} onComplete={addRefFromResults} />}
+          {hasShareIntent && <SearchRef onComplete={addRefFromResults} />}
+          {cameraOpen && <Camera />}
+        </>
+      )}
+
+      {step === 'add' && (
+        <RefForm
+          r={refData}
+          onComplete={handleNewRefCreated}
+          onCancel={() => setRefData({})}
+          backlog={backlog}
+        />
+      )}
+
+      {step === 'categorise' && (
+        <CategoriseRef item={itemData} existingRef={refData} onComplete={onNewRef} />
+      )}
+
+      {step === 'editList' && itemData && (
+        <EditableList
+          item={itemData}
+          onComplete={() => {
+            if (!isProfile(user) || !user.userName) onCancel()
+            onNewRef(itemData)
+          }}
+        />
+      )}
+    </>
   )
 }

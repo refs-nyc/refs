@@ -1,5 +1,5 @@
 import { useMemo, useEffect, useCallback, useState } from 'react'
-import BottomSheet, { BottomSheetView, BottomSheetBackdrop } from '@gorhom/bottom-sheet'
+import BottomSheet, { BottomSheetScrollView, BottomSheetBackdrop } from '@gorhom/bottom-sheet'
 import { c, s } from '@/features/style'
 import { useAnimatedKeyboard, useDerivedValue } from 'react-native-reanimated'
 import { Dimensions } from 'react-native'
@@ -17,13 +17,15 @@ export const Sheet = (props: any = { full: false }) => {
     []
   )
 
-  // Now use keyboardHeight from state in the calculation
-  const maxDynamicContentSize = useDerivedValue(() => {
-    const calculatedSize = win.height - keyboard.height.value - insets.top
-    return calculatedSize
-  })
+  const maxSnapPoint = useDerivedValue(() => {
+    return win.height - insets.top - keyboard.height.value
+  }, [win.height, insets.top, keyboard.height])
 
-  const snapPoints = useDerivedValue(() => [maxDynamicContentSize.value], [maxDynamicContentSize])
+  const snapPoints = useDerivedValue(() => {
+    console.log(maxSnapPoint)
+    return [maxSnapPoint.value]
+  }, [maxSnapPoint])
+
   return (
     <BottomSheet
       {...props}
@@ -32,15 +34,17 @@ export const Sheet = (props: any = { full: false }) => {
       }}
       style={{ paddingHorizontal: s.$2 }}
       backdropComponent={renderBackdrop}
-      enableDynamicSizing={!props?.full}
+      enableDynamicSizing={!props.full}
+      maxDynamicContentSize={maxSnapPoint.value}
       snapPoints={snapPoints}
-      maxDynamicContentSize={maxDynamicContentSize.value}
       handleIndicatorStyle={{ width: s.$10, backgroundColor: c.muted }}
       enablePanDownToClose={true}
       keyboardBehavior="interactive"
       onChange={props?.onChange}
     >
-      <BottomSheetView>{props?.children}</BottomSheetView>
+      <BottomSheetScrollView showsVerticalScrollIndicator={false}>
+        {props?.children}
+      </BottomSheetScrollView>
     </BottomSheet>
   )
 }

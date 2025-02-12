@@ -156,7 +156,7 @@ export const Profile = ({ userName }: { userName: string }) => {
                     }}
                     gap={s.$08}
                   >
-                    <Heading tag="h3normal">My Backlog</Heading>
+                    <Heading tag="h3semi">My Backlog</Heading>
                     <View style={{ height: s.$025, backgroundColor: c.black, flex: 1 }}></View>
                     <Pressable
                       onPress={() => {
@@ -222,7 +222,7 @@ export const Profile = ({ userName }: { userName: string }) => {
       </ScrollView>
 
       {removingId && (
-        <Sheet onChange={(e) => e === -1 && setRemovingId('')}>
+        <Sheet full={true} onChange={(e) => e === -1 && setRemovingId('')}>
           <YStack gap={s.$08} style={{ marginTop: s.$3, marginBottom: s.$6 }}>
             <Button
               onPress={handleMoveToBacklog}
@@ -243,7 +243,7 @@ export const Profile = ({ userName }: { userName: string }) => {
       )}
 
       {(addingTo === 'grid' || addingTo === 'backlog') && (
-        <Sheet onChange={(e) => e === -1 && setAddingTo('')}>
+        <Sheet full={true} onChange={(e) => e === -1 && setAddingTo('')}>
           <NewRef
             backlog={addingTo === 'backlog'}
             onNewRef={async (itm: Item) => {

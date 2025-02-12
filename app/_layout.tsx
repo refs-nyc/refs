@@ -61,6 +61,7 @@ SplashScreen.preventAutoHideAsync()
 export default function RootLayout() {
   const [interLoaded, interError] = useFonts({
     Inter: require('@/assets/fonts/Inter-Medium.ttf'),
+    InterSemiBold: require('@/assets/fonts/Inter-SemiBold.ttf'),
     InterBold: require('@/assets/fonts/Inter-Bold.ttf'),
     IcoMoon: require('@/assets/icomoon/fonts/icomoon.ttf'),
   })
@@ -111,14 +112,7 @@ const Providers = ({ children }: { children: React.ReactNode }) => {
   return (
     <ShareIntentProvider>
       <SafeAreaProvider>
-        <GestureHandlerRootView>
-          <KeyboardAvoidingView
-            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-            style={{ flex: 1 }}
-          >
-            {children}
-          </KeyboardAvoidingView>
-        </GestureHandlerRootView>
+        <GestureHandlerRootView>{children}</GestureHandlerRootView>
       </SafeAreaProvider>
     </ShareIntentProvider>
   )

@@ -27,18 +27,19 @@ export const OnboardingCarouselItem = ({
       <View
         style={{
           flex: 1,
-          paddingVertical: 100,
           marginHorizontal: s.$08,
           justifyContent: 'center',
         }}
       >
         <YStack gap={s.$4}>
-          <Heading tag="h2" style={{ textAlign: 'center' }}>
-            This is your grid.{'\n'} {'\n'}{' '}
-            <Heading tag="h2normal">
-              A mural that makes you, <Heading tag="h2normalitalic">you</Heading>
+          <View style={{ height: 100, justifyContent: 'flex-end' }}>
+            <Heading tag="h2" style={{ textAlign: 'center' }}>
+              This is your grid.{'\n'} {'\n'}{' '}
+              <Heading tag="h2normal">
+                A mural that makes you, <Heading tag="h2normalitalic">you</Heading>
+              </Heading>
             </Heading>
-          </Heading>
+          </View>
           <ExampleGrid />
           <YStack style={{ paddingVertical: s.$4, flex: 1 }}>
             <XStack gap={s.$1} style={{ width: '100%', justifyContent: 'center' }}>
@@ -92,15 +93,16 @@ export const OnboardingCarouselItem = ({
       <View
         style={{
           flex: 1,
-          paddingVertical: 100,
           marginHorizontal: s.$08,
           justifyContent: 'center',
         }}
       >
         <YStack gap={s.$4}>
-          <Heading tag="h2normal" style={{ textAlign: 'center' }}>
-            <Heading tag="h2">Fill your grid</Heading> with links, photos, hobbies, places
-          </Heading>
+          <View style={{ height: 100, justifyContent: 'flex-end' }}>
+            <Heading tag="h2normal" style={{ textAlign: 'center' }}>
+              <Heading tag="h2">Fill your grid</Heading> with links, photos, hobbies, places
+            </Heading>
+          </View>
           <Grid items={items} onAddItem={onAddItem} columns={3} rows={3} />
           <YStack style={{ paddingVertical: s.$4, flex: 1 }}>
             <XStack gap={s.$1} style={{ width: '100%', justifyContent: 'center' }}>
@@ -153,15 +155,16 @@ export const OnboardingCarouselItem = ({
       <View
         style={{
           flex: 1,
-          paddingVertical: 100,
           marginHorizontal: s.$08,
           justifyContent: 'center',
         }}
       >
         <YStack gap={s.$4}>
-          <Heading tag="h2normal" style={{ textAlign: 'center' }}>
-            ...then <Heading tag="h2">find people</Heading> based on the{'\n'}refs they add
-          </Heading>
+          <View style={{ height: 100, justifyContent: 'flex-end' }}>
+            <Heading tag="h2normal" style={{ textAlign: 'center' }}>
+              ...then <Heading tag="h2">find people</Heading> based on the{'\n'}refs they add
+            </Heading>
+          </View>
           <UseCaseDemo />
           <YStack style={{ paddingVertical: s.$4, flex: 1 }}>
             <XStack gap={s.$1} style={{ width: '100%', justifyContent: 'center' }}>
@@ -178,7 +181,7 @@ export const OnboardingCarouselItem = ({
                   width: s.$075,
                   height: s.$075,
                   borderRadius: s.$075 / 2,
-                  backgroundColor: c.grey1,
+                  backgroundColor: c.muted,
                 }}
               />
               <View
@@ -186,7 +189,7 @@ export const OnboardingCarouselItem = ({
                   width: s.$075,
                   height: s.$075,
                   borderRadius: s.$075 / 2,
-                  backgroundColor: c.muted,
+                  backgroundColor: c.grey1,
                 }}
               />
               <View
@@ -200,7 +203,6 @@ export const OnboardingCarouselItem = ({
             </XStack>
           </YStack>
         </YStack>
-
         <Button
           style={{ position: 'absolute', bottom: s.$3 }}
           variant="fluid"
@@ -215,7 +217,6 @@ export const OnboardingCarouselItem = ({
       <View
         style={{
           flex: 1,
-          paddingVertical: 100,
           marginHorizontal: s.$075,
           justifyContent: 'center',
         }}
@@ -228,42 +229,40 @@ export const OnboardingCarouselItem = ({
             {/* ...then <Heading tag="h2">find people</Heading> based on the{'\n'}refs they add */}
           </Heading>
           <ExampleButtonList />
-          <YStack style={{ paddingVertical: s.$4, flex: 1 }}>
-            <XStack gap={s.$1} style={{ width: '100%', justifyContent: 'center' }}>
-              <View
-                style={{
-                  width: s.$075,
-                  height: s.$075,
-                  borderRadius: s.$075 / 2,
-                  backgroundColor: c.grey1,
-                }}
-              />
-              <View
-                style={{
-                  width: s.$075,
-                  height: s.$075,
-                  borderRadius: s.$075 / 2,
-                  backgroundColor: c.grey1,
-                }}
-              />
-              <View
-                style={{
-                  width: s.$075,
-                  height: s.$075,
-                  borderRadius: s.$075 / 2,
-                  backgroundColor: c.grey1,
-                }}
-              />
-              <View
-                style={{
-                  width: s.$075,
-                  height: s.$075,
-                  borderRadius: s.$075 / 2,
-                  backgroundColor: c.muted,
-                }}
-              />
-            </XStack>
-          </YStack>
+          <XStack gap={s.$1} style={{ width: '100%', justifyContent: 'center' }}>
+            <View
+              style={{
+                width: s.$075,
+                height: s.$075,
+                borderRadius: s.$075 / 2,
+                backgroundColor: c.grey1,
+              }}
+            />
+            <View
+              style={{
+                width: s.$075,
+                height: s.$075,
+                borderRadius: s.$075 / 2,
+                backgroundColor: c.grey1,
+              }}
+            />
+            <View
+              style={{
+                width: s.$075,
+                height: s.$075,
+                borderRadius: s.$075 / 2,
+                backgroundColor: c.grey1,
+              }}
+            />
+            <View
+              style={{
+                width: s.$075,
+                height: s.$075,
+                borderRadius: s.$075 / 2,
+                backgroundColor: c.muted,
+              }}
+            />
+          </XStack>
         </YStack>
 
         <Button

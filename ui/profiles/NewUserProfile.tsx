@@ -12,7 +12,7 @@ export const NewUserProfile = () => {
   const win = Dimensions.get('window')
   const data = [
     ['email'],
-    // ['location'],
+    ['location'],
     ['password', 'passwordConfirm'],
     ['firstName', 'lastName'],
     ['image'],

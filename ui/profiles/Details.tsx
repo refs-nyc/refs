@@ -173,9 +173,7 @@ export const Details = ({
 
       {addingToList !== '' && addingItem && (
         <Sheet full={true} onChange={(e) => e === -1 && close()}>
-          <ScrollView style={{ height: '100%' }}>
-            <EditableList item={addingItem} onComplete={() => {}} />
-          </ScrollView>
+          <EditableList item={addingItem} onComplete={() => {}} />
         </Sheet>
       )}
     </>

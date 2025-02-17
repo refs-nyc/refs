@@ -59,7 +59,6 @@ export const ProfileStep = ({
         console.error(error)
       }
     } else if (fields.includes('email')) {
-      console.log('FIELDS INCLUDES EMAIL')
       try {
         console.log('Fetch the user by email')
         const user = await getUserByEmail(formValues.email)

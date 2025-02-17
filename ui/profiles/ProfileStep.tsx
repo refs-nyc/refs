@@ -384,30 +384,7 @@ export const ProfileStep = ({
                 rules={{
                   required: true,
                 }}
-                render={({ field: { onChange, value } }) => (
-                  <DeviceLocation onChange={onChange} />
-                  // <FormFieldWithIcon
-                  //   onChange={onChange}
-                  //   type="location"
-                  //   id="location"
-                  //   placeholder="Location"
-                  //   value={value}
-                  //   autoFocus={false}
-                  // >
-                  //   {errors.location && (
-                  //     <SizableText
-                  //       style={{
-                  //         fontSize: s.$08,
-                  //         fontFamily: 'Inter',
-                  //         textAlign: 'center',
-                  //         color: c.accent,
-                  //       }}
-                  //     >
-                  //       This field is required
-                  //     </SizableText>
-                  //   )}
-                  // </FormFieldWithIcon>
-                )}
+                render={({ field: { onChange, value } }) => <DeviceLocation onChange={onChange} />}
               />
             </>
           )}

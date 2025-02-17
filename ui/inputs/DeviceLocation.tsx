@@ -2,11 +2,14 @@ import { useState } from 'react'
 import { Platform, StyleSheet, View, Text } from 'react-native'
 import { YStack } from '../core/Stacks'
 import { pocketbase } from '@/features/pocketbase'
-import { getNeighborhoodFromCoordinates, presets } from '@/features/location'
+import {
+  getNeighborhoodFromCoordinates,
+  getCoordinatesFromNeighborhood,
+  presets,
+} from '@/features/location'
 import { useUserStore } from '@/features/pocketbase/stores/users'
 import { Button } from '../buttons/Button'
 import { c, t, s } from '@/features/style'
-import { Heading } from '../typo/Heading'
 import DropDownPicker from 'react-native-dropdown-picker'
 
 import * as Device from 'expo-device'
@@ -19,7 +22,7 @@ export const DeviceLocation = ({ onChange }: { onChange: (string) => void }) => 
   const [loadingMessage, setLoadingMessage] = useState('Use my current location')
   const [value, setValue] = useState(null)
 
-  const [items, setItems] = useState(presets.reverse())
+  const [items, setItems] = useState(presets)
 
   const { stagedUser, updateStagedUser, updateUser } = useUserStore()
 
@@ -90,7 +93,7 @@ export const DeviceLocation = ({ onChange }: { onChange: (string) => void }) => 
         setOpen={setOpen}
         setValue={setValue}
         setItems={setItems}
-        onSelectItem={(item) => {
+        onSelectItem={async (item) => {
           console.log('selected, ', item)
           const name =
             item.label === 'New York'
@@ -99,6 +102,22 @@ export const DeviceLocation = ({ onChange }: { onChange: (string) => void }) => 
           setHumanReadableFormat(name)
           setLoadingMessage(name)
           onChange(name)
+
+          console.log('search ', item.label)
+          const l = await getCoordinatesFromNeighborhood(item.label)
+
+          if (l) {
+            const lat = l.geometry.coordinates[0]
+            const lon = l.geometry.coordinates[1]
+            if (!pocketbase.authStore.isValid) {
+              console.log('UPDATING STAGED', { lat, lon })
+              const u = await updateStagedUser({ lat, lon })
+              console.log(u)
+            } else {
+              console.log('UPDATING USER', { lat, lon })
+              await updateUser({ lat, lon })
+            }
+          }
         }}
         theme={'LIGHT'}
         searchTextInputStyle={{ ...t.p, color: c.accent, borderWidth: 0 }}

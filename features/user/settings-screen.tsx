@@ -27,7 +27,7 @@ export function SettingsScreen({ userName }: { userName: string }) {
   }, [userName])
   return (
     <ScreenWrapper>
-      <DeviceLocation />
+      <DeviceLocation onChange={(e) => console.log(e)} />
 
       <Button
         style={{ marginTop: s.$12, marginBottom: 0 }}

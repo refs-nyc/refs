@@ -38,21 +38,26 @@ export const getNeighborhoodFromCoordinates = async ({ lon, lat }) => {
   // Store some kind of ID -> mapbox_id
 }
 
+// NB: Proximity is set to NYC!
 export const getCoordinatesFromNeighborhood = async (neighborhood: string) => {
   try {
     const response = await fetch(
-      `https://api.mapbox.com/search/geocode/v6/forward?neighborhood=${neighborhood}&access_token=${process.env.EXPO_PUBLIC_MAPBOX_KEY}`
+      `https://api.mapbox.com/search/geocode/v6/forward?q=${neighborhood}&proximity=-73.966,40.754&country=us&types=neighborhood,locality&autocomplete=false&access_token=${process.env.EXPO_PUBLIC_MAPBOX_KEY}`
     )
     const result = await response.json()
-    return result
+    if (result.features && result.features.length > 0) {
+      return result.features[0]
+    } else {
+      return false
+    }
   } catch (error) {
     console.error(error)
   }
 }
 
 export const presets = [
-  { label: 'New York', value: 'New York' },
-  { label: 'Queens', value: 'Queens' },
+  // { label: 'New York', value: 'New York', selectable: false },
+  { label: 'Queens', value: 'Queens', selectable: false },
   { label: 'Astoria', value: 'Astoria', parent: 'Queens' },
   { label: 'Forest Hills', value: 'Forest Hills', parent: 'Queens' },
   { label: 'Greenpoint', value: 'Greenpoint', parent: 'Queens' },
@@ -68,7 +73,7 @@ export const presets = [
   { label: 'Rockaway Park', value: 'Rockaway Park', parent: 'Queens' },
   { label: 'Sunnyside', value: 'Sunnyside', parent: 'Queens' },
   { label: 'Woodside', value: 'Woodside', parent: 'Queens' },
-  { label: 'Manhattan', value: 'Manhattan' },
+  { label: 'Manhattan', value: 'Manhattan', selectable: false },
   { label: 'Battery Park City', value: 'Battery Park City', parent: 'Manhattan' },
   { label: 'Chelsea', value: 'Chelsea', parent: 'Manhattan' },
   { label: 'Chinatown', value: 'Chinatown', parent: 'Manhattan' },
@@ -89,7 +94,7 @@ export const presets = [
   { label: 'Upper East Side', value: 'Upper East Side', parent: 'Manhattan' },
   { label: 'Upper West Side', value: 'Upper West Side', parent: 'Manhattan' },
   { label: 'West Village', value: 'West Village', parent: 'Manhattan' },
-  { label: 'Brooklyn', value: 'Brooklyn' },
+  { label: 'Brooklyn', value: 'Brooklyn', selectable: false },
   { label: 'Bay Ridge', value: 'Bay Ridge', parent: 'Brooklyn' },
   { label: 'Bedford-Stuyvesant', value: 'Bedford-Stuyvesant', parent: 'Brooklyn' },
   { label: 'Boerum Hill', value: 'Boerum Hill', parent: 'Brooklyn' },
@@ -116,6 +121,6 @@ export const presets = [
   { label: 'Sunset Park', value: 'Sunset Park', parent: 'Brooklyn' },
   { label: 'Williamsburg', value: 'Williamsburg', parent: 'Brooklyn' },
   { label: 'Windsor Terrace', value: 'Windsor Terrace', parent: 'Brooklyn' },
-  { label: 'Bronx', value: 'Bronx' },
-  { label: 'Staten Island', value: 'Staten Island' },
-]
+  // { label: 'Bronx', value: 'Bronx', selectable: false },
+  // { label: 'Staten Island', value: 'Staten Island', selectable: false },
+].toReversed()

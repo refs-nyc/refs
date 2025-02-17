@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Platform, StyleSheet, View, Text } from 'react-native'
 import { YStack } from '../core/Stacks'
 import { pocketbase } from '@/features/pocketbase'
+import { Image } from 'expo-image'
 import {
   getNeighborhoodFromCoordinates,
   getCoordinatesFromNeighborhood,
@@ -119,20 +120,42 @@ export const DeviceLocation = ({ onChange }: { onChange: (string) => void }) => 
             }
           }
         }}
+        ArrowUpIconComponent={() => (
+          <Image
+            style={{ width: 24, height: 24 }}
+            source={require('@/assets/icons/arrow-up.png')}
+          />
+        )}
+        ArrowDownIconComponent={() => (
+          <Image
+            style={{ width: 24, height: 24 }}
+            source={require('@/assets/icons/arrow-down.png')}
+          />
+        )}
+        TickIconComponent={() => (
+          <Image style={{ width: 24, height: 24 }} source={require('@/assets/icons/tick.png')} />
+        )}
+        CloseIconComponent={() => (
+          <Image style={{ width: 24, height: 24 }} source={require('@/assets/icons/close.png')} />
+        )}
         theme={'LIGHT'}
-        searchTextInputStyle={{ ...t.p, color: c.accent, borderWidth: 0 }}
+        placeholderStyle={{ ...t.p, color: c.accent, borderWidth: 0, paddingHorizontal: 12 }}
+        searchTextInputStyle={{ ...t.p, color: c.accent, borderWidth: 0, paddingHorizontal: 12 }}
         searchContainerStyle={{ borderBottomColor: c.white }}
         searchable={true}
-        ListEmptyComponent={() => <View style={[t.p, { color: c.accent, opacity: 0 }]}></View>}
+        ListEmptyComponent={() => (
+          <View style={[t.p, { color: c.accent, opacity: 0, height: 0, width: 0 }]}></View>
+        )}
         style={{ borderColor: c.accent, borderRadius: 30, borderWidth: 2 }}
         labelStyle={{ ...t.p, color: c.accent, paddingHorizontal: 12 }}
-        listParentLabelStyle={{ ...t.p, color: c.accent }}
+        listParentLabelStyle={{ ...t.p, color: c.accent, paddingHorizontal: 12 }}
         listChildLabelStyle={{ ...t.p, color: c.accent }}
         dropDownContainerStyle={{
           backgroundColor: 'white',
           borderColor: c.accent,
           borderRadius: 30,
           borderWidth: 2,
+          borderTopWidth: 1,
         }}
       />
 

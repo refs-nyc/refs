@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { Platform, StyleSheet, View, Text } from 'react-native'
-import { getNeighborhoodFromCoordinates } from '@/features/location'
+import { pocketbase } from '@/features/pocketbase'
+import { getNeighborhoodFromCoordinates, presets } from '@/features/location'
+import { useUserStore } from '@/features/pocketbase/stores/users'
 import { Button } from '../buttons/Button'
 import { c, t } from '@/features/style'
 import DropDownPicker from 'react-native-dropdown-picker'
@@ -8,65 +10,17 @@ import DropDownPicker from 'react-native-dropdown-picker'
 import * as Device from 'expo-device'
 import * as Location from 'expo-location'
 
-const hoodList = [
-  'Chelsea and Clinton',
-  'Lower East Side',
-  'Lower Manhattan',
-  'Gramercy Park and Murray Hill',
-  'Greenwich Village and Soho',
-  'Upper East Side',
-  'Upper West Side',
-  'Central Harlem',
-  'East Harlem',
-  'Inwood and Washington Heights',
-  'West Side',
-  'Tribeca',
-  'Stapleton and St. George',
-  'Port Richmond',
-  'South Shore',
-  'Mid-Island',
-  'High Bridge and Morrisania',
-  'Central Bronx',
-  'Hunts Point and Mott Haven',
-  'Bronx Park and Fordham',
-  'Southeast Bronx',
-  'Kingsbridge and Riverdale',
-  'Northeast Bronx',
-  'Southeast Queens',
-  'Northwest Queens',
-  'Long Island City',
-  'Northwest Brooklyn',
-  'Flatbush',
-  'Borough Park',
-  'Bushwick and Williamsburg',
-  'East New York and New Lots',
-  'Southwest Brooklyn',
-  'Greenpoint',
-  'Central Brooklyn',
-  'Sunset Park',
-  'Southern Brooklyn',
-  'Canarsie and Flatlands',
-  'North Queens',
-  'Northeast Queens',
-  'Central Queens',
-  'West Queens',
-  'West Central Queens',
-  'Jamaica',
-  'Southwest Queens',
-  'Rockaways',
-]
-
 export const DeviceLocation = () => {
   const [locationState, setLocation] = useState<Location.LocationObject | null>(null)
-  const [hoods, setHoods] = useState<string[]>(hoodList)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
   const [open, setOpen] = useState(false)
   const [value, setValue] = useState(null)
-  const [items, setItems] = useState([
-    { label: 'New York', value: 'newyork' },
-    ...hoodList.map((itm) => ({ label: itm, value: itm, parent: 'newyork' })),
-  ])
 
+  const [items, setItems] = useState(presets)
+
+  const { stagedUser, updateStagedUser, updateUser } = useUserStore()
+
+  /** Get location from button click */
   async function getCurrentLocation() {
     console.log('GET LOCATIONE')
     if (Platform.OS === 'android' && !Device.isDevice) {
@@ -75,10 +29,10 @@ export const DeviceLocation = () => {
       )
       return
     }
-    let { status } = await Location.requestForegroundPermissionsAsync()
+    let response = await Location.requestForegroundPermissionsAsync()
 
-    console.log(status)
-    if (status !== 'granted') {
+    console.log(response.status)
+    if (response.status !== 'granted') {
       setErrorMsg('Permission to access location was denied')
       return
     }
@@ -88,13 +42,30 @@ export const DeviceLocation = () => {
     setLocation(location)
 
     await getNeighborhoodFromCoordinates({
-      long: location?.coords.longitude,
+      lon: location?.coords.longitude,
       lat: location?.coords.latitude,
     })
+
+    const fields = {
+      lon: location?.coords.longitude,
+      lat: location?.coords.latitude,
+    }
+
+    if (!pocketbase.authStore.isValid) {
+      const updated = updateStagedUser(fields)
+      console.log('staged', updated)
+    } else {
+      const updated = await updateUser(fields)
+      console.log('actual', updated)
+    }
   }
 
   return (
     <>
+      <Button onPress={getCurrentLocation} variant="basic" title="Use my current location"></Button>
+
+      <Text>Or select your neighborhood</Text>
+
       <DropDownPicker
         open={open}
         value={value}
@@ -118,7 +89,6 @@ export const DeviceLocation = () => {
           borderWidth: 2,
         }}
       />
-      <Button onPress={getCurrentLocation} variant="basic" title="Use my current location"></Button>
       {/* <View style={styles.overlay} pointerEvents="none" /> */}
     </>
   )

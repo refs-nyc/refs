@@ -84,12 +84,13 @@ export const useUserStore = create<{
       if (!pocketbase.authStore.record) {
         throw new Error('not logged in')
       }
-      const userRecord = await pocketbase
-        .collection<UsersRecord>('users')
-        .getOne(pocketbase.authStore.record.id)
+
       const record = await pocketbase
         .collection<UsersRecord>('users')
         .update(pocketbase.authStore.record.id, { ...fields })
+
+      console.log('Updated user', fields)
+      console.log(record)
 
       await canvasApp.actions.updateUser(pocketbase.authStore.record.id, fields)
 
@@ -133,7 +134,14 @@ export const useUserStore = create<{
       await get().loginWithPassword(finalUser.email, userPassword)
 
       if (pocketbase?.authStore?.record?.id) {
-        await canvasApp.actions.registerUser({ id: pocketbase.authStore.record.id, ...finalUser, email: '', password: '', tokenKey: '', userName: record.userName })
+        await canvasApp.actions.registerUser({
+          id: pocketbase.authStore.record.id,
+          ...finalUser,
+          email: '',
+          password: '',
+          tokenKey: '',
+          userName: record.userName,
+        })
       }
 
       set(() => ({
@@ -208,7 +216,6 @@ export const useUserStore = create<{
         .collection<Profile>('users')
         .update(pocketbase.authStore.record.id, { '+items': itemId }, { expand: 'items,items.ref' })
       await canvasApp.actions.attachItem(pocketbase.authStore.record.id, itemId)
-      
 
       set(() => ({
         user: updatedRecord,
@@ -233,7 +240,7 @@ export const useUserStore = create<{
           { 'items-': itemId },
           { expand: 'items,items.ref' }
         )
-        await canvasApp.actions.removeUserItemAssociation(pocketbase.authStore.record.id, itemId)
+      await canvasApp.actions.removeUserItemAssociation(pocketbase.authStore.record.id, itemId)
 
       set(() => ({
         user: updatedRecord,

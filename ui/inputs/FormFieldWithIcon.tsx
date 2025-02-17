@@ -48,7 +48,7 @@ export const FormFieldWithIcon = ({
         {(type === 'email' || type === 'username') && (
           <Ionicons size={s.$1} color={c.accent} name="at" col="$accent" />
         )}
-        {type === 'location' && <Ionicons size={s.$1} color={c.accent} name="map" col="$accent" />}
+        {/* {type === 'location' && <Ionicons size={s.$1} color={c.accent} name="map" col="$accent" />} */}
         {type === 'password' && <Ionicons size={s.$1} color={c.accent} name="key" col="$accent" />}
         <TextInput
           style={{
@@ -79,12 +79,6 @@ export const FormFieldWithIcon = ({
       >
         {children}
       </View>
-
-      {type === 'location' && (
-        <View>
-          <DeviceLocation />
-        </View>
-      )}
     </>
   )
 }

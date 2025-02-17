@@ -11,6 +11,7 @@ import { DismissKeyboard } from '../atoms/DismissKeyboard'
 import { router } from 'expo-router'
 import { LOGIN_STATE } from '@/features/magic'
 import { s, c } from '@/features/style'
+import { DeviceLocation } from '../inputs/DeviceLocation'
 
 export const ProfileStep = ({
   fields,
@@ -384,27 +385,28 @@ export const ProfileStep = ({
                   required: true,
                 }}
                 render={({ field: { onChange, value } }) => (
-                  <FormFieldWithIcon
-                    onChange={onChange}
-                    type="location"
-                    id="location"
-                    placeholder="Location"
-                    value={value}
-                    autoFocus={false}
-                  >
-                    {errors.location && (
-                      <SizableText
-                        style={{
-                          fontSize: s.$08,
-                          fontFamily: 'Inter',
-                          textAlign: 'center',
-                          color: c.accent,
-                        }}
-                      >
-                        This field is required
-                      </SizableText>
-                    )}
-                  </FormFieldWithIcon>
+                  <DeviceLocation onChange={onChange} />
+                  // <FormFieldWithIcon
+                  //   onChange={onChange}
+                  //   type="location"
+                  //   id="location"
+                  //   placeholder="Location"
+                  //   value={value}
+                  //   autoFocus={false}
+                  // >
+                  //   {errors.location && (
+                  //     <SizableText
+                  //       style={{
+                  //         fontSize: s.$08,
+                  //         fontFamily: 'Inter',
+                  //         textAlign: 'center',
+                  //         color: c.accent,
+                  //       }}
+                  //     >
+                  //       This field is required
+                  //     </SizableText>
+                  //   )}
+                  // </FormFieldWithIcon>
                 )}
               />
             </>

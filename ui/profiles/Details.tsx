@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react'
 import { Image } from 'expo-image'
+import { Zoomable } from '@likashefqet/react-native-image-zoom'
 import { Link, useGlobalSearchParams, usePathname, useRouter } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { View, Dimensions, Pressable, ScrollView } from 'react-native'
@@ -12,7 +13,7 @@ import Ionicons from '@expo/vector-icons/Ionicons'
 import { useUIStore } from '@/ui/state'
 import { ListContainer } from '../lists/ListContainer'
 import { EditableList } from '../lists/EditableList'
-import { Sheet } from '../core/Sheets'
+import { Sheet, SheetScreen } from '../core/Sheets'
 import { useUserStore, isExpandedProfile } from '@/features/pocketbase/stores/users'
 import { ExpandedItem } from '@/features/pocketbase/stores/types'
 
@@ -22,51 +23,51 @@ const renderItem = ({ item, canAdd }: { item: ExpandedItem; canAdd?: boolean }) 
   return (
     <View
       style={{
+        height: 'auto', // hack
         width: win.width * 0.8,
         left: win.width * 0.1,
-        height: win.height,
         padding: s.$075,
-        paddingTop: s.$6,
         gap: s.$1,
-        justifyContent: 'start' as any,
+        justifyContent: 'start',
+        overflow: 'hidden',
       }}
       key={item.id}
     >
-      {/* Meta information */}
-      <View
-        style={{
-          width: '100%',
-          height: s.$4,
-          justifyContent: 'center',
-          alignItems: 'center',
-          // backgroundColor: c.red,
-        }}
-      >
-        <Heading tag="p">{/*  */}</Heading>
-      </View>
-      {/* Content */}
       <View style={{ width: '100%', aspectRatio: 1, overflow: 'hidden' }}>
         {item.image ? (
           item.expand?.ref.image && (
-            <Image
+            <Zoomable
+              minScale={1}
+              maxScale={3}
+              onInteractionEnd={() => console.log('onInteractionEnd')}
+              onPanStart={() => console.log('onPanStart')}
+              onPanEnd={() => console.log('onPanEnd')}
+              onPinchStart={() => console.log('onPinchStart')}
+              onPinchEnd={() => console.log('onPinchEnd')}
+              onSingleTap={() => console.log('onSingleTap')}
+              onDoubleTap={(zoomType) => {
+                console.log('onDoubleTap', zoomType)
+              }}
               style={{ width: '100%', aspectRatio: 1 }}
-              source={item.image || item.expand.ref.image}
-            />
+            >
+              <Image
+                style={{ width: '100%', aspectRatio: 1 }}
+                source={item.image || item.expand.ref.image}
+              />
+            </Zoomable>
           )
         ) : (
-          <>
-            <View
-              style={{
-                flex: 1,
-                backgroundColor: c.surface2,
-                // borderRadius: s.$075,
-                // borderWidth: 2,
-                // borderColor: c.black
-              }}
-            >
-              {item.list && <ListContainer canAdd={canAdd} item={item} />}
-            </View>
-          </>
+          <View
+            style={{
+              flex: 1,
+              backgroundColor: c.surface2,
+              // borderRadius: s.$075,
+              // borderWidth: 2,
+              // borderColor: c.black
+            }}
+          >
+            {item.list && <ListContainer canAdd={canAdd} item={item} />}
+          </View>
         )}
       </View>
       {/* Information */}
@@ -138,12 +139,12 @@ export const Details = ({
   }
 
   return (
-    <>
-      <View style={{ paddingTop: Math.max(insets.top, 16) }}>
+    <SheetScreen onChange={(e) => e === -1 && router.back()}>
+      <View style={{ height: win.height, justifyContent: 'center' }}>
         <Pressable
           style={{
             position: 'absolute',
-            top: s.$1,
+            top: s.$4,
             right: s.$1,
             padding: s.$1,
             zIndex: 99,
@@ -157,13 +158,17 @@ export const Details = ({
         </Pressable>
         {isCarouselVisible && (
           <Carousel
+            panGestureHandlerProps={{
+              activeOffsetX: [-10, 10],
+              // By setting this to a small range, the vertical interactions are allowed to bypass the handler
+            }}
             loop={true}
             ref={ref}
             data={data}
-            height={win.height}
             width={win.width * 0.8}
+            height={200} // hack
             defaultIndex={defaultIndex}
-            style={{ overflow: 'visible', top: 0 }}
+            style={{ overflow: 'visible', top: win.height * 0.2 }}
             defaultScrollOffsetValue={scrollOffsetValue}
             onSnapToItem={(index) => console.log('current index:', index)}
             renderItem={({ item }) => renderItem({ item, canAdd })}
@@ -176,6 +181,6 @@ export const Details = ({
           <EditableList item={addingItem} onComplete={() => {}} />
         </Sheet>
       )}
-    </>
+    </SheetScreen>
   )
 }

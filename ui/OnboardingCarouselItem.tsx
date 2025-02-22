@@ -4,6 +4,7 @@ import { View } from 'react-native'
 import { useItemStore } from '@/features/pocketbase'
 import { ExampleGrid } from './grid/ExampleGrid'
 import { UseCaseDemo } from './display/UseCaseDemo'
+import { SearchDemo } from './display/SearchDemo'
 import { Button } from './buttons/Button'
 import { ExampleButtonList } from './atoms/ExpandButtonList'
 import { Grid } from './grid/Grid'
@@ -34,7 +35,7 @@ export const OnboardingCarouselItem = ({
         <YStack gap={s.$4}>
           <View style={{ height: 100, justifyContent: 'flex-end' }}>
             <Heading tag="h2" style={{ textAlign: 'center' }}>
-              This is your grid.{'\n'} {'\n'}{' '}
+              This is a grid.{'\n'} {'\n'}{' '}
               <Heading tag="h2normal">
                 A mural that makes you, <Heading tag="h2normalitalic">you</Heading>
               </Heading>
@@ -100,7 +101,7 @@ export const OnboardingCarouselItem = ({
         <YStack gap={s.$4}>
           <View style={{ height: 100, justifyContent: 'flex-end' }}>
             <Heading tag="h2normal" style={{ textAlign: 'center' }}>
-              <Heading tag="h2">Fill your grid</Heading> with links, photos, hobbies, places
+              <Heading tag="h2">Fill your grid</Heading> with links, photos, hobbies, places.
             </Heading>
           </View>
           <Grid items={items} onAddItem={onAddItem} columns={3} rows={3} />
@@ -165,7 +166,7 @@ export const OnboardingCarouselItem = ({
               ...then <Heading tag="h2">find people</Heading> based on the{'\n'}refs they add
             </Heading>
           </View>
-          <UseCaseDemo />
+          <SearchDemo />
           <YStack style={{ paddingVertical: s.$4, flex: 1 }}>
             <XStack gap={s.$1} style={{ width: '100%', justifyContent: 'center' }}>
               <View

@@ -1,22 +1,24 @@
 import { useState, useRef, useEffect } from 'react'
 import { View, TextInput } from 'react-native'
 import { s, c } from '@/features/style'
-import { Heading } from '@/ui'
+import { TypewriterText } from '../atoms/TypewriterText'
 import { Image } from 'expo-image'
 import Animated, { useAnimatedStyle, withSpring, useSharedValue } from 'react-native-reanimated'
 import { Pressable, TouchableWithoutFeedback } from 'react-native-gesture-handler'
 import Ionicons from '@expo/vector-icons/Ionicons'
 
 export const SearchBar = ({
+  searchTerm = '',
   onChange,
   onFocus,
   onBlur,
 }: {
+  searchTerm?: string
   onChange: (str: string) => void
   onFocus: () => void
   onBlur: () => void
 }) => {
-  const [textState, setTextState] = useState('')
+  const [textState, setTextState] = useState(searchTerm)
 
   // Variables
   const y = useSharedValue(0)
@@ -38,6 +40,10 @@ export const SearchBar = ({
     transform: [{ scaleY: scaleY.get() }],
   }))
 
+  useEffect(() => {
+    console.log('search term updated, inner', searchTerm)
+    setTextState(searchTerm)
+  }, [searchTerm])
   useEffect(() => onChange(textState), [textState])
 
   return (
@@ -134,5 +140,77 @@ export const SearchBar = ({
         </TouchableWithoutFeedback>
       </View>
     </>
+  )
+}
+
+/**
+ * Just for display
+ */
+export const ControlledSearchBar = ({ searchTerm = '' }) => {
+  // Variables
+  const y = useSharedValue(0)
+  const scaleY = useSharedValue(1)
+
+  // Refs
+  const ref = useRef<TextInput>(null)
+
+  const translateY = useAnimatedStyle(() => ({
+    transform: [{ translateY: y.get() }],
+  }))
+
+  useEffect(() => {
+    console.log('it changed from controlled')
+  }, [searchTerm])
+
+  return (
+    <View style={{ paddingHorizontal: s.$2, width: '100%' }}>
+      <Animated.View
+        style={[
+          {
+            width: '100%',
+            height: 50,
+            backgroundColor: c.black,
+            position: 'absolute',
+            zIndex: 0,
+            left: s.$2,
+            top: 0,
+            borderRadius: s.$3,
+            transformOrigin: 'bottom',
+          },
+          translateY,
+        ]}
+      />
+      <TouchableWithoutFeedback
+        onPressIn={() => {
+          y.set(withSpring(6))
+          scaleY.set(withSpring(0.8))
+        }}
+        onPressOut={() => {
+          y.set(withSpring(0))
+          scaleY.set(withSpring(1))
+        }}
+      >
+        <Animated.View
+          style={[
+            {
+              flexDirection: 'row',
+              backgroundColor: c.surface,
+              padding: s.$05,
+              borderColor: c.black,
+              borderWidth: 2,
+              borderRadius: s.$3,
+              alignItems: 'center',
+              gap: s.$08,
+            },
+          ]}
+        >
+          <Image
+            style={{ width: s.$2, height: s.$2, margin: s.$025 }}
+            source={require('@/assets/icons/Logo.png')}
+          />
+          <TypewriterText style={{ flex: 1 }} text={searchTerm} />
+        </Animated.View>
+      </TouchableWithoutFeedback>
+    </View>
   )
 }

@@ -22,12 +22,14 @@ export const RefForm = ({
   onComplete,
   onCancel,
   backlog = false,
+  pickerOpen = false,
   attach = true,
 }: {
   r: StagedRef
   placeholder?: string
   onComplete: (i: Item) => void
   onCancel: () => void
+  pickerOpen?: boolean
   backlog?: boolean
   attach?: boolean
 }) => {
@@ -35,7 +37,7 @@ export const RefForm = ({
   const [currentRefComment, setCurrentRefComment] = useState<string>()
   const [imageAsset, setImageAsset] = useState<ImagePickerAsset | null>(null)
   const [pinataSource, setPinataSource] = useState('')
-  const [picking, setPicking] = useState(false)
+  const [picking, setPicking] = useState(pickerOpen)
 
   const pathname = usePathname()
 

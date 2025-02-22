@@ -19,7 +19,6 @@ import { ShareIntent as ShareIntentType, useShareIntentContext } from 'expo-shar
 import { s } from '@/features/style'
 
 import * as Clipboard from 'expo-clipboard'
-import { BottomSheetScrollView } from '@gorhom/bottom-sheet'
 
 type NewRefStep = '' | 'add' | 'search' | 'editList' | 'categorise'
 
@@ -85,6 +84,7 @@ export const NewRef = ({
 
   useEffect(() => {
     onStep(step)
+    console.log('step changed', step)
   }, [step])
 
   useEffect(() => {
@@ -133,7 +133,7 @@ export const NewRef = ({
             iconBefore="image-outline"
             iconColor={c.black}
             onPress={() => {
-              setStep('search')
+              setStep('add')
               setPickerOpen(true)
             }}
           />
@@ -152,6 +152,7 @@ export const NewRef = ({
       {step === 'add' && (
         <RefForm
           r={refData}
+          pickerOpen={pickerOpen}
           onComplete={handleNewRefCreated}
           onCancel={() => setRefData({})}
           backlog={backlog}

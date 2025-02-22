@@ -3,13 +3,15 @@ import Animated, { SlideInDown, SlideOutDown, FadeOut } from 'react-native-reani
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { useEffect } from 'react'
 import { Link, usePathname, useGlobalSearchParams } from 'expo-router'
-import { View } from 'react-native'
+import { Dimensions, View } from 'react-native'
 import { XStack } from '../core/Stacks'
 import { Avatar } from '../atoms/Avatar'
 import { c, s } from '@/features/style'
 import { pocketbase } from '@/features/pocketbase'
 import { useUserStore } from '@/features/pocketbase/stores/users'
 import { Icon } from '@/assets/icomoon/IconFont'
+
+const win = Dimensions.get('window')
 
 export const Navigation = () => {
   const { user } = useUserStore()
@@ -38,11 +40,11 @@ export const Navigation = () => {
         justifyContent: 'center',
         alignItems: 'center',
         bottom: s.$5,
-        right: 0,
-        left: 0,
+        alignSelf: 'center',
       }}
       entering={SlideInDown.duration(200)}
       exiting={FadeOut.duration(200)}
+      onStartShouldSetResponder={(event) => true}
     >
       <View
         style={{

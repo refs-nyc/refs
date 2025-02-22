@@ -31,6 +31,8 @@ export const SearchRef = ({
   const [searchResults, setSearchResults] = useState<CompleteRef[]>([])
   const { hasShareIntent, shareIntent, resetShareIntent } = useShareIntentContext()
 
+  console.log('SEARCH')
+
   // Search result item
   const renderItem = ({ item }: { item: CompleteRef }) => {
     return (

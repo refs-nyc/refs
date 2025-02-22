@@ -132,11 +132,61 @@ function RootLayoutNav() {
         }}
       >
         <Stack.Screen
+          name="home"
+          options={{
+            title: 'Refs',
+          }}
+        />
+        <Stack.Screen
+          name="settings"
+          options={{
+            title: 'Settings',
+            headerShown: false,
+          }}
+        />
+        <Stack.Screen
+          name="onboarding"
+          options={{
+            title: 'Onboarding',
+            // presentation: 'modal',
+            animation: 'slide_from_right',
+            gestureEnabled: true,
+            gestureDirection: 'horizontal',
+          }}
+        />
+        <Stack.Screen
+          name="user"
+          options={{
+            title: 'User',
+            // presentation: 'modal',
+            animation: 'slide_from_right',
+            gestureEnabled: true,
+            gestureDirection: 'horizontal',
+            headerShown: false,
+          }}
+        />
+        <Stack.Screen
+          name="user/[userName]/settings"
+          options={{
+            title: 'Settings',
+            headerShown: false,
+          }}
+        />
+        <Stack.Screen
+          name="user/login"
+          options={{
+            title: 'Login',
+            animation: 'slide_from_right',
+            gestureEnabled: true,
+            gestureDirection: 'horizontal',
+            headerShown: false,
+          }}
+        />
+        <Stack.Screen
           name="user/[userName]/modal"
           options={{
-            presentation: 'modal',
-            // presentation: 'fullScreenModal',
-            animation: 'slide_from_bottom',
+            title: 'Details',
+            animation: 'none',
           }}
         />
       </Stack>

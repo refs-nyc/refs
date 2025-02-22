@@ -51,28 +51,16 @@ export default function Screen() {
   )
 
   return (
-    <>
-      <Stack.Screen
-        options={{
-          title: 'Login',
-          // presentation: 'modal',
-          animation: 'slide_from_right',
-          gestureEnabled: true,
-          gestureDirection: 'horizontal',
-          headerShown: false,
-        }}
+    <View style={{ flex: 1 }}>
+      <Carousel
+        loop={false}
+        ref={ref}
+        data={data}
+        width={win.width}
+        height={win.height}
+        enabled={false}
+        renderItem={renderItem}
       />
-      <View style={{ flex: 1 }}>
-        <Carousel
-          loop={false}
-          ref={ref}
-          data={data}
-          width={win.width}
-          height={win.height}
-          enabled={false}
-          renderItem={renderItem}
-        />
-      </View>
-    </>
+    </View>
   )
 }

@@ -107,6 +107,7 @@ export const NewRef = ({
             variant="basicLeft"
             iconColor={c.black}
             title="Type anything"
+            iconSize={28}
             iconBefore="text-outline"
             onPress={() => {
               setStep('search')
@@ -119,6 +120,7 @@ export const NewRef = ({
               align="flex-start"
               title="Add from clipboard"
               iconBefore="clipboard-outline"
+              iconSize={28}
               iconColor={c.black}
               onPress={() => {
                 setStep('search')
@@ -132,6 +134,7 @@ export const NewRef = ({
             title="Add from Camera Roll"
             iconBefore="image-outline"
             iconColor={c.black}
+            iconSize={28}
             onPress={() => {
               setStep('add')
               setPickerOpen(true)

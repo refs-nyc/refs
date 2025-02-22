@@ -132,20 +132,20 @@ function RootLayoutNav() {
         }}
       >
         <Stack.Screen
-          name="home"
+          name="index"
           options={{
             title: 'Refs',
           }}
         />
         <Stack.Screen
-          name="settings"
+          name="settings/index"
           options={{
             title: 'Settings',
             headerShown: false,
           }}
         />
         <Stack.Screen
-          name="onboarding"
+          name="onboarding/index"
           options={{
             title: 'Onboarding',
             // presentation: 'modal',
@@ -155,7 +155,7 @@ function RootLayoutNav() {
           }}
         />
         <Stack.Screen
-          name="user"
+          name="user/[userName]/index"
           options={{
             title: 'User',
             // presentation: 'modal',
@@ -166,7 +166,7 @@ function RootLayoutNav() {
           }}
         />
         <Stack.Screen
-          name="user/[userName]/settings"
+          name="user/[userName]/settings/index"
           options={{
             title: 'Settings',
             headerShown: false,

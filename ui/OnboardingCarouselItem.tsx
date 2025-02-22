@@ -3,7 +3,7 @@ import { XStack, YStack } from './core/Stacks'
 import { View } from 'react-native'
 import { useItemStore } from '@/features/pocketbase'
 import { ExampleGrid } from './grid/ExampleGrid'
-import { UseCaseDemo } from './display/UseCaseDemo'
+import { DetailsDemo } from './display/DetailsDemo'
 import { SearchDemo } from './display/SearchDemo'
 import { Button } from './buttons/Button'
 import { ExampleButtonList } from './atoms/ExpandButtonList'
@@ -68,24 +68,15 @@ export const OnboardingCarouselItem = ({
                   backgroundColor: c.grey1,
                 }}
               />
-              <View
-                style={{
-                  width: s.$075,
-                  height: s.$075,
-                  borderRadius: s.$075 / 2,
-                  backgroundColor: c.grey1,
-                }}
-              />
             </XStack>
           </YStack>
         </YStack>
 
-        <Button
-          style={{ position: 'absolute', bottom: s.$3 }}
-          variant="fluid"
-          title="next"
-          onPress={next}
-        />
+        <View
+          style={{ paddingHorizontal: s.$2, position: 'absolute', bottom: s.$3, width: '100%' }}
+        >
+          <Button variant="fluid" title="next" onPress={next} />
+        </View>
       </View>
     )
 
@@ -94,7 +85,6 @@ export const OnboardingCarouselItem = ({
       <View
         style={{
           flex: 1,
-          marginHorizontal: s.$08,
           justifyContent: 'center',
         }}
       >
@@ -104,7 +94,7 @@ export const OnboardingCarouselItem = ({
               <Heading tag="h2">Fill your grid</Heading> with links, photos, hobbies, places.
             </Heading>
           </View>
-          <Grid items={items} onAddItem={onAddItem} columns={3} rows={3} />
+          <DetailsDemo />
           <YStack style={{ paddingVertical: s.$4, flex: 1 }}>
             <XStack gap={s.$1} style={{ width: '100%', justifyContent: 'center' }}>
               <View
@@ -131,23 +121,15 @@ export const OnboardingCarouselItem = ({
                   backgroundColor: c.grey1,
                 }}
               />
-              <View
-                style={{
-                  width: s.$075,
-                  height: s.$075,
-                  borderRadius: s.$075 / 2,
-                  backgroundColor: c.grey1,
-                }}
-              />
             </XStack>
           </YStack>
         </YStack>
-        <Button
-          style={{ position: 'absolute', bottom: s.$3 }}
-          variant="fluid"
-          title="next"
-          onPress={next}
-        />
+
+        <View
+          style={{ paddingHorizontal: s.$2, position: 'absolute', bottom: s.$3, width: '100%' }}
+        >
+          <Button variant="fluid" title="next" onPress={next} />
+        </View>
       </View>
     )
 
@@ -193,85 +175,15 @@ export const OnboardingCarouselItem = ({
                   backgroundColor: c.muted,
                 }}
               />
-              <View
-                style={{
-                  width: s.$075,
-                  height: s.$075,
-                  borderRadius: s.$075 / 2,
-                  backgroundColor: c.grey1,
-                }}
-              />
             </XStack>
           </YStack>
         </YStack>
-        <Button
-          style={{ position: 'absolute', bottom: s.$3 }}
-          variant="fluid"
-          title="next"
-          onPress={next}
-        />
-      </View>
-    )
 
-  if (index === 3)
-    return (
-      <View
-        style={{
-          flex: 1,
-          marginHorizontal: s.$075,
-          justifyContent: 'center',
-        }}
-      >
-        <YStack gap={s.$4}>
-          <Heading tag="h2normal" style={{ textAlign: 'center' }}>
-            ...and get connected by <Heading tag="h2">messaging </Heading> them, starting a{' '}
-            <Heading tag="h2">group chat</Heading>, or saving them to a{' '}
-            <Heading tag="h2">folder</Heading>.
-            {/* ...then <Heading tag="h2">find people</Heading> based on the{'\n'}refs they add */}
-          </Heading>
-          <ExampleButtonList />
-          <XStack gap={s.$1} style={{ width: '100%', justifyContent: 'center' }}>
-            <View
-              style={{
-                width: s.$075,
-                height: s.$075,
-                borderRadius: s.$075 / 2,
-                backgroundColor: c.grey1,
-              }}
-            />
-            <View
-              style={{
-                width: s.$075,
-                height: s.$075,
-                borderRadius: s.$075 / 2,
-                backgroundColor: c.grey1,
-              }}
-            />
-            <View
-              style={{
-                width: s.$075,
-                height: s.$075,
-                borderRadius: s.$075 / 2,
-                backgroundColor: c.grey1,
-              }}
-            />
-            <View
-              style={{
-                width: s.$075,
-                height: s.$075,
-                borderRadius: s.$075 / 2,
-                backgroundColor: c.muted,
-              }}
-            />
-          </XStack>
-        </YStack>
-
-        <Button
-          style={{ position: 'absolute', bottom: s.$4 }}
-          variant="fluid"
-          title="I'm ready"
-          onPress={done}
-        />
+        <View
+          style={{ paddingHorizontal: s.$2, position: 'absolute', bottom: s.$3, width: '100%' }}
+        >
+          <Button variant="fluid" title="I'm ready" onPress={done} />
+        </View>
       </View>
     )
 }

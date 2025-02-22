@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, forwardRef } from 'react'
 import { Image } from 'expo-image'
 import { Zoomable } from '@likashefqet/react-native-image-zoom'
 import { Link, useGlobalSearchParams, usePathname, useRouter } from 'expo-router'
@@ -19,7 +19,7 @@ import { ExpandedItem } from '@/features/pocketbase/stores/types'
 
 const win = Dimensions.get('window')
 
-const renderItem = ({ item, canAdd }: { item: ExpandedItem; canAdd?: boolean }) => {
+export const renderItem = ({ item, canAdd }: { item: ExpandedItem; canAdd?: boolean }) => {
   return (
     <View
       style={{
@@ -51,6 +51,9 @@ const renderItem = ({ item, canAdd }: { item: ExpandedItem; canAdd?: boolean }) 
               style={{ width: '100%', aspectRatio: 1 }}
             >
               <Image
+                onLoad={(e) => {
+                  console.log('on image load', e)
+                }}
                 style={{ width: '100%', aspectRatio: 1 }}
                 source={item.image || item.expand.ref.image}
               />
@@ -101,6 +104,33 @@ const renderItem = ({ item, canAdd }: { item: ExpandedItem; canAdd?: boolean }) 
   )
 }
 
+export const DetailsCarousel = forwardRef(
+  (
+    { data, height, width, defaultIndex, style, scrollOffsetValue, onSnapToItem, renderItem },
+    ref
+  ) => {
+    console.log(style)
+    return (
+      <Carousel
+        panGestureHandlerProps={{
+          activeOffsetX: [-10, 10],
+          // By setting this to a small range, the vertical interactions are allowed to bypass the handler
+        }}
+        loop={true}
+        ref={ref}
+        data={data}
+        width={width}
+        height={height} // hack
+        defaultIndex={defaultIndex}
+        style={style}
+        defaultScrollOffsetValue={scrollOffsetValue}
+        onSnapToItem={onSnapToItem}
+        renderItem={renderItem}
+      />
+    )
+  }
+)
+
 export const Details = ({
   canAdd = false,
   initialId = '',
@@ -113,7 +143,6 @@ export const Details = ({
   const pathname = usePathname()
   const { userName } = useGlobalSearchParams()
   const router = useRouter()
-
   const { profile, getProfile } = useUserStore()
 
   const userNameParam =
@@ -157,18 +186,13 @@ export const Details = ({
           <Ionicons size={s.$1} name="close" color={c.muted} />
         </Pressable>
         {isCarouselVisible && (
-          <Carousel
-            panGestureHandlerProps={{
-              activeOffsetX: [-10, 10],
-              // By setting this to a small range, the vertical interactions are allowed to bypass the handler
-            }}
-            loop={true}
+          <DetailsCarousel
             ref={ref}
             data={data}
-            width={win.width * 0.8}
-            height={200} // hack
+            height={200}
             defaultIndex={defaultIndex}
             style={{ overflow: 'visible', top: win.height * 0.2 }}
+            width={win.width * 0.8}
             defaultScrollOffsetValue={scrollOffsetValue}
             onSnapToItem={(index) => console.log('current index:', index)}
             renderItem={({ item }) => renderItem({ item, canAdd })}

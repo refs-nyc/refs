@@ -30,7 +30,11 @@ export const Activity = ({ items }: { items: ExpandedItem[] }) => {
         }}
       >
         {items.map((item) => (
-          <XStack key={item.id} gap={s.$1} style={{ paddingVertical: s.$05 }}>
+          <XStack
+            key={item.id}
+            gap={s.$09}
+            style={{ paddingVertical: s.$05, alignItems: 'center' }}
+          >
             {item?.image ? (
               <SimplePinataImage
                 originalSource={item.image}

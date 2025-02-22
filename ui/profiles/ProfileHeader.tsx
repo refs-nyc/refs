@@ -20,7 +20,7 @@ export const ProfileHeader = ({ profile }: { profile: Profile }) => {
         minWidth: s.$20,
         flexDirection: 'row',
         borderRadius: s.$08,
-        marginBottom: s.$2,
+        marginBottom: s.$075,
         paddingVertical: s.$1,
       }}
     >

@@ -37,8 +37,9 @@ export const renderItem = ({ item, canAdd }: { item: ExpandedItem; canAdd?: bool
         {item.image ? (
           item.expand?.ref.image && (
             <Zoomable
-              minScale={1}
+              minScale={0.25}
               maxScale={3}
+              isPanEnabled={true}
               onInteractionEnd={() => console.log('onInteractionEnd')}
               onPanStart={() => console.log('onPanStart')}
               onPanEnd={() => console.log('onPanEnd')}
@@ -48,13 +49,13 @@ export const renderItem = ({ item, canAdd }: { item: ExpandedItem; canAdd?: bool
               onDoubleTap={(zoomType) => {
                 console.log('onDoubleTap', zoomType)
               }}
-              style={{ width: '100%', aspectRatio: 1 }}
+              style={{ width: '100%', aspectRatio: 1, overflow: 'visible' }}
             >
               <Image
                 onLoad={(e) => {
                   console.log('on image load', e)
                 }}
-                style={{ width: '100%', aspectRatio: 1 }}
+                style={{ width: '100%', aspectRatio: 1, overflow: 'visible' }}
                 source={item.image || item.expand.ref.image}
               />
             </Zoomable>

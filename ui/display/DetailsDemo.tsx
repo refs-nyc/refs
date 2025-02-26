@@ -10,24 +10,27 @@ export const DetailsDemo = () => {
   const scrollOffsetValue = useSharedValue(0)
   const items = [
     {
+      image: true,
       expand: {
         ref: {
           title: 'Afrofuturism',
-          image: require('@/assets/images/sample/Carousel-0.jpg'),
+          image: require('@/assets/images/sample/Carousel-1.png'),
         },
       },
       text: 'pathways to unknown worlds etc etc',
     },
     {
+      image: true,
       expand: {
         ref: {
           title: 'Tennis',
-          image: require('@/assets/images/sample/Carousel-1.png'),
+          image: require('@/assets/images/sample/Carousel-0.jpg'),
         },
       },
       text: 'Looking for an early bird who will trade off sign up at the Fort Greene courts',
     },
     {
+      image: true,
       expand: {
         ref: {
           title: 'Poetic Computation',
@@ -43,7 +46,7 @@ export const DetailsDemo = () => {
       style={{
         width: win.width,
         height: win.width,
-        overflow: 'visible',
+        overflow: 'hidden',
         left: 0,
       }}
     >
@@ -55,7 +58,6 @@ export const DetailsDemo = () => {
         style={{ overflow: 'visible' }}
         ref={ref}
         defaultIndex={1}
-        style={{}}
         scrollOffsetValue={scrollOffsetValue}
         onSnapToItem={() => {}}
       />

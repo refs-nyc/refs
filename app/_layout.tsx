@@ -28,7 +28,7 @@ import { StatusBar, useColorScheme, KeyboardAvoidingView, Platform } from 'react
 import { Navigation } from '@/ui/navigation/Navigation'
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native'
 import { useFonts } from 'expo-font'
-import { SplashScreen, Stack } from 'expo-router'
+import { SplashScreen, Stack, router } from 'expo-router'
 import * as Notifications from 'expo-notifications'
 import { DeferredFonts } from '@/ui'
 import { c } from '@/features/style'
@@ -90,6 +90,7 @@ export default function RootLayout() {
       } else {
         pocketbase.authStore.clear()
         console.log('user is not logged in')
+        router.push('/onboarding')
       }
 
       loadRemainingFonts()

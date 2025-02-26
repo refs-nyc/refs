@@ -18,7 +18,7 @@ export const OnboardingCarouselItem = ({
 }: {
   index: number
   next: () => void
-  onAddItem: () => void
+  onAddItem?: () => void
   done: () => void
 }) => {
   const { items } = useItemStore()

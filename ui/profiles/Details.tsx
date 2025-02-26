@@ -3,7 +3,7 @@ import { Image } from 'expo-image'
 import { Zoomable } from '@likashefqet/react-native-image-zoom'
 import { Link, useGlobalSearchParams, usePathname, useRouter } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { View, Dimensions, Pressable, ScrollView } from 'react-native'
+import { View, Dimensions, Pressable, Text } from 'react-native'
 import Carousel, { ICarouselInstance } from 'react-native-reanimated-carousel'
 import { useSharedValue } from 'react-native-reanimated'
 import { Heading } from '../typo/Heading'
@@ -56,7 +56,7 @@ export const renderItem = ({ item, canAdd }: { item: ExpandedItem; canAdd?: bool
                   console.log('on image load', e)
                 }}
                 style={{ width: '100%', aspectRatio: 1, overflow: 'visible' }}
-                source={item.image || item.expand.ref.image}
+                source={item.expand.ref.image || item.image}
               />
             </Zoomable>
           )
@@ -65,9 +65,6 @@ export const renderItem = ({ item, canAdd }: { item: ExpandedItem; canAdd?: bool
             style={{
               flex: 1,
               backgroundColor: c.surface2,
-              // borderRadius: s.$075,
-              // borderWidth: 2,
-              // borderColor: c.black
             }}
           >
             {item.list && <ListContainer canAdd={canAdd} item={item} />}

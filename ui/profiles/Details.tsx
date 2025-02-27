@@ -102,7 +102,7 @@ export const renderItem = ({ item, canAdd }: { item: ExpandedItem; canAdd?: bool
   )
 }
 
-export const DetailsCarousel = forwardRef(
+export const DetailsDemoCarousel = forwardRef(
   (
     { data, height, width, defaultIndex, style, scrollOffsetValue, onSnapToItem, renderItem },
     ref
@@ -110,20 +110,22 @@ export const DetailsCarousel = forwardRef(
     console.log(style)
     return (
       <Carousel
-        panGestureHandlerProps={{
-          activeOffsetX: [-10, 10],
-          // By setting this to a small range, the vertical interactions are allowed to bypass the handler
+        onConfigurePanGesture={(gesture) => {
+          'worklet'
+          gesture.activeOffsetX([-10, 10])
         }}
         loop={true}
         ref={ref}
         data={data}
-        width={width}
+        width={width * 0.8}
         height={height} // hack
         defaultIndex={defaultIndex}
         style={style}
         defaultScrollOffsetValue={scrollOffsetValue}
         onSnapToItem={onSnapToItem}
         renderItem={renderItem}
+        autoPlay={true}
+        autoPlayInterval={2000}
       />
     )
   }
@@ -157,7 +159,6 @@ export const Details = ({
     0,
     data.findIndex((itm) => itm.id == initialId)
   )
-
   const addingItem = data.find((itm) => itm.id === addingToList)
 
   const close = async () => {
@@ -167,7 +168,7 @@ export const Details = ({
 
   return (
     <SheetScreen onChange={(e) => e === -1 && router.back()}>
-      <View style={{ height: win.height, justifyContent: 'center' }}>
+      <View style={{ height: win.height, justifyContent: 'flex-start' }}>
         <Pressable
           style={{
             position: 'absolute',
@@ -184,10 +185,14 @@ export const Details = ({
           <Ionicons size={s.$1} name="close" color={c.muted} />
         </Pressable>
         {isCarouselVisible && (
-          <DetailsCarousel
+          <Carousel
+            onConfigurePanGesture={(gesture) => {
+              'worklet'
+              gesture.activeOffsetX([-10, 10])
+            }}
             ref={ref}
             data={data}
-            height={200}
+            height={100}
             defaultIndex={defaultIndex}
             style={{ overflow: 'visible', top: win.height * 0.2 }}
             width={win.width * 0.8}

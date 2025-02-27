@@ -1,6 +1,6 @@
 import { useRef } from 'react'
 import { useSharedValue } from 'react-native-reanimated'
-import { DetailsCarousel, renderItem } from '../profiles/Details'
+import { DetailsDemoCarousel, renderItem } from '../profiles/Details'
 import { View, Dimensions } from 'react-native'
 
 const win = Dimensions.get('window')
@@ -43,6 +43,7 @@ export const DetailsDemo = () => {
 
   return (
     <View
+      pointerEvents="none"
       style={{
         width: win.width,
         height: win.width,
@@ -50,7 +51,7 @@ export const DetailsDemo = () => {
         left: 0,
       }}
     >
-      <DetailsCarousel
+      <DetailsDemoCarousel
         data={items}
         renderItem={({ item }) => renderItem({ item, canAdd: false })}
         height={800}

@@ -1,3 +1,4 @@
+import React from 'react'
 import { Heading } from './typo/Heading'
 import { XStack, YStack } from './core/Stacks'
 import { View } from 'react-native'
@@ -15,11 +16,13 @@ export const OnboardingCarouselItem = ({
   next,
   onAddItem,
   done,
+  children,
 }: {
   index: number
   next: () => void
   onAddItem?: () => void
   done: () => void
+  children: React.ReactNode
 }) => {
   const { items } = useItemStore()
 
@@ -42,34 +45,7 @@ export const OnboardingCarouselItem = ({
             </Heading>
           </View>
           <ExampleGrid />
-          <YStack style={{ paddingVertical: s.$4, flex: 1 }}>
-            <XStack gap={s.$1} style={{ width: '100%', justifyContent: 'center' }}>
-              <View
-                style={{
-                  width: s.$075,
-                  height: s.$075,
-                  borderRadius: s.$075 / 2,
-                  backgroundColor: c.muted,
-                }}
-              />
-              <View
-                style={{
-                  width: s.$075,
-                  height: s.$075,
-                  borderRadius: s.$075 / 2,
-                  backgroundColor: c.grey1,
-                }}
-              />
-              <View
-                style={{
-                  width: s.$075,
-                  height: s.$075,
-                  borderRadius: s.$075 / 2,
-                  backgroundColor: c.grey1,
-                }}
-              />
-            </XStack>
-          </YStack>
+          <View style={{ height: 100, justifyContent: 'center' }}>{children}</View>
         </YStack>
 
         <View
@@ -95,34 +71,7 @@ export const OnboardingCarouselItem = ({
             </Heading>
           </View>
           <DetailsDemo />
-          <YStack style={{ paddingVertical: s.$4, flex: 1 }}>
-            <XStack gap={s.$1} style={{ width: '100%', justifyContent: 'center' }}>
-              <View
-                style={{
-                  width: s.$075,
-                  height: s.$075,
-                  borderRadius: s.$075 / 2,
-                  backgroundColor: c.grey1,
-                }}
-              />
-              <View
-                style={{
-                  width: s.$075,
-                  height: s.$075,
-                  borderRadius: s.$075 / 2,
-                  backgroundColor: c.muted,
-                }}
-              />
-              <View
-                style={{
-                  width: s.$075,
-                  height: s.$075,
-                  borderRadius: s.$075 / 2,
-                  backgroundColor: c.grey1,
-                }}
-              />
-            </XStack>
-          </YStack>
+          <View style={{ height: 100, justifyContent: 'center' }}>{children}</View>
         </YStack>
 
         <View
@@ -149,34 +98,7 @@ export const OnboardingCarouselItem = ({
             </Heading>
           </View>
           <SearchDemo />
-          <YStack style={{ paddingVertical: s.$4, flex: 1 }}>
-            <XStack gap={s.$1} style={{ width: '100%', justifyContent: 'center' }}>
-              <View
-                style={{
-                  width: s.$075,
-                  height: s.$075,
-                  borderRadius: s.$075 / 2,
-                  backgroundColor: c.grey1,
-                }}
-              />
-              <View
-                style={{
-                  width: s.$075,
-                  height: s.$075,
-                  borderRadius: s.$075 / 2,
-                  backgroundColor: c.grey1,
-                }}
-              />
-              <View
-                style={{
-                  width: s.$075,
-                  height: s.$075,
-                  borderRadius: s.$075 / 2,
-                  backgroundColor: c.muted,
-                }}
-              />
-            </XStack>
-          </YStack>
+          <View style={{ height: 100, justifyContent: 'center' }}>{children}</View>
         </YStack>
 
         <View

@@ -12,50 +12,69 @@ export const NewUserProfile = () => {
   const win = Dimensions.get('window')
   const data = [
     ['email'],
+    ['firstName', 'lastName'],
     ['location'],
     ['password', 'passwordConfirm'],
-    ['firstName', 'lastName'],
     ['image'],
-    ['userName'],
+    ['done'],
   ]
 
-  // climber@manusnijhoff.nl
-  // !!!Abc123
-
   // TODO: remove any type
-  const nextStep = async (formValues: any) => {
+  const nextStep = async (formValues?: any) => {
     const index = ref.current?.getCurrentIndex() ?? 0
-    const updated = updateStagedUser(formValues)
 
-    if (index < data.length - 1) {
-      // Valid?
-      ref.current?.next()
-    } else {
+    if (data[index].includes('image')) {
+      // Final step
+      updateStagedUser(formValues)
       try {
         const record = await register()
 
         if (record.userName) {
-          router.push(`/user/${record.userName}?firstVisit=true`)
+          ref.current?.next()
         }
       } catch (error) {
         console.error('Nope', error)
       }
+    } else if (data[index].includes('done')) {
+      // When leaving done
+      router.push(`/users/${stagedUser.userName}`)
+    } else {
+      updateStagedUser(formValues)
+      ref.current?.next()
     }
   }
 
-  const renderItem = ({ item, index }: { item: string[]; index: number }) => (
-    <ProfileStep fields={item} index={index} onComplete={nextStep} />
-  )
+  const renderItem = ({ item, index }: { item: string[]; index: number }) => {
+    const titles = {
+      firstName: 'Let us know who you are',
+      location: 'Where are you?',
+      image: 'Upload a profile photo to get started',
+      done: 'Thanks for signing up!',
+    }
+
+    return (
+      <ProfileStep
+        key={item.join('-')}
+        fields={item}
+        title={titles?.[item[0] || '']}
+        index={index}
+        onComplete={nextStep}
+      />
+    )
+  }
 
   return (
     <View style={{ flex: 1 }}>
       <Carousel
+        onConfigurePanGesture={(gesture) => {
+          'worklet'
+          gesture.activeOffsetX([-win.width, 10])
+        }}
         loop={false}
         ref={ref}
         data={data}
         width={win.width}
         height={win.height}
-        enabled={false}
         renderItem={renderItem}
       />
     </View>

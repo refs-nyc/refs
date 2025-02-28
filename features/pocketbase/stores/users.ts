@@ -126,6 +126,13 @@ export const useUserStore = create<{
     const userPassword = get().stagedUser.password
     if (!userPassword) throw Error('User must have password')
 
+    // Generate a username
+    if (!finalUser.userName) {
+      const firstNamePart = finalUser.firstName ? finalUser.firstName.toLowerCase() : 'user'
+      const shortUuid = Math.random().toString(36).substring(2, 6)
+      finalUser.userName = `${firstNamePart}-${shortUuid}`
+    }
+
     try {
       const record = await pocketbase
         .collection('users')

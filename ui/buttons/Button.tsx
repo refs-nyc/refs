@@ -144,6 +144,11 @@ const styles = StyleSheet.create({
     borderColor: c.black,
     borderWidth: 2,
   },
+  inlineSmallMuted: {
+    backgroundColor: c.surface2,
+    borderRadius: 20,
+    paddingHorizontal: 0,
+  },
   // Text
   text: {
     ...t.p,
@@ -163,6 +168,9 @@ const styles = StyleSheet.create({
     color: 'black',
   },
   smallMutedText: {
+    ...t.pmuted,
+  },
+  inlineSmallMutedText: {
     ...t.smallmuted,
   },
   basicLeftText: {

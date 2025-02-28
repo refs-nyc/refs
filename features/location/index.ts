@@ -56,7 +56,7 @@ export const getCoordinatesFromNeighborhood = async (neighborhood: string) => {
 }
 
 export const presets = [
-  // { label: 'New York', value: 'New York', selectable: false },
+  { label: 'New York', value: 'New York', selectable: false },
   { label: 'Queens', value: 'Queens', selectable: false },
   { label: 'Astoria', value: 'Astoria', parent: 'Queens' },
   { label: 'Forest Hills', value: 'Forest Hills', parent: 'Queens' },

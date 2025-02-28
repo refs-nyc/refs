@@ -23,12 +23,11 @@ export const PinataImage = ({
   const [loading, setLoading] = useState(false)
   const [source, setSource] = useState(typeof asset === 'string' ? asset : asset?.uri)
   const [pinataSource, setPinataSource] = useState(typeof asset === 'string' ? asset : '')
-  const [showOriginal, setShowOriginal] = useState(true)
   const { isConnected } = useNetInfo()
 
   // Create animation values
   const pulseAnim = useRef(new Animated.Value(1)).current
-  const opacityAnim = useRef(new Animated.Value(1)).current
+  const fadeAnim = useRef(new Animated.Value(0)).current
 
   const handleLongpress = () => {
     if (source || pinataSource) onReplace()
@@ -42,7 +41,7 @@ export const PinataImage = ({
       pulseAnimation = Animated.loop(
         Animated.sequence([
           Animated.timing(pulseAnim, {
-            toValue: 0.6,
+            toValue: 0.8,
             duration: 800,
             useNativeDriver: true,
           }),
@@ -55,24 +54,8 @@ export const PinataImage = ({
       )
 
       pulseAnimation.start()
-
-      // Smoothly transition opacity to pulsing state
-      Animated.timing(opacityAnim, {
-        toValue: 0,
-        duration: 300,
-        useNativeDriver: true,
-      }).start()
-    } else {
-      // Smoothly transition from pulsing back to normal
-      Animated.timing(opacityAnim, {
-        toValue: 1,
-        duration: 300,
-        useNativeDriver: true,
-      }).start()
-
-      if (pulseAnimation) {
-        pulseAnimation.stop()
-      }
+    } else if (pulseAnimation) {
+      pulseAnimation.stop()
     }
 
     return () => {
@@ -80,6 +63,7 @@ export const PinataImage = ({
     }
   }, [loading])
 
+  // Handle image upload
   useEffect(() => {
     console.log('is connected from pinata ,', isConnected)
     const load = async () => {
@@ -89,24 +73,23 @@ export const PinataImage = ({
         console.log('got signed url')
         setPinataSource(url)
         onSuccess(url)
-        setTimeout(() => {
-          setShowOriginal(false)
+
+        // Start fade-in animation for pinata image
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 300,
+          useNativeDriver: true,
+        }).start(() => {
           setLoading(false)
-        }, 200)
+        })
       } catch (error) {
         console.error(error)
         setLoading(false)
         onFail()
       }
     }
-    if (!pinataSource) load()
-  }, [asset])
-
-  // Interpolate between normal opacity and pulse animation
-  const finalOpacity = Animated.add(
-    opacityAnim,
-    Animated.multiply(pulseAnim, Animated.subtract(1, opacityAnim))
-  )
+    if (!pinataSource && isConnected) load()
+  }, [asset, isConnected])
 
   return (
     <TouchableOpacity
@@ -118,7 +101,7 @@ export const PinataImage = ({
         alignItems: 'center',
       }}
     >
-      <Animated.View
+      <View
         style={{
           ...style,
           width: 200,
@@ -127,38 +110,53 @@ export const PinataImage = ({
           justifyContent: 'center',
           alignItems: 'center',
           borderRadius: round ? 1000 : 10,
-          opacity: finalOpacity, // Smooth transition between states
+          position: 'relative',
         }}
       >
+        {/* Always show local image until Pinata image is loaded */}
+        {source && (
+          <Animated.View
+            style={{
+              position: 'absolute',
+              width: '100%',
+              height: '100%',
+              opacity: pinataSource ? Animated.subtract(1, fadeAnim) : pulseAnim,
+            }}
+          >
+            <Image
+              key={`source-${source}`}
+              contentFit="cover"
+              style={{
+                width: 200,
+                height: 200,
+              }}
+              source={source}
+            />
+          </Animated.View>
+        )}
+
+        {/* Fade in Pinata image once loaded */}
         {pinataSource && (
-          <Image
-            placeholder={source}
-            key={`pinata-${pinataSource}`}
-            contentFit="cover"
-            placeholderContentFit="cover"
+          <Animated.View
             style={{
-              width: 200,
-              height: 200,
+              position: 'absolute',
+              width: '100%',
+              height: '100%',
+              opacity: fadeAnim,
             }}
-            onDisplay={() => {
-              setLoading(false)
-            }}
-            source={pinataSource}
-          />
+          >
+            <Image
+              key={`pinata-${pinataSource}`}
+              contentFit="cover"
+              style={{
+                width: 200,
+                height: 200,
+              }}
+              source={pinataSource}
+            />
+          </Animated.View>
         )}
-        {source && showOriginal && (
-          <Image
-            key={`source-${source}`}
-            contentFit="cover"
-            style={{
-              position: showOriginal ? 'absolute' : 'relative',
-              width: 200,
-              height: 200,
-            }}
-            source={source}
-          />
-        )}
-      </Animated.View>
+      </View>
     </TouchableOpacity>
   )
 }

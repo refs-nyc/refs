@@ -33,20 +33,23 @@ export const RefForm = ({
   backlog?: boolean
   attach?: boolean
 }) => {
-  const [currentRef, setCurrentRef] = useState<StagedRef>({ ...r })
-  const [currentRefComment, setCurrentRefComment] = useState<string>()
+  // Separate state for each field to prevent unnecessary re-renders
+  const [title, setTitle] = useState<string>(r?.title || '')
+  const [url, setUrl] = useState<string>(r?.url || '')
+  const [comment, setComment] = useState<string>('')
   const [imageAsset, setImageAsset] = useState<ImagePickerAsset | null>(null)
-  const [pinataSource, setPinataSource] = useState('')
+  const [pinataSource, setPinataSource] = useState<string>('')
   const [picking, setPicking] = useState(pickerOpen)
+  const [uploadInProgress, setUploadInProgress] = useState(false)
 
   const pathname = usePathname()
 
-  // Mandatory
-  // Ref title
-  // Ref image
-
+  // Initialize state based on incoming ref
   useEffect(() => {
-    // Initialize image state based on incoming ref
+    if (r?.title) setTitle(r.title)
+    if (r?.url) setUrl(r.url)
+
+    // Initialize image state
     if (r?.image) {
       if (typeof r.image === 'string') {
         setPinataSource(r.image)
@@ -56,33 +59,48 @@ export const RefForm = ({
     }
   }, [r])
 
-  const updateRefImage = (image: string) => {
-    setPinataSource(image)
+  // Get the current complete ref state when needed
+  const getCurrentRef = () => ({
+    ...r,
+    title,
+    url,
+    image: pinataSource || (imageAsset ? imageAsset.uri : null),
+  })
 
-    const u = { ...r, image }
-    setCurrentRef(u)
+  const handleTitleChange = (newTitle: string) => {
+    setTitle(newTitle)
   }
 
-  const updateRefTitle = (title: string) => {
-    const u = { ...r, title }
-    setCurrentRef(u)
+  const handleUrlChange = (newUrl: string) => {
+    setUrl(newUrl)
   }
 
-  const updateRefUrl = (url: string) => {
-    const u = { ...r, url }
-    setCurrentRef(u)
+  const handleImageSuccess = (imageUrl: string) => {
+    setUploadInProgress(false)
+
+    // Prefetch image to ensure it's in cache
+    Image.prefetch(imageUrl)
+      .then(() => {
+        setPinataSource(imageUrl)
+      })
+      .catch((err) => {
+        console.error('Failed to prefetch image:', err)
+      })
   }
 
-  const updateData = (d: { title: string; url: string; image: string }) => {
-    updateRefTitle(d.title)
-    updateRefImage(d.image)
-    updateRefUrl(d.url)
-    setImageAsset(d.image)
+  const handleDataChange = (d: { title: string; url: string; image: string }) => {
+    setTitle(d.title)
+    setUrl(d.url)
+    if (d.image) {
+      setPinataSource(d.image)
+    }
   }
 
   const submit = async (extraFields?: any) => {
     const data = {
-      ...currentRef,
+      ...r,
+      title,
+      url,
       image: pinataSource,
       backlog,
       ...extraFields,
@@ -90,7 +108,7 @@ export const RefForm = ({
 
     try {
       const item = await addToProfile(data, !pathname.includes('onboarding'), {
-        comment: currentRefComment,
+        comment,
         backlog,
       })
       onComplete(item)
@@ -100,6 +118,9 @@ export const RefForm = ({
       console.log('Done')
     }
   }
+
+  // Determine if the form is valid for submission
+  const isFormValid = Boolean(pinataSource && title)
 
   return (
     <View
@@ -120,16 +141,11 @@ export const RefForm = ({
           <PinataImage
             asset={imageAsset}
             onReplace={() => setPicking(true)}
-            onSuccess={(url) => {
-              Image.prefetch(url)
-                .then(() => {
-                  setPinataSource(url)
-                })
-                .catch((err) => {
-                  console.error('Failed to prefetch image:', err)
-                })
+            onSuccess={handleImageSuccess}
+            onFail={() => {
+              console.error('Upload failed')
+              setUploadInProgress(false)
             }}
-            onFail={() => console.error('Upload failed')}
           />
         ) : (
           <TouchableOpacity style={{ flex: 1 }} onPress={() => setPicking(true)}>
@@ -153,33 +169,36 @@ export const RefForm = ({
         <Picker
           onSuccess={(a: ImagePickerAsset) => {
             setImageAsset(a)
+            setPicking(false)
+            setUploadInProgress(true)
           }}
           onCancel={() => setPicking(false)}
         />
       )}
 
       <EditableHeader
-        onComplete={updateRefTitle}
-        onDataChange={updateData}
+        onComplete={handleTitleChange}
+        onDataChange={handleDataChange}
         placeholder={placeholder}
-        title={r?.title || placeholder}
-        url={r?.url || ''}
+        title={title || placeholder}
+        url={url || ''}
       />
+
       {/* Notes */}
       <TextInput
         multiline={true}
         numberOfLines={4}
         placeholder="Add a caption for your profile"
-        onChangeText={setCurrentRefComment}
+        onChangeText={setComment}
         style={{
           backgroundColor: c.white,
           borderRadius: s.$075,
           width: '100%',
           padding: s.$1,
           minHeight: s.$12,
-          // minHeight: 2000,
         }}
       />
+
       <View
         style={{
           width: '100%',
@@ -187,12 +206,12 @@ export const RefForm = ({
           justifyContent: 'space-between',
         }}
       >
-        {!currentRef?.url && (
+        {!url && (
           <Button
             title="Create List"
             variant="outlineFluid"
             style={{ width: '48%', minWidth: 0 }}
-            disabled={!pinataSource || !currentRef?.title}
+            disabled={!isFormValid || uploadInProgress}
             onPress={() => {
               console.log('ABOUT TO ADD A LIST')
               submit({ list: true })
@@ -202,8 +221,8 @@ export const RefForm = ({
         <Button
           title="Add Ref"
           variant="fluid"
-          style={{ width: currentRef.url ? '100%' : '48%', minWidth: 0 }}
-          disabled={!pinataSource || !currentRef?.title}
+          style={{ width: url ? '100%' : '48%', minWidth: 0 }}
+          disabled={!isFormValid || uploadInProgress}
           onPress={() => submit()}
         />
       </View>

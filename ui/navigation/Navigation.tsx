@@ -23,7 +23,7 @@ export const Navigation = () => {
     (pathName === '/' && !pocketbase.authStore.isValid) ||
     pathName.includes('/onboarding') ||
     pathName.includes('/user/login') ||
-    pathName.includes('/user/new') ||
+    pathName.includes('/user/register') ||
     pathName.includes('/modal') ||
     addingTo === 'grid' ||
     addingTo === 'backlog' ||

@@ -51,7 +51,7 @@ export const SearchBar = ({
       <View
         style={[
           {
-            paddingHorizontal: s.$2,
+            paddingHorizontal: s.$1,
             width: '100%',
           },
         ]}
@@ -65,7 +65,7 @@ export const SearchBar = ({
               backgroundColor: c.black,
               position: 'absolute',
               zIndex: 0,
-              left: s.$2,
+              left: s.$1,
               top: 0,
               borderRadius: s.$3,
               transformOrigin: 'bottom',

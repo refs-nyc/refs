@@ -119,25 +119,12 @@ export const RefForm = ({
     }
   }
 
-  // Determine if the form is valid for submission
-  const isFormValid = Boolean(pinataSource && title)
-
   return (
     <View
       style={{ justifyContent: 'center', alignItems: 'center', gap: s.$2, marginVertical: s.$4 }}
     >
       <View style={{ width: 200, height: 200 }}>
-        {pinataSource ? (
-          <TouchableOpacity style={{ flex: 1 }} onLongPress={() => setPicking(true)}>
-            <SimplePinataImage
-              placeholder={imageAsset?.uri}
-              placeholderContentFit="cover"
-              originalSource={pinataSource}
-              style={{ flex: 1, borderRadius: 10 }}
-              imageOptions={{ width: 400, height: 400 }}
-            />
-          </TouchableOpacity>
-        ) : imageAsset ? (
+        {imageAsset ? (
           <PinataImage
             asset={imageAsset}
             onReplace={() => setPicking(true)}
@@ -189,6 +176,7 @@ export const RefForm = ({
         multiline={true}
         numberOfLines={4}
         placeholder="Add a caption for your profile"
+        placeholderTextColor={c.muted}
         onChangeText={setComment}
         style={{
           backgroundColor: c.white,
@@ -211,9 +199,8 @@ export const RefForm = ({
             title="Create List"
             variant="outlineFluid"
             style={{ width: '48%', minWidth: 0 }}
-            disabled={!isFormValid || uploadInProgress}
+            disabled={!(pinataSource && title) || uploadInProgress}
             onPress={() => {
-              console.log('ABOUT TO ADD A LIST')
               submit({ list: true })
             }}
           />
@@ -222,7 +209,7 @@ export const RefForm = ({
           title="Add Ref"
           variant="fluid"
           style={{ width: url ? '100%' : '48%', minWidth: 0 }}
-          disabled={!isFormValid || uploadInProgress}
+          disabled={!(pinataSource && title) || uploadInProgress}
           onPress={() => submit()}
         />
       </View>

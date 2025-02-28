@@ -128,9 +128,8 @@ export const SearchRef = ({
           borderRadius: s.$075,
           color: c.black,
         }}
-        autoFocus={true}
         value={searchQuery}
-        placeholder="Start typing"
+        placeholder="Search anything or start typing"
         onChangeText={updateQuery}
       />
 

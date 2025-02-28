@@ -55,7 +55,7 @@ export const PinataImage = ({
 
       pulseAnimation.start()
     } else if (pulseAnimation) {
-      pulseAnimation.stop()
+      pulseAnimation?.stop()
     }
 
     return () => {
@@ -113,49 +113,24 @@ export const PinataImage = ({
           position: 'relative',
         }}
       >
-        {/* Always show local image until Pinata image is loaded */}
-        {source && (
-          <Animated.View
+        <Animated.View
+          style={{
+            position: 'absolute',
+            width: '100%',
+            height: '100%',
+            opacity: pinataSource ? Animated.add(1, fadeAnim) : pulseAnim,
+          }}
+        >
+          <Image
+            key={`source-${source}`}
+            contentFit="cover"
             style={{
-              position: 'absolute',
-              width: '100%',
-              height: '100%',
-              opacity: pinataSource ? Animated.subtract(1, fadeAnim) : pulseAnim,
+              width: 200,
+              height: 200,
             }}
-          >
-            <Image
-              key={`source-${source}`}
-              contentFit="cover"
-              style={{
-                width: 200,
-                height: 200,
-              }}
-              source={source}
-            />
-          </Animated.View>
-        )}
-
-        {/* Fade in Pinata image once loaded */}
-        {pinataSource && (
-          <Animated.View
-            style={{
-              position: 'absolute',
-              width: '100%',
-              height: '100%',
-              opacity: fadeAnim,
-            }}
-          >
-            <Image
-              key={`pinata-${pinataSource}`}
-              contentFit="cover"
-              style={{
-                width: 200,
-                height: 200,
-              }}
-              source={pinataSource}
-            />
-          </Animated.View>
-        )}
+            source={source}
+          />
+        </Animated.View>
       </View>
     </TouchableOpacity>
   )

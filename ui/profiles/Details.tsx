@@ -7,7 +7,7 @@ import { View, Dimensions, Pressable, Text } from 'react-native'
 import Carousel, { ICarouselInstance } from 'react-native-reanimated-carousel'
 import { useSharedValue } from 'react-native-reanimated'
 import { Heading } from '../typo/Heading'
-import { c, s } from '@/features/style'
+import { c, s, t } from '@/features/style'
 import { gridSort } from './sorts'
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { useUIStore } from '@/ui/state'
@@ -33,7 +33,7 @@ export const renderItem = ({ item, canAdd }: { item: ExpandedItem; canAdd?: bool
       }}
       key={item.id}
     >
-      <View style={{ width: '100%', aspectRatio: 1, overflow: 'hidden' }}>
+      <View style={{ width: '100%', aspectRatio: 1, overflow: 'hidden', borderRadius: s.$075 }}>
         {item.image ? (
           item.expand?.ref.image && (
             <Zoomable
@@ -49,7 +49,7 @@ export const renderItem = ({ item, canAdd }: { item: ExpandedItem; canAdd?: bool
               onDoubleTap={(zoomType) => {
                 console.log('onDoubleTap', zoomType)
               }}
-              style={{ width: '100%', aspectRatio: 1, overflow: 'visible' }}
+              style={{ width: '100%', aspectRatio: 1, overflow: 'visible', borderRadius: s.$075 }}
             >
               <Image
                 onLoad={(e) => {
@@ -91,11 +91,10 @@ export const renderItem = ({ item, canAdd }: { item: ExpandedItem; canAdd?: bool
             )}
           </Pressable>
         </View>
-        {/* Comments */}
         <View style={{ width: '100%' }}>
-          <Heading numberOfLines={4} tag="pmuted">
+          <Text numberOfLines={4} style={t.pmuted}>
             {item.text}
-          </Heading>
+          </Text>
         </View>
       </View>
     </View>
@@ -192,7 +191,7 @@ export const Details = ({
             }}
             ref={ref}
             data={data}
-            height={100}
+            height={win.height}
             defaultIndex={defaultIndex}
             style={{ overflow: 'visible', top: win.height * 0.2 }}
             width={win.width * 0.8}

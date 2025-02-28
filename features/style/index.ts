@@ -92,6 +92,7 @@ export const typo = StyleSheet.create({
   },
   h2normal: {
     fontFamily: 'Inter',
+    fontWeight: 'normal',
     fontSize: s.$1,
     lineHeight: s.$1half,
     letterSpacing: -0.5,
@@ -122,6 +123,7 @@ export const typo = StyleSheet.create({
   },
   h3normal: {
     fontFamily: 'Inter',
+    fontWeight: 'normal',
     fontSize: s.$1,
     lineHeight: s.$1half,
     letterSpacing: -0.5,
@@ -146,7 +148,7 @@ export const typo = StyleSheet.create({
     lineHeight: s.$1half,
     letterSpacing: -0.5,
     color: c.muted,
-    paddingHorizontal: s.$2,
+    // paddingHorizontal: s.$2,
   },
   small: {
     fontSize: 14,

@@ -8,7 +8,7 @@ import { Link } from 'expo-router'
 import { View, ScrollView, Dimensions } from 'react-native'
 import { s } from '@/features/style'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { Activity } from './activity'
+import { Nearby } from './nearby'
 
 import { SearchResults } from './results'
 
@@ -102,7 +102,7 @@ export const Feed = () => {
           </YStack>
         </YStack>
 
-        {searchTerm === '' ? <Activity items={items} /> : <SearchResults results={results} />}
+        {searchTerm === '' ? <Nearby items={items} /> : <SearchResults results={results} />}
 
         <View style={{ marginBottom: s.$14, alignItems: 'center' }}>
           <Button

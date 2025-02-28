@@ -6,7 +6,6 @@ import { Heading } from '../typo/Heading'
 import { NewRef } from '../actions/NewRef'
 import { useUIStore } from '../state'
 import { ProfileHeader } from './ProfileHeader'
-import { FirstVisitScreen } from './FirstVisitScreen'
 import { Grid } from '../grid/Grid'
 import { Sheet } from '../core/Sheets'
 import { useLocalSearchParams, router } from 'expo-router'
@@ -29,7 +28,7 @@ import { gridSort, createdSort } from '../profiles/sorts'
 const win = Dimensions.get('window')
 
 export const Profile = ({ userName }: { userName: string }) => {
-  const { firstVisit, addingTo, removingId } = useLocalSearchParams()
+  const { addingTo, removingId } = useLocalSearchParams()
 
   const { editingBacklog, stopEditBacklog, startEditBacklog } = useUIStore()
   const { hasShareIntent } = useShareIntentContext()
@@ -122,9 +121,7 @@ export const Profile = ({ userName }: { userName: string }) => {
           }}
           gap={s.$4}
         >
-          {firstVisit && user && isProfile(user) && <FirstVisitScreen user={user} />}
-
-          {!firstVisit && profile && (
+          {profile && (
             <View
               style={{
                 flex: 1,

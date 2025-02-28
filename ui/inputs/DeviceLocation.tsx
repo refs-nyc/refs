@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Platform, StyleSheet, View, Text } from 'react-native'
-import { YStack } from '../core/Stacks'
+import { XStack, YStack } from '../core/Stacks'
 import { pocketbase } from '@/features/pocketbase'
 import { Image } from 'expo-image'
 import {
@@ -9,21 +9,22 @@ import {
   presets,
 } from '@/features/location'
 import { useUserStore } from '@/features/pocketbase/stores/users'
-import { Button } from '../buttons/Button'
 import { c, t, s } from '@/features/style'
 import DropDownPicker from 'react-native-dropdown-picker'
-
 import * as Device from 'expo-device'
 import * as Location from 'expo-location'
+import { Pressable } from 'react-native-gesture-handler'
+import { Heading } from '../typo/Heading'
+import { Button } from '../buttons/Button'
 
-export const DeviceLocation = ({ onChange }: { onChange: (string) => void }) => {
+export const DeviceLocation = ({ onChange }: { onChange: (value: string) => void }) => {
   const [locationState, setLocation] = useState<Location.LocationObject | null>(null)
   const [humanReadableFormat, setHumanReadableFormat] = useState('')
   const [open, setOpen] = useState(false)
-  const [loadingMessage, setLoadingMessage] = useState('Use my current location')
+  const [loadingMessage, setLoadingMessage] = useState('')
   const [value, setValue] = useState(null)
-
-  const [items, setItems] = useState(presets)
+  // Ensure "Elsewhere" is added to the dropdown items from the start.
+  const [items, setItems] = useState([...presets, { label: 'Elsewhere', value: 'Elsewhere' }])
 
   const { stagedUser, updateStagedUser, updateUser } = useUserStore()
 
@@ -44,7 +45,6 @@ export const DeviceLocation = ({ onChange }: { onChange: (string) => void }) => 
     }
 
     let location = await Location.getCurrentPositionAsync({})
-
     setLocation(location)
 
     const hoodResult = await getNeighborhoodFromCoordinates({
@@ -52,29 +52,32 @@ export const DeviceLocation = ({ onChange }: { onChange: (string) => void }) => 
       lat: location?.coords.latitude,
     })
 
+    let computedLocation = ''
     if (
       hoodResult?.properties?.context?.neighborhood?.name &&
       hoodResult?.properties?.context?.locality?.name &&
       hoodResult?.properties?.context?.place?.name
     ) {
-      setHumanReadableFormat(
-        `${hoodResult?.properties?.context?.neighborhood?.name}, ${hoodResult?.properties?.context?.locality?.name}, ${hoodResult?.properties?.context?.place?.name}`
-      )
-      setLoadingMessage(humanReadableFormat)
+      computedLocation = `${hoodResult.properties.context.neighborhood.name}, ${hoodResult.properties.context.locality.name}, ${hoodResult.properties.context.place.name}`
     } else if (hoodResult?.properties?.name) {
-      setHumanReadableFormat(hoodResult?.properties?.name)
-      setLoadingMessage(humanReadableFormat)
-    } else {
-      setLoadingMessage('Could not determine your neighborhood')
+      computedLocation = hoodResult.properties.name
     }
+
+    // Determine the final location:
+    // If the computed location is in our items and not empty, use it; otherwise, fallback to "Elsewhere"
+    const existsInItems = items.find((item) => item.label === computedLocation)
+    const finalLocation = existsInItems && computedLocation !== '' ? computedLocation : 'Elsewhere'
+
+    setHumanReadableFormat(finalLocation)
+    setValue(finalLocation)
+    setLoadingMessage(finalLocation)
+    onChange(finalLocation)
 
     const fields = {
       lon: location?.coords.longitude,
       lat: location?.coords.latitude,
-      location: humanReadableFormat,
+      location: finalLocation,
     }
-
-    onChange(humanReadableFormat)
 
     if (!pocketbase.authStore.isValid) {
       const updated = updateStagedUser(fields)
@@ -94,6 +97,7 @@ export const DeviceLocation = ({ onChange }: { onChange: (string) => void }) => 
         setOpen={setOpen}
         setValue={setValue}
         setItems={setItems}
+        placeholder="Location"
         onSelectItem={async (item) => {
           console.log('selected, ', item)
           const name =
@@ -146,7 +150,7 @@ export const DeviceLocation = ({ onChange }: { onChange: (string) => void }) => 
         ListEmptyComponent={() => (
           <View style={[t.p, { color: c.accent, opacity: 0, height: 0, width: 0 }]}></View>
         )}
-        style={{ borderColor: c.accent, borderRadius: 30, borderWidth: 2 }}
+        style={{ borderColor: c.accent, borderRadius: 30, borderWidth: 1.5 }}
         labelStyle={{ ...t.p, color: c.accent, paddingHorizontal: 12 }}
         listParentLabelStyle={{ ...t.p, color: c.accent, paddingHorizontal: 12 }}
         listChildLabelStyle={{ ...t.p, color: c.accent }}
@@ -159,26 +163,21 @@ export const DeviceLocation = ({ onChange }: { onChange: (string) => void }) => 
         }}
       />
 
-      <Button disabled variant="basic" title="Or let us determine your location"></Button>
-
-      <Button onPress={getCurrentLocation} variant="" title={loadingMessage}></Button>
+      <View style={{ height: s.$4, alignItems: 'center', justifyContent: 'center' }}>
+        {loadingMessage === '' ? (
+          <XStack gap={s.$025} style={{ alignItems: 'center', justifyContent: 'center' }}>
+            <Button
+              onPress={getCurrentLocation}
+              variant="inlineSmallMuted"
+              title="Let us determine your location"
+            />
+          </XStack>
+        ) : (
+          <Heading style={{ textAlign: 'center' }} tag="pmuted">
+            {loadingMessage}
+          </Heading>
+        )}
+      </View>
     </YStack>
   )
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 20,
-  },
-  paragraph: {
-    fontSize: 18,
-    textAlign: 'center',
-  },
-  // overlay: {
-  //   ...StyleSheet.absoluteFillObject,
-  //   backgroundColor: c.accent,
-  // },
-})

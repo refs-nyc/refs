@@ -1,76 +1,50 @@
+import { pocketbase } from '@/features/pocketbase'
 import { useState } from 'react'
-import { XStack, YStack } from '@/ui/core/Stacks'
-import { Heading } from "@/ui/typo/Heading"
-import { Image } from 'expo-image'
+import { YStack } from '@/ui/core/Stacks'
+import { Heading } from '@/ui/typo/Heading'
 import { Switch, View } from 'react-native'
-import { GridTile } from '../grid/GridTile'
-import { Link, router } from 'expo-router'
+import { router } from 'expo-router'
+import { registerForPushNotificationsAsync } from '@/ui/notifications/utils'
 import { s, c } from '@/features/style'
-import { Profile } from "@/features/pocketbase/stores/types"
+import { useUserStore } from '@/features/pocketbase/stores/users'
 
-export const FirstVisitScreen = ({ user }: { user: Profile }) => {
+export const FirstVisitScreen = () => {
+  const { updateUser } = useUserStore()
+
   const [isEnabled, setIsEnabled] = useState(false)
-  const toggleSwitch = () => {
+  const toggleSwitch = async () => {
     setIsEnabled((previousState) => !previousState)
-    // @todo: sign them up
-    router.push(`/user/${user.userName}`)
+
+    await registerForPushNotificationsAsync()
+      .then(async (token) => {
+        await updateUser({ pushToken: token ?? '' })
+      })
+      .catch((err) => {
+        console.error(err)
+      })
+      .finally(() => {
+        router.push(
+          pocketbase.authStore?.record?.userName
+            ? `/user/${pocketbase.authStore?.record?.userName}`
+            : '/'
+        )
+      })
   }
 
   return (
-    <YStack gap={s.$3} screenHeight style={{ flex: 1, justifyContent: 'center' }}>
-      <Heading style={{ textAlign: 'center' }} tag="h2normal">
-        Thanks for signing up!
+    <YStack style={{ justifyContent: 'center', alignItems: 'center' }} gap={s.$2}>
+      <Heading tag="p" style={{ textAlign: 'center' }}>
+        Refs will go live in your city at 1,000 profiles.{'\n'}Click below to get notified once it’s
+        launched.
       </Heading>
-      <Link href={`/user/${user.userName}`}>
-        <YStack
-          gap={s.$1}
-          style={{
-            minWidth: s.$20,
-            flexDirection: 'row',
-            backgroundColor: c.surface2,
-            padding: s.$1half,
-            borderRadius: s.$08,
-          }}
-        >
-          <XStack style={{ width: '100%', justifyContent: 'space-between' }}>
-            <Heading tag="h2">{user.userName}</Heading>
-            {user?.image && (
-              <Image
-                style={{ width: s.$6, height: s.$6, borderRadius: '100%' }}
-                source={user.image}
-              />
-            )}
-          </XStack>
-          <XStack style={{ width: '100%' }}>
-            <View style={{ width: '33.33%' }}>
-              <GridTile backgroundColor={c.surface} />
-            </View>
-            <View style={{ width: '33.33%' }}>
-              <GridTile backgroundColor={c.surface} />
-            </View>
-            <View style={{ width: '33.33%' }}>
-              <GridTile backgroundColor={c.surface} />
-            </View>
-          </XStack>
-        </YStack>
-      </Link>
-      {/* <Shareable style={{ width: '100%' }}>
-        <Button variant="fluid" title="Share"></Button>
-      </Shareable> */}
-
-      <YStack style={{ justifyContent: 'center', alignItems: 'center' }} gap={s.$2}>
-        <Heading tag="h3normal" style={{ textAlign: 'center' }}>
-          Refs is going live on Jan ‘25. {'\n'} Get notified once it’s launched.
-        </Heading>
-        <Switch
-          trackColor={{ false: c.surface, true: c.accent2 }}
-          thumbColor={isEnabled ? c.accent : c.surface2}
-          ios_backgroundColor={c.white}
-          onValueChange={toggleSwitch}
-          value={isEnabled}
-        />
-        <Heading tag="mutewarn">Push Notifications</Heading>
-      </YStack>
+      <Switch
+        trackColor={{ false: c.surface, true: c.accent2 }}
+        thumbColor={isEnabled ? c.accent : c.surface2}
+        ios_backgroundColor={c.white}
+        onValueChange={toggleSwitch}
+        value={isEnabled}
+      />
+      <Heading tag="mutewarn">Push Notifications</Heading>
     </YStack>
   )
 }

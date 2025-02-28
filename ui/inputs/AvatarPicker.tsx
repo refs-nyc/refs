@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Pressable, Dimensions, View } from 'react-native'
 import { YStack } from '@/ui/core/Stacks'
-import { Heading } from "@/ui/typo/Heading"
+import { Heading } from '@/ui/typo/Heading'
 import { Picker } from '../inputs/Picker'
 import { PinataImage } from '../images/PinataImage'
 import { Button } from '../buttons/Button'
@@ -29,8 +29,8 @@ export const AddImage = ({
           <Pressable onPress={() => setPicking(true)}>
             <View
               style={{
-                width: s.$12,
-                height: s.$12,
+                width: 200,
+                height: 200,
                 justifyContent: 'center',
                 alignItems: 'center',
                 borderColor: 'black',
@@ -42,12 +42,6 @@ export const AddImage = ({
             </View>
           </Pressable>
         )}
-        <Button
-          iconBefore="images"
-          variant="small"
-          title="Add from Camera Roll"
-          onPress={() => setPicking(true)}
-        />
         <View style={{ height: s.$2, width: '100%', justifyContent: 'center' }}>{children}</View>
       </View>
     </>
@@ -57,23 +51,18 @@ export const AddImage = ({
 export const AvatarPicker = ({
   source = '',
   children,
-  placeholder = 'What is it',
   onComplete,
+  onReplace,
 }: {
   source: string
   children: React.ReactNode
-  placeholder: string
   onComplete: (s: string) => void
+  onReplace: () => void
 }) => {
-  const [currentSource, setCurrentSource] = useState(source)
   const [imageAsset, setImageAsset] = useState<ImagePickerAsset | null>(null)
-  const [pinataSource, setPinataSource] = useState('')
 
-  const updatePinata = (image: string) => {
-    setPinataSource(image)
-
-    // Side effects...
-    onComplete(image)
+  const reset = () => {
+    setImageAsset(null)
   }
 
   return (
@@ -84,8 +73,15 @@ export const AvatarPicker = ({
             <PinataImage
               round
               asset={imageAsset}
-              onSuccess={updatePinata}
-              onFail={() => console.error('Cant ul')}
+              onSuccess={(image) => onComplete(image)}
+              onReplace={() => {
+                reset()
+                onReplace()
+              }}
+              onFail={() => {
+                reset()
+                console.error('Cant ul')
+              }}
               style={{ width: s.$12, height: s.$12 }}
             />
             <AddImage

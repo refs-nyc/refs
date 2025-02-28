@@ -84,6 +84,12 @@ export const typo = StyleSheet.create({
     lineHeight: s.$1half,
     letterSpacing: -0.5,
   },
+  h2semi: {
+    fontFamily: 'InterSemiBold',
+    fontSize: s.$1,
+    lineHeight: s.$1half,
+    letterSpacing: -0.5,
+  },
   h2normal: {
     fontFamily: 'Inter',
     fontSize: s.$1,
@@ -140,6 +146,7 @@ export const typo = StyleSheet.create({
     lineHeight: s.$1half,
     letterSpacing: -0.5,
     color: c.muted,
+    paddingHorizontal: s.$2,
   },
   small: {
     fontSize: 14,

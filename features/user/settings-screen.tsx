@@ -4,6 +4,7 @@ import { Text, View } from 'react-native'
 import { router } from 'expo-router'
 import { Profile as ProfileType } from '@/features/pocketbase/stores/types'
 import { DeviceLocation } from '@/ui/inputs/DeviceLocation'
+import { FirstVisitScreen } from '@/ui/profiles/FirstVisitScreen'
 import { Button, ScreenWrapper } from '@/ui'
 import { useUserStore } from '@/features/pocketbase/stores/users'
 import { s } from '@/features/style'
@@ -28,6 +29,8 @@ export function SettingsScreen({ userName }: { userName: string }) {
   return (
     <ScreenWrapper>
       <DeviceLocation onChange={(e) => console.log(e)} />
+
+      <FirstVisitScreen />
 
       <Button
         style={{ marginTop: s.$12, marginBottom: 0 }}

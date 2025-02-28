@@ -46,7 +46,9 @@ export function HomeScreen() {
   return (
     <>
       {pocketbase.authStore.isValid && pocketbase.authStore?.record?.userName ? (
-        <Feed />
+        <>
+          <Feed />
+        </>
       ) : (
         <View
           style={{

@@ -2,6 +2,7 @@ import { pocketbase } from '../pocketbase'
 import { create } from 'zustand'
 import { Profile, EmptyProfile, ExpandedProfile, Item } from './types'
 import { UsersRecord, UsersResponse, ItemsResponse } from './pocketbase-types'
+import { router } from 'expo-router'
 import { canvasApp } from './canvas'
 import { ClientResponseError } from 'pocketbase'
 import { gridSort, createdSort } from '@/ui/profiles/sorts'
@@ -211,6 +212,7 @@ export const useUserStore = create<{
       stagedUser: {},
     }))
     await pocketbase.authStore.clear()
+    router.push('/')
   },
   //
   //

@@ -1,13 +1,15 @@
 import Animated, { FadeInUp, FadeOutUp } from 'react-native-reanimated'
 import type { ExpandedItem } from '@/features/pocketbase/stores/types'
 import { useState, useEffect } from 'react'
-import { SearchBar, YStack, Heading, DismissKeyboard } from '@/ui'
+import { SearchBar, YStack, Heading, DismissKeyboard, Button } from '@/ui'
 import { pocketbase } from '@/features/pocketbase'
+import { useUserStore } from '@/features/pocketbase/stores/users'
 import { Link } from 'expo-router'
 import { View, ScrollView, Dimensions } from 'react-native'
 import { s } from '@/features/style'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Activity } from './activity'
+
 import { SearchResults } from './results'
 
 const win = Dimensions.get('window')
@@ -18,6 +20,7 @@ export const Feed = () => {
   const [results, setResults] = useState<ExpandedItem[]>([])
   const [searchTerm, setSearchTerm] = useState<string>('')
   const insets = useSafeAreaInsets()
+  const { logout } = useUserStore()
 
   useEffect(() => {
     if (searchTerm === '') return
@@ -43,13 +46,11 @@ export const Feed = () => {
   useEffect(() => {
     const getInitialData = async () => {
       try {
-        const records = await pocketbase
-          .collection('items')
-          .getList<ExpandedItem>(1, 30, {
-            filter: `creator != null`,
-            sort: '-created',
-            expand: 'ref,creator',
-          })
+        const records = await pocketbase.collection('items').getList<ExpandedItem>(1, 30, {
+          filter: `creator != null`,
+          sort: '-created',
+          expand: 'ref,creator',
+        })
 
         setItems(records.items)
       } catch (error) {
@@ -102,6 +103,15 @@ export const Feed = () => {
         </YStack>
 
         {searchTerm === '' ? <Activity items={items} /> : <SearchResults results={results} />}
+
+        <View style={{ marginBottom: s.$14, alignItems: 'center' }}>
+          <Button
+            style={{ width: 20 }}
+            variant="inlineSmallMuted"
+            title="Log out"
+            onPress={logout}
+          />
+        </View>
       </ScrollView>
     </DismissKeyboard>
   )

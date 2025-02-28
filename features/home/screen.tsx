@@ -64,7 +64,7 @@ export function HomeScreen() {
               <Heading tag="strong">Refs</Heading> is the phonebook for the internet.
             </Heading>
             <YStack style={{ alignItems: 'center' }} gap={s.$05}>
-              <Button title="Join" onPress={() => router.push('/user/new')} />
+              <Button title="Join" onPress={() => router.push('/user/register')} />
               {pocketbase.authStore.isValid && pocketbase.authStore?.record?.userName ? (
                 <Button
                   variant="basic"

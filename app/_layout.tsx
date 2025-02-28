@@ -136,6 +136,7 @@ function RootLayoutNav() {
           name="index"
           options={{
             title: 'Refs',
+            animation: 'fade_from_bottom',
           }}
         />
         <Stack.Screen
@@ -160,7 +161,7 @@ function RootLayoutNav() {
           options={{
             title: 'User',
             // presentation: 'modal',
-            animation: 'slide_from_right',
+            animation: 'slide_from_left',
             gestureEnabled: true,
             gestureDirection: 'horizontal',
             headerShown: false,
@@ -170,6 +171,7 @@ function RootLayoutNav() {
           name="user/[userName]/settings/index"
           options={{
             title: 'Settings',
+            animation: 'slide_from_left',
             headerShown: false,
           }}
         />

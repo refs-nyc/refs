@@ -7,8 +7,6 @@ import { ExampleGrid } from './grid/ExampleGrid'
 import { DetailsDemo } from './display/DetailsDemo'
 import { SearchDemo } from './display/SearchDemo'
 import { Button } from './buttons/Button'
-import { ExampleButtonList } from './atoms/ExpandButtonList'
-import { Grid } from './grid/Grid'
 import { s, c } from '@/features/style/index'
 
 export const OnboardingCarouselItem = ({
@@ -51,7 +49,7 @@ export const OnboardingCarouselItem = ({
         <View
           style={{ paddingHorizontal: s.$2, position: 'absolute', bottom: s.$3, width: '100%' }}
         >
-          <Button variant="fluid" title="next" onPress={next} />
+          <Button variant="fluid" title="Next" onPress={next} />
         </View>
       </View>
     )
@@ -77,7 +75,7 @@ export const OnboardingCarouselItem = ({
         <View
           style={{ paddingHorizontal: s.$2, position: 'absolute', bottom: s.$3, width: '100%' }}
         >
-          <Button variant="fluid" title="next" onPress={next} />
+          <Button variant="fluid" title="Next" onPress={next} />
         </View>
       </View>
     )

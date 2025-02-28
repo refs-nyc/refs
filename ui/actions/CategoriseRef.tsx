@@ -70,6 +70,7 @@ export const CategoriseRef = ({
             <>
               <TextInput
                 autoFocus={true}
+                placeholderTextColor={c.muted}
                 style={{
                   backgroundColor: c.white,
                   borderRadius: s.$075,
@@ -101,6 +102,7 @@ export const CategoriseRef = ({
             <>
               <TextInput
                 autoFocus={true}
+                placeholderTextColor={c.muted}
                 style={{
                   backgroundColor: c.white,
                   borderRadius: s.$075,

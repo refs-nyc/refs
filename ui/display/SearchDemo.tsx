@@ -109,10 +109,12 @@ const AnimatedPerson = ({ person, index, style }) => {
     <Animated.View style={[style, { opacity: fadeAnim }]}>
       <Image source={person.source} style={styles.personImage} resizeMode="cover" />
       <View style={styles.personInfo}>
-        <Text style={styles.personName}>{person.name}</Text>
+        <Text style={[styles.personName, { fontWeight: 'normal' }]}>{person.name}</Text>
         <View style={styles.personDetails}>
-          <Text style={styles.personLocation}>{person.location}</Text>
-          <Text style={styles.refsShared}>{person.shared} refs shared</Text>
+          <Text style={[styles.personLocation, { fontWeight: 'normal' }]}>{person.location}</Text>
+          <Text style={[styles.refsShared, { fontWeight: 'normal' }]}>
+            {person.shared} refs shared
+          </Text>
         </View>
       </View>
     </Animated.View>

@@ -17,7 +17,7 @@ export function OnboardingScreen() {
   }
 
   const done = () => {
-    router.push('/user/new')
+    router.push('/user/register')
   }
 
   return (

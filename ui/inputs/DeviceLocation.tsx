@@ -58,7 +58,7 @@ export const DeviceLocation = ({ onChange }: { onChange: (value: string) => void
       hoodResult?.properties?.context?.locality?.name &&
       hoodResult?.properties?.context?.place?.name
     ) {
-      computedLocation = `${hoodResult.properties.context.neighborhood.name}, ${hoodResult.properties.context.locality.name}, ${hoodResult.properties.context.place.name}`
+      computedLocation = `${hoodResult.properties.context.neighborhood.name}`
     } else if (hoodResult?.properties?.name) {
       computedLocation = hoodResult.properties.name
     }
@@ -98,6 +98,7 @@ export const DeviceLocation = ({ onChange }: { onChange: (value: string) => void
         setValue={setValue}
         setItems={setItems}
         placeholder="Location"
+        searchPlaceholder="Type a neighborhood"
         onSelectItem={async (item) => {
           console.log('selected, ', item)
           const name =
@@ -161,6 +162,7 @@ export const DeviceLocation = ({ onChange }: { onChange: (value: string) => void
           borderWidth: 2,
           borderTopWidth: 1,
         }}
+        flatListProps={{ keyboardShouldPersistTaps: 'always' }}
       />
 
       <View style={{ height: s.$4, alignItems: 'center', justifyContent: 'center' }}>

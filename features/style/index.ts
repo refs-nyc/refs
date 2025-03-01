@@ -117,6 +117,7 @@ export const typo = StyleSheet.create({
   },
   h3semi: {
     fontFamily: 'InterSemiBold',
+    fontWeight: 400,
     fontSize: s.$1,
     lineHeight: s.$1half,
     letterSpacing: -0.5,
@@ -140,6 +141,13 @@ export const typo = StyleSheet.create({
     fontSize: s.$09,
     lineHeight: s.$1half,
     letterSpacing: -0.5,
+    // color: c.black,
+  },
+  psemi: {
+    fontFamily: 'InterSemiBold',
+    fontWeight: 400,
+    fontSize: s.$09,
+    lineHeight: s.$1half,
     // color: c.black,
   },
   pmuted: {

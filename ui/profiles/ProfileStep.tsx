@@ -246,6 +246,7 @@ export const ProfileStep = ({ fields, onComplete, overrideSubmit, title = '' }) 
         </YStack>
 
         <Button
+          variant="raised"
           style={styles.submitButton}
           title={
             fields.includes('email')
@@ -258,7 +259,6 @@ export const ProfileStep = ({ fields, onComplete, overrideSubmit, title = '' }) 
                 : 'Register'
               : 'Done'
           }
-          variant="fluid"
           onPress={handleSubmit(onSubmit, (errors) => console.log('Errors:', errors))}
         />
       </KeyboardAvoidingView>
@@ -287,6 +287,7 @@ const styles = {
   },
   submitButton: {
     position: 'absolute',
+    width: '100%',
     bottom: s.$3,
     left: s.$1half,
   },

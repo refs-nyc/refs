@@ -49,7 +49,7 @@ export const OnboardingCarouselItem = ({
         <View
           style={{ paddingHorizontal: s.$2, position: 'absolute', bottom: s.$3, width: '100%' }}
         >
-          <Button variant="fluid" title="Next" onPress={next} />
+          <Button variant="raised" title="Next" onPress={next} />
         </View>
       </View>
     )
@@ -75,7 +75,7 @@ export const OnboardingCarouselItem = ({
         <View
           style={{ paddingHorizontal: s.$2, position: 'absolute', bottom: s.$3, width: '100%' }}
         >
-          <Button variant="fluid" title="Next" onPress={next} />
+          <Button variant="raised" title="Next" onPress={next} />
         </View>
       </View>
     )
@@ -102,7 +102,7 @@ export const OnboardingCarouselItem = ({
         <View
           style={{ paddingHorizontal: s.$2, position: 'absolute', bottom: s.$3, width: '100%' }}
         >
-          <Button variant="fluid" title="I'm ready" onPress={done} />
+          <Button variant="raised" title="I'm ready" onPress={done} />
         </View>
       </View>
     )

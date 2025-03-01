@@ -58,7 +58,7 @@ export const Nearby = ({ items }: { items: ExpandedItem[] }) => {
               <Heading tag="p">
                 <Link href={item.expand?.creator ? `/user/${item.expand.creator?.userName}` : '/'}>
                   <Heading tag="semistrong">
-                    {item.expand?.creator?.userName || 'Anonymous'}{' '}
+                    {item.expand?.creator?.firstName || 'Anonymous'}{' '}
                   </Heading>
                 </Link>
                 <Heading style={{ color: c.muted2 }} tag="p">

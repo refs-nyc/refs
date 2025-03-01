@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Platform, StyleSheet, View, Text } from 'react-native'
+import { Platform, View } from 'react-native'
 import { XStack, YStack } from '../core/Stacks'
 import { pocketbase } from '@/features/pocketbase'
 import { Image } from 'expo-image'
@@ -53,11 +53,7 @@ export const DeviceLocation = ({ onChange }: { onChange: (value: string) => void
     })
 
     let computedLocation = ''
-    if (
-      hoodResult?.properties?.context?.neighborhood?.name &&
-      hoodResult?.properties?.context?.locality?.name &&
-      hoodResult?.properties?.context?.place?.name
-    ) {
+    if (hoodResult?.properties?.context?.neighborhood?.name) {
       computedLocation = `${hoodResult.properties.context.neighborhood.name}`
     } else if (hoodResult?.properties?.name) {
       computedLocation = hoodResult.properties.name
@@ -109,7 +105,6 @@ export const DeviceLocation = ({ onChange }: { onChange: (value: string) => void
           setLoadingMessage(name)
           onChange(name)
 
-          console.log('search ', item.label)
           const l = await getCoordinatesFromNeighborhood(item.label)
 
           if (l) {

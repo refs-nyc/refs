@@ -9,7 +9,7 @@ import { useUserStore } from '@/features/pocketbase/stores/users'
 
 export const SearchResultItem = ({ r }: { r: CompleteRef }) => {
   const [count, setCount] = useState<string | number>('...')
-  const { profileItems, backlogItems } = useUserStore()
+  const { profile, profileItems, backlogItems } = useUserStore()
 
   useEffect(() => {
     console.log('BACKLOG', backlogItems.length)
@@ -53,13 +53,18 @@ export const SearchResultItem = ({ r }: { r: CompleteRef }) => {
           <Text>{r?.title}</Text>
         </XStack>
         <XStack gap={s.$09} style={{ justifyContent: 'space-between', alignItems: 'center' }}>
-          {profileItems.map((itm) => itm.expand.ref.id).includes(r.id) && (
-            <Text>You are referencing</Text>
-          )}
-          {backlogItems.map((itm) => itm.expand.ref.id).includes(r.id) && (
+          {pocketbase.authStore.record?.expand?.items
+            ?.map((itm) => itm.expand.ref.id)
+            .includes(r.id) ? (
+            <Text>
+              You are{pocketbase.authStore.record.id !== profile?.id && ' also'} referencing
+            </Text>
+          ) : pocketbase.authStore.record?.expand?.items
+              .filter((itm) => itm.backlog)
+              .map((itm) => itm.expand.ref.id)
+              .includes(r.id) ? (
             <Text>In your backlog</Text>
-          )}
-          {![...backlogItems, ...profileItems].map((itm) => itm.expand.ref.id).includes(r.id) && (
+          ) : (
             <Text>{count} referencing</Text>
           )}
         </XStack>

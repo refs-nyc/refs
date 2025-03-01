@@ -42,6 +42,8 @@ export const NewUserProfile = () => {
       updateStagedUser(formValues)
       ref.current?.next()
     }
+
+    console.log(formValues)
   }
 
   const renderItem = ({ item, index }: { item: string[]; index: number }) => {

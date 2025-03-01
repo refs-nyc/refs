@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { XStack } from '@/ui/core/Stacks'
 import { Button as NativeButton, Text, StyleSheet, Pressable } from 'react-native'
 import Ionicons from '@expo/vector-icons/Ionicons'
@@ -14,6 +15,7 @@ type ButtonProps = {
   iconAfter?: keyof typeof Ionicons.glyphMap
   iconAfterCustom?: boolean
   iconColor?: string
+  iconButton?: boolean
   disabled?: boolean
   align?: 'center' | 'flex-start' | 'flex-end'
   style?: any
@@ -29,19 +31,25 @@ export const Button = (props: ButtonProps) => {
     iconBeforeCustom = false,
     iconAfterCustom = false,
     iconAfter = '',
+    iconButton = false,
     iconColor = 'white',
     disabled = false,
     align = 'center',
-    iconSize = s.$1,
+    iconSize = 24,
   } = props
 
   let buttonVariant = null
   let textVariant = null
   let iconVariant = null
+  let pressedVariant = null
+
+  const [pressed, setPressed] = useState(false)
+
   if (variant && variant in styles) {
     buttonVariant = styles[variant]
     textVariant = styles[`${variant}Text` as keyof typeof styles]
     iconVariant = styles[`${variant}Icon` as keyof typeof styles]
+    pressedVariant = styles[`${variant}Pressed` as keyof typeof styles]
   }
 
   return (
@@ -52,21 +60,37 @@ export const Button = (props: ButtonProps) => {
         buttonVariant,
         props?.style,
         disabled && styles.disabled,
+        pressed && pressedVariant,
+        iconButton && {
+          minWidth: 0,
+          paddingVertical: 8,
+          paddingHorizontal: 8,
+          borderRadius: s.$09,
+        },
       ]}
+      onTouchStart={() => {
+        setPressed(true)
+        console.log(pressedVariant)
+      }}
+      onTouchEnd={() => {
+        setPressed(false)
+      }}
       onPress={!disabled ? onPress : () => {}}
     >
-      <XStack style={{ alignItems: 'center' }} gap={s.$08}>
+      <XStack style={{ alignItems: 'center' }} gap={iconButton ? 0 : s.$08}>
         {iconBefore && iconBeforeCustom ? (
           <Icon size={iconSize} name={iconBefore} color={iconColor} />
         ) : (
           <Ionicons
             style={[{ height: iconSize }]}
-            color={iconColor}
+            color={iconVariant?.color || iconColor}
             name={iconBefore}
             size={iconSize}
           />
         )}
-        <Text style={[styles.text, textVariant]}>{title}</Text>
+
+        {!iconButton && <Text style={[styles.text, textVariant]}>{title}</Text>}
+
         {iconAfter && iconAfterCustom ? (
           <Icon size={iconSize} name={iconAfter} color={iconColor} />
         ) : (
@@ -94,7 +118,7 @@ const styles = StyleSheet.create({
     elevation: 3,
     paddingVertical: s.$08,
     paddingHorizontal: s.$2,
-    minWidth: s.$16,
+    minWidth: s.$8,
     backgroundColor: c.accent,
   },
   small: {
@@ -149,10 +173,67 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     paddingHorizontal: 0,
   },
+  raised: {
+    transform: 'translateY(0px)',
+    backgroundColor: c.accent,
+    shadowColor: '#655797',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 4,
+  },
+  raisedPressed: {
+    transform: 'translateY(6px)',
+    shadowOffset: {
+      width: 0,
+      height: 0,
+    },
+    elevation: 0,
+  },
+  raisedSecondaryPressed: {
+    transform: 'translateY(6px)',
+    shadowOffset: {
+      width: 0,
+      height: 0,
+    },
+    elevation: 0,
+  },
+  raisedSecondary: {
+    transform: 'translateY(0px)',
+    backgroundColor: c.white,
+    shadowColor: '#999999',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 4,
+  },
+  raisedSecondaryIcon: {
+    color: '#707070',
+  },
+  raisedPressedSecondary: {
+    transform: 'translateY(6px)',
+    shadowOffset: {
+      width: 0,
+      height: 0,
+    },
+    elevation: 0,
+  },
   // Text
   text: {
-    ...t.p,
+    ...t.psemi,
     color: 'white',
+    fontWeight: 400,
+  },
+  raisedSecondaryText: {
+    ...t.psemi,
+    color: '#707070',
+    fontWeight: 400,
   },
   smallText: {
     fontSize: s.$09,

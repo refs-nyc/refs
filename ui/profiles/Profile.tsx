@@ -4,6 +4,8 @@ import { XStack, YStack } from '../core/Stacks'
 import { Button } from '../buttons/Button'
 import { Heading } from '../typo/Heading'
 import { NewRef } from '../actions/NewRef'
+import Animated, { FadeIn, FadeOut } from 'react-native-reanimated'
+import { SearchResultItem } from '../atoms/SearchResultItem'
 import { useUIStore } from '../state'
 import { ProfileHeader } from './ProfileHeader'
 import { Grid } from '../grid/Grid'
@@ -28,18 +30,21 @@ import { gridSort, createdSort } from '../profiles/sorts'
 const win = Dimensions.get('window')
 
 export const Profile = ({ userName }: { userName: string }) => {
-  const { addingTo, removingId } = useLocalSearchParams()
+  const insets = useSafeAreaInsets()
 
+  const { addingTo, removingId } = useLocalSearchParams()
   const { editingBacklog, stopEditBacklog, startEditBacklog } = useUIStore()
   const { hasShareIntent } = useShareIntentContext()
 
-  const insets = useSafeAreaInsets()
   const [profile, setProfile] = useState<ProfileType>()
-  // const [addingTo, setAddingTo] = useState<'' | 'grid' | 'backlog'>('')
   const [gridItems, setGridItems] = useState<Item[]>([])
+  const [searching, setSearching] = useState(false)
   const [backlogItems, setBacklogItems] = useState<ExpandedItem[]>([])
   const [canAdd, setCanAdd] = useState<boolean>(false)
   const [step, setStep] = useState('')
+  const [term, setTerm] = useState('')
+  const [allItems, setAllItems] = useState<ExpandedItem[]>([])
+  const [results, setResults] = useState<ExpandedItem[]>([])
 
   const maxDynamicContentSize = win.height - insets.top
   const snapPointWithoutKeys = maxDynamicContentSize - 300
@@ -54,6 +59,14 @@ export const Profile = ({ userName }: { userName: string }) => {
   }
   const setRemovingId = (str: string) => {
     router.setParams({ removingId: str })
+  }
+
+  const search = async (t: string) => {
+    setTerm(t)
+    const newResults = [...allItems].filter((itm) =>
+      itm?.expand?.ref?.title.toLowerCase().includes(t.toLowerCase())
+    )
+    setResults(newResults)
   }
 
   const handleMoveToBacklog = async () => {
@@ -88,6 +101,11 @@ export const Profile = ({ userName }: { userName: string }) => {
       console.error(error)
     }
   }
+
+  useEffect(() => {
+    const all = [...backlogItems, ...gridItems] as ExpandedItem[]
+    setAllItems(all)
+  }, [backlogItems, gridItems])
 
   useEffect(() => {
     if (hasShareIntent) {
@@ -129,88 +147,73 @@ export const Profile = ({ userName }: { userName: string }) => {
                 marginHorizontal: s.$1half,
               }}
             >
-              <ProfileHeader profile={profile} />
-
-              {/* THE GRID! */}
-              <Grid
-                canAdd={canAdd}
-                onRemoveItem={setRemovingId}
-                onAddItem={() => {
-                  setAddingTo('grid')
+              <ProfileHeader
+                profile={profile}
+                onPress={() => {
+                  if (!searching) {
+                    setResults(allItems)
+                  }
+                  setSearching(!searching)
                 }}
-                columns={3}
-                items={gridItems}
-                rows={4}
-              ></Grid>
+                onTermChange={search}
+              />
 
-              {canAdd && (
-                <>
-                  <XStack
-                    style={{
-                      width: '100%',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      marginVertical: s.$1,
+              {!searching ? (
+                <Animated.View
+                  entering={FadeIn.duration(500)}
+                  exiting={FadeOut.duration(500)}
+                  style={{ gap: s.$2 }}
+                >
+                  <Grid
+                    canAdd={canAdd}
+                    onRemoveItem={setRemovingId}
+                    onAddItem={() => {
+                      setAddingTo('grid')
                     }}
-                    gap={s.$08}
-                  >
-                    <Heading tag="h3semi">My Backlog</Heading>
-                    <View style={{ height: s.$025, backgroundColor: c.black, flex: 1 }}></View>
-                    <Pressable
-                      onPress={() => {
-                        console.log('set adding to backlog')
-                        setAddingTo('backlog')
-                      }}
-                    >
-                      <Ionicons size={s.$3} name="add-circle-outline" />
-                    </Pressable>
+                    columns={3}
+                    items={gridItems}
+                    rows={4}
+                  ></Grid>
+                  {/* Actions */}
+                  <XStack gap={s.$2} style={{ justifyContent: 'center', width: '100%' }}>
+                    {canAdd && (
+                      <Button
+                        onPress={() => setAddingTo('backlog')}
+                        variant="raisedSecondary"
+                        title="Backlog"
+                        iconColor={c.muted}
+                        iconAfter="add-circle-outline"
+                      />
+                    )}
+                    {!canAdd && (
+                      <>
+                        <Button
+                          onPress={() => {}}
+                          variant="raisedSecondary"
+                          title="Message"
+                          iconColor={c.muted}
+                          iconAfter="paper-plane"
+                        />
+                        <Button
+                          onPress={() => {}}
+                          variant="raisedSecondary"
+                          title="Save"
+                          iconBefore="bookmark"
+                        />
+                      </>
+                    )}
                   </XStack>
-
-                  {backlogItems.length > 0 || gridItems.length === 12 ? (
-                    <YStack gap={s.$075} style={{ marginBottom: s.$4 }}>
-                      {backlogItems.map((itm) => (
-                        <Pressable
-                          key={itm.id}
-                          onPress={stopEditBacklog}
-                          onLongPress={() => {
-                            startEditBacklog()
-                          }}
-                        >
-                          {editingBacklog && (
-                            <YStack style={{ position: 'absolute', zIndex: 999, top: 0, right: 0 }}>
-                              <Pressable
-                                onPress={async () => {
-                                  stopEditBacklog()
-                                  await remove(itm.id)
-                                  await refreshGrid(userName)
-                                }}
-                                style={{
-                                  transform: 'translate(8px, -8px)',
-                                  backgroundColor: c.grey1,
-                                  borderRadius: 12,
-                                }}
-                              >
-                                <Ionicons size={12} style={{ padding: 6 }} name="close" />
-                              </Pressable>
-                            </YStack>
-                          )}
-                          {itm?.expand?.ref && (
-                            <RefListItem
-                              backgroundColor={editingBacklog ? c.surface2 : c.surface}
-                              key={itm.id}
-                              r={itm?.expand?.ref}
-                            />
-                          )}
-                        </Pressable>
-                      ))}
-                    </YStack>
-                  ) : (
-                    <Heading style={{ textAlign: 'center' }} tag="mutewarn">
-                      Add refs to your backlog. They'll be searchable to others, but won't show up
-                      on your grid.
-                    </Heading>
-                  )}
-                </>
+                </Animated.View>
+              ) : (
+                <Animated.View
+                  entering={FadeIn.duration(500)}
+                  exiting={FadeOut.duration(500)}
+                  style={{ marginBottom: s.$20 }}
+                >
+                  {results.map((item) => (
+                    <SearchResultItem key={item.id} r={item.expand.ref} />
+                  ))}
+                </Animated.View>
               )}
             </View>
           )}

@@ -97,10 +97,7 @@ export const DeviceLocation = ({ onChange }: { onChange: (value: string) => void
         searchPlaceholder="Type a neighborhood"
         onSelectItem={async (item) => {
           console.log('selected, ', item)
-          const name =
-            item.label === 'New York'
-              ? item.label
-              : `${item.label}${item?.parent ? `, ${item.parent}, New York` : ', New York'}`
+          const name = item.label
           setHumanReadableFormat(name)
           setLoadingMessage(name)
           onChange(name)

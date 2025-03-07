@@ -256,6 +256,7 @@ const styles = StyleSheet.create({
   },
   basicLeftText: {
     ...t.h3normal,
+    fontWeight: 'normal',
     color: 'black',
     textAlign: 'left',
   },

@@ -138,17 +138,22 @@ export const DeviceLocation = ({ onChange }: { onChange: (value: string) => void
         theme={'LIGHT'}
         placeholderStyle={{ ...t.p, color: c.accent, borderWidth: 0, paddingHorizontal: 12 }}
         searchTextInputStyle={{ ...t.p, color: c.accent, borderWidth: 0, paddingHorizontal: 12 }}
-        searchContainerStyle={{ borderBottomColor: c.white }}
+        searchContainerStyle={{ borderBottomColor: c.surface, backgroundColor: c.surface }}
         searchable={true}
         ListEmptyComponent={() => (
           <View style={[t.p, { color: c.accent, opacity: 0, height: 0, width: 0 }]}></View>
         )}
-        style={{ borderColor: c.accent, borderRadius: 30, borderWidth: 1.5 }}
+        style={{
+          borderColor: c.accent,
+          borderRadius: 30,
+          borderWidth: 1.5,
+          backgroundColor: c.surface,
+        }}
         labelStyle={{ ...t.p, color: c.accent, paddingHorizontal: 12 }}
         listParentLabelStyle={{ ...t.p, color: c.accent, paddingHorizontal: 12 }}
         listChildLabelStyle={{ ...t.p, color: c.accent }}
         dropDownContainerStyle={{
-          backgroundColor: 'white',
+          backgroundColor: c.surface,
           borderColor: c.accent,
           borderRadius: 30,
           borderWidth: 2,

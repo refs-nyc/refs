@@ -113,7 +113,7 @@ export const DetailsDemoCarousel = forwardRef(
           'worklet'
           gesture.activeOffsetX([-10, 10])
         }}
-        loop={true}
+        loop={data.length > 1}
         ref={ref}
         data={data}
         width={width * 0.8}
@@ -189,6 +189,7 @@ export const Details = ({
               'worklet'
               gesture.activeOffsetX([-10, 10])
             }}
+            loop={data.length > 1}
             ref={ref}
             data={data}
             height={win.height}

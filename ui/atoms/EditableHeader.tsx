@@ -102,7 +102,7 @@ export const EditableHeader = ({
             style={[
               t.h1,
               {
-                flexShrink: 1,
+                flex: 1,
                 // backgroundColor: 'blue',
                 padding: 0,
                 margin: 0,
@@ -142,7 +142,13 @@ export const EditableHeader = ({
           />
         )}
 
-        <XStack style={{ alignItems: 'center', paddingTop: s.$025 }} gap={s.$09}>
+        <XStack
+          style={{
+            alignItems: 'center',
+            paddingTop: s.$025,
+          }}
+          gap={s.$09}
+        >
           {editing ? (
             <Pressable
               onPress={() => {
@@ -150,53 +156,56 @@ export const EditableHeader = ({
                 onComplete(titleState)
               }}
             >
-              <Ionicons size={28} name="checkbox" color={c.accent2} />
+              <Ionicons size={28} name="checkbox" color={c.muted} />
             </Pressable>
           ) : (
+            !addingUrl && (
+              <Pressable
+                style={{
+                  width: 28,
+                  // backgroundColor: 'red',
+                  flexShrink: 0,
+                }}
+                onPress={() => setEditing(true)}
+              >
+                <Ionicons
+                  size={24}
+                  name={titleState === 'placeholder' || titleState === '' ? 'add' : 'pencil'}
+                  color={c.muted}
+                />
+              </Pressable>
+            )
+          )}
+          {!addingUrl && !editing && (
             <Pressable
               style={{
                 width: 28,
                 // backgroundColor: 'red',
                 flexShrink: 0,
               }}
-              onPress={() => setEditing(true)}
+              onPress={() => setAddingUrl(true)}
             >
-              <Ionicons
-                size={28}
-                name={titleState === 'placeholder' || titleState === '' ? 'add' : 'pencil'}
-                color={c.muted}
-              />
-            </Pressable>
-          )}
-          <Pressable
-            style={{
-              width: 28,
-              // backgroundColor: 'red',
-              flexShrink: 0,
-            }}
-            onPress={() => setAddingUrl(true)}
-          >
-            {!addingUrl && (
               <Ionicons
                 name="link-outline"
                 size={28}
                 color={urlState === '' ? c.muted : c.accent}
               />
-            )}
-            {addingUrl && (
-              <>
-                {hasUrl && urlState === '' ? (
-                  <Pressable onPress={async () => setUrlState(await Clipboard.getStringAsync())}>
-                    <Ionicons name="clipboard" size={28} color={c.muted} />
-                  </Pressable>
-                ) : (
-                  <Pressable onPress={() => setAddingUrl(false)}>
-                    <Ionicons name="checkbox" size={28} color={c.muted} />
-                  </Pressable>
-                )}
-              </>
-            )}
-          </Pressable>
+            </Pressable>
+          )}
+
+          {addingUrl && (
+            <>
+              {hasUrl && urlState === '' ? (
+                <Pressable onPress={async () => setUrlState(await Clipboard.getStringAsync())}>
+                  <Ionicons name="clipboard" size={28} color={c.muted} />
+                </Pressable>
+              ) : (
+                <Pressable onPress={() => setAddingUrl(false)}>
+                  <Ionicons name="checkbox" size={28} color={c.muted} />
+                </Pressable>
+              )}
+            </>
+          )}
         </XStack>
       </XStack>
     </>

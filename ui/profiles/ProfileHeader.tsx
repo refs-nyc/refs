@@ -39,7 +39,7 @@ export const ProfileHeader = ({
         flexDirection: 'row',
         borderRadius: s.$08,
         marginBottom: s.$075,
-        paddingVertical: s.$1,
+        paddingBottom: s.$075,
       }}
     >
       <XStack
@@ -58,12 +58,12 @@ export const ProfileHeader = ({
             >
               {profile.id === pocketbase?.authStore?.record?.id ? (
                 <Image
-                  style={{ width: s.$8, height: s.$8, borderRadius: s.$8 / 2 }}
+                  style={{ width: s.$6, height: s.$6, borderRadius: s.$6 / 2 }}
                   source={profile.image}
                 />
               ) : (
                 <Image
-                  style={{ width: s.$8, height: s.$8, borderRadius: s.$8 / 2 }}
+                  style={{ width: s.$6, height: s.$6, borderRadius: s.$6 / 2 }}
                   source={profile.image}
                 />
               )}

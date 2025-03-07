@@ -1,8 +1,8 @@
 import { pocketbase } from '../pocketbase'
 import { create } from 'zustand'
 import { StagedItem, Item, ExpandedItem, CompleteRef } from './types'
-import { ItemsRecord } from "./pocketbase-types"
-import { canvasApp } from "./canvas"
+import { ItemsRecord } from './pocketbase-types'
+import { canvasApp } from './canvas'
 
 // ***
 // Items
@@ -21,7 +21,9 @@ export const useItemStore = create<{
   push: async (newItem: StagedItem) => {
     console.log('ITEMS PUSH')
     try {
-      const record = await pocketbase.collection('items').create<ExpandedItem>(newItem, { expand: 'ref' })
+      const record = await pocketbase
+        .collection('items')
+        .create<ExpandedItem>(newItem, { expand: 'ref' })
       await canvasApp.actions.pushItem({ ...newItem, id: record.id })
 
       set((state) => {
@@ -44,7 +46,7 @@ export const useItemStore = create<{
     await canvasApp.actions.removeItem(id)
 
     set((state) => ({
-      items: [...state.items.filter((i) => i.id !== id)],
+      items: [...state.items?.filter((i) => i.id !== id)],
     }))
   },
   addToList: async (id: string, ref: CompleteRef) => {

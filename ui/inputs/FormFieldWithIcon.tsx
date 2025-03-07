@@ -47,7 +47,7 @@ export const FormFieldWithIcon = ({
           alignItems: 'center',
           paddingHorizontal: s.$09,
           paddingVertical: s.$05,
-          backgroundColor: c.white,
+          backgroundColor: c.surface,
           borderWidth: 1.5,
           borderColor: c.accent,
           borderRadius: s.$12,

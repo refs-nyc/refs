@@ -237,7 +237,7 @@ export const ProfileStep = ({ fields, onComplete, overrideSubmit, title = '' }) 
   return (
     <DismissKeyboard>
       <KeyboardAvoidingView behavior={'height'} style={styles.container}>
-        <YStack gap="$6">
+        <YStack style={fields.length === 1 && { height: '80%', justifyContent: 'center' }}>
           <View style={{ height: s.$8, marginBottom: s.$08, paddingHorizontal: s.$2 }}>
             <SizableText style={[t.h2semi, { textAlign: 'center' }]}>{title}</SizableText>
           </View>

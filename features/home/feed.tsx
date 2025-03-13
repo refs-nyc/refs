@@ -96,7 +96,10 @@ export const Feed = () => {
 
             <SearchBar
               onFocus={() => setSearching(true)}
-              onBlur={() => setSearching(false)}
+              onBlur={() => {
+                setSearching(false)
+                setSearchTerm('')
+              }}
               onChange={setSearchTerm}
             />
           </YStack>

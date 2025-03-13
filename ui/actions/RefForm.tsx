@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react'
 import { usePathname } from 'expo-router'
-import { View, TouchableOpacity, Dimensions, Image } from 'react-native'
+import { View, TouchableOpacity, Dimensions } from 'react-native'
 import { BottomSheetScrollView, BottomSheetTextInput as TextInput } from '@gorhom/bottom-sheet'
 
 import { Heading } from '@/ui/typo/Heading'
 import { Picker } from '../inputs/Picker'
 import { PinataImage } from '../images/PinataImage'
+import { Image } from 'expo-image'
 import { SimplePinataImage } from '../images/SimplePinataImage'
 import { EditableHeader } from '../atoms/EditableHeader'
 import { addToProfile } from '@/features/pocketbase'
@@ -46,11 +47,14 @@ export const RefForm = ({
 
   // Initialize state based on incoming ref
   useEffect(() => {
+    console.log(r)
     if (r?.title) setTitle(r.title)
     if (r?.url) setUrl(r.url)
 
     // Initialize image state
     if (r?.image) {
+      console.log('image found')
+      console.log(r.image)
       if (typeof r.image === 'string') {
         setPinataSource(r.image)
       } else {
@@ -58,14 +62,6 @@ export const RefForm = ({
       }
     }
   }, [r])
-
-  // Get the current complete ref state when needed
-  const getCurrentRef = () => ({
-    ...r,
-    title,
-    url,
-    image: pinataSource || (imageAsset ? imageAsset.uri : null),
-  })
 
   const handleTitleChange = (newTitle: string) => {
     setTitle(newTitle)
@@ -97,6 +93,8 @@ export const RefForm = ({
   }
 
   const submit = async (extraFields?: any) => {
+    console.log('extraFields')
+    console.log(extraFields)
     const data = {
       ...r,
       title,
@@ -110,6 +108,7 @@ export const RefForm = ({
       const item = await addToProfile(data, !pathname.includes('onboarding'), {
         comment,
         backlog,
+        ...extraFields,
       })
       onComplete(item)
     } catch (e) {
@@ -134,6 +133,13 @@ export const RefForm = ({
               setUploadInProgress(false)
             }}
           />
+        ) : pinataSource ? (
+          <TouchableOpacity
+            style={{ flex: 1, width: 200, height: 200, borderRadius: s.$075, overflow: 'hidden' }}
+            onLongPress={() => setPicking(true)}
+          >
+            <Image style={{ flex: 1 }} source={pinataSource} placeholder={pinataSource} />
+          </TouchableOpacity>
         ) : (
           <TouchableOpacity style={{ flex: 1 }} onPress={() => setPicking(true)}>
             <View

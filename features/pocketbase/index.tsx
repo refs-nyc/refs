@@ -7,10 +7,13 @@ import { StagedRef, CompleteRef, Item } from './stores/types'
 const addToProfile = async (
   stagedRef: StagedRef | CompleteRef,
   attach = true,
-  options: { comment?: string; backlog?: boolean } = {}
+  options: { comment?: string; backlog?: boolean; list?: boolean } = {}
 ) => {
   if ((!pocketbase.authStore?.isValid || !pocketbase.authStore?.record) && attach)
     throw new Error('Not enough permissions')
+
+  console.log('WE GOT STAGED', stagedRef?.list)
+  console.log('WE GOT OPTIONS', options.list)
 
   const refStore = useRefStore.getState()
   const itemStore = useItemStore.getState()
@@ -37,6 +40,7 @@ const addToProfile = async (
       creator: pocketbase.authStore?.record?.id || '',
       text: options.comment,
       backlog: !!options.backlog,
+      list: !!options.list,
     })
   }
 

@@ -64,12 +64,12 @@ export const EditableHeader = ({
   return (
     <>
       <XStack
-        gap={s.$05}
+        gap={s.$075}
         style={{
           width: '100%',
           flexDirection: 'row',
           justifyContent: 'space-between',
-          alignItems: 'start',
+          alignItems: 'center',
           minHeight: 44,
           // backgroundColor: 'green',
         }}
@@ -139,6 +139,7 @@ export const EditableHeader = ({
             autoFocus={true}
             placeholder="Paste url"
             onChangeText={setUrlState}
+            clearButtonMode="while-editing"
           />
         )}
 
@@ -156,7 +157,7 @@ export const EditableHeader = ({
                 onComplete(titleState)
               }}
             >
-              <Ionicons size={28} name="checkbox" color={c.muted} />
+              <Ionicons size={28} name="checkbox-outline" color={c.muted} />
             </Pressable>
           ) : (
             !addingUrl && (
@@ -201,7 +202,7 @@ export const EditableHeader = ({
                 </Pressable>
               ) : (
                 <Pressable onPress={() => setAddingUrl(false)}>
-                  <Ionicons name="checkbox" size={28} color={c.muted} />
+                  <Ionicons name="checkbox-outline" size={28} color={c.muted} />
                 </Pressable>
               )}
             </>

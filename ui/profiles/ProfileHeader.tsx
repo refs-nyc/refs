@@ -39,6 +39,7 @@ export const ProfileHeader = ({
         flexDirection: 'row',
         borderRadius: s.$08,
         marginBottom: s.$075,
+        paddingTop: s.$1,
         paddingBottom: s.$075,
       }}
     >
@@ -118,7 +119,7 @@ export const ProfileHeader = ({
                   setSearchTerm('')
                   onPress()
                 }}
-                iconBefore="close-circle-outline"
+                iconBefore="close"
                 title=""
               ></Button>
             </View>

@@ -9,6 +9,7 @@ export const YStack = ({
   gap,
   style,
   screenHeight,
+  ...props
 }: {
   children: React.ReactNode
   style?: any
@@ -20,6 +21,7 @@ export const YStack = ({
   return (
     <View
       style={[style, { flexDirection: 'column', gap }, screenHeight && { height: vh - insets.top }]}
+      {...props}
     >
       {children}
     </View>
@@ -30,8 +32,13 @@ export const XStack = ({
   children,
   gap,
   style,
+  ...props
 }: {
   children: React.ReactNode
   style?: any
   gap?: string | number
-}) => <View style={[style, { flexDirection: 'row', gap }]}>{children}</View>
+}) => (
+  <View style={[style, { flexDirection: 'row', gap }]} {...props}>
+    {children}
+  </View>
+)

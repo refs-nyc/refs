@@ -33,7 +33,7 @@ export const Profile = ({ userName }: { userName: string }) => {
   const insets = useSafeAreaInsets()
 
   const { addingTo, removingId } = useLocalSearchParams()
-  const { editingBacklog, stopEditBacklog, startEditBacklog } = useUIStore()
+  const { stopEditProfile, stopEditBacklog, startEditBacklog } = useUIStore()
   const { hasShareIntent } = useShareIntentContext()
 
   const [profile, setProfile] = useState<ProfileType>()
@@ -153,6 +153,7 @@ export const Profile = ({ userName }: { userName: string }) => {
               <ProfileHeader
                 profile={profile}
                 onPress={() => {
+                  stopEditProfile()
                   if (!searching) {
                     setResults(allItems)
                   }
@@ -178,7 +179,11 @@ export const Profile = ({ userName }: { userName: string }) => {
                     rows={4}
                   ></Grid>
                   {/* Actions */}
-                  <XStack gap={s.$2} style={{ justifyContent: 'center', width: '100%' }}>
+                  <XStack
+                    onTouchStart={() => stopEditProfile()}
+                    gap={s.$2}
+                    style={{ justifyContent: 'center', width: '100%' }}
+                  >
                     {canAdd && (
                       <Button
                         onPress={() => setAddingTo('backlog')}

@@ -1,4 +1,4 @@
-import { useState, useRef, forwardRef } from 'react'
+import { useState, useEffect, useRef, forwardRef } from 'react'
 import { Image } from 'expo-image'
 import { Zoomable } from '@likashefqet/react-native-image-zoom'
 import { Link, useGlobalSearchParams, usePathname, useRouter } from 'expo-router'
@@ -34,7 +34,7 @@ export const renderItem = ({ item, canAdd }: { item: ExpandedItem; canAdd?: bool
       key={item.id}
     >
       <View style={{ width: '100%', aspectRatio: 1, overflow: 'hidden', borderRadius: s.$075 }}>
-        {item.image ? (
+        {item.image && !item.list ? (
           item.expand?.ref.image && (
             <Zoomable
               minScale={0.25}
@@ -52,9 +52,6 @@ export const renderItem = ({ item, canAdd }: { item: ExpandedItem; canAdd?: bool
               style={{ width: '100%', aspectRatio: 1, overflow: 'visible', borderRadius: s.$075 }}
             >
               <Image
-                onLoad={(e) => {
-                  console.log('on image load', e)
-                }}
                 style={{ width: '100%', aspectRatio: 1, overflow: 'visible' }}
                 source={item.expand.ref.image || item.image}
               />
@@ -130,36 +127,52 @@ export const DetailsDemoCarousel = forwardRef(
   }
 )
 
-export const Details = ({
-  canAdd = false,
-  initialId = '',
-}: {
-  canAdd?: boolean
-  initialId: string
-}) => {
-  const [isCarouselVisible, setIsCarouselVisible] = useState(true)
-  const scrollOffsetValue = useSharedValue<number>(10)
+export const Details = ({ canAdd = false, initialId }: { canAdd?: boolean; initialId: string }) => {
+  const { profile, getProfile } = useUserStore()
+  const router = useRouter()
   const pathname = usePathname()
   const { userName } = useGlobalSearchParams()
-  const router = useRouter()
-  const { profile, getProfile } = useUserStore()
-
-  const userNameParam =
-    pathname === '/' ? undefined : typeof userName === 'string' ? userName : userName?.[0]
   const ref = useRef<ICarouselInstance>(null)
   const insets = useSafeAreaInsets()
   const { addingToList, setAddingToList } = useUIStore()
-  const data = (
+  const scrollOffsetValue = useSharedValue<number>(10)
+  const [defaultIndex, setDefaultIndex] = useState<number | null>(null)
+
+  // Compute userNameParam
+  const userNameParam =
+    pathname === '/' ? undefined : typeof userName === 'string' ? userName : userName?.[0]
+
+  const data =
     isExpandedProfile(profile) && profile.expand?.items
       ? [...profile.expand.items].filter((itm) => !itm.backlog).sort(gridSort)
       : []
-  ) as ExpandedItem[]
-  const defaultIndex = Math.max(
-    0,
-    data.findIndex((itm) => itm.id == initialId)
-  )
-  const addingItem = data.find((itm) => itm.id === addingToList)
 
+  const index = Math.max(
+    0,
+    data.findIndex((itm) => itm.id === initialId)
+  )
+
+  useEffect(() => {
+    if (data.length > 0) {
+      const rawIndex = data.findIndex((itm) => itm.id === initialId)
+      if (rawIndex === 0) {
+        setDefaultIndex(rawIndex)
+      } else {
+        const correctedIndex = data.length - rawIndex // 🔥 Adjust for reverse order
+
+        console.log('Raw Index:', rawIndex, 'Corrected Index:', correctedIndex)
+        setDefaultIndex(correctedIndex)
+      }
+
+      setTimeout(() => {
+        if (defaultIndex !== null) {
+          ref.current?.scrollTo({ index: defaultIndex })
+        }
+      }, 100)
+    }
+  }, [data, initialId])
+
+  // Close modal and refresh profile
   const close = async () => {
     setAddingToList('')
     await getProfile(userNameParam)
@@ -177,14 +190,15 @@ export const Details = ({
             zIndex: 99,
           }}
           onPress={() => {
-            setIsCarouselVisible(false)
             setTimeout(() => router.back(), 0)
           }}
         >
           <Ionicons size={s.$1} name="close" color={c.muted} />
         </Pressable>
-        {isCarouselVisible && (
+        {defaultIndex !== null && (
           <Carousel
+            key={defaultIndex}
+            defaultIndex={defaultIndex}
             onConfigurePanGesture={(gesture) => {
               'worklet'
               gesture.activeOffsetX([-10, 10])
@@ -193,7 +207,6 @@ export const Details = ({
             ref={ref}
             data={data}
             height={win.height}
-            defaultIndex={defaultIndex}
             style={{ overflow: 'visible', top: win.height * 0.2 }}
             width={win.width * 0.8}
             defaultScrollOffsetValue={scrollOffsetValue}

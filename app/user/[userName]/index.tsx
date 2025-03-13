@@ -1,5 +1,5 @@
 import { UserProfileScreen } from '@/features/user/profile-screen'
-import { Stack, useGlobalSearchParams } from 'expo-router'
+import { useGlobalSearchParams } from 'expo-router'
 import { Text } from 'react-native'
 
 export default function Screen() {

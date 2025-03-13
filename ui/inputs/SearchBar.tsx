@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { View, TextInput } from 'react-native'
-import { s, c } from '@/features/style'
+import { s, c, t } from '@/features/style'
 import { TypewriterText } from '../atoms/TypewriterText'
 import { Image } from 'expo-image'
 import Animated, { useAnimatedStyle, withSpring, useSharedValue } from 'react-native-reanimated'
@@ -53,6 +53,7 @@ export const SearchBar = ({
           {
             paddingHorizontal: s.$1,
             width: '100%',
+            zIndex: 99,
           },
         ]}
       >
@@ -104,7 +105,7 @@ export const SearchBar = ({
 
             <TextInput
               ref={ref}
-              style={{ flex: 1 }}
+              style={{ flex: 1, ...t.p, height: 30, lineHeight: 20 }}
               onFocus={() => {
                 y.set(withSpring(6))
                 scaleY.set(withSpring(0.8))
@@ -113,29 +114,15 @@ export const SearchBar = ({
               onBlur={() => {
                 y.set(withSpring(0))
                 scaleY.set(withSpring(1))
+                reset()
                 onBlur()
               }}
               autoFocus={false}
               placeholder="Search anything"
               onChangeText={setTextState}
               placeholderTextColor={c.black}
+              clearButtonMode="while-editing"
             />
-
-            {textState !== '' && (
-              <Pressable
-                onPress={reset}
-                style={{
-                  width: s.$2,
-                  height: s.$2,
-                  paddingRight: s.$05,
-                  flexDirection: 'column',
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                }}
-              >
-                <Ionicons size={s.$09} name="close" />
-              </Pressable>
-            )}
           </Animated.View>
         </TouchableWithoutFeedback>
       </View>

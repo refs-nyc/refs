@@ -14,6 +14,7 @@ export const SearchResults = ({ results }: { results: ExpandedItem[] }) => {
         paddingHorizontal: s.$1half,
         paddingTop: win.height * 0.2,
         position: 'absolute',
+        zIndex: -1,
       }}
       behavior="height"
     >
@@ -22,6 +23,7 @@ export const SearchResults = ({ results }: { results: ExpandedItem[] }) => {
         style={{
           width: win.width,
           height: '100%',
+          paddingTop: s.$1,
         }}
       >
         <ScrollView style={{ flex: 1 }}>
@@ -58,8 +60,8 @@ export const SearchResults = ({ results }: { results: ExpandedItem[] }) => {
 
                 <Link href={item.expand?.creator ? `/user/${item.expand.creator?.userName}` : '/'}>
                   <Heading tag="p">
-                    <Heading tag="strong">{item.expand?.creator?.userName || 'Anonymous'}</Heading>{' '}
-                    added <Heading tag="strong">{item.expand?.ref?.title}</Heading>
+                    <Heading tag="strong">{item.expand?.creator?.firstName || 'Anonymous'}</Heading>{' '}
+                    added <Heading tag="strong">{item.expand?.ref?.title || item.title}</Heading>
                   </Heading>
                 </Link>
               </XStack>

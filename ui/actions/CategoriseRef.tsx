@@ -4,18 +4,21 @@ import { Heading } from '../typo/Heading'
 import { BottomSheetTextInput as TextInput } from '@gorhom/bottom-sheet'
 import { YStack } from '../core/Stacks'
 import { Button } from '../buttons/Button'
-import { View, ScrollView } from 'react-native'
+import { View, ScrollView, Pressable } from 'react-native'
 import { s, c } from '@/features/style'
 import { useRefStore } from '@/features/pocketbase/stores/refs'
 import { SimplePinataImage } from '@/ui/images/SimplePinataImage'
+import Ionicons from '@expo/vector-icons/Ionicons'
 
 export const CategoriseRef = ({
   item,
   existingRef,
+  onBack,
   onComplete,
 }: {
   item: ExpandedItem | null | undefined
   existingRef: CompleteRef | StagedRef
+  onBack: () => void
   onComplete: (r: CompleteRef) => void
 }) => {
   const { addMetaData } = useRefStore()
@@ -47,6 +50,9 @@ export const CategoriseRef = ({
       <ScrollView
         contentContainerStyle={{ alignItems: 'center', paddingTop: s.$4, paddingBottom: s.$8 }}
       >
+        <Pressable style={{ alignSelf: 'flex-start' }} onPress={onBack}>
+          <Ionicons name="caret-back" size={18} color={c.muted} />
+        </Pressable>
         <View>
           {item?.expand?.ref?.image && <SimplePinataImage originalSource={item.expand.ref.image} />}
           <Heading tag="h1">{item?.expand?.ref.title}</Heading>

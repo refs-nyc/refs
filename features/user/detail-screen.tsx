@@ -14,6 +14,8 @@ export function UserDetailsScreen({
   const { profile, getProfile } = useUserStore()
   const [canAdd, setCanAdd] = useState(false)
 
+  console.log('initialId', initialId)
+
   useEffect(() => {
     const getProfileAsync = async () => {
       setCanAdd(pocketbase?.authStore?.record?.userName === userName)
@@ -28,6 +30,10 @@ export function UserDetailsScreen({
   }, [userName])
 
   return (
-    <>{profile && 'id' in profile && <Details canAdd={canAdd} initialId={initialId}></Details>}</>
+    <>
+      {profile && 'id' in profile && (
+        <Details key={initialId} canAdd={canAdd} initialId={initialId}></Details>
+      )}
+    </>
   )
 }

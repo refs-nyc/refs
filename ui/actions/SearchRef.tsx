@@ -61,16 +61,18 @@ export const SearchRef = ({
   // Update the search query
   const updateQuery = async (q: string) => {
     const search = async () => {
-      if (q === '') return []
+      let refsResults = []
 
-      // Search items and refs db
-      const refsResults = await pocketbase
-        .collection<CompleteRef>('refs')
-        .getFullList({ filter: `title ~ "${q}"` })
+      if (q === '') return []
 
       if (q.includes('http')) {
         const data = await getLinkPreview(q)
         updateState(q, data)
+      } else {
+        // Search items and refs db
+        refsResults = await pocketbase
+          .collection<CompleteRef>('refs')
+          .getFullList({ filter: `title ~ "${q}"` })
       }
       return refsResults
     }
@@ -128,6 +130,7 @@ export const SearchRef = ({
           borderRadius: s.$075,
           color: c.black,
         }}
+        clearButtonMode="while-editing"
         value={searchQuery}
         placeholder="Search anything or start typing"
         onChangeText={updateQuery}

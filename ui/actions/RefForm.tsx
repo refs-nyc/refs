@@ -67,10 +67,6 @@ export const RefForm = ({
     setTitle(newTitle)
   }
 
-  const handleUrlChange = (newUrl: string) => {
-    setUrl(newUrl)
-  }
-
   const handleImageSuccess = (imageUrl: string) => {
     setUploadInProgress(false)
 

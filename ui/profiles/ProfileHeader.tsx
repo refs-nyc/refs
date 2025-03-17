@@ -96,7 +96,7 @@ export const ProfileHeader = ({
                 autoFocus
                 style={{
                   backgroundColor: c.surface2,
-                  marginVertical: s.$1,
+                  marginBottom: s.$1,
                   paddingVertical: s.$1,
                   paddingHorizontal: s.$1,
                   borderRadius: s.$075,

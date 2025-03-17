@@ -34,11 +34,20 @@ export const EditableHeader = ({
   const analyseUrl = async (u: string) => {
     // pass the link directly
     getLinkPreview(u).then((data) => {
-      if (data?.title) {
+      console.log(
+        'TITLE STATE',
+        titleState,
+        titleState === '',
+        titleState == '',
+        titleState.trim() === '',
+        titleState.trim() == ''
+      )
+      if (data?.title && titleState === '') {
+        console.log('SETTING TITLE: ', data.title)
         setTitleState(data.title)
       }
 
-      if (data?.images?.length > 0) {
+      if (data?.images?.length > 0 && !imageState) {
         console.log('IMAGE', data.images[0])
         setImageState(data.images[0])
       }
@@ -46,6 +55,7 @@ export const EditableHeader = ({
   }
 
   useEffect(() => {
+    console.log(titleState, imageState, urlState)
     onDataChange({ title: titleState, url: urlState, image: imageState })
   }, [titleState, imageState, urlState])
 
@@ -197,10 +207,11 @@ export const EditableHeader = ({
           {addingUrl && (
             <>
               {hasUrl && urlState === '' ? (
-                <Pressable onPress={async () => setUrlState(await Clipboard.getStringAsync())}>
-                  <Ionicons name="clipboard" size={28} color={c.muted} />
-                </Pressable>
+                <></>
               ) : (
+                // <Pressable onPress={async () => setUrlState(await Clipboard.getStringAsync())}>
+                //   <Ionicons name="clipboard" size={28} color={c.muted} />
+                // </Pressable>
                 <Pressable onPress={() => setAddingUrl(false)}>
                   <Ionicons name="checkbox-outline" size={28} color={c.muted} />
                 </Pressable>

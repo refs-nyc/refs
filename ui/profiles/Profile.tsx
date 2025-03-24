@@ -231,8 +231,8 @@ export const Profile = ({ userName }: { userName: string }) => {
       </ScrollView>
 
       {removingId && (
-        <Sheet full={true} onChange={(e) => e === -1 && setRemovingId('')}>
-          <YStack gap={s.$08} style={{ marginTop: s.$3, marginBottom: s.$6 }}>
+        <Sheet full={false} onChange={(e) => e === -1 && setRemovingId('')}>
+          <YStack gap={s.$08} style={{ marginTop: s.$1, marginBottom: s.$5 }}>
             <Button
               onPress={handleMoveToBacklog}
               title={`Move to backlog`}

@@ -84,7 +84,7 @@ export const DraggableGrid = ({
   onDragEnd,
   onDragStart,
 }: {
-  items: Array<{ id: string; key: string }>
+  items: { id: string; key: string }[]
   onDragEnd: () => void
   onDragStart: () => void
 }) => {
@@ -121,7 +121,7 @@ export const DraggableGrid = ({
       }}
     >
       <DraggableGridComponent
-        onDragRelease={(newData: Array<{ id: string; key: string }>) => {
+        onDragRelease={(newData: { id: string; key: string }[]) => {
           setData(newData)
           onDragEnd() //This activates the above onDragEnd function when you stop dragging and just turns scrolling back on
         }}

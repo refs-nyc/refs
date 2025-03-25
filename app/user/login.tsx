@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react'
 import { useUserStore } from '@/features/pocketbase'
 import { s, c } from '@/features/style'
 import { router } from 'expo-router'
-import { ProfileStep } from '@/ui/profiles/ProfileStep2'
+import { ProfileStep } from '@/ui/profiles/ProfileStep'
 import { View, Dimensions } from 'react-native'
 import { pocketbase } from '@/features/pocketbase'
 import Carousel, { ICarouselInstance } from 'react-native-reanimated-carousel'
@@ -15,20 +15,18 @@ const win = Dimensions.get('window')
 const EmailStep = ({ carouselRef }: { carouselRef: React.RefObject<ICarouselInstance> }) => {
   const {
     control,
-    watch,
     handleSubmit,
     formState: { errors },
   } = useForm()
-  const formValues = watch()
   const { updateStagedUser } = useUserStore()
 
   return (
     <ProfileStep
       buttonTitle="Logging in"
-      showFullHeightStack={true}
+      showFullHeightStack={false}
       onSubmit={handleSubmit(
         async (values) => {
-          const updated = updateStagedUser(formValues)
+          updateStagedUser(values)
           // Valid?
           carouselRef.current?.next()
         },
@@ -65,7 +63,6 @@ const EmailStep = ({ carouselRef }: { carouselRef: React.RefObject<ICarouselInst
 const LoginStep = () => {
   const {
     control,
-    watch,
     handleSubmit,
     formState: { errors },
   } = useForm()
@@ -74,7 +71,7 @@ const LoginStep = () => {
   return (
     <ProfileStep
       buttonTitle="Done"
-      showFullHeightStack={true}
+      showFullHeightStack={false}
       onSubmit={handleSubmit(async (values) => {
         if (values.login) {
           if (!stagedUser.email) throw new Error('email required')

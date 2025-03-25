@@ -69,7 +69,11 @@ export const Navigation = () => {
           {pocketbase.authStore.record ? (
             <View style={{ position: 'relative', marginTop: 4, left: 5 }}>
               <Link href={`/user/${pocketbase.authStore.record.userName}`}>
-                <Avatar source={pocketbase.authStore.record.image} size={42} />
+                {pocketbase.authStore.record.image ? (
+                  <Avatar source={pocketbase.authStore.record.image} size={42} />
+                ) : (
+                  <Ionicons name="person" size={42} color={c.accent} />
+                )}
               </Link>
             </View>
           ) : (

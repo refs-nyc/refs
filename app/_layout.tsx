@@ -90,7 +90,7 @@ export default function RootLayout() {
       } else {
         pocketbase.authStore.clear()
         console.log('user is not logged in')
-        router.push('/onboarding')
+        router.push('/')
       }
 
       loadRemainingFonts()

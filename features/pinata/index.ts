@@ -1,9 +1,9 @@
+import * as ImagePicker from 'expo-image-picker'
+
 export type OptimizeImageOptions = {
   width: number
   height: number
 }
-
-import * as ImagePicker from 'expo-image-picker'
 
 export const getPinataImage = async (url: string, imageOptions: OptimizeImageOptions) => {
   const cid = /files\/(.*)(?:\?)/g.exec(url)

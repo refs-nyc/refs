@@ -1,8 +1,6 @@
 import { install } from 'react-native-quick-crypto'
-install()
 
 import { polyfill as polyfillEncoding } from 'react-native-polyfill-globals/src/encoding'
-polyfillEncoding()
 
 import eventsource from 'react-native-sse'
 import 'event-target-polyfill'
@@ -13,11 +11,6 @@ import 'fast-text-encoding'
 // Disable strict mode warnings caused by carousel
 import { configureReanimatedLogger } from 'react-native-reanimated'
 import { ShareIntentProvider } from 'expo-share-intent'
-configureReanimatedLogger({ strict: false })
-
-// For pocketbase
-// @ts-ignore
-global.EventSource = eventsource
 
 import NetInfo from '@react-native-community/netinfo'
 import { pocketbase } from '@/features/pocketbase'
@@ -35,6 +28,13 @@ import { c } from '@/features/style'
 import * as SystemUI from 'expo-system-ui'
 import { RegisterPushNotifications } from '@/ui/notifications/RegisterPushNotifications'
 import { Icon } from '@/assets/icomoon/IconFont'
+install()
+polyfillEncoding()
+configureReanimatedLogger({ strict: false })
+
+// For pocketbase
+// @ts-ignore
+global.EventSource = eventsource
 
 export {
   // Catch any errors thrown by the Layout component.

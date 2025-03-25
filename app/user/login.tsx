@@ -78,7 +78,6 @@ const LoginStep = () => {
       onSubmit={handleSubmit(async (values) => {
         if (values.login) {
           if (!stagedUser.email) throw new Error('email required')
-          console.log('logging in: ', stagedUser.email, values.login)
           const response = await loginWithPassword(stagedUser.email, values.login)
 
           if (pocketbase.authStore.record === null) {

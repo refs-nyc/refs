@@ -134,6 +134,7 @@ export const SearchRef = ({
         value={searchQuery}
         placeholder="Search anything or start typing"
         onChangeText={updateQuery}
+        autoFocus={true}
       />
 
       {searchQuery !== '' && !noNewRef && !disableNewRef && (

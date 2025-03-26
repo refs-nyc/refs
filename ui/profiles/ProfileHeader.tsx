@@ -8,7 +8,7 @@ import { Shareable } from '@/ui/atoms/Shareable'
 import { s, c } from '@/features/style'
 import { Link, usePathname } from 'expo-router'
 import { Profile } from '@/features/pocketbase/stores/types'
-import { Button } from '@/ui'
+import { Button } from '@/ui/buttons/Button'
 import { pocketbase } from '@/features/pocketbase'
 import Ionicons from '@expo/vector-icons/Ionicons'
 

@@ -7,7 +7,7 @@ import { router } from 'expo-router'
 import Carousel, { ICarouselInstance } from 'react-native-reanimated-carousel'
 import { ProfileStep } from '@/ui/profiles/ProfileStep'
 import { Controller, useForm } from 'react-hook-form'
-import { FormFieldWithIcon } from '../inputs/FormFieldWithIcon'
+import { ErrorView, FormFieldWithIcon } from '../inputs/FormFieldWithIcon'
 import { SizableText } from '..'
 import { DeviceLocation } from '../inputs/DeviceLocation'
 import { AvatarPicker } from '../inputs/AvatarPicker'
@@ -19,14 +19,15 @@ const EmailStep = ({ carouselRef }: { carouselRef: React.RefObject<ICarouselInst
   const {
     control,
     handleSubmit,
-    formState: { errors },
-  } = useForm()
+    formState: { errors, isValid },
+  } = useForm({ mode: 'onChange' })
   const { getUserByEmail, updateStagedUser } = useUserStore()
 
   return (
     <ProfileStep
       buttonTitle="Registering"
       showFullHeightStack={false}
+      disabled={!isValid}
       onSubmit={handleSubmit(
         async (values) => {
           // check if a user already exists with the given email address
@@ -37,7 +38,7 @@ const EmailStep = ({ carouselRef }: { carouselRef: React.RefObject<ICarouselInst
               router.push(`/user/login`)
             }
           } catch (error) {
-            if (error.status == 404) {
+            if (error.status === 404) {
               // otherwise update the staged user and move to the next step
               updateStagedUser(values)
               carouselRef.current?.next()
@@ -53,25 +54,26 @@ const EmailStep = ({ carouselRef }: { carouselRef: React.RefObject<ICarouselInst
         name="email"
         control={control}
         rules={{
-          required: true,
-          pattern:
-            /(?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*|"(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\[(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?|[a-z0-9-]*[a-z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\])/,
+          required: 'Email address is required',
+          pattern: {
+            value:
+              /(?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*|"(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\[(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?|[a-z0-9-]*[a-z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\])/,
+            message: 'Email address is invalid',
+          },
         }}
-        render={({ field: { onChange, value } }) => (
+        render={({ field: { onChange, value, onBlur } }) => (
           <FormFieldWithIcon
             onChange={onChange}
+            onBlur={onBlur}
             type="email"
             id="email"
             placeholder={'Sign up with email'}
             value={value}
             autoFocus={false}
-          >
-            {errors?.email && (
-              <SizableText style={styles.errorText}>This field is required</SizableText>
-            )}
-          </FormFieldWithIcon>
+          />
         )}
       />
+      <ErrorView error={errors?.email} />
     </ProfileStep>
   )
 }
@@ -80,14 +82,15 @@ const NameStep = ({ carouselRef }: { carouselRef: React.RefObject<ICarouselInsta
   const {
     control,
     handleSubmit,
-    formState: { errors },
-  } = useForm()
+    formState: { errors, isValid },
+  } = useForm({ mode: 'onChange' })
   const { updateStagedUser } = useUserStore()
 
   return (
     <ProfileStep
       buttonTitle="Registering"
       showFullHeightStack={false}
+      disabled={!isValid}
       onSubmit={handleSubmit(
         async (values) => {
           updateStagedUser(values)
@@ -100,56 +103,57 @@ const NameStep = ({ carouselRef }: { carouselRef: React.RefObject<ICarouselInsta
         name="firstName"
         control={control}
         rules={{
-          required: true,
+          required: 'First name is required',
         }}
-        render={({ field: { onChange, value } }) => (
+        render={({ field: { onChange, value, onBlur } }) => (
           <FormFieldWithIcon
             onChange={onChange}
+            onBlur={onBlur}
             type="user"
             id="firstName"
             placeholder={'First Name'}
             value={value}
             autoFocus={false}
-          >
-            {errors?.email && (
-              <SizableText style={styles.errorText}>This field is required</SizableText>
-            )}
-          </FormFieldWithIcon>
+          />
         )}
       />
+      <ErrorView error={errors?.firstName} />
       <Controller
         name="lastName"
         control={control}
         rules={{
-          required: true,
+          required: 'Last name is required',
         }}
-        render={({ field: { onChange, value } }) => (
+        render={({ field: { onChange, value, onBlur } }) => (
           <FormFieldWithIcon
             onChange={onChange}
+            onBlur={onBlur}
             type="user"
             id="lastName"
             placeholder={'Last Name'}
             value={value}
             autoFocus={false}
-          >
-            {errors?.email && (
-              <SizableText style={styles.errorText}>This field is required</SizableText>
-            )}
-          </FormFieldWithIcon>
+          />
         )}
       />
+      <ErrorView error={errors?.lastName} />
     </ProfileStep>
   )
 }
 
 const LocationStep = ({ carouselRef }: { carouselRef: React.RefObject<ICarouselInstance> }) => {
-  const { control, handleSubmit } = useForm()
+  const {
+    control,
+    handleSubmit,
+    formState: { errors, isValid },
+  } = useForm({ mode: 'onChange' })
   const { updateStagedUser } = useUserStore()
 
   return (
     <ProfileStep
       buttonTitle="Registering"
       showFullHeightStack={false}
+      disabled={!isValid}
       onSubmit={handleSubmit(
         async (values) => {
           updateStagedUser(values)
@@ -162,10 +166,11 @@ const LocationStep = ({ carouselRef }: { carouselRef: React.RefObject<ICarouselI
         name="location"
         control={control}
         rules={{
-          required: true,
+          required: 'Location is required',
         }}
         render={({ field: { onChange } }) => <DeviceLocation onChange={onChange} />}
       />
+      <ErrorView error={errors?.location} />
     </ProfileStep>
   )
 }
@@ -174,14 +179,15 @@ const PasswordStep = ({ carouselRef }: { carouselRef: React.RefObject<ICarouselI
   const {
     control,
     handleSubmit,
-    formState: { errors },
-  } = useForm()
+    formState: { errors, isValid },
+  } = useForm({ mode: 'onChange' })
   const { updateStagedUser } = useUserStore()
 
   return (
     <ProfileStep
       buttonTitle="Registering"
       showFullHeightStack={false}
+      disabled={!isValid}
       onSubmit={handleSubmit(
         async (values) => {
           updateStagedUser(values)
@@ -194,10 +200,14 @@ const PasswordStep = ({ carouselRef }: { carouselRef: React.RefObject<ICarouselI
         name="password"
         control={control}
         rules={{
-          required: true,
-          pattern: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/,
+          required: 'Password is required',
+          pattern: {
+            value: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/,
+            message:
+              'Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one number, and one special character',
+          },
         }}
-        render={({ field: { onChange, value } }) => (
+        render={({ field: { onChange, value, onBlur } }) => (
           <FormFieldWithIcon
             onChange={onChange}
             type="password"
@@ -205,16 +215,11 @@ const PasswordStep = ({ carouselRef }: { carouselRef: React.RefObject<ICarouselI
             placeholder={'Password'}
             value={value}
             autoFocus={false}
-          >
-            {errors?.password && (
-              <SizableText style={styles.errorText}>
-                Password must include an uppercase letter, lowercase letter, {'\n'} number, and
-                special character, and be at least 8 characters long
-              </SizableText>
-            )}
-          </FormFieldWithIcon>
+            onBlur={onBlur}
+          />
         )}
       />
+      <ErrorView error={errors?.password} />
       <Controller
         name="passwordConfirm"
         control={control}
@@ -222,7 +227,7 @@ const PasswordStep = ({ carouselRef }: { carouselRef: React.RefObject<ICarouselI
           required: true,
           validate: (value, formValues) => value === formValues.password,
         }}
-        render={({ field: { onChange, value } }) => (
+        render={({ field: { onChange, value, onBlur } }) => (
           <FormFieldWithIcon
             onChange={onChange}
             type="password"
@@ -230,13 +235,11 @@ const PasswordStep = ({ carouselRef }: { carouselRef: React.RefObject<ICarouselI
             placeholder={'Confirm Password'}
             value={value}
             autoFocus={false}
-          >
-            {errors?.passwordConfirm && (
-              <SizableText style={styles.errorText}>Passwords must match</SizableText>
-            )}
-          </FormFieldWithIcon>
+            onBlur={onBlur}
+          />
         )}
       />
+      <ErrorView error={errors?.passwordConfirm} />
     </ProfileStep>
   )
 }
@@ -245,14 +248,15 @@ const ImageStep = ({ carouselRef }: { carouselRef: React.RefObject<ICarouselInst
   const {
     control,
     handleSubmit,
-    formState: { errors },
-  } = useForm()
+    formState: { errors, isValid },
+  } = useForm({ mode: 'onChange' })
   const { register, updateStagedUser } = useUserStore()
 
   return (
     <ProfileStep
       buttonTitle="Registering"
       showFullHeightStack={false}
+      disabled={!isValid}
       onSubmit={handleSubmit(
         async (values) => {
           updateStagedUser(values)
@@ -283,12 +287,13 @@ const ImageStep = ({ carouselRef }: { carouselRef: React.RefObject<ICarouselInst
           </AvatarPicker>
         )}
       />
+      <ErrorView error={errors?.image} />
     </ProfileStep>
   )
 }
 
 const DoneStep = ({ carouselRef }: { carouselRef: React.RefObject<ICarouselInstance> }) => {
-  const { handleSubmit } = useForm()
+  const { handleSubmit } = useForm({ mode: 'onChange' })
   const { user } = useUserStore()
 
   return (
@@ -297,7 +302,7 @@ const DoneStep = ({ carouselRef }: { carouselRef: React.RefObject<ICarouselInsta
       showFullHeightStack={false}
       onSubmit={handleSubmit(
         async (values) => {
-          const userName = user.userName
+          const userName = 'userName' in user && user.userName
           if (!userName) {
             // user is not logged in
             // throw an error, redirect to home page?

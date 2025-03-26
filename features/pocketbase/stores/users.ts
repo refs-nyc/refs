@@ -162,16 +162,11 @@ export const useUserStore = create<{
     }
   },
   loginWithPassword: async (email: string, password: string) => {
-    try {
-      const record = await pocketbase.collection('users').authWithPassword(email, password)
-      // TODO: unexpected
-      set(() => ({
-        user: record,
-      }))
-      return record
-    } catch (error) {
-      console.error(error)
-    }
+    const record = await pocketbase.collection('users').authWithPassword(email, password)
+    set(() => ({
+      user: record,
+    }))
+    return record
   },
   //
   //

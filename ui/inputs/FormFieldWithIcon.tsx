@@ -1,21 +1,19 @@
 import { useState } from 'react'
-import { XStack } from '@/ui/core/Stacks'
+import { TextInput, Pressable, View } from 'react-native'
 import Ionicons from '@expo/vector-icons/Ionicons'
-import { TextInput, View, Pressable } from 'react-native'
-import { Dropdown } from '../inputs/Dropdown'
-import { DeviceLocation } from '../inputs/DeviceLocation'
-import { setGeolocation } from '@/features/location'
 import { c, s } from '@/features/style'
-import { Button } from '../buttons/Button'
+import { XStack } from '@/ui/core/Stacks'
+import { SizableText } from '../typo/SizableText'
+import { GlobalError } from 'react-hook-form'
 
 export const FormFieldWithIcon = ({
   type,
   id,
-  children,
   placeholder,
   onChange,
   value = '',
   autoFocus = false,
+  onBlur,
 }: {
   type:
     | 'email'
@@ -29,9 +27,9 @@ export const FormFieldWithIcon = ({
     | 'user'
     | 'phone'
   id: string
-  children: React.ReactNode
   placeholder: string
   onChange: (str: string) => void
+  onBlur: () => void
   value: string
   autoFocus: boolean
 }) => {
@@ -83,21 +81,35 @@ export const FormFieldWithIcon = ({
           autoFocus={autoFocus}
           placeholder={placeholder}
           placeholderTextColor={c.accent}
+          onBlur={onBlur}
           onChangeText={onChange}
           value={value}
           keyboardType={type === 'email' ? 'email-address' : 'default'}
         />
       </XStack>
-      {/* Warnings etc */}
-      <View
-        style={{
-          paddingVertical: s.$08,
-          width: '100%',
-          justifyContent: 'flex-start',
-        }}
-      >
-        {children}
-      </View>
     </>
   )
+}
+
+export const ErrorView = ({ error }: { error?: GlobalError }) => {
+  return (
+    <View
+      style={{
+        paddingVertical: s.$08,
+        width: '100%',
+        justifyContent: 'flex-start',
+      }}
+    >
+      {error && <SizableText style={styles.errorText}>{error.message}</SizableText>}
+    </View>
+  )
+}
+
+const styles = {
+  errorText: {
+    fontSize: s.$08,
+    fontFamily: 'Inter',
+    textAlign: 'center',
+    color: c.accent,
+  },
 }

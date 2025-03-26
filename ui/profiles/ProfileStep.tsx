@@ -10,12 +10,14 @@ export const ProfileStep = ({
   showFullHeightStack,
   onSubmit,
   children,
+  disabled = false,
 }: {
   title?: string
   buttonTitle: string
   showFullHeightStack: boolean
   onSubmit: () => void
   children: React.ReactNode
+  disabled?: boolean
 }) => {
   return (
     <DismissKeyboard>
@@ -32,6 +34,7 @@ export const ProfileStep = ({
           style={styles.submitButton}
           title={buttonTitle}
           onPress={onSubmit}
+          disabled={disabled}
         />
       </KeyboardAvoidingView>
     </DismissKeyboard>

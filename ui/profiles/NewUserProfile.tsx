@@ -25,7 +25,7 @@ const EmailStep = ({ carouselRef }: { carouselRef: React.RefObject<ICarouselInst
 
   return (
     <ProfileStep
-      buttonTitle="Registering"
+      buttonTitle="Next"
       showFullHeightStack={false}
       disabled={!isValid}
       onSubmit={handleSubmit(
@@ -88,7 +88,7 @@ const NameStep = ({ carouselRef }: { carouselRef: React.RefObject<ICarouselInsta
 
   return (
     <ProfileStep
-      buttonTitle="Registering"
+      buttonTitle="Next"
       showFullHeightStack={false}
       disabled={!isValid}
       onSubmit={handleSubmit(
@@ -151,7 +151,7 @@ const LocationStep = ({ carouselRef }: { carouselRef: React.RefObject<ICarouselI
 
   return (
     <ProfileStep
-      buttonTitle="Registering"
+      buttonTitle="Next"
       showFullHeightStack={false}
       disabled={!isValid}
       onSubmit={handleSubmit(
@@ -185,7 +185,7 @@ const PasswordStep = ({ carouselRef }: { carouselRef: React.RefObject<ICarouselI
 
   return (
     <ProfileStep
-      buttonTitle="Registering"
+      buttonTitle="Next"
       showFullHeightStack={false}
       disabled={!isValid}
       onSubmit={handleSubmit(
@@ -254,7 +254,7 @@ const ImageStep = ({ carouselRef }: { carouselRef: React.RefObject<ICarouselInst
 
   return (
     <ProfileStep
-      buttonTitle="Registering"
+      buttonTitle="Register"
       showFullHeightStack={false}
       disabled={!isValid}
       onSubmit={handleSubmit(
@@ -298,7 +298,7 @@ const DoneStep = ({ carouselRef }: { carouselRef: React.RefObject<ICarouselInsta
 
   return (
     <ProfileStep
-      buttonTitle="Registering"
+      buttonTitle="Done"
       showFullHeightStack={false}
       onSubmit={handleSubmit(
         async (values) => {

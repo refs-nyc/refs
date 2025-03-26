@@ -35,7 +35,7 @@ export function OnboardingScreen() {
           <YStack
             style={{
               height: '100%',
-              paddingTop: s.$4,
+              paddingTop: s.$2,
               paddingBottom: s.$4,
             }}
           >

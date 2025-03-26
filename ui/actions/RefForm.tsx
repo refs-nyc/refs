@@ -42,6 +42,7 @@ export const RefForm = ({
   const [pinataSource, setPinataSource] = useState<string>('')
   const [picking, setPicking] = useState(pickerOpen)
   const [uploadInProgress, setUploadInProgress] = useState(false)
+  const [createInProgress, setCreateInProgress] = useState(false)
 
   const pathname = usePathname()
 
@@ -101,12 +102,14 @@ export const RefForm = ({
     }
 
     try {
+      setCreateInProgress(true)
       const item = await addToProfile(data, !pathname.includes('onboarding'), {
         comment,
         backlog,
         ...extraFields,
       })
       onComplete(item)
+      setCreateInProgress(false)
     } catch (e) {
       console.error(e)
     } finally {
@@ -201,7 +204,7 @@ export const RefForm = ({
             title="Create List"
             variant="outlineFluid"
             style={{ width: '48%', minWidth: 0 }}
-            disabled={!(pinataSource && title) || uploadInProgress}
+            disabled={!(pinataSource && title) || uploadInProgress || createInProgress}
             onPress={() => {
               submit({ list: true })
             }}
@@ -211,7 +214,7 @@ export const RefForm = ({
           title="Add Ref"
           variant="fluid"
           style={{ width: url ? '100%' : '48%', minWidth: 0 }}
-          disabled={!(pinataSource && title) || uploadInProgress}
+          disabled={!(pinataSource && title) || uploadInProgress || createInProgress}
           onPress={() => submit()}
         />
       </View>

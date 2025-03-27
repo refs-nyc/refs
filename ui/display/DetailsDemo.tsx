@@ -45,8 +45,7 @@ export const DetailsDemo = () => {
     <View
       pointerEvents="none"
       style={{
-        width: win.width,
-        height: win.width,
+        height: win.width + 50,
         overflow: 'hidden',
         left: 0,
       }}

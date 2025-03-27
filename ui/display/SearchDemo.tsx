@@ -191,6 +191,7 @@ const styles = StyleSheet.create({
     width: win.width - s.$2,
     overflow: 'hidden',
     height: win.width - s.$2,
+    marginHorizontal: 'auto',
     // Replicating the transform from the Svelte code:
     // transform: [{ translateX: 10 }, { translateY: 12 }],
   },

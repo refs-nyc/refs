@@ -26,5 +26,4 @@ export * from './profiles/Profile'
 export * from './SwipeToGoBack'
 
 export const Spinner = () => <Text>Loading</Text>
-export const SizableText = ({ children }: { children: React.ReactNode }) => <Text>{children}</Text>
 export const Paragraph = ({ children }: { children: React.ReactNode }) => <Text>{children}</Text>

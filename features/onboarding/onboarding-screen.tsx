@@ -1,8 +1,9 @@
-import { OnboardingCarouselItem } from '@/ui'
+import { OnboardingCarouselItem, YStack } from '@/ui'
 import { View, Dimensions } from 'react-native'
 import { useSharedValue } from 'react-native-reanimated'
 import { useRef } from 'react'
 import { router } from 'expo-router'
+import { Button } from '@/ui/buttons/Button'
 import Carousel, { ICarouselInstance, Pagination } from 'react-native-reanimated-carousel'
 import { c, s } from '@/features/style'
 
@@ -31,18 +32,46 @@ export function OnboardingScreen() {
         height={win.height}
         enabled={true}
         renderItem={({ index }) => (
-          <OnboardingCarouselItem index={index} next={() => nextSlide(index)} done={done}>
-            <Pagination.Basic
-              data={data}
-              dotStyle={{ backgroundColor: c.grey1, borderRadius: 100 }}
-              activeDotStyle={{ backgroundColor: c.grey2, borderRadius: 100 }}
-              containerStyle={{
-                gap: s.$2,
+          <YStack
+            style={{
+              height: '100%',
+              paddingTop: s.$2,
+              paddingBottom: s.$4,
+            }}
+          >
+            <OnboardingCarouselItem index={index} />
+
+            <View
+              style={{
+                height: 100,
+                justifyContent: 'center',
               }}
-              progress={progress}
-              horizontal
-            />
-          </OnboardingCarouselItem>
+            >
+              <Pagination.Basic
+                data={data}
+                dotStyle={{ backgroundColor: c.grey1, borderRadius: 100 }}
+                activeDotStyle={{ backgroundColor: c.grey2, borderRadius: 100 }}
+                containerStyle={{
+                  gap: s.$2,
+                }}
+                progress={progress}
+                horizontal
+              />
+            </View>
+
+            <View
+              style={{
+                paddingHorizontal: s.$2,
+                width: '100%',
+              }}
+            >
+              {index === data.length - 1 ? (
+                <Button variant="raised" title={"I'm ready"} onPress={() => done()} />
+              ) : (
+                <Button variant="raised" title="Next" onPress={() => nextSlide(index)} />
+              )}
+            </View>
+          </YStack>
         )}
       />
     </View>

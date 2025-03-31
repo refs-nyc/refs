@@ -134,7 +134,7 @@ export function generateDropdownItems() {
 
   for (const [place, boroughs] of Object.entries(places)) {
     items.push({ label: place, value: place, selectable: false })
-    for (const [boroughKey, neighborhoods] of Object.keys(boroughs)) {
+    for (const [boroughKey, neighborhoods] of Object.entries(boroughs)) {
       items.push({ label: boroughKey, value: boroughKey, selectable: false })
       for (const neighborhood of neighborhoods) {
         items.push({ label: neighborhood, value: neighborhood })

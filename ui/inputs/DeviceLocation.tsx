@@ -6,7 +6,8 @@ import { Image } from 'expo-image'
 import {
   getNeighborhoodFromCoordinates,
   getCoordinatesFromNeighborhood,
-  presets,
+  generateDropdownItems,
+  places,
 } from '@/features/location'
 import { useUserStore } from '@/features/pocketbase/stores/users'
 import { c, t, s } from '@/features/style'
@@ -22,9 +23,9 @@ export const DeviceLocation = ({ onChange }: { onChange: (value: string) => void
   const [humanReadableFormat, setHumanReadableFormat] = useState('')
   const [open, setOpen] = useState(false)
   const [loadingMessage, setLoadingMessage] = useState('')
-  const [value, setValue] = useState(null)
+  const [value, setValue] = useState<string | null>(null)
   // Ensure "Elsewhere" is added to the dropdown items from the start.
-  const [items, setItems] = useState([...presets, { label: 'Elsewhere', value: 'Elsewhere' }])
+  const [items, setItems] = useState(generateDropdownItems())
 
   const { stagedUser, updateStagedUser, updateUser } = useUserStore()
 
@@ -52,27 +53,37 @@ export const DeviceLocation = ({ onChange }: { onChange: (value: string) => void
       lat: location?.coords.latitude,
     })
 
-    let computedLocation = ''
-    if (hoodResult?.properties?.context?.neighborhood?.name) {
-      computedLocation = `${hoodResult.properties.context.neighborhood.name}`
-    } else if (hoodResult?.properties?.name) {
-      computedLocation = hoodResult.properties.name
+    const place = hoodResult.properties.context.place.name as string
+    const neighborhood = hoodResult.properties.context.neighborhood.name as string
+    const borough = hoodResult.properties.context.borough.name as string
+
+    let locationLabel = 'Elsewhere'
+
+    if (place in places) {
+      const boroughs = places[place]
+      if (borough in boroughs) {
+        const neighborhoods = boroughs[borough]
+        // Special case for Manhattan, should be formatted as "NYC"
+        const boroughLabel = borough === 'Manhattan' ? 'NYC' : borough
+        if (neighborhood in neighborhoods) {
+          locationLabel = `${neighborhood}, ${boroughLabel}`
+        } else {
+          locationLabel = boroughLabel
+        }
+      } else {
+        locationLabel = place
+      }
     }
 
-    // Determine the final location:
-    // If the computed location is in our items and not empty, use it; otherwise, fallback to "Elsewhere"
-    const existsInItems = items.find((item) => item.label === computedLocation)
-    const finalLocation = existsInItems && computedLocation !== '' ? computedLocation : 'Elsewhere'
-
-    setHumanReadableFormat(finalLocation)
-    setValue(finalLocation)
-    setLoadingMessage(finalLocation)
-    onChange(finalLocation)
+    setHumanReadableFormat(locationLabel)
+    setValue(locationLabel)
+    setLoadingMessage(locationLabel)
+    onChange(locationLabel)
 
     const fields = {
       lon: location?.coords.longitude,
       lat: location?.coords.latitude,
-      location: finalLocation,
+      location: locationLabel,
     }
 
     if (!pocketbase.authStore.isValid) {

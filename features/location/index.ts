@@ -144,3 +144,25 @@ export function generateDropdownItems() {
 
   return items
 }
+
+export function getPlaceLabel(place?: string, borough?: string, neighborhood?: string) {
+  let locationLabel = 'Elsewhere'
+
+  if (place && place in places) {
+    const boroughs = places[place]
+    if (borough && borough in boroughs) {
+      const neighborhoods = boroughs[borough]
+      // Special case for Manhattan, should be formatted as "NYC"
+      const boroughLabel = borough === 'Manhattan' ? 'NYC' : borough
+      if (neighborhood && neighborhood in neighborhoods) {
+        locationLabel = `${neighborhood}, ${boroughLabel}`
+      } else {
+        locationLabel = boroughLabel
+      }
+    } else {
+      locationLabel = place
+    }
+  }
+
+  return locationLabel
+}

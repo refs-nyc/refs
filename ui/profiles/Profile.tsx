@@ -252,7 +252,7 @@ export const Profile = ({ userName }: { userName: string }) => {
       )}
 
       {(addingTo === 'grid' || addingTo === 'backlog') && (
-        <Sheet full={step !== ''} onChange={(e) => e === -1 && setAddingTo('')}>
+        <Sheet noPadding={true} full={step !== ''} onChange={(e) => e === -1 && setAddingTo('')}>
           <NewRef
             backlog={addingTo === 'backlog'}
             onStep={setStep}

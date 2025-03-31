@@ -7,7 +7,7 @@ import {
   getNeighborhoodFromCoordinates,
   getCoordinatesFromNeighborhood,
   generateDropdownItems,
-  places,
+  getPlaceLabel,
 } from '@/features/location'
 import { useUserStore } from '@/features/pocketbase/stores/users'
 import { c, t, s } from '@/features/style'
@@ -57,23 +57,7 @@ export const DeviceLocation = ({ onChange }: { onChange: (value: string) => void
     const neighborhood = hoodResult.properties.context.neighborhood.name as string
     const borough = hoodResult.properties.context.borough.name as string
 
-    let locationLabel = 'Elsewhere'
-
-    if (place in places) {
-      const boroughs = places[place]
-      if (borough in boroughs) {
-        const neighborhoods = boroughs[borough]
-        // Special case for Manhattan, should be formatted as "NYC"
-        const boroughLabel = borough === 'Manhattan' ? 'NYC' : borough
-        if (neighborhood in neighborhoods) {
-          locationLabel = `${neighborhood}, ${boroughLabel}`
-        } else {
-          locationLabel = boroughLabel
-        }
-      } else {
-        locationLabel = place
-      }
-    }
+    const locationLabel = getPlaceLabel(place, borough, neighborhood)
 
     setHumanReadableFormat(locationLabel)
     setValue(locationLabel)

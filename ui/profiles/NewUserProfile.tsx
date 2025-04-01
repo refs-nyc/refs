@@ -37,7 +37,7 @@ const EmailStep = ({ carouselRef }: { carouselRef: React.RefObject<ICarouselInst
               // if so, then redirect to login view
               router.push(`/user/login`)
             }
-          } catch (error) {
+          } catch (error: any) {
             if (error.status === 404) {
               // otherwise update the staged user and move to the next step
               updateStagedUser(values)
@@ -145,8 +145,11 @@ const LocationStep = ({ carouselRef }: { carouselRef: React.RefObject<ICarouselI
   const {
     control,
     handleSubmit,
+    setValue,
     formState: { errors, isValid },
-  } = useForm({ mode: 'onChange' })
+  } = useForm<{ location?: string; lon?: number; lat?: number }>({
+    mode: 'onChange',
+  })
   const { updateStagedUser } = useUserStore()
 
   return (
@@ -168,7 +171,15 @@ const LocationStep = ({ carouselRef }: { carouselRef: React.RefObject<ICarouselI
         rules={{
           required: 'Location is required',
         }}
-        render={({ field: { onChange } }) => <DeviceLocation onChange={onChange} />}
+        render={() => (
+          <DeviceLocation
+            onChange={({ location, lat, lon }) => {
+              setValue('location', location)
+              setValue('lon', lon)
+              setValue('lat', lat)
+            }}
+          />
+        )}
       />
       <ErrorView error={errors?.location} />
     </ProfileStep>

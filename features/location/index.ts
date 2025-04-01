@@ -11,31 +11,23 @@
 // Search profiles are text based. We process them using the options we have with geocoding
 
 export const getNeighborhoodFromCoordinates = async ({ lon, lat }) => {
-  try {
-    const response = await fetch(
-      `https://api.mapbox.com/search/geocode/v6/reverse?types=neighborhood&longitude=${lon}&latitude=${lat}&access_token=${process.env.EXPO_PUBLIC_MAPBOX_KEY}`
-    )
-    const result = await response.json()
+  const response = await fetch(
+    `https://api.mapbox.com/search/geocode/v6/reverse?types=neighborhood&longitude=${lon}&latitude=${lat}&access_token=${process.env.EXPO_PUBLIC_MAPBOX_KEY}`
+  )
+  const result = await response.json()
 
-    if (result?.features.length > 0) {
-      // We want to store the feature without coordinates
-      const feature = { ...result.features[0] }
+  if (result?.features.length > 0) {
+    // We want to store the feature without coordinates
+    const feature = { ...result.features[0] }
 
-      delete feature.properties.coordinates
-      delete feature.geometry.coordinates
-      delete feature.properties.bbox
+    delete feature.properties.coordinates
+    delete feature.geometry.coordinates
+    delete feature.properties.bbox
 
-      return feature
-    }
-
-    throw new Error('Could not determine location')
-  } catch (error) {
-    console.error(error)
-
-    return false
+    return feature
+  } else {
+    throw new Error('Could not determine location from coordinates')
   }
-
-  // Store some kind of ID -> mapbox_id
 }
 
 // NB: Proximity is set to NYC!
@@ -135,9 +127,14 @@ export function generateDropdownItems() {
   for (const [place, boroughs] of Object.entries(places)) {
     items.push({ label: place, value: place, selectable: false })
     for (const [boroughKey, neighborhoods] of Object.entries(boroughs)) {
-      items.push({ label: boroughKey, value: boroughKey, selectable: false })
+      items.push({ label: boroughKey, value: boroughKey, selectable: false, parent: place })
       for (const neighborhood of neighborhoods) {
-        items.push({ label: neighborhood, value: neighborhood, selectable: true })
+        items.push({
+          label: neighborhood,
+          value: neighborhood,
+          selectable: true,
+          parent: boroughKey,
+        })
       }
     }
   }
@@ -145,24 +142,36 @@ export function generateDropdownItems() {
   return items
 }
 
-export function getPlaceLabel(place?: string, borough?: string, neighborhood?: string) {
-  let locationLabel = 'Elsewhere'
-
-  if (place && place in places) {
-    const boroughs = places[place]
-    if (borough && borough in boroughs) {
-      const neighborhoods = boroughs[borough]
-      // Special case for Manhattan, should be formatted as "NYC"
-      const boroughLabel = borough === 'Manhattan' ? 'NYC' : borough
-      if (neighborhood && neighborhood in neighborhoods) {
-        locationLabel = `${neighborhood}, ${boroughLabel}`
-      } else {
-        locationLabel = boroughLabel
+export function getPlaceLabel(
+  items: { label: string }[],
+  place?: string,
+  locality?: string,
+  neighborhood?: string
+) {
+  if (neighborhood) {
+    const matchingItem = items.find((item) => item.label === neighborhood)
+    if (matchingItem) {
+      // special case for Manhattan
+      if (locality === 'Manhattan') {
+        return { locationLabel: `${neighborhood}, NYC`, matchingItem }
       }
-    } else {
-      locationLabel = place
+      return { locationLabel: `${neighborhood}, ${locality}`, matchingItem }
     }
   }
 
-  return locationLabel
+  if (locality) {
+    const matchingItem = items.find((item) => item.label === locality)
+    if (matchingItem) {
+      return { locationLabel: locality, matchingItem }
+    }
+  }
+
+  if (place) {
+    const matchingItem = items.find((item) => item.label === place)
+    if (matchingItem) {
+      return { locationLabel: place, matchingItem }
+    }
+  }
+
+  return { locationLabel: 'Elsewhere', matchingItem: null }
 }

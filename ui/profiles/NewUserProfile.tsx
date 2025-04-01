@@ -159,7 +159,6 @@ const LocationStep = ({ carouselRef }: { carouselRef: React.RefObject<ICarouselI
       disabled={!isValid}
       onSubmit={handleSubmit(
         async (values) => {
-          updateStagedUser(values)
           carouselRef.current?.next()
         },
         (errors) => console.log('Errors:', errors)
@@ -171,12 +170,11 @@ const LocationStep = ({ carouselRef }: { carouselRef: React.RefObject<ICarouselI
         rules={{
           required: 'Location is required',
         }}
-        render={() => (
+        render={({ field: { onChange } }) => (
           <DeviceLocation
-            onChange={({ location, lat, lon }) => {
-              setValue('location', location)
-              setValue('lon', lon)
-              setValue('lat', lat)
+            onChange={(values) => {
+              updateStagedUser(values)
+              onChange(values)
             }}
           />
         )}

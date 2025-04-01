@@ -124,11 +124,10 @@ export function generateDropdownItems() {
 
   items.push({ label: 'Elsewhere', value: 'Elsewhere', selectable: true })
 
-  for (const [place, boroughs] of Object.entries(places)) {
-    items.push({ label: place, value: place, selectable: false })
+  for (const boroughs of Object.values(places)) {
     for (const [boroughKey, neighborhoods] of Object.entries(boroughs)) {
-      items.push({ label: boroughKey, value: boroughKey, selectable: false, parent: place })
-      for (const neighborhood of neighborhoods) {
+      items.push({ label: boroughKey, value: boroughKey, selectable: false })
+      for (const neighborhood of neighborhoods.toReversed()) {
         items.push({
           label: neighborhood,
           value: neighborhood,

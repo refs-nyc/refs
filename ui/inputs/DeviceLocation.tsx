@@ -43,10 +43,18 @@ export const DeviceLocation = ({
 
     const location = await Location.getCurrentPositionAsync({})
 
+    if (!location) {
+      setLoadingMessage('Could not determine your location, select from dropdown')
+      return
+    }
+    const lon = location.coords.longitude
+    const lat = location.coords.latitude
+
+    let locationLabel = 'Elsewhere'
     try {
       const hoodResult = await getNeighborhoodFromCoordinates({
-        lon: location?.coords.longitude,
-        lat: location?.coords.latitude,
+        lon,
+        lat,
       })
       const place = hoodResult.properties.context.place?.name as string
       const locality = hoodResult.properties.context.locality?.name as string
@@ -58,17 +66,14 @@ export const DeviceLocation = ({
       }
 
       setLoadingMessage(locationLabel)
-
-      onChange({
-        lon: location?.coords.longitude,
-        lat: location?.coords.latitude,
-        location: locationLabel,
-      })
     } catch (error) {
       console.error(error)
-      setLoadingMessage('Could not determine your location, select from dropdown')
-      return
+      setDropdownValue('Elsewhere')
+      setLoadingMessage('Elsewhere')
+      locationLabel = 'Elsewhere'
     }
+
+    onChange({ lon, lat, location: locationLabel })
   }
 
   return (

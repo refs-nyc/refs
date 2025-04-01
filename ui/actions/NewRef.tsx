@@ -100,7 +100,7 @@ export const NewRef = ({
   }, [step])
 
   return (
-    <>
+    <View style={{ paddingHorizontal: s.$2 }}>
       {step === '' && (
         <YStack gap={s.$08} style={{ paddingTop: s.$1, paddingBottom: s.$6 }}>
           <Button
@@ -180,6 +180,6 @@ export const NewRef = ({
           }}
         />
       )}
-    </>
+    </View>
   )
 }

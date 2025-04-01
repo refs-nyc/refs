@@ -11,31 +11,23 @@
 // Search profiles are text based. We process them using the options we have with geocoding
 
 export const getNeighborhoodFromCoordinates = async ({ lon, lat }) => {
-  try {
-    const response = await fetch(
-      `https://api.mapbox.com/search/geocode/v6/reverse?types=neighborhood&longitude=${lon}&latitude=${lat}&access_token=${process.env.EXPO_PUBLIC_MAPBOX_KEY}`
-    )
-    const result = await response.json()
+  const response = await fetch(
+    `https://api.mapbox.com/search/geocode/v6/reverse?types=neighborhood&longitude=${lon}&latitude=${lat}&access_token=${process.env.EXPO_PUBLIC_MAPBOX_KEY}`
+  )
+  const result = await response.json()
 
-    if (result?.features.length > 0) {
-      // We want to store the feature without coordinates
-      const feature = { ...result.features[0] }
+  if (result?.features.length > 0) {
+    // We want to store the feature without coordinates
+    const feature = { ...result.features[0] }
 
-      delete feature.properties.coordinates
-      delete feature.geometry.coordinates
-      delete feature.properties.bbox
+    delete feature.properties.coordinates
+    delete feature.geometry.coordinates
+    delete feature.properties.bbox
 
-      return feature
-    }
-
-    throw new Error('Could not determine location')
-  } catch (error) {
-    console.error(error)
-
-    return false
+    return feature
+  } else {
+    throw new Error('Could not determine location from coordinates')
   }
-
-  // Store some kind of ID -> mapbox_id
 }
 
 // NB: Proximity is set to NYC!
@@ -55,72 +47,130 @@ export const getCoordinatesFromNeighborhood = async (neighborhood: string) => {
   }
 }
 
-export const presets = [
-  { label: 'New York', value: 'New York', selectable: false },
-  { label: 'Queens', value: 'Queens', selectable: false },
-  { label: 'Astoria', value: 'Astoria', parent: 'Queens' },
-  { label: 'Forest Hills', value: 'Forest Hills', parent: 'Queens' },
-  { label: 'Greenpoint', value: 'Greenpoint', parent: 'Queens' },
-  { label: 'Jackson Heights', value: 'Jackson Heights', parent: 'Queens' },
-  { label: 'Long Island City', value: 'Long Island City', parent: 'Queens' },
-  { label: 'Lower East Side', value: 'Lower East Side', parent: 'Queens' },
-  { label: 'Meatpacking District', value: 'Meatpacking District', parent: 'Queens' },
-  { label: 'Midtown East', value: 'Midtown East', parent: 'Queens' },
-  { label: 'Murray Hill', value: 'Murray Hill', parent: 'Queens' },
-  { label: 'NoHo', value: 'NoHo', parent: 'Queens' },
-  { label: 'Ridgewood', value: 'Ridgewood', parent: 'Queens' },
-  { label: 'Rockaway Beach', value: 'Rockaway Beach', parent: 'Queens' },
-  { label: 'Rockaway Park', value: 'Rockaway Park', parent: 'Queens' },
-  { label: 'Sunnyside', value: 'Sunnyside', parent: 'Queens' },
-  { label: 'Woodside', value: 'Woodside', parent: 'Queens' },
-  { label: 'Manhattan', value: 'Manhattan', selectable: false },
-  { label: 'Battery Park City', value: 'Battery Park City', parent: 'Manhattan' },
-  { label: 'Chelsea', value: 'Chelsea', parent: 'Manhattan' },
-  { label: 'Chinatown', value: 'Chinatown', parent: 'Manhattan' },
-  { label: 'East Harlem', value: 'East Harlem', parent: 'Manhattan' },
-  { label: 'East Village', value: 'East Village', parent: 'Manhattan' },
-  { label: 'Garment District', value: 'Garment District', parent: 'Manhattan' },
-  { label: 'Financial District', value: 'Financial District', parent: 'Manhattan' },
-  { label: 'Flatiron', value: 'Flatiron', parent: 'Manhattan' },
-  { label: 'Gramercy Park', value: 'Gramercy Park', parent: 'Manhattan' },
-  { label: 'Greenwich Village', value: 'Greenwich Village', parent: 'Manhattan' },
-  { label: "Hell's Kitchen", value: "Hell's Kitchen", parent: 'Manhattan' },
-  { label: 'Little Italy', value: 'Little Italy', parent: 'Manhattan' },
-  { label: 'Nolita', value: 'Nolita', parent: 'Manhattan' },
-  { label: 'Nomad', value: 'Nomad', parent: 'Manhattan' },
-  { label: 'SoHo', value: 'SoHo', parent: 'Manhattan' },
-  { label: 'Theater District', value: 'Theater District', parent: 'Manhattan' },
-  { label: 'Tribeca', value: 'Tribeca', parent: 'Manhattan' },
-  { label: 'Upper East Side', value: 'Upper East Side', parent: 'Manhattan' },
-  { label: 'Upper West Side', value: 'Upper West Side', parent: 'Manhattan' },
-  { label: 'West Village', value: 'West Village', parent: 'Manhattan' },
-  { label: 'Brooklyn', value: 'Brooklyn', selectable: false },
-  { label: 'Bay Ridge', value: 'Bay Ridge', parent: 'Brooklyn' },
-  { label: 'Bedford-Stuyvesant', value: 'Bedford-Stuyvesant', parent: 'Brooklyn' },
-  { label: 'Boerum Hill', value: 'Boerum Hill', parent: 'Brooklyn' },
-  { label: 'Brooklyn Heights', value: 'Brooklyn Heights', parent: 'Brooklyn' },
-  { label: 'Carroll Gardens', value: 'Carroll Gardens', parent: 'Brooklyn' },
-  { label: 'Clinton Hill', value: 'Clinton Hill', parent: 'Brooklyn' },
-  { label: 'Cobble Hill', value: 'Cobble Hill', parent: 'Brooklyn' },
-  { label: 'Crown Heights', value: 'Crown Heights', parent: 'Brooklyn' },
-  { label: 'Ditmas Park', value: 'Ditmas Park', parent: 'Brooklyn' },
-  { label: 'Downtown Brooklyn', value: 'Downtown Brooklyn', parent: 'Brooklyn' },
-  { label: 'Dumbo', value: 'Dumbo', parent: 'Brooklyn' },
-  { label: 'East New York', value: 'East New York', parent: 'Brooklyn' },
-  { label: 'Flatbush', value: 'Flatbush', parent: 'Brooklyn' },
-  { label: 'Fort Greene', value: 'Fort Greene', parent: 'Brooklyn' },
-  { label: 'Gowanus', value: 'Gowanus', parent: 'Brooklyn' },
-  { label: 'Greenwood Heights', value: 'Greenwood Heights', parent: 'Brooklyn' },
-  { label: 'Harlem', value: 'Harlem', parent: 'Brooklyn' },
-  { label: 'Kensington', value: 'Kensington', parent: 'Brooklyn' },
-  { label: 'Park Slope', value: 'Park Slope', parent: 'Brooklyn' },
-  { label: 'Prospect Heights', value: 'Prospect Heights', parent: 'Brooklyn' },
-  { label: 'Prospect Lefferts Gardens', value: 'Prospect Lefferts Gardens', parent: 'Brooklyn' },
-  { label: 'Prospect Park South', value: 'Prospect Park South', parent: 'Brooklyn' },
-  { label: 'Red Hook', value: 'Red Hook', parent: 'Brooklyn' },
-  { label: 'Sunset Park', value: 'Sunset Park', parent: 'Brooklyn' },
-  { label: 'Williamsburg', value: 'Williamsburg', parent: 'Brooklyn' },
-  { label: 'Windsor Terrace', value: 'Windsor Terrace', parent: 'Brooklyn' },
-  // { label: 'Bronx', value: 'Bronx', selectable: false },
-  // { label: 'Staten Island', value: 'Staten Island', selectable: false },
-].toReversed()
+// place -> borough -> neighborhood
+export const places = {
+  'New York': {
+    Brooklyn: [
+      'Bay Ridge',
+      'Bedford-Stuyvesant',
+      'Boerum Hill',
+      'Brooklyn Heights',
+      'Carroll Gardens',
+      'Clinton Hill',
+      'Cobble Hill',
+      'Crown Heights',
+      'Ditmas Park',
+      'Downtown Brooklyn',
+      'Dumbo',
+      'East New York',
+      'Flatbush',
+      'Fort Greene',
+      'Gowanus',
+      'Greenwood Heights',
+      'Kensington',
+      'Park Slope',
+      'Prospect Heights',
+      'Prospect Lefferts Gardens',
+      'Prospect Park South',
+      'Red Hook',
+      'Sunset Park',
+      'Williamsburg',
+      'Windsor Terrace',
+    ],
+    Manhattan: [
+      'Battery Park City',
+      'Chelsea',
+      'Chinatown',
+      'East Harlem',
+      'East Village',
+      'Garment District',
+      'Financial District',
+      'Flatiron',
+      'Gramercy Park',
+      'Greenwich Village',
+      "Hell's Kitchen",
+      'Little Italy',
+      'Lower East Side',
+      'Meatpacking District',
+      'Midtown East',
+      'Nolita',
+      'Nomad',
+      'NoHo',
+      'SoHo',
+      'Theater District',
+      'Tribeca',
+      'Upper East Side',
+      'Upper West Side',
+      'West Village',
+    ],
+
+    Queens: [
+      'Astoria',
+      'Forest Hills',
+      'Greenpoint',
+      'Jackson Heights',
+      'Long Island City',
+      'Murray Hill',
+      'Rockaway Beach',
+      'Rockaway Park',
+      'Sunnyside',
+      'Woodside',
+    ],
+  },
+} as Record<string, Record<string, string[]>>
+
+export function generateDropdownItems() {
+  const items = []
+
+  items.push({ label: 'Elsewhere', value: 'Elsewhere', selectable: true })
+
+  for (const boroughs of Object.values(places)) {
+    for (const [boroughKey, neighborhoods] of Object.entries(boroughs)) {
+      items.push({ label: boroughKey, value: boroughKey, selectable: false })
+      for (const neighborhood of neighborhoods.toReversed()) {
+        items.push({
+          label: neighborhood,
+          value: neighborhood,
+          selectable: true,
+          parent: boroughKey,
+        })
+      }
+    }
+  }
+
+  return items
+}
+
+export function getPlaceLabel(
+  items: { label: string }[],
+  place?: string,
+  locality?: string,
+  neighborhood?: string
+) {
+  if (neighborhood) {
+    const matchingItem = items.find((item) => item.label === neighborhood)
+    if (matchingItem) {
+      // special case for Manhattan
+      if (locality === 'Manhattan') {
+        return { locationLabel: `${neighborhood}, NYC`, matchingItem }
+      }
+      return { locationLabel: `${neighborhood}, ${locality}`, matchingItem }
+    }
+  }
+
+  if (locality) {
+    const matchingItem = items.find((item) => item.label === locality)
+    if (matchingItem) {
+      return { locationLabel: locality, matchingItem }
+    }
+  }
+
+  if (place) {
+    const matchingItem = items.find((item) => item.label === place)
+    if (matchingItem) {
+      return { locationLabel: place, matchingItem }
+    }
+  }
+
+  return { locationLabel: 'Elsewhere', matchingItem: null }
+}

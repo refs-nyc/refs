@@ -10,7 +10,7 @@ import { useUserStore } from '@/features/pocketbase/stores/users'
 import { s } from '@/features/style'
 
 export function SettingsScreen({ userName }: { userName: string }) {
-  const { profile, getProfile, logout } = useUserStore()
+  const { profile, getProfile, logout, updateUser } = useUserStore()
 
   const handleLogout = async () => {
     await logout()
@@ -26,9 +26,14 @@ export function SettingsScreen({ userName }: { userName: string }) {
     }
     load()
   }, [userName])
+
   return (
     <ScreenWrapper>
-      <DeviceLocation onChange={(e) => console.log(e)} />
+      <DeviceLocation
+        onChange={async ({ location, lon, lat }) => {
+          await updateUser({ location, lon, lat })
+        }}
+      />
 
       <FirstVisitScreen />
 

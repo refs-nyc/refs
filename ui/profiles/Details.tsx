@@ -16,6 +16,8 @@ import { EditableList } from '../lists/EditableList'
 import { Sheet, SheetScreen } from '../core/Sheets'
 import { useUserStore, isExpandedProfile } from '@/features/pocketbase/stores/users'
 import { ExpandedItem } from '@/features/pocketbase/stores/types'
+import { EditableHeader } from '../atoms/EditableHeader'
+import { useRefStore } from '@/features/pocketbase/stores/refs'
 
 const win = Dimensions.get('window')
 
@@ -26,81 +28,116 @@ export const renderItem = ({
   item: ExpandedItem
   editingRights?: boolean
 }) => {
+  const [editing, setEditing] = useState(false)
+  const [title, setTitle] = useState(item.expand?.ref?.title || '')
+
+  const { updateOne } = useRefStore()
+
   return (
-    <View
-      style={{
-        height: 'auto', // hack
-        width: win.width * 0.8,
-        left: win.width * 0.1,
-        padding: s.$075,
-        gap: s.$1,
-        justifyContent: 'start',
-        overflow: 'hidden',
+    <Pressable
+      onLongPress={() => {
+        console.log('editing intent', editingRights)
+        if (!editingRights) return
+
+        console.log('Start editing')
+        setEditing(true)
       }}
-      key={item.id}
     >
-      <View style={{ width: '100%', aspectRatio: 1, overflow: 'hidden', borderRadius: s.$075 }}>
-        {item.image && !item.list ? (
-          item.expand?.ref.image && (
-            <Zoomable
-              minScale={0.25}
-              maxScale={3}
-              isPanEnabled={true}
-              onInteractionEnd={() => console.log('onInteractionEnd')}
-              onPanStart={() => console.log('onPanStart')}
-              onPanEnd={() => console.log('onPanEnd')}
-              onPinchStart={() => console.log('onPinchStart')}
-              onPinchEnd={() => console.log('onPinchEnd')}
-              onSingleTap={() => console.log('onSingleTap')}
-              onDoubleTap={(zoomType) => {
-                console.log('onDoubleTap', zoomType)
-              }}
-              style={{ width: '100%', aspectRatio: 1, overflow: 'visible', borderRadius: s.$075 }}
-            >
-              <Image
-                style={{ width: '100%', aspectRatio: 1, overflow: 'visible' }}
-                source={item.expand.ref.image || item.image}
-              />
-            </Zoomable>
-          )
-        ) : (
-          <View
-            style={{
-              flex: 1,
-              backgroundColor: c.surface2,
-            }}
-          >
-            {item.list && <ListContainer editingRights={!!editingRights} item={item} />}
-          </View>
-        )}
-      </View>
-      {/* Information */}
-      <View style={{ width: '100%', paddingHorizontal: s.$1 }}>
-        <View style={{ marginBottom: 0, flexDirection: 'row', justifyContent: 'space-between' }}>
-          <View style={{ gap: s.$05 }}>
-            <Heading tag="h2">{item.expand?.ref.title}</Heading>
-            <Heading tag="smallmuted">{item.expand?.ref?.meta}</Heading>
-          </View>
-          <Pressable onPress={() => {}}>
-            {item.expand.ref.url && (
-              <Link href={item.expand.ref.url}>
-                <Ionicons
-                  style={{ transformOrigin: 'center', transform: 'rotate(-45deg)' }}
-                  color={c.muted}
-                  size={s.$1}
-                  name="arrow-forward-outline"
+      <View
+        style={{
+          height: 'auto', // hack
+          width: win.width * 0.8,
+          left: win.width * 0.1,
+          padding: s.$075,
+          gap: s.$1,
+          justifyContent: 'start',
+          overflow: 'hidden',
+        }}
+        key={item.id}
+      >
+        <View style={{ width: '100%', aspectRatio: 1, overflow: 'hidden', borderRadius: s.$075 }}>
+          {item.image && !item.list ? (
+            item.expand?.ref.image && (
+              <Zoomable
+                minScale={0.25}
+                maxScale={3}
+                isPanEnabled={true}
+                onInteractionEnd={() => console.log('onInteractionEnd')}
+                onPanStart={() => console.log('onPanStart')}
+                onPanEnd={() => console.log('onPanEnd')}
+                onPinchStart={() => console.log('onPinchStart')}
+                onPinchEnd={() => console.log('onPinchEnd')}
+                onSingleTap={() => console.log('onSingleTap')}
+                onDoubleTap={(zoomType) => {
+                  console.log('onDoubleTap', zoomType)
+                }}
+                style={{ width: '100%', aspectRatio: 1, overflow: 'visible', borderRadius: s.$075 }}
+              >
+                <Image
+                  style={{ width: '100%', aspectRatio: 1, overflow: 'visible' }}
+                  source={item.expand.ref.image || item.image}
                 />
-              </Link>
-            )}
-          </Pressable>
+              </Zoomable>
+            )
+          ) : (
+            <View
+              style={{
+                flex: 1,
+                backgroundColor: c.surface2,
+              }}
+            >
+              {item.list && <ListContainer editingRights={!!editingRights} item={item} />}
+            </View>
+          )}
         </View>
-        <View style={{ width: '100%' }}>
-          <Text numberOfLines={4} style={t.pmuted}>
-            {item.text}
-          </Text>
+        {/* Information */}
+        <View style={{ width: '100%', paddingHorizontal: s.$1 }}>
+          <View style={{ marginBottom: 0, flexDirection: 'row', justifyContent: 'space-between' }}>
+            <View style={{ gap: s.$05 }}>
+              {editing ? (
+                <EditableHeader
+                  initialEditing={true}
+                  onTitleChange={async (newTitle) => {
+                    try {
+                      const updated = await updateOne(item.ref, { title: newTitle })
+                      setTitle(newTitle)
+                      console.log(updated)
+                    } catch (err) {
+                      console.error(err)
+                    } finally {
+                      setEditing(false)
+                    }
+                  }}
+                  title={title}
+                />
+              ) : (
+                <View style={{ paddingVertical: s.$08 }}>
+                  <Heading tag="h2">{title}</Heading>
+                  <Heading tag="smallmuted">{item.expand?.ref?.meta}</Heading>
+                </View>
+              )}
+            </View>
+            <Pressable onPress={() => {}}>
+              {item.expand.ref.url && (
+                <Link href={item.expand.ref.url}>
+                  <Ionicons
+                    style={{ transformOrigin: 'center', transform: 'rotate(-45deg)' }}
+                    color={c.muted}
+                    size={s.$1}
+                    name="arrow-forward-outline"
+                  />
+                </Link>
+              )}
+            </Pressable>
+          </View>
+          <View style={{ width: '100%' }}>
+            <Text numberOfLines={4} style={t.pmuted}>
+              {item.text}
+            </Text>
+          </View>
         </View>
       </View>
-    </View>
+    </Pressable>
   )
 }
 

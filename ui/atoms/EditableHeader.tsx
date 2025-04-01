@@ -13,14 +13,16 @@ export const EditableHeader = ({
   url,
   image,
   placeholder = '',
-  onComplete,
-  onDataChange,
+  initialEditing = false,
+  onTitleChange,
+  onDataChange = () => {},
 }: {
   title: string
   url: string
   image?: string
   placeholder: string
-  onComplete: (str: string) => void
+  initialEditing?: boolean
+  onTitleChange: (str: string) => void
   onDataChange: (d: { url: string; image: string; title: string }) => void
 }) => {
   console.log(title || '')
@@ -28,7 +30,7 @@ export const EditableHeader = ({
   const [urlState, setUrlState] = useState(url)
   const [imageState, setImageState] = useState(image)
   const [hasUrl, setHasUrl] = useState(false)
-  const [editing, setEditing] = useState(false)
+  const [editing, setEditing] = useState(initialEditing)
   const [addingUrl, setAddingUrl] = useState(false)
 
   const analyseUrl = async (u: string) => {
@@ -95,7 +97,7 @@ export const EditableHeader = ({
           >
             <Pressable onPress={() => setEditing(true)}>
               <Heading
-                tag="h1"
+                tag="h2"
                 style={{
                   textAlign: 'left',
                   // backgroundColor: 'blue',
@@ -110,7 +112,7 @@ export const EditableHeader = ({
         {!addingUrl && editing && (
           <TextInput
             style={[
-              t.h1,
+              t.h2,
               {
                 flex: 1,
                 // backgroundColor: 'blue',
@@ -129,7 +131,7 @@ export const EditableHeader = ({
             multiline={true}
             onBlur={() => {
               setEditing(false)
-              onComplete(titleState)
+              onTitleChange(titleState)
             }}
           ></TextInput>
         )}
@@ -164,7 +166,7 @@ export const EditableHeader = ({
             <Pressable
               onPress={() => {
                 setEditing(false)
-                onComplete(titleState)
+                onTitleChange(titleState)
               }}
             >
               <Ionicons size={28} name="checkbox-outline" color={c.muted} />
@@ -209,9 +211,6 @@ export const EditableHeader = ({
               {hasUrl && urlState === '' ? (
                 <></>
               ) : (
-                // <Pressable onPress={async () => setUrlState(await Clipboard.getStringAsync())}>
-                //   <Ionicons name="clipboard" size={28} color={c.muted} />
-                // </Pressable>
                 <Pressable onPress={() => setAddingUrl(false)}>
                   <Ionicons name="checkbox-outline" size={28} color={c.muted} />
                 </Pressable>

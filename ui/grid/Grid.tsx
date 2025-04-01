@@ -11,14 +11,14 @@ export const Grid = ({
   columns = 3,
   rows = 3,
   items,
-  canAdd = true,
+  editingRights = true,
 }: {
   onAddItem?: () => void
   onRemoveItem?: (id: string) => void
   columns: number
   rows: number
   items: any[]
-  canAdd?: boolean
+  editingRights?: boolean
 }) => {
   useEffect(() => {
     // console.log('grid: items updated', items.length)
@@ -42,7 +42,7 @@ export const Grid = ({
         </GridTileWrapper>
       ))}
 
-      {canAdd && (
+      {editingRights && (
         <>
           {items.length < gridSize && (
             <GridTileWrapper canEdit={false} key="add" type="add">
@@ -52,7 +52,7 @@ export const Grid = ({
         </>
       )}
 
-      {Array.from({ length: gridSize - items.length - (canAdd ? 1 : 0) }).map((_, i) => (
+      {Array.from({ length: gridSize - items.length - (editingRights ? 1 : 0) }).map((_, i) => (
         <GridTileWrapper canEdit={false} key={`empty-${i}`} type="">
           <GridTile key={i} />
         </GridTileWrapper>

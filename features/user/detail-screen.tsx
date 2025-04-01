@@ -12,13 +12,13 @@ export function UserDetailsScreen({
   initialId: string
 }) {
   const { profile, getProfile } = useUserStore()
-  const [canAdd, setCanAdd] = useState(false)
+  const [editingRights, setEditingRights] = useState(false)
 
   console.log('initialId', initialId)
 
   useEffect(() => {
     const getProfileAsync = async () => {
-      setCanAdd(pocketbase?.authStore?.record?.userName === userName)
+      setEditingRights(pocketbase?.authStore?.record?.userName === userName)
       try {
         await getProfile(userName)
       } catch (error) {
@@ -32,7 +32,7 @@ export function UserDetailsScreen({
   return (
     <>
       {profile && 'id' in profile && (
-        <Details key={initialId} canAdd={canAdd} initialId={initialId}></Details>
+        <Details key={initialId} editingRights={editingRights} initialId={initialId}></Details>
       )}
     </>
   )

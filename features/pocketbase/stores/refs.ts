@@ -11,6 +11,7 @@ import { canvasApp } from './canvas'
 export const useRefStore = create<{
   refs: RecordModel[]
   push: (stagedRef: StagedRef) => Promise<RecordModel>
+  updateOne: (id: string, fields: Partial<StagedRef>) => Promise<RecordModel>
   addMetaData: (
     id: string,
     { cat, meta }: { cat: string; meta: string }
@@ -38,10 +39,18 @@ export const useRefStore = create<{
       console.error(error)
     }
   },
+  updateOne: async (id: string, fields: Partial<StagedRef>) => {
+    try {
+      const record = await pocketbase.collection('refs').update(id, { ...fields })
+      return record
+    } catch (error) {
+      console.error(error)
+    }
+  },
   remove: async (id: string) => {
     await pocketbase.collection('refs').delete(id)
     await canvasApp.actions.removeRef(id)
-    
+
     set((state) => ({
       refs: [...state.refs.filter((i) => i.id !== id)],
     }))

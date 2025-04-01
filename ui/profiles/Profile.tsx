@@ -40,7 +40,7 @@ export const Profile = ({ userName }: { userName: string }) => {
   const [gridItems, setGridItems] = useState<Item[]>([])
   const [searching, setSearching] = useState(false)
   const [backlogItems, setBacklogItems] = useState<ExpandedItem[]>([])
-  const [canAdd, setCanAdd] = useState<boolean>(false)
+  const [editingRights, seteditingRights] = useState<boolean>(false)
   const [step, setStep] = useState('')
   const [term, setTerm] = useState('')
   const [allItems, setAllItems] = useState<ExpandedItem[]>([])
@@ -118,7 +118,7 @@ export const Profile = ({ userName }: { userName: string }) => {
       try {
         await getProfile(userName)
         await refreshGrid(userName)
-        setCanAdd(pocketbase?.authStore?.record?.userName === userName)
+        seteditingRights(pocketbase?.authStore?.record?.userName === userName)
       } catch (error) {
         console.error(error)
       }
@@ -169,7 +169,7 @@ export const Profile = ({ userName }: { userName: string }) => {
                   style={{ gap: s.$2 }}
                 >
                   <Grid
-                    canAdd={canAdd}
+                    editingRights={editingRights}
                     onRemoveItem={setRemovingId}
                     onAddItem={() => {
                       setAddingTo('grid')
@@ -184,7 +184,7 @@ export const Profile = ({ userName }: { userName: string }) => {
                     gap={s.$2}
                     style={{ justifyContent: 'center', width: '100%' }}
                   >
-                    {canAdd && (
+                    {editingRights && (
                       <Button
                         onPress={() => setAddingTo('backlog')}
                         variant="raisedSecondary"
@@ -193,7 +193,7 @@ export const Profile = ({ userName }: { userName: string }) => {
                         iconAfter="add-circle-outline"
                       />
                     )}
-                    {!canAdd && (
+                    {!editingRights && (
                       <>
                         <Button
                           onPress={() => {}}

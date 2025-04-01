@@ -19,7 +19,13 @@ import { ExpandedItem } from '@/features/pocketbase/stores/types'
 
 const win = Dimensions.get('window')
 
-export const renderItem = ({ item, canAdd }: { item: ExpandedItem; canAdd?: boolean }) => {
+export const renderItem = ({
+  item,
+  editingRights,
+}: {
+  item: ExpandedItem
+  editingRights?: boolean
+}) => {
   return (
     <View
       style={{
@@ -64,7 +70,7 @@ export const renderItem = ({ item, canAdd }: { item: ExpandedItem; canAdd?: bool
               backgroundColor: c.surface2,
             }}
           >
-            {item.list && <ListContainer canAdd={canAdd} item={item} />}
+            {item.list && <ListContainer editingRights={!!editingRights} item={item} />}
           </View>
         )}
       </View>
@@ -127,7 +133,13 @@ export const DetailsDemoCarousel = forwardRef(
   }
 )
 
-export const Details = ({ canAdd = false, initialId }: { canAdd?: boolean; initialId: string }) => {
+export const Details = ({
+  editingRights = false,
+  initialId,
+}: {
+  editingRights?: boolean
+  initialId: string
+}) => {
   const { profile, getProfile } = useUserStore()
   const router = useRouter()
   const pathname = usePathname()
@@ -205,7 +217,7 @@ export const Details = ({ canAdd = false, initialId }: { canAdd?: boolean; initi
           width={win.width * 0.8}
           defaultScrollOffsetValue={scrollOffsetValue}
           onSnapToItem={(index) => console.log('current index:', index)}
-          renderItem={({ item }) => renderItem({ item, canAdd })}
+          renderItem={({ item }) => renderItem({ item, editingRights })}
         />
       </View>
 

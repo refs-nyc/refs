@@ -166,7 +166,7 @@ export const useUserStore = create<{
     set(() => ({
       user: record,
     }))
-    return record
+    return record.record
   },
   //
   //

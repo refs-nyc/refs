@@ -8,7 +8,13 @@ import { ListItem } from './ListItem'
 import { s } from '@/features/style'
 import { YStack } from '../core/Stacks'
 
-export const ListContainer = ({ item, canAdd }: { item: ExpandedItem; canAdd: boolean }) => {
+export const ListContainer = ({
+  item,
+  editingRights,
+}: {
+  item: ExpandedItem
+  editingRights: boolean
+}) => {
   const { addingToList, setAddingToList } = useUIStore()
 
   return (item?.expand?.children ?? []).length > 0 ? (
@@ -19,7 +25,7 @@ export const ListContainer = ({ item, canAdd }: { item: ExpandedItem; canAdd: bo
         ))}
       </YStack>
 
-      {canAdd && (
+      {editingRights && (
         <Button
           onPress={() => setAddingToList(item.id)}
           variant="smallMuted"
@@ -33,7 +39,7 @@ export const ListContainer = ({ item, canAdd }: { item: ExpandedItem; canAdd: bo
         onPress={() => setAddingToList(item.id)}
         style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}
       >
-        {canAdd && (
+        {editingRights && (
           <Button
             onPress={() => setAddingToList(item.id)}
             variant="smallMuted"

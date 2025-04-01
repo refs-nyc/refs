@@ -78,6 +78,7 @@ export const FormFieldWithIcon = ({
           secureTextEntry={
             type === 'password' || type === 'passwordConfirm' ? !showPassword : false
           }
+          autoCorrect={false}
           autoFocus={autoFocus}
           placeholder={placeholder}
           placeholderTextColor={c.accent}

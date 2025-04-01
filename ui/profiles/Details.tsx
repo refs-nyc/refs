@@ -136,7 +136,6 @@ export const Details = ({ canAdd = false, initialId }: { canAdd?: boolean; initi
   const insets = useSafeAreaInsets()
   const { addingToList, setAddingToList } = useUIStore()
   const scrollOffsetValue = useSharedValue<number>(10)
-  const [defaultIndex, setDefaultIndex] = useState<number | null>(null)
 
   // Compute userNameParam
   const userNameParam =
@@ -155,20 +154,18 @@ export const Details = ({ canAdd = false, initialId }: { canAdd?: boolean; initi
   useEffect(() => {
     if (data.length > 0) {
       const rawIndex = data.findIndex((itm) => itm.id === initialId)
+
       if (rawIndex === 0) {
-        setDefaultIndex(rawIndex)
+        ref.current?.scrollTo({ index: rawIndex })
       } else {
-        const correctedIndex = data.length - rawIndex // 🔥 Adjust for reverse order
+        let correctedIndex = data.length - rawIndex // 🔥 Adjust for reverse order
 
-        console.log('Raw Index:', rawIndex, 'Corrected Index:', correctedIndex)
-        setDefaultIndex(correctedIndex)
-      }
-
-      setTimeout(() => {
-        if (defaultIndex !== null) {
-          ref.current?.scrollTo({ index: defaultIndex })
+        if (correctedIndex > -1 && correctedIndex < data.length - 1) {
+          ref.current?.scrollTo({ index: correctedIndex })
+        } else {
+          ref.current?.scrollTo({ index: correctedIndex })
         }
-      }, 100)
+      }
     }
   }, [data, initialId])
 
@@ -195,25 +192,21 @@ export const Details = ({ canAdd = false, initialId }: { canAdd?: boolean; initi
         >
           <Ionicons size={s.$1} name="close" color={c.muted} />
         </Pressable>
-        {defaultIndex !== null && (
-          <Carousel
-            key={defaultIndex}
-            defaultIndex={defaultIndex}
-            onConfigurePanGesture={(gesture) => {
-              'worklet'
-              gesture.activeOffsetX([-10, 10])
-            }}
-            loop={data.length > 1}
-            ref={ref}
-            data={data}
-            height={win.height}
-            style={{ overflow: 'visible', top: win.height * 0.2 }}
-            width={win.width * 0.8}
-            defaultScrollOffsetValue={scrollOffsetValue}
-            onSnapToItem={(index) => console.log('current index:', index)}
-            renderItem={({ item }) => renderItem({ item, canAdd })}
-          />
-        )}
+        <Carousel
+          onConfigurePanGesture={(gesture) => {
+            'worklet'
+            gesture.activeOffsetX([-10, 10])
+          }}
+          loop={data.length > 1}
+          ref={ref}
+          data={data}
+          height={win.height}
+          style={{ overflow: 'visible', top: win.height * 0.2 }}
+          width={win.width * 0.8}
+          defaultScrollOffsetValue={scrollOffsetValue}
+          onSnapToItem={(index) => console.log('current index:', index)}
+          renderItem={({ item }) => renderItem({ item, canAdd })}
+        />
       </View>
 
       {addingToList !== '' && addingItem && (

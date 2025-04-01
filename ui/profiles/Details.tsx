@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, forwardRef } from 'react'
 import { Image } from 'expo-image'
 import { Zoomable } from '@likashefqet/react-native-image-zoom'
+import { ContextMenu } from '../atoms/ContextMenu'
 import { Link, useGlobalSearchParams, usePathname, useRouter } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { View, Dimensions, Pressable, Text } from 'react-native'
@@ -24,25 +25,26 @@ const win = Dimensions.get('window')
 export const renderItem = ({
   item,
   editingRights,
+  index,
+  activeIndex,
 }: {
   item: ExpandedItem
   editingRights?: boolean
+  index: number
+  activeIndex: number
 }) => {
+  const [showContextMenu, setShowContextMenu] = useState(false)
   const [editing, setEditing] = useState(false)
-  const [title, setTitle] = useState(item.expand?.ref?.title || '')
+  const [title, setTitle] = useState(item.expand?.ref.title)
 
-  const { updateOne } = useRefStore()
+  useEffect(() => {
+    if (index !== activeIndex && showContextMenu) {
+      setShowContextMenu(false)
+    }
+  }, [activeIndex])
 
   return (
-    <Pressable
-      onLongPress={() => {
-        console.log('editing intent', editingRights)
-        if (!editingRights) return
-
-        console.log('Start editing')
-        setEditing(true)
-      }}
-    >
+    <Pressable onLongPress={() => setShowContextMenu(true)}>
       <View
         style={{
           height: 'auto', // hack
@@ -56,6 +58,11 @@ export const renderItem = ({
         key={item.id}
       >
         <View style={{ width: '100%', aspectRatio: 1, overflow: 'hidden', borderRadius: s.$075 }}>
+          {showContextMenu && (
+            <View style={{ position: 'absolute', zIndex: 1, bottom: s.$1, alignSelf: 'center' }}>
+              <ContextMenu onEditPress={() => setEditing(true)} editingRights={editingRights} />
+            </View>
+          )}
           {item.image && !item.list ? (
             item.expand?.ref.image && (
               <Zoomable
@@ -185,6 +192,7 @@ export const Details = ({
   const insets = useSafeAreaInsets()
   const { addingToList, setAddingToList } = useUIStore()
   const scrollOffsetValue = useSharedValue<number>(10)
+  const [activeIndex, setActiveIndex] = useState(-1)
 
   // Compute userNameParam
   const userNameParam =
@@ -253,8 +261,18 @@ export const Details = ({
           style={{ overflow: 'visible', top: win.height * 0.2 }}
           width={win.width * 0.8}
           defaultScrollOffsetValue={scrollOffsetValue}
-          onSnapToItem={(index) => console.log('current index:', index)}
-          renderItem={({ item }) => renderItem({ item, editingRights })}
+          onSnapToItem={(i) => {
+            setActiveIndex(i)
+            console.log('current index:', i)
+          }}
+          renderItem={({ item, index }) =>
+            renderItem({
+              item,
+              editingRights,
+              index,
+              activeIndex,
+            })
+          }
         />
       </View>
 

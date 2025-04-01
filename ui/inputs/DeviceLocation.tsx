@@ -14,20 +14,16 @@ import { c, t, s } from '@/features/style'
 import DropDownPicker from 'react-native-dropdown-picker'
 import * as Device from 'expo-device'
 import * as Location from 'expo-location'
-import { Pressable } from 'react-native-gesture-handler'
 import { Heading } from '../typo/Heading'
 import { Button } from '../buttons/Button'
 
 export const DeviceLocation = ({ onChange }: { onChange: (value: string) => void }) => {
-  const [locationState, setLocation] = useState<Location.LocationObject | null>(null)
-  const [humanReadableFormat, setHumanReadableFormat] = useState('')
   const [open, setOpen] = useState(false)
   const [loadingMessage, setLoadingMessage] = useState('')
   const [value, setValue] = useState<string | null>(null)
-  // Ensure "Elsewhere" is added to the dropdown items from the start.
   const [items, setItems] = useState(generateDropdownItems())
 
-  const { stagedUser, updateStagedUser, updateUser } = useUserStore()
+  const { updateStagedUser, updateUser } = useUserStore()
 
   /** Get location from button click */
   async function getCurrentLocation() {
@@ -45,8 +41,7 @@ export const DeviceLocation = ({ onChange }: { onChange: (value: string) => void
       return
     }
 
-    let location = await Location.getCurrentPositionAsync({})
-    setLocation(location)
+    const location = await Location.getCurrentPositionAsync({})
 
     const hoodResult = await getNeighborhoodFromCoordinates({
       lon: location?.coords.longitude,
@@ -59,7 +54,6 @@ export const DeviceLocation = ({ onChange }: { onChange: (value: string) => void
 
     const locationLabel = getPlaceLabel(place, borough, neighborhood)
 
-    setHumanReadableFormat(locationLabel)
     setValue(locationLabel)
     setLoadingMessage(locationLabel)
     onChange(locationLabel)
@@ -92,12 +86,11 @@ export const DeviceLocation = ({ onChange }: { onChange: (value: string) => void
         searchPlaceholder="Type a neighborhood"
         onSelectItem={async (item) => {
           console.log('selected, ', item)
-          const name = item.label
-          setHumanReadableFormat(name)
+          const name = item.label!
           setLoadingMessage(name)
           onChange(name)
 
-          const l = await getCoordinatesFromNeighborhood(item.label)
+          const l = await getCoordinatesFromNeighborhood(name)
 
           if (l) {
             const lat = l.geometry.coordinates[0]

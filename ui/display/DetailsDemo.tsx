@@ -52,7 +52,7 @@ export const DetailsDemo = () => {
     >
       <DetailsDemoCarousel
         data={items}
-        renderItem={({ item }) => renderItem({ item, canAdd: false })}
+        renderItem={({ item }) => renderItem({ item, editingRights: false })}
         height={800}
         width={win.width}
         style={{ overflow: 'visible' }}

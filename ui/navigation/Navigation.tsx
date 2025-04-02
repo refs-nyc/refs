@@ -66,7 +66,7 @@ export const Navigation = () => {
           }}
         >
           <View style={{ position: 'relative', marginTop: 4, left: 5 }}>
-            <Link href={`/user/${user.userName}`}>
+            <Link dismissTo href={`/`}>
               {user.image ? (
                 <Avatar source={user.image} size={42} />
               ) : (
@@ -75,7 +75,7 @@ export const Navigation = () => {
             </Link>
           </View>
           <View style={{ position: 'relative', left: -2, marginTop: 3, paddingRight: 3 }}>
-            <Link href="/">
+            <Link href="/feed">
               {/* <Ionicons name="globe" size={42} color={c.accent} /> */}
               <Icon name="Globe" size={39} color={c.accent} />
             </Link>

@@ -13,7 +13,6 @@ import { configureReanimatedLogger } from 'react-native-reanimated'
 import { ShareIntentProvider } from 'expo-share-intent'
 
 import NetInfo from '@react-native-community/netinfo'
-import { pocketbase } from '@/features/pocketbase'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { useEffect } from 'react'
@@ -130,6 +129,13 @@ function RootLayoutNav() {
           options={{
             title: 'Refs',
             animation: 'fade_from_bottom',
+          }}
+        />
+        <Stack.Screen
+          name="feed"
+          options={{
+            title: 'Feed',
+            headerShown: false,
           }}
         />
         <Stack.Screen

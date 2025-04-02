@@ -90,8 +90,8 @@ const LoginStep = () => {
         if (values.login) {
           if (!stagedUser.email) throw new Error('email required')
           try {
-            const loginRecord = await loginWithPassword(stagedUser.email, values.login)
-            router.push(`/user/${loginRecord.userName}`)
+            await loginWithPassword(stagedUser.email, values.login)
+            router.dismissAll()
           } catch (error) {
             setError('login', { type: 'loginFailed', message: 'Login unsuccessful' })
           }

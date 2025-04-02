@@ -1,8 +1,7 @@
 import { View, Dimensions, DimensionValue } from 'react-native'
 import { useEffect } from 'react'
 import { Button, YStack, Heading } from '../../ui/index'
-import { pocketbase } from '@/features/pocketbase'
-import { Feed } from '@/features/home/feed'
+import { useUserStore } from '@/features/pocketbase'
 import Animated, {
   useAnimatedStyle,
   Easing,
@@ -13,6 +12,7 @@ import Animated, {
 
 import { router } from 'expo-router'
 import { c, s } from '@/features/style/index'
+import { UserProfileScreen } from '../user/profile-screen'
 
 const dims = Dimensions.get('window')
 
@@ -61,11 +61,14 @@ function RotatingImage() {
 }
 
 export function HomeScreen() {
+  const { user } = useUserStore()
+
   return (
     <>
-      {pocketbase.authStore.isValid && pocketbase.authStore?.record?.userName ? (
+      {user ? (
         <>
-          <Feed />
+          {/* show the current user's profile */}
+          <UserProfileScreen userName={user.userName} />
         </>
       ) : (
         <View
@@ -83,15 +86,7 @@ export function HomeScreen() {
             </Heading>
             <YStack style={{ alignItems: 'center' }} gap={s.$05}>
               <Button title="Join" onPress={() => router.push('/onboarding')} />
-              {pocketbase.authStore.isValid && pocketbase.authStore?.record?.userName ? (
-                <Button
-                  variant="basic"
-                  title="Profile"
-                  onPress={() => router.push(`/user/${pocketbase.authStore?.record?.userName}`)}
-                />
-              ) : (
-                <Button variant="basic" title="Login" onPress={() => router.push('/user/login')} />
-              )}
+              <Button variant="basic" title="Login" onPress={() => router.push('/user/login')} />
             </YStack>
           </YStack>
           <RotatingImage />

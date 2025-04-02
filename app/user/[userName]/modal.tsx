@@ -1,5 +1,5 @@
 import { UserDetailsScreen } from '@/features/user/detail-screen'
-import { Stack, useLocalSearchParams } from 'expo-router'
+import { useLocalSearchParams } from 'expo-router'
 
 export default function ModalScreen() {
   const { userName, initialId } = useLocalSearchParams()

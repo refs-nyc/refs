@@ -58,13 +58,7 @@ Notifications.setNotificationHandler({
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync()
 
-function FontProvider({
-  children,
-  onFontsLoaded,
-}: {
-  children: React.ReactNode
-  onFontsLoaded: () => void
-}) {
+function FontProvider({ children }: { children: React.ReactNode }) {
   const [interLoaded, interError] = useFonts({
     Inter: require('@/assets/fonts/Inter-Medium.ttf'),
     InterSemiBold: require('@/assets/fonts/Inter-SemiBold.ttf'),
@@ -79,9 +73,7 @@ function FontProvider({
       // Hide the splash screen after the fonts have loaded (or an error was returned) and the UI is ready.
       SplashScreen.hideAsync()
     }
-
-    onFontsLoaded()
-  }, [interLoaded, interError, onFontsLoaded])
+  }, [interLoaded, interError])
 
   if (!interLoaded && !interError) {
     return null
@@ -113,18 +105,7 @@ const Providers = ({ children }: { children: React.ReactNode }) => {
     <ShareIntentProvider>
       <SafeAreaProvider>
         <GestureHandlerRootView>
-          <FontProvider
-            onFontsLoaded={() => {
-              if (pocketbase.authStore.isValid) {
-                console.log('user is logged in')
-              } else {
-                console.log('user is not logged in')
-                router.push('/')
-              }
-            }}
-          >
-            {children}
-          </FontProvider>
+          <FontProvider>{children}</FontProvider>
         </GestureHandlerRootView>
       </SafeAreaProvider>
     </ShareIntentProvider>

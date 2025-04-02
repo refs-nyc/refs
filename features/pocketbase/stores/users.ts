@@ -161,12 +161,17 @@ export const useUserStore = create<{
       throw error
     }
   },
+  //
+  //
+  //
   loginWithPassword: async (email: string, password: string) => {
-    const record = await pocketbase.collection('users').authWithPassword(email, password)
+    const response = await pocketbase
+      .collection<UsersRecord>('users')
+      .authWithPassword(email, password)
     set(() => ({
-      user: record,
+      user: response.record,
     }))
-    return record.record
+    return response.record
   },
   //
   //
@@ -204,10 +209,10 @@ export const useUserStore = create<{
   //
   logout: async () => {
     set(() => ({
+      user: null,
       stagedUser: {},
     }))
-    await pocketbase.authStore.clear()
-    router.push('/')
+    pocketbase.authStore.clear()
   },
   //
   //

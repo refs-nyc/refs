@@ -2,7 +2,6 @@ import { pocketbase } from '../pocketbase'
 import { create } from 'zustand'
 import { Profile, EmptyProfile, ExpandedProfile, Item } from './types'
 import { UsersRecord, UsersResponse, ItemsResponse } from './pocketbase-types'
-import { router } from 'expo-router'
 import { canvasApp } from './canvas'
 import { ClientResponseError } from 'pocketbase'
 import { gridSort, createdSort } from '@/ui/profiles/sorts'
@@ -19,7 +18,7 @@ export const isExpandedProfile = (
 
 export const useUserStore = create<{
   stagedUser: Partial<Profile>
-  user: Profile | EmptyProfile
+  user: Profile | null
   profile: Profile | EmptyProfile
   profileItems: Item[]
   backlogItems: Item[]
@@ -31,11 +30,11 @@ export const useUserStore = create<{
   loginWithPassword: (email: string, password: string) => Promise<any>
   getUserByEmail: (email: string) => Promise<Profile>
   login: (userName: string) => Promise<Profile>
-  logout: () => Promise<void>
+  logout: () => void
   removeItem: (itemId: string) => Promise<ExpandedProfile>
 }>((set, get) => ({
   stagedUser: {},
-  user: {}, // user is ALWAYS the user of the app
+  user: null, // user is ALWAYS the user of the app, this is only set if the user is logged in
   profile: {}, // profile can be any page you are currently viewing
   profileItems: [],
   backlogItems: [],
@@ -207,7 +206,7 @@ export const useUserStore = create<{
   //
   //
   //
-  logout: async () => {
+  logout: () => {
     set(() => ({
       user: null,
       stagedUser: {},

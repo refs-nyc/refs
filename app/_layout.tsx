@@ -102,19 +102,8 @@ export default function RootLayout() {
 
   return (
     <Providers>
-      <FontProvider
-        onFontsLoaded={() => {
-          if (pocketbase.authStore.isValid) {
-            console.log('user is logged in')
-          } else {
-            console.log('user is not logged in')
-            router.push('/')
-          }
-        }}
-      >
-        <RootLayoutNav />
-        <DeferredFonts />
-      </FontProvider>
+      <RootLayoutNav />
+      <DeferredFonts />
     </Providers>
   )
 }
@@ -123,7 +112,20 @@ const Providers = ({ children }: { children: React.ReactNode }) => {
   return (
     <ShareIntentProvider>
       <SafeAreaProvider>
-        <GestureHandlerRootView>{children}</GestureHandlerRootView>
+        <GestureHandlerRootView>
+          <FontProvider
+            onFontsLoaded={() => {
+              if (pocketbase.authStore.isValid) {
+                console.log('user is logged in')
+              } else {
+                console.log('user is not logged in')
+                router.push('/')
+              }
+            }}
+          >
+            {children}
+          </FontProvider>
+        </GestureHandlerRootView>
       </SafeAreaProvider>
     </ShareIntentProvider>
   )

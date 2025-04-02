@@ -161,14 +161,6 @@ function RootLayoutNav() {
           }}
         />
         <Stack.Screen
-          name="user/[userName]/settings/index"
-          options={{
-            title: 'Settings',
-            animation: 'slide_from_left',
-            headerShown: false,
-          }}
-        />
-        <Stack.Screen
           name="user/login"
           options={{
             title: 'Login',

@@ -7,7 +7,6 @@ import { Dimensions, View } from 'react-native'
 import { XStack } from '../core/Stacks'
 import { Avatar } from '../atoms/Avatar'
 import { c, s } from '@/features/style'
-import { pocketbase } from '@/features/pocketbase'
 import { useUserStore } from '@/features/pocketbase/stores/users'
 import { Icon } from '@/assets/icomoon/IconFont'
 
@@ -20,7 +19,7 @@ export const Navigation = () => {
   const { addingTo, removingId } = useGlobalSearchParams()
 
   if (
-    (pathName === '/' && !pocketbase.authStore.isValid) ||
+    !user ||
     pathName.includes('/onboarding') ||
     pathName.includes('/user/login') ||
     pathName.includes('/user/register') ||
@@ -66,21 +65,15 @@ export const Navigation = () => {
             zIndex: 1,
           }}
         >
-          {pocketbase.authStore.record ? (
-            <View style={{ position: 'relative', marginTop: 4, left: 5 }}>
-              <Link href={`/user/${pocketbase.authStore.record.userName}`}>
-                {pocketbase.authStore.record.image ? (
-                  <Avatar source={pocketbase.authStore.record.image} size={42} />
-                ) : (
-                  <Ionicons name="person" size={42} color={c.accent} />
-                )}
-              </Link>
-            </View>
-          ) : (
-            <View style={{ width: 42, height: 42 }}>
-              <Ionicons name="person" size={42} color={c.accent} />
-            </View>
-          )}
+          <View style={{ position: 'relative', marginTop: 4, left: 5 }}>
+            <Link href={`/user/${user.userName}`}>
+              {user.image ? (
+                <Avatar source={user.image} size={42} />
+              ) : (
+                <Ionicons name="person" size={42} color={c.accent} />
+              )}
+            </Link>
+          </View>
           <View style={{ position: 'relative', left: -2, marginTop: 3, paddingRight: 3 }}>
             <Link href="/">
               {/* <Ionicons name="globe" size={42} color={c.accent} /> */}

@@ -16,7 +16,7 @@ import { c, s } from '@/features/style/index'
 
 const dims = Dimensions.get('window')
 
-export function HomeScreen() {
+function RotatingImage() {
   const rotation = useSharedValue(0)
 
   // Start the infinite rotation when component mounts
@@ -43,6 +43,24 @@ export function HomeScreen() {
     }
   })
 
+  return (
+    <Animated.Image
+      style={[
+        {
+          width: dims.width * 1.2,
+          height: dims.width * 1.2,
+          position: 'absolute',
+          right: -dims.width / 3,
+          bottom: -dims.width / 2,
+        },
+        animatedStyle,
+      ]}
+      source={require('@/assets/images/homepage.png')}
+    />
+  )
+}
+
+export function HomeScreen() {
   return (
     <>
       {pocketbase.authStore.isValid && pocketbase.authStore?.record?.userName ? (
@@ -76,19 +94,7 @@ export function HomeScreen() {
               )}
             </YStack>
           </YStack>
-          <Animated.Image
-            style={[
-              {
-                width: dims.width * 1.2,
-                height: dims.width * 1.2,
-                position: 'absolute',
-                right: -dims.width / 3,
-                bottom: -dims.width / 2,
-              },
-              animatedStyle,
-            ]}
-            source={require('@/assets/images/homepage.png')}
-          />
+          <RotatingImage />
         </View>
       )}
     </>

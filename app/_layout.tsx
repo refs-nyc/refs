@@ -58,7 +58,13 @@ Notifications.setNotificationHandler({
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync()
 
-export default function RootLayout() {
+function FontProvider({
+  children,
+  onFontsLoaded,
+}: {
+  children: React.ReactNode
+  onFontsLoaded: () => void
+}) {
   const [interLoaded, interError] = useFonts({
     Inter: require('@/assets/fonts/Inter-Medium.ttf'),
     InterSemiBold: require('@/assets/fonts/Inter-SemiBold.ttf'),
@@ -66,8 +72,25 @@ export default function RootLayout() {
     IcoMoon: require('@/assets/icomoon/fonts/icomoon.ttf'),
   })
 
-  function loadRemainingFonts() {}
+  useEffect(() => {
+    SystemUI.setBackgroundColorAsync(c.surface)
 
+    if (interLoaded || interError) {
+      // Hide the splash screen after the fonts have loaded (or an error was returned) and the UI is ready.
+      SplashScreen.hideAsync()
+    }
+
+    onFontsLoaded()
+  }, [interLoaded, interError, onFontsLoaded])
+
+  if (!interLoaded && !interError) {
+    return null
+  }
+
+  return <>{children}</>
+}
+
+export default function RootLayout() {
   useEffect(() => {
     const unsubscribe = NetInfo.addEventListener((state) => {
       console.log('Connection type', state.type)
@@ -77,34 +100,21 @@ export default function RootLayout() {
     return unsubscribe
   }, [])
 
-  useEffect(() => {
-    SystemUI.setBackgroundColorAsync(c.surface)
-
-    if (interLoaded || interError) {
-      // Hide the splash screen after the fonts have loaded (or an error was returned) and the UI is ready.
-      SplashScreen.hideAsync()
-
-      // Check if the user is already logged in
-      if (pocketbase.authStore.isValid) {
-        console.log('user is logged in')
-      } else {
-        pocketbase.authStore.clear()
-        console.log('user is not logged in')
-        router.push('/')
-      }
-
-      loadRemainingFonts()
-    }
-  }, [interLoaded, interError])
-
-  if (!interLoaded && !interError) {
-    return null
-  }
-
   return (
     <Providers>
-      <RootLayoutNav />
-      {interLoaded && <DeferredFonts />}
+      <FontProvider
+        onFontsLoaded={() => {
+          if (pocketbase.authStore.isValid) {
+            console.log('user is logged in')
+          } else {
+            console.log('user is not logged in')
+            router.push('/')
+          }
+        }}
+      >
+        <RootLayoutNav />
+        <DeferredFonts />
+      </FontProvider>
     </Providers>
   )
 }

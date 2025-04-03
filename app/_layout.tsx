@@ -131,6 +131,14 @@ function RootLayoutNav() {
             animation: 'fade_from_bottom',
           }}
         />
+        {/* modal for the current user */}
+        <Stack.Screen
+          name="modal"
+          options={{
+            title: 'Details',
+            animation: 'none',
+          }}
+        />
         <Stack.Screen
           name="feed"
           options={{

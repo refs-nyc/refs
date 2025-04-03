@@ -316,13 +316,14 @@ const DoneStep = ({ carouselRef }: { carouselRef: React.RefObject<ICarouselInsta
       showFullHeightStack={false}
       onSubmit={handleSubmit(
         async (values) => {
-          const userName = 'userName' in user && user.userName
+          const userName = user && 'userName' in user && user.userName
           if (!userName) {
             // user is not logged in
             // throw an error, redirect to home page?
             return
           }
-          router.push(`/user/${userName}`)
+          // go back to /, clear the stack of the onboarding screens
+          router.dismissAll()
         },
         (errors) => console.log('Errors:', errors)
       )}

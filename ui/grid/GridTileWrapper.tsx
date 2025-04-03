@@ -1,6 +1,6 @@
-import { Children, useState } from 'react'
+import { useState } from 'react'
 import { YStack } from '../core/Stacks'
-import { TouchableOpacity, Pressable, Text } from 'react-native'
+import { TouchableOpacity, Pressable } from 'react-native'
 import { base } from '@/features/style'
 import { GridTileType } from '@/features/pocketbase/stores/types'
 import { useUIStore } from '../state'
@@ -37,7 +37,9 @@ export const GridTileWrapper = ({
   const openDetailScreen = () => {
     if (pathname.includes('onboarding')) return
     stopEditProfile()
-    router.push(`${pathname}/modal${id && `?initialId=${id}`}`)
+    const url = pathname === '/' ? '/modal' : `${pathname}/modal`
+    const query = id ? `?initialId=${id}` : ''
+    router.push(`${url}${query}`)
   }
 
   const handleLongPress = () => {

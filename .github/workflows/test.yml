@@ -23,5 +23,6 @@ jobs:
       - name: Install dependencies
         run: yarn install
 
-      - name: Run tests
-        run: yarn test
+      # Commented out for now as we don't have any tests yet
+      # - name: Run tests
+      #   run: yarn test

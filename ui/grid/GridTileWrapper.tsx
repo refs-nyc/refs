@@ -7,6 +7,7 @@ import { useUIStore } from '../state'
 import { router, usePathname } from 'expo-router'
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { s, c } from '@/features/style'
+import { useUserStore } from '@/features/pocketbase'
 
 export const GridTileWrapper = ({
   type,
@@ -14,6 +15,7 @@ export const GridTileWrapper = ({
   id,
   canEdit,
   index,
+  onPress,
   onRemove,
 }: {
   type: GridTileType
@@ -21,6 +23,7 @@ export const GridTileWrapper = ({
   canEdit: boolean
   id?: string
   index?: number
+  onPress?: () => void
   onRemove?: () => void
 }) => {
   const pathname = usePathname()
@@ -37,7 +40,9 @@ export const GridTileWrapper = ({
   const openDetailScreen = () => {
     if (pathname.includes('onboarding')) return
     stopEditProfile()
-    router.push(`${pathname}/modal${id && `?initialId=${id}`}`)
+    const url = pathname === '/' ? '/modal' : `${pathname}/modal`
+    const query = id ? `?initialId=${id}` : ''
+    router.push(`${url}${query}`)
   }
 
   const handleLongPress = () => {

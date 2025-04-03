@@ -69,7 +69,7 @@ export const Nearby = ({ items }: { items: ExpandedItem[] }) => {
                     item.expand?.creator
                       ? item.backlog
                         ? `/user/${item.expand.creator?.userName}`
-                        : `/user/${item.expand.creator?.userName}/details?initialId=${item.id}`
+                        : `/user/${item.expand.creator?.userName}/modal?initialId=${item.id}`
                       : '/'
                   }
                 >

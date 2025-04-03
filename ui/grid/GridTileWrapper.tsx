@@ -14,7 +14,6 @@ export const GridTileWrapper = ({
   id,
   canEdit,
   index,
-  onPress,
   onRemove,
 }: {
   type: GridTileType
@@ -22,7 +21,6 @@ export const GridTileWrapper = ({
   canEdit: boolean
   id?: string
   index?: number
-  onPress?: () => void
   onRemove?: () => void
 }) => {
   const pathname = usePathname()

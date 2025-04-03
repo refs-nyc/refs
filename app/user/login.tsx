@@ -58,6 +58,7 @@ const EmailStep = ({ carouselRef }: { carouselRef: React.RefObject<ICarouselInst
             placeholder={'Login with email'}
             value={value}
             autoFocus={false}
+            autoCorrect={false}
           />
         )}
       />
@@ -115,6 +116,7 @@ const LoginStep = () => {
               placeholder="Password"
               value={value}
               autoFocus={false}
+              autoCorrect={false}
             />
           )
         }}

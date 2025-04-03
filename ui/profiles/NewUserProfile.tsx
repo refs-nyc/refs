@@ -70,6 +70,7 @@ const EmailStep = ({ carouselRef }: { carouselRef: React.RefObject<ICarouselInst
             placeholder={'Sign up with email'}
             value={value}
             autoFocus={false}
+            autoCorrect={false}
           />
         )}
       />
@@ -114,6 +115,7 @@ const NameStep = ({ carouselRef }: { carouselRef: React.RefObject<ICarouselInsta
             placeholder={'First Name'}
             value={value}
             autoFocus={false}
+            autoCorrect={false}
           />
         )}
       />
@@ -133,6 +135,7 @@ const NameStep = ({ carouselRef }: { carouselRef: React.RefObject<ICarouselInsta
             placeholder={'Last Name'}
             value={value}
             autoFocus={false}
+            autoCorrect={false}
           />
         )}
       />
@@ -225,6 +228,7 @@ const PasswordStep = ({ carouselRef }: { carouselRef: React.RefObject<ICarouselI
             value={value}
             autoFocus={false}
             onBlur={onBlur}
+            autoCorrect={false}
           />
         )}
       />
@@ -245,6 +249,7 @@ const PasswordStep = ({ carouselRef }: { carouselRef: React.RefObject<ICarouselI
             value={value}
             autoFocus={false}
             onBlur={onBlur}
+            autoCorrect={false}
           />
         )}
       />

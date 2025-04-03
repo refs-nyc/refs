@@ -14,6 +14,7 @@ export const FormFieldWithIcon = ({
   value = '',
   autoFocus = false,
   onBlur,
+  autoCorrect = true,
 }: {
   type:
     | 'email'
@@ -32,6 +33,7 @@ export const FormFieldWithIcon = ({
   onBlur: () => void
   value: string
   autoFocus: boolean
+  autoCorrect?: boolean
 }) => {
   const [showPassword, setShowPassword] = useState(false)
   const onSelect = (s: string) => {}
@@ -85,6 +87,7 @@ export const FormFieldWithIcon = ({
           onBlur={onBlur}
           onChangeText={onChange}
           value={value}
+          autoCorrect={autoCorrect}
           keyboardType={type === 'email' ? 'email-address' : 'default'}
         />
       </XStack>

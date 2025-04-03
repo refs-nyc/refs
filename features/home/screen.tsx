@@ -1,8 +1,7 @@
 import { View, Dimensions, DimensionValue } from 'react-native'
 import { useEffect } from 'react'
 import { Button, YStack, Heading } from '../../ui/index'
-import { pocketbase } from '@/features/pocketbase'
-import { Feed } from '@/features/home/feed'
+import { useUserStore } from '@/features/pocketbase'
 import Animated, {
   useAnimatedStyle,
   Easing,
@@ -13,10 +12,11 @@ import Animated, {
 
 import { router } from 'expo-router'
 import { c, s } from '@/features/style/index'
+import { UserProfileScreen } from '../user/profile-screen'
 
 const dims = Dimensions.get('window')
 
-export function HomeScreen() {
+function RotatingImage() {
   const rotation = useSharedValue(0)
 
   // Start the infinite rotation when component mounts
@@ -44,53 +44,51 @@ export function HomeScreen() {
   })
 
   return (
-    <>
-      {pocketbase.authStore.isValid && pocketbase.authStore?.record?.userName ? (
-        <>
-          <Feed />
-        </>
-      ) : (
-        <View
-          style={{
-            flex: 1,
-            justifyContent: 'flex-start',
-            padding: s.$4,
-            height: s.full as DimensionValue,
-            marginTop: dims.height * 0.2,
-          }}
-        >
-          <YStack gap={s.$3}>
-            <Heading tag="h1normal" style={{ textAlign: 'center', color: c.black }}>
-              <Heading tag="strong">Refs</Heading> is the phonebook for the internet.
-            </Heading>
-            <YStack style={{ alignItems: 'center' }} gap={s.$05}>
-              <Button title="Join" onPress={() => router.push('/onboarding')} />
-              {pocketbase.authStore.isValid && pocketbase.authStore?.record?.userName ? (
-                <Button
-                  variant="basic"
-                  title="Profile"
-                  onPress={() => router.push(`/user/${pocketbase.authStore?.record?.userName}`)}
-                />
-              ) : (
-                <Button variant="basic" title="Login" onPress={() => router.push('/user/login')} />
-              )}
-            </YStack>
-          </YStack>
-          <Animated.Image
-            style={[
-              {
-                width: dims.width * 1.2,
-                height: dims.width * 1.2,
-                position: 'absolute',
-                right: -dims.width / 3,
-                bottom: -dims.width / 2,
-              },
-              animatedStyle,
-            ]}
-            source={require('@/assets/images/homepage.png')}
-          />
-        </View>
-      )}
-    </>
+    <Animated.Image
+      style={[
+        {
+          width: dims.width * 1.2,
+          height: dims.width * 1.2,
+          position: 'absolute',
+          right: -dims.width / 3,
+          bottom: -dims.width / 2,
+        },
+        animatedStyle,
+      ]}
+      source={require('@/assets/images/homepage.png')}
+    />
   )
+}
+
+export function HomeScreen() {
+  const { user } = useUserStore()
+
+  if (user) {
+    // if the user is logged in, show the user's profile
+    return <UserProfileScreen userName={user.userName} />
+  } else {
+    // if the user is not logged in, show the home screen
+    return (
+      <View
+        style={{
+          flex: 1,
+          justifyContent: 'flex-start',
+          padding: s.$4,
+          height: s.full as DimensionValue,
+          marginTop: dims.height * 0.2,
+        }}
+      >
+        <YStack gap={s.$3}>
+          <Heading tag="h1normal" style={{ textAlign: 'center', color: c.black }}>
+            <Heading tag="strong">Refs</Heading> is the phonebook for the internet.
+          </Heading>
+          <YStack style={{ alignItems: 'center' }} gap={s.$05}>
+            <Button title="Join" onPress={() => router.push('/onboarding')} />
+            <Button variant="basic" title="Login" onPress={() => router.push('/user/login')} />
+          </YStack>
+        </YStack>
+        <RotatingImage />
+      </View>
+    )
+  }
 }

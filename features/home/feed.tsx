@@ -4,13 +4,13 @@ import { useState, useEffect } from 'react'
 import { SearchBar, YStack, Heading, DismissKeyboard, Button } from '@/ui'
 import { pocketbase } from '@/features/pocketbase'
 import { useUserStore } from '@/features/pocketbase/stores/users'
-import { Link } from 'expo-router'
 import { View, ScrollView, Dimensions } from 'react-native'
 import { s } from '@/features/style'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Nearby } from './nearby'
 
 import { SearchResults } from './results'
+import { router } from 'expo-router'
 
 const win = Dimensions.get('window')
 

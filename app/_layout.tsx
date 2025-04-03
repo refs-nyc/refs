@@ -13,7 +13,6 @@ import { configureReanimatedLogger } from 'react-native-reanimated'
 import { ShareIntentProvider } from 'expo-share-intent'
 
 import NetInfo from '@react-native-community/netinfo'
-import { pocketbase } from '@/features/pocketbase'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { useEffect } from 'react'
@@ -58,7 +57,7 @@ Notifications.setNotificationHandler({
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync()
 
-export default function RootLayout() {
+function FontProvider({ children }: { children: React.ReactNode }) {
   const [interLoaded, interError] = useFonts({
     Inter: require('@/assets/fonts/Inter-Medium.ttf'),
     InterSemiBold: require('@/assets/fonts/Inter-SemiBold.ttf'),
@@ -66,8 +65,23 @@ export default function RootLayout() {
     IcoMoon: require('@/assets/icomoon/fonts/icomoon.ttf'),
   })
 
-  function loadRemainingFonts() {}
+  useEffect(() => {
+    SystemUI.setBackgroundColorAsync(c.surface)
 
+    if (interLoaded || interError) {
+      // Hide the splash screen after the fonts have loaded (or an error was returned) and the UI is ready.
+      SplashScreen.hideAsync()
+    }
+  }, [interLoaded, interError])
+
+  if (!interLoaded && !interError) {
+    return null
+  }
+
+  return <>{children}</>
+}
+
+export default function RootLayout() {
   useEffect(() => {
     const unsubscribe = NetInfo.addEventListener((state) => {
       console.log('Connection type', state.type)
@@ -77,34 +91,10 @@ export default function RootLayout() {
     return unsubscribe
   }, [])
 
-  useEffect(() => {
-    SystemUI.setBackgroundColorAsync(c.surface)
-
-    if (interLoaded || interError) {
-      // Hide the splash screen after the fonts have loaded (or an error was returned) and the UI is ready.
-      SplashScreen.hideAsync()
-
-      // Check if the user is already logged in
-      if (pocketbase.authStore.isValid) {
-        console.log('user is logged in')
-      } else {
-        pocketbase.authStore.clear()
-        console.log('user is not logged in')
-        router.push('/')
-      }
-
-      loadRemainingFonts()
-    }
-  }, [interLoaded, interError])
-
-  if (!interLoaded && !interError) {
-    return null
-  }
-
   return (
     <Providers>
       <RootLayoutNav />
-      {interLoaded && <DeferredFonts />}
+      <DeferredFonts />
     </Providers>
   )
 }
@@ -113,7 +103,9 @@ const Providers = ({ children }: { children: React.ReactNode }) => {
   return (
     <ShareIntentProvider>
       <SafeAreaProvider>
-        <GestureHandlerRootView>{children}</GestureHandlerRootView>
+        <GestureHandlerRootView>
+          <FontProvider>{children}</FontProvider>
+        </GestureHandlerRootView>
       </SafeAreaProvider>
     </ShareIntentProvider>
   )
@@ -137,6 +129,21 @@ function RootLayoutNav() {
           options={{
             title: 'Refs',
             animation: 'fade_from_bottom',
+          }}
+        />
+        {/* modal for the current user */}
+        <Stack.Screen
+          name="modal"
+          options={{
+            title: 'Details',
+            animation: 'none',
+          }}
+        />
+        <Stack.Screen
+          name="feed"
+          options={{
+            title: 'Feed',
+            headerShown: false,
           }}
         />
         <Stack.Screen
@@ -164,14 +171,6 @@ function RootLayoutNav() {
             animation: 'slide_from_left',
             gestureEnabled: true,
             gestureDirection: 'horizontal',
-            headerShown: false,
-          }}
-        />
-        <Stack.Screen
-          name="user/[userName]/settings/index"
-          options={{
-            title: 'Settings',
-            animation: 'slide_from_left',
             headerShown: false,
           }}
         />

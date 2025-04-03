@@ -2,10 +2,89 @@ import { XStack, YStack, Heading } from '@/ui'
 import type { ExpandedItem } from '@/features/pocketbase/stores/types'
 import { Link } from 'expo-router'
 import { View, Dimensions } from 'react-native'
+import { useUserStore } from '@/features/pocketbase'
 import { s, c } from '@/features/style'
 import { SimplePinataImage } from '@/ui/images/SimplePinataImage'
-
+import Ionicons from '@expo/vector-icons/Ionicons'
 const win = Dimensions.get('window')
+
+const ListItem = ({ item }: { item: ExpandedItem }) => {
+  const { user } = useUserStore()
+  const creator = item.expand!.creator
+  const createdByCurrentUser = user && creator.userName === user?.userName
+
+  const creatorProfileUrl = createdByCurrentUser
+    ? ('/' as const)
+    : (`/user/${creator.userName}` as const)
+  const itemUrl = `${creatorProfileUrl}/modal?initialId=${item.id}` as const
+
+  return (
+    <XStack
+      key={item.id}
+      gap={s.$09}
+      style={{
+        paddingVertical: s.$05,
+        alignItems: 'center',
+        width: '100%',
+        justifyContent: 'space-between',
+      }}
+    >
+      {item.expand?.creator && (
+        <Link dismissTo={creatorProfileUrl === '/'} href={creatorProfileUrl}>
+          {creator.image ? (
+            <SimplePinataImage
+              originalSource={creator.image}
+              imageOptions={{ width: s.$5, height: s.$5 }}
+              style={{
+                width: s.$5,
+                height: s.$5,
+                backgroundColor: c.accent,
+                borderRadius: 100,
+              }}
+            />
+          ) : (
+            <Ionicons name="person" size={42} color={c.accent} />
+          )}
+        </Link>
+      )}
+      <View style={{ overflow: 'hidden', flex: 1 }}>
+        <Heading tag="p">
+          <Link dismissTo={creatorProfileUrl === '/'} href={creatorProfileUrl}>
+            <Heading tag="semistrong">{item.expand?.creator?.firstName || 'Anonymous'} </Heading>
+          </Link>
+          <Heading style={{ color: c.muted2 }} tag="p">
+            added{' '}
+          </Heading>
+          <Link href={item.expand?.creator ? (item.backlog ? creatorProfileUrl : itemUrl) : '/'}>
+            <Heading tag="semistrong">{item.expand?.ref?.title}</Heading>
+          </Link>
+        </Heading>
+      </View>
+
+      {item?.image ? (
+        <SimplePinataImage
+          originalSource={item.image}
+          imageOptions={{ width: s.$5, height: s.$5 }}
+          style={{
+            width: s.$5,
+            height: s.$5,
+            backgroundColor: c.accent,
+            borderRadius: s.$075,
+          }}
+        />
+      ) : (
+        <View
+          style={{
+            width: s.$5,
+            height: s.$5,
+            backgroundColor: c.accent,
+            borderRadius: s.$075,
+          }}
+        />
+      )}
+    </XStack>
+  )
+}
 
 export const Nearby = ({ items }: { items: ExpandedItem[] }) => {
   return (
@@ -30,76 +109,7 @@ export const Nearby = ({ items }: { items: ExpandedItem[] }) => {
         }}
       >
         {items.map((item) => (
-          <XStack
-            key={item.id}
-            gap={s.$09}
-            style={{
-              paddingVertical: s.$05,
-              alignItems: 'center',
-              width: '100%',
-              justifyContent: 'space-between',
-            }}
-          >
-            {item.expand?.creator && (
-              <Link href={item.expand?.creator ? `/user/${item.expand.creator?.userName}` : '/'}>
-                <SimplePinataImage
-                  originalSource={item.expand.creator?.image}
-                  imageOptions={{ width: s.$5, height: s.$5 }}
-                  style={{
-                    width: s.$5,
-                    height: s.$5,
-                    backgroundColor: c.accent,
-                    borderRadius: 100,
-                  }}
-                />
-              </Link>
-            )}
-            <View style={{ overflow: 'hidden', flex: 1 }}>
-              <Heading tag="p">
-                <Link href={item.expand?.creator ? `/user/${item.expand.creator?.userName}` : '/'}>
-                  <Heading tag="semistrong">
-                    {item.expand?.creator?.firstName || 'Anonymous'}{' '}
-                  </Heading>
-                </Link>
-                <Heading style={{ color: c.muted2 }} tag="p">
-                  added{' '}
-                </Heading>
-                <Link
-                  href={
-                    item.expand?.creator
-                      ? item.backlog
-                        ? `/user/${item.expand.creator?.userName}`
-                        : `/user/${item.expand.creator?.userName}/details?initialId=${item.id}`
-                      : '/'
-                  }
-                >
-                  <Heading tag="semistrong">{item.expand?.ref?.title}</Heading>
-                </Link>
-              </Heading>
-            </View>
-
-            {item?.image ? (
-              <SimplePinataImage
-                originalSource={item.image}
-                imageOptions={{ width: s.$5, height: s.$5 }}
-                style={{
-                  width: s.$5,
-                  height: s.$5,
-                  backgroundColor: c.accent,
-                  borderRadius: s.$075,
-                }}
-              />
-            ) : (
-              <View
-                style={{
-                  width: s.$5,
-                  height: s.$5,
-                  backgroundColor: c.accent,
-                  borderRadius: s.$075,
-                }}
-              />
-            )}
-          </XStack>
+          <ListItem key={item.id} item={item} />
         ))}
       </YStack>
     </View>

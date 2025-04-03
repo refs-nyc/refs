@@ -63,35 +63,32 @@ function RotatingImage() {
 export function HomeScreen() {
   const { user } = useUserStore()
 
-  return (
-    <>
-      {user ? (
-        <>
-          {/* show the current user's profile */}
-          <UserProfileScreen userName={user.userName} />
-        </>
-      ) : (
-        <View
-          style={{
-            flex: 1,
-            justifyContent: 'flex-start',
-            padding: s.$4,
-            height: s.full as DimensionValue,
-            marginTop: dims.height * 0.2,
-          }}
-        >
-          <YStack gap={s.$3}>
-            <Heading tag="h1normal" style={{ textAlign: 'center', color: c.black }}>
-              <Heading tag="strong">Refs</Heading> is the phonebook for the internet.
-            </Heading>
-            <YStack style={{ alignItems: 'center' }} gap={s.$05}>
-              <Button title="Join" onPress={() => router.push('/onboarding')} />
-              <Button variant="basic" title="Login" onPress={() => router.push('/user/login')} />
-            </YStack>
+  if (user) {
+    // if the user is logged in, show the user's profile
+    return <UserProfileScreen userName={user.userName} />
+  } else {
+    // if the user is not logged in, show the home screen
+    return (
+      <View
+        style={{
+          flex: 1,
+          justifyContent: 'flex-start',
+          padding: s.$4,
+          height: s.full as DimensionValue,
+          marginTop: dims.height * 0.2,
+        }}
+      >
+        <YStack gap={s.$3}>
+          <Heading tag="h1normal" style={{ textAlign: 'center', color: c.black }}>
+            <Heading tag="strong">Refs</Heading> is the phonebook for the internet.
+          </Heading>
+          <YStack style={{ alignItems: 'center' }} gap={s.$05}>
+            <Button title="Join" onPress={() => router.push('/onboarding')} />
+            <Button variant="basic" title="Login" onPress={() => router.push('/user/login')} />
           </YStack>
-          <RotatingImage />
-        </View>
-      )}
-    </>
-  )
+        </YStack>
+        <RotatingImage />
+      </View>
+    )
+  }
 }

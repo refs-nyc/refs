@@ -1,10 +1,13 @@
 import { Feed } from '@/features/home/feed'
-import { RequireAuth } from '@/ui/navigation/RequireAuth'
+import { useUserStore } from '@/features/pocketbase/stores/users'
+import { router } from 'expo-router'
 
 export default function Screen() {
-  return (
-    <RequireAuth>
-      <Feed />
-    </RequireAuth>
-  )
+  const { user } = useUserStore()
+
+  if (!user) {
+    router.dismissAll()
+  }
+
+  return <Feed />
 }

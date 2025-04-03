@@ -75,7 +75,7 @@ export const Navigation = () => {
             </Link>
           </View>
           <View style={{ position: 'relative', left: -2, marginTop: 3, paddingRight: 3 }}>
-            <Link href="/feed">
+            <Link dismissTo href="/feed">
               {/* <Ionicons name="globe" size={42} color={c.accent} /> */}
               <Icon name="Globe" size={39} color={c.accent} />
             </Link>

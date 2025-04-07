@@ -26,25 +26,16 @@ export const renderItem = ({
   item,
   editingRights,
   index,
-  activeIndex,
 }: {
   item: ExpandedItem
   editingRights?: boolean
   index: number
-  activeIndex: number
 }) => {
-  const [showContextMenu, setShowContextMenu] = useState(false)
   const [editing, setEditing] = useState(false)
   const [title, setTitle] = useState(item.expand?.ref.title)
 
-  useEffect(() => {
-    if (index !== activeIndex && showContextMenu) {
-      setShowContextMenu(false)
-    }
-  }, [activeIndex])
-
   return (
-    <Pressable onLongPress={() => setShowContextMenu(true)}>
+    <Pressable>
       <View
         style={{
           height: 'auto', // hack
@@ -58,11 +49,6 @@ export const renderItem = ({
         key={item.id}
       >
         <View style={{ width: '100%', aspectRatio: 1, overflow: 'hidden', borderRadius: s.$075 }}>
-          {showContextMenu && (
-            <View style={{ position: 'absolute', zIndex: 1, bottom: s.$1, alignSelf: 'center' }}>
-              <ContextMenu onEditPress={() => setEditing(true)} editingRights={editingRights} />
-            </View>
-          )}
           {item.image && !item.list ? (
             item.expand?.ref.image && (
               <Zoomable
@@ -192,7 +178,6 @@ export const Details = ({
   const insets = useSafeAreaInsets()
   const { addingToList, setAddingToList } = useUIStore()
   const scrollOffsetValue = useSharedValue<number>(10)
-  const [activeIndex, setActiveIndex] = useState(-1)
 
   // Compute userNameParam
   const userNameParam =
@@ -261,16 +246,10 @@ export const Details = ({
           style={{ overflow: 'visible', top: win.height * 0.2 }}
           width={win.width * 0.8}
           defaultScrollOffsetValue={scrollOffsetValue}
-          onSnapToItem={(i) => {
-            setActiveIndex(i)
-            console.log('current index:', i)
-          }}
-          renderItem={({ item, index }) =>
+          renderItem={({ item }) =>
             renderItem({
               item,
               editingRights,
-              index,
-              activeIndex,
             })
           }
         />

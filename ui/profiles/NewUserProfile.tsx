@@ -8,11 +8,10 @@ import Carousel, { ICarouselInstance } from 'react-native-reanimated-carousel'
 import { ProfileStep } from '@/ui/profiles/ProfileStep'
 import { Controller, useForm } from 'react-hook-form'
 import { ErrorView, FormFieldWithIcon } from '../inputs/FormFieldWithIcon'
-import { SizableText } from '..'
 import { DeviceLocation } from '../inputs/DeviceLocation'
 import { AvatarPicker } from '../inputs/AvatarPicker'
 import { FirstVisitScreen } from './FirstVisitScreen'
-
+import { SizableText } from '../typo/SizableText'
 const win = Dimensions.get('window')
 
 const EmailStep = ({ carouselRef }: { carouselRef: React.RefObject<ICarouselInstance> }) => {

@@ -31,6 +31,7 @@ export const renderItem = ({
   editingRights?: boolean
   index: number
 }) => {
+  const { updateOne } = useRefStore()
   const [editing, setEditing] = useState(false)
   const [title, setTitle] = useState(item.expand?.ref.title)
 

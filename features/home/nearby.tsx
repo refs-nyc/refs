@@ -15,8 +15,8 @@ const ListItem = ({ item }: { item: ExpandedItem }) => {
 
   const creatorProfileUrl = createdByCurrentUser
     ? ('/' as const)
-    : (`/user/${creator.userName}` as const)
-  const itemUrl = `${creatorProfileUrl}/modal?initialId=${item.id}` as const
+    : (`/user/${creator.userName}/` as const)
+  const itemUrl = `${creatorProfileUrl}modal?initialId=${item.id}` as const
 
   return (
     <XStack
@@ -43,7 +43,7 @@ const ListItem = ({ item }: { item: ExpandedItem }) => {
               }}
             />
           ) : (
-            <Ionicons name="person" size={42} color={c.accent} />
+            <Ionicons name="person" size={s.$5} color={c.accent} />
           )}
         </Link>
       )}
@@ -62,16 +62,18 @@ const ListItem = ({ item }: { item: ExpandedItem }) => {
       </View>
 
       {item?.image ? (
-        <SimplePinataImage
-          originalSource={item.image}
-          imageOptions={{ width: s.$5, height: s.$5 }}
-          style={{
-            width: s.$5,
-            height: s.$5,
-            backgroundColor: c.accent,
-            borderRadius: s.$075,
-          }}
-        />
+        <Link href={item.expand?.creator ? (item.backlog ? creatorProfileUrl : itemUrl) : '/'}>
+          <SimplePinataImage
+            originalSource={item.image}
+            imageOptions={{ width: s.$5, height: s.$5 }}
+            style={{
+              width: s.$5,
+              height: s.$5,
+              backgroundColor: c.accent,
+              borderRadius: s.$075,
+            }}
+          />
+        </Link>
       ) : (
         <View
           style={{

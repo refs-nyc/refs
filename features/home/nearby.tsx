@@ -43,7 +43,7 @@ const ListItem = ({ item }: { item: ExpandedItem }) => {
               }}
             />
           ) : (
-            <Ionicons name="person" size={42} color={c.accent} />
+            <Ionicons name="person" size={s.$5} color={c.accent} />
           )}
         </Link>
       )}

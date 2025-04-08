@@ -33,3 +33,33 @@ The sign up view is a form that consists of a sequence of screens, where the use
 - Notifications: The last view asks the user if they would like to be notified when the app goes live in their area. This switch should enable Push Notifications. Pressing the "Done" button should bring the user to the User Profile view.
 
 ### Log in
+
+### User profile
+
+#### View ref details
+
+#### Search user's refs
+
+#### Add new ref to profile
+
+- from search
+- from camera roll
+
+#### Add new ref to backlog
+
+- from search
+- from camera roll
+
+### Feed
+
+#### Search feed
+
+### Other user's profile
+
+#### View ref details
+
+#### Search other user's refs
+
+#### Message
+
+#### Save

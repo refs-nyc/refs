@@ -169,7 +169,7 @@ export const RefForm = ({
       )}
 
       <EditableHeader
-        onComplete={handleTitleChange}
+        onTitleChange={handleTitleChange}
         onDataChange={handleDataChange}
         placeholder={placeholder}
         title={title || placeholder}

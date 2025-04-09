@@ -34,32 +34,63 @@ The sign up view is a form that consists of a sequence of screens, where the use
 
 ### Log in
 
+The log in view consists of two screens. On each screen, there are input fields and a submit button. The submit button is only enabled if the input fields have valid input.
+
+- Email: There is a single text input with the label "Login with email". The "Next" button is clickable if the email field contains a syntactically valid email address.
+- Password: There is a single password text input with the label "Password". The "Log in" button is clickable if a password is given (i.e. is a non-empty string).
+
+When the "Log in" button is pressed, the email and password that were given by the user are submitted to the server. If the email and password combination is correct, the user is redirected to their user profile page. If the email and password combination is incorrect, an error message "Login unsuccessful" is displayed.
+
 ### User profile
+
+TODO: fill this in
 
 #### View ref details
 
+TODO: fill this in
+
 #### Search user's refs
 
+TODO: fill this in
+
 #### Add new ref to profile
+
+TODO: fill this in
 
 - from search
 - from camera roll
 
 #### Add new ref to backlog
 
+TODO: fill this in
+
 - from search
 - from camera roll
 
 ### Feed
 
+TODO: fill this in
+
 #### Search feed
+
+TODO: fill this in
 
 ### Other user's profile
 
+TODO: fill this in
+
 #### View ref details
+
+TODO: fill this in
 
 #### Search other user's refs
 
+TODO: fill this in
+
 #### Message
 
+TODO: fill this in
+
 #### Save
+
+TODO: fill this in

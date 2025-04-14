@@ -43,11 +43,11 @@ When the "Log in" button is pressed, the email and password that were given by t
 
 ### User profile
 
-TODO: fill this in
+The user's profile should display their name, location and their refs.
 
 #### View ref details
 
-TODO: fill this in
+Clicking on a user's ref (in their profile) should bring up a carousel, which shows the user's refs. The carousel should initially show the ref the user clicked on. Each view should show the ref image, the title and the description.
 
 #### Search user's refs
 

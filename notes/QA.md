@@ -47,18 +47,27 @@ The user's profile should display their name, location and their refs.
 
 #### View ref details
 
-Clicking on a user's ref (in their profile) should bring up a carousel, which shows the user's refs. The carousel should initially show the ref the user clicked on. Each view should show the ref image, the title and the description.
+Clicking on a user's ref (in their profile) should bring up a carousel, which shows the user's refs. The carousel should initially show the ref the user clicked on. Each view should show the ref image, the title and the description. Closing the carousel should bring the user back to the user's profile page.
 
 #### Search user's refs
 
-TODO: fill this in
+On the user profile page, clicking the button in the top right with a magnifying glass icon will open a screen that lets you search the user's refs.
+
+This screen consists of:
+
+- a text box with the label "Search anything or start typing"
+- an "X" button
+- a list component
+
+Initially the text box will be empty and the list will show all of the refs that are referenced by the user on their profile and their backlog.
+
+TODO: should clicking on the ref in the list link to the ref details carousel?
 
 #### Add new ref to profile
 
-TODO: fill this in
+On the user profile, if the profile belongs to the currently authenticated user and the refs grid has not been completely filled in, the n+1th grid entry should be a black outlined box with a plus (+) sign. Clicking on this entry brings up a bottom sheet with two options: "Type anything" and "Add from Camera roll".
 
-- from search
-- from camera roll
+Clicking "Type anything" expands the bottom sheet to the whole screen and displays a text box, where the user can type a search term. If the text box is empty, no refs are displayed. If the user starts typing, a list of refs matching the given search term is displayed.
 
 #### Add new ref to backlog
 

@@ -4,7 +4,7 @@ import { s, c } from "@/features/style"
 import { useState, useEffect } from "react"
 import { View, Text } from "react-native"
 import { XStack, YStack } from "../core/Stacks"
-import { SimplePinataImage } from "../images/SimplePinataImage"
+import { Avatar } from "../atoms/Avatar"
 
 export default function ConversationListItem ({ conversation }: { conversation: ExpandedConversation }): JSX.Element | null
 {
@@ -43,16 +43,7 @@ export default function ConversationListItem ({ conversation }: { conversation: 
   return (
     <XStack gap={s.$075} style={{ alignItems: 'center', backgroundColor: c.surface2 }}>
       <View style={{width: s.$075, height: s.$075, backgroundColor: c.accent, borderRadius: 100}}></View>
-      <SimplePinataImage
-        originalSource={image}
-        imageOptions={{ width: s.$5, height: s.$5 }}
-        style={{
-          width: s.$5,
-          height: s.$5,
-          backgroundColor: c.accent,
-          borderRadius: 100,
-        }}
-      />
+      <Avatar source={image} size={s.$5} />
       <YStack style={{ padding: s.$2, width: "80%" }}>
         {/* <Text style={{fontWeight: 'bold'}}>
           {conversation.id}

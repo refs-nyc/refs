@@ -80,6 +80,13 @@ export const Navigation = () => {
               <Icon name="Globe" size={39} color={c.accent} />
             </Link>
           </View>
+          <View 
+            style={{ position: 'relative', left: -10, marginTop: 3, paddingRight: 3 }}
+          >
+            <Link dismissTo href="/messages">
+              <Icon name="Messages" size={39} color={c.muted2} />
+            </Link>
+          </View>
         </View>
         <View
           style={[

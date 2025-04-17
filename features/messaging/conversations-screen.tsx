@@ -60,8 +60,8 @@ export function ConversationsScreen() {
           }}
         >
           {items.map(i =>
-            <Pressable onPress={()=>router.push(`/messages/${i.id}`)}>
-              <ConversationListItem key={i.id} conversation={i} />
+            <Pressable key={i.id} onPress={()=>router.push(`/messages/${i.id}`)}>
+              <ConversationListItem conversation={i} />
             </Pressable>
           )}
         </YStack>

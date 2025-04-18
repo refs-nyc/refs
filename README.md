@@ -4,11 +4,13 @@ This is an [Expo](https://expo.dev) project created with [`create-expo-app`](htt
 
 ## Get started
 
+This project uses [pnpm](https://pnpm.io/) for package management.
+
 ```
 nvm use
-npm install        # Install dependencies
-npx expo prebuild  # Create an iOS prebuild
-npm run ios        # Build and run the iOS app
+pnpm install        # Install dependencies
+pnpm prebuild  # Create an iOS prebuild
+pnpm ios        # Build and run the iOS app
 ```
 
 ## Building on EAS

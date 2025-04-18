@@ -1,7 +1,6 @@
 import Animated, { FadeIn, FadeOut, SlideInRight, Easing } from 'react-native-reanimated'
 import { useState, useEffect } from 'react'
 import { View, TextInput } from 'react-native'
-import { Image } from 'expo-image'
 import { YStack, XStack } from '@/ui/core/Stacks'
 import { Heading } from '@/ui/typo/Heading'
 import { Shareable } from '@/ui/atoms/Shareable'
@@ -9,8 +8,7 @@ import { s, c } from '@/features/style'
 import { Link, usePathname } from 'expo-router'
 import { Profile } from '@/features/pocketbase/stores/types'
 import { Button } from '@/ui/buttons/Button'
-import { pocketbase } from '@/features/pocketbase'
-import Ionicons from '@expo/vector-icons/Ionicons'
+import { Avatar } from '../atoms/Avatar'
 
 export const ProfileHeader = ({
   profile,
@@ -57,17 +55,7 @@ export const ProfileHeader = ({
               gap={s.$09}
               style={{ width: '100%', justifyContent: 'space-between', alignItems: 'center' }}
             >
-              {profile.id === pocketbase?.authStore?.record?.id ? (
-                <Image
-                  style={{ width: s.$6, height: s.$6, borderRadius: s.$6 / 2 }}
-                  source={profile.image}
-                />
-              ) : (
-                <Image
-                  style={{ width: s.$6, height: s.$6, borderRadius: s.$6 / 2 }}
-                  source={profile.image}
-                />
-              )}
+              <Avatar source={profile.image} size={s.$6} />
               <YStack style={{ flex: 1 }} gap={s.$05}>
                 <Heading tag="h2">{profile.firstName}</Heading>
                 <Heading tag="small">{profile?.location || profile.userName}</Heading>

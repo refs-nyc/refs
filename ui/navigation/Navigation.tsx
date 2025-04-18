@@ -23,6 +23,7 @@ export const Navigation = () => {
     pathName.includes('/user/login') ||
     pathName.includes('/user/register') ||
     pathName.includes('/modal') ||
+    pathName.includes('/messages/') || // e.g. /messages/123
     addingTo === 'grid' ||
     addingTo === 'backlog' ||
     !!removingId

@@ -7,10 +7,12 @@ import { ExpandedConversation } from '../pocketbase/stores/types'
 import ConversationListItem from '@/ui/messaging/ConversationListItem'
 import { Pressable } from 'react-native-gesture-handler'
 import { router } from 'expo-router'
+import { useMessageStore } from '../pocketbase/stores/messages'
 
 export function ConversationsScreen() {
   const [items, setItems] = useState<ExpandedConversation[]>([])
   const { user } = useUserStore()
+  const { setConversations } = useMessageStore()
 
   if (!user) return null
 
@@ -20,11 +22,11 @@ export function ConversationsScreen() {
         sort: '-created',
         expand: "messages_via_conversation",
       })
-      console.log('conversations', conversations.map(c => c.expand?.messages_via_conversation))
       setItems(conversations)
+      setConversations(conversations);
     }
     try {
-      getConversations()
+      getConversations();
     }
     catch (error) {
       console.error(error)

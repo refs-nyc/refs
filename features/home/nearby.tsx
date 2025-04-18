@@ -5,7 +5,7 @@ import { View, Dimensions } from 'react-native'
 import { useUserStore } from '@/features/pocketbase'
 import { s, c } from '@/features/style'
 import { SimplePinataImage } from '@/ui/images/SimplePinataImage'
-import Ionicons from '@expo/vector-icons/Ionicons'
+import { Avatar } from '@/ui/atoms/Avatar'
 const win = Dimensions.get('window')
 
 const ListItem = ({ item }: { item: ExpandedItem }) => {
@@ -31,20 +31,7 @@ const ListItem = ({ item }: { item: ExpandedItem }) => {
     >
       {item.expand?.creator && (
         <Link dismissTo={creatorProfileUrl === '/'} href={creatorProfileUrl}>
-          {creator.image ? (
-            <SimplePinataImage
-              originalSource={creator.image}
-              imageOptions={{ width: s.$5, height: s.$5 }}
-              style={{
-                width: s.$5,
-                height: s.$5,
-                backgroundColor: c.accent,
-                borderRadius: 100,
-              }}
-            />
-          ) : (
-            <Ionicons name="person" size={s.$5} color={c.accent} />
-          )}
+          <Avatar source={creator.image} size={s.$5} />
         </Link>
       )}
       <View style={{ overflow: 'hidden', flex: 1 }}>

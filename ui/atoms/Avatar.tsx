@@ -1,8 +1,14 @@
 import { SimplePinataImage } from '../images/SimplePinataImage'
 import { View } from 'react-native'
-import { s } from '@/features/style'
+import { c, s } from '@/features/style'
+import { Ionicons } from '@expo/vector-icons';
 
-export const Avatar = ({ source, size = s.$3 }: { source: string; size: number }) => {
+export const Avatar = ({ source, size = s.$3 }: { source: string | undefined; size: number }) => {
+  if (!source) return (
+    <View style={{ width: size, height: size }}>
+      <Ionicons name="person" size={size} color={c.accent} />
+    </View>
+  )
   return (
     <>
       <View style={{ width: size, height: size }}>

@@ -1,6 +1,5 @@
 import Animated, { SlideInDown, SlideOutDown, FadeOut } from 'react-native-reanimated'
 
-import Ionicons from '@expo/vector-icons/Ionicons'
 import { useEffect } from 'react'
 import { Link, usePathname, useGlobalSearchParams } from 'expo-router'
 import { Dimensions, View } from 'react-native'
@@ -67,11 +66,7 @@ export const Navigation = () => {
         >
           <View style={{ position: 'relative', marginTop: 4, left: 5 }}>
             <Link dismissTo href={`/`}>
-              {user.image ? (
-                <Avatar source={user.image} size={42} />
-              ) : (
-                <Ionicons name="person" size={42} color={c.accent} />
-              )}
+              <Avatar source={user.image} size={42} />
             </Link>
           </View>
           <View style={{ position: 'relative', left: -2, marginTop: 3, paddingRight: 3 }}>

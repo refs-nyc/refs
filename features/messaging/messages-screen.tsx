@@ -1,13 +1,14 @@
-import { Button, Heading, XStack, YStack } from '@/ui'
+import { Heading, XStack, YStack } from '@/ui'
 import { View, ScrollView, Text, DimensionValue, KeyboardAvoidingView, Keyboard } from 'react-native'
 import { c, s } from '../style'
 import { useEffect, useRef, useState } from 'react'
 import { pocketbase, useUserStore } from '../pocketbase'
 import {  Message } from '../pocketbase/stores/types'
 import { useMessageStore } from '../pocketbase/stores/messages'
-import { TextInput } from 'react-native-gesture-handler'
+import { Pressable, TextInput } from 'react-native-gesture-handler'
 import { useRouter } from 'expo-router'
 import { Avatar } from '@/ui/atoms/Avatar'
+import { Ionicons } from '@expo/vector-icons'
 
 export function MessagesScreen({conversationId} : {conversationId: string})
 {
@@ -16,8 +17,11 @@ export function MessagesScreen({conversationId} : {conversationId: string})
   const { conversations } = useMessageStore();
   const { memberships } = useMessageStore();
   const scrollViewRef = useRef<ScrollView>(null);
+  const [message, setMessage] = useState<string>('');
 
   if (!user) return null
+
+  const { sendMessage } = useMessageStore();
 
   useEffect(() => {
     const showSub = Keyboard.addListener('keyboardDidShow', () => {
@@ -29,19 +33,25 @@ export function MessagesScreen({conversationId} : {conversationId: string})
 
   useEffect(() => {
     const getMessages = async () => {
+      try {
       const messages = await pocketbase.collection('messages').getFullList<Message>({
         filter: `conversation = "${conversationId}"`,
         sort: 'created',
       })
-      console.log('messages', messages)
       setItems(messages)
-    }
-    try {
-      getMessages()
+      await pocketbase.collection('messages').unsubscribe('*');
+      const unsubscribe = await pocketbase.collection('messages').subscribe('*', 
+        ({action, record}) => {
+          if (action==='create') setItems((prev)=>[...prev, record]);
+        },
+      )
+      return unsubscribe;
     }
     catch (error) {
       console.error(error)
     }
+    }
+    return getMessages()
 
   }, [])
 
@@ -61,18 +71,9 @@ export function MessagesScreen({conversationId} : {conversationId: string})
       }}
     >
       <XStack gap={s.$1} style={{ alignItems: 'center', padding: s.$1 }}>
-        <Button 
-          onPress={()=>{router.dismissTo('/messages')}}
-          title="<"
-          variant="smallMuted"
-          style={{ 
-            // backgroundColor: "yellow", 
-            height: s.$3,
-            minWidth: s.$3,
-            paddingHorizontal: s.$0,
-            width: s.$3,
-          }}
-        />
+        <Pressable onPress={() => { router.dismissTo('/messages') }}>
+          <Ionicons name="chevron-back" size={s.$2} color={c.grey2} />
+        </Pressable>
         <Heading tag="h2semi">
           {conversation.is_direct ? 
             members[0].expand?.user.firstName + " " + members[0].expand?.user.lastName 
@@ -93,6 +94,7 @@ export function MessagesScreen({conversationId} : {conversationId: string})
           style={{ 
             //backgroundColor: "purple",
           }}
+          onContentSizeChange={()=>{scrollViewRef.current?.scrollToEnd({ animated: true });}}
         >
           <YStack
             gap={s.$0}
@@ -125,23 +127,42 @@ export function MessagesScreen({conversationId} : {conversationId: string})
             )}
           </YStack>
         </ScrollView>
-        <View 
+          <XStack 
             style={{ 
-              //backgroundColor: "blue",
+              backgroundColor: c.white,
+              borderRadius: s.$2,
+              marginVertical: s.$075,
+              marginHorizontal: s.$1,
+              paddingVertical: s.$09,
+              paddingHorizontal: s.$1,
+              justifyContent: 'space-between',
+              fontSize: s.$09,
+              alignItems: 'center',
             }}
           >
             <TextInput
               style={{
-                backgroundColor: c.white,
-                marginVertical: s.$075,
-                marginHorizontal: s.$1,
-                padding: s.$09,
-                borderRadius: s.$2,
-                fontSize: s.$09,
+                width: '70%',
               }}
               placeholder="Type anything..."
+              multiline={true}
+              value={message}
+              onChangeText={setMessage}
             />
-          </View>
+            <Pressable
+              onPress={() => {
+                sendMessage(user.id, conversationId, message);
+                setMessage('');
+              }}
+            >
+              <Ionicons 
+                name="paper-plane-outline" 
+                size={s.$2} 
+                color={c.grey2} 
+
+              />
+            </Pressable>
+          </XStack>
       </KeyboardAvoidingView>
     </View>
   )

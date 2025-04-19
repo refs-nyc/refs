@@ -1,0 +1,119 @@
+import { useState, useEffect, useRef, forwardRef } from 'react'
+import { Image } from 'expo-image'
+import { Zoomable } from '@likashefqet/react-native-image-zoom'
+import { ContextMenu } from '../atoms/ContextMenu'
+import { EditableHeader } from '../atoms/EditableHeader'
+import { useRefStore } from '@/features/pocketbase/stores/refs'
+import { ExpandedItem } from '@/features/pocketbase/stores/types'
+import { Link } from 'expo-router'
+import { View, Pressable, Text } from 'react-native'
+import { Heading } from '../typo/Heading'
+import { c, s, t } from '@/features/style'
+import Ionicons from '@expo/vector-icons/Ionicons'
+import { ListContainer } from '../lists/ListContainer'
+
+export const EditableItem = ({
+  item,
+  editingRights,
+  index,
+  onEditing = () => {},
+}: {
+  item: ExpandedItem
+  editingRights?: boolean
+  index: number
+  onEditing: (b: boolean) => void
+}) => {
+  const [editing, setEditing] = useState(false)
+  const [title, setTitle] = useState(item.expand?.ref.title)
+
+  return (
+    <Pressable
+      onPress={() => console.log('on press')}
+      onLongPress={() => {
+        onEditing(!editing)
+        setEditing(!editing)
+      }}
+    >
+      <View style={{ width: '100%', aspectRatio: 1, overflow: 'hidden', borderRadius: s.$075 }}>
+        {item.image && !item.list ? (
+          item.expand?.ref.image && (
+            <Zoomable
+              minScale={0.25}
+              maxScale={3}
+              isPanEnabled={true}
+              onInteractionEnd={() => console.log('onInteractionEnd')}
+              onPanStart={() => console.log('onPanStart')}
+              onPanEnd={() => console.log('onPanEnd')}
+              onPinchStart={() => console.log('onPinchStart')}
+              onPinchEnd={() => console.log('onPinchEnd')}
+              onSingleTap={() => console.log('onSingleTap')}
+              onDoubleTap={(zoomType) => {
+                console.log('onDoubleTap', zoomType)
+              }}
+              style={{ width: '100%', aspectRatio: 1, overflow: 'visible', borderRadius: s.$075 }}
+            >
+              <Image
+                style={{ width: '100%', aspectRatio: 1, overflow: 'visible' }}
+                source={item.expand.ref.image || item.image}
+              />
+            </Zoomable>
+          )
+        ) : (
+          <View
+            style={{
+              flex: 1,
+              backgroundColor: c.surface2,
+            }}
+          >
+            {item.list && <ListContainer editingRights={!!editingRights} item={item} />}
+          </View>
+        )}
+      </View>
+      <View style={{ width: '100%', paddingHorizontal: s.$1 }}>
+        <View style={{ marginBottom: 0, flexDirection: 'row', justifyContent: 'space-between' }}>
+          <View style={{ gap: s.$05 }}>
+            {editing ? (
+              <EditableHeader
+                initialEditing={true}
+                onTitleChange={async (newTitle) => {
+                  try {
+                    const updated = await updateOne(item.ref, { title: newTitle })
+                    setTitle(newTitle)
+                    console.log(updated)
+                  } catch (err) {
+                    console.error(err)
+                  } finally {
+                    setEditing(false)
+                  }
+                }}
+                title={title}
+              />
+            ) : (
+              <View style={{ paddingVertical: s.$08 }}>
+                <Heading tag="h2">{title}</Heading>
+                <Heading tag="smallmuted">{item.expand?.ref?.meta}</Heading>
+              </View>
+            )}
+          </View>
+          <Pressable onPress={() => {}}>
+            {item.expand.ref.url && (
+              <Link href={item.expand.ref.url}>
+                <Ionicons
+                  style={{ transformOrigin: 'center', transform: 'rotate(-45deg)' }}
+                  color={c.muted}
+                  size={s.$1}
+                  name="arrow-forward-outline"
+                />
+              </Link>
+            )}
+          </Pressable>
+        </View>
+        <View style={{ width: '100%' }}>
+          <Text numberOfLines={4} style={t.pmuted}>
+            {item.text}
+          </Text>
+        </View>
+      </View>
+    </Pressable>
+  )
+}

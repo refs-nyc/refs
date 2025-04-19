@@ -1,7 +1,7 @@
 import { Button, Heading, XStack, YStack } from '@/ui'
 import { View, ScrollView, Text, DimensionValue, KeyboardAvoidingView, Keyboard } from 'react-native'
 import { c, s } from '../style'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { pocketbase, useUserStore } from '../pocketbase'
 import {  Message } from '../pocketbase/stores/types'
 import { useMessageStore } from '../pocketbase/stores/messages'
@@ -15,8 +15,17 @@ export function MessagesScreen({conversationId} : {conversationId: string})
   const { user } = useUserStore()
   const { conversations } = useMessageStore();
   const { memberships } = useMessageStore();
+  const scrollViewRef = useRef<ScrollView>(null);
 
   if (!user) return null
+
+  useEffect(() => {
+    const showSub = Keyboard.addListener('keyboardDidShow', () => {
+      scrollViewRef.current?.scrollToEnd({ animated: true });
+    });
+
+    return () => showSub.remove();
+  }, []);
 
   useEffect(() => {
     const getMessages = async () => {
@@ -77,16 +86,18 @@ export function MessagesScreen({conversationId} : {conversationId: string})
         style={{ 
           height: "85%"
         }}
-        behavior={"height"}
+        behavior={"padding"}
       >
         <ScrollView 
-          //style={{ backgroundColor: "purple"}}
+          ref={scrollViewRef}
+          style={{ 
+            //backgroundColor: "purple",
+          }}
         >
           <YStack
             gap={s.$0}
             style={{
               flex: 1,
-              paddingBottom: s.$2,
               // backgroundColor: "lightblue",
               width: '90%',
               margin: 'auto',
@@ -115,27 +126,22 @@ export function MessagesScreen({conversationId} : {conversationId: string})
           </YStack>
         </ScrollView>
         <View 
-          style={{ 
-            //backgroundColor: "blue",
-            position: 'relative',
-            bottom: s.$0,
-          }}
-        >
-          <TextInput
-            style={{
-              backgroundColor: c.white,
-              margin: s.$075,
-              marginTop: s.$05,
-              marginHorizontal: s.$1,
-              paddingVertical: s.$09,
-              paddingHorizontal: s.$1,
-              borderRadius: s.$2,
-              color: c.black,
-              fontSize: s.$09,
+            style={{ 
+              //backgroundColor: "blue",
             }}
-            placeholder="Type anything..."
-          />
-        </View>
+          >
+            <TextInput
+              style={{
+                backgroundColor: c.white,
+                marginVertical: s.$075,
+                marginHorizontal: s.$1,
+                padding: s.$09,
+                borderRadius: s.$2,
+                fontSize: s.$09,
+              }}
+              placeholder="Type anything..."
+            />
+          </View>
       </KeyboardAvoidingView>
     </View>
   )

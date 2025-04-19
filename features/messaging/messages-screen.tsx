@@ -32,27 +32,29 @@ export function MessagesScreen({conversationId} : {conversationId: string})
   }, []);
 
   useEffect(() => {
-    const getMessages = async () => {
+    const init = async () => {
       try {
       const messages = await pocketbase.collection('messages').getFullList<Message>({
         filter: `conversation = "${conversationId}"`,
         sort: 'created',
       })
       setItems(messages)
-      await pocketbase.collection('messages').unsubscribe('*');
-      const unsubscribe = await pocketbase.collection('messages').subscribe('*', 
+      const unsubscribePromise = pocketbase.collection('messages').subscribe('*', 
         ({action, record}) => {
           if (action==='create') setItems((prev)=>[...prev, record]);
         },
       )
-      return unsubscribe;
+      return () => {
+        (async () => {
+          (await unsubscribePromise)();
+        })();
+      };
     }
     catch (error) {
       console.error(error)
     }
     }
-    return getMessages()
-
+    init();
   }, [])
 
   const conversation = conversations[conversationId];

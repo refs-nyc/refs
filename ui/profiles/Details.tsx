@@ -21,7 +21,54 @@ import { Button } from '../buttons/Button'
 
 const win = Dimensions.get('window')
 
-// Outer renderItem function (already stable as it's outside Details)
+// --- Helper Components for State Isolation ---
+
+const ConditionalGridLines = React.memo(() => {
+  const editing = useItemStore((state) => state.editing)
+  if (editing === '') {
+    return null
+  }
+  return <GridLines lineColor={c.grey1} size={20} />
+})
+ConditionalGridLines.displayName = 'ConditionalGridLines'
+
+const DetailsHeaderButton = React.memo(() => {
+  const editing = useItemStore((state) => state.editing)
+  const stopEditing = useItemStore((state) => state.stopEditing)
+  const router = useRouter()
+  const insets = useSafeAreaInsets()
+
+  const handlePress = useCallback(() => {
+    if (editing === '') {
+      router.back()
+    } else {
+      stopEditing()
+    }
+  }, [editing, stopEditing, router])
+
+  return (
+    <Pressable
+      style={{
+        position: 'absolute',
+        top: Math.max(insets.top, s.$1),
+        right: s.$1,
+        padding: s.$1,
+        zIndex: 99,
+      }}
+      onPress={handlePress}
+    >
+      {editing !== '' ? (
+        <Ionicons size={s.$1} name="checkbox" color={c.muted} />
+      ) : (
+        <Ionicons size={s.$1} name="close" color={c.muted} />
+      )}
+    </Pressable>
+  )
+})
+DetailsHeaderButton.displayName = 'DetailsHeaderButton'
+
+// --- Main Components ---
+
 export const renderItem = ({
   item,
   editingRights,
@@ -42,7 +89,7 @@ export const renderItem = ({
         justifyContent: 'start',
         overflow: 'hidden',
       }}
-      key={item.id}
+      key={item.id} // key should ideally be on the top-level element returned by map/renderItem callback
     >
       <EditableItem item={item} editingRights={editingRights} index={index} />
     </View>
@@ -61,11 +108,8 @@ export const Details = ({
   const pathname = usePathname()
   const { userName } = useGlobalSearchParams()
   const ref = useRef<ICarouselInstance>(null)
-  const insets = useSafeAreaInsets()
-  const { addingToList, setAddingToList, addingItem } = useUIStore() // Assuming addingItem comes from here? Make sure it's defined
+  const { addingToList, setAddingToList, addingItem } = useUIStore()
   const scrollOffsetValue = useSharedValue<number>(10)
-
-  const { editing, stopEditing } = useItemStore()
 
   const userNameParam =
     pathname === '/' ? undefined : typeof userName === 'string' ? userName : userName?.[0]
@@ -74,71 +118,65 @@ export const Details = ({
     return isExpandedProfile(profile) && profile.expand?.items
       ? [...profile.expand.items].filter((itm) => !itm.backlog).sort(gridSort)
       : []
-  }, [profile]) // Recompute only when profile changes
+  }, [profile])
 
   const index = useMemo(() => {
     return Math.max(
       0,
       data.findIndex((itm) => itm.id === initialId)
     )
-  }, [data, initialId]) // Recompute only when data or initialId changes
+  }, [data, initialId])
 
   useEffect(() => {
     if (ref.current && data.length > 0) {
       if (index >= 0 && index < data.length) {
-        ref.current?.scrollTo({ index: index, animated: false }) // Try scrolling without animation initially
+        // Check if component is mounted and index is valid before scrolling
+        try {
+          ref.current?.scrollTo({ index: index, animated: false })
+        } catch (error) {
+          console.error('Error scrolling carousel:', error)
+        }
       }
     }
+    // Add ref.current to dependencies? Usually not needed unless the ref itself changes identity.
   }, [data, index])
 
   const handleConfigurePanGesture = useCallback((gesture: any) => {
     'worklet'
     gesture.activeOffsetX([-10, 10])
-  }, []) // Empty dependency array
+  }, [])
 
   const close = useCallback(async () => {
-    // Memoize close function too
     setAddingToList('')
-    await getProfile(userNameParam)
-  }, [setAddingToList, getProfile, userNameParam]) // Add dependencies
+    if (userNameParam) {
+      await getProfile(userNameParam)
+    } else {
+      await getProfile() // Fetch own profile if no param
+    }
+  }, [setAddingToList, getProfile, userNameParam])
 
   const carouselStyle = useMemo(
     () => ({
       overflow: 'visible',
-      top: win.height * 0.2,
+      top: win.height * 0.2, // Consider making this dynamic based on header/insets
     }),
     []
   )
 
+  const carouselRenderItem = useCallback(
+    ({ item, index: carouselIndex }: { item: ExpandedItem; index: number }) => {
+      return renderItem({ item, editingRights, index: carouselIndex })
+    },
+    [editingRights] // Depends only on the editingRights prop
+  )
+
   return (
     <SheetScreen onChange={(e) => e === -1 && router.back()}>
-      {editing !== '' && <GridLines lineColor={c.grey1} size={20} />}
+      <ConditionalGridLines />
 
       <View style={{ height: win.height, justifyContent: 'flex-start' }}>
-        <Pressable
-          style={{
-            position: 'absolute',
-            top: Math.max(insets.top, s.$1), // Use safe area top inset or default padding
-            right: s.$1,
-            padding: s.$1,
-            zIndex: 99, // Ensure it's above the carousel
-          }}
-          onPress={() => {
-            if (editing === '') {
-              router.back()
-            } else {
-              stopEditing()
-            }
-          }} // Simplified back navigation
-        >
-          {editing !== '' ? (
-            <Ionicons size={s.$1} name="checkbox" color={c.muted} />
-          ) : (
-            <Ionicons size={s.$1} name="close" color={c.muted} />
-          )}
-        </Pressable>
+        <DetailsHeaderButton />
 
-        {/* Use memoized props */}
         <Carousel
           loop={data.length > 1}
           ref={ref}
@@ -147,18 +185,15 @@ export const Details = ({
           style={carouselStyle}
           height={win.height * 0.6}
           defaultIndex={index}
-          onConfigurePanGesture={handleConfigurePanGesture} // Use memoized handler
-          renderItem={({ item }) => {
-            console.log(item)
-            return renderItem({ item, editingRights, index })
-          }}
+          onConfigurePanGesture={handleConfigurePanGesture}
+          renderItem={carouselRenderItem}
           windowSize={5}
           pagingEnabled={true}
           snapEnabled={true}
+          keyExtractor={(item) => item.id} // Good practice for lists/carousels
         />
       </View>
 
-      {/* Ensure addingItem is defined before rendering Sheet */}
       {addingToList !== '' && addingItem && (
         <Sheet full={true} onChange={(e) => e === -1 && close()}>
           <EditableList item={addingItem} onComplete={() => {}} />

@@ -6,13 +6,15 @@ import { EditableHeader } from '../atoms/EditableHeader'
 import { useItemStore } from '@/features/pocketbase/stores/items'
 import { ExpandedItem } from '@/features/pocketbase/stores/types'
 import { Link } from 'expo-router'
-import { View, Pressable, Text } from 'react-native'
+import { View, Pressable, Text, Dimensions } from 'react-native'
 import { Heading } from '../typo/Heading'
 import { c, s, t, base } from '@/features/style'
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { ListContainer } from '../lists/ListContainer'
 import Animated, { useAnimatedStyle } from 'react-native-reanimated'
 import { BottomSheetTextInput, BottomSheetScrollView } from '@gorhom/bottom-sheet'
+
+const win = Dimensions.get('window')
 
 const EditableItemComponent = ({
   item,
@@ -34,7 +36,7 @@ const EditableItemComponent = ({
 
   return (
     <Pressable
-      style={{ gap: s.$09 }}
+      style={{ gap: s.$09, paddingVertical: win.height * 0.2 }}
       onPress={() => console.log('on press')}
       onLongPress={() => {
         setShowMenu(!showMenu)

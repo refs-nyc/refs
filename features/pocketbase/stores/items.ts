@@ -10,6 +10,9 @@ import { canvasApp } from './canvas'
 //
 export const useItemStore = create<{
   items: Item[]
+  editing: string
+  startEditing: (id: string) => void
+  stopEditing: () => void
   push: (newItem: StagedItem) => Promise<ExpandedItem>
   addToList: (id: string, ref: CompleteRef) => Promise<Item>
   removeFromList: (id: string, ref: CompleteRef) => Promise<Item>
@@ -18,6 +21,9 @@ export const useItemStore = create<{
   moveToBacklog: (id: string) => Promise<ItemsRecord>
 }>((set) => ({
   items: [],
+  editing: '',
+  startEditing: (id: string) => set(() => ({ editing: id })),
+  stopEditing: () => set(() => ({ editing: '' })),
   push: async (newItem: StagedItem) => {
     console.log('ITEMS PUSH')
     try {

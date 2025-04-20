@@ -81,7 +81,6 @@ export const renderItem = ({
   return (
     <View
       style={{
-        height: 'auto',
         width: win.width * 0.8,
         left: win.width * 0.1,
         padding: s.$075,
@@ -181,7 +180,7 @@ export const Details = ({
     >
       <ConditionalGridLines />
 
-      <View style={{ height: win.height, justifyContent: 'flex-start' }}>
+      <View style={{ justifyContent: 'flex-start' }}>
         <DetailsHeaderButton />
 
         <Carousel
@@ -190,7 +189,6 @@ export const Details = ({
           data={data}
           width={win.width}
           style={carouselStyle}
-          height={win.height * 0.6}
           defaultIndex={index}
           onConfigurePanGesture={handleConfigurePanGesture}
           renderItem={carouselRenderItem}

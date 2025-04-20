@@ -12,7 +12,7 @@ import { c, s, t, base } from '@/features/style'
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { ListContainer } from '../lists/ListContainer'
 import Animated, { useAnimatedStyle } from 'react-native-reanimated'
-import { TextInput } from 'react-native-gesture-handler'
+import { BottomSheetTextInput, BottomSheetScrollView } from '@gorhom/bottom-sheet'
 
 const EditableItemComponent = ({
   item,
@@ -44,7 +44,6 @@ const EditableItemComponent = ({
         style={{
           width: '100%',
           aspectRatio: 1,
-          overflow: 'hidden',
         }}
       >
         {showMenu && (
@@ -145,7 +144,7 @@ const EditableItemComponent = ({
         ]}
       >
         {editing === item.id ? (
-          <TextInput numberOfLines={4} style={t.pmuted}></TextInput>
+          <BottomSheetTextInput numberOfLines={4} style={t.pmuted}></BottomSheetTextInput>
         ) : (
           <Text numberOfLines={4} style={t.pmuted}>
             {item.text}

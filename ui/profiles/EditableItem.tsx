@@ -1,9 +1,9 @@
-import { useState, useEffect, useRef, forwardRef } from 'react'
+import React, { useState, useEffect, useRef, forwardRef } from 'react'
 import { Image } from 'expo-image'
 import { Zoomable } from '@likashefqet/react-native-image-zoom'
 import { ContextMenu } from '../atoms/ContextMenu'
 import { EditableHeader } from '../atoms/EditableHeader'
-import { useRefStore } from '@/features/pocketbase/stores/refs'
+import { useItemStore } from '@/features/pocketbase/stores/items'
 import { ExpandedItem } from '@/features/pocketbase/stores/types'
 import { Link } from 'expo-router'
 import { View, Pressable, Text } from 'react-native'
@@ -12,29 +12,39 @@ import { c, s, t } from '@/features/style'
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { ListContainer } from '../lists/ListContainer'
 
-export const EditableItem = ({
+const EditableItemComponent = ({
   item,
   editingRights,
   index,
-  onEditing = () => {},
 }: {
   item: ExpandedItem
   editingRights?: boolean
   index: number
-  onEditing: (b: boolean) => void
 }) => {
-  const [editing, setEditing] = useState(false)
+  const [showMenu, setShowMenu] = useState(false)
   const [title, setTitle] = useState(item.expand?.ref.title)
+
+  const { editing, startEditing, stopEditing } = useItemStore()
+
+  console.log('EDITABLE ITEM')
 
   return (
     <Pressable
       onPress={() => console.log('on press')}
       onLongPress={() => {
-        onEditing(!editing)
-        setEditing(!editing)
+        setShowMenu(!showMenu)
       }}
     >
       <View style={{ width: '100%', aspectRatio: 1, overflow: 'hidden', borderRadius: s.$075 }}>
+        {showMenu && (
+          <ContextMenu
+            onEditPress={() => {
+              startEditing(item.id)
+              setShowMenu(false)
+            }}
+            editingRights={editingRights}
+          />
+        )}
         {item.image && !item.list ? (
           item.expand?.ref.image && (
             <Zoomable
@@ -72,28 +82,10 @@ export const EditableItem = ({
       <View style={{ width: '100%', paddingHorizontal: s.$1 }}>
         <View style={{ marginBottom: 0, flexDirection: 'row', justifyContent: 'space-between' }}>
           <View style={{ gap: s.$05 }}>
-            {editing ? (
-              <EditableHeader
-                initialEditing={true}
-                onTitleChange={async (newTitle) => {
-                  try {
-                    const updated = await updateOne(item.ref, { title: newTitle })
-                    setTitle(newTitle)
-                    console.log(updated)
-                  } catch (err) {
-                    console.error(err)
-                  } finally {
-                    setEditing(false)
-                  }
-                }}
-                title={title}
-              />
-            ) : (
-              <View style={{ paddingVertical: s.$08 }}>
-                <Heading tag="h2">{title}</Heading>
-                <Heading tag="smallmuted">{item.expand?.ref?.meta}</Heading>
-              </View>
-            )}
+            <View style={{ paddingVertical: s.$08 }}>
+              <Heading tag="h2">{title}</Heading>
+              <Heading tag="smallmuted">{item.expand?.ref?.meta}</Heading>
+            </View>
           </View>
           <Pressable onPress={() => {}}>
             {item.expand.ref.url && (
@@ -117,3 +109,5 @@ export const EditableItem = ({
     </Pressable>
   )
 }
+
+export const EditableItem = React.memo(EditableItemComponent)

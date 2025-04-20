@@ -8,9 +8,11 @@ import { ExpandedItem } from '@/features/pocketbase/stores/types'
 import { Link } from 'expo-router'
 import { View, Pressable, Text } from 'react-native'
 import { Heading } from '../typo/Heading'
-import { c, s, t } from '@/features/style'
+import { c, s, t, base } from '@/features/style'
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { ListContainer } from '../lists/ListContainer'
+import Animated, { useAnimatedStyle } from 'react-native-reanimated'
+import { TextInput } from 'react-native-gesture-handler'
 
 const EditableItemComponent = ({
   item,
@@ -26,16 +28,25 @@ const EditableItemComponent = ({
 
   const { editing, startEditing, stopEditing } = useItemStore()
 
-  console.log('EDITABLE ITEM')
+  const animatedStyle = useAnimatedStyle(() => {
+    return editing === item.id ? base.editableItem : base.nonEditableItem
+  }, [editing, item])
 
   return (
     <Pressable
+      style={{ gap: s.$09 }}
       onPress={() => console.log('on press')}
       onLongPress={() => {
         setShowMenu(!showMenu)
       }}
     >
-      <View style={{ width: '100%', aspectRatio: 1, overflow: 'hidden', borderRadius: s.$075 }}>
+      <View
+        style={{
+          width: '100%',
+          aspectRatio: 1,
+          overflow: 'hidden',
+        }}
+      >
         {showMenu && (
           <ContextMenu
             onEditPress={() => {
@@ -60,12 +71,23 @@ const EditableItemComponent = ({
               onDoubleTap={(zoomType) => {
                 console.log('onDoubleTap', zoomType)
               }}
-              style={{ width: '100%', aspectRatio: 1, overflow: 'visible', borderRadius: s.$075 }}
             >
-              <Image
-                style={{ width: '100%', aspectRatio: 1, overflow: 'visible' }}
-                source={item.expand.ref.image || item.image}
-              />
+              <Animated.View
+                style={[
+                  animatedStyle,
+                  {
+                    width: '100%',
+                    aspectRatio: 1,
+                    overflow: 'hidden',
+                    borderRadius: s.$075,
+                  },
+                ]}
+              >
+                <Image
+                  style={[{ width: '100%', aspectRatio: 1, overflow: 'visible' }]}
+                  source={item.expand.ref.image || item.image}
+                />
+              </Animated.View>
             </Zoomable>
           )
         ) : (
@@ -79,10 +101,25 @@ const EditableItemComponent = ({
           </View>
         )}
       </View>
-      <View style={{ width: '100%', paddingHorizontal: s.$1 }}>
+      <View style={{ width: '100%' }}>
         <View style={{ marginBottom: 0, flexDirection: 'row', justifyContent: 'space-between' }}>
-          <View style={{ gap: s.$05 }}>
-            <View style={{ paddingVertical: s.$08 }}>
+          <View
+            style={[
+              {
+                gap: s.$05,
+                width: '100%',
+                paddingHorizontal: s.$1,
+                borderWidth: 1,
+                borderColor: 'transparent',
+              },
+              editing === item.id && base.editableItem,
+            ]}
+          >
+            <View
+              style={{
+                paddingVertical: s.$08,
+              }}
+            >
               <Heading tag="h2">{title}</Heading>
               <Heading tag="smallmuted">{item.expand?.ref?.meta}</Heading>
             </View>
@@ -100,12 +137,21 @@ const EditableItemComponent = ({
             )}
           </Pressable>
         </View>
-        <View style={{ width: '100%' }}>
+      </View>
+      <Animated.View
+        style={[
+          { width: '100%', minHeight: s.$10, paddingHorizontal: s.$1, paddingVertical: s.$075 },
+          animatedStyle,
+        ]}
+      >
+        {editing === item.id ? (
+          <TextInput numberOfLines={4} style={t.pmuted}></TextInput>
+        ) : (
           <Text numberOfLines={4} style={t.pmuted}>
             {item.text}
           </Text>
-        </View>
-      </View>
+        )}
+      </Animated.View>
     </Pressable>
   )
 }

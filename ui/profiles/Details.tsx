@@ -110,6 +110,9 @@ export const Details = ({
   const ref = useRef<ICarouselInstance>(null)
   const { addingToList, setAddingToList, addingItem } = useUIStore()
   const scrollOffsetValue = useSharedValue<number>(10)
+  const [activeIndex, setActiveIndex] = useState(0)
+
+  const { stopEditing } = useItemStore()
 
   const userNameParam =
     pathname === '/' ? undefined : typeof userName === 'string' ? userName : userName?.[0]
@@ -150,9 +153,8 @@ export const Details = ({
     setAddingToList('')
     if (userNameParam) {
       await getProfile(userNameParam)
-    } else {
-      await getProfile() // Fetch own profile if no param
     }
+    stopEditing()
   }, [setAddingToList, getProfile, userNameParam])
 
   const carouselStyle = useMemo(
@@ -171,7 +173,12 @@ export const Details = ({
   )
 
   return (
-    <SheetScreen onChange={(e) => e === -1 && router.back()}>
+    <SheetScreen
+      onChange={(e) => {
+        e === -1 && router.back()
+        e === -1 && stopEditing()
+      }}
+    >
       <ConditionalGridLines />
 
       <View style={{ height: win.height, justifyContent: 'flex-start' }}>

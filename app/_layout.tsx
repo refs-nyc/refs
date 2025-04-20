@@ -2,7 +2,6 @@ import { install } from 'react-native-quick-crypto'
 
 import { polyfill as polyfillEncoding } from 'react-native-polyfill-globals/src/encoding'
 
-import eventsource from 'react-native-sse'
 import 'event-target-polyfill'
 import '@/features/polyfill/custom-event-polyfill'
 import 'react-native-get-random-values'
@@ -27,13 +26,10 @@ import { c } from '@/features/style'
 import * as SystemUI from 'expo-system-ui'
 import { RegisterPushNotifications } from '@/ui/notifications/RegisterPushNotifications'
 import { Icon } from '@/assets/icomoon/IconFont'
+import { pocketbase } from '@/features/pocketbase/pocketbase'
 install()
 polyfillEncoding()
 configureReanimatedLogger({ strict: false })
-
-// For pocketbase
-// @ts-ignore
-global.EventSource = eventsource
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -113,6 +109,24 @@ const Providers = ({ children }: { children: React.ReactNode }) => {
 
 function RootLayoutNav() {
   const colorScheme = useColorScheme()
+
+  /** Subscribe to SSE from Pocketbase */
+  useEffect(() => {
+    // Sanity check. Records can be written in non-real-time
+    // const result = await pocketbase.collection('test').getFullList()
+
+    // ! no async
+    pocketbase.collection('test').subscribe('*', (e) => {
+      console.log('Realtime event received:', e.action)
+      console.log('Record data:', e.record)
+    })
+
+    return () => {
+      console.log('unsubscribe')
+      pocketbase.collection('test').unsubscribe('*')
+    }
+  }, [])
+
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <StatusBar barStyle={colorScheme === 'dark' ? 'light-content' : 'dark-content'} />

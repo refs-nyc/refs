@@ -17,6 +17,7 @@ import { useUserStore, isExpandedProfile } from '@/features/pocketbase/stores/us
 import { ExpandedItem } from '@/features/pocketbase/stores/types'
 import { EditableItem } from './EditableItem' // Assuming EditableItem is memoized
 import { GridLines } from '../display/Gridlines'
+import { BottomSheetScrollView } from '@gorhom/bottom-sheet'
 import { Button } from '../buttons/Button'
 
 const win = Dimensions.get('window')
@@ -82,15 +83,22 @@ export const renderItem = ({
     <View
       style={{
         width: win.width * 0.8,
+        height: win.height,
         left: win.width * 0.1,
         padding: s.$075,
         gap: s.$1,
         justifyContent: 'start',
-        overflow: 'hidden',
       }}
       key={item.id} // key should ideally be on the top-level element returned by map/renderItem callback
     >
-      <EditableItem item={item} editingRights={editingRights} index={index} />
+      <BottomSheetScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ padding: s.$075, gap: s.$1, paddingBottom: 200 }} // Add padding here, ensure enough bottom padding
+        keyboardShouldPersistTaps="handled"
+        nestedScrollEnabled={true} // May be needed if Carousel interferes, test
+      >
+        <EditableItem item={item} editingRights={editingRights} index={index} />
+      </BottomSheetScrollView>
     </View>
   )
 }
@@ -159,7 +167,7 @@ export const Details = ({
   const carouselStyle = useMemo(
     () => ({
       overflow: 'visible',
-      top: win.height * 0.2, // Consider making this dynamic based on header/insets
+      paddingVertical: win.height * 0.2, // Consider making this dynamic based on header/insets
     }),
     []
   )
@@ -180,24 +188,23 @@ export const Details = ({
     >
       <ConditionalGridLines />
 
-      <View style={{ justifyContent: 'flex-start' }}>
-        <DetailsHeaderButton />
+      <DetailsHeaderButton />
 
-        <Carousel
-          loop={data.length > 1}
-          ref={ref}
-          data={data}
-          width={win.width}
-          style={carouselStyle}
-          defaultIndex={index}
-          onConfigurePanGesture={handleConfigurePanGesture}
-          renderItem={carouselRenderItem}
-          windowSize={5}
-          pagingEnabled={true}
-          snapEnabled={true}
-          keyExtractor={(item) => item.id} // Good practice for lists/carousels
-        />
-      </View>
+      <Carousel
+        loop={data.length > 1}
+        ref={ref}
+        data={data}
+        width={win.width}
+        height={win.height}
+        style={carouselStyle}
+        defaultIndex={index}
+        onConfigurePanGesture={handleConfigurePanGesture}
+        renderItem={carouselRenderItem}
+        windowSize={5}
+        pagingEnabled={true}
+        snapEnabled={true}
+        keyExtractor={(item) => item.id} // Good practice for lists/carousels
+      />
 
       {addingToList !== '' && addingItem && (
         <Sheet full={true} onChange={(e) => e === -1 && close()}>

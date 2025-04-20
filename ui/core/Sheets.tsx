@@ -72,18 +72,18 @@ export const SheetScreen = (props: any) => {
       {...props}
       backgroundStyle={{
         backgroundColor: c.surface,
+        padding: 0,
       }}
       backdropComponent={renderBackdrop}
+      handleComponent={null}
       enableDynamicSizing={false}
       maxDynamicContentSize={maxSnapPoint.value}
       snapPoints={snapPoints}
-      handleComponent={() => {
-        console.log('Working from handle')
-        return <View style={{ width: win.width, height: win.height }}>{props?.children}</View>
-      }}
       enablePanDownToClose={true}
       keyboardBehavior="interactive"
       onChange={props?.onChange}
-    />
+    >
+      {props?.children}
+    </BottomSheet>
   )
 }

@@ -11,21 +11,19 @@ import { ProfileHeader } from './ProfileHeader'
 import { Grid } from '../grid/Grid'
 import { Sheet } from '../core/Sheets'
 import { useLocalSearchParams, router } from 'expo-router'
-import { RefListItem } from '../atoms/RefListItem'
-import { useEffect, useState, useCallback, useMemo } from 'react'
-import { View, Dimensions, KeyboardAvoidingView } from 'react-native'
+import { useEffect, useState, useMemo } from 'react'
+import { View, Dimensions } from 'react-native'
 import { s, c } from '@/features/style'
 import { pocketbase, useUserStore, removeFromProfile, useItemStore } from '@/features/pocketbase'
 import { ShareIntent as ShareIntentType, useShareIntentContext } from 'expo-share-intent'
-import Ionicons from '@expo/vector-icons/Ionicons'
-import { Pressable, ScrollView } from 'react-native-gesture-handler'
+import { ScrollView } from 'react-native-gesture-handler'
 import {
   Profile as ProfileType,
   ExpandedProfile,
   ExpandedItem,
 } from '@/features/pocketbase/stores/types'
-import { isProfile } from '@/features/pocketbase/stores/users'
 import { gridSort, createdSort } from '../profiles/sorts'
+import { DMButton } from './DMButton'
 
 const win = Dimensions.get('window')
 
@@ -195,13 +193,7 @@ export const Profile = ({ userName }: { userName: string }) => {
                     )}
                     {!editingRights && (
                       <>
-                        <Button
-                          onPress={() => {}}
-                          variant="raisedSecondary"
-                          title="Message"
-                          iconColor={c.muted}
-                          iconAfter="paper-plane"
-                        />
+                        <DMButton />
                         <Button
                           onPress={() => {}}
                           variant="raisedSecondary"

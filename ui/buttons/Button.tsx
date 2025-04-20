@@ -70,7 +70,6 @@ export const Button = (props: ButtonProps) => {
       ]}
       onTouchStart={() => {
         setPressed(true)
-        console.log(pressedVariant)
       }}
       onTouchEnd={() => {
         setPressed(false)

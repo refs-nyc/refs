@@ -25,4 +25,5 @@ export type Conversation = PBTypes.ConversationsRecord
 export type Message = PBTypes.MessagesRecord
 
 export type ExpandedConversation = PBTypes.ConversationsResponse<{ messages_via_conversation: PBTypes.MessagesRecord[] }>
+export type ConversationWithMemberships = PBTypes.ConversationsResponse<{ memberships_via_conversation: ExpandedMembership[] }>
 export type ExpandedMembership = PBTypes.MembershipsResponse<{ user: PBTypes.UsersRecord }>

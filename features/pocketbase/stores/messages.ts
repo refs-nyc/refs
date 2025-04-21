@@ -123,9 +123,13 @@ export const useMessageStore = create<MessageStore>((set) => ({
   },
   addMessage: (message: Message) =>
   {
-    set (state => ({
-      messages: [...state.messages.filter(m => m.id !== message.id), message]
-    }))
+    set(state => {
+      console.log(state.messages)
+      if (!state.messages.length) return {...state, messages: [message]}
+      return {
+        messages: state.messages.some(m => m.id === message.id) ? [...state.messages] : [...state.messages, message]
+      }
+    })
   }
 
 }));

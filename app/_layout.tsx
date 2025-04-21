@@ -122,7 +122,7 @@ function RootLayoutNav() {
     })
 
     return () => {
-      console.log('unsubscribe')
+      console.log('unsubscribe test')
       pocketbase.collection('test').unsubscribe('*')
     }
   }, [])

@@ -11,7 +11,6 @@ export function MessagesInit() {
 
   // load conversations
   useEffect(() => {
-    if (!user) return
     const getConversations = async () => {
       const conversations = await pocketbase.collection('conversations').getFullList<Conversation>({
         sort: '-created',
@@ -29,7 +28,6 @@ export function MessagesInit() {
 
   // load messages
   useEffect(() => {
-    if (!user) return
     const getMessages = async () => {
       const messages = await pocketbase.collection('messages').getFullList<Message>({
         sort: 'created',
@@ -47,7 +45,6 @@ export function MessagesInit() {
 
   // load memberships
   useEffect(() => {
-    if (!user) return
     const getMemberships = async () => {
       const memberships = await pocketbase.collection('memberships').getFullList<ExpandedMembership>({
         expand: 'user',
@@ -61,7 +58,7 @@ export function MessagesInit() {
       console.error(error)
     }
 
-  },[user])
+  }, [user])
 
   // subscribe to new messages
   useEffect(() => {
@@ -75,7 +72,7 @@ export function MessagesInit() {
       console.log('unsubscribe')
       pocketbase.collection('messages').unsubscribe('*')
     }
-  }, [])
+  }, [user])
 
   // subscribe to conversation updates 
   useEffect(() => {
@@ -89,7 +86,7 @@ export function MessagesInit() {
       console.log('unsubscribe')
       pocketbase.collection('conversations').unsubscribe('*')
     }
-  }, [])
+  }, [user])
 
   return <></>
 

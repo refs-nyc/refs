@@ -134,7 +134,7 @@ export const useMessageStore = create<MessageStore>((set) => ({
   {
     set(state => {
       console.log(state.messages)
-      if (!state.messages.length) return {...state, messages: [message]}
+      if (!state.messages.length) return {messages: [message]}
       return {
         messages: state.messages.some(m => m.id === message.id) ? [...state.messages] : [...state.messages, message]
       }

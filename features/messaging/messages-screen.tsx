@@ -32,6 +32,7 @@ export function MessagesScreen({conversationId} : {conversationId: string})
 
   console.log('VIEWING CONVERSATION', conversationId)
   console.log('members', memberships[conversationId].map(m=>m.expand?.user.email))
+  console.log('all messages', messages.map(m=>m.text))
   console.log('conversationMessages', conversationMessages.map(m=>m.text))
 
   return (

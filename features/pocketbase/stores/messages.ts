@@ -38,26 +38,35 @@ export const useMessageStore = create<MessageStore>((set) => ({
   },
   createConversation: async (is_direct: boolean, creatorId: string, otherMemberIds: string[]): Promise<string> =>
   {
-    console.log(`creating conversation with ${otherMemberIds.length} users: ${otherMemberIds}`)
-    const newConversation = await pocketbase.collection('conversations').create({is_direct});
+    try
+    {
+      console.log(`creating conversation with ${otherMemberIds.length} users: ${otherMemberIds}`)
+      const newConversation = await pocketbase.collection('conversations').create({is_direct});
 
-    await pocketbase.collection('memberships').create({conversation: newConversation.id, user: creatorId});
+      await pocketbase.collection('memberships').create({conversation: newConversation.id, user: creatorId});
 
-    for (const userId of otherMemberIds) {
-      await pocketbase.collection('memberships').create({conversation: newConversation.id, user: userId});
+      for (const userId of otherMemberIds) {
+        await pocketbase.collection('memberships').create({conversation: newConversation.id, user: userId});
+      }
+
+      const newMemberships = await pocketbase.collection('memberships').getFullList<ExpandedMembership>({
+        filter: `conversation = "${newConversation.id}"`,
+        expand: 'user',
+      });
+
+      set((state) => ({
+        conversations: { ...state.conversations, [newConversation.id]: newConversation },
+        memberships : { ...state.memberships, [newConversation.id]: newMemberships }
+      }));
+
+      return newConversation.id;
+
+    }
+    catch (error)
+    {
+      console.error(error);
     }
 
-    const newMemberships = await pocketbase.collection('memberships').getFullList<ExpandedMembership>({
-      filter: `conversation = "${newConversation.id}"`,
-      expand: 'user',
-    });
-
-    set((state) => ({
-      conversations: { ...state.conversations, [newConversation.id]: newConversation },
-      memberships : { ...state.memberships, [newConversation.id]: newMemberships }
-    }));
-
-    return newConversation.id;
   },
   addConversation: (conversation) =>
   {

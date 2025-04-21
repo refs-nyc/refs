@@ -39,6 +39,7 @@ export const Profile = ({ userName }: { userName: string }) => {
   const [searching, setSearching] = useState(false)
   const [backlogItems, setBacklogItems] = useState<ExpandedItem[]>([])
   const [editingRights, seteditingRights] = useState<boolean>(false)
+  const [showMessageButtons, setShowMessageButtons] = useState<boolean>(false)
   const [step, setStep] = useState('')
   const [term, setTerm] = useState('')
   const [allItems, setAllItems] = useState<ExpandedItem[]>([])
@@ -117,6 +118,7 @@ export const Profile = ({ userName }: { userName: string }) => {
         await getProfile(userName)
         await refreshGrid(userName)
         seteditingRights(pocketbase?.authStore?.record?.userName === userName)
+        setShowMessageButtons(!(pocketbase?.authStore?.record?.userName === userName))
       } catch (error) {
         console.error(error)
       }
@@ -191,7 +193,7 @@ export const Profile = ({ userName }: { userName: string }) => {
                         iconAfter="add-circle-outline"
                       />
                     )}
-                    {!editingRights && (
+                    {showMessageButtons && (
                       <>
                         <DMButton />
                         <Button

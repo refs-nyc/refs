@@ -1,54 +1,29 @@
-import { useUserStore, pocketbase } from "@/features/pocketbase"
-import { ExpandedConversation, ExpandedMembership } from "@/features/pocketbase/stores/types"
+import { useUserStore } from "@/features/pocketbase"
+import { Conversation } from "@/features/pocketbase/stores/types"
 import { s, c } from "@/features/style"
-import { useState, useEffect } from "react"
 import { View, Text } from "react-native"
 import { XStack, YStack } from "../core/Stacks"
 import { Avatar } from "../atoms/Avatar"
 import { useMessageStore } from "@/features/pocketbase/stores/messages"
 
-export default function ConversationListItem ({ conversation }: { conversation: ExpandedConversation }): JSX.Element | null
+export default function ConversationListItem ({ conversation }: { conversation: Conversation }): JSX.Element | null
 {
 
   const { user } = useUserStore()
-  const [image, setImage] = useState<string>('');
-  const [title, setTitle] = useState<string>('');
-  const { setMembership } = useMessageStore();
+  const { memberships, messages } = useMessageStore();
   
   if (!user) return null
 
-  useEffect(() => {
-    const setConversationDetails = async () => 
-    {
-      const memberships = await pocketbase.collection<ExpandedMembership>('memberships').getFullList({
-        filter: `conversation="${conversation.id}"`,
-        expand: 'user',
-      });
-      setMembership(conversation.id, memberships);
-
-      const members = memberships.filter(m => m.expand?.user && m.expand.user.id !== user.id).map(m=>m.expand!.user);
-
-      if (conversation.is_direct) {
-        setTitle(members[0].firstName + " " + members[0].lastName);
-      }
-      else {
-        setTitle('Group Chat'); //todo get title from db instead
-      }
-
-      for (const member of members) {
-        if (member.image) {
-          setImage(member.image);
-          break;
-        }
-      }
+  const msgs = messages.filter(m => m.conversation === conversation.id);
+  const last_message = msgs[msgs.length-1];
+  const members = memberships[conversation.id].filter(m => m.expand?.user && m.expand.user.id !== user.id).map(m=>m.expand!.user);
+  let image; 
+  for (const member of members) {
+    if (member.image) {
+      image = member.image;
+      break;
     }
-    try {
-      setConversationDetails();
-    }
-    catch (error) {
-      console.error(error)
-    }
-  }, [])
+  }
 
   return (
     <XStack gap={s.$075} style={{ alignItems: 'center', backgroundColor: c.surface2 }}>
@@ -56,12 +31,12 @@ export default function ConversationListItem ({ conversation }: { conversation: 
       <Avatar source={image} size={s.$5} /> 
       <YStack style={{ padding: s.$1, width: "80%" }}>
         <Text style={{ fontSize: s.$1}}>
-          {title}
+          {conversation.is_direct ? 
+            members[0].firstName + " " + members[0].lastName 
+            : 'Group Chat'}
         </Text>
         <Text>
-          {/* todo make sure this is the latest message. i think it's impossible to sort within an expansion so need some diff way */}
-          {/* and anyway we shouldn't be fetching the whole conversation for this */}
-          {conversation.expand?.messages_via_conversation?.length  &&  conversation.expand.messages_via_conversation[0].text}
+          {last_message?.text}
         </Text>
       </YStack>
     </XStack>

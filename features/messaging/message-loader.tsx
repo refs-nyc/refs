@@ -62,6 +62,8 @@ export function MessagesInit() {
 
   // subscribe to new messages
   useEffect(() => {
+    if (!user) return;
+    pocketbase.collection('messages').unsubscribe('*');
     console.log(`subscribing to new messages, user: ${user?.userName}`)
     pocketbase.collection('messages').subscribe('*', (e) => {
       if (e.action === 'create') {
@@ -98,6 +100,8 @@ export function MessagesInit() {
 
   //subscribe to membership updates (to see new conversations)
   useEffect(() => {
+    if (!user) return;
+    pocketbase.collection('memberships').unsubscribe('*');
     console.log(`subscribing to memberships, user: ${user?.userName}`)
     pocketbase.collection('memberships').subscribe('*', async (e) => {   
       if (e.action === 'update') {

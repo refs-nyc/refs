@@ -14,7 +14,7 @@ export const EditableHeader = ({
   image,
   placeholder = '',
   initialEditing = false,
-  onTitleChange,
+  onTitleChange = () => {},
   onDataChange = () => {},
 }: {
   title: string
@@ -25,7 +25,6 @@ export const EditableHeader = ({
   onTitleChange: (str: string) => void
   onDataChange: (d: { url: string; image: string; title: string }) => void
 }) => {
-  console.log(title || '')
   const [titleState, setTitleState] = useState(title || '')
   const [urlState, setUrlState] = useState(url)
   const [imageState, setImageState] = useState(image)
@@ -36,14 +35,6 @@ export const EditableHeader = ({
   const analyseUrl = async (u: string) => {
     // pass the link directly
     getLinkPreview(u).then((data) => {
-      console.log(
-        'TITLE STATE',
-        titleState,
-        titleState === '',
-        titleState == '',
-        titleState.trim() === '',
-        titleState.trim() == ''
-      )
       if (data?.title && titleState === '') {
         console.log('SETTING TITLE: ', data.title)
         setTitleState(data.title)

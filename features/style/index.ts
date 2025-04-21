@@ -208,6 +208,18 @@ export const base = StyleSheet.create({
     height: s.$2,
     borderRadius: 4,
   },
+  nonEditableItem: {
+    backgroundColor: c.surface,
+    borderColor: c.surface,
+    borderWidth: 2,
+    borderRadius: s.$1,
+  },
+  editableItem: {
+    backgroundColor: c.surface,
+    borderColor: c.grey1,
+    borderWidth: 2,
+    borderRadius: s.$1,
+  },
 })
 
 export { Icon } from '@/assets/icomoon/IconFont'

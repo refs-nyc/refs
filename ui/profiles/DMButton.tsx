@@ -15,8 +15,6 @@ export const DMButton = () =>
 
   const { userName } =  useGlobalSearchParams();
 
-  if ( userName === user.userName) return null;
-
   useEffect(() => {
     const checkIfDirectMessageExists = async () => {
       try {
@@ -24,7 +22,7 @@ export const DMButton = () =>
         const userId = await pocketbase.collection<UsersRecord>('users').getFullList({
           filter: `userName = "${userName}"`,
         });
-        console.log(userName, userId[0].id)
+
         const directConversations = await pocketbase.collection<ConversationWithMemberships>('conversations').getFullList({
           filter: `is_direct = true`,
           expand: 'memberships_via_conversation.user',
@@ -38,8 +36,6 @@ export const DMButton = () =>
         }
         else
         {
-          // todo: make sure conversation is loaded. currently if the user has not visited their conversation list yet
-          // conversation details will not be loaded and it will crash. maybe do it in _layout.tsx?
           setTarget('/messages/' + existingConversationId);
         }
       }

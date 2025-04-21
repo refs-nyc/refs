@@ -2,8 +2,7 @@ import { Heading, XStack, YStack } from '@/ui'
 import { View, ScrollView, Text, DimensionValue, KeyboardAvoidingView, Keyboard } from 'react-native'
 import { c, s } from '../style'
 import { useEffect, useRef, useState } from 'react'
-import { pocketbase, useUserStore } from '../pocketbase'
-import {  Message } from '../pocketbase/stores/types'
+import { useUserStore } from '../pocketbase'
 import { useMessageStore } from '../pocketbase/stores/messages'
 import { Pressable, TextInput } from 'react-native-gesture-handler'
 import { useRouter } from 'expo-router'
@@ -12,10 +11,8 @@ import { Ionicons } from '@expo/vector-icons'
 
 export function MessagesScreen({conversationId} : {conversationId: string})
 {
-  const [items, setItems] = useState<Message[]>([])
   const { user } = useUserStore()
-  const { conversations } = useMessageStore();
-  const { memberships } = useMessageStore();
+  const { conversations, memberships, messages } = useMessageStore();
   const scrollViewRef = useRef<ScrollView>(null);
   const [message, setMessage] = useState<string>('');
 
@@ -31,35 +28,11 @@ export function MessagesScreen({conversationId} : {conversationId: string})
     return () => showSub.remove();
   }, []);
 
-  useEffect(() => {
-    const init = async () => {
-      try {
-      const messages = await pocketbase.collection('messages').getFullList<Message>({
-        filter: `conversation = "${conversationId}"`,
-        sort: 'created',
-      })
-      setItems(messages)
-      const unsubscribePromise = pocketbase.collection('messages').subscribe('*', 
-        ({action, record}) => {
-          if (action==='create') setItems((prev)=>[...prev, record]);
-        },
-      )
-      return () => {
-        (async () => {
-          (await unsubscribePromise)();
-        })();
-      };
-    }
-    catch (error) {
-      console.error(error)
-    }
-    }
-    init();
-  }, [])
-
   const conversation = conversations[conversationId];
   const members = memberships[conversationId].filter(m => m.expand?.user.id !== user.id);
   const router = useRouter();
+
+  const conversationMessages = messages.filter(m => m.conversation === conversationId);
 
   return (
 
@@ -107,7 +80,7 @@ export function MessagesScreen({conversationId} : {conversationId: string})
               margin: 'auto',
             }}
           >
-            {items.map(i => 
+            {conversationMessages.map(i => 
               {
                 const isMe = i.sender === user.id;
                 return (

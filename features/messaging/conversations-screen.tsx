@@ -1,38 +1,17 @@
 import { Heading, YStack } from '@/ui'
 import { View, ScrollView, DimensionValue } from 'react-native'
 import { c, s } from '../style'
-import { useEffect, useState } from 'react'
-import { pocketbase, useUserStore } from '../pocketbase'
-import { ExpandedConversation } from '../pocketbase/stores/types'
+import { useUserStore } from '../pocketbase'
 import ConversationListItem from '@/ui/messaging/ConversationListItem'
 import { Pressable } from 'react-native-gesture-handler'
 import { router } from 'expo-router'
 import { useMessageStore } from '../pocketbase/stores/messages'
 
 export function ConversationsScreen() {
-  const [items, setItems] = useState<ExpandedConversation[]>([])
   const { user } = useUserStore()
-  const { setConversations } = useMessageStore()
+  const { conversations } = useMessageStore()
 
   if (!user) return null
-
-  useEffect(() => {
-    const getConversations = async () => {
-      const conversations = await pocketbase.collection('conversations').getFullList<ExpandedConversation>({
-        sort: '-created',
-        expand: "messages_via_conversation",
-      })
-      setItems(conversations)
-      setConversations(conversations);
-    }
-    try {
-      getConversations();
-    }
-    catch (error) {
-      console.error(error)
-    }
-
-  }, [])
 
   return (
 
@@ -61,7 +40,7 @@ export function ConversationsScreen() {
             margin: 'auto'
           }}
         >
-          {items.map(i =>
+          {(Object.values(conversations)).map(i =>
             <Pressable key={i.id} onPress={()=>router.push(`/messages/${i.id}`)}>
               <ConversationListItem conversation={i} />
             </Pressable>

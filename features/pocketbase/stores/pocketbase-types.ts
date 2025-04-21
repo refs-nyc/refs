@@ -18,6 +18,7 @@ export enum Collections {
 	Messages = "messages",
 	Profiles = "profiles",
 	Refs = "refs",
+	Test = "test",
 	Users = "users",
 }
 
@@ -129,11 +130,12 @@ export type ItemsRecord = {
 }
 
 export type MembershipsRecord = {
+	conversation?: RecordIdString
 	created?: IsoDateString
-	field2?: RecordIdString
-	field?: RecordIdString
 	id: string
+	last_read?: IsoDateString
 	updated?: IsoDateString
+	user?: RecordIdString
 }
 
 export type MessagesRecord = {
@@ -176,6 +178,12 @@ export type RefsRecord = {
 	url?: string
 }
 
+export type TestRecord = {
+	created?: IsoDateString
+	id: string
+	updated?: IsoDateString
+}
+
 export type UsersRecord = {
 	created?: IsoDateString
 	email: string
@@ -209,6 +217,7 @@ export type MembershipsResponse<Texpand = unknown> = Required<MembershipsRecord>
 export type MessagesResponse<Texpand = unknown> = Required<MessagesRecord> & BaseSystemFields<Texpand>
 export type ProfilesResponse<Texpand = unknown> = Required<ProfilesRecord> & BaseSystemFields<Texpand>
 export type RefsResponse<Texpand = unknown> = Required<RefsRecord> & BaseSystemFields<Texpand>
+export type TestResponse<Texpand = unknown> = Required<TestRecord> & BaseSystemFields<Texpand>
 export type UsersResponse<Texpand = unknown> = Required<UsersRecord> & AuthSystemFields<Texpand>
 
 // Types containing all Records and Responses, useful for creating typing helper functions
@@ -226,6 +235,7 @@ export type CollectionRecords = {
 	messages: MessagesRecord
 	profiles: ProfilesRecord
 	refs: RefsRecord
+	test: TestRecord
 	users: UsersRecord
 }
 
@@ -242,6 +252,7 @@ export type CollectionResponses = {
 	messages: MessagesResponse
 	profiles: ProfilesResponse
 	refs: RefsResponse
+	test: TestResponse
 	users: UsersResponse
 }
 
@@ -261,5 +272,6 @@ export type TypedPocketBase = PocketBase & {
 	collection(idOrName: 'messages'): RecordService<MessagesResponse>
 	collection(idOrName: 'profiles'): RecordService<ProfilesResponse>
 	collection(idOrName: 'refs'): RecordService<RefsResponse>
+	collection(idOrName: 'test'): RecordService<TestResponse>
 	collection(idOrName: 'users'): RecordService<UsersResponse>
 }

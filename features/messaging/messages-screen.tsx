@@ -12,13 +12,9 @@ import { Ionicons } from '@expo/vector-icons'
 export function MessagesScreen({conversationId} : {conversationId: string})
 {
   const { user } = useUserStore()
-  const { conversations, memberships, messages } = useMessageStore();
+  const { conversations, memberships, messages, sendMessage } = useMessageStore();
   const scrollViewRef = useRef<ScrollView>(null);
   const [message, setMessage] = useState<string>('');
-
-  if (!user) return null
-
-  const { sendMessage } = useMessageStore();
 
   useEffect(() => {
     const showSub = Keyboard.addListener('keyboardDidShow', () => {
@@ -33,6 +29,10 @@ export function MessagesScreen({conversationId} : {conversationId: string})
   const router = useRouter();
 
   const conversationMessages = messages.filter(m => m.conversation === conversationId);
+
+  console.log('VIEWING CONVERSATION', conversationId)
+  console.log('members', memberships[conversationId].map(m=>m.expand?.user.email))
+  console.log('conversationMessages', conversationMessages.map(m=>m.text))
 
   return (
 

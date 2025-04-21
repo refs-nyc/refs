@@ -6,7 +6,7 @@ import { Conversation, ExpandedMembership, Message } from '../pocketbase/stores/
 export function MessagesInit() {
   const { user } = useUserStore()
   const { setConversations, updateConversation } = useMessageStore();
-  const { setMessages, addMessage } = useMessageStore();
+  const { setMessages, addMessage, addConversation } = useMessageStore();
   const { setMemberships } = useMessageStore();
 
   // load conversations
@@ -79,6 +79,9 @@ export function MessagesInit() {
     pocketbase.collection('conversations').subscribe('*', (e) => {   
       if (e.action === 'update') {
         updateConversation(e.record);
+      }
+      if (e.action === 'create') {
+        addConversation(e.record);
       }
     })
 

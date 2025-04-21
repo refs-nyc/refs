@@ -7,6 +7,8 @@ type MessageStore = {
   conversations: Record<string, Conversation>;
   setConversations: (conversations: Conversation[]) => void;
   updateConversation: (conversation: Conversation) => void;
+  createConversation: (is_direct: boolean, creatorId: string, otherMemberIds: string[]) => Promise<string>;
+  addConversation (conversation: Conversation): void;
   memberships: Record<string, ExpandedMembership[]>;
   setMembership: (convId: string, members: ExpandedMembership[]) => void;
   setMemberships: (memberships: ExpandedMembership[]) => void;
@@ -28,6 +30,35 @@ export const useMessageStore = create<MessageStore>((set) => ({
     set({ conversations: newItems });
   },
   updateConversation: (conversation) =>
+  {
+    set((state) => ({
+      conversations: { ...state.conversations, [conversation.id]: conversation }
+    }));
+  },
+  createConversation: async (is_direct: boolean, creatorId: string, otherMemberIds: string[]): Promise<string> =>
+  {
+    console.log(`creating conversation with ${otherMemberIds.length} users: ${otherMemberIds}`)
+    const newConversation = await pocketbase.collection('conversations').create({is_direct});
+
+    await pocketbase.collection('memberships').create({conversation: newConversation.id, user: creatorId});
+
+    for (const userId of otherMemberIds) {
+      await pocketbase.collection('memberships').create({conversation: newConversation.id, user: userId});
+    }
+
+    const newMemberships = await pocketbase.collection('memberships').getFullList<ExpandedMembership>({
+      filter: `conversation = "${newConversation.id}"`,
+      expand: 'user',
+    });
+
+    set((state) => ({
+      conversations: { ...state.conversations, [newConversation.id]: newConversation },
+      memberships : { ...state.memberships, [newConversation.id]: newMemberships }
+    }));
+
+    return newConversation.id;
+  },
+  addConversation: (conversation) =>
   {
     set((state) => ({
       conversations: { ...state.conversations, [conversation.id]: conversation }

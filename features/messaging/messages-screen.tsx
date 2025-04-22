@@ -1,5 +1,5 @@
 import { Heading, XStack, YStack } from '@/ui'
-import { View, ScrollView, Text, DimensionValue, KeyboardAvoidingView, Keyboard } from 'react-native'
+import { View, ScrollView, DimensionValue, KeyboardAvoidingView, Keyboard } from 'react-native'
 import { c, s } from '../style'
 import { useEffect, useRef, useState } from 'react'
 import { useUserStore } from '../pocketbase'
@@ -8,8 +8,7 @@ import { Pressable, TextInput } from 'react-native-gesture-handler'
 import { Link, useRouter } from 'expo-router'
 import { Avatar } from '@/ui/atoms/Avatar'
 import { Ionicons } from '@expo/vector-icons'
-import {useCalendars} from 'expo-localization'
-import formatTimestamp from './timestampFormatter'
+import MessageBubble from '@/ui/messaging/MessageBubble'
 
 export function MessagesScreen({conversationId} : {conversationId: string})
 {
@@ -18,14 +17,10 @@ export function MessagesScreen({conversationId} : {conversationId: string})
   const scrollViewRef = useRef<ScrollView>(null);
   const [message, setMessage] = useState<string>('');
   
-  const calendars = useCalendars();
-  const timeZone = calendars[0].timeZone || "America/New_York";
-
   useEffect(() => {
     const showSub = Keyboard.addListener('keyboardDidShow', () => {
       scrollViewRef.current?.scrollToEnd({ animated: true });
     });
-
     return () => showSub.remove();
   }, []);
 
@@ -88,30 +83,7 @@ export function MessagesScreen({conversationId} : {conversationId: string})
               margin: 'auto',
             }}
           >
-            {conversationMessages.map(i => 
-              {
-                const isMe = i.sender === user.id;
-                const date = i.created ? i.created.slice(0, i.created.length-1) : '';
-                const formatted = formatTimestamp(date, timeZone);
-                
-                return (
-                  <View 
-                    key={i.id} 
-                    style={{ 
-                      backgroundColor: isMe ? c.accent2 : c.surface2, 
-                      padding: s.$08, 
-                      marginVertical: s.$05,
-                      borderRadius: s.$075, 
-                      maxWidth: '70%',
-                      alignSelf: isMe ? 'flex-end' : 'flex-start'
-                    }}
-                    >
-                    <Text>{i.text}</Text>
-                    <Text style={{color: c.muted, fontSize: s.$08, alignSelf: 'flex-end'}}>{formatted}</Text>
-                  </View>
-                  )
-              }
-            )}
+            {conversationMessages.map(message => <MessageBubble message={message} />)}
           </YStack>
         </ScrollView>
           <XStack 
@@ -145,8 +117,7 @@ export function MessagesScreen({conversationId} : {conversationId: string})
               <Ionicons 
                 name="paper-plane-outline" 
                 size={s.$2} 
-                color={c.grey2} 
-
+                color={c.grey2}
               />
             </Pressable>
           </XStack>
@@ -154,4 +125,3 @@ export function MessagesScreen({conversationId} : {conversationId: string})
     </View>
   )
 }
-

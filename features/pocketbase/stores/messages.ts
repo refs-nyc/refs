@@ -10,7 +10,6 @@ type MessageStore = {
   createConversation: (is_direct: boolean, creatorId: string, otherMemberIds: string[]) => Promise<string>;
   addConversation (conversation: Conversation): void;
   memberships: Record<string, ExpandedMembership[]>;
-  setMembership: (convId: string, members: ExpandedMembership[]) => void;
   setMemberships: (memberships: ExpandedMembership[]) => void;
   addMembership: (membership: ExpandedMembership) => void;
   sendMessage: (sendreId: string, conversationId: string, text: string) => Promise<void>;
@@ -75,12 +74,6 @@ export const useMessageStore = create<MessageStore>((set) => ({
     }));
   },
   memberships: {},
-  setMembership: (convId, members) =>
-  {
-    set((state) => ({
-      memberships: { ...state.memberships, [convId]: members },
-    }));
-  },
   addMembership: (membership) => {
     set((state) => {
       const prev = state.memberships[membership.conversation] || [];
@@ -114,11 +107,17 @@ export const useMessageStore = create<MessageStore>((set) => ({
   },
   sendMessage: async (senderId, conversationId, text) => {
     try {
-      await pocketbase.collection('messages').create({
+      const message = await pocketbase.collection('messages').create({
         conversation: conversationId,
         text,
         sender: senderId,
       });
+      set(state => {
+        if (!state.messages.length) return {messages: [message]}
+        return {
+          messages: state.messages.some(m => m.id === message.id) ? [...state.messages] : [...state.messages, message]
+        }
+      })
     } catch (error) {
       console.error(error);
     }
@@ -133,7 +132,7 @@ export const useMessageStore = create<MessageStore>((set) => ({
   addMessage: (message: Message) =>
   {
     set(state => {
-      console.log(state.messages)
+      console.log("messages in store",state.messages.map(m=>m.text))
       if (!state.messages.length) return {messages: [message]}
       return {
         messages: state.messages.some(m => m.id === message.id) ? [...state.messages] : [...state.messages, message]

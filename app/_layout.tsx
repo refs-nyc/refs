@@ -111,21 +111,21 @@ function RootLayoutNav() {
   const colorScheme = useColorScheme()
 
   /** Subscribe to SSE from Pocketbase */
-  useEffect(() => {
-    // Sanity check. Records can be written in non-real-time
-    // const result = await pocketbase.collection('test').getFullList()
+  // useEffect(() => {
+  //   // Sanity check. Records can be written in non-real-time
+  //   // const result = await pocketbase.collection('test').getFullList()
 
-    // ! no async
-    pocketbase.collection('test').subscribe('*', (e) => {
-      console.log('Realtime event received:', e.action)
-      console.log('Record data:', e.record)
-    })
+  //   // ! no async
+  //   pocketbase.collection('test').subscribe('*', (e) => {
+  //     console.log('Realtime event received:', e.action)
+  //     console.log('Record data:', e.record)
+  //   })
 
-    return () => {
-      console.log('unsubscribe test')
-      pocketbase.collection('test').unsubscribe('*')
-    }
-  }, [])
+  //   return () => {
+  //     console.log('unsubscribe test')
+  //     pocketbase.collection('test').unsubscribe('*')
+  //   }
+  // }, [])
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>

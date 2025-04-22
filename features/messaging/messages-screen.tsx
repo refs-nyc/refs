@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useUserStore } from '../pocketbase'
 import { useMessageStore } from '../pocketbase/stores/messages'
 import { Pressable, TextInput } from 'react-native-gesture-handler'
-import { useRouter } from 'expo-router'
+import { Link, useRouter } from 'expo-router'
 import { Avatar } from '@/ui/atoms/Avatar'
 import { Ionicons } from '@expo/vector-icons'
 import {useCalendars} from 'expo-localization'
@@ -61,7 +61,9 @@ export function MessagesScreen({conversationId} : {conversationId: string})
             : 'Group Chat'}
         </Heading>
         {conversation.is_direct && 
-          <Avatar source={members[0].expand?.user.image} size={s.$4} />
+          <Link href={`/user/${members[0].expand?.user.userName}`}>
+            <Avatar source={members[0].expand?.user.image} size={s.$4} />
+          </Link>
         }
       </XStack>
       <KeyboardAvoidingView       

@@ -63,13 +63,18 @@ export function MessagesInit() {
   // subscribe to new messages
   useEffect(() => {
     if (!user) return;
-    console.log(`subscribing to new messages, user: ${user?.userName}`)
+    try
+    {console.log(`subscribing to new messages, user: ${user?.userName}`)
     pocketbase.collection('messages').subscribe('*', (e) => {
+      console.log(e)
       if (e.action === 'create') {
         console.log(`new message received: ${e.record.text}`)
         addMessage(e.record);
       }
-    })
+    })}
+    catch (error) {
+      console.error(error)
+    }
 
     return () => {
       console.log('unsubscribe from messages')
@@ -101,6 +106,7 @@ export function MessagesInit() {
   useEffect(() => {
     if (!user) return;
     console.log(`subscribing to memberships, user: ${user?.userName}`)
+    try {
     pocketbase.collection('memberships').subscribe('*', async (e) => {   
       if (e.action === 'update') {
         console.log('membership updated')
@@ -125,6 +131,9 @@ export function MessagesInit() {
         }
       }
     })
+  } catch (error) {
+    console.error(error)
+  }
     return () => {
       console.log('unsubscribe from memberships')
       pocketbase.collection('memberships').unsubscribe('*')

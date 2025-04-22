@@ -34,7 +34,7 @@ export default function ConversationListItem ({ conversation }: { conversation: 
           {conversation.is_direct ? 
             members[0].firstName + " " + members[0].lastName 
             : 'Group Chat'}
-            {`(${conversation.id})`}
+            {/* {`(${conversation.id})`} */}
         </Text>
         <Text>
           {last_message?.text}

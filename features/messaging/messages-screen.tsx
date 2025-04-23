@@ -4,12 +4,13 @@ import { c, s } from '../style'
 import { useEffect, useRef, useState } from 'react'
 import { useUserStore } from '../pocketbase'
 import { useMessageStore } from '../pocketbase/stores/messages'
-import { Pressable, TextInput } from 'react-native-gesture-handler'
+import { Pressable } from 'react-native-gesture-handler'
 import { Link, useRouter } from 'expo-router'
 import { Avatar } from '@/ui/atoms/Avatar'
 import { Ionicons } from '@expo/vector-icons'
 import MessageBubble from '@/ui/messaging/MessageBubble'
 import { EmojiKeyboard } from 'rn-emoji-keyboard'
+import MessageInput from '@/ui/messaging/MessageInput'
 
 export function MessagesScreen({conversationId} : {conversationId: string})
 {
@@ -106,41 +107,12 @@ export function MessagesScreen({conversationId} : {conversationId: string})
           </View>
         </SheetScreen>
        :
-        <XStack
-          style={{ 
-            backgroundColor: c.white,
-            borderRadius: s.$2,
-            marginVertical: s.$075,
-            marginHorizontal: s.$1,
-            paddingVertical: s.$09,
-            paddingHorizontal: s.$1,
-            justifyContent: 'space-between',
-            fontSize: s.$09,
-            alignItems: 'center',
-          }}
-        >
-          <TextInput
-            style={{
-              width: '70%',
-            }}
-            placeholder="Type anything..."
-            multiline={true}
-            value={message}
-            onChangeText={setMessage}
-          />
-          <Pressable
-            onPress={() => {
-              sendMessage(user.id, conversationId, message);
-              setMessage('');
-            }}
-          >
-            <Ionicons 
-              name="paper-plane-outline" 
-              size={s.$2} 
-              color={c.grey2}
-            />
-          </Pressable>
-        </XStack>}
+        <MessageInput 
+          onMessageSubmit={() => {sendMessage(user.id, conversationId, message); setMessage('');}} 
+          setMessage={setMessage} 
+          message={message} 
+        />
+        }
       </KeyboardAvoidingView>
     </View>
   )

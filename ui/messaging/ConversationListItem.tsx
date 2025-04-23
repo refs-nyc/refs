@@ -20,14 +20,14 @@ export default function ConversationListItem ({ conversation }: { conversation: 
   if (!user) return null
 
   const msgs = messages.filter(m => m.conversation === conversation.id);
-  const last_message = msgs[msgs.length-1];
-  const time = last_message?.created ? last_message.created.slice(0, last_message.created.length-1) : '';
+  const lastMessage = msgs[msgs.length-1];
+  const time = lastMessage?.created ? lastMessage.created.slice(0, lastMessage.created.length-1) : '';
   const members = memberships[conversation.id].filter(m => m.expand?.user && m.expand.user.id !== user.id).map(m=>m.expand!.user);
   const ownMembership = memberships[conversation.id].filter(m => m.expand?.user.id === user.id)[0];
 
-  const lastMessageDate = new Date(last_message?.created ? last_message.created : '');
+  const lastMessageDate = new Date(lastMessage?.created ? lastMessage.created : '');
   const lastReadDate = new Date(ownMembership.last_read);
-  const newMessages = lastMessageDate > lastReadDate && last_message?.sender !== user?.id;
+  const newMessages = lastMessageDate > lastReadDate && lastMessage?.sender !== user?.id;
 
   let image; 
   for (const member of members) {
@@ -58,7 +58,7 @@ export default function ConversationListItem ({ conversation }: { conversation: 
               {/* {`(${conversation.id})`} */}
           </Text>
           <Text>
-            {last_message?.text}
+            {lastMessage?.text}
           </Text>
         </YStack>
       </XStack>

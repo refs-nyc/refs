@@ -17,6 +17,7 @@ export enum Collections {
 	Memberships = "memberships",
 	Messages = "messages",
 	Profiles = "profiles",
+	Reactions = "reactions",
 	Refs = "refs",
 	Test = "test",
 	Users = "users",
@@ -159,6 +160,15 @@ export type ProfilesRecord = {
 	userName: string
 }
 
+export type ReactionsRecord = {
+	created?: IsoDateString
+	emoji?: string
+	id: string
+	message?: RecordIdString
+	updated?: IsoDateString
+	user?: RecordIdString
+}
+
 export enum RefsTypeOptions {
 	"place" = "place",
 	"artwork" = "artwork",
@@ -216,6 +226,7 @@ export type ItemsResponse<Texpand = unknown> = Required<ItemsRecord> & BaseSyste
 export type MembershipsResponse<Texpand = unknown> = Required<MembershipsRecord> & BaseSystemFields<Texpand>
 export type MessagesResponse<Texpand = unknown> = Required<MessagesRecord> & BaseSystemFields<Texpand>
 export type ProfilesResponse<Texpand = unknown> = Required<ProfilesRecord> & BaseSystemFields<Texpand>
+export type ReactionsResponse<Texpand = unknown> = Required<ReactionsRecord> & BaseSystemFields<Texpand>
 export type RefsResponse<Texpand = unknown> = Required<RefsRecord> & BaseSystemFields<Texpand>
 export type TestResponse<Texpand = unknown> = Required<TestRecord> & BaseSystemFields<Texpand>
 export type UsersResponse<Texpand = unknown> = Required<UsersRecord> & AuthSystemFields<Texpand>
@@ -234,6 +245,7 @@ export type CollectionRecords = {
 	memberships: MembershipsRecord
 	messages: MessagesRecord
 	profiles: ProfilesRecord
+	reactions: ReactionsRecord
 	refs: RefsRecord
 	test: TestRecord
 	users: UsersRecord
@@ -251,6 +263,7 @@ export type CollectionResponses = {
 	memberships: MembershipsResponse
 	messages: MessagesResponse
 	profiles: ProfilesResponse
+	reactions: ReactionsResponse
 	refs: RefsResponse
 	test: TestResponse
 	users: UsersResponse
@@ -271,6 +284,7 @@ export type TypedPocketBase = PocketBase & {
 	collection(idOrName: 'memberships'): RecordService<MembershipsResponse>
 	collection(idOrName: 'messages'): RecordService<MessagesResponse>
 	collection(idOrName: 'profiles'): RecordService<ProfilesResponse>
+	collection(idOrName: 'reactions'): RecordService<ReactionsResponse>
 	collection(idOrName: 'refs'): RecordService<RefsResponse>
 	collection(idOrName: 'test'): RecordService<TestResponse>
 	collection(idOrName: 'users'): RecordService<UsersResponse>

@@ -27,7 +27,7 @@ export default function ConversationListItem ({ conversation }: { conversation: 
 
   const lastMessageDate = new Date(last_message?.created ? last_message.created : '');
   const lastReadDate = new Date(ownMembership.last_read);
-  const newMessages = lastMessageDate > lastReadDate;
+  const newMessages = lastMessageDate > lastReadDate && last_message?.sender !== user?.id;
 
   let image; 
   for (const member of members) {

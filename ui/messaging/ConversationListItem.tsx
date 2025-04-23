@@ -23,6 +23,12 @@ export default function ConversationListItem ({ conversation }: { conversation: 
   const last_message = msgs[msgs.length-1];
   const time = last_message?.created ? last_message.created.slice(0, last_message.created.length-1) : '';
   const members = memberships[conversation.id].filter(m => m.expand?.user && m.expand.user.id !== user.id).map(m=>m.expand!.user);
+  const ownMembership = memberships[conversation.id].filter(m => m.expand?.user.id === user.id)[0];
+
+  const lastMessageDate = new Date(last_message?.created ? last_message.created : '');
+  const lastReadDate = new Date(ownMembership.last_read);
+  const newMessages = lastMessageDate > lastReadDate;
+
   let image; 
   for (const member of members) {
     if (member.image) {
@@ -41,7 +47,8 @@ export default function ConversationListItem ({ conversation }: { conversation: 
         borderRadius: s.$075,
       }}>
       <XStack gap={s.$075} style={{ alignItems: 'center' }}>
-        <View style={{width: s.$075, height: s.$075, backgroundColor: c.accent, borderRadius: 100}}></View>
+        { newMessages && 
+          <View style={{width: s.$075, height: s.$075, backgroundColor: c.accent, borderRadius: 100}}></View>}
         <Avatar source={image} size={s.$5} /> 
         <YStack style={{ padding: s.$1, }}>
           <Text style={{ fontSize: s.$1}}>

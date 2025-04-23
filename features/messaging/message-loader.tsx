@@ -7,7 +7,7 @@ export function MessagesInit() {
   const { user } = useUserStore()
   const { setConversations, setReactions } = useMessageStore();
   const { setMessages, addMessage, addConversation, addMembership, addReaction } = useMessageStore();
-  const { setMemberships } = useMessageStore();
+  const { setMemberships, updateMembership } = useMessageStore();
 
   // load conversations
   useEffect(() => {
@@ -125,30 +125,33 @@ export function MessagesInit() {
   useEffect(() => {
     if (!user) return;
     console.log(`subscribing to memberships, user: ${user?.userName}`)
-    try {
-    pocketbase.collection('memberships').subscribe('*', async (e) => {   
-      if (e.action === 'update') {
-        console.log('membership updated')
-      }
-      if (e.action === 'create') {
-        console.log(`new membership with user ${e.record.user} and conversation ${e.record.conversation}`)
-        const expandedMembership = await pocketbase.collection('memberships').getOne<ExpandedMembership>(e.record.id, {expand: 'user'});
-        console.log('user of expanded membership is',expandedMembership.expand?.user.email);
-        try {
-          addMembership(expandedMembership);
+    try 
+    {
+      pocketbase.collection('memberships').subscribe('*', async (e) => {   
+        if (e.action === 'update') {
+          console.log('membership updated')
+          const expandedMembership = await pocketbase.collection('memberships').getOne<ExpandedMembership>(e.record.id, {expand: 'user'});
+          updateMembership(expandedMembership);
         }
-        catch (error) {
-          console.error('error adding membership');
-          console.error(error);
+        if (e.action === 'create') {
+          console.log(`new membership with user ${e.record.user} and conversation ${e.record.conversation}`)
+          const expandedMembership = await pocketbase.collection('memberships').getOne<ExpandedMembership>(e.record.id, {expand: 'user'});
+          console.log('user of expanded membership is',expandedMembership.expand?.user.email);
+          try {
+            addMembership(expandedMembership);
+          }
+          catch (error) {
+            console.error('error adding membership');
+            console.error(error);
+          }
+          console.log(`e.record.user is ${e.record.user}, user.id is ${user?.id}`)
+          if (e.record.user === user?.id)
+          {
+            console.log(`adding new conversation with id ${e.record.conversation}`)
+            const conversation = await pocketbase.collection('conversations').getOne(e.record.conversation);
+            addConversation(conversation);
+          }
         }
-        console.log(`e.record.user is ${e.record.user}, user.id is ${user?.id}`)
-        if (e.record.user === user?.id)
-        {
-          console.log(`adding new conversation with id ${e.record.conversation}`)
-          const conversation = await pocketbase.collection('conversations').getOne(e.record.conversation);
-          addConversation(conversation);
-        }
-      }
     })
   } catch (error) {
     console.error(error)

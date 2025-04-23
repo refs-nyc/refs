@@ -2,7 +2,7 @@ import { Heading, SheetScreen, XStack, YStack } from '@/ui'
 import { View, ScrollView, DimensionValue, KeyboardAvoidingView, Keyboard } from 'react-native'
 import { c, s } from '../style'
 import { useEffect, useRef, useState } from 'react'
-import { useUserStore } from '../pocketbase'
+import { pocketbase, useUserStore } from '../pocketbase'
 import { useMessageStore } from '../pocketbase/stores/messages'
 import { Pressable } from 'react-native-gesture-handler'
 import { Link, useRouter } from 'expo-router'
@@ -19,6 +19,13 @@ export function MessagesScreen({conversationId} : {conversationId: string})
   const scrollViewRef = useRef<ScrollView>(null);
   const [message, setMessage] = useState<string>('');
   const [reactingTo, setReactingTo] = useState<string>('');
+
+  const conversation = conversations[conversationId];
+  const members = memberships[conversationId].filter(m => m.expand?.user.id !== user?.id);
+  const ownMembership = memberships[conversationId].filter(m => m.expand?.user.id === user?.id)[0];
+  const router = useRouter();
+
+  const conversationMessages = messages.filter(m => m.conversation === conversationId);
   
   useEffect(() => {
     const showSub = Keyboard.addListener('keyboardDidShow', () => {
@@ -27,13 +34,16 @@ export function MessagesScreen({conversationId} : {conversationId: string})
     return () => showSub.remove();
   }, []);
 
+  useEffect(() => {
+    async function setLastRead() {
+      const lastReadDate = conversationMessages[conversationMessages.length-1].created;
+      await pocketbase.collection('memberships').update(ownMembership.id, {last_read: lastReadDate});
+    }
+    setLastRead();
+  }, [])
+
   if (!user) return null;
 
-  const conversation = conversations[conversationId];
-  const members = memberships[conversationId].filter(m => m.expand?.user.id !== user.id);
-  const router = useRouter();
-
-  const conversationMessages = messages.filter(m => m.conversation === conversationId);
 
   // console.log('VIEWING CONVERSATION', conversationId)
   // console.log('members', memberships[conversationId].map(m=>m.expand?.user.email))

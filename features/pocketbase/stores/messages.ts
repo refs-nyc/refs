@@ -11,6 +11,7 @@ type MessageStore = {
   memberships: Record<string, ExpandedMembership[]>;
   setMemberships: (memberships: ExpandedMembership[]) => void;
   addMembership: (membership: ExpandedMembership) => void;
+  updateMembership: (membership: ExpandedMembership) => void;
   sendMessage: (sendreId: string, conversationId: string, text: string) => Promise<void>;
   messages: Message[];
   setMessages: (messages: Message[]) => void;
@@ -88,12 +89,18 @@ export const useMessageStore = create<MessageStore>((set) => ({
       };
     });
   },
-  // addMembership: (membership) =>
-  // {
-  //   set((state) => ({
-  //     memberships: { ...state.memberships, [membership.conversation]: [...state.memberships[membership.conversation], membership] },
-  //   }));
-  // },
+  updateMembership: (membership) =>
+  {
+    set((state) => {
+      const prev = state.memberships[membership.conversation] || [];
+      return {
+        memberships: {
+          ...state.memberships,
+          [membership.conversation]: prev.map(m=>m.id===membership.id ? membership : m),
+        },
+      };
+    });
+  },
   setMemberships: (memberships) =>
   {
     const newItems: Record<string, ExpandedMembership[]> = {};

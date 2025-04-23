@@ -14,7 +14,7 @@ import { EmojiKeyboard } from 'rn-emoji-keyboard'
 export function MessagesScreen({conversationId} : {conversationId: string})
 {
   const { user } = useUserStore()
-  const { conversations, memberships, messages, sendMessage } = useMessageStore();
+  const { conversations, memberships, messages, sendMessage, sendReaction } = useMessageStore();
   const scrollViewRef = useRef<ScrollView>(null);
   const [message, setMessage] = useState<string>('');
   const [reactingTo, setReactingTo] = useState<string>('');
@@ -26,16 +26,18 @@ export function MessagesScreen({conversationId} : {conversationId: string})
     return () => showSub.remove();
   }, []);
 
+  if (!user) return null;
+
   const conversation = conversations[conversationId];
   const members = memberships[conversationId].filter(m => m.expand?.user.id !== user.id);
   const router = useRouter();
 
   const conversationMessages = messages.filter(m => m.conversation === conversationId);
 
-  console.log('VIEWING CONVERSATION', conversationId)
-  console.log('members', memberships[conversationId].map(m=>m.expand?.user.email))
-  console.log('all messages', messages.map(m=>m.text))
-  console.log('conversationMessages', conversationMessages.map(m=>m.text))
+  // console.log('VIEWING CONVERSATION', conversationId)
+  // console.log('members', memberships[conversationId].map(m=>m.expand?.user.email))
+  // console.log('all messages', messages.map(m=>m.text))
+  // console.log('conversationMessages', conversationMessages.map(m=>m.text))
 
   return (
     <View
@@ -99,7 +101,7 @@ export function MessagesScreen({conversationId} : {conversationId: string})
           </View>
           <View style={{ minHeight: '80%' }}>
             <EmojiKeyboard 
-              onEmojiSelected={(e) => {setReactingTo(''); console.log(e)}}
+              onEmojiSelected={(e) => {sendReaction(user.id, reactingTo, e.emoji); setReactingTo(''); console.log(e)}}
             />
           </View>
         </SheetScreen>

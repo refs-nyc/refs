@@ -1,4 +1,4 @@
-import { Heading, XStack, YStack } from '@/ui'
+import { Heading, SheetScreen, XStack, YStack } from '@/ui'
 import { View, ScrollView, DimensionValue, KeyboardAvoidingView, Keyboard } from 'react-native'
 import { c, s } from '../style'
 import { useEffect, useRef, useState } from 'react'
@@ -9,6 +9,7 @@ import { Link, useRouter } from 'expo-router'
 import { Avatar } from '@/ui/atoms/Avatar'
 import { Ionicons } from '@expo/vector-icons'
 import MessageBubble from '@/ui/messaging/MessageBubble'
+import { EmojiKeyboard } from 'rn-emoji-keyboard'
 
 export function MessagesScreen({conversationId} : {conversationId: string})
 {
@@ -16,6 +17,7 @@ export function MessagesScreen({conversationId} : {conversationId: string})
   const { conversations, memberships, messages, sendMessage } = useMessageStore();
   const scrollViewRef = useRef<ScrollView>(null);
   const [message, setMessage] = useState<string>('');
+  const [reactingTo, setReactingTo] = useState<string>('');
   
   useEffect(() => {
     const showSub = Keyboard.addListener('keyboardDidShow', () => {
@@ -36,7 +38,6 @@ export function MessagesScreen({conversationId} : {conversationId: string})
   console.log('conversationMessages', conversationMessages.map(m=>m.text))
 
   return (
-
     <View
       style={{
         flex: 1,
@@ -69,58 +70,75 @@ export function MessagesScreen({conversationId} : {conversationId: string})
       >
         <ScrollView 
           ref={scrollViewRef}
-          style={{ 
-            //backgroundColor: "purple",
-          }}
           onContentSizeChange={()=>{scrollViewRef.current?.scrollToEnd({ animated: true });}}
         >
           <YStack
             gap={s.$0}
             style={{
               flex: 1,
-              // backgroundColor: "lightblue",
               width: '90%',
               margin: 'auto',
             }}
           >
-            {conversationMessages.map(message => <MessageBubble message={message} />)}
+            {conversationMessages.map(message => <MessageBubble message={message} setReactingTo={setReactingTo} />)}
           </YStack>
         </ScrollView>
-          <XStack 
-            style={{ 
-              backgroundColor: c.white,
-              borderRadius: s.$2,
-              marginVertical: s.$075,
-              marginHorizontal: s.$1,
-              paddingVertical: s.$09,
-              paddingHorizontal: s.$1,
-              justifyContent: 'space-between',
-              fontSize: s.$09,
-              alignItems: 'center',
+       { reactingTo ? 
+        <SheetScreen
+          snapPoints={['70%']}
+          backgroundStyle={{
+            backgroundColor: 'transparent',
+            padding: 0,
+          }}
+          onChange={(i: number) => {
+            if (i === -1) setReactingTo('')
+          }}
+        >
+          <View style={{ maxHeight: '20%'}} >
+            <MessageBubble message={messages.filter(m=>m.id === reactingTo)[0]} />
+          </View>
+          <View style={{ minHeight: '80%' }}>
+            <EmojiKeyboard 
+              onEmojiSelected={(e) => {setReactingTo(''); console.log(e)}}
+            />
+          </View>
+        </SheetScreen>
+       :
+        <XStack
+          style={{ 
+            backgroundColor: c.white,
+            borderRadius: s.$2,
+            marginVertical: s.$075,
+            marginHorizontal: s.$1,
+            paddingVertical: s.$09,
+            paddingHorizontal: s.$1,
+            justifyContent: 'space-between',
+            fontSize: s.$09,
+            alignItems: 'center',
+          }}
+        >
+          <TextInput
+            style={{
+              width: '70%',
+            }}
+            placeholder="Type anything..."
+            multiline={true}
+            value={message}
+            onChangeText={setMessage}
+          />
+          <Pressable
+            onPress={() => {
+              sendMessage(user.id, conversationId, message);
+              setMessage('');
             }}
           >
-            <TextInput
-              style={{
-                width: '70%',
-              }}
-              placeholder="Type anything..."
-              multiline={true}
-              value={message}
-              onChangeText={setMessage}
+            <Ionicons 
+              name="paper-plane-outline" 
+              size={s.$2} 
+              color={c.grey2}
             />
-            <Pressable
-              onPress={() => {
-                sendMessage(user.id, conversationId, message);
-                setMessage('');
-              }}
-            >
-              <Ionicons 
-                name="paper-plane-outline" 
-                size={s.$2} 
-                color={c.grey2}
-              />
-            </Pressable>
-          </XStack>
+          </Pressable>
+        </XStack>}
       </KeyboardAvoidingView>
     </View>
   )

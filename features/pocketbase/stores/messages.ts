@@ -1,7 +1,6 @@
 import { create } from 'zustand';
-import { Conversation, ExpandedMembership, Message } from './types';
+import { Conversation, ExpandedMembership, ExpandedReaction, Message } from './types';
 import { pocketbase } from '../pocketbase';
-
 
 type MessageStore = {
   conversations: Record<string, Conversation>;
@@ -16,6 +15,10 @@ type MessageStore = {
   messages: Message[];
   setMessages: (messages: Message[]) => void;
   addMessage: (message: Message) => void;
+  reactions: Record<string, ExpandedReaction[]>;
+  setReactions: (reactions: ExpandedReaction[]) => void;
+  addReaction: (reaction: ExpandedReaction) => void;
+  sendReaction: (senderId: string, messageId: string, emoji: string) => Promise<void>;
 };
 
 export const useMessageStore = create<MessageStore>((set) => ({
@@ -138,6 +141,54 @@ export const useMessageStore = create<MessageStore>((set) => ({
         messages: state.messages.some(m => m.id === message.id) ? [...state.messages] : [...state.messages, message]
       }
     })
-  }
-
+  },
+  reactions: {},
+  setReactions: (reactions: ExpandedReaction[]) =>
+  {
+    const newItems: Record<string, ExpandedReaction[]> = {};
+    reactions.forEach((item) => {
+      if (newItems[item.message]) {
+        newItems[item.message].push(item);
+      } else {
+        newItems[item.message] = [item];
+      }
+    });
+    set({ reactions: newItems });
+  },
+  addReaction: (reaction: ExpandedReaction) =>
+  {
+    set(state => {
+      if (!state.reactions[reaction.message]) {
+        return {
+          reactions: {
+            ...state.reactions,
+            [reaction.message]: [reaction],
+          },
+        };
+      }
+      return {
+        reactions: {
+          ...state.reactions,
+          [reaction.message]: [...state.reactions[reaction.message], reaction],
+        },
+      };
+    });
+  },
+  sendReaction: async (senderId, messageId, emoji) => {
+    try {
+      const reaction = await pocketbase.collection('reactions').create({
+        message: messageId,
+        emoji,
+        user: senderId,
+      });
+      // set(state => {
+      //   if (!state.reactions.length) return {reactions: [reaction]}
+      //   return {
+      //     reactions: state.reactions.some(m => m.id === reaction.id) ? [...state.reactions] : [...state.reactions, reaction]
+      //   }
+      // })
+    } catch (error) {
+      console.error(error);
+    }
+  },
 }));

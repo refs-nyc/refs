@@ -5,7 +5,7 @@ import { Message } from "@/features/pocketbase/stores/types";
 import { c, s } from "@/features/style";
 import { useCalendars } from "expo-localization";
 import { View, Text } from "react-native";
-import { Pressable } from "react-native-gesture-handler";
+import { Pressable } from "react-native";
 import { Avatar } from "../atoms/Avatar";
 import { XStack } from "../core/Stacks";
 
@@ -28,11 +28,8 @@ export default function MessageBubble(
     <Pressable
       onLongPress={ () =>
       {
-        console.log('long press', message.text);
         if (setReactingTo) setReactingTo(message.id);
-        console.log('long pressed', message.text);
-      }
-        }
+      }}
     >
       <View
         style={{
@@ -53,7 +50,6 @@ export default function MessageBubble(
                 <Pressable
                   key={r.id}
                   onPress={isMine ? () => deleteReaction(r.id) : null}
-                  style={{backgroundColor: 'red'}}
                 >
                   <XStack
                     style={{

@@ -93,7 +93,7 @@ export function MessagesScreen({conversationId} : {conversationId: string})
               margin: 'auto',
             }}
           >
-            {conversationMessages.map(message => <MessageBubble message={message} setReactingTo={setReactingTo} />)}
+            {conversationMessages.map(m => <MessageBubble key={m.id} message={m} setReactingTo={setReactingTo} />)}
           </YStack>
         </ScrollView>
        { reactingTo ? 

@@ -3,7 +3,7 @@ import { View, ScrollView, DimensionValue } from 'react-native'
 import { c, s } from '../style'
 import { useUserStore } from '../pocketbase'
 import ConversationListItem from '@/ui/messaging/ConversationListItem'
-import { Pressable } from 'react-native-gesture-handler'
+import { Pressable } from 'react-native'
 import { router } from 'expo-router'
 import { useMessageStore } from '../pocketbase/stores/messages'
 

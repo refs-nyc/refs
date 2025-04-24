@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { Conversation, ExpandedMembership, ExpandedReaction, Message } from './types';
+import { Conversation, ExpandedMembership, ExpandedReaction, Message, Reaction } from './types';
 import { pocketbase } from '../pocketbase';
 
 type MessageStore = {
@@ -20,6 +20,8 @@ type MessageStore = {
   setReactions: (reactions: ExpandedReaction[]) => void;
   addReaction: (reaction: ExpandedReaction) => void;
   sendReaction: (senderId: string, messageId: string, emoji: string) => Promise<void>;
+  deleteReaction: (id: string) => Promise<void>;
+  removeReaction: (reaction: Reaction) => void;
 };
 
 export const useMessageStore = create<MessageStore>((set) => ({
@@ -183,18 +185,36 @@ export const useMessageStore = create<MessageStore>((set) => ({
   },
   sendReaction: async (senderId, messageId, emoji) => {
     try {
-      const reaction = await pocketbase.collection('reactions').create({
+      await pocketbase.collection('reactions').create({
         message: messageId,
         emoji,
         user: senderId,
       });
-      // set(state => {
-      //   if (!state.reactions.length) return {reactions: [reaction]}
-      //   return {
-      //     reactions: state.reactions.some(m => m.id === reaction.id) ? [...state.reactions] : [...state.reactions, reaction]
-      //   }
-      // })
     } catch (error) {
+      console.error(error);
+    }
+  },
+  deleteReaction: async (id: string) => {
+    try {
+      await pocketbase.collection('reactions').delete(id);
+    }
+    catch (error) {
+      console.error(error);
+    }
+  },
+  removeReaction: (reaction: Reaction) => {
+    try {
+      set(state => {
+        const newList = {...state.reactions};
+        console.log(reaction.message, newList[reaction.message])
+        newList[reaction.message] = newList[reaction.message].filter(r => r.id !== reaction.id);
+        
+        return {
+          reactions: newList
+        }
+      })
+    }
+    catch (error) {
       console.error(error);
     }
   },

@@ -1,12 +1,12 @@
 import { useEffect } from 'react'
 import { pocketbase, useUserStore } from '../pocketbase'
 import { useMessageStore } from '../pocketbase/stores/messages'
-import { Conversation, ExpandedMembership, ExpandedReaction, Message } from '../pocketbase/stores/types'
+import { Conversation, ExpandedMembership, ExpandedReaction, Message, Reaction } from '../pocketbase/stores/types'
 
 export function MessagesInit() {
   const { user } = useUserStore()
   const { setConversations, setReactions } = useMessageStore();
-  const { setMessages, addMessage, addConversation, addMembership, addReaction } = useMessageStore();
+  const { setMessages, addMessage, addConversation, addMembership, addReaction, removeReaction } = useMessageStore();
   const { setMemberships, updateMembership } = useMessageStore();
 
   // load conversations
@@ -98,28 +98,34 @@ export function MessagesInit() {
     }
   }, [user])
 
-    // subscribe to new reactions
-    useEffect(() => {
-      if (!user) return;
-      try
-      {console.log(`subscribing to new reactions, user: ${user?.userName}`)
-      pocketbase.collection('reactions').subscribe('*', async (e) => {
+  // subscribe to reactions
+  useEffect(() => {
+    if (!user) return;
+    try
+    {
+      console.log(`subscribing to new reactions, user: ${user?.userName}`)
+      pocketbase.collection('reactions').subscribe<Reaction>('*', async (e) => {
         console.log(e)
         if (e.action === 'create') {
           console.log(`new reaction received: ${e.record.emoji}`)
           const expandedReaction = await pocketbase.collection('reactions').getOne<ExpandedReaction>(e.record.id, {expand: 'user'});
           addReaction(expandedReaction);
         }
-      })}
-      catch (error) {
-        console.error(error)
-      }
-  
-      return () => {
-        console.log('unsubscribe from reactions')
-        pocketbase.collection('reactions').unsubscribe('*')
-      }
-    }, [user])
+        if (e.action === 'delete') {
+          console.log(`reaction deleted: ${e.record.emoji}`)
+          removeReaction(e.record);
+        }
+      })
+    }
+    catch (error) {
+      console.error(error)
+    }
+
+    return () => {
+      console.log('unsubscribe from reactions')
+      pocketbase.collection('reactions').unsubscribe('*')
+    }
+  }, [user])
 
   //subscribe to membership updates (to see new conversations)
   useEffect(() => {

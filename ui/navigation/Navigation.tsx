@@ -1,13 +1,11 @@
-import Animated, { SlideInDown, SlideOutDown, FadeOut } from 'react-native-reanimated'
-
-import { useEffect } from 'react'
+import Animated, { SlideInDown, FadeOut } from 'react-native-reanimated'
 import { Link, usePathname, useGlobalSearchParams } from 'expo-router'
 import { Dimensions, View } from 'react-native'
-import { XStack } from '../core/Stacks'
 import { Avatar } from '../atoms/Avatar'
 import { c, s } from '@/features/style'
 import { useUserStore } from '@/features/pocketbase/stores/users'
 import { Icon } from '@/assets/icomoon/IconFont'
+import { Ionicons } from '@expo/vector-icons'
 
 const win = Dimensions.get('window')
 
@@ -22,7 +20,7 @@ export const Navigation = () => {
     pathName.includes('/onboarding') ||
     pathName.includes('/user/login') ||
     pathName.includes('/user/register') ||
-    pathName.includes('/modal') ||
+    (pathName.includes('/modal') && !pathName.includes('/saves/modal')) || // want the navbar to stay visible under the saves modal
     pathName.includes('/messages/') || // e.g. /messages/123
     addingTo === 'grid' ||
     addingTo === 'backlog' ||
@@ -81,6 +79,13 @@ export const Navigation = () => {
           >
             <Link dismissTo href="/messages">
               <Icon name="Messages" size={39} color={c.muted2} />
+            </Link>
+          </View>
+          <View 
+            style={{ position: 'relative', left: -20, marginTop: 3, paddingRight: 3 }}
+          >
+            <Link push href="/saves/modal">
+              <Ionicons name="paper-plane" size={39} color={c.muted2} />
             </Link>
           </View>
         </View>

@@ -28,7 +28,6 @@ export const Sheet = (props: any = { full: false, noNotch: false, noPadding: fal
 
   return (
     <BottomSheet
-      {...props}
       backgroundStyle={{
         backgroundColor: c.surface,
       }}
@@ -41,6 +40,7 @@ export const Sheet = (props: any = { full: false, noNotch: false, noPadding: fal
       enablePanDownToClose={true}
       keyboardBehavior="interactive"
       onChange={props?.onChange}
+      {...props}
     >
       <BottomSheetScrollView showsVerticalScrollIndicator={false}>
         {props?.children}

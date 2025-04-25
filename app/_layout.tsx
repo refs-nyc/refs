@@ -146,6 +146,14 @@ function RootLayoutNav() {
             animation: 'fade_from_bottom',
           }}
         />
+        <Stack.Screen
+          name="saves/modal"
+          options={{
+            presentation: 'transparentModal',
+            headerShown: false,
+            contentStyle: { backgroundColor: 'transparent' },
+          }}
+        />
         {/* modal for the current user */}
         <Stack.Screen
           name="modal"

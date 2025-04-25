@@ -36,7 +36,7 @@ const EditableItemComponent = ({
 
   return (
     <Pressable
-      style={{ gap: s.$09, paddingVertical: win.height * 0.2 }}
+      style={{ gap: s.$09, paddingVertical: win.height * 0.1 }}
       onPress={() => console.log('on press')}
       onLongPress={() => {
         setShowMenu(!showMenu)
@@ -48,6 +48,7 @@ const EditableItemComponent = ({
           aspectRatio: 1,
         }}
       >
+        {/* Menu */}
         {showMenu && (
           <ContextMenu
             onEditPress={() => {
@@ -57,6 +58,7 @@ const EditableItemComponent = ({
             editingRights={editingRights}
           />
         )}
+        {/* Image */}
         {item.image && !item.list ? (
           item.expand?.ref.image && (
             <Zoomable
@@ -84,10 +86,12 @@ const EditableItemComponent = ({
                   },
                 ]}
               >
-                <Image
-                  style={[{ width: '100%', aspectRatio: 1, overflow: 'visible' }]}
-                  source={item.expand.ref.image || item.image}
-                />
+                <View style={{ flex: 1, padding: s.$075 }}>
+                  <Image
+                    style={[{ flex: 1, aspectRatio: 1, overflow: 'hidden', borderRadius: s.$075 }]}
+                    source={item.expand.ref.image || item.image}
+                  />
+                </View>
               </Animated.View>
             </Zoomable>
           )
@@ -98,17 +102,27 @@ const EditableItemComponent = ({
               backgroundColor: c.surface2,
             }}
           >
+            {/* List */}
             {item.list && <ListContainer editingRights={!!editingRights} item={item} />}
           </View>
         )}
       </View>
+      {/* Title */}
       <View style={{ width: '100%' }}>
-        <View style={{ marginBottom: 0, flexDirection: 'row', justifyContent: 'space-between' }}>
+        <View
+          style={{
+            marginBottom: 0,
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            gap: s.$09,
+          }}
+        >
+          {/* Title */}
           <View
             style={[
               {
                 gap: s.$05,
-                width: '100%',
+                flex: 1,
                 paddingHorizontal: s.$1,
                 borderWidth: 1,
                 borderColor: 'transparent',
@@ -125,20 +139,40 @@ const EditableItemComponent = ({
               <Heading tag="smallmuted">{item.expand?.ref?.meta}</Heading>
             </View>
           </View>
-          <Pressable onPress={() => {}}>
-            {item.expand.ref.url && (
-              <Link href={item.expand.ref.url}>
-                <Ionicons
+
+          <Pressable
+            style={[
+              {
+                width: s.$4,
+                height: s.$4,
+                justifyContent: 'center',
+                alignItems: 'center',
+              },
+              editing && base.editableItem,
+            ]}
+            onPress={() => {}}
+          >
+            {editing ? (
+              <Ionicons
+                style={{ transformOrigin: 'center', transform: 'rotate(-45deg)' }}
+                color={c.muted}
+                size={s.$1}
+                name="arrow-forward-outline"
+              />
+            ) : (
+              item.expand?.ref?.url && (
+                <Link
                   style={{ transformOrigin: 'center', transform: 'rotate(-45deg)' }}
-                  color={c.muted}
-                  size={s.$1}
-                  name="arrow-forward-outline"
-                />
-              </Link>
+                  href={item.expand.ref.url}
+                >
+                  <Ionicons color={c.muted} size={s.$1} name="arrow-forward-outline" />
+                </Link>
+              )
             )}
           </Pressable>
         </View>
       </View>
+      {/* Notes */}
       <Animated.View
         style={[
           { width: '100%', minHeight: s.$10, paddingHorizontal: s.$1, paddingVertical: s.$075 },
@@ -146,7 +180,11 @@ const EditableItemComponent = ({
         ]}
       >
         {editing === item.id ? (
-          <BottomSheetTextInput numberOfLines={4} style={t.pmuted}></BottomSheetTextInput>
+          <BottomSheetTextInput
+            style={[{ width: '100%', minHeight: s.$10 }, t.pmuted]}
+            multiline={true}
+            numberOfLines={4}
+          ></BottomSheetTextInput>
         ) : (
           <Text numberOfLines={4} style={t.pmuted}>
             {item.text}

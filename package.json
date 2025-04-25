@@ -8,6 +8,7 @@
   "scripts": {
     "start": "expo start",
     "reset-project": "node ./scripts/reset-project.js",
+    "dev": "npx tsc --noEmit --watch",
     "android": "expo run:android",
     "prebuild": "expo prebuild --platform ios",
     "ios": "expo run:ios",

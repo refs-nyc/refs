@@ -10,6 +10,9 @@ export const c = {
   // Accent colors
   accent: '#7F70B8',
   accent2: '#D5CDF3',
+  // Green
+  olive: '#A5B89F',
+  olive2: '#8D9C89',
   // Surface colors
   surface: '#F3F2ED',
   surface2: '#EFEDE3',

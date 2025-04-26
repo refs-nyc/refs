@@ -3,7 +3,7 @@
 // import { Magic } from '@magic-sdk/react-native-expo'
 // import { Web3Provider } from '@ethersproject/providers'
 // import { ethers } from 'ethers'
-// import { SIWESigner } from '@canvas-js/chain-ethereum'
+// import { SIWESigner } from '@canvas-js/signer-ethereum'
 // import { REFS_TOPIC } from '@/features/const'
 
 // export const magic = new Magic(process.env.EXPO_PUBLIC_MAGIC_KEY)

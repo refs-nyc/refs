@@ -1,4 +1,4 @@
-name: Run Tests
+name: Typecheck
 
 on:
   push:
@@ -28,6 +28,5 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
-      # Commented out for now as we don't have any tests yet
-      # - name: Run tests
-      #   run: yarn test
+      - name: Check types
+        run: npx tsc --noEmit

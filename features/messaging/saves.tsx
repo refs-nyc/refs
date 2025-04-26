@@ -2,6 +2,7 @@ import { useMessageStore } from "@/features/pocketbase/stores/messages";
 import { c, s } from "@/features/style";
 import { Button, Heading, XStack, YStack } from "@/ui";
 import { Avatar } from "@/ui/atoms/Avatar";
+import { DMButton } from "@/ui/profiles/DMButton";
 import { BottomSheetScrollView } from "@gorhom/bottom-sheet";
 import { useEffect, useState } from "react";
 import { Pressable, Text, View } from "react-native";
@@ -19,8 +20,10 @@ export default function SavesList() {
 
   const toggleSelect = (id: string) => {
     setSelected((prev) => ({ ...prev, [id]: !(prev[id]) }))
-    console.log(selected);
   }
+
+  const selectedUsers = saves.filter(save => selected[save.user]).map(save => save.expand.user);
+  console.log('selectedUsers', selectedUsers.map(u=>u.id));
 
   return (
     <View style={{ paddingVertical: s.$1, paddingHorizontal: s.$3 }}>
@@ -45,10 +48,10 @@ export default function SavesList() {
               style={{ padding: s.$075, backgroundColor: selected[save.user] ? c.olive2 : c.olive, borderRadius: s.$1 }}
             >
               <XStack gap={ s.$1 } style={{alignItems: 'center'}}> 
-                <Avatar source={save.expand.user?.image} size={s.$4} />
+                <Avatar source={save.expand?.user.image} size={s.$4} />
                 <YStack gap={0}>
-                  <Text style={{ color: c.white, fontSize: s.$1 }}>{save.expand.user?.firstName} {save.expand.user?.lastName}</Text>
-                  <Text style={{ color: c.white, fontSize: s.$08 }}>{save.expand.user?.location} </Text>
+                  <Text style={{ color: c.white, fontSize: s.$1 }}>{save.expand?.user.firstName} {save.expand?.user.lastName}</Text>
+                  <Text style={{ color: c.white, fontSize: s.$08 }}>{save.expand?.user.location} </Text>
                 </YStack>
               </XStack>
             </Pressable>
@@ -59,14 +62,12 @@ export default function SavesList() {
         gap={s.$1}
         style={{
           width: '100%',
-          //height: '15%',
           paddingVertical: s.$1half,
-          // backgroundColor: 'red',  
           justifyContent: 'center',
           alignItems: 'center'
         }}
       >
-        <Button variant='whiteInverted' onPress={() => null} title='Message' />
+        <DMButton fromSaves={true} disabled={selectedUsers.length!==1} profile={selectedUsers[0]} />
         <Button variant='whiteOutline' onPress={() => null} title='+ Group' />
       </XStack>
     </View>

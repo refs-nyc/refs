@@ -13,6 +13,11 @@ export const DMButton = ({profile} : {profile: Profile}) =>
 
   useEffect(() => {
     const checkIfDirectMessageExists = async () => {
+      if (!profile)
+      {
+        setTarget('');
+        return; 
+      } 
       try {
         let existingConversationId = '';
 
@@ -21,24 +26,28 @@ export const DMButton = ({profile} : {profile: Profile}) =>
           expand: 'memberships_via_conversation.user',
         });
         for (const conversation of directConversations) {
-          const otherUserId = conversation.expand?.memberships_via_conversation.map(m=>m.expand?.user.id).filter(id=>id==user?.id)[0];
-          if (otherUserId===profile.id) existingConversationId = conversation.id;
-          break;
+          const otherUserId = conversation.expand?.memberships_via_conversation.map(m=>m.expand?.user.id).filter(id=>id!==user?.id)[0];
+          if (otherUserId===profile.id)
+          {
+            existingConversationId = conversation.id;
+            break;
+          } 
         }
-         if (!existingConversationId) {
+        if (!existingConversationId) {
           setTarget(`/user/${profile.userName}/new-dm`);
         }
         else
         {
           setTarget('/messages/' + existingConversationId);
         }
+        console.log('target', target);
       }
       catch (error) {
         console.error(error);
       }
     }
     checkIfDirectMessageExists();
-  },[]);
+  }, [profile]);
 
   return (
     <Button

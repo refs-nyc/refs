@@ -64,14 +64,14 @@ export const Profile = ({ userName }: { userName: string }) => {
   const search = async (t: string) => {
     setTerm(t)
     const newResults = [...allItems].filter((itm) =>
-      itm?.expand?.ref?.title.toLowerCase().includes(t.toLowerCase())
+      itm?.expand?.ref?.title?.toLowerCase().includes(t.toLowerCase())
     )
     setResults(newResults)
   }
 
   const handleMoveToBacklog = async () => {
     try {
-      const updatedRecord = await moveToBacklog(removingId)
+      const updatedRecord = await moveToBacklog(typeof removingId === "string" ? removingId : removingId[0])
       setRemovingId('')
       await refreshGrid(userName)
     } catch (error) {
@@ -179,38 +179,39 @@ export const Profile = ({ userName }: { userName: string }) => {
                     rows={4}
                   ></Grid>
                   {/* Actions */}
-                  <XStack
-                    onTouchStart={() => stopEditProfile()}
-                    gap={s.$2}
-                    style={{ justifyContent: 'center', width: '100%' }}
-                  >
-                    {editingRights && (
-                      <Button
-                        onPress={() => setAddingTo('backlog')}
-                        variant="raisedSecondary"
-                        title="Backlog"
-                        iconColor={c.muted}
-                        iconAfter="add-circle-outline"
-                      />
-                    )}
-                    {!editingRights && (
-                      <>
+                  <Pressable onPress={() => stopEditProfile()}>
+                    <XStack
+                      gap={s.$2}
+                      style={{ justifyContent: 'center', width: '100%' }}
+                    >
+                      {editingRights && (
                         <Button
-                          onPress={() => {}}
+                          onPress={() => setAddingTo('backlog')}
                           variant="raisedSecondary"
-                          title="Message"
+                          title="Backlog"
                           iconColor={c.muted}
-                          iconAfter="paper-plane"
+                          iconAfter="add-circle-outline"
                         />
-                        <Button
-                          onPress={() => {}}
-                          variant="raisedSecondary"
-                          title="Save"
-                          iconBefore="bookmark"
-                        />
-                      </>
-                    )}
-                  </XStack>
+                      )}
+                      {!editingRights && (
+                        <>
+                          <Button
+                            onPress={() => {}}
+                            variant="raisedSecondary"
+                            title="Message"
+                            iconColor={c.muted}
+                            iconAfter="paper-plane"
+                          />
+                          <Button
+                            onPress={() => {}}
+                            variant="raisedSecondary"
+                            title="Save"
+                            iconBefore="bookmark"
+                          />
+                        </>
+                      )}
+                    </XStack>
+                  </Pressable>
                 </Animated.View>
               ) : (
                 <Animated.View
@@ -218,8 +219,8 @@ export const Profile = ({ userName }: { userName: string }) => {
                   exiting={FadeOut.duration(500)}
                   style={{ marginBottom: s.$20 }}
                 >
-                  {results.map((item) => (
-                    <SearchResultItem key={item.id} r={item.expand.ref} />
+                  {results.filter((item) => item.expand?.ref).map((item) => (
+                    <SearchResultItem key={item.id} r={item.expand!.ref} />
                   ))}
                 </Animated.View>
               )}
@@ -240,7 +241,7 @@ export const Profile = ({ userName }: { userName: string }) => {
             />
             <Button
               onPress={async () => {
-                await removeFromProfile(removingId)
+                await removeFromProfile(typeof removingId === "string" ? removingId : removingId[0])
                 setRemovingId('')
                 await refreshGrid(userName)
               }}

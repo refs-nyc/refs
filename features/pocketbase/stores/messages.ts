@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { Conversation, ExpandedMembership, ExpandedReaction, Message, Reaction, Save } from './types';
+import { Conversation, ExpandedMembership, ExpandedReaction, ExpandedSave, Message, Reaction, Save } from './types';
 import { pocketbase } from '../pocketbase';
 
 type MessageStore = {
@@ -22,8 +22,8 @@ type MessageStore = {
   sendReaction: (senderId: string, messageId: string, emoji: string) => Promise<void>;
   deleteReaction: (id: string) => Promise<void>;
   removeReaction: (reaction: Reaction) => void;
-  saves: Save[];
-  setSaves: (saves: Save[]) => void;
+  saves: ExpandedSave[];
+  setSaves: (saves: ExpandedSave[]) => void;
   addSave: (userId: string, savedBy: string) => Promise<void>;
 };
 
@@ -122,7 +122,7 @@ export const useMessageStore = create<MessageStore>((set) => ({
   },
   sendMessage: async (senderId, conversationId, text) => {
     try {
-      const message = await pocketbase.collection('messages').create({
+      const message = await pocketbase.collection('messages').create<Message>({
         conversation: conversationId,
         text,
         sender: senderId,
@@ -222,7 +222,7 @@ export const useMessageStore = create<MessageStore>((set) => ({
     }
   },
   saves: [],
-  setSaves: (saves: Save[]) =>
+  setSaves: (saves: ExpandedSave[]) =>
   {
     set((state) => ({
       saves: saves,
@@ -233,7 +233,7 @@ export const useMessageStore = create<MessageStore>((set) => ({
     try
     {
       const id = (await pocketbase.collection('saves').create<Save>({ user: userId, saved_by: savedBy })).id;
-      const save = (await pocketbase.collection('saves').getOne(id, {expand: 'user'})) as Save;
+      const save = (await pocketbase.collection('saves').getOne<ExpandedSave>(id, {expand: 'user'}));
       set(state => {
         if (!state.saves.length) return {saves: [save]}
         return {

@@ -66,4 +66,4 @@ const styles = {
     bottom: s.$3,
     left: s.$1half,
   },
-}
+} as const

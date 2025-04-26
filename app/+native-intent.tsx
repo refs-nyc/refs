@@ -13,9 +13,9 @@ export function redirectSystemPath({ path, initial }: { path: string; initial: s
 
       if (!pocketbase.authStore.isValid) returnValue = '/login'
 
-      console.log(`/user/${pocketbase.authStore.record.userName}`)
+      console.log(`/user/${pocketbase?.authStore?.record?.userName}`)
 
-      returnValue = `/user/${pocketbase.authStore.record.userName}`
+      returnValue = `/user/${pocketbase?.authStore?.record?.userName}`
     } else {
       returnValue = path
     }

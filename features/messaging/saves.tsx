@@ -22,8 +22,15 @@ export default function SavesList() {
     setSelected((prev) => ({ ...prev, [id]: !(prev[id]) }))
   }
 
-  const selectedUsers = saves.filter(save => selected[save.user]).map(save => save.expand.user);
-  console.log('selectedUsers', selectedUsers.map(u=>u.id));
+  const selectedUsers = saves.filter(save => selected[save.user]).map(save => save.expand?.user);
+
+  const handleSelectAll = () => {
+    const anySelected = selectedUsers.length > 0;
+    const newValue = anySelected ? false : true;
+    for (const save of saves) {
+      setSelected((prev) => ({ ...prev, [save.user]: newValue }))
+    }
+  }
 
   return (
     <View style={{ paddingVertical: s.$1, paddingHorizontal: s.$3 }}>
@@ -32,8 +39,8 @@ export default function SavesList() {
           <Heading tag='h2' style={{ color: c.white }}>Saved</Heading>
           <Button
             variant='smallWhiteOutline'
-            onPress={() => null}
-            title='Select All'
+            onPress={handleSelectAll}
+            title={selectedUsers.length ? 'Clear' : 'Select All'}
             style={{ borderColor: c.white, border: 1, borderRadius: s.$2, color: c.white }}
           />
         </XStack>

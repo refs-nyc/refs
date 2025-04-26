@@ -10,7 +10,7 @@
 // User can create search profiles
 // Search profiles are text based. We process them using the options we have with geocoding
 
-export const getNeighborhoodFromCoordinates = async ({ lon, lat }) => {
+export const getNeighborhoodFromCoordinates = async ({ lon, lat }: { lon: number, lat: number }) => {
   const response = await fetch(
     `https://api.mapbox.com/search/geocode/v6/reverse?types=neighborhood&longitude=${lon}&latitude=${lat}&access_token=${process.env.EXPO_PUBLIC_MAPBOX_KEY}`
   )

@@ -121,67 +121,63 @@ const models = {
 } satisfies ModelSchema
 
 const itemActions = {
-  pushItem(db: ModelAPI, item: Item) {
-    db.set('item', fill(item, itemFields, itemRelations))
+  pushItem(item: Item) {
+    this.db.set('item', fill(item, itemFields, itemRelations))
   },
-  removeItem(db: ModelAPI, itemId: string) {
-    db.delete('item', itemId)
+  removeItem(itemId: string) {
+    this.db.delete('item', itemId)
   },
-  addItemToList(db: ModelAPI, itemId: string, ref: CompleteRef) {
-    db.set('item_ref_association', { id: `${itemId}/${ref.id}`, item: itemId, ref: ref.id })
+  addItemToList(itemId: string, ref: CompleteRef) {
+    this.db.set('item_ref_association', { id: `${itemId}/${ref.id}`, item: itemId, ref: ref.id })
   },
-  removeItemFromList(db: ModelAPI, itemId: string, ref: CompleteRef) {
-    db.delete('item_ref_association', `${itemId}/${ref.id}`)
+  removeItemFromList(itemId: string, ref: CompleteRef) {
+    this.db.delete('item_ref_association', `${itemId}/${ref.id}`)
   },
-  async moveItemToBacklog(db: ModelAPI, itemId: string) {
-    const item = await db.get('item', itemId)
-    db.set('item', fill({ ...item, backlog: true }, itemFields, itemRelations))
+  async moveItemToBacklog(itemId: string) {
+    const item = await this.db.get('item', itemId)
+    this.db.set('item', fill({ ...item, backlog: true }, itemFields, itemRelations))
   },
 } satisfies Actions<typeof models>
 
 const refActions = {
-  pushRef(db: ModelAPI, ref: CompleteRef) {
-    db.set('ref', fill(ref, refFields, refRelations))
+  pushRef(ref: CompleteRef) {
+    this.db.set('ref', fill(ref, refFields, refRelations))
   },
-  async addRefMetadata(
-    db: ModelAPI,
-    refId: string,
-    { type, meta }: { type: string; meta: string }
-  ) {
-    const ref = await db.get('ref', refId)
+  async addRefMetadata(refId: string, { type, meta }: { type: string; meta: string }) {
+    const ref = await this.db.get('ref', refId)
     if (!ref) return // TODO: ref might be missing id
-    db.set('ref', fill({ ...ref, metadata: { type, meta } }, refFields, refRelations))
+    this.db.set('ref', fill({ ...ref, metadata: { type, meta } }, refFields, refRelations))
   },
-  removeRef: async (db: ModelAPI, refId: string) => {
-    db.delete('ref', refId)
+  removeRef: async (refId: string) => {
+    this.db.delete('ref', refId)
   },
 } satisfies Actions<typeof models>
 
 const userActions = {
-  async updateUser(db: ModelAPI, userId: string, fields: Partial<Profile>) {
-    const user = await db.get('user', userId)
-    db.set('user', fill({ user, ...fields }, userFields, userRelations))
+  async updateUser(userId: string, fields: Partial<Profile>) {
+    const user = await this.db.get('user', userId)
+    this.db.set('user', fill({ user, ...fields }, userFields, userRelations))
   },
-  async registerUser(db: ModelAPI, fields: Omit<Profile, 'id'>) {
-    db.set('user', fill({ ...fields }, userFields, userRelations))
+  async registerUser(fields: Omit<Profile, 'id'>) {
+    this.db.set('user', fill({ ...fields }, userFields, userRelations))
   },
-  async attachItem(db: ModelAPI, userId: string, itemId: string) {
-    db.set('user_item_association', { id: `${userId}/${itemId}`, user: userId, item: itemId })
+  async attachItem(userId: string, itemId: string) {
+    this.db.set('user_item_association', { id: `${userId}/${itemId}`, user: userId, item: itemId })
   },
-  async removeUserItemAssociation(db: ModelAPI, userId: string, itemId: string) {
-    db.delete('user_item_association', `${userId}/${itemId}`)
+  async removeUserItemAssociation(userId: string, itemId: string) {
+    this.db.delete('user_item_association', `${userId}/${itemId}`)
   },
 } satisfies Actions<typeof models>
 
 // const userViews = {
-//   async getProfileByUsername(db: ModelAPI, userName: string) {
-//     return db.get('user', {
+//   async getProfileByUsername( userName: string) {
+//     return this.db.get('user', {
 //       where: { userName },
 //       include: { items: { ref: {}, children: {} } },
 //     })
 //   },
-//   async getUserByEmail(db: ModelAPI, email: string) {
-//     return db.get('user').get({ where: { email: email } })
+//   async getUserByEmail( email: string) {
+//     return this.db.get('user').get({ where: { email: email } })
 //   },
 // } satisfies Actions<typeof models>
 

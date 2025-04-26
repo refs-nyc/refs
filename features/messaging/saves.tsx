@@ -6,13 +6,16 @@ import { DMButton } from "@/ui/profiles/DMButton";
 import { Ionicons } from "@expo/vector-icons";
 import { BottomSheetScrollView } from "@gorhom/bottom-sheet";
 import { useEffect, useState } from "react";
-import { Pressable, Text, View } from "react-native";
+import { Pressable, Text, View, useWindowDimensions } from "react-native";
+import Animated, { useSharedValue, useAnimatedStyle, withTiming } from "react-native-reanimated";
 
 type Step = 'select' | 'add';
 
 export default function SavesList() {
 
   const { saves } = useMessageStore();
+  const { width } = useWindowDimensions();
+
   const [selected, setSelected] = useState<Record<string, boolean>>({});
   const [step, setStep] = useState<Step>('select');
 
@@ -36,77 +39,87 @@ export default function SavesList() {
     }
   }
 
+  const translateX = useSharedValue(0);
+  
+  useEffect(() => {
+    translateX.value = withTiming(step === 'select' ? 0 : -width, { duration: 300 });
+  }, [step, translateX, width]);
 
-  if (step === 'select') 
-  {
-    return (
-      <View style={{ paddingVertical: s.$1, paddingHorizontal: s.$3 }}>
-        <View style={{ paddingBottom: s.$1 }}>
-          <XStack style={{ justifyContent: 'space-between', alignItems: 'center' }}>
-            <Heading tag='h2' style={{ color: c.white }}>Saved</Heading>
-            <Button
-              variant='smallWhiteOutline'
-              onPress={handleSelectAll}
-              title={selectedUsers.length ? 'Clear' : 'Select All'}
-              style={{ borderColor: c.white, border: 1, borderRadius: s.$2, color: c.white }}
-            />
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: translateX.value }],
+  }));
+
+  return (
+    <Animated.View style={{ flex: 1, overflow: 'hidden' }}>
+      <Animated.View style={[{ flexDirection: 'row', width: width * 2 }, animatedStyle]}>
+        {/* Select Step */}
+        <View style={{ width, paddingVertical: s.$1, paddingHorizontal: s.$3 }}>
+          <View style={{ paddingBottom: s.$1 }}>
+            <XStack style={{ justifyContent: 'space-between', alignItems: 'center' }}>
+              <Heading tag='h2' style={{ color: c.white }}>Saved</Heading>
+              <Button
+                variant='smallWhiteOutline'
+                onPress={handleSelectAll}
+                title={selectedUsers.length ? 'Clear' : 'Select All'}
+                style={{ borderColor: c.white, border: 1, borderRadius: s.$2, color: c.white }}
+              />
+            </XStack>
+            <Text style={{ color: c.white }}>Select anyone to DM or start a group chat</Text>
+          </View>
+          <BottomSheetScrollView style={{ height: '75%'}}>
+            <YStack gap={2} style={{ paddingBottom: s.$10 }}>
+              {saves.map(save => 
+                <Pressable
+                  onPress={()=>{toggleSelect(save.user)}}
+                  key={save.id}
+                  style={{ padding: s.$075, backgroundColor: selected[save.user] ? c.olive2 : c.olive, borderRadius: s.$1 }}
+                >
+                  <XStack gap={ s.$1 } style={{alignItems: 'center'}}>
+                    <Avatar source={save.expand?.user.image} size={s.$4} />
+                    <YStack gap={0}>
+                      <Text style={{ color: c.white, fontSize: s.$1 }}>{save.expand?.user.firstName} {save.expand?.user.lastName}</Text>
+                      <Text style={{ color: c.white, fontSize: s.$08 }}>{save.expand?.user.location} </Text>
+                    </YStack>
+                  </XStack>
+                </Pressable>
+              )}
+            </YStack>
+          </BottomSheetScrollView>
+          <XStack
+            gap={s.$1}
+            style={{
+              width: '100%',
+              paddingVertical: s.$1half,
+              justifyContent: 'center',
+              alignItems: 'center'
+            }}
+          >
+            <DMButton fromSaves={true} disabled={selectedUsers.length!==1} profile={selectedUsers[0]} />
+            <Button variant='whiteOutline' onPress={() => {setStep('add')}} title='+ Group' />
           </XStack>
-          <Text style={{ color: c.white }}>Select anyone to DM or start a group chat</Text>
         </View>
-        <BottomSheetScrollView style={{ height: '75%'}}>
-          <YStack gap={2} style={{ paddingBottom: s.$10 }}>
-            {saves.map(save => 
-              <Pressable 
-                onPress={()=>{toggleSelect(save.user)}} 
-                key={save.id} 
-                style={{ padding: s.$075, backgroundColor: selected[save.user] ? c.olive2 : c.olive, borderRadius: s.$1 }}
-              >
-                <XStack gap={ s.$1 } style={{alignItems: 'center'}}> 
-                  <Avatar source={save.expand?.user.image} size={s.$4} />
-                  <YStack gap={0}>
-                    <Text style={{ color: c.white, fontSize: s.$1 }}>{save.expand?.user.firstName} {save.expand?.user.lastName}</Text>
-                    <Text style={{ color: c.white, fontSize: s.$08 }}>{save.expand?.user.location} </Text>
-                  </YStack>
-                </XStack>
-              </Pressable>
-            )}
-          </YStack>
-        </BottomSheetScrollView>
-        <XStack
-          gap={s.$1}
-          style={{
-            width: '100%',
-            paddingVertical: s.$1half,
-            justifyContent: 'center',
-            alignItems: 'center'
-          }}
-        >
-          <DMButton fromSaves={true} disabled={selectedUsers.length!==1} profile={selectedUsers[0]} />
-          <Button variant='whiteOutline' onPress={() => {setStep('add')}} title='+ Group' />
-        </XStack>
-      </View>
-    )
-  }
-  else if (step === 'add')
-  {
-    return (
-      <View style={{ paddingVertical: s.$1, paddingHorizontal: s.$3 }}>
-        <View style={{ paddingBottom: s.$1 }}>
-          <Pressable onPress={() => {setStep('select')}}>
-            <XStack style={{ justifyContent: 'start', alignItems: 'center' }}>
+
+        {/* Add Step */}
+        <View style={{ width, paddingVertical: s.$1, paddingHorizontal: s.$3 }}>
+          <View style={{ paddingBottom: s.$1 }}>
+            <Pressable onPress={() => {setStep('select')}}>
+              <XStack style={{ justifyContent: 'start', alignItems: 'center' }}>
                 <Ionicons name="chevron-back" size={18} color={c.white} />
                 <Heading tag='h2' style={{ color: c.white }}>Back to selection</Heading>
-            </XStack>
-          </Pressable>
+              </XStack>
+            </Pressable>
+          </View>
+          <BottomSheetScrollView style={{ height: '75%'}}>
+            <YStack gap={2} style={{ paddingBottom: s.$10, color: c.white }}>
+              <Text>New Chat</Text>
+              <Text>Group chat</Text>
+            </YStack>
+          </BottomSheetScrollView>
         </View>
-        <BottomSheetScrollView style={{ height: '75%'}}>
-          <YStack gap={2} style={{ paddingBottom: s.$10, color: c.white }}>
-            <Text>New Chat</Text>
-            <Text>Group chat</Text>
-          </YStack>
-        </BottomSheetScrollView>
-      </View>
-    )
-  }
+      </Animated.View>
+    </Animated.View>
+  )
 }
+
 

@@ -1,7 +1,36 @@
-import { useRef } from 'react'
+import { useRef, forwardRef } from 'react'
 import { useSharedValue } from 'react-native-reanimated'
-import { DetailsDemoCarousel, renderItem } from '../profiles/Details'
 import { View, Dimensions } from 'react-native'
+import Carousel from 'react-native-reanimated-carousel'
+
+export const DetailsDemoCarousel = forwardRef(
+  (
+    { data, height, width, defaultIndex, style, scrollOffsetValue, onSnapToItem, renderItem },
+    ref
+  ) => {
+    console.log(style)
+    return (
+      <Carousel
+        onConfigurePanGesture={(gesture) => {
+          'worklet'
+          gesture.activeOffsetX([-10, 10])
+        }}
+        loop={data.length > 1}
+        ref={ref}
+        data={data}
+        width={width * 0.8}
+        height={height} // hack
+        defaultIndex={defaultIndex}
+        style={style}
+        defaultScrollOffsetValue={scrollOffsetValue}
+        onSnapToItem={onSnapToItem}
+        renderItem={() => {}}
+        autoPlay={true}
+        autoPlayInterval={2000}
+      />
+    )
+  }
+)
 
 const win = Dimensions.get('window')
 

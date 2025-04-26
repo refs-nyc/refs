@@ -3,12 +3,25 @@ import { c, s } from "@/features/style";
 import { Button, Heading, XStack, YStack } from "@/ui";
 import { Avatar } from "@/ui/atoms/Avatar";
 import { BottomSheetScrollView } from "@gorhom/bottom-sheet";
-import { Text, View } from "react-native";
+import { useEffect, useState } from "react";
+import { Pressable, Text, View } from "react-native";
 
 export default function SavesList() {
 
   const { saves } = useMessageStore();
-  
+  const [selected, setSelected] = useState<Record<string, boolean>>({});
+
+  useEffect(() => {
+    for (const save of saves) {
+      setSelected((prev) => ({ ...prev, [save.id]: false }))
+    }
+  }, [])
+
+  const toggleSelect = (id: string) => {
+    setSelected((prev) => ({ ...prev, [id]: !(prev[id]) }))
+    console.log(selected);
+  }
+
   return (
     <View style={{ paddingVertical: s.$1, paddingHorizontal: s.$3 }}>
       <View style={{ paddingBottom: s.$1 }}>
@@ -24,9 +37,13 @@ export default function SavesList() {
         <Text style={{ color: c.white }}>Select anyone to DM or start a group chat</Text>
       </View>
       <BottomSheetScrollView style={{ height: '75%'}}>
-        <YStack style={{ paddingBottom: s.$10 }}>
+        <YStack gap={2} style={{ paddingBottom: s.$10 }}>
           {saves.map(save => 
-            <View key={save.id} style={{ padding: s.$08 }}>
+            <Pressable 
+              onPress={()=>{toggleSelect(save.user)}} 
+              key={save.id} 
+              style={{ padding: s.$075, backgroundColor: selected[save.user] ? c.olive2 : c.olive, borderRadius: s.$1 }}
+            >
               <XStack gap={ s.$1 } style={{alignItems: 'center'}}> 
                 <Avatar source={save.expand.user?.image} size={s.$4} />
                 <YStack gap={0}>
@@ -34,7 +51,7 @@ export default function SavesList() {
                   <Text style={{ color: c.white, fontSize: s.$08 }}>{save.expand.user?.location} </Text>
                 </YStack>
               </XStack>
-            </View>
+            </Pressable>
           )}
         </YStack>
       </BottomSheetScrollView>

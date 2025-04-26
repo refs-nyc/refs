@@ -24,6 +24,7 @@ import {
 } from '@/features/pocketbase/stores/types'
 import { gridSort, createdSort } from '../profiles/sorts'
 import { DMButton } from './DMButton'
+import { useMessageStore } from '@/features/pocketbase/stores/messages'
 
 const win = Dimensions.get('window')
 
@@ -33,6 +34,7 @@ export const Profile = ({ userName }: { userName: string }) => {
   const { addingTo, removingId } = useLocalSearchParams()
   const { stopEditProfile, stopEditBacklog, startEditBacklog } = useUIStore()
   const { hasShareIntent } = useShareIntentContext()
+  const {saves, addSave} = useMessageStore();
 
   const [profile, setProfile] = useState<ProfileType>()
   const [gridItems, setGridItems] = useState<Item[]>([])
@@ -197,7 +199,7 @@ export const Profile = ({ userName }: { userName: string }) => {
                       <>
                         <DMButton />
                         <Button
-                          onPress={() => {}}
+                          onPress={() => {addSave(profile.id, user?.id!)}}
                           variant="raisedSecondary"
                           title="Save"
                           iconBefore="bookmark"

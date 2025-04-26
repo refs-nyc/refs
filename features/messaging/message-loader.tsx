@@ -1,13 +1,13 @@
 import { useEffect } from 'react'
 import { pocketbase, useUserStore } from '../pocketbase'
 import { useMessageStore } from '../pocketbase/stores/messages'
-import { Conversation, ExpandedMembership, ExpandedReaction, Message, Reaction } from '../pocketbase/stores/types'
+import { Conversation, ExpandedMembership, ExpandedReaction, Message, Reaction, Save } from '../pocketbase/stores/types'
 
 export function MessagesInit() {
   const { user } = useUserStore()
   const { setConversations, setReactions } = useMessageStore();
   const { setMessages, addMessage, addConversation, addMembership, addReaction, removeReaction } = useMessageStore();
-  const { setMemberships, updateMembership } = useMessageStore();
+  const { setMemberships, updateMembership, setSaves } = useMessageStore();
 
   // load conversations
   useEffect(() => {
@@ -59,6 +59,23 @@ export function MessagesInit() {
     }
 
   }, [user])
+
+  // load saves
+  useEffect(() => {
+    const getSaves = async () => {
+      const saves = await pocketbase.collection('saves').getFullList<Save>({
+        expand: 'user',
+      });
+      setSaves(saves);
+    }
+    try {
+      getSaves();
+    }
+    catch (error) {
+      console.error(error)
+    }
+  }, [user])
+
   // load memberships
   useEffect(() => {
     const getMemberships = async () => {

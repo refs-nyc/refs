@@ -197,7 +197,7 @@ export const Profile = ({ userName }: { userName: string }) => {
                     )}
                     {showMessageButtons && (
                       <>
-                        <DMButton />
+                        <DMButton profile={profile} />
                         <Button
                           onPress={() => {addSave(profile.id, user?.id!)}}
                           variant="raisedSecondary"

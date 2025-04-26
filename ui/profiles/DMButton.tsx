@@ -5,7 +5,7 @@ import { pocketbase, useUserStore } from "@/features/pocketbase";
 import { useEffect, useState } from "react";
 import { ConversationWithMemberships, Profile } from "@/features/pocketbase/stores/types";
 
-export const DMButton = ({profile} : {profile: Profile}) =>
+export const DMButton = ({profile, fromSaves, disabled} : {profile: Profile, fromSaves?: boolean, disabled?: boolean}) =>
 {
   const { user } = useUserStore();
 
@@ -40,7 +40,6 @@ export const DMButton = ({profile} : {profile: Profile}) =>
         {
           setTarget('/messages/' + existingConversationId);
         }
-        console.log('target', target);
       }
       catch (error) {
         console.error(error);
@@ -51,11 +50,12 @@ export const DMButton = ({profile} : {profile: Profile}) =>
 
   return (
     <Button
-      onPress={() => {router.push(target as any)}}
-      variant="raisedSecondary"
+      onPress={() => { if (fromSaves)  router.replace(target as any); else router.push(target as any)}}
+      variant={fromSaves ? "whiteInverted" : "raisedSecondary"}
+      disabled={disabled}
       title="Message"
       iconColor={c.muted}
-      iconAfter="paper-plane"
+      iconAfter={fromSaves ? undefined :"paper-plane"}
     />
   )
 }

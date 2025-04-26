@@ -1,4 +1,4 @@
-import { useUserStore } from "@/features/pocketbase";
+import { pocketbase, useUserStore } from "@/features/pocketbase";
 import { useMessageStore } from "@/features/pocketbase/stores/messages";
 import { c, s } from "@/features/style";
 import { Heading, XStack, YStack } from "@/ui";
@@ -6,17 +6,27 @@ import { Avatar } from "@/ui/atoms/Avatar";
 import MessageInput from "@/ui/messaging/MessageInput";
 import { Ionicons } from "@expo/vector-icons";
 import { router, useGlobalSearchParams } from "expo-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { DimensionValue, Pressable, View } from "react-native";
 
 export default function NewDMScreen() 
 {
-  const { user, profile } = useUserStore();
+  const { user } = useUserStore();
   const { userName } = useGlobalSearchParams();
   const [message, setMessage] = useState<string>('');
   const {createConversation, sendMessage} = useMessageStore();
+  const [profile, setProfile] = useState<any>();
 
-  if (!profile) return null;
+  useEffect(() => {
+    async function getProfile() {
+      const results = await pocketbase.collection('users').getFullList({
+        filter: `userName = "${userName}"`,
+      });
+      console.log('results', results);
+      setProfile(results[0]);
+    }
+    getProfile();
+  }, [userName]);
   
   if (!user) {
     router.dismissTo('/');
@@ -28,7 +38,7 @@ export default function NewDMScreen()
     return;
   }
 
-  if (!profile.id) return null;
+  if (!profile) return null;
 
   const onMessageSubmit = async () => 
   {

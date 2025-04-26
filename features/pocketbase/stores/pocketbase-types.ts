@@ -19,6 +19,7 @@ export enum Collections {
 	Profiles = "profiles",
 	Reactions = "reactions",
 	Refs = "refs",
+	Saves = "saves",
 	Test = "test",
 	Users = "users",
 }
@@ -111,6 +112,7 @@ export type ConversationsRecord = {
 	created?: IsoDateString
 	id: string
 	is_direct?: boolean
+	title?: string
 }
 
 export type ItemsRecord = {
@@ -131,20 +133,20 @@ export type ItemsRecord = {
 }
 
 export type MembershipsRecord = {
-	conversation?: RecordIdString
+	conversation: RecordIdString
 	created?: IsoDateString
 	id: string
 	last_read?: IsoDateString
 	updated?: IsoDateString
-	user?: RecordIdString
+	user: RecordIdString
 }
 
 export type MessagesRecord = {
 	conversation?: RecordIdString
 	created?: IsoDateString
 	id: string
-	sender?: RecordIdString
-	text?: string
+	sender: RecordIdString
+	text: string
 }
 
 export type ProfilesRecord = {
@@ -162,11 +164,11 @@ export type ProfilesRecord = {
 
 export type ReactionsRecord = {
 	created?: IsoDateString
-	emoji?: string
+	emoji: string
 	id: string
-	message?: RecordIdString
+	message: RecordIdString
 	updated?: IsoDateString
-	user?: RecordIdString
+	user: RecordIdString
 }
 
 export enum RefsTypeOptions {
@@ -186,6 +188,14 @@ export type RefsRecord = {
 	type?: RefsTypeOptions
 	updated?: IsoDateString
 	url?: string
+}
+
+export type SavesRecord = {
+	created?: IsoDateString
+	id: string
+	saved_by: RecordIdString
+	updated?: IsoDateString
+	user: RecordIdString
 }
 
 export type TestRecord = {
@@ -228,6 +238,7 @@ export type MessagesResponse<Texpand = unknown> = Required<MessagesRecord> & Bas
 export type ProfilesResponse<Texpand = unknown> = Required<ProfilesRecord> & BaseSystemFields<Texpand>
 export type ReactionsResponse<Texpand = unknown> = Required<ReactionsRecord> & BaseSystemFields<Texpand>
 export type RefsResponse<Texpand = unknown> = Required<RefsRecord> & BaseSystemFields<Texpand>
+export type SavesResponse<Texpand = unknown> = Required<SavesRecord> & BaseSystemFields<Texpand>
 export type TestResponse<Texpand = unknown> = Required<TestRecord> & BaseSystemFields<Texpand>
 export type UsersResponse<Texpand = unknown> = Required<UsersRecord> & AuthSystemFields<Texpand>
 
@@ -247,6 +258,7 @@ export type CollectionRecords = {
 	profiles: ProfilesRecord
 	reactions: ReactionsRecord
 	refs: RefsRecord
+	saves: SavesRecord
 	test: TestRecord
 	users: UsersRecord
 }
@@ -265,6 +277,7 @@ export type CollectionResponses = {
 	profiles: ProfilesResponse
 	reactions: ReactionsResponse
 	refs: RefsResponse
+	saves: SavesResponse
 	test: TestResponse
 	users: UsersResponse
 }
@@ -286,6 +299,7 @@ export type TypedPocketBase = PocketBase & {
 	collection(idOrName: 'profiles'): RecordService<ProfilesResponse>
 	collection(idOrName: 'reactions'): RecordService<ReactionsResponse>
 	collection(idOrName: 'refs'): RecordService<RefsResponse>
+	collection(idOrName: 'saves'): RecordService<SavesResponse>
 	collection(idOrName: 'test'): RecordService<TestResponse>
 	collection(idOrName: 'users'): RecordService<UsersResponse>
 }

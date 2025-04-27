@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react' // Import useCallback, useMemo
 import { Link, useGlobalSearchParams, usePathname, useRouter } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { View, Dimensions, Pressable, Text } from 'react-native'
+import { View, Dimensions, Pressable, Text, ViewStyle } from 'react-native'
 import Carousel, { ICarouselInstance } from 'react-native-reanimated-carousel'
 import { useSharedValue } from 'react-native-reanimated'
 import { Heading } from '../typo/Heading'
@@ -164,7 +164,10 @@ export const Details = ({
     stopEditing()
   }, [setAddingToList, getProfile, userNameParam])
 
-  const carouselStyle = useMemo(
+  const carouselStyle = useMemo<{
+    overflow: ViewStyle["overflow"],
+    paddingVertical: number,
+  }>(
     () => ({
       overflow: 'visible',
       paddingVertical: win.height * 0.2, // Consider making this dynamic based on header/insets
@@ -193,7 +196,7 @@ export const Details = ({
       <Carousel
         loop={data.length > 1}
         ref={ref}
-        data={data}
+        data={data as ExpandedItem[]}
         width={win.width}
         height={win.height}
         style={carouselStyle}
@@ -203,7 +206,7 @@ export const Details = ({
         windowSize={5}
         pagingEnabled={true}
         snapEnabled={true}
-        keyExtractor={(item) => item.id} // Good practice for lists/carousels
+        keyExtractor={(item: ExpandedItem) => item.id} // Good practice for lists/carousels
       />
 
       {addingToList !== '' && addingItem && (

@@ -3,7 +3,7 @@ import { useUserStore } from '@/features/pocketbase'
 import { s, c } from '@/features/style'
 import { router } from 'expo-router'
 import { ProfileStep } from '@/ui/profiles/ProfileStep'
-import { View, Dimensions } from 'react-native'
+import { View, Dimensions, Text, TouchableOpacity } from 'react-native'
 import Carousel, { ICarouselInstance } from 'react-native-reanimated-carousel'
 import { ErrorView, FormFieldWithIcon } from '@/ui/inputs/FormFieldWithIcon'
 import { Controller, useForm } from 'react-hook-form'
@@ -132,6 +132,12 @@ export default function Screen() {
 
   return (
     <View style={{ flex: 1 }}>
+      <TouchableOpacity
+        style={styles.backButton}
+        onPress={() => router.back()}
+      >
+        <Text style={styles.backButtonText}>Back</Text>
+      </TouchableOpacity>
       <Carousel
         loop={false}
         ref={carouselRef}
@@ -151,5 +157,17 @@ const styles = {
     fontFamily: 'Inter',
     textAlign: 'center',
     color: c.accent,
+  },
+  backButton: {
+    position: 'absolute' as const,
+    top: 50,
+    right: 20,
+    zIndex: 10,
+    padding: 10,
+  },
+  backButtonText: {
+    color: '#999999',
+    fontSize: 16,
+    fontFamily: 'Inter',
   },
 }

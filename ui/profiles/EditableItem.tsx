@@ -126,8 +126,8 @@ const EditableItemComponent = ({
             </View>
           </View>
           <Pressable onPress={() => {}}>
-            {item.expand.ref.url && (
-              <Link href={item.expand.ref.url}>
+            {item.expand?.ref.url && (
+              <Link href={item.expand.ref.url as any}>
                 <Ionicons
                   style={{ transformOrigin: 'center', transform: 'rotate(-45deg)' }}
                   color={c.muted}

@@ -27,10 +27,10 @@ export const Button = (props: ButtonProps) => {
     onPress,
     title = 'Save',
     variant = '',
-    iconBefore = '',
+    iconBefore = '' as keyof typeof Ionicons.glyphMap,
     iconBeforeCustom = false,
     iconAfterCustom = false,
-    iconAfter = '',
+    iconAfter = '' as keyof typeof Ionicons.glyphMap,
     iconButton = false,
     iconColor = 'white',
     disabled = false,
@@ -82,7 +82,7 @@ export const Button = (props: ButtonProps) => {
         ) : (
           <Ionicons
             style={[{ height: iconSize }]}
-            color={iconVariant?.color || iconColor}
+            color={(iconVariant as any)?.color || iconColor}
             name={iconBefore}
             size={iconSize}
           />

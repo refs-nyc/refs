@@ -12,7 +12,7 @@ import { Grid } from '../grid/Grid'
 import { Sheet } from '../core/Sheets'
 import { useLocalSearchParams, router } from 'expo-router'
 import { useEffect, useState, useMemo } from 'react'
-import { View, Dimensions } from 'react-native'
+import { View, Dimensions, Pressable } from 'react-native'
 import { s, c } from '@/features/style'
 import { pocketbase, useUserStore, removeFromProfile, useItemStore } from '@/features/pocketbase'
 import { ShareIntent as ShareIntentType, useShareIntentContext } from 'expo-share-intent'
@@ -195,39 +195,6 @@ export const Profile = ({ userName }: { userName: string }) => {
                           iconAfter="add-circle-outline"
                         />
                       )}
-                      {!editingRights && (
-                        <>
-                          <Button
-                            onPress={() => {}}
-                            variant="raisedSecondary"
-                            title="Message"
-                            iconColor={c.muted}
-                            iconAfter="paper-plane"
-                          />
-                          <Button
-                            onPress={() => {}}
-                            variant="raisedSecondary"
-                            title="Save"
-                            iconBefore="bookmark"
-                          />
-                        </>
-                      )}
-                    </XStack>
-                  </Pressable>
-                  <XStack
-                    onTouchStart={() => stopEditProfile()}
-                    gap={s.$2}
-                    style={{ justifyContent: 'center', width: '100%' }}
-                  >
-                    {editingRights && (
-                      <Button
-                        onPress={() => setAddingTo('backlog')}
-                        variant="raisedSecondary"
-                        title="Backlog"
-                        iconColor={c.muted}
-                        iconAfter="add-circle-outline"
-                      />
-                    )}
                     {showMessageButtons && (
                       <>
                         <DMButton profile={profile} />
@@ -239,7 +206,8 @@ export const Profile = ({ userName }: { userName: string }) => {
                         />
                       </>
                     )}
-                  </XStack>
+                    </XStack>
+                  </Pressable>
                 </Animated.View>
               ) : (
                 <Animated.View

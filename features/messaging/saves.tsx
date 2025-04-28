@@ -7,8 +7,9 @@ import { Ionicons } from "@expo/vector-icons";
 import { BottomSheetScrollView } from "@gorhom/bottom-sheet";
 import { Link, router } from "expo-router";
 import { useEffect, useState } from "react";
-import { Pressable, Text, View, useWindowDimensions } from "react-native";
+import { Pressable, Text, TextInput, View, useWindowDimensions } from "react-native";
 import Animated, { useSharedValue, useAnimatedStyle, withTiming } from "react-native-reanimated";
+import { Conversation } from "../pocketbase/stores/types";
 
 type Step = 'select' | 'add';
 
@@ -19,9 +20,19 @@ export default function SavesList() {
 
   const [selected, setSelected] = useState<Record<string, boolean>>({});
   const [step, setStep] = useState<Step>('select');
-
+  const [searchTerm, setSearchTerm] = useState('');
+  
   const {conversations, memberships} = useMessageStore();
-  const groupChats = Object.values(conversations).filter(c => !c.is_direct);
+  const [filteredChats, setFilteredChats] = useState<Conversation[]>([...Object.values(conversations).filter(c => !c.is_direct)]);
+
+  const onSearchTermChange = (searchTerm: string) => 
+  {
+    setSearchTerm(searchTerm);
+    setFilteredChats(
+      [...Object.values(conversations)
+        .filter(c => !c.is_direct && c.title && c.title.toLowerCase().includes(searchTerm.toLowerCase()))]
+    );
+  }
 
   useEffect(() => {
     for (const save of saves) {
@@ -118,6 +129,21 @@ export default function SavesList() {
               </XStack>
             </Pressable>
           </View>
+          <TextInput 
+            placeholder="Search"
+            placeholderTextColor={c.white}
+            value={searchTerm}
+            onChangeText={onSearchTermChange}
+            style={{
+              marginVertical: s.$1,
+              paddingVertical: s.$075,
+              paddingHorizontal: s.$1,
+              color: c.white,
+              borderWidth: 1,
+              borderColor: c.white,
+              borderRadius: s.$2,
+            }}
+          />
           <BottomSheetScrollView style={{ height: '75%'}}>
             <YStack gap={2} style={{ paddingBottom: s.$10, color: c.white }}>
               <Link 
@@ -131,7 +157,7 @@ export default function SavesList() {
                   </View>
                 </XStack>
               </Link>
-              {groupChats.map(gc => 
+              {filteredChats.map(gc => 
                 <Pressable key={gc.id} onPress={()=>{onAddToGroupChat(gc.id)}}>
                   <XStack style={{ justifyContent: 'space-between', alignItems: 'center', width: '100%', paddingVertical: s.$075 }}>
                     <Heading tag="h2normal" style={{color: c.white}}>{gc.title || 'Group Chat'}</Heading>

@@ -54,7 +54,10 @@ export const useMessageStore = create<MessageStore>((set) => ({
     try
     {
       console.log(`creating conversation with ${otherMemberIds.length} users: ${otherMemberIds}`)
-      const newConversation = await pocketbase.collection('conversations').create({is_direct, title});
+      const newConversation = await pocketbase.collection('conversations').create({
+        is_direct, 
+        title: is_direct ? undefined : (title || 'New Group Chat')
+      });
 
       await pocketbase.collection('memberships').create({conversation: newConversation.id, user: creatorId});
 

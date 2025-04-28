@@ -5,7 +5,7 @@ import { Avatar } from "@/ui/atoms/Avatar";
 import { DMButton } from "@/ui/profiles/DMButton";
 import { Ionicons } from "@expo/vector-icons";
 import { BottomSheetScrollView } from "@gorhom/bottom-sheet";
-import { Link } from "expo-router";
+import { Link, router } from "expo-router";
 import { useEffect, useState } from "react";
 import { Pressable, Text, View, useWindowDimensions } from "react-native";
 import Animated, { useSharedValue, useAnimatedStyle, withTiming } from "react-native-reanimated";
@@ -14,11 +14,14 @@ type Step = 'select' | 'add';
 
 export default function SavesList() {
 
-  const { saves } = useMessageStore();
+  const { saves, createMemberships } = useMessageStore();
   const { width } = useWindowDimensions();
 
   const [selected, setSelected] = useState<Record<string, boolean>>({});
   const [step, setStep] = useState<Step>('select');
+
+  const {conversations, memberships} = useMessageStore();
+  const groupChats = Object.values(conversations).filter(c => !c.is_direct);
 
   useEffect(() => {
     for (const save of saves) {
@@ -40,12 +43,16 @@ export default function SavesList() {
     }
   }
 
+  const onAddToGroupChat = async (gcId: string) => {
+    await createMemberships(selectedUsers.map(u=>u!.id), gcId);
+    router.replace(`/messages/${gcId}`);
+  }
+
   const translateX = useSharedValue(0);
   
   useEffect(() => {
     translateX.value = withTiming(step === 'select' ? 0 : -width, { duration: 300 });
   }, [step, translateX, width]);
-
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ translateX: translateX.value }],
@@ -124,7 +131,14 @@ export default function SavesList() {
                   </View>
                 </XStack>
               </Link>
-              <Text>Group chat</Text>
+              {groupChats.map(gc => 
+                <Pressable key={gc.id} onPress={()=>{onAddToGroupChat(gc.id)}}>
+                  <XStack style={{ justifyContent: 'space-between', alignItems: 'center', width: '100%', paddingVertical: s.$075 }}>
+                    <Heading tag="h2normal" style={{color: c.white}}>{gc.title || 'Group Chat'}</Heading>
+                    <Button variant='smallWhiteOutline' onPress={() => {}} title={`${memberships[gc.id].length} members`} />
+                  </XStack>
+                </Pressable>)
+              }
             </YStack>
           </BottomSheetScrollView>
         </View>

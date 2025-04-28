@@ -6,7 +6,7 @@ import { pocketbase, useUserStore } from '../pocketbase'
 import { useMessageStore } from '../pocketbase/stores/messages'
 import { Pressable } from 'react-native'
 import { Link, useRouter } from 'expo-router'
-import { Avatar } from '@/ui/atoms/Avatar'
+import { Avatar, AvatarStack } from '@/ui/atoms/Avatar'
 import { Ionicons } from '@expo/vector-icons'
 import MessageBubble from '@/ui/messaging/MessageBubble'
 import { EmojiKeyboard } from 'rn-emoji-keyboard'
@@ -69,10 +69,14 @@ export function MessagesScreen({conversationId} : {conversationId: string})
             members[0].expand?.user.firstName + " " + members[0].expand?.user.lastName 
             : conversation.title || 'Group Chat'}
         </Heading>
-        {conversation.is_direct && 
+        {conversation.is_direct ?
           <Link href={`/user/${members[0].expand?.user.userName}`}>
             <Avatar source={members[0].expand?.user.image} size={s.$4} />
           </Link>
+          :
+          <XStack style={{ flex:1, justifyContent: 'flex-end'}}>
+            <AvatarStack sources={members.map(m=>m.expand?.user.image)} size={s.$3} />
+          </XStack>
         }
       </XStack>
       <KeyboardAvoidingView       

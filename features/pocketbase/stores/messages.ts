@@ -8,20 +8,25 @@ type MessageStore = {
   updateConversation: (conversation: Conversation) => void;
   createConversation: (is_direct: boolean, creatorId: string, otherMemberIds: string[], title?: string) => Promise<string>;
   addConversation (conversation: Conversation): void;
+
   memberships: Record<string, ExpandedMembership[]>;
   setMemberships: (memberships: ExpandedMembership[]) => void;
   addMembership: (membership: ExpandedMembership) => void;
   updateMembership: (membership: ExpandedMembership) => void;
+  createMemberships: (userIds: string[], conversationId: string) => Promise<void>;
+  
   sendMessage: (sendreId: string, conversationId: string, text: string) => Promise<void>;
   messages: Message[];
   setMessages: (messages: Message[]) => void;
   addMessage: (message: Message) => void;
+
   reactions: Record<string, ExpandedReaction[]>;
   setReactions: (reactions: ExpandedReaction[]) => void;
   addReaction: (reaction: ExpandedReaction) => void;
   sendReaction: (senderId: string, messageId: string, emoji: string) => Promise<void>;
   deleteReaction: (id: string) => Promise<void>;
   removeReaction: (reaction: Reaction) => void;
+
   saves: ExpandedSave[];
   setSaves: (saves: ExpandedSave[]) => void;
   addSave: (userId: string, savedBy: string) => Promise<void>;
@@ -105,6 +110,28 @@ export const useMessageStore = create<MessageStore>((set) => ({
         },
       };
     });
+  },
+  async createMemberships(userIds, conversationId) : Promise<void>
+  {
+    try
+    {
+      for (const userId of userIds) {
+        await pocketbase.collection('memberships').create({conversation: conversationId, user: userId});
+      }
+
+      const newMemberships = await pocketbase.collection('memberships').getFullList<ExpandedMembership>({
+        filter: `conversation = "${conversationId}"`,
+        expand: 'user',
+      });
+
+      set((state) => ({
+        memberships : { ...state.memberships, [conversationId]: newMemberships }
+      }));
+    }
+    catch (error)
+    {
+      console.error(error);
+    }
   },
   setMemberships: (memberships) =>
   {

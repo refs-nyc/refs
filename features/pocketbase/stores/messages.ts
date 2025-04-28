@@ -51,10 +51,10 @@ export const useMessageStore = create<MessageStore>((set) => ({
       console.log(`creating conversation with ${otherMemberIds.length} users: ${otherMemberIds}`)
       const newConversation = await pocketbase.collection('conversations').create({is_direct});
 
-      await pocketbase.collection('memberships').create({conversation: newConversation.id, user: creatorId});
+      await pocketbase.collection('memberships').create({conversation: newConversation.id, user: creatorId, title: title});
 
       for (const userId of otherMemberIds) {
-        await pocketbase.collection('memberships').create({conversation: newConversation.id, user: userId, title: title});
+        await pocketbase.collection('memberships').create({conversation: newConversation.id, user: userId});
       }
 
       const newMemberships = await pocketbase.collection('memberships').getFullList<ExpandedMembership>({

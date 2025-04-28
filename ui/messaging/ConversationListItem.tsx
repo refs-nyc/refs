@@ -5,7 +5,7 @@ import { View, Text } from "react-native"
 import { XStack, YStack } from "../core/Stacks"
 import { Avatar } from "../atoms/Avatar"
 import { useMessageStore } from "@/features/pocketbase/stores/messages"
-import formatTimestamp from "@/features/messaging/utils"
+import { formatTimestamp } from "@/features/messaging/utils"
 import { useCalendars } from "expo-localization"
 
 export default function ConversationListItem ({ conversation }: { conversation: Conversation }): JSX.Element | null

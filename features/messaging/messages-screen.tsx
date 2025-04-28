@@ -1,7 +1,7 @@
 import { Heading, SheetScreen, XStack, YStack } from '@/ui'
 import { View, ScrollView, DimensionValue, KeyboardAvoidingView, Keyboard } from 'react-native'
 import { c, s } from '../style'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { pocketbase, useUserStore } from '../pocketbase'
 import { useMessageStore } from '../pocketbase/stores/messages'
 import { Pressable } from 'react-native'
@@ -11,6 +11,7 @@ import { Ionicons } from '@expo/vector-icons'
 import MessageBubble from '@/ui/messaging/MessageBubble'
 import { EmojiKeyboard } from 'rn-emoji-keyboard'
 import MessageInput from '@/ui/messaging/MessageInput'
+import { randomColors } from './utils'
 
 export function MessagesScreen({conversationId} : {conversationId: string})
 {
@@ -26,6 +27,17 @@ export function MessagesScreen({conversationId} : {conversationId: string})
   const router = useRouter();
 
   const conversationMessages = messages.filter(m => m.conversation === conversationId);
+
+  const colorMap = useMemo(() => {
+    const colors = randomColors(members.length);
+
+    const map = members.reduce((acc, member, index) => {
+      if (member.expand?.user.id) acc[member.expand?.user.id] = colors[index];
+      return acc;
+    }, {} as Record<string, any>);
+
+    return map;
+  }, [members.length])
   
   useEffect(() => {
     const showSub = Keyboard.addListener('keyboardDidShow', () => {
@@ -97,9 +109,10 @@ export function MessagesScreen({conversationId} : {conversationId: string})
               <MessageBubble 
                 key={m.id} 
                 message={m} 
+                sender={memberships[conversationId].find(member => member.expand?.user.id === m.sender)?.expand?.user}
                 showSender={!conversation.is_direct} 
-                avatarSource={members.find(member => member.expand?.user.id === m.sender)?.expand?.user.image}
                 setReactingTo={setReactingTo} 
+                senderColor={colorMap[m.sender]}
               />
             )}
           </YStack>
@@ -116,7 +129,11 @@ export function MessagesScreen({conversationId} : {conversationId: string})
           }}
         >
           <View style={{ maxHeight: '20%'}} >
-            <MessageBubble message={messages.filter(m=>m.id === reactingTo)[0]} showSenderAvatar={false} />
+            <MessageBubble 
+              message={messages.filter(m=>m.id === reactingTo)[0]} 
+              showSender={false} 
+              sender={members.find(member => member.expand?.user.id === m.sender)?.expand?.user}
+            />
           </View>
           <View style={{ minHeight: '80%' }}>
             <EmojiKeyboard 

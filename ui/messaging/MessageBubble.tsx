@@ -11,8 +11,8 @@ import { XStack } from "../core/Stacks";
 import { Link } from "expo-router";
 
 export default function MessageBubble(
-  { message, showSender, sender, senderColor, setReactingTo }:
-  { message: Message, showSender: boolean, sender: Profile, senderColor?: string, setReactingTo?: (id: string) => void }) 
+  { message, showSender, sender, senderColor, onLongPress }:
+  { message: Message, showSender: boolean, sender: Profile, senderColor?: string, onLongPress?: (id: string) => void }) 
 {
   const { user } = useUserStore()
   const calendars = useCalendars();
@@ -38,7 +38,7 @@ export default function MessageBubble(
       <Pressable
         onLongPress={ () =>
         {
-          if (setReactingTo) setReactingTo(message.id);
+          if (onLongPress) onLongPress(message.id);
         }}
       >
         <View

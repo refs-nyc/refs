@@ -1,10 +1,10 @@
-import { Heading, SheetScreen, XStack, YStack } from '@/ui'
-import { View, ScrollView, DimensionValue, KeyboardAvoidingView, Keyboard } from 'react-native'
+import { Heading, XStack, YStack } from '@/ui'
+import { View, ScrollView, DimensionValue, KeyboardAvoidingView, Keyboard, Modal } from 'react-native'
 import { c, s } from '../style'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { pocketbase, useUserStore } from '../pocketbase'
 import { useMessageStore } from '../pocketbase/stores/messages'
-import { Pressable } from 'react-native'
+import { Pressable, Text } from 'react-native'
 import { Link, useRouter } from 'expo-router'
 import { Avatar, AvatarStack } from '@/ui/atoms/Avatar'
 import { Ionicons } from '@expo/vector-icons'
@@ -19,7 +19,8 @@ export function MessagesScreen({conversationId} : {conversationId: string})
   const { conversations, memberships, messages, sendMessage, sendReaction } = useMessageStore();
   const scrollViewRef = useRef<ScrollView>(null);
   const [message, setMessage] = useState<string>('');
-  const [reactingTo, setReactingTo] = useState<string>('');
+  const [highlightedMessageId, setHighlightedMessageId] = useState<string>('');
+  const [showInModal, setShowInModal] = useState<'' | 'contextMenu' | 'reactions'>('');
 
   const conversation = conversations[conversationId];
   const members = memberships[conversationId].filter(m => m.expand?.user.id !== user?.id);
@@ -27,7 +28,7 @@ export function MessagesScreen({conversationId} : {conversationId: string})
   const router = useRouter();
 
   const conversationMessages = messages.filter(m => m.conversation === conversationId);
-  const highlightedMessage = conversationMessages.find(m => m.id === reactingTo);
+  const highlightedMessage = conversationMessages.find(m => m.id === highlightedMessageId);
 
   const colorMap = useMemo(() => {
     const colors = randomColors(members.length);
@@ -55,13 +56,12 @@ export function MessagesScreen({conversationId} : {conversationId: string})
     setLastRead();
   }, [])
 
+  const onMessageLongPress = (id: string) => {
+    setHighlightedMessageId(id);
+    setShowInModal('contextMenu');
+  }
+
   if (!user) return null;
-
-
-  // console.log('VIEWING CONVERSATION', conversationId)
-  // console.log('members', memberships[conversationId].map(m=>m.expand?.user.email))
-  // console.log('all messages', messages.map(m=>m.text))
-  // console.log('conversationMessages', conversationMessages.map(m=>m.text))
 
   return (
     <View
@@ -114,36 +114,60 @@ export function MessagesScreen({conversationId} : {conversationId: string})
                 message={m} 
                 sender={memberships[conversationId].find(member => member.expand?.user.id === m.sender)?.expand?.user}
                 showSender={!conversation.is_direct} 
-                setReactingTo={setReactingTo} 
                 senderColor={colorMap[m.sender]}
+                onLongPress={onMessageLongPress}
               />
             )}
           </YStack>
         </ScrollView>
-       { highlightedMessage ? 
-        <SheetScreen
-          snapPoints={['70%']}
-          backgroundStyle={{
-            backgroundColor: 'transparent',
-            padding: 0,
-          }}
-          onChange={(i: number) => {
-            if (i === -1) setReactingTo('')
-          }}
+       { showInModal && highlightedMessage ?
+        <Modal
+          animationType="fade"
+          transparent={true}
+          visible={true}
         >
-          <View style={{ maxHeight: '20%'}} >
-            <MessageBubble 
-              message={highlightedMessage} 
-              showSender={false} 
-              sender={members.find(member => member.expand?.user.id === highlightedMessage.sender)?.expand?.user}
-            />
-          </View>
-          <View style={{ minHeight: '80%' }}>
-            <EmojiKeyboard 
-              onEmojiSelected={(e) => {sendReaction(user.id, reactingTo, e.emoji); setReactingTo(''); console.log(e)}}
-            />
-          </View>
-        </SheetScreen>
+          <Pressable 
+            style={{height: s.full as DimensionValue, backgroundColor: '#0009' }} 
+            onPress={() => {setHighlightedMessageId(''); setShowInModal('')}}
+          >
+            <View style={{ height: '20%', backgroundColor: '#0000' }}>
+            </View>
+            <View style={{ maxHeight: '80%' }}>
+              <View style={{ maxHeight: '20%'}} >
+                <MessageBubble 
+                  message={highlightedMessage} 
+                  showSender={false} 
+                  sender={members.find(member => member.expand?.user.id === highlightedMessage.sender)?.expand?.user}
+                />
+              </View>
+                <View style={{ minHeight: '80%' }}>
+                  {showInModal === 'reactions' &&
+                    <EmojiKeyboard 
+                      onEmojiSelected={(e) => {sendReaction(user.id, highlightedMessageId, e.emoji); setHighlightedMessageId(''); setShowInModal('')}}
+                    />
+                  }
+                  { showInModal === 'contextMenu' &&
+                    <YStack 
+                      style={{ 
+                        alignSelf: highlightedMessage.sender === user.id ? 'flex-end' : 'flex-start',
+                        backgroundColor: c.surface, 
+                        padding: s.$08, 
+                        borderRadius: s.$1, 
+                        width: s.$10 
+                      }} 
+                    >
+                      <Pressable style={{padding: s.$05, width: 'auto'}} onPress={()=>{setHighlightedMessageId(''); setShowInModal('')}}>
+                        <Text>Reply</Text>
+                      </Pressable>
+                      <Pressable style={{padding: s.$05, width: 'auto'}} onPress={()=>{setShowInModal('reactions')}}>
+                        <Text>React</Text>
+                      </Pressable>
+                    </YStack>
+                  }
+                </View>
+            </View>
+          </Pressable>
+        </Modal>
        :
         <MessageInput 
           onMessageSubmit={() => {sendMessage(user.id, conversationId, message); setMessage('');}} 

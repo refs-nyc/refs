@@ -5,6 +5,7 @@ import { Avatar } from "@/ui/atoms/Avatar";
 import { DMButton } from "@/ui/profiles/DMButton";
 import { Ionicons } from "@expo/vector-icons";
 import { BottomSheetScrollView } from "@gorhom/bottom-sheet";
+import { Link } from "expo-router";
 import { useEffect, useState } from "react";
 import { Pressable, Text, View, useWindowDimensions } from "react-native";
 import Animated, { useSharedValue, useAnimatedStyle, withTiming } from "react-native-reanimated";
@@ -95,8 +96,8 @@ export default function SavesList() {
               alignItems: 'center'
             }}
           >
-            <DMButton fromSaves={true} disabled={selectedUsers.length!==1} profile={selectedUsers[0]} />
-            <Button variant='whiteOutline' onPress={() => {setStep('add')}} title='+ Group' />
+            <DMButton fromSaves={true} disabled={selectedUsers.length!==1} profile={selectedUsers[0]!} />
+            <Button disabled={selectedUsers.length<1} variant='whiteOutline' onPress={() => {setStep('add')}} title='+ Group' />
           </XStack>
         </View>
 
@@ -112,7 +113,17 @@ export default function SavesList() {
           </View>
           <BottomSheetScrollView style={{ height: '75%'}}>
             <YStack gap={2} style={{ paddingBottom: s.$10, color: c.white }}>
-              <Text>New Chat</Text>
+              <Link 
+                replace 
+                href={`/messages/new-gc?members=${selectedUsers.map(u=>u!.id).join(',')}`}
+              >
+                <XStack style={{ justifyContent: 'space-between', alignItems: 'center', width: '100%', paddingVertical: s.$075 }}>
+                  <Heading tag='h2' style={{ color: c.white }}>New Chat</Heading>
+                  <View style={{backgroundColor: c.white, borderRadius: s.$075, padding: s.$075}}>
+                    <Ionicons name="add" size={s.$2} color={c.olive} />
+                  </View>
+                </XStack>
+              </Link>
               <Text>Group chat</Text>
             </YStack>
           </BottomSheetScrollView>

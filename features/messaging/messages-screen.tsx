@@ -87,7 +87,9 @@ export function MessagesScreen({conversationId} : {conversationId: string})
           </Link>
           :
           <XStack style={{ flex:1, justifyContent: 'flex-end'}}>
-            <AvatarStack sources={members.map(m=>m.expand?.user.image)} size={s.$3} />
+            <Link href={`/messages/${conversationId}/member-list`} >
+              <AvatarStack sources={members.map(m=>m.expand?.user.image)} size={s.$3} />
+            </Link>
           </XStack>
         }
       </XStack>

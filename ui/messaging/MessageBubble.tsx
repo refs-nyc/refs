@@ -1,17 +1,18 @@
-import formatTimestamp from "@/features/messaging/utils";
+import { formatTimestamp } from "@/features/messaging/utils";
 import { useUserStore } from "@/features/pocketbase";
 import { useMessageStore } from "@/features/pocketbase/stores/messages";
-import { Message } from "@/features/pocketbase/stores/types";
+import { Message, Profile } from "@/features/pocketbase/stores/types";
 import { c, s } from "@/features/style";
 import { useCalendars } from "expo-localization";
 import { View, Text } from "react-native";
 import { Pressable } from "react-native";
 import { Avatar } from "../atoms/Avatar";
 import { XStack } from "../core/Stacks";
+import { Link } from "expo-router";
 
 export default function MessageBubble(
-  { message, showSender, avatarSource, setReactingTo }:
-  { message: Message, showSender: boolean, avatarSource?: string, setReactingTo?: (id: string) => void }) 
+  { message, showSender, sender, senderColor, setReactingTo }:
+  { message: Message, showSender: boolean, sender: Profile, senderColor?: string, setReactingTo?: (id: string) => void }) 
 {
   const { user } = useUserStore()
   const calendars = useCalendars();
@@ -27,9 +28,11 @@ export default function MessageBubble(
 
   return (
     <XStack style={{ alignSelf : isMe ? 'flex-end' : 'flex-start',}}>
-      {message.sender !== user?.id && showSender &&
+      { sender && showSender && !isMe &&
         <View style={{alignSelf: 'flex-end'}}>
-          <Avatar source={avatarSource} size={s.$3} />
+          <Link href={`/user/${sender.userName}`}>
+            <Avatar source={sender.image} size={s.$3} />
+          </Link>
         </View>
       }
       <Pressable
@@ -47,6 +50,9 @@ export default function MessageBubble(
             width: '100%',
           }}
         >
+          { sender && showSender && !isMe &&
+            <Text style={{color: senderColor, fontWeight: 'bold'}}>{sender.firstName}</Text>
+          }
           <Text>{message.text}</Text>
           {messageReactions &&
             <XStack >

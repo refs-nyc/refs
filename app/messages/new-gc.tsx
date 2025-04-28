@@ -14,6 +14,7 @@ export default function NewGCScreen()
   const queryParams = useLocalSearchParams();
   const [users, setUsers] = useState<Profile[]>([]);
   const [message, setMessage] = useState<string>('');
+  const [title, setTitle] = useState<string>('');
   const { createConversation, sendMessage } = useMessageStore();
   const { user } = useUserStore();
 
@@ -43,7 +44,7 @@ export default function NewGCScreen()
 
   const onMessageSubmit = async () => 
   {
-    const conversationId = await createConversation(false, user!.id, [...users.map(u=>u.id)]);
+    const conversationId = await createConversation(false, user!.id, [...users.map(u=>u.id)], title);
     await sendMessage(user!.id, conversationId, message);
     router.replace(`/messages/${conversationId}`);
   }
@@ -63,6 +64,8 @@ export default function NewGCScreen()
       <YStack gap={s.$3half} style={{ flex: 1, alignItems: 'center', justifyContent: 'start', paddingTop: s.$5}}>
         <TextInput 
           placeholder="What's it about?" 
+          value={title}
+          onChangeText={setTitle}
           style={{ 
             width: '70%', 
             paddingVertical: s.$2, 

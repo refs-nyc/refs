@@ -54,7 +54,7 @@ export default function ConversationListItem ({ conversation }: { conversation: 
           <Text style={{ fontSize: s.$1}}>
             {conversation.is_direct ? 
               members[0].firstName + " " + members[0].lastName 
-              : 'Group Chat'}
+              : conversation.title || 'Group Chat'}
               {/* {`(${conversation.id})`} */}
           </Text>
           <Text>

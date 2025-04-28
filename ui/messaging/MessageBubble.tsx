@@ -10,8 +10,9 @@ import { Avatar } from "../atoms/Avatar";
 import { XStack } from "../core/Stacks";
 
 export default function MessageBubble(
-  { message, setReactingTo }:
-    { message: Message, setReactingTo?: (id: string) => void }) {
+  { message, showSender, avatarSource, setReactingTo }:
+  { message: Message, showSender: boolean, avatarSource?: string, setReactingTo?: (id: string) => void }) 
+{
   const { user } = useUserStore()
   const calendars = useCalendars();
   const { reactions, deleteReaction } = useMessageStore();
@@ -25,55 +26,59 @@ export default function MessageBubble(
   const formattedDate = formatTimestamp(date, timeZone);
 
   return (
-    <Pressable
-      onLongPress={ () =>
-      {
-        if (setReactingTo) setReactingTo(message.id);
-      }}
-    >
-      <View
-        style={{
-          backgroundColor: isMe ? c.accent2 : c.surface2,
-          padding: s.$08,
-          marginVertical: s.$05,
-          borderRadius: s.$075,
-          maxWidth: '70%',
-          alignSelf: isMe ? 'flex-end' : 'flex-start'
+    <XStack style={{ alignSelf : isMe ? 'flex-end' : 'flex-start',}}>
+      {message.sender !== user?.id && showSender && 
+        <View style={{alignSelf: 'flex-end'}}>
+          <Avatar source={avatarSource} size={s.$3} />
+        </View>
+      }
+      <Pressable
+        onLongPress={ () =>
+        {
+          if (setReactingTo) setReactingTo(message.id);
         }}
       >
-        <Text>{message.text}</Text>
-        {messageReactions &&
-          <XStack >
-            {messageReactions.map(r => {
-              const isMine = r.user === user?.id;
-              return (
-                <Pressable
-                  key={r.id}
-                  onPress={isMine ? () => deleteReaction(r.id) : null}
-                >
-                  <XStack
-                    style={{
-                      backgroundColor: isMine ? c.accent : c.muted,
-                      padding: s.$05,
-                      borderRadius: s.$1
-                    }}
-                  >
-                    <Text>{r.emoji}</Text>
-                    <Avatar source={r.expand?.user.image} size={s.$1} />
-                  </XStack>
-                </Pressable>
-              )
-            }
-            )
-            }
-          </XStack>
-        }
-        <Text
-          style={{ color: c.muted, fontSize: s.$08, alignSelf: 'flex-end' }}
+        <View
+          style={{
+            backgroundColor: isMe ? c.accent2 : c.surface2,
+            padding: s.$08,
+            marginVertical: s.$05,
+            borderRadius: s.$075,
+            width: '100%',          
+          }}
         >
-          {formattedDate}
-        </Text>
-      </View>
-    </Pressable>
+          <Text>{message.text}</Text>
+          {messageReactions &&
+            <XStack >
+              {messageReactions.map(r => {
+                const isMine = r.user === user?.id;
+                return (
+                  <Pressable
+                    key={r.id}
+                    onPress={isMine ? () => deleteReaction(r.id) : null}
+                  >
+                    <XStack
+                      style={{
+                        backgroundColor: isMine ? c.accent : c.muted,
+                        padding: s.$05,
+                        borderRadius: s.$1
+                      }}
+                    >
+                      <Text>{r.emoji}</Text>
+                      <Avatar source={r.expand?.user.image} size={s.$1} />
+                    </XStack>
+                  </Pressable>
+                )
+              })}
+            </XStack>
+          }
+          <Text
+            style={{ color: c.muted, fontSize: s.$08, alignSelf: 'flex-end' }}
+          >
+            {formattedDate}
+          </Text>
+        </View>
+      </Pressable>
+    </XStack>
   )
 }

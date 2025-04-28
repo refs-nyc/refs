@@ -91,13 +91,17 @@ export function MessagesScreen({conversationId} : {conversationId: string})
         >
           <YStack
             gap={s.$0}
-            style={{
-              flex: 1,
-              width: '90%',
-              margin: 'auto',
-            }}
+            style={{ flex: 1, width: '90%', margin: 'auto' }}
           >
-            {conversationMessages.map(m => <MessageBubble key={m.id} message={m} setReactingTo={setReactingTo} />)}
+            {conversationMessages.map(m => 
+              <MessageBubble 
+                key={m.id} 
+                message={m} 
+                showSender={!conversation.is_direct} 
+                avatarSource={members.find(member => member.expand?.user.id === m.sender)?.expand?.user.image}
+                setReactingTo={setReactingTo} 
+              />
+            )}
           </YStack>
         </ScrollView>
        { reactingTo ? 
@@ -112,7 +116,7 @@ export function MessagesScreen({conversationId} : {conversationId: string})
           }}
         >
           <View style={{ maxHeight: '20%'}} >
-            <MessageBubble message={messages.filter(m=>m.id === reactingTo)[0]} />
+            <MessageBubble message={messages.filter(m=>m.id === reactingTo)[0]} showSenderAvatar={false} />
           </View>
           <View style={{ minHeight: '80%' }}>
             <EmojiKeyboard 

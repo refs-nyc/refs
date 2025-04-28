@@ -27,6 +27,7 @@ export function MessagesScreen({conversationId} : {conversationId: string})
   const router = useRouter();
 
   const conversationMessages = messages.filter(m => m.conversation === conversationId);
+  const highlightedMessage = conversationMessages.find(m => m.id === reactingTo);
 
   const colorMap = useMemo(() => {
     const colors = randomColors(members.length);
@@ -119,7 +120,7 @@ export function MessagesScreen({conversationId} : {conversationId: string})
             )}
           </YStack>
         </ScrollView>
-       { reactingTo ? 
+       { highlightedMessage ? 
         <SheetScreen
           snapPoints={['70%']}
           backgroundStyle={{
@@ -132,9 +133,9 @@ export function MessagesScreen({conversationId} : {conversationId: string})
         >
           <View style={{ maxHeight: '20%'}} >
             <MessageBubble 
-              message={messages.filter(m=>m.id === reactingTo)[0]} 
+              message={highlightedMessage} 
               showSender={false} 
-              sender={members.find(member => member.expand?.user.id === m.sender)?.expand?.user}
+              sender={members.find(member => member.expand?.user.id === highlightedMessage.sender)?.expand?.user}
             />
           </View>
           <View style={{ minHeight: '80%' }}>

@@ -1,4 +1,4 @@
-import formatTimestamp from "@/features/messaging/timestampFormatter";
+import formatTimestamp from "@/features/messaging/utils";
 import { useUserStore } from "@/features/pocketbase";
 import { useMessageStore } from "@/features/pocketbase/stores/messages";
 import { Message } from "@/features/pocketbase/stores/types";
@@ -27,7 +27,7 @@ export default function MessageBubble(
 
   return (
     <XStack style={{ alignSelf : isMe ? 'flex-end' : 'flex-start',}}>
-      {message.sender !== user?.id && showSender && 
+      {message.sender !== user?.id && showSender &&
         <View style={{alignSelf: 'flex-end'}}>
           <Avatar source={avatarSource} size={s.$3} />
         </View>
@@ -44,7 +44,7 @@ export default function MessageBubble(
             padding: s.$08,
             marginVertical: s.$05,
             borderRadius: s.$075,
-            width: '100%',          
+            width: '100%',
           }}
         >
           <Text>{message.text}</Text>

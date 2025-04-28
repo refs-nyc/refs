@@ -5,12 +5,11 @@ import { View, Text } from "react-native"
 import { XStack, YStack } from "../core/Stacks"
 import { Avatar } from "../atoms/Avatar"
 import { useMessageStore } from "@/features/pocketbase/stores/messages"
-import formatTimestamp from "@/features/messaging/timestampFormatter"
+import formatTimestamp from "@/features/messaging/utils"
 import { useCalendars } from "expo-localization"
 
 export default function ConversationListItem ({ conversation }: { conversation: Conversation }): JSX.Element | null
 {
-
   const { user } = useUserStore()
   const { memberships, messages } = useMessageStore();
 
@@ -29,7 +28,7 @@ export default function ConversationListItem ({ conversation }: { conversation: 
   const lastReadDate = new Date(ownMembership.last_read);
   const newMessages = lastMessageDate > lastReadDate && lastMessage?.sender !== user?.id;
 
-  let image; 
+  let image;
   for (const member of members) {
     if (member.image) {
       image = member.image;
@@ -38,10 +37,10 @@ export default function ConversationListItem ({ conversation }: { conversation: 
   }
 
   return (
-    <XStack 
-      style={{ 
-        alignItems: 'center', 
-        backgroundColor: c.surface2, 
+    <XStack
+      style={{
+        alignItems: 'center',
+        backgroundColor: c.surface2,
         justifyContent: 'space-between',
         paddingHorizontal: s.$075,
         borderRadius: s.$075,
@@ -49,13 +48,13 @@ export default function ConversationListItem ({ conversation }: { conversation: 
       <XStack gap={s.$075} style={{ alignItems: 'center' }}>
         { newMessages && 
           <View style={{width: s.$075, height: s.$075, backgroundColor: c.accent, borderRadius: 100}}></View>}
-        <Avatar source={image} size={s.$5} /> 
+        <Avatar source={image} size={s.$5} />
         <YStack style={{ padding: s.$1, }}>
           <Text style={{ fontSize: s.$1}}>
-            {conversation.is_direct ? 
-              members[0].firstName + " " + members[0].lastName 
+            {conversation.is_direct ?
+              members[0].firstName + " " + members[0].lastName
               : conversation.title || 'Group Chat'}
-              {/* {`(${conversation.id})`} */}
+            {/* {`(${conversation.id})`} */}
           </Text>
           <Text>
             {lastMessage?.text}

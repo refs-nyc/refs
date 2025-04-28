@@ -79,7 +79,7 @@ export function MessagesScreen({conversationId} : {conversationId: string})
         <Heading tag="h2semi">
           {conversation.is_direct ? 
             members[0].expand?.user.firstName + " " + members[0].expand?.user.lastName 
-            : conversation.title || 'Group Chat'}
+            : conversation.title }
         </Heading>
         {conversation.is_direct ?
           <Link href={`/user/${members[0].expand?.user.userName}`}>

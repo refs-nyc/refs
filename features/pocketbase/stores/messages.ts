@@ -6,7 +6,7 @@ type MessageStore = {
   conversations: Record<string, Conversation>;
   setConversations: (conversations: Conversation[]) => void;
   updateConversation: (conversation: Conversation) => void;
-  createConversation: (is_direct: boolean, creatorId: string, otherMemberIds: string[]) => Promise<string>;
+  createConversation: (is_direct: boolean, creatorId: string, otherMemberIds: string[], title?: string) => Promise<string>;
   addConversation (conversation: Conversation): void;
   memberships: Record<string, ExpandedMembership[]>;
   setMemberships: (memberships: ExpandedMembership[]) => void;
@@ -44,7 +44,7 @@ export const useMessageStore = create<MessageStore>((set) => ({
       conversations: { ...state.conversations, [conversation.id]: conversation }
     }));
   },
-  createConversation: async (is_direct: boolean, creatorId: string, otherMemberIds: string[]): Promise<string> =>
+  createConversation: async (is_direct: boolean, creatorId: string, otherMemberIds: string[], title?: string): Promise<string> =>
   {
     try
     {
@@ -54,7 +54,7 @@ export const useMessageStore = create<MessageStore>((set) => ({
       await pocketbase.collection('memberships').create({conversation: newConversation.id, user: creatorId});
 
       for (const userId of otherMemberIds) {
-        await pocketbase.collection('memberships').create({conversation: newConversation.id, user: userId});
+        await pocketbase.collection('memberships').create({conversation: newConversation.id, user: userId, title: title});
       }
 
       const newMemberships = await pocketbase.collection('memberships').getFullList<ExpandedMembership>({

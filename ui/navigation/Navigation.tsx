@@ -1,11 +1,14 @@
 import Animated, { SlideInDown, FadeOut } from 'react-native-reanimated'
 import { Link, usePathname, useGlobalSearchParams } from 'expo-router'
-import { Dimensions, View } from 'react-native'
+import { Dimensions, View, Text } from 'react-native'
 import { Avatar } from '../atoms/Avatar'
 import { c, s } from '@/features/style'
 import { useUserStore } from '@/features/pocketbase/stores/users'
 import { Icon } from '@/assets/icomoon/IconFont'
 import { Ionicons } from '@expo/vector-icons'
+import { useMessageStore } from '@/features/pocketbase/stores/messages'
+import { Badge } from '../atoms/Badge'
+import { useMemo } from 'react'
 
 const win = Dimensions.get('window')
 
@@ -14,6 +17,24 @@ export const Navigation = () => {
 
   const pathName = usePathname()
   const { addingTo, removingId } = useGlobalSearchParams()
+
+  const {saves, messages, conversations, memberships} = useMessageStore();
+
+  const countNewMessages = () => 
+  {
+    let newMessages = 0;
+    for (const conversationId in conversations) {
+      const lastRead = memberships[conversationId].find(m => m.expand?.user.id === user?.id)?.last_read;
+      const lastReadDate = new Date(lastRead || '');
+      const conversationMessages = messages.filter(m => m.conversation === conversationId);
+      let unreadMessages;
+      if (lastReadDate) unreadMessages = conversationMessages.filter(m => new Date(m.created!) > lastReadDate).length;
+      else unreadMessages = conversationMessages.length;
+      newMessages += unreadMessages;
+    }
+    return newMessages;
+  }
+  const newMessages = useMemo(() => countNewMessages(), [messages, memberships]);
 
   if (
     !user ||
@@ -77,9 +98,10 @@ export const Navigation = () => {
           <View 
             style={{ position: 'relative', left: -10, marginTop: 3, paddingRight: 3 }}
           >
-            <Link dismissTo href="/messages">
+            <Link dismissTo href="/messages" >
               <Icon name="Messages" size={39} color={c.muted2} />
             </Link>
+            {newMessages > 0 && <Badge count={newMessages} color={c.red}/>}
           </View>
           <View 
             style={{ position: 'relative', left: -20, marginTop: 3, paddingRight: 3 }}
@@ -87,6 +109,7 @@ export const Navigation = () => {
             <Link push href="/saves/modal">
               <Ionicons name="paper-plane" size={39} color={c.muted2} />
             </Link>
+            {saves.length > 0 && <Badge count={saves.length} />}
           </View>
         </View>
         <View

@@ -35,7 +35,7 @@ export const Navigation = () => {
     }
     return newMessages;
   }
-  const newMessages = useMemo(() => countNewMessages(), [messages, memberships]);
+  const newMessages = useMemo(() => countNewMessages(), [messages, memberships, user]);
 
   if (
     !user ||

@@ -1,12 +1,14 @@
 import { useEffect } from 'react'
 import { pocketbase, useUserStore } from '../pocketbase'
-import { useMessageStore } from '../pocketbase/stores/messages'
-import { Conversation, ExpandedMembership, ExpandedReaction, Message, Reaction, Save } from '../pocketbase/stores/types'
+import { PAGE_SIZE, useMessageStore } from '../pocketbase/stores/messages'
+import { Conversation, ExpandedMembership, ExpandedReaction, ExpandedSave, Message, Reaction, Save } from '../pocketbase/stores/types'
+import { ConversationsRecord } from '../pocketbase/stores/pocketbase-types'
 
 export function MessagesInit() {
   const { user } = useUserStore()
+  const { setMessagesForConversation, setOldestLoadedMessageDate, addNewMessage, setFirstMessageDate } = useMessageStore();
   const { setConversations, setReactions } = useMessageStore();
-  const { setMessages, addMessage, addConversation, addMembership, addReaction, removeReaction } = useMessageStore();
+  const { addConversation, addMembership, addReaction, removeReaction } = useMessageStore();
   const { setMemberships, updateMembership, setSaves } = useMessageStore();
 
   // load conversations
@@ -15,27 +17,14 @@ export function MessagesInit() {
       const conversations = await pocketbase.collection('conversations').getFullList<Conversation>({
         sort: '-created',
       })
+      console.log('conversations', conversations.map(c => c.id))
       setConversations(conversations);
+      for (const conversation of conversations) {
+        await loadInitialMessages(conversation)
+      }
     }
     try {
       getConversations();
-    }
-    catch (error) {
-      console.error(error)
-    }
-
-  }, [user])
-
-  // load messages
-  useEffect(() => {
-    const getMessages = async () => {
-      const messages = await pocketbase.collection('messages').getFullList<Message>({
-        sort: 'created',
-      })
-      setMessages(messages);
-    }
-    try {
-      getMessages();
     }
     catch (error) {
       console.error(error)
@@ -57,13 +46,12 @@ export function MessagesInit() {
     catch (error) {
       console.error(error)
     }
-
   }, [user])
 
   // load saves
   useEffect(() => {
     const getSaves = async () => {
-      const saves = await pocketbase.collection('saves').getFullList<Save>({
+      const saves = await pocketbase.collection('saves').getFullList<ExpandedSave>({
         expand: 'user',
       });
       setSaves(saves);
@@ -96,15 +84,15 @@ export function MessagesInit() {
   // subscribe to new messages
   useEffect(() => {
     if (!user) return;
-    try
-    {console.log(`subscribing to new messages, user: ${user?.userName}`)
-    pocketbase.collection('messages').subscribe('*', (e) => {
-      console.log(e)
-      if (e.action === 'create') {
-        console.log(`new message received: ${e.record.text}`)
-        addMessage(e.record);
-      }
-    })}
+    try {
+      console.log(`subscribing to new messages, user: ${user?.userName}`)
+      pocketbase.collection('messages').subscribe<Message>('*', (e) => {
+        if (e.action === 'create') {
+          console.log(`new message received: ${e.record.text}`)
+          addNewMessage(e.record.conversation!, e.record);
+        }
+      })
+    }
     catch (error) {
       console.error(error)
     }
@@ -118,7 +106,7 @@ export function MessagesInit() {
   // subscribe to reactions
   useEffect(() => {
     if (!user) return;
-    try
+    try 
     {
       console.log(`subscribing to new reactions, user: ${user?.userName}`)
       pocketbase.collection('reactions').subscribe<Reaction>('*', async (e) => {
@@ -172,6 +160,7 @@ export function MessagesInit() {
           {
             console.log(`adding new conversation with id ${e.record.conversation}`)
             const conversation = await pocketbase.collection('conversations').getOne(e.record.conversation);
+            await loadInitialMessages(conversation);
             addConversation(conversation);
           }
         }
@@ -187,5 +176,25 @@ export function MessagesInit() {
 
   return <></>
 
+
+  async function loadInitialMessages(conversation: ConversationsRecord) {
+    console.log('loading messages for conversation', conversation.id)
+    const messages = await pocketbase.collection('messages').getList<Message>(0, PAGE_SIZE, {
+      filter: `conversation = "${conversation.id}"`,
+      sort: '-created'
+    })
+    setMessagesForConversation(conversation.id, messages.items)
+    if (messages.items.length) {
+      const oldestMessage = messages.items[messages.items.length - 1]
+      setOldestLoadedMessageDate(conversation.id, oldestMessage.created!)
+    }
+
+    const firstMessage = await pocketbase.collection('messages').getFirstListItem<Message>(
+      `conversation = "${conversation.id}"`,
+      {
+        sort: 'created',
+      })
+    setFirstMessageDate(conversation.id, firstMessage.created!)
+  }
 }
 

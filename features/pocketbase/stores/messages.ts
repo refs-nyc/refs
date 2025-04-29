@@ -2,6 +2,8 @@ import { create } from 'zustand';
 import { Conversation, ExpandedMembership, ExpandedReaction, ExpandedSave, Message, Reaction, Save } from './types';
 import { pocketbase } from '../pocketbase';
 
+export const PAGE_SIZE = 10;
+
 type MessageStore = {
   conversations: Record<string, Conversation>;
   setConversations: (conversations: Conversation[]) => void;
@@ -15,10 +17,15 @@ type MessageStore = {
   updateMembership: (membership: ExpandedMembership) => void;
   createMemberships: (userIds: string[], conversationId: string) => Promise<void>;
   
-  sendMessage: (sendreId: string, conversationId: string, text: string, parentMessageId?: string) => Promise<void>;
-  messages: Message[];
-  setMessages: (messages: Message[]) => void;
-  addMessage: (message: Message) => void;
+  sendMessage: (senderId: string, conversationId: string, text: string, parentMessageId?: string) => Promise<void>;
+  messagesPerConversation: Record<string, Message[]>;
+  setMessagesForConversation: (conversationId: string, messages: Message[]) => void;
+  oldestLoadedMessageDate: Record<string, string>;
+  setOldestLoadedMessageDate: (conversationId: string, dateString: string) => void;
+  addOlderMessages: (conversationId: string, messages: Message[]) => void;
+  addNewMessage: (conversationId: string, message: Message) => void;
+  firstMessageDate: Record<string, string>;
+  setFirstMessageDate: (conversationId: string, dateString: string) => void;
 
   reactions: Record<string, ExpandedReaction[]>;
   setReactions: (reactions: ExpandedReaction[]) => void;
@@ -158,30 +165,55 @@ export const useMessageStore = create<MessageStore>((set) => ({
         sender: senderId,
         replying_to: parentMessageId,
       });
-      set(state => {
-        if (!state.messages.length) return {messages: [message]}
-        return {
-          messages: state.messages.some(m => m.id === message.id) ? [...state.messages] : [...state.messages, message]
-        }
-      })
+      const membership = await pocketbase.collection('memberships').getFirstListItem(
+        `conversation = "${conversationId}" && user = "${senderId}"`,
+      );
+      await pocketbase.collection('memberships').update(membership.id, {last_read: message.created});
     } catch (error) {
       console.error(error);
     }
   },
-  messages: [],
-  setMessages: (messages: Message[]) =>
+
+  messagesPerConversation: {},
+  oldestLoadedMessageDate: {},
+  setMessagesForConversation: (conversationId: string, messages: Message[]) =>
   {
-    set((state) => ({
-      messages: messages,
-    }));
+    set((state) => {
+      return {messagesPerConversation: {...state.messagesPerConversation, [conversationId]: messages}}
+    })
   },
-  addMessage: (message: Message) =>
+  addOlderMessages: (conversationId: string, messages: Message[]) =>
   {
-    set(state => {
-      if (!state.messages.length) return {messages: [message]}
-      return {
-        messages: state.messages.some(m => m.id === message.id) ? [...state.messages] : [...state.messages, message]
+    set((state) => {
+      const newMessages = messages.filter(m => !state.messagesPerConversation[conversationId].some(m2=>m2.id === m.id));
+      return { messagesPerConversation: 
+        {...state.messagesPerConversation, 
+            [conversationId]: [...state.messagesPerConversation[conversationId], ...newMessages]
+        }
       }
+    })
+  },
+  addNewMessage: (conversationId: string, message: Message) => 
+  {
+    set((state) => {
+      if (state.messagesPerConversation[conversationId].some(m=>m.id === message.id)) return state;
+      return { messagesPerConversation: 
+        {...state.messagesPerConversation, [conversationId]: [message, ...state.messagesPerConversation[conversationId]]
+        }
+      }
+    })
+  },
+  setOldestLoadedMessageDate: (conversationId: string, dateString: string) =>
+  {
+    set((state) => {
+      return {oldestLoadedMessageDate: {...state.oldestLoadedMessageDate, [conversationId]: dateString}}
+    })
+  },
+  firstMessageDate: {},
+  setFirstMessageDate: (conversationId: string, dateString: string) =>
+  {
+    set((state) => {
+      return {firstMessageDate: {...state.firstMessageDate, [conversationId]: dateString}}
     })
   },
   reactions: {},

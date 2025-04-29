@@ -11,15 +11,16 @@ import { useCalendars } from "expo-localization"
 export default function ConversationListItem ({ conversation }: { conversation: Conversation }): JSX.Element | null
 {
   const { user } = useUserStore()
-  const { memberships, messages } = useMessageStore();
+  const { memberships, messagesPerConversation } = useMessageStore();
+
+  const messages = messagesPerConversation[conversation.id];
 
   const calendars = useCalendars();
   const timeZone = calendars[0].timeZone || "America/New_York";
   
   if (!user) return null
 
-  const msgs = messages.filter(m => m.conversation === conversation.id);
-  const lastMessage = msgs[msgs.length-1];
+  const lastMessage = messages[0];
   const time = lastMessage?.created ? lastMessage.created.slice(0, lastMessage.created.length-1) : '';
   const members = memberships[conversation.id].filter(m => m.expand?.user && m.expand.user.id !== user.id).map(m=>m.expand!.user);
   const ownMembership = memberships[conversation.id].filter(m => m.expand?.user.id === user.id)[0];

@@ -18,24 +18,30 @@ export const Navigation = () => {
   const pathName = usePathname()
   const { addingTo, removingId } = useGlobalSearchParams()
 
-  const {saves, messages, conversations, memberships} = useMessageStore();
+  const {saves, messagesPerConversation, conversations, memberships} = useMessageStore();
 
   const countNewMessages = () => 
   {
     if (!user) return 0;
+    if (!messagesPerConversation) return 0;
     let newMessages = 0;
     for (const conversationId in conversations) {
       const lastRead = memberships[conversationId].find(m => m.expand?.user.id === user?.id)?.last_read;
       const lastReadDate = new Date(lastRead || '');
-      const conversationMessages = messages.filter(m => m.conversation === conversationId);
+      const conversationMessages = messagesPerConversation[conversationId];
+      if (!conversationMessages) continue; 
       let unreadMessages;
-      if (lastReadDate) unreadMessages = conversationMessages.filter(m => new Date(m.created!) > lastReadDate).length;
+      if (lastRead) {
+        const msgs = conversationMessages.filter(m => new Date(m.created!) > lastReadDate && m.sender !== user?.id);
+        unreadMessages = msgs.length
+        if (msgs.length) console.log("unread messages",msgs.map(m=>m.text+m.created))
+      }
       else unreadMessages = conversationMessages.length;
       newMessages += unreadMessages;
     }
     return newMessages;
   }
-  const newMessages = useMemo(() => countNewMessages(), [messages, memberships, user]);
+  const newMessages = useMemo(() => countNewMessages(), [messagesPerConversation, memberships, user]);
 
   if (
     !user ||

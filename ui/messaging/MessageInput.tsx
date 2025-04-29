@@ -48,12 +48,12 @@ export default function MessageInput(
         />
         <Pressable
           onPress={onMessageSubmit}
+          disabled={!message}
         >
           <Ionicons
             name="paper-plane-outline"
             size={s.$2}
             color={c.grey2}
-
           />
         </Pressable>
       </XStack>

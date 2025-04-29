@@ -1,5 +1,5 @@
 import { Heading, XStack, YStack } from '@/ui'
-import { View, ScrollView, DimensionValue, KeyboardAvoidingView, Keyboard, Modal } from 'react-native'
+import { View, DimensionValue, KeyboardAvoidingView, Keyboard, Modal, FlatList } from 'react-native'
 import { c, s } from '../style'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { pocketbase, useUserStore } from '../pocketbase'
@@ -12,12 +12,13 @@ import MessageBubble from '@/ui/messaging/MessageBubble'
 import { EmojiKeyboard } from 'rn-emoji-keyboard'
 import MessageInput from '@/ui/messaging/MessageInput'
 import { randomColors } from './utils'
+import { Message } from '../pocketbase/stores/types'
 
 export function MessagesScreen({conversationId} : {conversationId: string})
 {
   const { user } = useUserStore()
   const { conversations, memberships, messages, sendMessage, sendReaction } = useMessageStore();
-  const scrollViewRef = useRef<ScrollView>(null);
+  const flatListRef = useRef<FlatList>(null);
   const [message, setMessage] = useState<string>('');
   const [highlightedMessageId, setHighlightedMessageId] = useState<string>('');
   const [showInModal, setShowInModal] = useState<'' | 'contextMenu' | 'reactions'>('');
@@ -44,10 +45,14 @@ export function MessagesScreen({conversationId} : {conversationId: string})
   
   useEffect(() => {
     const showSub = Keyboard.addListener('keyboardDidShow', () => {
-      scrollViewRef.current?.scrollToEnd({ animated: true });
+      flatListRef.current?.scrollToEnd({ animated: true });
     });
     return () => showSub.remove();
   }, []);
+
+  useEffect(() => {
+    flatListRef.current?.scrollToEnd({ animated: true });
+  }, [messages])
 
   useEffect(() => {
     async function setLastRead() {
@@ -70,6 +75,31 @@ export function MessagesScreen({conversationId} : {conversationId: string})
     setMessage(''); 
     setHighlightedMessageId('')
     setReplying(false);
+  }
+
+  function renderMessage({ item } : { item: Message })
+  {
+    const parentMessageIndex = conversationMessages.findIndex(m => m.id === item.replying_to)
+    const parentMessage = item.replying_to ? conversationMessages[parentMessageIndex] : undefined
+    const parentMessageSender = parentMessage ? memberships[conversationId].find(member => member.expand?.user.id === parentMessage.sender)?.expand?.user : undefined
+    return (
+      <MessageBubble
+        key={item.id}
+        message={item}
+        sender={memberships[conversationId].find(member => member.expand?.user.id === item.sender)?.expand?.user || user}
+        showSender={!conversation.is_direct}
+        senderColor={colorMap[item.sender]}
+        onLongPress={onMessageLongPress}
+        parentMessage={parentMessage}
+        parentMessageSender={parentMessageSender}
+        onParentMessagePress={() => {
+          flatListRef.current?.scrollToIndex({
+            index: parentMessageIndex,
+            animated: true,
+          })
+        }}
+      />
+    )
   }
 
   return (
@@ -109,36 +139,13 @@ export function MessagesScreen({conversationId} : {conversationId: string})
         }}
         behavior={"padding"}
       >
-        <ScrollView 
-          ref={scrollViewRef}
-          onContentSizeChange={()=>{scrollViewRef.current?.scrollToEnd({ animated: true });}}
-        >
-          <YStack
-            gap={s.$0}
-            style={{ flex: 1, width: '90%', margin: 'auto' }}
-          >
-            {conversationMessages.map(m => 
-              {
-                const parentMessage = m.replying_to ? conversationMessages.find(message => message.id === m.replying_to) : undefined;
-                // console.log('replying_to', m.replying_to)
-                // console.log('cMessages', conversationMessages.map(m=>m.id))
-                // console.log('pMessage', parentMessage)
-                const parentMessageSender = parentMessage ? memberships[conversationId].find(member => member.expand?.user.id === parentMessage.sender)?.expand?.user : undefined;
-                return (
-                <MessageBubble 
-                  key={m.id} 
-                  message={m} 
-                  sender={memberships[conversationId].find(member => member.expand?.user.id === m.sender)?.expand?.user || user}
-                  showSender={!conversation.is_direct} 
-                  senderColor={colorMap[m.sender]}
-                  onLongPress={onMessageLongPress}
-                  parentMessage={parentMessage}
-                  parentMessageSender={parentMessageSender}
-                />)
-              }
-            )}
-          </YStack>
-        </ScrollView>
+        <View style={{ width: '95%', height: '80%', margin: 'auto' }}>
+          <FlatList 
+            ref={flatListRef}
+            data={conversationMessages}
+            renderItem={(item)=>renderMessage(item)}
+          />
+        </View>
        { showInModal && highlightedMessage ?
         <Modal
           animationType="fade"

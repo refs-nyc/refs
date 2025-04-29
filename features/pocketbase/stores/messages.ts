@@ -15,7 +15,7 @@ type MessageStore = {
   updateMembership: (membership: ExpandedMembership) => void;
   createMemberships: (userIds: string[], conversationId: string) => Promise<void>;
   
-  sendMessage: (sendreId: string, conversationId: string, text: string) => Promise<void>;
+  sendMessage: (sendreId: string, conversationId: string, text: string, parentMessageId?: string) => Promise<void>;
   messages: Message[];
   setMessages: (messages: Message[]) => void;
   addMessage: (message: Message) => void;
@@ -150,12 +150,13 @@ export const useMessageStore = create<MessageStore>((set) => ({
     set({ memberships: newItems });
 
   },
-  sendMessage: async (senderId, conversationId, text) => {
+  sendMessage: async (senderId, conversationId, text, parentMessageId) => {
     try {
       const message = await pocketbase.collection('messages').create<Message>({
         conversation: conversationId,
         text,
         sender: senderId,
+        replying_to: parentMessageId,
       });
       set(state => {
         if (!state.messages.length) return {messages: [message]}

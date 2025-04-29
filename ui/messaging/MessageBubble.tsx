@@ -11,8 +11,10 @@ import { XStack } from "../core/Stacks";
 import { Link } from "expo-router";
 
 export default function MessageBubble(
-  { message, showSender, sender, senderColor, onLongPress }:
-  { message: Message, showSender: boolean, sender: Profile, senderColor?: string, onLongPress?: (id: string) => void }) 
+  { message, showSender, sender, senderColor, onLongPress, parentMessage, parentMessageSender }:
+  { message: Message, showSender: boolean, sender: Profile, 
+    senderColor?: string, onLongPress?: (id: string) => void, parentMessage?: Message, parentMessageSender?: Profile }
+  )
 {
   const { user } = useUserStore()
   const calendars = useCalendars();
@@ -52,6 +54,16 @@ export default function MessageBubble(
         >
           { sender && showSender && !isMe &&
             <Text style={{color: senderColor, fontWeight: 'bold'}}>{sender.firstName}</Text>
+          }
+          { parentMessage &&
+            <View style={{ borderLeftWidth: 4, borderLeftColor: '#ccc', paddingLeft: 10, marginVertical: 10 }}>
+              <Text style={{ color: c.black }}>
+                <Text style={{ fontWeight: 'bold' }}>{parentMessageSender?.firstName}</Text> said:
+              </Text>
+              <Text style={{ fontStyle: 'italic', color: c.muted }}>
+                {parentMessage?.text}
+              </Text>
+            </View>
           }
           <Text>{message.text}</Text>
           {messageReactions &&

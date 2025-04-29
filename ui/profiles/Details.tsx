@@ -18,6 +18,7 @@ import { ExpandedItem } from '@/features/pocketbase/stores/types'
 import { EditableItem } from './EditableItem' // Assuming EditableItem is memoized
 import { GridLines } from '../display/Gridlines'
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet'
+import { MeatballMenu } from '../atoms/MeatballMenu'
 import { Button } from '../buttons/Button'
 
 const win = Dimensions.get('window')
@@ -50,19 +51,15 @@ const DetailsHeaderButton = React.memo(() => {
   return (
     <Pressable
       style={{
-        position: 'absolute',
-        top: Math.max(insets.top, s.$1),
-        right: s.$1,
-        padding: s.$1,
+        width: '100%',
         zIndex: 99,
+        // backgroundColor: 'red',
+        alignItems: 'flex-end',
+        top: s.$4,
       }}
       onPress={handlePress}
     >
-      {editing !== '' ? (
-        <Ionicons size={s.$1} name="checkbox" color={c.muted} />
-      ) : (
-        <Ionicons size={s.$1} name="close" color={c.muted} />
-      )}
+      {editing !== '' ? <Ionicons size={s.$1} name="popover" color={c.muted} /> : <MeatballMenu />}
     </Pressable>
   )
 })
@@ -82,9 +79,9 @@ export const renderItem = ({
   return (
     <View
       style={{
-        width: win.width * 0.8,
+        width: win.width * 0.9,
         height: win.height,
-        left: win.width * 0.1,
+        left: win.width * 0.05,
         padding: s.$075,
         gap: s.$1,
         justifyContent: 'start',
@@ -93,10 +90,11 @@ export const renderItem = ({
     >
       <BottomSheetScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ padding: s.$075, gap: s.$1, paddingBottom: 200 }} // Add padding here, ensure enough bottom padding
+        contentContainerStyle={{ padding: s.$075, gap: s.$1 }} // Add padding here, ensure enough bottom padding
         keyboardShouldPersistTaps="handled"
         nestedScrollEnabled={true} // May be needed if Carousel interferes, test
       >
+        <DetailsHeaderButton />
         <EditableItem item={item} editingRights={editingRights} index={index} />
       </BottomSheetScrollView>
     </View>
@@ -190,8 +188,6 @@ export const Details = ({
       }}
     >
       <ConditionalGridLines />
-
-      <DetailsHeaderButton />
 
       <Carousel
         loop={data.length > 1}

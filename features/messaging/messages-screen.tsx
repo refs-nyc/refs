@@ -21,6 +21,7 @@ export function MessagesScreen({conversationId} : {conversationId: string})
   const [message, setMessage] = useState<string>('');
   const [highlightedMessageId, setHighlightedMessageId] = useState<string>('');
   const [showInModal, setShowInModal] = useState<'' | 'contextMenu' | 'reactions'>('');
+  const [replying, setReplying] = useState<boolean>(false);
 
   const conversation = conversations[conversationId];
   const members = memberships[conversationId].filter(m => m.expand?.user.id !== user?.id);
@@ -62,6 +63,14 @@ export function MessagesScreen({conversationId} : {conversationId: string})
   }
 
   if (!user) return null;
+
+  const onMessageSubmit = () => 
+  {
+    sendMessage(user.id, conversationId, message, replying ? highlightedMessageId : undefined);
+    setMessage(''); 
+    setHighlightedMessageId('')
+    setReplying(false);
+  }
 
   return (
     <View
@@ -109,14 +118,24 @@ export function MessagesScreen({conversationId} : {conversationId: string})
             style={{ flex: 1, width: '90%', margin: 'auto' }}
           >
             {conversationMessages.map(m => 
-              <MessageBubble 
-                key={m.id} 
-                message={m} 
-                sender={memberships[conversationId].find(member => member.expand?.user.id === m.sender)?.expand?.user}
-                showSender={!conversation.is_direct} 
-                senderColor={colorMap[m.sender]}
-                onLongPress={onMessageLongPress}
-              />
+              {
+                const parentMessage = m.replying_to ? conversationMessages.find(message => message.id === m.replying_to) : undefined;
+                // console.log('replying_to', m.replying_to)
+                // console.log('cMessages', conversationMessages.map(m=>m.id))
+                // console.log('pMessage', parentMessage)
+                const parentMessageSender = parentMessage ? memberships[conversationId].find(member => member.expand?.user.id === parentMessage.sender)?.expand?.user : undefined;
+                return (
+                <MessageBubble 
+                  key={m.id} 
+                  message={m} 
+                  sender={memberships[conversationId].find(member => member.expand?.user.id === m.sender)?.expand?.user || user}
+                  showSender={!conversation.is_direct} 
+                  senderColor={colorMap[m.sender]}
+                  onLongPress={onMessageLongPress}
+                  parentMessage={parentMessage}
+                  parentMessageSender={parentMessageSender}
+                />)
+              }
             )}
           </YStack>
         </ScrollView>
@@ -137,7 +156,7 @@ export function MessagesScreen({conversationId} : {conversationId: string})
                 <MessageBubble 
                   message={highlightedMessage} 
                   showSender={false} 
-                  sender={members.find(member => member.expand?.user.id === highlightedMessage.sender)?.expand?.user}
+                  sender={members.find(member => member.expand?.user.id === highlightedMessage.sender)?.expand?.user || user}
                 />
               </View>
                 <View style={{ minHeight: '80%' }}>
@@ -156,7 +175,7 @@ export function MessagesScreen({conversationId} : {conversationId: string})
                         width: s.$10 
                       }} 
                     >
-                      <Pressable style={{padding: s.$05, width: 'auto'}} onPress={()=>{setHighlightedMessageId(''); setShowInModal('')}}>
+                      <Pressable style={{padding: s.$05, width: 'auto'}} onPress={()=>{setShowInModal(''), setReplying(true)}}>
                         <Text>Reply</Text>
                       </Pressable>
                       <Pressable style={{padding: s.$05, width: 'auto'}} onPress={()=>{setShowInModal('reactions')}}>
@@ -170,9 +189,12 @@ export function MessagesScreen({conversationId} : {conversationId: string})
         </Modal>
        :
         <MessageInput 
-          onMessageSubmit={() => {sendMessage(user.id, conversationId, message); setMessage('');}} 
+          onMessageSubmit={onMessageSubmit} 
           setMessage={setMessage} 
           message={message} 
+          parentMessage={replying ? highlightedMessage : undefined}
+          parentMessageSender={replying ? members.find(m => m.expand?.user.id === highlightedMessage?.sender)?.expand?.user || user : undefined}
+          onReplyClose={() => {setReplying(false), setHighlightedMessageId('')}}
         />
         }
       </KeyboardAvoidingView>

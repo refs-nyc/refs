@@ -8,7 +8,9 @@ import { c, s } from '@/features/style';
 import { Pressable } from 'react-native-gesture-handler';
 import { YStack } from '../core/Stacks';
 
-export default function SwipeableConversation({ conversation, onArchive }: { conversation: Conversation, onArchive: () => void }) 
+export default function SwipeableConversation(
+  { conversation, isInArchive, onArchive }: 
+  { conversation: Conversation, isInArchive?: boolean, onArchive: () => Promise<void> }) 
 {
   return (
     <Swipeable
@@ -16,7 +18,7 @@ export default function SwipeableConversation({ conversation, onArchive }: { con
       enableTrackpadTwoFingerGesture
       rightThreshold={40}
       renderRightActions={(prog, drag) => (
-        <RightAction prog={prog} drag={drag} onArchive={onArchive} />
+        <RightAction prog={prog} drag={drag} onArchive={onArchive} isInArchive={isInArchive || false} />
       )}    
     >
       <ConversationListItem conversation={conversation}/>
@@ -26,8 +28,8 @@ export default function SwipeableConversation({ conversation, onArchive }: { con
 
 
 function RightAction(
-  { prog, drag, onArchive }: 
-  { prog: SharedValue<number>, drag: SharedValue<number>, onArchive: () => void}) 
+  { prog, drag, onArchive, isInArchive }: 
+  { prog: SharedValue<number>, drag: SharedValue<number>, onArchive: () => void, isInArchive: boolean}) 
 {  
   const styleAnimation = useAnimatedStyle(() => 
   {
@@ -47,7 +49,7 @@ function RightAction(
           onPress={onArchive}
         >
           <YStack style={{ alignItems: 'center', justifyContent: 'center', height: '100%', }}>
-            <Text style={{ color: c.white, }}>Archive</Text>
+            <Text style={{ color: c.white, }}>{isInArchive ? 'Unarchive' : 'Archive'}</Text>
           </YStack>
         </Pressable>
       </View>

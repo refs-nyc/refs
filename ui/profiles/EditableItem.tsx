@@ -5,7 +5,7 @@ import { ContextMenu } from '../atoms/ContextMenu'
 import { EditableHeader } from '../atoms/EditableHeader'
 import { useItemStore } from '@/features/pocketbase/stores/items'
 import { ExpandedItem } from '@/features/pocketbase/stores/types'
-import { Link } from 'expo-router'
+import { Href, Link } from 'expo-router'
 import { View, Pressable, Text, Dimensions } from 'react-native'
 import { Heading } from '../typo/Heading'
 import { c, s, t, base } from '@/features/style'
@@ -127,7 +127,7 @@ const EditableItemComponent = ({
           </View>
           <Pressable onPress={() => {}}>
             {item.expand?.ref.url && (
-              <Link href={item.expand.ref.url as any}>
+              <Link href={item.expand.ref.url as Href}>
                 <Ionicons
                   style={{ transformOrigin: 'center', transform: 'rotate(-45deg)' }}
                   color={c.muted}

@@ -19,7 +19,6 @@ export const EditableList = ({ item, onComplete }: { item: Item; onComplete: () 
           initialStep={'add'}
           onCancel={() => {}}
           onStep={(s) => console.log(s)}
-          /* @ts-ignore */
           onNewRef={async (ref: CompleteRef) => {
             const record = await addToList(item.id, ref)
             onComplete()

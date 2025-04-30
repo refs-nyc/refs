@@ -1,12 +1,20 @@
-import { useRef, forwardRef } from 'react'
-import { useSharedValue } from 'react-native-reanimated'
-import { View, Dimensions } from 'react-native'
-import Carousel from 'react-native-reanimated-carousel'
+import { useRef, forwardRef, Ref } from 'react'
+import { SharedValue, useSharedValue } from 'react-native-reanimated'
+import { View, Dimensions, StyleProp, ViewStyle } from 'react-native'
+import Carousel, { CarouselRenderItem, ICarouselInstance } from 'react-native-reanimated-carousel'
 
 export const DetailsDemoCarousel = forwardRef(
   (
-    // @ts-ignore
-    { data, height, width, defaultIndex, style, scrollOffsetValue, onSnapToItem, renderItem },
+    { data, height, width, defaultIndex, style, scrollOffsetValue, onSnapToItem, renderItem }: {
+      data: unknown[],
+      height: number,
+      width: number,
+      defaultIndex: number,
+      style: StyleProp<ViewStyle>,
+      scrollOffsetValue: SharedValue<number>,
+      onSnapToItem?: ((index: number) => void),
+      renderItem: CarouselRenderItem<unknown>,
+    },
     ref
   ) => {
     console.log(style)
@@ -17,7 +25,7 @@ export const DetailsDemoCarousel = forwardRef(
           gesture.activeOffsetX([-10, 10])
         }}
         loop={data.length > 1}
-        ref={ref}
+        ref={ref as Ref<ICarouselInstance>}
         data={data}
         width={width * 0.8}
         height={height} // hack
@@ -25,7 +33,7 @@ export const DetailsDemoCarousel = forwardRef(
         style={style}
         defaultScrollOffsetValue={scrollOffsetValue}
         onSnapToItem={onSnapToItem}
-        renderItem={() => {}}
+        renderItem={() => <></>}
         autoPlay={true}
         autoPlayInterval={2000}
       />
@@ -82,7 +90,10 @@ export const DetailsDemo = () => {
     >
       <DetailsDemoCarousel
         data={items}
-        renderItem={({ item }: any) => renderItem({ item, editingRights: false })}
+        renderItem={({ item }: any) => {
+          return <></>
+          // renderItem({ item, editingRights: false })
+        }}
         height={800}
         width={win.width}
         style={{ overflow: 'visible' }}

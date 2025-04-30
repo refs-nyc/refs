@@ -1,57 +1,10 @@
-import { StagedRef, Item, Profile, CompleteRef } from './types'
+import { Item, Profile, CompleteRef } from './types'
 import { Canvas, CanvasLoadable, Actions, ModelSchema } from '@canvas-js/core'
-import { GossipLog } from '@canvas-js/gossiplog/sqlite-expo'
-
-// ensure gossiplog is bundled
-console.log(GossipLog && '@canvas-js/gossiplog successfully bundled')
-
-type ModelAPI = any
-
-// todo: fill nullable fields inside db.set()
-const itemFields = ([] as string[])
-  .concat(['backlog', 'created', 'deleted', 'string', 'list', 'image', 'location'])
-  .concat(['order', 'ref', 'text', 'updated', 'url'])
-const itemRelations = ['children']
-const profileFields = ['created', 'geolocation', 'image', 'location', 'updated']
-const profileRelations = ['items']
-const refFields = [
-  'created',
-  'creator',
-  'deleted',
-  'image',
-  'location',
-  'meta',
-  'title',
-  'type',
-  'updated',
-  'url',
-]
-const refRelations = [] as string[]
-const userFields = ([] as string[])
-  .concat(['created', 'email', 'emailVisibility', 'firstName', 'geolocation', 'image', 'lastName'])
-  .concat(['location', 'password', 'pushToken', 'tokenKey', 'updated', 'verified'])
-const userRelations = ['items']
-
-const fill = <T extends Record<string, any>>(item: T, fields: string[], relations: string[]) => {
-  const result = { ...item } as Record<string, any>
-
-  for (const field of fields) {
-    if (!(field in result)) {
-      result[field] = null
-    }
-  }
-  for (const relation of relations) {
-    if (!(relation in result)) {
-      result[relation] = []
-    }
-  }
-  return result as T
-}
 
 const models = {
   item: {
     backlog: 'boolean?',
-    children: '@items[]',
+    children: '@item[]',
     created: 'string?',
     creator: '@user',
     deleted: 'string?',
@@ -71,7 +24,7 @@ const models = {
     geolocation: 'string?',
     id: 'primary',
     image: 'string?',
-    items: '@items[]',
+    items: '@item[]',
     lastName: 'string',
     location: 'string?',
     updated: 'string?',
@@ -84,7 +37,7 @@ const models = {
     id: 'primary',
     image: 'string?',
     location: 'string?',
-    meta: 'string?',
+    meta: 'json',
     title: 'string?',
     type: 'string?', // "place" | "artwork" | "other"
     updated: 'string?',
@@ -122,7 +75,23 @@ const models = {
 
 const itemActions = {
   pushItem(item: Item) {
-    this.db.set('item', fill(item, itemFields, itemRelations))
+    const finalItem = {
+      ...item,
+      backlog: item.backlog ?? null,
+      created: item.created ?? null,
+      creator: item.creator ?? null,
+      deleted: item.deleted ?? null,
+      list: item.list ?? null,
+      image: item.image ?? null,
+      location: item.location ?? null,
+      order: item.order ?? null,
+      ref: item.ref ?? null,
+      text: item.text ?? null,
+      updated: item.updated ?? null,
+      url: item.url ?? null,
+      children: item.children ?? [],
+    }
+    this.db.set('item', finalItem)
   },
   removeItem(itemId: string) {
     this.db.delete('item', itemId)
@@ -135,20 +104,34 @@ const itemActions = {
   },
   async moveItemToBacklog(itemId: string) {
     const item = await this.db.get('item', itemId)
-    this.db.set('item', fill({ ...item, backlog: true }, itemFields, itemRelations))
+    if (!item) throw new Error()
+    this.db.set('item', { ...item, backlog: true })
   },
 } satisfies Actions<typeof models>
 
 const refActions = {
   pushRef(ref: CompleteRef) {
-    this.db.set('ref', fill(ref, refFields, refRelations))
+    const finalRef = {
+      ...ref,
+      created: ref.created ?? null,
+      creator: ref.creator ?? null,
+      deleted: ref.deleted ?? null,
+      image: ref.image ?? null,
+      location: ref.location ?? null,
+      meta: ref.meta ?? null,
+      title: ref.title ?? null,
+      type: ref.type ?? null,
+      updated: ref.updated ?? null,
+      url: ref.url ?? null,
+    }
+    this.db.set('ref', finalRef)
   },
   async addRefMetadata(refId: string, { type, meta }: { type: string; meta: string }) {
     const ref = await this.db.get('ref', refId)
     if (!ref) return // TODO: ref might be missing id
-    this.db.set('ref', fill({ ...ref, metadata: { type, meta } }, refFields, refRelations))
+    this.db.set('ref', { ...ref, meta: { type, meta } })
   },
-  removeRef: async (refId: string) => {
+  async removeRef(refId: string) {
     this.db.delete('ref', refId)
   },
 } satisfies Actions<typeof models>
@@ -156,10 +139,29 @@ const refActions = {
 const userActions = {
   async updateUser(userId: string, fields: Partial<Profile>) {
     const user = await this.db.get('user', userId)
-    this.db.set('user', fill({ user, ...fields }, userFields, userRelations))
+    if (user === null) throw new Error('invalid userId')
+    this.db.set('user', { ...user, ...fields })
   },
-  async registerUser(fields: Omit<Profile, 'id'>) {
-    this.db.set('user', fill({ ...fields }, userFields, userRelations))
+  async registerUser(profile: Omit<Profile, 'id'>) {
+    const finalUser = {
+      id: this.id,
+      ...profile,
+      created: profile.created ?? null,
+      email: profile.email ?? null,
+      emailVisibility: profile.emailVisibility ?? null,
+      firstName: profile.firstName ?? null,
+      geolocation: profile.location ?? null,
+      image: profile.image ?? null,
+      lastName: profile.lastName ?? null,
+      location: profile.location ?? null,
+      password: null,
+      pushToken: profile.pushToken ?? null,
+      tokenKey: profile.tokenKey ?? null,
+      updated: profile.updated ?? null,
+      verified: profile.verified ?? null,
+      items: profile.items ?? [],
+    }
+    this.db.set('user', finalUser)
   },
   async attachItem(userId: string, itemId: string) {
     this.db.set('user_item_association', { id: `${userId}/${itemId}`, user: userId, item: itemId })
@@ -168,18 +170,6 @@ const userActions = {
     this.db.delete('user_item_association', `${userId}/${itemId}`)
   },
 } satisfies Actions<typeof models>
-
-// const userViews = {
-//   async getProfileByUsername( userName: string) {
-//     return this.db.get('user', {
-//       where: { userName },
-//       include: { items: { ref: {}, children: {} } },
-//     })
-//   },
-//   async getUserByEmail( email: string) {
-//     return this.db.get('user').get({ where: { email: email } })
-//   },
-// } satisfies Actions<typeof models>
 
 export const actions = {
   ...itemActions,

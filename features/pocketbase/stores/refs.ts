@@ -45,6 +45,7 @@ export const useRefStore = create<{
       return record
     } catch (error) {
       console.error(error)
+      throw error
     }
   },
   remove: async (id: string) => {

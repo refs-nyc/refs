@@ -34,7 +34,6 @@ export const Navigation = () => {
       if (lastRead) {
         const msgs = conversationMessages.filter(m => new Date(m.created!) > lastReadDate && m.sender !== user?.id);
         unreadMessages = msgs.length
-        if (msgs.length) console.log("unread messages",msgs.map(m=>m.text+m.created))
       }
       else unreadMessages = conversationMessages.length;
       newMessages += unreadMessages;

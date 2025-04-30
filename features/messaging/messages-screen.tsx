@@ -46,7 +46,7 @@ export function MessagesScreen({conversationId} : {conversationId: string})
 
   useEffect(() => {
     const showSub = Keyboard.addListener('keyboardDidShow', () => {
-      flatListRef.current?.scrollToEnd({ animated: true });
+      //flatListRef.current?.scrollToIndex({ animated: true, index: 0 });
     });
     return () => showSub.remove();
   }, []);
@@ -123,12 +123,11 @@ export function MessagesScreen({conversationId} : {conversationId: string})
       style={{
         flex: 1,
         justifyContent: 'flex-start',
-        paddingTop: s.$8,
         height: s.full as DimensionValue,
         backgroundColor: c.surface,
       }}
     >
-      <XStack gap={s.$1} style={{ alignItems: 'center', padding: s.$1 }}>
+      <XStack gap={s.$1} style={{ alignItems: 'center', padding: s.$1, zIndex: 1, backgroundColor: c.surface, paddingTop: s.$8 }}>
         <Pressable onPress={() => { router.dismissTo('/messages') }}>
           <Ionicons name="chevron-back" size={s.$2} color={c.grey2} />
         </Pressable>
@@ -153,9 +152,9 @@ export function MessagesScreen({conversationId} : {conversationId: string})
         style={{
           height: "85%"
         }}
-        behavior={"padding"}
+        behavior={"position"}
       >
-        <View style={{ width: '95%', height: '80%', margin: 'auto' }}>
+        <View style={{ width: '95%', height: replying ? '80%' : '88%', margin: 'auto', backgroundColor: c.surface }}>
           <FlatList
             ref={flatListRef}
             data={conversationMessages}
@@ -165,7 +164,15 @@ export function MessagesScreen({conversationId} : {conversationId: string})
             onEndReachedThreshold={0.1}
           />
         </View>
-        { showInModal && highlightedMessage ?
+        <MessageInput
+            onMessageSubmit={onMessageSubmit}
+            setMessage={setMessage}
+            message={message}
+            parentMessage={replying ? highlightedMessage : undefined}
+            parentMessageSender={replying ? members.find(m => m.expand?.user.id === highlightedMessage?.sender)?.expand?.user || user : undefined}
+            onReplyClose={() => {setReplying(false), setHighlightedMessageId('')}}
+          />
+        { showInModal && highlightedMessage &&
           <Modal
             animationType="fade"
             transparent={true}
@@ -173,7 +180,7 @@ export function MessagesScreen({conversationId} : {conversationId: string})
           >
             <Pressable
               style={{height: s.full as DimensionValue, backgroundColor: '#0009' }}
-              onPress={() => {setHighlightedMessageId(''); setShowInModal('')}}
+              onPress={() => {setHighlightedMessageId(''); setShowInModal('');  setReplying(false);}}
             >
               <View style={{ height: '20%', backgroundColor: '#0000' }}>
               </View>
@@ -204,7 +211,7 @@ export function MessagesScreen({conversationId} : {conversationId: string})
                       <Pressable style={{padding: s.$05, width: 'auto'}} onPress={()=>{setShowInModal(''), setReplying(true)}}>
                         <Text>Reply</Text>
                       </Pressable>
-                      <Pressable style={{padding: s.$05, width: 'auto'}} onPress={()=>{setShowInModal('reactions')}}>
+                      <Pressable style={{padding: s.$05, width: 'auto'}} onPress={()=>{setShowInModal('reactions'); setReplying(false)}}>
                         <Text>React</Text>
                       </Pressable>
                     </YStack>
@@ -213,15 +220,6 @@ export function MessagesScreen({conversationId} : {conversationId: string})
               </View>
             </Pressable>
           </Modal>
-          :
-          <MessageInput
-            onMessageSubmit={onMessageSubmit}
-            setMessage={setMessage}
-            message={message}
-            parentMessage={replying ? highlightedMessage : undefined}
-            parentMessageSender={replying ? members.find(m => m.expand?.user.id === highlightedMessage?.sender)?.expand?.user || user : undefined}
-            onReplyClose={() => {setReplying(false), setHighlightedMessageId('')}}
-          />
         }
       </KeyboardAvoidingView>
     </View>

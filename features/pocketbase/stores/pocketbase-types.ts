@@ -138,6 +138,7 @@ export type ItemsRecord = {
 }
 
 export type MembershipsRecord = {
+	archived?: boolean
 	conversation: RecordIdString
 	created?: IsoDateString
 	id: string

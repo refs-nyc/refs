@@ -5,9 +5,27 @@ import { Ionicons } from "@expo/vector-icons";
 import { Message, Profile } from "@/features/pocketbase/stores/types";
 
 export default function MessageInput(
-  { onMessageSubmit, setMessage, message, parentMessage, parentMessageSender, onReplyClose }:
-    { onMessageSubmit: () => void, setMessage: (str: string) => void, message: string, 
-      parentMessage?: Message, parentMessageSender?: Profile, onReplyClose?: ()=>void }) 
+  { onMessageSubmit,
+    setMessage,
+    message,
+    disabled,
+    parentMessage,
+    parentMessageSender,
+    onReplyClose,
+    allowAttachment,
+    onAttachmentPress
+  }:
+    {
+      onMessageSubmit: () => void,
+      setMessage: (str: string) => void,
+      message: string,
+      disabled: boolean,
+      parentMessage?: Message,
+      parentMessageSender?: Profile,
+      onReplyClose?: () => void,
+      allowAttachment?: boolean,
+      onAttachmentPress?: () => void
+    })
 {
   return (
     <>
@@ -24,38 +42,33 @@ export default function MessageInput(
           </XStack>
         </View>
       }
-      <XStack
-        style={{
-          backgroundColor: c.white,
-          borderRadius: s.$2,
-          marginVertical: s.$075,
-          marginHorizontal: s.$1,
-          paddingVertical: s.$09,
-          paddingHorizontal: s.$1,
-          justifyContent: 'space-between',
-          fontSize: s.$09,
-          alignItems: 'center',
-        }}
-      >
-        <TextInput
+      <XStack style={{ alignItems: 'center', justifyContent: 'center', paddingHorizontal: s.$1, }}>
+        { allowAttachment  && <Ionicons name="add" size={s.$2} color={c.grey2} onPress={onAttachmentPress} /> }
+        <XStack
           style={{
-            width: '70%',
+            backgroundColor: c.white,
+            borderRadius: s.$2,
+            marginVertical: s.$075,
+            marginHorizontal: s.$1,
+            paddingVertical: s.$09,
+            paddingHorizontal: s.$1,
+            justifyContent: 'space-between',
+            fontSize: s.$09,
+            alignItems: 'center',
+            flex: 1
           }}
-          placeholder="Type anything..."
-          multiline={true}
-          value={message}
-          onChangeText={setMessage}
-        />
-        <Pressable
-          onPress={onMessageSubmit}
-          disabled={!message}
         >
-          <Ionicons
-            name="paper-plane-outline"
-            size={s.$2}
-            color={c.grey2}
+          <TextInput
+            style={{ width: '70%' }}
+            placeholder="Type anything..."
+            multiline={true}
+            value={message}
+            onChangeText={setMessage}
           />
-        </Pressable>
+          <Pressable onPress={onMessageSubmit} disabled={disabled} >
+            <Ionicons name="paper-plane-outline" size={s.$2} color={c.grey2} />
+          </Pressable>
+        </XStack>
       </XStack>
     </>
   )

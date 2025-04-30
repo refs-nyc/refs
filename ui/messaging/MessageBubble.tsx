@@ -9,6 +9,7 @@ import { Pressable } from "react-native";
 import { Avatar } from "../atoms/Avatar";
 import { XStack } from "../core/Stacks";
 import { Link } from "expo-router";
+import { SimplePinataImage } from "../images/SimplePinataImage";
 
 export default function MessageBubble(
   { message, showSender, sender, senderColor, onLongPress, parentMessage, parentMessageSender, onParentMessagePress }:
@@ -68,6 +69,18 @@ export default function MessageBubble(
                 </Text>
               </View>
             </Pressable>
+          }
+          { message.image && 
+              <SimplePinataImage
+                originalSource={message.image}
+                imageOptions={{ width: s.$20, height: s.$20 }}
+                style={{
+                  width: s.$20,
+                  height: s.$20,
+                  backgroundColor: c.accent,
+                  borderRadius: s.$075,
+                }}
+              />
           }
           <Text>{message.text}</Text>
           {messageReactions &&

@@ -1,4 +1,4 @@
-import { Heading, XStack, YStack } from '@/ui'
+import { Heading, Sheet, XStack, YStack } from '@/ui'
 import { View, DimensionValue, KeyboardAvoidingView, Keyboard, Modal, FlatList } from 'react-native'
 import { c, s } from '../style'
 import { useEffect, useMemo, useRef, useState } from 'react'
@@ -13,6 +13,7 @@ import { EmojiKeyboard } from 'rn-emoji-keyboard'
 import MessageInput from '@/ui/messaging/MessageInput'
 import { randomColors } from './utils'
 import { Message } from '../pocketbase/stores/types'
+import { AvatarPicker } from '@/ui/inputs/AvatarPicker'
 
 export function MessagesScreen({conversationId} : {conversationId: string})
 {
@@ -24,6 +25,8 @@ export function MessagesScreen({conversationId} : {conversationId: string})
   const [highlightedMessageId, setHighlightedMessageId] = useState<string>('');
   const [showInModal, setShowInModal] = useState<'' | 'contextMenu' | 'reactions'>('');
   const [replying, setReplying] = useState<boolean>(false);
+  const [attachmentOpen, setAttachmentOpen] = useState<boolean>(false);
+  const [imageUrl, setImageUrl] = useState<string>('');
 
   const conversation = conversations[conversationId];
   const members = memberships[conversationId].filter(m => m.expand?.user.id !== user?.id);
@@ -51,10 +54,6 @@ export function MessagesScreen({conversationId} : {conversationId: string})
     return () => showSub.remove();
   }, []);
 
-  // useEffect(() => {
-  //   flatListRef.current?.scrollToEnd({ animated: true });
-  // }, [messagesPerConversation])
-
   useEffect(() => {
     async function setLastRead() {
       const lastReadDate = conversationMessages[0].created;
@@ -72,10 +71,18 @@ export function MessagesScreen({conversationId} : {conversationId: string})
 
   const onMessageSubmit = () =>
   {
-    sendMessage(user.id, conversationId, message, replying ? highlightedMessageId : undefined);
+    sendMessage(user.id, conversationId, message, replying ? highlightedMessageId : undefined, imageUrl || undefined);
     setMessage('');
     setHighlightedMessageId('')
     setReplying(false);
+    setAttachmentOpen(false);
+    setImageUrl('');
+    flatListRef.current?.scrollToIndex({ index: 0, animated: true });
+  }
+
+  const onAttachmentPress = () =>
+  {
+    setAttachmentOpen(true);
   }
 
   const loadMoreMessages = async () => 
@@ -112,6 +119,7 @@ export function MessagesScreen({conversationId} : {conversationId: string})
           flatListRef.current?.scrollToIndex({
             index: parentMessageIndex,
             animated: true,
+            viewPosition: 1,
           })
         }}
       />
@@ -163,15 +171,32 @@ export function MessagesScreen({conversationId} : {conversationId: string})
             onEndReached={loadMoreMessages}
             onEndReachedThreshold={0.1}
           />
+        { attachmentOpen &&
+            <Sheet
+              onChange={(i: number)=>{i === -1 && setAttachmentOpen(false); setImageUrl('')}}
+              style={{padding: s.$2}}
+            >
+              <AvatarPicker 
+                source={''} 
+                onComplete={(s)=>setImageUrl(s)} 
+                onReplace={()=>console.log('replace')}
+              >
+                {null}
+              </AvatarPicker>
+            </Sheet>
+        }
         </View>
         <MessageInput
-            onMessageSubmit={onMessageSubmit}
-            setMessage={setMessage}
-            message={message}
-            parentMessage={replying ? highlightedMessage : undefined}
-            parentMessageSender={replying ? members.find(m => m.expand?.user.id === highlightedMessage?.sender)?.expand?.user || user : undefined}
-            onReplyClose={() => {setReplying(false), setHighlightedMessageId('')}}
-          />
+          onMessageSubmit={onMessageSubmit}
+          setMessage={setMessage}
+          message={message}
+          parentMessage={replying ? highlightedMessage : undefined}
+          parentMessageSender={replying ? members.find(m => m.expand?.user.id === highlightedMessage?.sender)?.expand?.user || user : undefined}
+          onReplyClose={() => {setReplying(false), setHighlightedMessageId('')}}
+          allowAttachment={true}
+          onAttachmentPress={onAttachmentPress}
+          disabled={attachmentOpen && !imageUrl}
+        />
         { showInModal && highlightedMessage &&
           <Modal
             animationType="fade"

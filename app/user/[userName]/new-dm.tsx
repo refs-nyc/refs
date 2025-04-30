@@ -67,7 +67,7 @@ export default function NewDMScreen()
           </Heading>
           <Avatar source={profile.image} size={s.$4} />
         </XStack>
-        <MessageInput onMessageSubmit={onMessageSubmit} setMessage={setMessage} message={message} />
+        <MessageInput onMessageSubmit={onMessageSubmit} setMessage={setMessage} message={message} disabled={!message} />
       </YStack>
     </View>
   )

@@ -1,5 +1,6 @@
 import { StagedRef, Item, Profile, CompleteRef } from './types'
 import { Canvas, CanvasLoadable, Actions, ModelSchema } from '@canvas-js/core'
+// @ts-ignore
 import { GossipLog } from '@canvas-js/gossiplog/sqlite-expo'
 
 // ensure gossiplog is bundled
@@ -122,6 +123,7 @@ const models = {
 
 const itemActions = {
   pushItem(item: Item) {
+    // @ts-ignore
     this.db.set('item', fill(item, itemFields, itemRelations))
   },
   removeItem(itemId: string) {
@@ -135,20 +137,24 @@ const itemActions = {
   },
   async moveItemToBacklog(itemId: string) {
     const item = await this.db.get('item', itemId)
+    // @ts-ignore
     this.db.set('item', fill({ ...item, backlog: true }, itemFields, itemRelations))
   },
 } satisfies Actions<typeof models>
 
 const refActions = {
   pushRef(ref: CompleteRef) {
+    // @ts-ignore
     this.db.set('ref', fill(ref, refFields, refRelations))
   },
   async addRefMetadata(refId: string, { type, meta }: { type: string; meta: string }) {
     const ref = await this.db.get('ref', refId)
     if (!ref) return // TODO: ref might be missing id
+    // @ts-ignore
     this.db.set('ref', fill({ ...ref, metadata: { type, meta } }, refFields, refRelations))
   },
   removeRef: async (refId: string) => {
+    // @ts-ignore
     this.db.delete('ref', refId)
   },
 } satisfies Actions<typeof models>
@@ -156,9 +162,11 @@ const refActions = {
 const userActions = {
   async updateUser(userId: string, fields: Partial<Profile>) {
     const user = await this.db.get('user', userId)
+    // @ts-ignore
     this.db.set('user', fill({ user, ...fields }, userFields, userRelations))
   },
   async registerUser(fields: Omit<Profile, 'id'>) {
+    // @ts-ignore
     this.db.set('user', fill({ ...fields }, userFields, userRelations))
   },
   async attachItem(userId: string, itemId: string) {

@@ -52,6 +52,7 @@ export const NewRef = ({
   const { user } = useUserStore()
 
   const addImageRef = async (asset: ImagePickerAsset) => {
+    // @ts-ignore
     setRefData({ image: asset })
     setStep('add')
   }

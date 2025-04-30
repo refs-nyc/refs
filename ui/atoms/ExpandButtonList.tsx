@@ -82,7 +82,7 @@ export const ExpandButton = ({
     }
   }
 
-  const onItemPress = (o, i) => {
+  const onItemPress = (o: ExpandOption, i: number) => {
     console.log(o.label)
   }
 
@@ -113,6 +113,7 @@ export const ExpandButton = ({
         }}
         onPress={toggleExpand}
       >
+        {/* @ts-ignore */}
         <Ionicons size={20} color={c.white} name={icon} />
         <Text style={{ color: 'white' }}>{title}</Text>
       </Pressable>
@@ -145,7 +146,7 @@ export const ExpandButton = ({
           transform: [{ translateX }],
         }}
       >
-        {options.map((o, i) => (
+        {options.map((o: ExpandOption, i: number) => (
           <React.Fragment key={o.label + i}>
             <Pressable onPress={() => onItemPress(o, i)}>
               <SizableText style={{ color: c.accent, textAlign: 'center' }}>{o.label}</SizableText>

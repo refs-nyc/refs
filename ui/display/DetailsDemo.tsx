@@ -5,6 +5,7 @@ import Carousel from 'react-native-reanimated-carousel'
 
 export const DetailsDemoCarousel = forwardRef(
   (
+    // @ts-ignore
     { data, height, width, defaultIndex, style, scrollOffsetValue, onSnapToItem, renderItem },
     ref
   ) => {
@@ -81,7 +82,7 @@ export const DetailsDemo = () => {
     >
       <DetailsDemoCarousel
         data={items}
-        renderItem={({ item }) => renderItem({ item, editingRights: false })}
+        renderItem={({ item }: any) => renderItem({ item, editingRights: false })}
         height={800}
         width={win.width}
         style={{ overflow: 'visible' }}

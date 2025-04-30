@@ -110,7 +110,6 @@ export function MessagesInit() {
     {
       console.log(`subscribing to new reactions, user: ${user?.userName}`)
       pocketbase.collection('reactions').subscribe<Reaction>('*', async (e) => {
-        console.log(e)
         if (e.action === 'create') {
           console.log(`new reaction received: ${e.record.emoji}`)
           const expandedReaction = await pocketbase.collection('reactions').getOne<ExpandedReaction>(e.record.id, {expand: 'user'});

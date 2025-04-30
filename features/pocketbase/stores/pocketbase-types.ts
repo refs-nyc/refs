@@ -29,15 +29,20 @@ export type IsoDateString = string
 export type RecordIdString = string
 export type HTMLString = string
 
+type ExpandType<T> = unknown extends T
+	? T extends unknown
+		? { expand?: unknown }
+		: { expand: T }
+	: { expand: T }
+
 // System fields
-export type BaseSystemFields<T = never> = {
+export type BaseSystemFields<T = unknown> = {
 	id: RecordIdString
 	collectionId: string
 	collectionName: Collections
-	expand?: T
-}
+} & ExpandType<T>
 
-export type AuthSystemFields<T = never> = {
+export type AuthSystemFields<T = unknown> = {
 	email: string
 	emailVisibility: boolean
 	username: string
@@ -145,6 +150,7 @@ export type MessagesRecord = {
 	conversation?: RecordIdString
 	created?: IsoDateString
 	id: string
+	replying_to?: RecordIdString
 	sender: RecordIdString
 	text: string
 }

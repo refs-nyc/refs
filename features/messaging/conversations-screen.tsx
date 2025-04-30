@@ -2,10 +2,8 @@ import { Heading, YStack } from '@/ui'
 import { View, ScrollView, DimensionValue } from 'react-native'
 import { c, s } from '../style'
 import { useUserStore } from '../pocketbase'
-import ConversationListItem from '@/ui/messaging/ConversationListItem'
-import { Pressable } from 'react-native'
-import { router } from 'expo-router'
 import { useMessageStore } from '../pocketbase/stores/messages'
+import SwipeableConversation from '@/ui/messaging/SwipeableConversation'
 
 export function ConversationsScreen() {
   const { user } = useUserStore()
@@ -41,15 +39,11 @@ export function ConversationsScreen() {
           }}
         >
           {(Object.values(conversations)).map(i =>
-            <Pressable key={i.id} onPress={()=>router.push(`/messages/${i.id}`)}>
-              <ConversationListItem conversation={i} />
-            </Pressable>
+            <SwipeableConversation key={i.id} conversation={i} onArchive={()=>console.log('archive')} />
           )}
         </YStack>
       </ScrollView>
     </View>
-
   )
-
 }
 

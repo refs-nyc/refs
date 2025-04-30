@@ -7,6 +7,8 @@ import { Avatar } from "../atoms/Avatar"
 import { useMessageStore } from "@/features/pocketbase/stores/messages"
 import { formatTimestamp } from "@/features/messaging/utils"
 import { useCalendars } from "expo-localization"
+import { Pressable } from "react-native-gesture-handler"
+import { router } from "expo-router"
 
 export default function ConversationListItem ({ conversation }: { conversation: Conversation }): JSX.Element | null
 {
@@ -38,31 +40,32 @@ export default function ConversationListItem ({ conversation }: { conversation: 
   }
 
   return (
-    <XStack
-      style={{
-        alignItems: 'center',
-        backgroundColor: c.surface2,
-        justifyContent: 'space-between',
-        paddingHorizontal: s.$075,
-        borderRadius: s.$075,
-      }}>
-      <XStack gap={s.$075} style={{ alignItems: 'center' }}>
-        { newMessages && 
-          <View style={{width: s.$075, height: s.$075, backgroundColor: c.accent, borderRadius: 100}}></View>}
-        <Avatar source={image} size={s.$5} />
-        <YStack style={{ padding: s.$1, }}>
-          <Text style={{ fontSize: s.$1}}>
-            {conversation.is_direct ?
-              members[0].firstName + " " + members[0].lastName
-              : conversation.title }
-            {/* {`(${conversation.id})`} */}
-          </Text>
-          <Text>
-            {lastMessage?.text}
-          </Text>
-        </YStack>
+    <Pressable onPress={()=>router.push(`/messages/${conversation.id}`)}>
+      <XStack
+        style={{
+          alignItems: 'center',
+          backgroundColor: c.surface2,
+          justifyContent: 'space-between',
+          paddingHorizontal: s.$075,
+          borderRadius: s.$075,
+        }}>
+        <XStack gap={s.$075} style={{ alignItems: 'center', maxWidth: '80%' }}>
+          { newMessages && 
+            <View style={{width: s.$075, height: s.$075, backgroundColor: c.accent, borderRadius: 100}}></View>}
+          <Avatar source={image} size={s.$5} />
+          <YStack style={{ padding: s.$1, }}>
+            <Text style={{ fontSize: s.$1}}>
+              {conversation.is_direct ?
+                members[0].firstName + " " + members[0].lastName
+                : conversation.title }
+            </Text>
+            <Text>
+              {lastMessage?.text}
+            </Text>
+          </YStack>
+        </XStack>
+        <Text style={{color: c.muted, margin: s.$05, alignSelf: 'flex-start'}}>{formatTimestamp(time, timeZone)}</Text>
       </XStack>
-      <Text style={{color: c.muted, margin: s.$05, alignSelf: 'flex-start'}}>{formatTimestamp(time, timeZone)}</Text>
-    </XStack>
+    </Pressable>
   )
 }

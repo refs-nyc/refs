@@ -87,7 +87,7 @@ export const useMessageStore = create<MessageStore>((set) => ({
     }
     catch (error)
     {
-      console.error(error);
+      throw new Error();
     }
 
   },

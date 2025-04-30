@@ -151,9 +151,10 @@ export type MessagesRecord = {
 	conversation?: RecordIdString
 	created?: IsoDateString
 	id: string
+	image?: string
 	replying_to?: RecordIdString
 	sender: RecordIdString
-	text: string
+	text?: string
 }
 
 export type ProfilesRecord = {

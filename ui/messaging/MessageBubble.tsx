@@ -31,7 +31,7 @@ export default function MessageBubble(
   const formattedDate = formatTimestamp(date, timeZone);
 
   return (
-    <XStack style={{ alignSelf : isMe ? 'flex-end' : 'flex-start',}}>
+    <XStack style={{ alignSelf : isMe ? 'flex-end' : 'flex-start', maxWidth: '75%'}}>
       { sender && showSender && !isMe &&
         <View style={{alignSelf: 'flex-end'}}>
           <Link href={`/user/${sender.userName}`}>

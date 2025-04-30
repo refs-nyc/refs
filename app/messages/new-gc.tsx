@@ -79,7 +79,7 @@ export default function NewGCScreen()
             <Avatar source={u.image} size={s.$4} />
           </Link>)}
         </XStack>
-        <MessageInput onMessageSubmit={onMessageSubmit} setMessage={setMessage} message={message} />
+        <MessageInput onMessageSubmit={onMessageSubmit} setMessage={setMessage} message={message} disabled={!message} />
       </YStack>
     </View>
     )

@@ -1,11 +1,12 @@
-import { Heading, XStack, YStack } from '@/ui'
-import { View, ScrollView, DimensionValue, Pressable, Text } from 'react-native'
-import { c, s } from '../style'
+import { Heading, XStack} from '@/ui'
+import { View, DimensionValue, Pressable, Text } from 'react-native'
+import { s } from '../style'
 import { pocketbase, useUserStore } from '../pocketbase'
 import { useMessageStore } from '../pocketbase/stores/messages'
 import SwipeableConversation from '@/ui/messaging/SwipeableConversation'
 import { router } from 'expo-router'
 import { Conversation } from '../pocketbase/stores/types'
+import ConversationList from '@/ui/messaging/ConversationList'
 
 export function ConversationsScreen() 
 {
@@ -33,8 +34,7 @@ export function ConversationsScreen()
     const membership = memberships[conversation.id].find(m => m.expand?.user.id === user?.id);
     if (membership)
     {
-      const result = await pocketbase.collection('memberships').update(membership.id, {archived: true});
-      console.log('archived membership?', result);
+      await pocketbase.collection('memberships').update(membership.id, {archived: true});
     }
   }
 
@@ -58,22 +58,11 @@ export function ConversationsScreen()
           <Text>Archive</Text>
         </Pressable>
       </XStack>
-      <ScrollView style={{ flex: 1 }}>
-        <YStack
-          gap={s.$075}
-          style={{
-            flex: 1,
-            paddingBottom: s.$14,
-            backgroundColor: c.surface,
-            width: '90%',
-            margin: 'auto'
-          }}
-        >
+        <ConversationList>
           {activeConversations.map(i =>
             <SwipeableConversation key={i.id} conversation={i} onArchive={()=>onArchive(i)} />
           )}
-        </YStack>
-      </ScrollView>
+        </ConversationList>
     </View>
   )
 }

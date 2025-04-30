@@ -71,7 +71,7 @@ export const Profile = ({ userName }: { userName: string }) => {
 
   const handleMoveToBacklog = async () => {
     try {
-      const updatedRecord = await moveToBacklog(typeof removingId === "string" ? removingId : removingId[0])
+      const updatedRecord = await moveToBacklog(typeof removingId === "string" ? removingId : (removingId as string[])[0])
       setRemovingId('')
       await refreshGrid(userName)
     } catch (error) {
@@ -232,7 +232,7 @@ export const Profile = ({ userName }: { userName: string }) => {
       </ScrollView>
 
       {removingId && (
-        <Sheet full={false} onChange={(e) => e === -1 && setRemovingId('')}>
+        <Sheet full={false} onChange={(e: any) => e === -1 && setRemovingId('')}>
           <YStack gap={s.$08} style={{ marginTop: s.$1, marginBottom: s.$5 }}>
             <Button
               onPress={handleMoveToBacklog}
@@ -241,7 +241,7 @@ export const Profile = ({ userName }: { userName: string }) => {
             />
             <Button
               onPress={async () => {
-                await removeFromProfile(typeof removingId === "string" ? removingId : removingId[0])
+                await removeFromProfile(typeof removingId === "string" ? removingId : (removingId as string[])[0])
                 setRemovingId('')
                 await refreshGrid(userName)
               }}
@@ -253,7 +253,7 @@ export const Profile = ({ userName }: { userName: string }) => {
       )}
 
       {(addingTo === 'grid' || addingTo === 'backlog') && (
-        <Sheet noPadding={true} full={step !== ''} onChange={(e) => e === -1 && setAddingTo('')}>
+        <Sheet noPadding={true} full={step !== ''} onChange={(e: any) => e === -1 && setAddingTo('')}>
           <NewRef
             backlog={addingTo === 'backlog'}
             onStep={setStep}

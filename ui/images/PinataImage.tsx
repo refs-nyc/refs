@@ -35,6 +35,7 @@ export const PinataImage = ({
 
   // Start pulsing animation when loading
   useEffect(() => {
+    // @ts-ignore
     let pulseAnimation
 
     if (loading) {
@@ -55,10 +56,12 @@ export const PinataImage = ({
 
       pulseAnimation.start()
     } else if (pulseAnimation) {
+      // @ts-ignore
       pulseAnimation?.stop()
     }
 
     return () => {
+      // @ts-ignore
       if (pulseAnimation) pulseAnimation.stop()
     }
   }, [loading])

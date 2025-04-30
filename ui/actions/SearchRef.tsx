@@ -10,6 +10,7 @@ import { CompleteRef, StagedRef, Item } from '../../features/pocketbase/stores/t
 import { getLinkPreview, getPreviewFromContent } from 'link-preview-js'
 import { ShareIntent as ShareIntentType, useShareIntentContext } from 'expo-share-intent'
 import * as Clipboard from 'expo-clipboard'
+import { RefsRecord } from '@/features/pocketbase/stores/pocketbase-types'
 
 export const SearchRef = ({
   noNewRef,
@@ -19,9 +20,9 @@ export const SearchRef = ({
   onComplete,
 }: {
   noNewRef?: boolean
-  url: string
-  image: string
-  paste: boolean
+  url?: string
+  image?: string
+  paste?: boolean
   onComplete: (r: CompleteRef) => void
 }) => {
   const [searchQuery, setSearchQuery] = useState('')
@@ -61,7 +62,7 @@ export const SearchRef = ({
   // Update the search query
   const updateQuery = async (q: string) => {
     const search = async () => {
-      let refsResults = []
+      let refsResults: RefsRecord[] = []
 
       if (q === '') return []
 
@@ -107,7 +108,7 @@ export const SearchRef = ({
   useEffect(() => {
     const doPaste = async () => {
       const u = await Clipboard.getUrlAsync()
-      console.log(u)
+      if (u === null) return
       setSearchQuery(u)
       if (u) {
         const data = await getLinkPreview(u)
@@ -139,8 +140,12 @@ export const SearchRef = ({
 
       {searchQuery !== '' && !noNewRef && !disableNewRef && (
         <Pressable
-          onPress={() => onComplete({ title: searchQuery, image: imageState, url: urlState })}
+          onPress={() => {
+            // @ts-ignore
+            return onComplete({ title: searchQuery, image: imageState, url: urlState })
+          }}
         >
+          {/* @ts-ignore */}
           <NewRefListItem title={searchQuery} image={image} />
         </Pressable>
       )}

@@ -81,7 +81,7 @@ export const RefForm = ({
       })
   }
 
-  const handleDataChange = (d: { title: string; url: string; image: string }) => {
+  const handleDataChange = (d: { title: string; url: string; image?: string | undefined }) => {
     setTitle(d.title)
     setUrl(d.url)
     if (d.image) {

@@ -6,8 +6,8 @@ import { canvasApp } from './canvas'
 import { ClientResponseError } from 'pocketbase'
 import { gridSort, createdSort } from '@/ui/profiles/sorts'
 
-export const isProfile = (profile: Profile | EmptyProfile): profile is Profile => {
-  return Object.keys(profile).length > 0
+export const isProfile = (profile: Profile | EmptyProfile | null): profile is Profile => {
+  return profile !== null && Object.keys(profile).length > 0
 }
 
 export const isExpandedProfile = (

@@ -23,7 +23,7 @@ const EditableItemComponent = ({
 }: {
   item: ExpandedItem
   editingRights?: boolean
-  index: number
+  index: number | undefined
 }) => {
   const [showMenu, setShowMenu] = useState(false)
   const [title, setTitle] = useState(item.expand?.ref.title)

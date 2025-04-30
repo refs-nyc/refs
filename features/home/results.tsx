@@ -61,6 +61,7 @@ export const SearchResults = ({ results }: { results: ExpandedItem[] }) => {
                 <Link href={item.expand?.creator ? `/user/${item.expand.creator?.userName}` : '/'}>
                   <Heading tag="p">
                     <Heading tag="strong">{item.expand?.creator?.firstName || 'Anonymous'}</Heading>{' '}
+                    {/* @ts-ignore */}
                     added <Heading tag="strong">{item.expand?.ref?.title || item.title}</Heading>
                   </Heading>
                 </Link>

@@ -57,7 +57,7 @@ export const SearchResultItem = ({ r }: { r: CompleteRef }) => {
             ?.map((itm) => itm.expand.ref.id)
             .includes(r.id) ? (
             <Text>
-              You are{pocketbase.authStore.record.id !== profile?.id && ' also'} referencing
+              You are{"id" in profile && pocketbase.authStore.record.id !== profile.id && ' also'} referencing
             </Text>
           ) : pocketbase.authStore.record?.expand?.items
               ?.filter((itm) => itm.backlog)

@@ -6,7 +6,9 @@ export const useUIStore = create<{
   editingBacklog: boolean
   addingToList: string
   addingItem: ItemsRecord | null
+  showContextMenu: string
   setAddingToList: (newState: string) => void
+  setShowContextMenu: (newState: string) => void
   toggleEditProfile: () => void
   stopEditProfile: () => void
   startEditProfile: () => void
@@ -16,7 +18,13 @@ export const useUIStore = create<{
 }>((set) => ({
   editingBacklog: false,
   addingToList: '',
+  showContextMenu: '',
   addingItem: null,
+  setShowContextMenu: (newState: string) => {
+    set(() => ({
+      showContextMenu: newState,
+    }))
+  },
   setAddingToList: (newState: string) => {
     set(() => ({
       addingToList: newState,

@@ -8,7 +8,6 @@ import { Heading } from '../typo/Heading'
 import { c, s, t } from '@/features/style'
 import { gridSort } from './sorts'
 import Ionicons from '@expo/vector-icons/Ionicons'
-import { useUIStore } from '@/ui/state'
 import { useItemStore } from '@/features/pocketbase/stores/items'
 import { ListContainer } from '../lists/ListContainer'
 import { EditableList } from '../lists/EditableList'
@@ -20,6 +19,7 @@ import { GridLines } from '../display/Gridlines'
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet'
 import { MeatballMenu } from '../atoms/MeatballMenu'
 import { Button } from '../buttons/Button'
+import { useUIStore } from '@/ui/state'
 
 const win = Dimensions.get('window')
 
@@ -34,11 +34,12 @@ const ConditionalGridLines = React.memo(() => {
 })
 ConditionalGridLines.displayName = 'ConditionalGridLines'
 
-const DetailsHeaderButton = React.memo(() => {
+const DetailsHeaderButton = React.memo(({ item }: { item: ExpandedItem }) => {
   const editing = useItemStore((state) => state.editing)
   const stopEditing = useItemStore((state) => state.stopEditing)
   const router = useRouter()
   const insets = useSafeAreaInsets()
+  const { showContextMenu, setShowContextMenu } = useUIStore()
 
   const handlePress = useCallback(() => {
     if (editing === '') {
@@ -59,7 +60,15 @@ const DetailsHeaderButton = React.memo(() => {
       }}
       onPress={handlePress}
     >
-      {editing !== '' ? <Ionicons size={s.$1} name="popover" color={c.muted} /> : <MeatballMenu />}
+      {editing !== '' ? (
+        <Ionicons size={s.$1} name="popover" color={c.muted} />
+      ) : (
+        <MeatballMenu
+          onPress={() => {
+            setShowContextMenu(item.id)
+          }}
+        />
+      )}
     </Pressable>
   )
 })
@@ -86,15 +95,15 @@ export const renderItem = ({
         gap: s.$1,
         justifyContent: 'start',
       }}
-      key={item.id} // key should ideally be on the top-level element returned by map/renderItem callback
+      key={item.id}
     >
       <BottomSheetScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ padding: s.$075, gap: s.$1 }} // Add padding here, ensure enough bottom padding
+        contentContainerStyle={{ padding: s.$075, gap: s.$1 }}
         keyboardShouldPersistTaps="handled"
-        nestedScrollEnabled={true} // May be needed if Carousel interferes, test
+        nestedScrollEnabled={true}
       >
-        <DetailsHeaderButton />
+        <DetailsHeaderButton item={item} />
         <EditableItem item={item} editingRights={editingRights} index={index} />
       </BottomSheetScrollView>
     </View>
@@ -113,10 +122,10 @@ export const Details = ({
   const pathname = usePathname()
   const { userName } = useGlobalSearchParams()
   const ref = useRef<ICarouselInstance>(null)
-  const { addingToList, setAddingToList, addingItem } = useUIStore()
   const scrollOffsetValue = useSharedValue<number>(10)
   const [activeIndex, setActiveIndex] = useState(0)
 
+  const { addingToList, setAddingToList, addingItem, setShowContextMenu } = useUIStore()
   const { stopEditing } = useItemStore()
 
   const userNameParam =
@@ -163,8 +172,8 @@ export const Details = ({
   }, [setAddingToList, getProfile, userNameParam])
 
   const carouselStyle = useMemo<{
-    overflow: ViewStyle["overflow"],
-    paddingVertical: number,
+    overflow: ViewStyle['overflow']
+    paddingVertical: number
   }>(
     () => ({
       overflow: 'visible',
@@ -197,6 +206,10 @@ export const Details = ({
         height={win.height}
         style={carouselStyle}
         defaultIndex={index}
+        onSnapToItem={() => {
+          // console.log('progress')
+          setShowContextMenu('')
+        }}
         onConfigurePanGesture={handleConfigurePanGesture}
         renderItem={carouselRenderItem}
         windowSize={5}

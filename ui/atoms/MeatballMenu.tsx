@@ -18,7 +18,7 @@ export const MeatballMenu = ({
         gap: 5,
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: 'red',
+        // backgroundColor: 'red',
       }}
     >
       <View style={{ width: 5, height: 5, borderRadius: s.$05, backgroundColor: color }} />

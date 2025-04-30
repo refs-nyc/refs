@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, forwardRef } from 'react'
 import { Image } from 'expo-image'
 import { Zoomable } from '@likashefqet/react-native-image-zoom'
 import { ContextMenu } from '../atoms/ContextMenu'
-import { EditableHeader } from '../atoms/EditableHeader'
+import { useUIStore } from '@/ui/state'
 import { useItemStore } from '@/features/pocketbase/stores/items'
 import { ExpandedItem } from '@/features/pocketbase/stores/types'
 import { Link } from 'expo-router'
@@ -25,9 +25,9 @@ const EditableItemComponent = ({
   editingRights?: boolean
   index: number
 }) => {
-  const [showMenu, setShowMenu] = useState(false)
   const [title, setTitle] = useState(item.expand?.ref.title)
 
+  const { showContextMenu, setShowContextMenu } = useUIStore()
   const { editing, startEditing, stopEditing } = useItemStore()
 
   const animatedStyle = useAnimatedStyle(() => {
@@ -38,10 +38,10 @@ const EditableItemComponent = ({
     <Pressable
       style={{ gap: s.$09, paddingVertical: win.height * 0.1 }}
       onPress={() => {
-        setShowMenu(false)
+        setShowContextMenu('')
       }}
       onLongPress={() => {
-        setShowMenu(!showMenu)
+        setShowContextMenu(item.id)
       }}
     >
       <View
@@ -51,11 +51,11 @@ const EditableItemComponent = ({
         }}
       >
         {/* Menu */}
-        {showMenu && (
+        {showContextMenu === item.id && (
           <ContextMenu
             onEditPress={() => {
               startEditing(item.id)
-              setShowMenu(false)
+              setShowContextMenu('')
             }}
             editingRights={editingRights}
           />

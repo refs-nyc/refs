@@ -1,5 +1,5 @@
-import { Heading, XStack, YStack } from '@/ui'
-import { View, ScrollView, DimensionValue, Pressable } from 'react-native'
+import { Heading, XStack } from '@/ui'
+import { View, DimensionValue, Pressable } from 'react-native'
 import { c, s } from '../style'
 import { pocketbase, useUserStore } from '../pocketbase'
 import { useMessageStore } from '../pocketbase/stores/messages'
@@ -7,6 +7,7 @@ import SwipeableConversation from '@/ui/messaging/SwipeableConversation'
 import { Ionicons } from '@expo/vector-icons'
 import { router } from 'expo-router'
 import { Conversation } from '../pocketbase/stores/types'
+import ConversationList from '@/ui/messaging/ConversationList'
 
 export function ArchiveScreen() 
 {
@@ -18,7 +19,6 @@ export function ArchiveScreen()
   {
     const conversation = conversations[conversationId];
     const membership = memberships[conversationId].find(m => m.expand?.user.id === user?.id);
-    console.log('archived? ', membership?.archived);
     if ( membership?.archived ) archivedConversations.push(conversation);
   }
 
@@ -35,8 +35,7 @@ export function ArchiveScreen()
     const membership = memberships[conversation.id].find(m => m.expand?.user.id === user?.id);
     if (membership)
     {
-      const result = await pocketbase.collection('memberships').update(membership.id, {archived: false});
-      console.log(result)
+      await pocketbase.collection('memberships').update(membership.id, {archived: false});
     }
   }
 
@@ -57,22 +56,11 @@ export function ArchiveScreen()
           <Heading tag="h1"> Archive </Heading>
         </XStack>
       </Pressable>
-      <ScrollView style={{ flex: 1 }}>
-        <YStack
-          gap={s.$075}
-          style={{
-            flex: 1,
-            paddingBottom: s.$14,
-            backgroundColor: c.surface,
-            width: '90%',
-            margin: 'auto'
-          }}
-        >
-          {archivedConversations.map(i =>
-            <SwipeableConversation key={i.id} conversation={i} onArchive={()=>onUnarchive(i)} isInArchive={true} />
-          )}
-        </YStack>
-      </ScrollView>
+      <ConversationList>
+        {archivedConversations.map(i =>
+          <SwipeableConversation key={i.id} conversation={i} onArchive={()=>onUnarchive(i)} isInArchive={true} />
+        )}
+      </ConversationList>
     </View>
   )
 }

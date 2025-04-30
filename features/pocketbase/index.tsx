@@ -16,8 +16,7 @@ const addToProfile: ((
   if ((!pocketbase.authStore?.isValid || !pocketbase.authStore?.record) && attach)
     throw new Error('Not enough permissions')
 
-  // @ts-ignore
-  console.log('WE GOT STAGED', /* @ts-ignore */ stagedRef?.list)
+  console.log('WE GOT STAGED', "list" in stagedRef ? stagedRef.list : null)
   console.log('WE GOT OPTIONS', options.list)
 
   const refStore = useRefStore.getState()

@@ -18,6 +18,7 @@ export const EditableList = ({ item, onComplete }: { item: Item; onComplete: () 
           initialRefData={initialRefData}
           initialStep={'add'}
           onCancel={() => {}}
+          onStep={(s) => console.log(s)}
           onNewRef={async (ref: CompleteRef) => {
             const record = await addToList(item.id, ref)
             onComplete()
@@ -25,12 +26,14 @@ export const EditableList = ({ item, onComplete }: { item: Item; onComplete: () 
         />
       ) : (
         <View style={{ flex: 1, paddingBottom: s.$2 }}>
+          {/* @ts-ignore */}
           <SearchRef
             onComplete={async (ref: CompleteRef) => {
               if (!ref.id) {
                 setInitialRefData(ref)
               } else {
                 const record = await addToList(item.id, ref)
+                {/* @ts-ignore */}
                 onComplete && onComplete(record)
               }
             }}

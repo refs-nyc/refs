@@ -21,7 +21,7 @@ export function SettingsScreen({ userName }: { userName: string }) {
     const load = async () => {
       await getProfile(userName)
 
-      if (!pocketbase.authStore.isValid || pocketbase.authStore?.record?.id !== profile?.id)
+      if (!pocketbase.authStore.isValid || ("id" in profile && pocketbase.authStore?.record?.id !== profile?.id))
         router.push('/')
     }
     load()

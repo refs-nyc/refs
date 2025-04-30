@@ -92,6 +92,7 @@ function shuffle(array: any[]) {
 
 const win = Dimensions.get('window')
 
+// @ts-ignore
 const AnimatedPerson = ({ person, index, style }) => {
   // Create an animated value for opacity.
   const fadeAnim = useRef(new Animated.Value(0)).current

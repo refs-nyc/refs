@@ -2,24 +2,28 @@ import { pocketbase } from './pocketbase'
 import { useUserStore } from './stores/users'
 import { useRefStore } from './stores/refs'
 import { useItemStore } from './stores/items'
-import { StagedRef, CompleteRef, Item } from './stores/types'
+import { StagedRef, CompleteRef, Item, ExpandedItem } from './stores/types'
 
-const addToProfile = async (
+const addToProfile: ((
   stagedRef: StagedRef | CompleteRef,
+  attach: boolean,
+  options: { comment?: string; backlog?: boolean; list?: boolean },
+) => Promise<ExpandedItem>) = async (
+  stagedRef,
   attach = true,
-  options: { comment?: string; backlog?: boolean; list?: boolean } = {}
+  options = {}
 ) => {
   if ((!pocketbase.authStore?.isValid || !pocketbase.authStore?.record) && attach)
     throw new Error('Not enough permissions')
 
-  console.log('WE GOT STAGED', stagedRef?.list)
+  console.log('WE GOT STAGED', "list" in stagedRef ? stagedRef.list : null)
   console.log('WE GOT OPTIONS', options.list)
 
   const refStore = useRefStore.getState()
   const itemStore = useItemStore.getState()
   const userStore = useUserStore.getState()
 
-  let newItem: Item
+  let newItem: ExpandedItem
 
   if (stagedRef.id) {
     // create a new item from an existing ref

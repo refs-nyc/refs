@@ -51,7 +51,7 @@ export default function NewGCScreen() {
     const conversationId = await createConversation(
       false,
       user!.id,
-      [...users.map((u) => u.id)],
+      users.map((u) => u.id),
       title
     )
     await sendMessage(user!.id, conversationId, message)

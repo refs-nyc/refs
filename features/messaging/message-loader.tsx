@@ -30,10 +30,6 @@ export function MessagesInit() {
       const conversations = await pocketbase.collection('conversations').getFullList<Conversation>({
         sort: '-created',
       })
-      console.log(
-        'conversations',
-        conversations.map((c) => c.id)
-      )
       setConversations(conversations)
       for (const conversation of conversations) {
         await loadInitialMessages(conversation)
@@ -100,7 +96,6 @@ export function MessagesInit() {
       console.log(`subscribing to new messages, user: ${user?.userName}`)
       pocketbase.collection('messages').subscribe<Message>('*', (e) => {
         if (e.action === 'create') {
-          console.log(`new message received: ${e.record.text}`)
           addNewMessage(e.record.conversation!, e.record)
         }
       })
@@ -121,14 +116,12 @@ export function MessagesInit() {
       console.log(`subscribing to new reactions, user: ${user?.userName}`)
       pocketbase.collection('reactions').subscribe<Reaction>('*', async (e) => {
         if (e.action === 'create') {
-          console.log(`new reaction received: ${e.record.emoji}`)
           const expandedReaction = await pocketbase
             .collection('reactions')
             .getOne<ExpandedReaction>(e.record.id, { expand: 'user' })
           addReaction(expandedReaction)
         }
         if (e.action === 'delete') {
-          console.log(`reaction deleted: ${e.record.emoji}`)
           removeReaction(e.record)
         }
       })
@@ -149,29 +142,22 @@ export function MessagesInit() {
     try {
       pocketbase.collection('memberships').subscribe('*', async (e) => {
         if (e.action === 'update') {
-          console.log('membership updated')
           const expandedMembership = await pocketbase
             .collection('memberships')
             .getOne<ExpandedMembership>(e.record.id, { expand: 'user' })
           updateMembership(expandedMembership)
         }
         if (e.action === 'create') {
-          console.log(
-            `new membership with user ${e.record.user} and conversation ${e.record.conversation}`
-          )
           const expandedMembership = await pocketbase
             .collection('memberships')
             .getOne<ExpandedMembership>(e.record.id, { expand: 'user' })
-          console.log('user of expanded membership is', expandedMembership.expand?.user.email)
           try {
             addMembership(expandedMembership)
           } catch (error) {
             console.error('error adding membership')
             console.error(error)
           }
-          console.log(`e.record.user is ${e.record.user}, user.id is ${user?.id}`)
           if (e.record.user === user?.id) {
-            console.log(`adding new conversation with id ${e.record.conversation}`)
             const conversation = await pocketbase
               .collection('conversations')
               .getOne(e.record.conversation)
@@ -192,7 +178,6 @@ export function MessagesInit() {
   return <></>
 
   async function loadInitialMessages(conversation: ConversationsRecord) {
-    console.log('loading messages for conversation', conversation.id)
     const messages = await pocketbase.collection('messages').getList<Message>(0, PAGE_SIZE, {
       filter: `conversation = "${conversation.id}"`,
       sort: '-created',

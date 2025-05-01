@@ -25,7 +25,6 @@ import { DeferredFonts } from '@/ui'
 import { c } from '@/features/style'
 import * as SystemUI from 'expo-system-ui'
 import { RegisterPushNotifications } from '@/ui/notifications/RegisterPushNotifications'
-import { pocketbase } from '@/features/pocketbase/pocketbase'
 import { MessagesInit } from '@/features/messaging/message-loader'
 install()
 polyfillEncoding()
@@ -109,23 +108,6 @@ const Providers = ({ children }: { children: React.ReactNode }) => {
 
 function RootLayoutNav() {
   const colorScheme = useColorScheme()
-
-  /** Subscribe to SSE from Pocketbase */
-  // useEffect(() => {
-  //   // Sanity check. Records can be written in non-real-time
-  //   // const result = await pocketbase.collection('test').getFullList()
-
-  //   // ! no async
-  //   pocketbase.collection('test').subscribe('*', (e) => {
-  //     console.log('Realtime event received:', e.action)
-  //     console.log('Record data:', e.record)
-  //   })
-
-  //   return () => {
-  //     console.log('unsubscribe test')
-  //     pocketbase.collection('test').unsubscribe('*')
-  //   }
-  // }, [])
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>

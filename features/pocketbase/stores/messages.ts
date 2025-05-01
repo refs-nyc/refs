@@ -80,7 +80,6 @@ export const useMessageStore = create<MessageStore>((set) => ({
     title?: string
   ): Promise<string> => {
     try {
-      console.log(`creating conversation with ${otherMemberIds.length} users: ${otherMemberIds}`)
       const newConversation = await pocketbase.collection('conversations').create({
         is_direct,
         title: is_direct ? undefined : title || 'New Group Chat',
@@ -294,7 +293,6 @@ export const useMessageStore = create<MessageStore>((set) => ({
     try {
       set((state) => {
         const newList = { ...state.reactions }
-        console.log(reaction.message, newList[reaction.message])
         newList[reaction.message] = newList[reaction.message].filter((r) => r.id !== reaction.id)
 
         return {

@@ -56,13 +56,6 @@ export function MessagesScreen({ conversationId }: { conversationId: string }) {
   }, [members.length])
 
   useEffect(() => {
-    const showSub = Keyboard.addListener('keyboardDidShow', () => {
-      //flatListRef.current?.scrollToIndex({ animated: true, index: 0 });
-    })
-    return () => showSub.remove()
-  }, [])
-
-  useEffect(() => {
     async function setLastRead() {
       const lastReadDate = conversationMessages[0].created
       await pocketbase
@@ -110,10 +103,6 @@ export function MessagesScreen({ conversationId }: { conversationId: string }) {
     const oldestMessage = newMessages.items[newMessages.items.length - 1]
     setOldestLoadedMessageDate(conversationId, oldestMessage.created!)
     addOlderMessages(conversationId, newMessages.items)
-    console.log(
-      'new messages (old)',
-      newMessages.items.map((m) => m.text)
-    )
   }
 
   function renderMessage({ item }: { item: Message }) {

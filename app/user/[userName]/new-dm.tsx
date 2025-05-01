@@ -21,7 +21,6 @@ export default function NewDMScreen() {
       const results = await pocketbase.collection('users').getFullList({
         filter: `userName = "${userName}"`,
       })
-      console.log('results', results)
       setProfile(results[0])
     }
     getProfile()

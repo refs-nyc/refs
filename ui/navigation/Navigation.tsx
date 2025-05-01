@@ -73,7 +73,9 @@ export const Navigation = () => {
         </Link>
       </View>
       <View style={{ margin: 'auto' }}>
-        <Text style={{ fontSize: 24, fontWeight: 'bold' }}>Refs</Text>
+        <Link dismissTo href="/feed">
+          <Text style={{ fontSize: 24, fontWeight: 'bold' }}>Refs</Text>
+        </Link>
       </View>
       <View style={{ top: -2 }}>
         <Link dismissTo href="/messages">

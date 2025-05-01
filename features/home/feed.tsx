@@ -1,25 +1,19 @@
-import Animated, { FadeInUp, FadeOutUp } from 'react-native-reanimated'
 import type { ExpandedItem } from '@/features/pocketbase/stores/types'
 import { useState, useEffect } from 'react'
-import { SearchBar, YStack, Heading, DismissKeyboard, Button } from '@/ui'
+import { SearchBar, YStack, DismissKeyboard, Button } from '@/ui'
 import { pocketbase } from '@/features/pocketbase'
 import { useUserStore } from '@/features/pocketbase/stores/users'
-import { View, ScrollView, Dimensions } from 'react-native'
+import { View, ScrollView } from 'react-native'
 import { s } from '@/features/style'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Nearby } from './nearby'
 
 import { SearchResults } from './results'
-import { router } from 'expo-router'
-
-const win = Dimensions.get('window')
 
 export const Feed = () => {
   const [items, setItems] = useState<ExpandedItem[]>([])
   const [searching, setSearching] = useState<boolean>(false)
   const [results, setResults] = useState<ExpandedItem[]>([])
   const [searchTerm, setSearchTerm] = useState<string>('')
-  const insets = useSafeAreaInsets()
   const { logout } = useUserStore()
 
   useEffect(() => {
@@ -63,37 +57,24 @@ export const Feed = () => {
 
   return (
     <DismissKeyboard>
-      <ScrollView style={{ flex: 1, height: win.height }}>
+      <View style={{ height: '100%' }}>
         <YStack
           gap={s.$2}
           style={{
-            height: win.height * 0.4,
-            // position: 'absolute',
             width: '100%',
-            top: Math.max(insets.top, 16),
-            paddingTop: s.$2,
+            paddingBottom: s.$2,
             textAlign: 'center',
           }}
         >
           <YStack
             gap={s.$2}
             style={{
-              // position: 'absolute',
               width: '100%',
               zIndex: 9,
-              height: win.height * 0.4,
               paddingTop: s.$2,
               textAlign: 'center',
             }}
           >
-            {!searching && (
-              <Animated.View entering={FadeInUp.duration(200)} exiting={FadeOutUp.duration(200)}>
-                <Heading style={{ textAlign: 'center' }} tag="h1">
-                  Refs
-                </Heading>
-              </Animated.View>
-            )}
-
             <SearchBar
               onFocus={() => setSearching(true)}
               onBlur={() => {
@@ -105,9 +86,10 @@ export const Feed = () => {
           </YStack>
         </YStack>
 
-        {searchTerm === '' ? <Nearby items={items} /> : <SearchResults results={results} />}
-
-        <View style={{ marginBottom: s.$14, alignItems: 'center' }}>
+        <ScrollView style={{ flex: 1 }}>
+          {searchTerm === '' ? <Nearby items={items} /> : <SearchResults results={results} />}
+        </ScrollView>
+        <View style={{ marginBottom: s.$2, alignItems: 'center' }}>
           <Button
             style={{ width: 20 }}
             variant="inlineSmallMuted"
@@ -115,7 +97,7 @@ export const Feed = () => {
             onPress={logout}
           />
         </View>
-      </ScrollView>
+      </View>
     </DismissKeyboard>
   )
 }

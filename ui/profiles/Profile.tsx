@@ -132,10 +132,7 @@ export const Profile = ({ userName }: { userName: string }) => {
 
   return (
     <>
-      <ScrollView
-        keyboardShouldPersistTaps="always"
-        style={{ paddingTop: Math.max(insets.top, 16) }}
-      >
+      <ScrollView keyboardShouldPersistTaps="always">
         <YStack
           style={{
             flex: 1,

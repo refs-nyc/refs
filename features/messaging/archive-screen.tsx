@@ -41,7 +41,6 @@ export function ArchiveScreen() {
       style={{
         flex: 1,
         justifyContent: 'flex-start',
-        paddingTop: s.$8,
         height: s.full as DimensionValue,
       }}
     >

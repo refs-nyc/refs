@@ -18,29 +18,34 @@ export const Navigation = () => {
   const pathName = usePathname()
   const { addingTo, removingId } = useGlobalSearchParams()
 
-  const {saves, messagesPerConversation, conversations, memberships} = useMessageStore();
+  const { saves, messagesPerConversation, conversations, memberships } = useMessageStore()
 
-  const countNewMessages = () => 
-  {
-    if (!user) return 0;
-    if (!messagesPerConversation) return 0;
-    let newMessages = 0;
+  const countNewMessages = () => {
+    if (!user) return 0
+    if (!messagesPerConversation) return 0
+    let newMessages = 0
     for (const conversationId in conversations) {
-      const lastRead = memberships[conversationId].find(m => m.expand?.user.id === user?.id)?.last_read;
-      const lastReadDate = new Date(lastRead || '');
-      const conversationMessages = messagesPerConversation[conversationId];
-      if (!conversationMessages) continue; 
-      let unreadMessages;
+      const lastRead = memberships[conversationId].find(
+        (m) => m.expand?.user.id === user?.id
+      )?.last_read
+      const lastReadDate = new Date(lastRead || '')
+      const conversationMessages = messagesPerConversation[conversationId]
+      if (!conversationMessages) continue
+      let unreadMessages
       if (lastRead) {
-        const msgs = conversationMessages.filter(m => new Date(m.created!) > lastReadDate && m.sender !== user?.id);
+        const msgs = conversationMessages.filter(
+          (m) => new Date(m.created!) > lastReadDate && m.sender !== user?.id
+        )
         unreadMessages = msgs.length
-      }
-      else unreadMessages = conversationMessages.length;
-      newMessages += unreadMessages;
+      } else unreadMessages = conversationMessages.length
+      newMessages += unreadMessages
     }
-    return newMessages;
+    return newMessages
   }
-  const newMessages = useMemo(() => countNewMessages(), [messagesPerConversation, memberships, user]);
+  const newMessages = useMemo(
+    () => countNewMessages(),
+    [messagesPerConversation, memberships, user]
+  )
 
   if (
     !user ||
@@ -101,17 +106,13 @@ export const Navigation = () => {
               <Icon name="Globe" size={39} color={c.accent} />
             </Link>
           </View>
-          <View 
-            style={{ position: 'relative', left: -10, marginTop: 3, paddingRight: 3 }}
-          >
-            <Link dismissTo href="/messages" >
+          <View style={{ position: 'relative', left: -10, marginTop: 3, paddingRight: 3 }}>
+            <Link dismissTo href="/messages">
               <Icon name="Messages" size={39} color={c.muted2} />
             </Link>
-            {newMessages > 0 && <Badge count={newMessages} color={c.red}/>}
+            {newMessages > 0 && <Badge count={newMessages} color={c.red} />}
           </View>
-          <View 
-            style={{ position: 'relative', left: -20, marginTop: 3, paddingRight: 3 }}
-          >
+          <View style={{ position: 'relative', left: -20, marginTop: 3, paddingRight: 3 }}>
             <Link push href="/saves/modal">
               <Ionicons name="paper-plane" size={39} color={c.muted2} />
             </Link>

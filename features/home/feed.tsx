@@ -88,15 +88,16 @@ export const Feed = () => {
 
         <ScrollView style={{ flex: 1 }}>
           {searchTerm === '' ? <Nearby items={items} /> : <SearchResults results={results} />}
+
+          <View style={{ marginBottom: s.$2, alignItems: 'center' }}>
+            <Button
+              style={{ width: 20 }}
+              variant="inlineSmallMuted"
+              title="Log out"
+              onPress={logout}
+            />
+          </View>
         </ScrollView>
-        <View style={{ marginBottom: s.$2, alignItems: 'center' }}>
-          <Button
-            style={{ width: 20 }}
-            variant="inlineSmallMuted"
-            title="Log out"
-            onPress={logout}
-          />
-        </View>
       </View>
     </DismissKeyboard>
   )

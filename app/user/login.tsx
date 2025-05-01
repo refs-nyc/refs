@@ -132,10 +132,7 @@ export default function Screen() {
 
   return (
     <View style={{ flex: 1 }}>
-      <TouchableOpacity
-        style={styles.backButton}
-        onPress={() => router.back()}
-      >
+      <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
         <Text style={styles.backButtonText}>Back</Text>
       </TouchableOpacity>
       <Carousel

@@ -211,6 +211,7 @@ export const useUserStore = create<{
       user: null,
       stagedUser: {},
     }))
+    pocketbase.realtime.unsubscribe()
     pocketbase.authStore.clear()
   },
   //

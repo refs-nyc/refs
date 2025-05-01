@@ -15,18 +15,17 @@ import NetInfo from '@react-native-community/netinfo'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { useEffect } from 'react'
-import { StatusBar, useColorScheme, KeyboardAvoidingView, Platform } from 'react-native'
+import { StatusBar, useColorScheme } from 'react-native'
 import { Navigation } from '@/ui/navigation/Navigation'
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native'
 import { useFonts } from 'expo-font'
-import { SplashScreen, Stack, router } from 'expo-router'
+import { SplashScreen, Stack } from 'expo-router'
 import * as Notifications from 'expo-notifications'
 import { DeferredFonts } from '@/ui'
 import { c } from '@/features/style'
 import * as SystemUI from 'expo-system-ui'
 import { RegisterPushNotifications } from '@/ui/notifications/RegisterPushNotifications'
-import { Icon } from '@/assets/icomoon/IconFont'
-import { pocketbase } from '@/features/pocketbase/pocketbase'
+import { MessagesInit } from '@/features/messaging/message-loader'
 install()
 polyfillEncoding()
 configureReanimatedLogger({ strict: false })
@@ -110,27 +109,11 @@ const Providers = ({ children }: { children: React.ReactNode }) => {
 function RootLayoutNav() {
   const colorScheme = useColorScheme()
 
-  /** Subscribe to SSE from Pocketbase */
-  useEffect(() => {
-    // Sanity check. Records can be written in non-real-time
-    // const result = await pocketbase.collection('test').getFullList()
-
-    // ! no async
-    pocketbase.collection('test').subscribe('*', (e) => {
-      console.log('Realtime event received:', e.action)
-      console.log('Record data:', e.record)
-    })
-
-    return () => {
-      console.log('unsubscribe')
-      pocketbase.collection('test').unsubscribe('*')
-    }
-  }, [])
-
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <StatusBar barStyle={colorScheme === 'dark' ? 'light-content' : 'dark-content'} />
       <RegisterPushNotifications />
+      <MessagesInit />
       <Navigation />
       <Stack
         screenOptions={{
@@ -143,6 +126,14 @@ function RootLayoutNav() {
           options={{
             title: 'Refs',
             animation: 'fade_from_bottom',
+          }}
+        />
+        <Stack.Screen
+          name="saves/modal"
+          options={{
+            presentation: 'transparentModal',
+            headerShown: false,
+            contentStyle: { backgroundColor: 'transparent' },
           }}
         />
         {/* modal for the current user */}

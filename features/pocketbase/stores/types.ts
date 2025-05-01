@@ -24,7 +24,9 @@ export type Message = PBTypes.MessagesRecord
 export type Reaction = PBTypes.ReactionsRecord
 export type Save = PBTypes.SavesRecord
 
-export type ConversationWithMemberships = PBTypes.ConversationsResponse<{ memberships_via_conversation: ExpandedMembership[] }>
+export type ConversationWithMemberships = PBTypes.ConversationsResponse<{
+  memberships_via_conversation: ExpandedMembership[]
+}>
 export type ExpandedMembership = PBTypes.MembershipsResponse<{ user: PBTypes.UsersRecord }>
 export type ExpandedReaction = PBTypes.ReactionsResponse<{ user: PBTypes.UsersRecord }>
 export type ExpandedSave = PBTypes.SavesResponse<{ user: PBTypes.UsersRecord }>

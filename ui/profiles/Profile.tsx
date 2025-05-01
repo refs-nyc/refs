@@ -34,7 +34,7 @@ export const Profile = ({ userName }: { userName: string }) => {
   const { addingTo, removingId } = useLocalSearchParams()
   const { stopEditProfile, stopEditBacklog, startEditBacklog } = useUIStore()
   const { hasShareIntent } = useShareIntentContext()
-  const {saves, addSave} = useMessageStore();
+  const { saves, addSave } = useMessageStore()
 
   const [profile, setProfile] = useState<ProfileType>()
   const [gridItems, setGridItems] = useState<Item[]>([])
@@ -72,7 +72,9 @@ export const Profile = ({ userName }: { userName: string }) => {
 
   const handleMoveToBacklog = async () => {
     try {
-      const updatedRecord = await moveToBacklog(typeof removingId === "string" ? removingId : (removingId as string[])[0])
+      const updatedRecord = await moveToBacklog(
+        typeof removingId === 'string' ? removingId : (removingId as string[])[0]
+      )
       setRemovingId('')
       await refreshGrid(userName)
     } catch (error) {
@@ -182,10 +184,7 @@ export const Profile = ({ userName }: { userName: string }) => {
                   ></Grid>
                   {/* Actions */}
                   <Pressable onPress={() => stopEditProfile()}>
-                    <XStack
-                      gap={s.$2}
-                      style={{ justifyContent: 'center', width: '100%' }}
-                    >
+                    <XStack gap={s.$2} style={{ justifyContent: 'center', width: '100%' }}>
                       {editingRights && (
                         <Button
                           onPress={() => setAddingTo('backlog')}
@@ -195,17 +194,19 @@ export const Profile = ({ userName }: { userName: string }) => {
                           iconAfter="add-circle-outline"
                         />
                       )}
-                    {showMessageButtons && (
-                      <>
-                        <DMButton profile={profile} />
-                        <Button
-                          onPress={() => {addSave(profile.id, user?.id!)}}
-                          variant="raisedSecondary"
-                          title="Save"
-                          iconBefore="bookmark"
-                        />
-                      </>
-                    )}
+                      {showMessageButtons && (
+                        <>
+                          <DMButton profile={profile} />
+                          <Button
+                            onPress={() => {
+                              addSave(profile.id, user?.id!)
+                            }}
+                            variant="raisedSecondary"
+                            title="Save"
+                            iconBefore="bookmark"
+                          />
+                        </>
+                      )}
                     </XStack>
                   </Pressable>
                 </Animated.View>
@@ -215,9 +216,11 @@ export const Profile = ({ userName }: { userName: string }) => {
                   exiting={FadeOut.duration(500)}
                   style={{ marginBottom: s.$20 }}
                 >
-                  {results.filter((item) => item.expand?.ref).map((item) => (
-                    <SearchResultItem key={item.id} r={item.expand!.ref} />
-                  ))}
+                  {results
+                    .filter((item) => item.expand?.ref)
+                    .map((item) => (
+                      <SearchResultItem key={item.id} r={item.expand!.ref} />
+                    ))}
                 </Animated.View>
               )}
             </View>
@@ -237,7 +240,9 @@ export const Profile = ({ userName }: { userName: string }) => {
             />
             <Button
               onPress={async () => {
-                await removeFromProfile(typeof removingId === "string" ? removingId : (removingId as string[])[0])
+                await removeFromProfile(
+                  typeof removingId === 'string' ? removingId : (removingId as string[])[0]
+                )
                 setRemovingId('')
                 await refreshGrid(userName)
               }}
@@ -249,7 +254,11 @@ export const Profile = ({ userName }: { userName: string }) => {
       )}
 
       {(addingTo === 'grid' || addingTo === 'backlog') && (
-        <Sheet noPadding={true} full={step !== ''} onChange={(e: any) => e === -1 && setAddingTo('')}>
+        <Sheet
+          noPadding={true}
+          full={step !== ''}
+          onChange={(e: any) => e === -1 && setAddingTo('')}
+        >
           <NewRef
             backlog={addingTo === 'backlog'}
             onStep={setStep}

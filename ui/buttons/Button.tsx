@@ -284,9 +284,9 @@ const styles = StyleSheet.create({
   },
   smallWhiteOutlineText: {
     ...t.small,
-    color: 'white'
+    color: 'white',
   },
   whiteInvertedText: {
     color: c.olive,
-  }
+  },
 })

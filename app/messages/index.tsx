@@ -7,8 +7,8 @@ export default function Screen() {
   const router = useRouter()
 
   if (!user) {
-    router.dismissTo('/');
-    return;
+    router.dismissTo('/')
+    return
   }
 
   return <ConversationsScreen />

@@ -1,4 +1,4 @@
-import { useRef } from 'react'
+import { useRef, useState } from 'react'
 import { useUserStore } from '@/features/pocketbase'
 import { s, c } from '@/features/style'
 import { router } from 'expo-router'
@@ -21,6 +21,7 @@ const EmailStep = ({ carouselRef }: { carouselRef: React.RefObject<ICarouselInst
     },
     mode: 'onChange',
   })
+
   const { updateStagedUser } = useUserStore()
 
   return (
@@ -82,18 +83,21 @@ const LoginStep = () => {
   })
 
   const { stagedUser, loginWithPassword } = useUserStore()
+  const [loginInProgress, setLoginInProgress] = useState(false)
 
   return (
     <ProfileStep
-      buttonTitle="Log in"
+      buttonTitle={loginInProgress ? 'Logging in...' : 'Log in'}
       showFullHeightStack={false}
       onSubmit={handleSubmit(async (values) => {
         if (values.login) {
+          setLoginInProgress(true)
           if (!stagedUser.email) throw new Error('email required')
           try {
             await loginWithPassword(stagedUser.email, values.login)
             router.dismissAll()
           } catch (error) {
+            setLoginInProgress(false)
             setError('login', { type: 'loginFailed', message: 'Login unsuccessful' })
           }
         }

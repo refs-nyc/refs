@@ -1,13 +1,14 @@
-import Animated, { SlideInDown, SlideOutDown, FadeOut } from 'react-native-reanimated'
-
-import { useEffect } from 'react'
+import Animated, { SlideInDown, FadeOut } from 'react-native-reanimated'
 import { Link, usePathname, useGlobalSearchParams } from 'expo-router'
-import { Dimensions, View } from 'react-native'
-import { XStack } from '../core/Stacks'
+import { Dimensions, View, Text } from 'react-native'
 import { Avatar } from '../atoms/Avatar'
 import { c, s } from '@/features/style'
 import { useUserStore } from '@/features/pocketbase/stores/users'
 import { Icon } from '@/assets/icomoon/IconFont'
+import { Ionicons } from '@expo/vector-icons'
+import { useMessageStore } from '@/features/pocketbase/stores/messages'
+import { Badge } from '../atoms/Badge'
+import { useMemo } from 'react'
 
 const win = Dimensions.get('window')
 
@@ -17,12 +18,42 @@ export const Navigation = () => {
   const pathName = usePathname()
   const { addingTo, removingId } = useGlobalSearchParams()
 
+  const { saves, messagesPerConversation, conversations, memberships } = useMessageStore()
+
+  const countNewMessages = () => {
+    if (!user) return 0
+    if (!messagesPerConversation) return 0
+    let newMessages = 0
+    for (const conversationId in conversations) {
+      const lastRead = memberships[conversationId].find(
+        (m) => m.expand?.user.id === user?.id
+      )?.last_read
+      const lastReadDate = new Date(lastRead || '')
+      const conversationMessages = messagesPerConversation[conversationId]
+      if (!conversationMessages) continue
+      let unreadMessages
+      if (lastRead) {
+        const msgs = conversationMessages.filter(
+          (m) => new Date(m.created!) > lastReadDate && m.sender !== user?.id
+        )
+        unreadMessages = msgs.length
+      } else unreadMessages = conversationMessages.length
+      newMessages += unreadMessages
+    }
+    return newMessages
+  }
+  const newMessages = useMemo(
+    () => countNewMessages(),
+    [messagesPerConversation, memberships, user]
+  )
+
   if (
     !user ||
     pathName.includes('/onboarding') ||
     pathName.includes('/user/login') ||
     pathName.includes('/user/register') ||
-    pathName.includes('/modal') ||
+    (pathName.includes('/modal') && !pathName.includes('/saves/modal')) || // want the navbar to stay visible under the saves modal
+    pathName.includes('/messages/') || // e.g. /messages/123
     addingTo === 'grid' ||
     addingTo === 'backlog' ||
     !!removingId
@@ -74,6 +105,18 @@ export const Navigation = () => {
               {/* <Ionicons name="globe" size={42} color={c.accent} /> */}
               <Icon name="Globe" size={39} color={c.accent} />
             </Link>
+          </View>
+          <View style={{ position: 'relative', left: -10, marginTop: 3, paddingRight: 3 }}>
+            <Link dismissTo href="/messages">
+              <Icon name="Messages" size={39} color={c.muted2} />
+            </Link>
+            {newMessages > 0 && <Badge count={newMessages} color={c.red} />}
+          </View>
+          <View style={{ position: 'relative', left: -20, marginTop: 3, paddingRight: 3 }}>
+            <Link push href="/saves/modal">
+              <Ionicons name="paper-plane" size={39} color={c.muted2} />
+            </Link>
+            {saves.length > 0 && <Badge count={saves.length} />}
           </View>
         </View>
         <View

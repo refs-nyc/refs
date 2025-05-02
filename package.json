@@ -56,6 +56,7 @@
     "expo-image": "^2.0.3",
     "expo-image-picker": "^16.0.3",
     "expo-linking": "~7.0.4",
+    "expo-localization": "~16.0.1",
     "expo-location": "~18.0.5",
     "expo-modules-core": "^2.1.1",
     "expo-notifications": "~0.29.11",
@@ -69,6 +70,7 @@
     "expo-web-browser": "~14.0.1",
     "fast-text-encoding": "^1.0.6",
     "link-preview-js": "^3.0.13",
+    "luxon": "^3.6.1",
     "metro": "0.81.0",
     "multiformats": "^13.3.1",
     "pocketbase": "^0.22.1",
@@ -91,6 +93,7 @@
     "react-native-svg-transformer": "^1.5.0",
     "react-native-web": "~0.19.13",
     "react-native-webview": "13.12.2",
+    "rn-emoji-keyboard": "^1.7.0",
     "text-encoding": "^0.7.0",
     "xcode": "3.0.1",
     "zustand": "^5.0.2"
@@ -105,6 +108,7 @@
   "devDependencies": {
     "@babel/core": "^7.25.2",
     "@types/jest": "^29.5.12",
+    "@types/luxon": "^3.6.2",
     "@types/react": "~18.3.12",
     "@types/react-native-get-random-values": "^1.8.2",
     "@types/react-test-renderer": "^18.3.0",
@@ -120,5 +124,6 @@
     "patchedDependencies": {
       "xcode@3.0.1": "patches/xcode@3.0.1.patch"
     }
-  }
+  },
+  "packageManager": "pnpm@10.8.0+sha512.0e82714d1b5b43c74610193cb20734897c1d00de89d0e18420aebc5977fa13d780a9cb05734624e81ebd81cc876cd464794850641c48b9544326b5622ca29971"
 }

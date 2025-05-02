@@ -5,7 +5,7 @@ import { ContextMenu } from '../atoms/ContextMenu'
 import { EditableHeader } from '../atoms/EditableHeader'
 import { useItemStore } from '@/features/pocketbase/stores/items'
 import { ExpandedItem } from '@/features/pocketbase/stores/types'
-import { Link } from 'expo-router'
+import { Href, Link } from 'expo-router'
 import { View, Pressable, Text, Dimensions } from 'react-native'
 import { Heading } from '../typo/Heading'
 import { c, s, t, base } from '@/features/style'
@@ -23,7 +23,7 @@ const EditableItemComponent = ({
 }: {
   item: ExpandedItem
   editingRights?: boolean
-  index: number
+  index: number | undefined
 }) => {
   const [showMenu, setShowMenu] = useState(false)
   const [title, setTitle] = useState(item.expand?.ref.title)

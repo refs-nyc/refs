@@ -4,7 +4,7 @@ import { XStack } from '@/ui/core/Stacks'
 import { View, Text } from 'react-native'
 import { SimplePinataImage } from '@/ui/images/SimplePinataImage'
 import { s, c, base } from '@/features/style'
-import { CompleteRef } from '@/features/pocketbase/stores/types'
+import { CompleteRef, ExpandedItem } from '@/features/pocketbase/stores/types'
 import { useUserStore } from '@/features/pocketbase/stores/users'
 
 export const SearchResultItem = ({ r }: { r: CompleteRef }) => {
@@ -13,7 +13,7 @@ export const SearchResultItem = ({ r }: { r: CompleteRef }) => {
 
   useEffect(() => {
     console.log('BACKLOG', backlogItems.length)
-    console.log(backlogItems.map((itm) => itm.expand.ref.id))
+    console.log(backlogItems.map((itm) => (itm as ExpandedItem).expand?.ref.id))
     console.log(backlogItems.map((itm) => Object.keys(itm)))
     console.log(r.id)
   }, [backlogItems])
@@ -54,14 +54,14 @@ export const SearchResultItem = ({ r }: { r: CompleteRef }) => {
         </XStack>
         <XStack gap={s.$09} style={{ justifyContent: 'space-between', alignItems: 'center' }}>
           {pocketbase.authStore.record?.expand?.items
-            ?.map((itm) => itm.expand.ref.id)
+            ?.map((itm: ExpandedItem) => itm.expand?.ref.id)
             .includes(r.id) ? (
             <Text>
-              You are{pocketbase.authStore.record.id !== profile?.id && ' also'} referencing
+              You are{"id" in profile && pocketbase.authStore.record.id !== profile.id && ' also'} referencing
             </Text>
           ) : pocketbase.authStore.record?.expand?.items
-              ?.filter((itm) => itm.backlog)
-              ?.map((itm) => itm.expand.ref.id)
+              ?.filter((itm: ExpandedItem) => itm.backlog)
+              ?.map((itm: ExpandedItem) => itm.expand?.ref.id)
               ?.includes(r.id) ? (
             <Text>In your backlog</Text>
           ) : (

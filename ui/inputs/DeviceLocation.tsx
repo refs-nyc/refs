@@ -123,9 +123,10 @@ export const DeviceLocation = ({
         searchTextInputStyle={{ ...t.p, color: c.accent, borderWidth: 0, paddingHorizontal: 12 }}
         searchContainerStyle={{ borderBottomColor: c.surface, backgroundColor: c.surface }}
         searchable={true}
-        ListEmptyComponent={() => (
-          <View style={[t.p, { color: c.accent, opacity: 0, height: 0, width: 0 }]}></View>
-        )}
+        ListEmptyComponent={() => {
+          // @ts-ignore
+          return <View style={[t.p, { color: c.accent, opacity: 0, height: 0, width: 0 }]}></View>
+        }}
         style={{
           borderColor: c.accent,
           borderRadius: 30,

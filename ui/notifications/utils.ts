@@ -40,12 +40,12 @@ export async function registerForPushNotificationsAsync() {
           projectId,
         })
       ).data
-      console.log(pushTokenString)
+      console.log('pushTokenString:', pushTokenString)
       return pushTokenString
     } catch (e: unknown) {
       handleRegistrationError(`${e}`)
     }
   } else {
-    console.error('Must use physical device for push notifications')
+    console.log('Must use physical device for push notifications')
   }
 }

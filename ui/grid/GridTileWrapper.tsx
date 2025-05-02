@@ -39,6 +39,7 @@ export const GridTileWrapper = ({
     stopEditProfile()
     const url = pathname === '/' ? '/modal' : `${pathname}/modal`
     const query = id ? `?initialId=${id}` : ''
+    // @ts-ignore
     router.push(`${url}${query}`)
   }
 

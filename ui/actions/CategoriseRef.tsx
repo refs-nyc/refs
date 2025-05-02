@@ -54,6 +54,7 @@ export const CategoriseRef = ({
           <Ionicons name="caret-back" size={18} color={c.muted} />
         </Pressable>
         <View>
+          {/* @ts-ignore */}
           {item?.expand?.ref?.image && <SimplePinataImage originalSource={item.expand.ref.image} />}
           <Heading tag="h1">{item?.expand?.ref.title}</Heading>
         </View>
@@ -67,7 +68,7 @@ export const CategoriseRef = ({
               iconColor={c.accent}
               iconSize={s.$2}
               onPress={() => categorise('place')}
-              iconBefore="Castle"
+              iconBefore={"Castle" as any}
               iconBeforeCustom={true}
               title="Place"
             />
@@ -94,12 +95,13 @@ export const CategoriseRef = ({
         </YStack>
         <YStack gap={s.$08} style={{ justifyContent: 'center', width: '100%' }}>
           <View style={{ width: '100%', paddingHorizontal: s.$2 }}>
+            
             <Button
               variant="basicLeft"
               iconColor={c.accent}
               iconSize={s.$2}
               onPress={() => categorise('artwork')}
-              iconBefore="Palette"
+              iconBefore={"Palette" as any}
               iconBeforeCustom={true}
               title="Work of art"
             />
@@ -134,7 +136,7 @@ export const CategoriseRef = ({
                 categorise('other')
                 done()
               }}
-              iconBefore="Infinity"
+              iconBefore={"Infinity" as any}
               iconBeforeCustom={true}
               title="Other"
             />

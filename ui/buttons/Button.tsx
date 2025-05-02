@@ -70,7 +70,6 @@ export const Button = (props: ButtonProps) => {
       ]}
       onTouchStart={() => {
         setPressed(true)
-        console.log(pressedVariant)
       }}
       onTouchEnd={() => {
         setPressed(false)
@@ -134,6 +133,23 @@ const styles = StyleSheet.create({
   },
   smallMuted: {
     backgroundColor: 'transparent',
+  },
+  whiteOutline: {
+    borderColor: 'white',
+    borderWidth: 1,
+    backgroundColor: 'transparent',
+  },
+  whiteInverted: {
+    borderColor: 'white',
+    borderWidth: 1,
+    backgroundColor: 'white',
+  },
+  smallWhiteOutline: {
+    borderColor: 'white',
+    borderWidth: 1,
+    backgroundColor: 'transparent',
+    paddingVertical: 0,
+    paddingHorizontal: s.$05,
   },
   disabled: {
     opacity: 0.6,
@@ -265,5 +281,12 @@ const styles = StyleSheet.create({
   },
   outlineText: {
     color: c.black,
+  },
+  smallWhiteOutlineText: {
+    ...t.small,
+    color: 'white',
+  },
+  whiteInvertedText: {
+    color: c.olive,
   },
 })

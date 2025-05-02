@@ -80,14 +80,13 @@ export const FormFieldWithIcon = ({
           secureTextEntry={
             type === 'password' || type === 'passwordConfirm' ? !showPassword : false
           }
-          autoCorrect={false}
+          autoCorrect={autoCorrect}
           autoFocus={autoFocus}
           placeholder={placeholder}
           placeholderTextColor={c.accent}
           onBlur={onBlur}
           onChangeText={onChange}
           value={value}
-          autoCorrect={autoCorrect}
           keyboardType={type === 'email' ? 'email-address' : 'default'}
         />
       </XStack>

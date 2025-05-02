@@ -37,7 +37,8 @@
         {
           "locationAlwaysAndWhenInUsePermission": "Allow Refs to use your location."
         }
-      ]
+      ],
+      "expo-localization"
     ],
     "experiments": {
       "typedRoutes": true

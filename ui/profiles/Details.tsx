@@ -74,30 +74,32 @@ export const renderItem = ({
 }: {
   item: ExpandedItem
   editingRights?: boolean
-  index: number
+  index?: number
 }) => {
   return (
-    <View
-      style={{
-        width: win.width * 0.9,
-        height: win.height,
-        left: win.width * 0.05,
-        padding: s.$075,
-        gap: s.$1,
-        justifyContent: 'start',
-      }}
-      key={item.id} // key should ideally be on the top-level element returned by map/renderItem callback
-    >
-      <BottomSheetScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ padding: s.$075, gap: s.$1 }} // Add padding here, ensure enough bottom padding
-        keyboardShouldPersistTaps="handled"
-        nestedScrollEnabled={true} // May be needed if Carousel interferes, test
+    <>
+      {/* @ts-ignore */}
+      <View
+        style={{
+          width: win.width * 0.8,
+          height: win.height,
+          left: win.width * 0.1,
+          padding: s.$075,
+          gap: s.$1,
+          justifyContent: 'start' as any,
+        }}
+        key={item.id} // key should ideally be on the top-level element returned by map/renderItem callback
       >
-        <DetailsHeaderButton />
-        <EditableItem item={item} editingRights={editingRights} index={index} />
-      </BottomSheetScrollView>
-    </View>
+        <BottomSheetScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ padding: s.$075, gap: s.$1, paddingBottom: 200 }} // Add padding here, ensure enough bottom padding
+          keyboardShouldPersistTaps="handled"
+          nestedScrollEnabled={true} // May be needed if Carousel interferes, test
+        >
+          <EditableItem item={item} editingRights={editingRights} index={index} />
+        </BottomSheetScrollView>
+      </View>
+    </>
   )
 }
 
@@ -163,8 +165,8 @@ export const Details = ({
   }, [setAddingToList, getProfile, userNameParam])
 
   const carouselStyle = useMemo<{
-    overflow: ViewStyle["overflow"],
-    paddingVertical: number,
+    overflow: ViewStyle['overflow']
+    paddingVertical: number
   }>(
     () => ({
       overflow: 'visible',
@@ -182,7 +184,7 @@ export const Details = ({
 
   return (
     <SheetScreen
-      onChange={(e) => {
+      onChange={(e: any) => {
         e === -1 && router.back()
         e === -1 && stopEditing()
       }}
@@ -202,11 +204,10 @@ export const Details = ({
         windowSize={5}
         pagingEnabled={true}
         snapEnabled={true}
-        keyExtractor={(item: ExpandedItem) => item.id} // Good practice for lists/carousels
       />
 
       {addingToList !== '' && addingItem && (
-        <Sheet full={true} onChange={(e) => e === -1 && close()}>
+        <Sheet full={true} onChange={(e: any) => e === -1 && close()}>
           <EditableList item={addingItem} onComplete={() => {}} />
         </Sheet>
       )}

@@ -11,21 +11,20 @@ import { ProfileHeader } from './ProfileHeader'
 import { Grid } from '../grid/Grid'
 import { Sheet } from '../core/Sheets'
 import { useLocalSearchParams, router } from 'expo-router'
-import { RefListItem } from '../atoms/RefListItem'
-import { useEffect, useState, useCallback, useMemo } from 'react'
-import { View, Dimensions, KeyboardAvoidingView } from 'react-native'
+import { useEffect, useState, useMemo } from 'react'
+import { View, Dimensions, Pressable } from 'react-native'
 import { s, c } from '@/features/style'
 import { pocketbase, useUserStore, removeFromProfile, useItemStore } from '@/features/pocketbase'
 import { ShareIntent as ShareIntentType, useShareIntentContext } from 'expo-share-intent'
-import Ionicons from '@expo/vector-icons/Ionicons'
-import { Pressable, ScrollView } from 'react-native-gesture-handler'
+import { ScrollView } from 'react-native-gesture-handler'
 import {
   Profile as ProfileType,
   ExpandedProfile,
   ExpandedItem,
 } from '@/features/pocketbase/stores/types'
-import { isProfile } from '@/features/pocketbase/stores/users'
 import { gridSort, createdSort } from '../profiles/sorts'
+import { DMButton } from './DMButton'
+import { useMessageStore } from '@/features/pocketbase/stores/messages'
 
 const win = Dimensions.get('window')
 
@@ -35,12 +34,14 @@ export const Profile = ({ userName }: { userName: string }) => {
   const { addingTo, removingId } = useLocalSearchParams()
   const { stopEditProfile, stopEditBacklog, startEditBacklog } = useUIStore()
   const { hasShareIntent } = useShareIntentContext()
+  const { saves, addSave } = useMessageStore()
 
   const [profile, setProfile] = useState<ProfileType>()
   const [gridItems, setGridItems] = useState<Item[]>([])
   const [searching, setSearching] = useState(false)
   const [backlogItems, setBacklogItems] = useState<ExpandedItem[]>([])
   const [editingRights, seteditingRights] = useState<boolean>(false)
+  const [showMessageButtons, setShowMessageButtons] = useState<boolean>(false)
   const [step, setStep] = useState('')
   const [term, setTerm] = useState('')
   const [allItems, setAllItems] = useState<ExpandedItem[]>([])
@@ -71,7 +72,9 @@ export const Profile = ({ userName }: { userName: string }) => {
 
   const handleMoveToBacklog = async () => {
     try {
-      const updatedRecord = await moveToBacklog(typeof removingId === "string" ? removingId : removingId[0])
+      const updatedRecord = await moveToBacklog(
+        typeof removingId === 'string' ? removingId : (removingId as string[])[0]
+      )
       setRemovingId('')
       await refreshGrid(userName)
     } catch (error) {
@@ -119,6 +122,7 @@ export const Profile = ({ userName }: { userName: string }) => {
         await getProfile(userName)
         await refreshGrid(userName)
         seteditingRights(pocketbase?.authStore?.record?.userName === userName)
+        setShowMessageButtons(!(pocketbase?.authStore?.record?.userName === userName))
       } catch (error) {
         console.error(error)
       }
@@ -180,10 +184,7 @@ export const Profile = ({ userName }: { userName: string }) => {
                   ></Grid>
                   {/* Actions */}
                   <Pressable onPress={() => stopEditProfile()}>
-                    <XStack
-                      gap={s.$2}
-                      style={{ justifyContent: 'center', width: '100%' }}
-                    >
+                    <XStack gap={s.$2} style={{ justifyContent: 'center', width: '100%' }}>
                       {editingRights && (
                         <Button
                           onPress={() => setAddingTo('backlog')}
@@ -193,17 +194,13 @@ export const Profile = ({ userName }: { userName: string }) => {
                           iconAfter="add-circle-outline"
                         />
                       )}
-                      {!editingRights && (
+                      {showMessageButtons && (
                         <>
+                          <DMButton profile={profile} />
                           <Button
-                            onPress={() => {}}
-                            variant="raisedSecondary"
-                            title="Message"
-                            iconColor={c.muted}
-                            iconAfter="paper-plane"
-                          />
-                          <Button
-                            onPress={() => {}}
+                            onPress={() => {
+                              addSave(profile.id, user?.id!)
+                            }}
                             variant="raisedSecondary"
                             title="Save"
                             iconBefore="bookmark"
@@ -219,9 +216,11 @@ export const Profile = ({ userName }: { userName: string }) => {
                   exiting={FadeOut.duration(500)}
                   style={{ marginBottom: s.$20 }}
                 >
-                  {results.filter((item) => item.expand?.ref).map((item) => (
-                    <SearchResultItem key={item.id} r={item.expand!.ref} />
-                  ))}
+                  {results
+                    .filter((item) => item.expand?.ref)
+                    .map((item) => (
+                      <SearchResultItem key={item.id} r={item.expand!.ref} />
+                    ))}
                 </Animated.View>
               )}
             </View>
@@ -232,7 +231,7 @@ export const Profile = ({ userName }: { userName: string }) => {
       </ScrollView>
 
       {removingId && (
-        <Sheet full={false} onChange={(e) => e === -1 && setRemovingId('')}>
+        <Sheet full={false} onChange={(e: any) => e === -1 && setRemovingId('')}>
           <YStack gap={s.$08} style={{ marginTop: s.$1, marginBottom: s.$5 }}>
             <Button
               onPress={handleMoveToBacklog}
@@ -241,7 +240,9 @@ export const Profile = ({ userName }: { userName: string }) => {
             />
             <Button
               onPress={async () => {
-                await removeFromProfile(typeof removingId === "string" ? removingId : removingId[0])
+                await removeFromProfile(
+                  typeof removingId === 'string' ? removingId : (removingId as string[])[0]
+                )
                 setRemovingId('')
                 await refreshGrid(userName)
               }}
@@ -253,7 +254,11 @@ export const Profile = ({ userName }: { userName: string }) => {
       )}
 
       {(addingTo === 'grid' || addingTo === 'backlog') && (
-        <Sheet noPadding={true} full={step !== ''} onChange={(e) => e === -1 && setAddingTo('')}>
+        <Sheet
+          noPadding={true}
+          full={step !== ''}
+          onChange={(e: any) => e === -1 && setAddingTo('')}
+        >
           <NewRef
             backlog={addingTo === 'backlog'}
             onStep={setStep}

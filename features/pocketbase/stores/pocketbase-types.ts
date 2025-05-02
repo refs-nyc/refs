@@ -12,9 +12,15 @@ export enum Collections {
   Mfas = '_mfas',
   Otps = '_otps',
   Superusers = '_superusers',
+  Conversations = 'conversations',
   Items = 'items',
+  Memberships = 'memberships',
+  Messages = 'messages',
   Profiles = 'profiles',
+  Reactions = 'reactions',
   Refs = 'refs',
+  Saves = 'saves',
+  Test = 'test',
   Users = 'users',
 }
 
@@ -23,15 +29,20 @@ export type IsoDateString = string
 export type RecordIdString = string
 export type HTMLString = string
 
+type ExpandType<T> = unknown extends T
+  ? T extends unknown
+    ? { expand?: unknown }
+    : { expand: T }
+  : { expand: T }
+
 // System fields
-export type BaseSystemFields<T = never> = {
+export type BaseSystemFields<T = unknown> = {
   id: RecordIdString
   collectionId: string
   collectionName: Collections
-  expand?: T
-}
+} & ExpandType<T>
 
-export type AuthSystemFields<T = never> = {
+export type AuthSystemFields<T = unknown> = {
   email: string
   emailVisibility: boolean
   username: string
@@ -102,6 +113,13 @@ export type SuperusersRecord = {
   verified?: boolean
 }
 
+export type ConversationsRecord = {
+  created?: IsoDateString
+  id: string
+  is_direct?: boolean
+  title?: string
+}
+
 export type ItemsRecord = {
   backlog?: boolean
   children?: RecordIdString[]
@@ -119,6 +137,26 @@ export type ItemsRecord = {
   url?: string
 }
 
+export type MembershipsRecord = {
+  archived?: boolean
+  conversation: RecordIdString
+  created?: IsoDateString
+  id: string
+  last_read?: IsoDateString
+  updated?: IsoDateString
+  user: RecordIdString
+}
+
+export type MessagesRecord = {
+  conversation?: RecordIdString
+  created?: IsoDateString
+  id: string
+  image?: string
+  replying_to?: RecordIdString
+  sender: RecordIdString
+  text?: string
+}
+
 export type ProfilesRecord = {
   created?: IsoDateString
   firstName: string
@@ -130,6 +168,15 @@ export type ProfilesRecord = {
   location?: string
   updated?: IsoDateString
   userName: string
+}
+
+export type ReactionsRecord = {
+  created?: IsoDateString
+  emoji: string
+  id: string
+  message: RecordIdString
+  updated?: IsoDateString
+  user: RecordIdString
 }
 
 export enum RefsTypeOptions {
@@ -149,6 +196,20 @@ export type RefsRecord = {
   type?: RefsTypeOptions
   updated?: IsoDateString
   url?: string
+}
+
+export type SavesRecord = {
+  created?: IsoDateString
+  id: string
+  saved_by: RecordIdString
+  updated?: IsoDateString
+  user: RecordIdString
+}
+
+export type TestRecord = {
+  created?: IsoDateString
+  id: string
+  updated?: IsoDateString
 }
 
 export type UsersRecord = {
@@ -181,10 +242,20 @@ export type MfasResponse<Texpand = unknown> = Required<MfasRecord> & BaseSystemF
 export type OtpsResponse<Texpand = unknown> = Required<OtpsRecord> & BaseSystemFields<Texpand>
 export type SuperusersResponse<Texpand = unknown> = Required<SuperusersRecord> &
   AuthSystemFields<Texpand>
+export type ConversationsResponse<Texpand = unknown> = Required<ConversationsRecord> &
+  BaseSystemFields<Texpand>
 export type ItemsResponse<Texpand = unknown> = Required<ItemsRecord> & BaseSystemFields<Texpand>
+export type MembershipsResponse<Texpand = unknown> = Required<MembershipsRecord> &
+  BaseSystemFields<Texpand>
+export type MessagesResponse<Texpand = unknown> = Required<MessagesRecord> &
+  BaseSystemFields<Texpand>
 export type ProfilesResponse<Texpand = unknown> = Required<ProfilesRecord> &
   BaseSystemFields<Texpand>
+export type ReactionsResponse<Texpand = unknown> = Required<ReactionsRecord> &
+  BaseSystemFields<Texpand>
 export type RefsResponse<Texpand = unknown> = Required<RefsRecord> & BaseSystemFields<Texpand>
+export type SavesResponse<Texpand = unknown> = Required<SavesRecord> & BaseSystemFields<Texpand>
+export type TestResponse<Texpand = unknown> = Required<TestRecord> & BaseSystemFields<Texpand>
 export type UsersResponse<Texpand = unknown> = Required<UsersRecord> & AuthSystemFields<Texpand>
 
 // Types containing all Records and Responses, useful for creating typing helper functions
@@ -196,9 +267,15 @@ export type CollectionRecords = {
   _mfas: MfasRecord
   _otps: OtpsRecord
   _superusers: SuperusersRecord
+  conversations: ConversationsRecord
   items: ItemsRecord
+  memberships: MembershipsRecord
+  messages: MessagesRecord
   profiles: ProfilesRecord
+  reactions: ReactionsRecord
   refs: RefsRecord
+  saves: SavesRecord
+  test: TestRecord
   users: UsersRecord
 }
 
@@ -209,9 +286,15 @@ export type CollectionResponses = {
   _mfas: MfasResponse
   _otps: OtpsResponse
   _superusers: SuperusersResponse
+  conversations: ConversationsResponse
   items: ItemsResponse
+  memberships: MembershipsResponse
+  messages: MessagesResponse
   profiles: ProfilesResponse
+  reactions: ReactionsResponse
   refs: RefsResponse
+  saves: SavesResponse
+  test: TestResponse
   users: UsersResponse
 }
 
@@ -225,8 +308,14 @@ export type TypedPocketBase = PocketBase & {
   collection(idOrName: '_mfas'): RecordService<MfasResponse>
   collection(idOrName: '_otps'): RecordService<OtpsResponse>
   collection(idOrName: '_superusers'): RecordService<SuperusersResponse>
+  collection(idOrName: 'conversations'): RecordService<ConversationsResponse>
   collection(idOrName: 'items'): RecordService<ItemsResponse>
+  collection(idOrName: 'memberships'): RecordService<MembershipsResponse>
+  collection(idOrName: 'messages'): RecordService<MessagesResponse>
   collection(idOrName: 'profiles'): RecordService<ProfilesResponse>
+  collection(idOrName: 'reactions'): RecordService<ReactionsResponse>
   collection(idOrName: 'refs'): RecordService<RefsResponse>
+  collection(idOrName: 'saves'): RecordService<SavesResponse>
+  collection(idOrName: 'test'): RecordService<TestResponse>
   collection(idOrName: 'users'): RecordService<UsersResponse>
 }

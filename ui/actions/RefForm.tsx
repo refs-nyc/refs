@@ -13,7 +13,7 @@ import { addToProfile } from '@/features/pocketbase'
 import { Button } from '../buttons/Button'
 import type { ImagePickerAsset } from 'expo-image-picker'
 import { c, s } from '@/features/style'
-import { StagedRef, Item } from '@/features/pocketbase/stores/types'
+import { StagedRef, Item, ExpandedItem } from '@/features/pocketbase/stores/types'
 
 const win = Dimensions.get('window')
 
@@ -28,7 +28,7 @@ export const RefForm = ({
 }: {
   r: StagedRef
   placeholder?: string
-  onComplete: (i: Item) => void
+  onComplete: (i: ExpandedItem) => void
   onCancel: () => void
   pickerOpen?: boolean
   backlog?: boolean
@@ -81,7 +81,7 @@ export const RefForm = ({
       })
   }
 
-  const handleDataChange = (d: { title: string; url: string; image: string }) => {
+  const handleDataChange = (d: { title: string; url: string; image?: string | undefined }) => {
     setTitle(d.title)
     setUrl(d.url)
     if (d.image) {

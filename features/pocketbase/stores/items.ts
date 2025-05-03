@@ -12,13 +12,15 @@ import { canvasApp } from './canvas'
 export const useItemStore = create<{
   items: Item[]
   editing: string
+  searchingNewRef: string
   editedState: Partial<ExpandedItem>
   startEditing: (id: string) => void
+  setSearchingNewRef: (id: string) => void
   stopEditing: () => void
   push: (newItem: StagedItem) => Promise<ExpandedItem>
   addToList: (id: string, ref: CompleteRef) => Promise<Item>
   update: (id?: string) => Promise<RecordModel>
-  updateEditedState: (e: Partial<CompleteRef>) => void
+  updateEditedState: (e: Partial<ExpandedItem>) => void
   removeFromList: (id: string, ref: CompleteRef) => Promise<Item>
   reference: () => void
   remove: (id: string) => void
@@ -26,11 +28,13 @@ export const useItemStore = create<{
 }>((set, get) => ({
   items: [],
   editing: '',
+  searchingNewRef: '', // the id to replace the ref for
   editedState: {},
   startEditing: (id: string) => set(() => ({ editing: id })),
+  setSearchingNewRef: (id: string) => set(() => ({ searchingNewRef: id })),
   stopEditing: () =>
     set(() => {
-      return { editing: '', editedState: {} }
+      return { editing: '', editedState: {}, setSearchingNewRef: '' }
     }),
   updateEditedState: (editedState: Partial<CompleteRef>) =>
     set(() => ({
@@ -85,7 +89,7 @@ export const useItemStore = create<{
     try {
       const record = await pocketbase
         .collection('items')
-        .update(id || get().editing, get().editedState, { expand: 'children' })
+        .update(id || get().editing, get().editedState, { expand: 'children,ref' })
       // Canvas stuff
 
       return record

@@ -19,9 +19,9 @@ export const SearchRef = ({
   onComplete,
 }: {
   noNewRef?: boolean
-  url: string
-  image: string
-  paste: boolean
+  url?: string
+  image?: string
+  paste?: boolean
   onComplete: (r: CompleteRef) => void
 }) => {
   const [searchQuery, setSearchQuery] = useState('')

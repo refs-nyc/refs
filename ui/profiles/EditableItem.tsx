@@ -12,7 +12,9 @@ import { c, s, t, base } from '@/features/style'
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { ListContainer } from '../lists/ListContainer'
 import Animated, { useAnimatedStyle } from 'react-native-reanimated'
-import { BottomSheetTextInput, BottomSheetScrollView } from '@gorhom/bottom-sheet'
+import { BottomSheetTextInput, BottomSheetScrollView, BottomSheetView } from '@gorhom/bottom-sheet'
+import { Sheet } from '../core/Sheets'
+import { SearchRef } from '../actions/SearchRef'
 
 const win = Dimensions.get('window')
 
@@ -26,7 +28,7 @@ const EditableItemComponent = ({
   index: number
 }) => {
   const { showContextMenu, setShowContextMenu } = useUIStore()
-  const { editing, startEditing, updateEditedState, update } = useItemStore()
+  const { editing, startEditing, updateEditedState, setSearchingNewRef } = useItemStore()
   const [text, setText] = useState(item?.text)
 
   const animatedStyle = useAnimatedStyle(() => {
@@ -34,34 +36,34 @@ const EditableItemComponent = ({
   }, [editing, item])
 
   return (
-    <Pressable
-      style={{ gap: s.$09, paddingVertical: win.height * 0.1 }}
-      onPress={() => {
-        setShowContextMenu('')
-      }}
-      onLongPress={() => {
-        setShowContextMenu(item.id)
-      }}
-    >
-      <View
-        style={{
-          width: '100%',
-          aspectRatio: 1,
+    <>
+      <Pressable
+        style={{ gap: s.$09, paddingVertical: win.height * 0.1, paddingHorizontal: s.$2 }}
+        onPress={() => {
+          setShowContextMenu('')
+        }}
+        onLongPress={() => {
+          setShowContextMenu(item.id)
         }}
       >
-        {/* Menu */}
-        {showContextMenu === item.id && (
-          <ContextMenu
-            onEditPress={() => {
-              startEditing(item.id)
-              setShowContextMenu('')
-            }}
-            editingRights={editingRights}
-          />
-        )}
         {/* Image */}
-        {item.image && !item.list ? (
-          item.expand?.ref.image && (
+        <BottomSheetView
+          style={{
+            width: '100%',
+            aspectRatio: 1,
+          }}
+        >
+          {/* Menu */}
+          {showContextMenu === item.id && (
+            <ContextMenu
+              onEditPress={() => {
+                startEditing(item.id)
+                setShowContextMenu('')
+              }}
+              editingRights={editingRights}
+            />
+          )}
+          {(item.expand?.ref.image || item.image) && !item.list ? (
             <Zoomable
               minScale={0.25}
               maxScale={3}
@@ -87,112 +89,120 @@ const EditableItemComponent = ({
                   },
                 ]}
               >
-                <View style={{ flex: 1, padding: s.$075 }}>
+                <BottomSheetView style={{ flex: 1, padding: s.$075 }}>
                   <Image
                     style={[{ flex: 1, aspectRatio: 1, overflow: 'hidden', borderRadius: s.$075 }]}
-                    source={item.expand.ref.image || item.image}
+                    source={item.image || item.expand?.ref.image}
                   />
-                </View>
+                </BottomSheetView>
               </Animated.View>
             </Zoomable>
-          )
-        ) : (
-          <View
-            style={{
-              flex: 1,
-              backgroundColor: c.surface2,
-            }}
-          >
-            {/* List */}
-            {item.list && <ListContainer editingRights={!!editingRights} item={item} />}
-          </View>
-        )}
-      </View>
-      {/* Title */}
-      <View style={{ width: '100%' }}>
-        <View
-          style={{
-            marginBottom: 0,
-            flexDirection: 'row',
-            justifyContent: 'space-between',
-            gap: s.$09,
-          }}
-        >
-          {/* Title */}
-          <View
-            style={[
-              {
-                gap: s.$05,
-                flex: 1,
-                paddingHorizontal: s.$1,
-                borderWidth: 1,
-                borderColor: 'transparent',
-              },
-              editing === item.id && base.editableItem,
-            ]}
-          >
-            <View
+          ) : (
+            <BottomSheetView
               style={{
-                paddingVertical: s.$08,
+                flex: 1,
+                backgroundColor: c.surface2,
               }}
             >
-              <Heading tag="h2">{item.expand?.ref?.title}</Heading>
-              <Heading tag="smallmuted">{item.expand?.ref?.meta}</Heading>
-            </View>
-          </View>
+              {/* List */}
+              {item.list && <ListContainer editingRights={!!editingRights} item={item} />}
+            </BottomSheetView>
+          )}
+        </BottomSheetView>
 
-          <Pressable
-            style={[
-              {
-                width: s.$4,
-                height: s.$4,
-                justifyContent: 'center',
-                alignItems: 'center',
-              },
-              editing && base.editableItem,
-            ]}
-            onPress={() => {}}
+        {/* Title */}
+        <BottomSheetView style={{ width: '100%' }}>
+          <BottomSheetView
+            style={{
+              marginBottom: 0,
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              gap: s.$09,
+            }}
           >
-            {item.expand?.ref.url && (
-              <>
+            {/* Title */}
+            <Pressable
+              onPress={() => {
+                if (!editing) return
+
+                setSearchingNewRef(editing)
+              }}
+              style={[
+                {
+                  gap: s.$05,
+                  flex: 1,
+                  paddingHorizontal: s.$1,
+                },
+                editing === item.id ? base.editableItem : base.nonEditableItem,
+              ]}
+            >
+              <BottomSheetView
+                style={{
+                  paddingVertical: s.$08,
+                }}
+              >
+                <Heading tag="h2">{item.expand?.ref?.title}</Heading>
+                <Heading tag="smallmuted">{item.expand?.ref?.meta}</Heading>
+              </BottomSheetView>
+            </Pressable>
+
+            <Pressable
+              style={[
+                {
+                  width: s.$4,
+                  height: s.$4,
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                },
+                editing ? base.editableItem : base.nonEditableItem,
+              ]}
+              onPress={() => {}}
+            >
+              {item.expand?.ref.url && (
                 <Link
                   style={{ transformOrigin: 'center', transform: 'rotate(-45deg)' }}
                   href={item.expand?.ref.url}
                 >
-                  <Ionicons color={c.muted} size={s.$1} name="arrow-forward-outline" />
+                  <Ionicons
+                    color={c.muted}
+                    size={s.$2}
+                    fillColor="red"
+                    name="arrow-forward-outline"
+                  />
                 </Link>
-              </>
-            )}
-          </Pressable>
-        </View>
-      </View>
-      {/* Notes */}
-      <Animated.View
-        style={[
-          { width: '100%', minHeight: s.$10, paddingHorizontal: s.$1, paddingVertical: s.$075 },
-          animatedStyle,
-        ]}
-      >
-        {editing === item.id ? (
-          <BottomSheetTextInput
-            defaultValue={item.text}
-            style={[{ width: '100%', minHeight: s.$10 }, t.pmuted]}
-            multiline={true}
-            numberOfLines={4}
-            onChangeText={async (e) => {
-              updateEditedState({
-                text: e,
-              })
-              setText(e)
-            }}
-          ></BottomSheetTextInput>
-        ) : (
-          <Text numberOfLines={4} style={t.pmuted}>
-            {text}
-          </Text>
-        )}
-      </Animated.View>
-    </Pressable>
+              )}
+            </Pressable>
+          </BottomSheetView>
+        </BottomSheetView>
+
+        {/* Notes */}
+        <Animated.View
+          style={[
+            { width: '100%', minHeight: s.$10, paddingHorizontal: s.$1, paddingVertical: s.$075 },
+            animatedStyle,
+          ]}
+        >
+          {editing === item.id ? (
+            <BottomSheetTextInput
+              defaultValue={item.text}
+              style={[{ width: '100%', minHeight: s.$10 }, t.pmuted]}
+              multiline={true}
+              numberOfLines={4}
+              onChangeText={async (e) => {
+                updateEditedState({
+                  text: e,
+                })
+                setText(e)
+              }}
+            ></BottomSheetTextInput>
+          ) : (
+            <Text numberOfLines={4} style={t.pmuted}>
+              {text}
+            </Text>
+          )}
+        </Animated.View>
+      </Pressable>
+    </>
   )
 }
 

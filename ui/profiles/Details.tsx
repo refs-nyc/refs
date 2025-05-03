@@ -3,22 +3,19 @@ import { Link, useGlobalSearchParams, usePathname, useRouter } from 'expo-router
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { View, Dimensions, Pressable, Text, ViewStyle } from 'react-native'
 import Carousel, { ICarouselInstance } from 'react-native-reanimated-carousel'
-import { useSharedValue } from 'react-native-reanimated'
-import { Heading } from '../typo/Heading'
 import { c, s, t } from '@/features/style'
 import { gridSort } from './sorts'
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { useItemStore } from '@/features/pocketbase/stores/items'
-import { ListContainer } from '../lists/ListContainer'
+import { SearchRef } from '../actions/SearchRef'
 import { EditableList } from '../lists/EditableList'
 import { Sheet, SheetScreen } from '../core/Sheets'
-import type { ItemsRecord } from '@/features/pocketbase/stores/pocketbase-types'
 import { useUserStore, isExpandedProfile } from '@/features/pocketbase/stores/users'
 import { ExpandedItem } from '@/features/pocketbase/stores/types'
 import { EditableItem } from './EditableItem' // Assuming EditableItem is memoized
 import { GridLines } from '../display/Gridlines'
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet'
-import { MeatballMenu } from '../atoms/MeatballMenu'
+import { MeatballMenu, Checkbox } from '../atoms/MeatballMenu'
 import { Button } from '../buttons/Button'
 import { useUIStore } from '@/ui/state'
 
@@ -41,7 +38,7 @@ const DetailsHeaderButton = React.memo(({ item }: { item: ExpandedItem }) => {
   const stopEditing = useItemStore((state) => state.stopEditing)
   const router = useRouter()
   const insets = useSafeAreaInsets()
-  const { showContextMenu, setShowContextMenu } = useUIStore()
+  const { setShowContextMenu } = useUIStore()
 
   const handlePress = useCallback(async () => {
     if (editing === '') {
@@ -50,22 +47,28 @@ const DetailsHeaderButton = React.memo(({ item }: { item: ExpandedItem }) => {
       await update()
       stopEditing()
     }
-  }, [editing, stopEditing, router])
+  }, [editing, router, stopEditing])
 
   return (
     <Pressable
       style={{
         width: '100%',
         zIndex: 99,
-        // backgroundColor: 'red',
+        padding: s.$2,
         alignItems: 'flex-end',
         top: s.$4,
       }}
       onPress={handlePress}
     >
       {editing !== '' ? (
-        <Ionicons size={s.$1} name="popover" color={c.muted} />
+        <Checkbox
+          onPress={() => {
+            setShowContextMenu('')
+            stopEditing()
+          }}
+        />
       ) : (
+        // <Ionicons size={s.$1} name="checkbox" color={c.muted} />
         <MeatballMenu
           onPress={() => {
             setShowContextMenu(item.id)
@@ -88,27 +91,51 @@ export const renderItem = ({
   editingRights?: boolean
   index: number
 }) => {
+  const { searchingNewRef, updateEditedState, setSearchingNewRef, update, items } = useItemStore()
+  const [currentItem, setCurrentItem] = useState(item)
+
   return (
     <View
       style={{
-        width: win.width * 0.9,
+        width: win.width,
         height: win.height,
-        left: win.width * 0.05,
-        padding: s.$075,
         gap: s.$1,
-        justifyContent: 'start',
+        justifyContent: 'flex-start',
       }}
-      key={item.id}
+      key={currentItem.id}
     >
       <BottomSheetScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ padding: s.$075, gap: s.$1 }}
+        contentContainerStyle={{ gap: s.$1 }}
         keyboardShouldPersistTaps="handled"
         nestedScrollEnabled={true}
       >
-        <DetailsHeaderButton item={item} />
-        <EditableItem item={item} editingRights={editingRights} index={index} />
+        <DetailsHeaderButton item={currentItem} />
+        <EditableItem item={currentItem} editingRights={editingRights} index={index} />
       </BottomSheetScrollView>
+
+      {searchingNewRef && (
+        <Sheet
+          onClose={() => {
+            console.log('close')
+            // Do not update the ref
+          }}
+        >
+          <SearchRef
+            noNewRef
+            onComplete={async (e) => {
+              // Update the ref
+              console.log(e.id)
+              await updateEditedState({
+                ref: e.id,
+              })
+              const newRecord = await update()
+              setCurrentItem(newRecord)
+              setSearchingNewRef('')
+            }}
+          />
+        </Sheet>
+      )}
     </View>
   )
 }
@@ -121,20 +148,24 @@ export const Details = ({
   initialId: string
 }) => {
   const { profile, getProfile } = useUserStore()
+  const { userName } = useGlobalSearchParams()
+
   const router = useRouter()
   const pathname = usePathname()
-  const { userName } = useGlobalSearchParams()
   const ref = useRef<ICarouselInstance>(null)
 
   const { addingToList, setAddingToList, addingItem, setShowContextMenu } = useUIStore()
   const { stopEditing, update, editing: editingId } = useItemStore()
+
   const userNameParam =
     pathname === '/' ? undefined : typeof userName === 'string' ? userName : userName?.[0]
+
   const data = useMemo(() => {
     return isExpandedProfile(profile) && profile.expand?.items
       ? [...profile.expand.items].filter((itm) => !itm.backlog).sort(gridSort)
       : []
   }, [profile])
+
   const index = useMemo(() => {
     return Math.max(
       0,
@@ -207,7 +238,7 @@ export const Details = ({
         style={carouselStyle}
         defaultIndex={index}
         onSnapToItem={(index) => {
-          // console.log('progress')
+          stopEditing()
           setShowContextMenu('')
         }}
         onConfigurePanGesture={handleConfigurePanGesture}

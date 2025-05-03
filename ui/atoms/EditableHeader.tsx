@@ -95,7 +95,7 @@ export const EditableHeader = ({
                   color: titleState == placeholder ? c.muted : c.black,
                 }}
               >
-                {titleState && titleState}
+                {titleState || ''}
               </Heading>
             </Pressable>
           </XStack>

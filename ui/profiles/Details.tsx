@@ -3,14 +3,11 @@ import { Link, useGlobalSearchParams, usePathname, useRouter } from 'expo-router
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { View, Dimensions, Pressable, Text, ViewStyle } from 'react-native'
 import Carousel, { ICarouselInstance } from 'react-native-reanimated-carousel'
-import { useSharedValue } from 'react-native-reanimated'
-import { Heading } from '../typo/Heading'
 import { c, s, t } from '@/features/style'
 import { gridSort } from './sorts'
 import Ionicons from '@expo/vector-icons/Ionicons'
-import { useUIStore } from '@/ui/state'
 import { useItemStore } from '@/features/pocketbase/stores/items'
-import { ListContainer } from '../lists/ListContainer'
+import { SearchRef } from '../actions/SearchRef'
 import { EditableList } from '../lists/EditableList'
 import { Sheet, SheetScreen } from '../core/Sheets'
 import { useUserStore, isExpandedProfile } from '@/features/pocketbase/stores/users'
@@ -18,8 +15,9 @@ import { ExpandedItem } from '@/features/pocketbase/stores/types'
 import { EditableItem } from './EditableItem' // Assuming EditableItem is memoized
 import { GridLines } from '../display/Gridlines'
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet'
-import { MeatballMenu } from '../atoms/MeatballMenu'
+import { MeatballMenu, Checkbox } from '../atoms/MeatballMenu'
 import { Button } from '../buttons/Button'
+import { useUIStore } from '@/ui/state'
 
 const win = Dimensions.get('window')
 
@@ -34,32 +32,49 @@ const ConditionalGridLines = React.memo(() => {
 })
 ConditionalGridLines.displayName = 'ConditionalGridLines'
 
-const DetailsHeaderButton = React.memo(() => {
+const DetailsHeaderButton = React.memo(({ item }: { item: ExpandedItem }) => {
   const editing = useItemStore((state) => state.editing)
+  const update = useItemStore((state) => state.update)
   const stopEditing = useItemStore((state) => state.stopEditing)
   const router = useRouter()
   const insets = useSafeAreaInsets()
+  const { setShowContextMenu } = useUIStore()
 
-  const handlePress = useCallback(() => {
+  const handlePress = useCallback(async () => {
     if (editing === '') {
       router.back()
     } else {
+      await update()
       stopEditing()
     }
-  }, [editing, stopEditing, router])
+  }, [editing, router, stopEditing])
 
   return (
     <Pressable
       style={{
         width: '100%',
         zIndex: 99,
-        // backgroundColor: 'red',
+        padding: s.$2,
         alignItems: 'flex-end',
         top: s.$4,
       }}
       onPress={handlePress}
     >
-      {editing !== '' ? <Ionicons size={s.$1} name="popover" color={c.muted} /> : <MeatballMenu />}
+      {editing !== '' ? (
+        <Checkbox
+          onPress={() => {
+            setShowContextMenu('')
+            stopEditing()
+          }}
+        />
+      ) : (
+        // <Ionicons size={s.$1} name="checkbox" color={c.muted} />
+        <MeatballMenu
+          onPress={() => {
+            setShowContextMenu(item.id)
+          }}
+        />
+      )}
     </Pressable>
   )
 })
@@ -76,30 +91,52 @@ export const renderItem = ({
   editingRights?: boolean
   index?: number
 }) => {
+  const { searchingNewRef, updateEditedState, setSearchingNewRef, update, items } = useItemStore()
+  const [currentItem, setCurrentItem] = useState(item)
+
   return (
-    <>
-      {/* @ts-ignore */}
-      <View
-        style={{
-          width: win.width * 0.8,
-          height: win.height,
-          left: win.width * 0.1,
-          padding: s.$075,
-          gap: s.$1,
-          justifyContent: 'start' as any,
-        }}
-        key={item.id} // key should ideally be on the top-level element returned by map/renderItem callback
+    <View
+      style={{
+        width: win.width,
+        height: win.height,
+        gap: s.$1,
+        justifyContent: 'flex-start',
+      }}
+      key={currentItem.id}
+    >
+      <BottomSheetScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ gap: s.$1 }}
+        keyboardShouldPersistTaps="handled"
+        nestedScrollEnabled={true}
       >
-        <BottomSheetScrollView
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ padding: s.$075, gap: s.$1, paddingBottom: 200 }} // Add padding here, ensure enough bottom padding
-          keyboardShouldPersistTaps="handled"
-          nestedScrollEnabled={true} // May be needed if Carousel interferes, test
+        <DetailsHeaderButton item={currentItem} />
+        <EditableItem item={currentItem} editingRights={editingRights} index={index} />
+      </BottomSheetScrollView>
+
+      {searchingNewRef && (
+        <Sheet
+          onClose={() => {
+            console.log('close')
+            // Do not update the ref
+          }}
         >
-          <EditableItem item={item} editingRights={editingRights} index={index} />
-        </BottomSheetScrollView>
-      </View>
-    </>
+          <SearchRef
+            noNewRef
+            onComplete={async (e) => {
+              // Update the ref
+              console.log(e.id)
+              await updateEditedState({
+                ref: e.id,
+              })
+              const newRecord = await update()
+              setCurrentItem(newRecord)
+              setSearchingNewRef('')
+            }}
+          />
+        </Sheet>
+      )}
+    </View>
   )
 }
 
@@ -111,15 +148,14 @@ export const Details = ({
   initialId: string
 }) => {
   const { profile, getProfile } = useUserStore()
+  const { userName } = useGlobalSearchParams()
+
   const router = useRouter()
   const pathname = usePathname()
-  const { userName } = useGlobalSearchParams()
   const ref = useRef<ICarouselInstance>(null)
-  const { addingToList, setAddingToList, addingItem } = useUIStore()
-  const scrollOffsetValue = useSharedValue<number>(10)
-  const [activeIndex, setActiveIndex] = useState(0)
 
-  const { stopEditing } = useItemStore()
+  const { addingToList, setAddingToList, addingItem, setShowContextMenu } = useUIStore()
+  const { stopEditing, update, editing: editingId } = useItemStore()
 
   const userNameParam =
     pathname === '/' ? undefined : typeof userName === 'string' ? userName : userName?.[0]
@@ -158,9 +194,11 @@ export const Details = ({
 
   const close = useCallback(async () => {
     setAddingToList('')
+
     if (userNameParam) {
       await getProfile(userNameParam)
     }
+    await update()
     stopEditing()
   }, [setAddingToList, getProfile, userNameParam])
 
@@ -199,6 +237,10 @@ export const Details = ({
         height={win.height}
         style={carouselStyle}
         defaultIndex={index}
+        onSnapToItem={(index) => {
+          stopEditing()
+          setShowContextMenu('')
+        }}
         onConfigurePanGesture={handleConfigurePanGesture}
         renderItem={carouselRenderItem}
         windowSize={5}

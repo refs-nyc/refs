@@ -25,10 +25,9 @@ const EditableItemComponent = ({
   editingRights?: boolean
   index: number
 }) => {
-  const [title, setTitle] = useState(item.expand?.ref.title)
-
   const { showContextMenu, setShowContextMenu } = useUIStore()
-  const { editing, startEditing, stopEditing } = useItemStore()
+  const { editing, startEditing, updateEditedState, update } = useItemStore()
+  const [text, setText] = useState(item?.text)
 
   const animatedStyle = useAnimatedStyle(() => {
     return editing === item.id ? base.editableItem : base.nonEditableItem
@@ -137,7 +136,7 @@ const EditableItemComponent = ({
                 paddingVertical: s.$08,
               }}
             >
-              <Heading tag="h2">{title}</Heading>
+              <Heading tag="h2">{item.expand?.ref?.title}</Heading>
               <Heading tag="smallmuted">{item.expand?.ref?.meta}</Heading>
             </View>
           </View>
@@ -154,22 +153,15 @@ const EditableItemComponent = ({
             ]}
             onPress={() => {}}
           >
-            {editing ? (
-              <Ionicons
-                style={{ transformOrigin: 'center', transform: 'rotate(-45deg)' }}
-                color={c.muted}
-                size={s.$1}
-                name="arrow-forward-outline"
-              />
-            ) : (
-              item.expand?.ref?.url && (
+            {item.expand?.ref.url && (
+              <>
                 <Link
                   style={{ transformOrigin: 'center', transform: 'rotate(-45deg)' }}
-                  href={item.expand.ref.url}
+                  href={item.expand?.ref.url}
                 >
                   <Ionicons color={c.muted} size={s.$1} name="arrow-forward-outline" />
                 </Link>
-              )
+              </>
             )}
           </Pressable>
         </View>
@@ -183,13 +175,20 @@ const EditableItemComponent = ({
       >
         {editing === item.id ? (
           <BottomSheetTextInput
+            defaultValue={item.text}
             style={[{ width: '100%', minHeight: s.$10 }, t.pmuted]}
             multiline={true}
             numberOfLines={4}
+            onChangeText={async (e) => {
+              updateEditedState({
+                text: e,
+              })
+              setText(e)
+            }}
           ></BottomSheetTextInput>
         ) : (
           <Text numberOfLines={4} style={t.pmuted}>
-            {item.text}
+            {text}
           </Text>
         )}
       </Animated.View>

@@ -12,6 +12,7 @@ import { useItemStore } from '@/features/pocketbase/stores/items'
 import { ListContainer } from '../lists/ListContainer'
 import { EditableList } from '../lists/EditableList'
 import { Sheet, SheetScreen } from '../core/Sheets'
+import type { ItemsRecord } from '@/features/pocketbase/stores/pocketbase-types'
 import { useUserStore, isExpandedProfile } from '@/features/pocketbase/stores/users'
 import { ExpandedItem } from '@/features/pocketbase/stores/types'
 import { EditableItem } from './EditableItem' // Assuming EditableItem is memoized
@@ -36,15 +37,17 @@ ConditionalGridLines.displayName = 'ConditionalGridLines'
 
 const DetailsHeaderButton = React.memo(({ item }: { item: ExpandedItem }) => {
   const editing = useItemStore((state) => state.editing)
+  const update = useItemStore((state) => state.update)
   const stopEditing = useItemStore((state) => state.stopEditing)
   const router = useRouter()
   const insets = useSafeAreaInsets()
   const { showContextMenu, setShowContextMenu } = useUIStore()
 
-  const handlePress = useCallback(() => {
+  const handlePress = useCallback(async () => {
     if (editing === '') {
       router.back()
     } else {
+      await update()
       stopEditing()
     }
   }, [editing, stopEditing, router])
@@ -122,21 +125,16 @@ export const Details = ({
   const pathname = usePathname()
   const { userName } = useGlobalSearchParams()
   const ref = useRef<ICarouselInstance>(null)
-  const scrollOffsetValue = useSharedValue<number>(10)
-  const [activeIndex, setActiveIndex] = useState(0)
 
   const { addingToList, setAddingToList, addingItem, setShowContextMenu } = useUIStore()
-  const { stopEditing } = useItemStore()
-
+  const { stopEditing, update, editing: editingId } = useItemStore()
   const userNameParam =
     pathname === '/' ? undefined : typeof userName === 'string' ? userName : userName?.[0]
-
   const data = useMemo(() => {
     return isExpandedProfile(profile) && profile.expand?.items
       ? [...profile.expand.items].filter((itm) => !itm.backlog).sort(gridSort)
       : []
   }, [profile])
-
   const index = useMemo(() => {
     return Math.max(
       0,
@@ -165,9 +163,11 @@ export const Details = ({
 
   const close = useCallback(async () => {
     setAddingToList('')
+
     if (userNameParam) {
       await getProfile(userNameParam)
     }
+    await update()
     stopEditing()
   }, [setAddingToList, getProfile, userNameParam])
 
@@ -206,7 +206,7 @@ export const Details = ({
         height={win.height}
         style={carouselStyle}
         defaultIndex={index}
-        onSnapToItem={() => {
+        onSnapToItem={(index) => {
           // console.log('progress')
           setShowContextMenu('')
         }}

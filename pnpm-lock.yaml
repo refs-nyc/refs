@@ -10,7 +10,7 @@ overrides:
 
 patchedDependencies:
   xcode@3.0.1:
-    hash: 725863c0591d89ca053226c49fe7bc321f320391ec5f78b6c2e8e41ab1868805
+    hash: kvggi4abfe6iel7wt6iiemonyq
     path: patches/xcode@3.0.1.patch
 
 importers:
@@ -55,7 +55,7 @@ importers:
         version: 4.3.0(react-native-gesture-handler@2.20.2(react-native@0.76.6(@babel/core@7.26.0)(@babel/preset-env@7.26.0(@babel/core@7.26.0))(@types/react@18.3.16)(bufferutil@4.0.8)(react@18.3.1)(utf-8-validate@5.0.10))(react@18.3.1))(react-native-reanimated@3.16.5(@babel/core@7.26.0)(react-native@0.76.6(@babel/core@7.26.0)(@babel/preset-env@7.26.0(@babel/core@7.26.0))(@types/react@18.3.16)(bufferutil@4.0.8)(react@18.3.1)(utf-8-validate@5.0.10))(react@18.3.1))(react-native@0.76.6(@babel/core@7.26.0)(@babel/preset-env@7.26.0(@babel/core@7.26.0))(@types/react@18.3.16)(bufferutil@4.0.8)(react@18.3.1)(utf-8-validate@5.0.10))(react@18.3.1)
       '@magic-sdk/react-native-expo':
         specifier: ^29.19.1
-        version: 29.19.1(6995f28f57a054dbdfbc2830ad747250)
+        version: 29.19.1(gq2vtbe5qjvtqw5pf2ds2saa2a)
       '@react-native-async-storage/async-storage':
         specifier: ^2.1.0
         version: 2.1.0(react-native@0.76.6(@babel/core@7.26.0)(@babel/preset-env@7.26.0(@babel/core@7.26.0))(@types/react@18.3.16)(bufferutil@4.0.8)(react@18.3.1)(utf-8-validate@5.0.10))
@@ -136,10 +136,10 @@ importers:
         version: 0.29.11(expo@52.0.18(@babel/core@7.26.0)(@babel/preset-env@7.26.0(@babel/core@7.26.0))(@expo/metro-runtime@4.0.0(react-native@0.76.6(@babel/core@7.26.0)(@babel/preset-env@7.26.0(@babel/core@7.26.0))(@types/react@18.3.16)(bufferutil@4.0.8)(react@18.3.1)(utf-8-validate@5.0.10)))(bufferutil@4.0.8)(react-native-webview@13.12.2(react-native@0.76.6(@babel/core@7.26.0)(@babel/preset-env@7.26.0(@babel/core@7.26.0))(@types/react@18.3.16)(bufferutil@4.0.8)(react@18.3.1)(utf-8-validate@5.0.10))(react@18.3.1))(react-native@0.76.6(@babel/core@7.26.0)(@babel/preset-env@7.26.0(@babel/core@7.26.0))(@types/react@18.3.16)(bufferutil@4.0.8)(react@18.3.1)(utf-8-validate@5.0.10))(react@18.3.1)(utf-8-validate@5.0.10))(react-native@0.76.6(@babel/core@7.26.0)(@babel/preset-env@7.26.0(@babel/core@7.26.0))(@types/react@18.3.16)(bufferutil@4.0.8)(react@18.3.1)(utf-8-validate@5.0.10))(react@18.3.1)
       expo-router:
         specifier: ~4.0.9
-        version: 4.0.11(f68e65ef515d3b15cdbf7c84e0a18207)
+        version: 4.0.11(gjhz5em2fwjrvtzvj3rxulesn4)
       expo-share-intent:
         specifier: ^3.2.0
-        version: 3.2.0(76153dececfb01c3241849e68ae90f7b)
+        version: 3.2.0(5sbn7trpchxtjot457qcmwd67i)
       expo-splash-screen:
         specifier: ~0.29.13
         version: 0.29.18(expo@52.0.18(@babel/core@7.26.0)(@babel/preset-env@7.26.0(@babel/core@7.26.0))(@expo/metro-runtime@4.0.0(react-native@0.76.6(@babel/core@7.26.0)(@babel/preset-env@7.26.0(@babel/core@7.26.0))(@types/react@18.3.16)(bufferutil@4.0.8)(react@18.3.1)(utf-8-validate@5.0.10)))(bufferutil@4.0.8)(react-native-webview@13.12.2(react-native@0.76.6(@babel/core@7.26.0)(@babel/preset-env@7.26.0(@babel/core@7.26.0))(@types/react@18.3.16)(bufferutil@4.0.8)(react@18.3.1)(utf-8-validate@5.0.10))(react@18.3.1))(react-native@0.76.6(@babel/core@7.26.0)(@babel/preset-env@7.26.0(@babel/core@7.26.0))(@types/react@18.3.16)(bufferutil@4.0.8)(react@18.3.1)(utf-8-validate@5.0.10))(react@18.3.1)(utf-8-validate@5.0.10))
@@ -241,7 +241,7 @@ importers:
         version: 0.7.0
       xcode:
         specifier: 3.0.1
-        version: 3.0.1(patch_hash=725863c0591d89ca053226c49fe7bc321f320391ec5f78b6c2e8e41ab1868805)
+        version: 3.0.1(patch_hash=kvggi4abfe6iel7wt6iiemonyq)
       zustand:
         specifier: ^5.0.2
         version: 5.0.2(@types/react@18.3.16)(react@18.3.1)(use-sync-external-store@1.4.0(react@18.3.1))
@@ -275,7 +275,7 @@ importers:
         version: 29.7.0(@types/node@22.10.2)
       jest-expo:
         specifier: ~52.0.2
-        version: 52.0.2(31177a5d3b8a03efffef8e335afb5ae3)
+        version: 52.0.2(opdr5mulqhpdmnozs4c2kkhs5m)
       react-test-renderer:
         specifier: 18.3.1
         version: 18.3.1(react@18.3.1)
@@ -3943,9 +3943,6 @@ packages:
   emittery@0.13.1:
     resolution: {integrity: sha512-DeWwawk6r5yR9jFgnDKYt4sLS0LmHJJi3ZOnb5/JdbYwj3nW+FxQnHIjhBKz8YLC7oRNPVM9NQ47I3CVx34eqQ==}
     engines: {node: '>=12'}
-
-  emoji-datasource@6.1.1:
-    resolution: {integrity: sha512-fbS3QJpzGHhujvBULSKXcvsYmVg+1ldfI3VVXG3jnFuniZtkp7rz/OcTcQjbp3m43BYxmiJgKmaoOUPxXQupRQ==}
 
   emoji-regex@8.0.0:
     resolution: {integrity: sha512-MSjYzcWNOA0ewAHpz0MxpYFvwg6yjy1NG3xteoqz644VCo/RPgnr1/GGt+ic3iJTzQ8Eu3TdM14SawnVUmGE6A==}
@@ -10155,7 +10152,7 @@ snapshots:
       semver: 7.6.3
       slash: 3.0.0
       slugify: 1.6.6
-      xcode: 3.0.1(patch_hash=725863c0591d89ca053226c49fe7bc321f320391ec5f78b6c2e8e41ab1868805)
+      xcode: 3.0.1(patch_hash=kvggi4abfe6iel7wt6iiemonyq)
       xml2js: 0.6.0
     transitivePeerDependencies:
       - supports-color
@@ -10174,7 +10171,7 @@ snapshots:
       semver: 7.6.3
       slash: 3.0.0
       slugify: 1.6.6
-      xcode: 3.0.1(patch_hash=725863c0591d89ca053226c49fe7bc321f320391ec5f78b6c2e8e41ab1868805)
+      xcode: 3.0.1(patch_hash=kvggi4abfe6iel7wt6iiemonyq)
       xml2js: 0.6.0
     transitivePeerDependencies:
       - supports-color
@@ -11098,7 +11095,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@magic-sdk/react-native-expo@29.19.1(6995f28f57a054dbdfbc2830ad747250)':
+  '@magic-sdk/react-native-expo@29.19.1(gq2vtbe5qjvtqw5pf2ds2saa2a)':
     dependencies:
       '@aveq-research/localforage-asyncstorage-driver': 3.0.1(@react-native-async-storage/async-storage@1.24.0(react-native@0.76.6(@babel/core@7.26.0)(@babel/preset-env@7.26.0(@babel/core@7.26.0))(@types/react@18.3.16)(bufferutil@4.0.8)(react@18.3.1)(utf-8-validate@5.0.10)))(localforage@1.10.0)(react-native@0.76.6(@babel/core@7.26.0)(@babel/preset-env@7.26.0(@babel/core@7.26.0))(@types/react@18.3.16)(bufferutil@4.0.8)(react@18.3.1)(utf-8-validate@5.0.10))(react@18.3.1)
       '@magic-sdk/commons': 24.18.1(@magic-sdk/provider@28.18.1(localforage@1.10.0))(@magic-sdk/types@24.16.1)
@@ -13428,8 +13425,6 @@ snapshots:
 
   emittery@0.13.1: {}
 
-  emoji-datasource@6.1.1: {}
-
   emoji-regex@8.0.0: {}
 
   emoji-regex@9.2.2: {}
@@ -13663,7 +13658,7 @@ snapshots:
       '@typescript-eslint/eslint-plugin': 8.28.0(@typescript-eslint/parser@8.28.0(eslint@9.25.1)(typescript@5.7.2))(eslint@9.25.1)(typescript@5.7.2)
       '@typescript-eslint/parser': 8.28.0(eslint@9.25.1)(typescript@5.7.2)
       eslint: 9.25.1
-      eslint-import-resolver-typescript: 3.9.1(eslint-plugin-import@2.31.0)(eslint@9.25.1)
+      eslint-import-resolver-typescript: 3.9.1(eslint-plugin-import@2.31.0(@typescript-eslint/parser@8.28.0(eslint@9.25.1)(typescript@5.7.2))(eslint@9.25.1))(eslint@9.25.1)
       eslint-plugin-expo: 0.1.0(eslint@9.25.1)(typescript@5.7.2)
       eslint-plugin-import: 2.31.0(@typescript-eslint/parser@8.28.0(eslint@9.25.1)(typescript@5.7.2))(eslint-import-resolver-typescript@3.9.1)(eslint@9.25.1)
       eslint-plugin-react: 7.37.4(eslint@9.25.1)
@@ -13682,7 +13677,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  eslint-import-resolver-typescript@3.9.1(eslint-plugin-import@2.31.0)(eslint@9.25.1):
+  eslint-import-resolver-typescript@3.9.1(eslint-plugin-import@2.31.0(@typescript-eslint/parser@8.28.0(eslint@9.25.1)(typescript@5.7.2))(eslint@9.25.1))(eslint@9.25.1):
     dependencies:
       '@nolyfill/is-core-module': 1.0.39
       debug: 4.4.0
@@ -13697,14 +13692,14 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  eslint-module-utils@2.12.0(@typescript-eslint/parser@8.28.0(eslint@9.25.1)(typescript@5.7.2))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.9.1)(eslint@9.25.1):
+  eslint-module-utils@2.12.0(@typescript-eslint/parser@8.28.0(eslint@9.25.1)(typescript@5.7.2))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.9.1(eslint-plugin-import@2.31.0(@typescript-eslint/parser@8.28.0(eslint@9.25.1)(typescript@5.7.2))(eslint@9.25.1))(eslint@9.25.1))(eslint@9.25.1):
     dependencies:
       debug: 3.2.7
     optionalDependencies:
       '@typescript-eslint/parser': 8.28.0(eslint@9.25.1)(typescript@5.7.2)
       eslint: 9.25.1
       eslint-import-resolver-node: 0.3.9
-      eslint-import-resolver-typescript: 3.9.1(eslint-plugin-import@2.31.0)(eslint@9.25.1)
+      eslint-import-resolver-typescript: 3.9.1(eslint-plugin-import@2.31.0(@typescript-eslint/parser@8.28.0(eslint@9.25.1)(typescript@5.7.2))(eslint@9.25.1))(eslint@9.25.1)
     transitivePeerDependencies:
       - supports-color
 
@@ -13728,7 +13723,7 @@ snapshots:
       doctrine: 2.1.0
       eslint: 9.25.1
       eslint-import-resolver-node: 0.3.9
-      eslint-module-utils: 2.12.0(@typescript-eslint/parser@8.28.0(eslint@9.25.1)(typescript@5.7.2))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.9.1)(eslint@9.25.1)
+      eslint-module-utils: 2.12.0(@typescript-eslint/parser@8.28.0(eslint@9.25.1)(typescript@5.7.2))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.9.1(eslint-plugin-import@2.31.0(@typescript-eslint/parser@8.28.0(eslint@9.25.1)(typescript@5.7.2))(eslint@9.25.1))(eslint@9.25.1))(eslint@9.25.1)
       hasown: 2.0.2
       is-core-module: 2.15.1
       is-glob: 4.0.3
@@ -14166,7 +14161,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  expo-router@4.0.11(f68e65ef515d3b15cdbf7c84e0a18207):
+  expo-router@4.0.11(gjhz5em2fwjrvtzvj3rxulesn4):
     dependencies:
       '@expo/metro-runtime': 4.0.0(react-native@0.76.6(@babel/core@7.26.0)(@babel/preset-env@7.26.0(@babel/core@7.26.0))(@types/react@18.3.16)(bufferutil@4.0.8)(react@18.3.1)(utf-8-validate@5.0.10))
       '@expo/server': 0.5.0(typescript@5.7.2)
@@ -14196,7 +14191,7 @@ snapshots:
       - supports-color
       - typescript
 
-  expo-share-intent@3.2.0(76153dececfb01c3241849e68ae90f7b):
+  expo-share-intent@3.2.0(5sbn7trpchxtjot457qcmwd67i):
     dependencies:
       '@expo/config-plugins': 9.0.14
       expo: 52.0.18(@babel/core@7.26.0)(@babel/preset-env@7.26.0(@babel/core@7.26.0))(@expo/metro-runtime@4.0.0(react-native@0.76.6(@babel/core@7.26.0)(@babel/preset-env@7.26.0(@babel/core@7.26.0))(@types/react@18.3.16)(bufferutil@4.0.8)(react@18.3.1)(utf-8-validate@5.0.10)))(bufferutil@4.0.8)(react-native-webview@13.12.2(react-native@0.76.6(@babel/core@7.26.0)(@babel/preset-env@7.26.0(@babel/core@7.26.0))(@types/react@18.3.16)(bufferutil@4.0.8)(react@18.3.1)(utf-8-validate@5.0.10))(react@18.3.1))(react-native@0.76.6(@babel/core@7.26.0)(@babel/preset-env@7.26.0(@babel/core@7.26.0))(@types/react@18.3.16)(bufferutil@4.0.8)(react@18.3.1)(utf-8-validate@5.0.10))(react@18.3.1)(utf-8-validate@5.0.10)
@@ -15369,7 +15364,7 @@ snapshots:
       jest-mock: 29.7.0
       jest-util: 29.7.0
 
-  jest-expo@52.0.2(31177a5d3b8a03efffef8e335afb5ae3):
+  jest-expo@52.0.2(opdr5mulqhpdmnozs4c2kkhs5m):
     dependencies:
       '@expo/config': 10.0.6
       '@expo/json-file': 9.0.0
@@ -18724,7 +18719,7 @@ snapshots:
       bufferutil: 4.0.8
       utf-8-validate: 5.0.10
 
-  xcode@3.0.1(patch_hash=725863c0591d89ca053226c49fe7bc321f320391ec5f78b6c2e8e41ab1868805):
+  xcode@3.0.1(patch_hash=kvggi4abfe6iel7wt6iiemonyq):
     dependencies:
       simple-plist: 1.3.1
       uuid: 7.0.3

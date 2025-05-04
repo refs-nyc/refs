@@ -209,6 +209,11 @@ export const base = StyleSheet.create({
     height: s.$2,
     borderRadius: 4,
   },
+  largeSquare: {
+    width: s.$4,
+    height: s.$4,
+    borderRadius: 8,
+  },
   nonEditableItem: {
     backgroundColor: c.surface,
     borderColor: c.surface,

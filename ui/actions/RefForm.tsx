@@ -110,6 +110,7 @@ export const RefForm = ({
       })
       onComplete(item)
       setCreateInProgress(false)
+      console.log('success')
     } catch (e) {
       console.error(e)
     } finally {
@@ -199,12 +200,13 @@ export const RefForm = ({
           justifyContent: 'space-between',
         }}
       >
+        {/* Lists can't have a url */}
         {!url && (
           <Button
             title="Create List"
             variant="outlineFluid"
             style={{ width: '48%', minWidth: 0 }}
-            disabled={!(pinataSource && title) || uploadInProgress || createInProgress}
+            disabled={!title || uploadInProgress || createInProgress}
             onPress={() => {
               submit({ list: true })
             }}

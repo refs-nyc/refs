@@ -1,45 +1,116 @@
-import { useState } from 'react'
+import { BottomSheetView, BottomSheetScrollView, BottomSheetTextInput } from '@gorhom/bottom-sheet'
+import { EditableHeader } from '../atoms/EditableHeader'
+import { Button } from '../buttons/Button'
+import { t, c, base, s } from '@/features/style'
+import { useEffect, useState } from 'react'
+import { Dimensions } from 'react-native'
 import { SearchRef } from '../actions/SearchRef'
 import { NewRef } from '../actions/NewRef'
+import { useRefStore } from '@/features/pocketbase/stores/refs'
 import { View } from 'react-native'
 import { useItemStore } from '@/features/pocketbase/stores/items'
-import { s } from '@/features/style'
-import type { Item, CompleteRef } from '@/features/pocketbase/stores/types'
+import type { ExpandedItem, CompleteRef } from '@/features/pocketbase/stores/types'
 import { DismissKeyboard } from '../atoms/DismissKeyboard'
+import { ListItem } from './ListItem'
+import { NewRefListItem } from '../atoms/NewRefListItem'
+import { NewListItemButton } from './NewListItemButton'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
-export const EditableList = ({ item, onComplete }: { item: Item; onComplete: () => void }) => {
-  const [initialRefData, setInitialRefData] = useState({})
-  const { addToList } = useItemStore()
+export const EditableList = ({
+  item,
+  onComplete,
+}: {
+  item: ExpandedItem
+  onComplete: () => void
+}) => {
+  const { addingToList, addToList, removeFromList, setAddingToList } = useItemStore()
+  const { updateOne } = useRefStore()
+  const [itemState, setItemState] = useState<ExpandedItem>(item)
+  const insets = useSafeAreaInsets()
+  const win = Dimensions.get('window')
+
+  const onRefFound = async (ref: CompleteRef) => {
+    try {
+      const itm = await addToList(item.id, ref)
+      setItemState((prev) => ({
+        ...prev,
+        expand: {
+          ...prev.expand,
+          children: [...(prev.expand?.children || []), ref],
+        },
+      }))
+      setAddingToList(false)
+    } catch (error) {
+    } finally {
+      setAddingToList(false)
+    }
+  }
+
+  useEffect(() => {}, [itemState])
 
   return (
-    <View style={{ flex: 1 }}>
-      {JSON.stringify(initialRefData) !== '{}' ? (
-        <NewRef
-          initialRefData={initialRefData}
-          initialStep={'add'}
-          onCancel={() => {}}
-          onStep={(s) => console.log(s)}
-          onNewRef={async (ref: CompleteRef) => {
-            const record = await addToList(item.id, ref)
-            onComplete()
-          }}
-        />
-      ) : (
-        <View style={{ flex: 1, paddingBottom: s.$2 }}>
-          {/* @ts-ignore */}
-          <SearchRef
-            onComplete={async (ref: CompleteRef) => {
-              if (!ref.id) {
-                setInitialRefData(ref)
-              } else {
-                const record = await addToList(item.id, ref)
-                {/* @ts-ignore */}
-                onComplete && onComplete(record)
-              }
+    <BottomSheetView
+      style={{
+        height: win.height - insets.top - insets.bottom - 20,
+      }}
+    >
+      <BottomSheetScrollView style={{ flex: 1, gap: s.$09 }}>
+        <BottomSheetView>
+          {/* Title */}
+          <EditableHeader
+            withUrl={false}
+            onTitleChange={async (e) => {
+              try {
+                const rec = await updateOne(item.ref, {
+                  title: e,
+                })
+              } catch (error) {}
             }}
+            onDataChange={() => {}}
+            placeholder={'Add a list title'}
+            title={item.expand?.ref?.title || ''}
+            url=""
           />
-        </View>
-      )}
-    </View>
+        </BottomSheetView>
+        <BottomSheetView style={{ flex: 1 }}>
+          {addingToList ? (
+            <SearchRef onComplete={onRefFound} noNewRef={true} />
+          ) : (
+            <BottomSheetView>
+              <NewListItemButton onPress={() => setAddingToList(true)} />
+
+              {itemState?.expand?.children?.map((kid, index) => {
+                return (
+                  <ListItem
+                    key={kid.id + index}
+                    r={kid}
+                    largeImage={true}
+                    withRemove={true}
+                    onRemove={async () => {
+                      try {
+                        await removeFromList(item.id, kid)
+                        setItemState((prev) => ({
+                          ...prev,
+                          expand: {
+                            ...prev.expand,
+                            children: prev.expand?.children?.filter((e) => e.id !== kid.id) || [],
+                          },
+                        }))
+                      } catch (error) {}
+                    }}
+                  />
+                )
+              })}
+            </BottomSheetView>
+          )}
+        </BottomSheetView>
+      </BottomSheetScrollView>
+      <Button
+        style={{ position: 'absolute', bottom: 0, width: '100%' }}
+        onPress={onComplete}
+        title="Done"
+        variant="raised"
+      ></Button>
+    </BottomSheetView>
   )
 }

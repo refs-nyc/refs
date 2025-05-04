@@ -12,25 +12,29 @@ import { canvasApp } from './canvas'
 export const useItemStore = create<{
   items: Item[]
   editing: string
+  addingToList: boolean
   searchingNewRef: string
   editedState: Partial<ExpandedItem>
   startEditing: (id: string) => void
+  setAddingToList: (newValue: boolean) => void
   setSearchingNewRef: (id: string) => void
   stopEditing: () => void
   push: (newItem: StagedItem) => Promise<ExpandedItem>
   addToList: (id: string, ref: CompleteRef) => Promise<Item>
+  removeFromList: (id: string, ref: CompleteRef) => Promise<Item>
   update: (id?: string) => Promise<RecordModel>
   updateEditedState: (e: Partial<ExpandedItem>) => void
-  removeFromList: (id: string, ref: CompleteRef) => Promise<Item>
   reference: () => void
   remove: (id: string) => void
   moveToBacklog: (id: string) => Promise<ItemsRecord>
 }>((set, get) => ({
   items: [],
+  addingToList: false,
   editing: '',
   searchingNewRef: '', // the id to replace the ref for
   editedState: {},
   startEditing: (id: string) => set(() => ({ editing: id })),
+  setAddingToList: (newValue: boolean) => set(() => ({ addingToList: newValue })),
   setSearchingNewRef: (id: string) => set(() => ({ searchingNewRef: id })),
   stopEditing: () =>
     set(() => {
@@ -76,8 +80,24 @@ export const useItemStore = create<{
     try {
       const record = await pocketbase
         .collection('items')
-        .update(id, { '+children': ref.id, expand: 'children' })
+        .update(id, { '+children': ref.id }, { expand: 'children' })
       await canvasApp.actions.addItemToList(id, ref)
+
+      console.log('returning record,', record)
+      return record
+    } catch (error) {
+      console.error(error)
+      throw error
+    }
+  },
+  removeFromList: async (id: string, ref: CompleteRef) => {
+    console.log('REMOVE FROM LIST')
+    try {
+      const record = await pocketbase
+        .collection('items')
+        .update(id, { '-children': ref.id }, { expand: 'children' })
+
+      console.log('record removed from children key', record)
 
       return record
     } catch (error) {

@@ -25,6 +25,7 @@ import {
 import { gridSort, createdSort } from '../profiles/sorts'
 import { DMButton } from './DMButton'
 import { useMessageStore } from '@/features/pocketbase/stores/messages'
+import { BottomSheetScrollView, BottomSheetView } from '@gorhom/bottom-sheet'
 
 const win = Dimensions.get('window')
 

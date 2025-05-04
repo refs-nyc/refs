@@ -14,6 +14,7 @@ export const EditableHeader = ({
   image,
   placeholder = '',
   initialEditing = false,
+  withUrl = true,
   onTitleChange = () => {},
   onDataChange = () => {},
 }: {
@@ -22,6 +23,7 @@ export const EditableHeader = ({
   image?: string
   placeholder: string
   initialEditing?: boolean
+  withUrl?: boolean
   onTitleChange: (str: string) => void
   onDataChange: (d: { url: string; image?: string; title: string }) => void
 }) => {
@@ -186,7 +188,7 @@ export const EditableHeader = ({
               </Pressable>
             )
           )}
-          {!addingUrl && !editing && (
+          {!addingUrl && withUrl && !editing && (
             <Pressable
               style={{
                 width: 28,
@@ -203,7 +205,7 @@ export const EditableHeader = ({
             </Pressable>
           )}
 
-          {addingUrl && (
+          {addingUrl && withUrl && (
             <>
               {hasUrl && urlState === '' ? (
                 <></>

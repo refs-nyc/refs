@@ -10,6 +10,8 @@ import { Dimensions, View } from 'react-native'
 import { useState, useEffect } from 'react'
 import { RefForm } from '../actions/RefForm'
 import { SearchRef } from '../actions/SearchRef'
+import { FilteredItems } from '../actions/FilteredItems'
+// import { SearchItem } from '../actions/SearchItem'
 import { c } from '@/features/style'
 import { StagedRef, CompleteRef, Item, ExpandedItem } from '@/features/pocketbase/stores/types'
 import type { ImagePickerAsset } from 'expo-image-picker'
@@ -21,7 +23,7 @@ import { s } from '@/features/style'
 
 import * as Clipboard from 'expo-clipboard'
 
-type NewRefStep = '' | 'add' | 'search' | 'editList' | 'categorise'
+type NewRefStep = '' | 'add' | 'search' | 'editList' | 'addToList' | 'categorise'
 
 const win = Dimensions.get('window')
 
@@ -64,16 +66,16 @@ export const NewRef = ({
     setStep('add')
   }
 
-  const handleNewRefCreated = (item: ExpandedItem) => {
+  const handleNewRefCreated = (item: ExpandedItem, addToList: boolean = false) => {
     console.log('HANDLE NEW REF CREATED', item)
     if (!item.expand?.ref)
       throw new Error('unexpected: handleNewRefCreated should always be called with ExpandedItem')
     setItemData(item)
     setRefData(item.expand?.ref)
 
-    if (item.list) {
+    if (addToList) {
       console.log('edit list')
-      setStep('editList')
+      setStep('addToList')
       console.log(itemData)
     } else {
       setStep('categorise')
@@ -171,6 +173,18 @@ export const NewRef = ({
           existingRef={refData}
           onComplete={onNewRef}
           onBack={() => setStep('add')}
+        />
+      )}
+
+      {step === 'addToList' && (
+        <FilteredItems
+          filter={`children:length > 0 && creator = "${user?.id}"`}
+          onComplete={(item) => {
+            // Handle item selection
+          }}
+          onCreateList={() => {
+            // Handle new list creation
+          }}
         />
       )}
 

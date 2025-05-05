@@ -5,7 +5,7 @@ import { Button } from '../buttons/Button'
 import { Heading } from '../typo/Heading'
 import { NewRef } from '../actions/NewRef'
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated'
-import { SearchResultItem } from '../atoms/SearchResultItem'
+import { ListItem } from '../lists/ListItem'
 import { useUIStore } from '../state'
 import { ProfileHeader } from './ProfileHeader'
 import { Grid } from '../grid/Grid'
@@ -220,7 +220,7 @@ export const Profile = ({ userName }: { userName: string }) => {
                   {results
                     .filter((item) => item.expand?.ref)
                     .map((item) => (
-                      <SearchResultItem key={item.id} r={item.expand!.ref} />
+                      <ListItem key={item.id} r={item.expand!.ref} />
                     ))}
                 </Animated.View>
               )}

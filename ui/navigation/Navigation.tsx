@@ -1,6 +1,6 @@
 import Animated, { SlideInDown, FadeOut } from 'react-native-reanimated'
-import { Link, usePathname, useGlobalSearchParams } from 'expo-router'
-import { Dimensions, View, Text } from 'react-native'
+import { Link, usePathname, useGlobalSearchParams, router } from 'expo-router'
+import { Dimensions, View, Text, Pressable } from 'react-native'
 import { Avatar } from '../atoms/Avatar'
 import { c, s } from '@/features/style'
 import { useUserStore } from '@/features/pocketbase/stores/users'
@@ -107,16 +107,16 @@ export const Navigation = () => {
             </Link>
           </View>
           <View style={{ position: 'relative', left: -10, marginTop: 3, paddingRight: 3 }}>
-            <Link dismissTo href="/messages">
+            <Pressable onPress={()=>router.dismissTo('/messages')}>
               <Icon name="Messages" size={39} color={c.muted2} />
-            </Link>
-            {newMessages > 0 && <Badge count={newMessages} color={c.red} />}
+              {newMessages > 0 && <Badge count={newMessages} color={c.red} />}
+            </Pressable>
           </View>
           <View style={{ position: 'relative', left: -20, marginTop: 3, paddingRight: 3 }}>
-            <Link push href="/saves/modal">
+            <Pressable onPress={()=>router.push('/saves/modal')}>
               <Ionicons name="paper-plane" size={39} color={c.muted2} />
-            </Link>
-            {saves.length > 0 && <Badge count={saves.length} />}
+              {saves.length > 0 && <Badge count={saves.length} />}
+            </Pressable>
           </View>
         </View>
         <View

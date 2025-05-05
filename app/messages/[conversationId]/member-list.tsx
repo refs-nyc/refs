@@ -22,7 +22,6 @@ export default function MemberListScreen() {
           alignItems: 'flex-start',
           justifyContent: 'start',
           paddingVertical: s.$5,
-          // backgroundColor: 'purple',
         }}
       >
         <XStack
@@ -30,7 +29,6 @@ export default function MemberListScreen() {
           style={{
             alignItems: 'center',
             width: '100%',
-            // backgroundColor: 'yellow',
             height: s.$10,
             paddingHorizontal: s.$075,
           }}
@@ -48,7 +46,6 @@ export default function MemberListScreen() {
         </XStack>
         <ScrollView
           style={{
-            // backgroundColor: 'blue',
             width: '100%',
           }}
         >
@@ -60,7 +57,6 @@ export default function MemberListScreen() {
               justifyContent: 'start',
               paddingHorizontal: s.$4,
               paddingVertical: s.$2,
-              // backgroundColor: 'lightblue'
             }}
           >
             {members.map((m) => (

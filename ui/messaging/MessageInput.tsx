@@ -46,7 +46,6 @@ export default function MessageInput({
         style={{
           alignItems: 'center',
           justifyContent: 'center',
-          // backgroundColor: 'red',
         }}
         gap={s.$075}
       >

@@ -214,12 +214,13 @@ export default function SavesList() {
                       paddingVertical: s.$075,
                     }}
                   >
-                    <Heading tag="h2normal" style={{ color: c.white }}>
-                      {gc.title || 'Group Chat'}
+                    <Heading tag="h2normal" style={{ color: c.white, width: '65%' }} numberOfLines={2}>
+                      {gc.title}
                     </Heading>
                     <Button
                       variant="smallWhiteOutline"
                       onPress={() => {}}
+                      style={{ width: '30%' }}
                       title={`${memberships[gc.id].length} members`}
                     />
                   </XStack>

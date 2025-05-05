@@ -57,7 +57,7 @@ export const FilteredItems = ({
         minHeight: s.$12,
       }}
     >
-      <NewListItemButton onPress={onCreateList} />
+      <NewListItemButton onPress={onCreateList} label="Create new list" />
       {items.map((r) => renderItem({ item: r }))}
     </YStack>
   )

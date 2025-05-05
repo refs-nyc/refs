@@ -151,9 +151,11 @@ export function MessagesScreen({ conversationId }: { conversationId: string }) {
         style={{
           alignItems: 'center',
           padding: s.$1,
+          paddingBottom: 0,
           zIndex: 1,
           backgroundColor: c.surface,
-          paddingTop: s.$8,
+          paddingTop: s.$7,
+          //backgroundColor: 'yellow'
         }}
       >
         <Pressable

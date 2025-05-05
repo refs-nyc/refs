@@ -69,7 +69,10 @@ export default function MessageBubble({
             <Text style={{ color: senderColor, fontWeight: 'bold' }}>{sender.firstName}</Text>
           )}
           {parentMessage && (
-            <Pressable onPress={onParentMessagePress}>
+            <Pressable 
+              onPress={onParentMessagePress} 
+              onLongPress={()=>{if (onLongPress) onLongPress(message.id)}}
+            >
               <View
                 style={{
                   borderLeftWidth: 4,

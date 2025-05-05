@@ -15,7 +15,7 @@ export default function Saves() {
       backdropComponent={renderBackdrop}
       enablePanDownToClose={true}
       enableDynamicSizing={false}
-      snapPoints={['70%']}
+      snapPoints={['80%']}
       onChange={(i: number) => {
         if (i === -1) router.dismiss()
       }}

@@ -71,8 +71,14 @@ export default function NewGCScreen() {
       }}
     >
       <YStack
-        gap={s.$3half}
-        style={{ flex: 1, alignItems: 'center', justifyContent: 'start', paddingTop: s.$5 }}
+        gap={s.$2}
+        style={{ 
+          flex: 1, 
+          alignItems: 'start', 
+          width: '80%', 
+          paddingTop: s.$5, 
+          margin: 'auto',
+        }}
       >
         <TextInput
           placeholder="What's it about?"
@@ -80,17 +86,16 @@ export default function NewGCScreen() {
           onChangeText={setTitle}
           style={{
             width: '70%',
-            paddingVertical: s.$2,
             fontSize: s.$2,
             fontWeight: 'bold',
           }}
         />
 
         <Text>{getUserListString(users)}</Text>
-        <XStack>
+        <XStack gap={s.$05} style={{flexWrap: 'wrap'}}>
           {users.map((u) => (
             <Link key={u.id} href={`/user/${u.userName}`}>
-              <Avatar source={u.image} size={s.$4} />
+              <Avatar source={u.image} size={s.$3} />
             </Link>
           ))}
         </XStack>

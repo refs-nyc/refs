@@ -78,7 +78,7 @@ export default function SavesList() {
       <Animated.View style={[{ flexDirection: 'row', width: width * 2 }, animatedStyle]}>
         {/* Select Step */}
         <View style={{ width, paddingVertical: s.$1, paddingHorizontal: s.$3 }}>
-          <View style={{ paddingBottom: s.$1 }}>
+          <YStack gap={s.$075} style={{ paddingBottom: s.$1 }}>
             <XStack style={{ justifyContent: 'space-between', alignItems: 'center' }}>
               <Heading tag="h2" style={{ color: c.white }}>
                 Saved
@@ -91,7 +91,7 @@ export default function SavesList() {
               />
             </XStack>
             <Text style={{ color: c.white }}>Select anyone to DM or start a group chat</Text>
-          </View>
+          </YStack>
           <BottomSheetScrollView style={{ height: '75%' }}>
             <YStack gap={2} style={{ paddingBottom: s.$10 }}>
               {saves.map((save) => (
@@ -214,7 +214,11 @@ export default function SavesList() {
                       paddingVertical: s.$075,
                     }}
                   >
-                    <Heading tag="h2normal" style={{ color: c.white, width: '65%' }} numberOfLines={2}>
+                    <Heading
+                      tag="h2normal"
+                      style={{ color: c.white, width: '65%' }}
+                      numberOfLines={2}
+                    >
                       {gc.title}
                     </Heading>
                     <Button

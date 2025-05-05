@@ -150,12 +150,12 @@ export function MessagesScreen({ conversationId }: { conversationId: string }) {
         gap={s.$1}
         style={{
           alignItems: 'center',
-          padding: s.$1,
+          paddingHorizontal: s.$075,
           paddingBottom: 0,
           zIndex: 1,
           backgroundColor: c.surface,
           paddingTop: s.$7,
-          //backgroundColor: 'yellow'
+          // backgroundColor: 'yellow'
         }}
       >
         <Pressable
@@ -165,7 +165,7 @@ export function MessagesScreen({ conversationId }: { conversationId: string }) {
         >
           <Ionicons name="chevron-back" size={s.$2} color={c.grey2} />
         </Pressable>
-        <Heading tag="h2semi">
+        <Heading tag="h2semi" style={{ width: '50%' }} numberOfLines={2}>
           {conversation.is_direct
             ? members[0].expand?.user.firstName + ' ' + members[0].expand?.user.lastName
             : conversation.title}

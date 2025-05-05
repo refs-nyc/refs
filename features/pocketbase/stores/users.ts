@@ -32,6 +32,7 @@ export const useUserStore = create<{
   login: (userName: string) => Promise<Profile>
   logout: () => void
   removeItem: (itemId: string) => Promise<ExpandedProfile>
+  init: () => Promise<void>
 }>((set, get) => ({
   stagedUser: {},
   user: null, // user is ALWAYS the user of the app, this is only set if the user is logged in
@@ -39,6 +40,27 @@ export const useUserStore = create<{
   profileItems: [],
   backlogItems: [],
   users: [],
+  //
+  //
+  //
+  init: async () => {
+    // If PocketBase has a valid auth store, sync it with our store
+    if (pocketbase.authStore.isValid && pocketbase.authStore.record) {
+      try {
+        const record = await pocketbase
+          .collection<Profile>('users')
+          .getOne(pocketbase.authStore.record.id, { expand: 'items,items.ref' })
+
+        set(() => ({
+          user: record,
+        }))
+      } catch (error) {
+        console.error('Failed to sync user state:', error)
+        // If we can't get the user record, clear the auth store
+        pocketbase.authStore.clear()
+      }
+    }
+  },
   //
   //
   //
@@ -180,6 +202,20 @@ export const useUserStore = create<{
       const record = await pocketbase
         .collection<Profile>('users')
         .getFirstListItem(`userName = "${userName}"`, { expand: 'items,items.ref' })
+
+      // Get the user's email from the record
+      if (!record.email) {
+        throw new Error('User has no email')
+      }
+
+      // Get the password from staged user
+      const password = get().stagedUser.password
+      if (!password) {
+        throw new Error('No password provided')
+      }
+
+      // Authenticate with PocketBase
+      await pocketbase.collection('users').authWithPassword(record.email, password)
 
       set(() => ({
         user: record,

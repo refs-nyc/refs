@@ -17,12 +17,23 @@ export default function MemberListScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: c.surface }}>
       <YStack
-        gap={s.$1}
-        style={{ flex: 1, alignItems: 'flex-start', justifyContent: 'start', paddingTop: s.$5 }}
+        style={{
+          flex: 1,
+          alignItems: 'flex-start',
+          justifyContent: 'start',
+          paddingVertical: s.$5,
+          // backgroundColor: 'purple',
+        }}
       >
         <XStack
           gap={s.$1}
-          style={{ alignItems: 'center', padding: s.$3, paddingTop: s.$7, width: '100%' }}
+          style={{
+            alignItems: 'center',
+            width: '100%',
+            // backgroundColor: 'yellow',
+            height: s.$10,
+            paddingHorizontal: s.$075,
+          }}
         >
           <Pressable
             onPress={() => {
@@ -31,9 +42,16 @@ export default function MemberListScreen() {
           >
             <Ionicons name="chevron-back" size={s.$2} color={c.grey2} />
           </Pressable>
-          <Heading tag="h2semi">{conversation.title}</Heading>
+          <Heading tag="h2semi" style={{ width: '80%' }} numberOfLines={2}>
+            {conversation.title}
+          </Heading>
         </XStack>
-        <ScrollView>
+        <ScrollView
+          style={{
+            // backgroundColor: 'blue',
+            width: '100%',
+          }}
+        >
           <YStack
             gap={s.$1}
             style={{
@@ -41,6 +59,8 @@ export default function MemberListScreen() {
               alignItems: 'flex-start',
               justifyContent: 'start',
               paddingHorizontal: s.$4,
+              paddingVertical: s.$2,
+              // backgroundColor: 'lightblue'
             }}
           >
             {members.map((m) => (

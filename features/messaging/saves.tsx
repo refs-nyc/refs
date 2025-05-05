@@ -87,7 +87,7 @@ export default function SavesList() {
                 variant="smallWhiteOutline"
                 onPress={handleSelectAll}
                 title={selectedUsers.length ? 'Clear' : 'Select All'}
-                style={{ borderColor: c.white, border: 1, borderRadius: s.$2, color: c.white }}
+                style={{ width: s.$10 }}
               />
             </XStack>
             <Text style={{ color: c.white }}>Select anyone to DM or start a group chat</Text>

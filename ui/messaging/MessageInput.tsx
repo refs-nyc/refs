@@ -42,7 +42,13 @@ export default function MessageInput({
           </XStack>
         </View>
       )}
-      <XStack style={{ alignItems: 'center', justifyContent: 'center', paddingHorizontal: s.$1 }}>
+      <XStack
+        style={{
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+        gap={s.$075}
+      >
         {allowAttachment && (
           <Ionicons name="add" size={s.$2} color={c.grey2} onPress={onAttachmentPress} />
         )}
@@ -51,7 +57,6 @@ export default function MessageInput({
             backgroundColor: c.white,
             borderRadius: s.$2,
             marginVertical: s.$075,
-            marginHorizontal: s.$1,
             paddingVertical: s.$09,
             paddingHorizontal: s.$1,
             justifyContent: 'space-between',

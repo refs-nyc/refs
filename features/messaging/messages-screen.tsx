@@ -144,13 +144,13 @@ export function MessagesScreen({ conversationId }: { conversationId: string }) {
         justifyContent: 'flex-start',
         height: s.full as DimensionValue,
         backgroundColor: c.surface,
+        paddingHorizontal: s.$075,
       }}
     >
       <XStack
         gap={s.$1}
         style={{
           alignItems: 'center',
-          paddingHorizontal: s.$075,
           paddingBottom: 0,
           zIndex: 1,
           backgroundColor: c.surface,
@@ -185,6 +185,7 @@ export function MessagesScreen({ conversationId }: { conversationId: string }) {
       <KeyboardAvoidingView
         style={{
           height: '85%',
+          paddingHorizontal: s.$075,
         }}
         behavior={'position'}
       >

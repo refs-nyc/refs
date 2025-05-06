@@ -200,14 +200,15 @@ export function MessagesScreen({ conversationId }: { conversationId: string }) {
             backgroundColor: c.surface,
           }}
         >
-          <FlatList
-            ref={flatListRef}
-            data={conversationMessages}
-            renderItem={(item) => renderMessage(item)}
-            inverted
-            onEndReached={loadMoreMessages}
-            onEndReachedThreshold={0.1}
-          />
+            <FlatList
+              ref={flatListRef}
+              data={conversationMessages}
+              renderItem={(item) => renderMessage(item)}
+              inverted
+              onEndReached={loadMoreMessages}
+              onEndReachedThreshold={0.1}
+              contentContainerStyle={{ minHeight: '100%', justifyContent: 'flex-end' }}
+            />
           {attachmentOpen && (
             <Sheet
               onChange={(i: number) => {

@@ -10,25 +10,28 @@ import { Avatar } from '../atoms/Avatar'
 import { XStack } from '../core/Stacks'
 import { Link } from 'expo-router'
 import { SimplePinataImage } from '../images/SimplePinataImage'
+import ContextMenu from 'react-native-context-menu-view'
 
 export default function MessageBubble({
   message,
   showSender,
   sender,
   senderColor,
-  onLongPress,
   parentMessage,
   parentMessageSender,
   onParentMessagePress,
+  onReplyPress,
+  onExpandReactionsPress,
 }: {
   message: Message
   showSender: boolean
   sender: Profile
   senderColor?: string
-  onLongPress?: (id: string) => void
   parentMessage?: Message
   parentMessageSender?: Profile
   onParentMessagePress?: () => void
+  onReplyPress: (messageId: string) => void
+  onExpandReactionsPress: (messageId: string) => void
 }) {
   const { user } = useUserStore()
   const calendars = useCalendars()
@@ -51,9 +54,15 @@ export default function MessageBubble({
           </Link>
         </View>
       )}
-      <Pressable
-        onLongPress={() => {
-          if (onLongPress) onLongPress(message.id)
+      <ContextMenu
+        actions={[{ title: 'Reply' }, { title: 'React' }]}
+        onPress={(e) => {
+          if (e.nativeEvent.name === 'Reply') {
+            onReplyPress(message.id)
+          }
+          if (e.nativeEvent.name === 'React') {
+            onExpandReactionsPress(message.id)
+          }
         }}
       >
         <View
@@ -71,7 +80,6 @@ export default function MessageBubble({
           {parentMessage && (
             <Pressable 
               onPress={onParentMessagePress} 
-              onLongPress={()=>{if (onLongPress) onLongPress(message.id)}}
             >
               <View
                 style={{
@@ -126,7 +134,7 @@ export default function MessageBubble({
             {formattedDate}
           </Text>
         </View>
-      </Pressable>
+      </ContextMenu>
     </XStack>
   )
 }

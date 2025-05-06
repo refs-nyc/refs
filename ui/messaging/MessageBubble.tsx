@@ -55,7 +55,10 @@ export default function MessageBubble({
         </View>
       )}
       <ContextMenu
-        actions={[{ title: 'Reply' }, { title: 'React' }]}
+        actions={[
+          { title: 'Reply', systemIcon: 'arrowshape.turn.up.left' }, 
+          { title: 'React', systemIcon: 'chevron.forward' }
+        ]}
         onPress={(e) => {
           if (e.nativeEvent.name === 'Reply') {
             onReplyPress(message.id)

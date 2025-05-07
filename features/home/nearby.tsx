@@ -76,6 +76,7 @@ const ListItem = ({ item }: { item: ExpandedItem }) => {
 }
 
 export const Nearby = ({ items }: { items: ExpandedItem[] }) => {
+  const itemsWithoutBacklog = items.filter((item) => !item.backlog)
   return (
     <View
       style={{
@@ -97,7 +98,7 @@ export const Nearby = ({ items }: { items: ExpandedItem[] }) => {
           paddingBottom: s.$12,
         }}
       >
-        {items.map((item) => (
+        {itemsWithoutBacklog.map((item) => (
           <ListItem key={item.id} item={item} />
         ))}
       </YStack>

@@ -32,6 +32,14 @@ export const getPinataImage = async (url: string, imageOptions: OptimizeImageOpt
   return url
 }
 
+export const constructPinataUrl = (url: string, imageOptions: OptimizeImageOptions) => {
+  const cid = /files\/(.*)(?:\?)/g.exec(url)
+
+  if (!cid?.[1] || !imageOptions?.width || !imageOptions?.height) return url
+
+  return `https://violet-fashionable-blackbird-836.mypinata.cloud/files/${cid[1]}?img-width=${imageOptions.width}&img-height=${imageOptions.height}`
+}
+
 /**
  * Create a signed pinata url
  */

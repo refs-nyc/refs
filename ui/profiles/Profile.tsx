@@ -25,7 +25,7 @@ import {
 import { gridSort, createdSort } from '../profiles/sorts'
 import { DMButton } from './DMButton'
 import { useMessageStore } from '@/features/pocketbase/stores/messages'
-import { BottomSheetScrollView, BottomSheetView } from '@gorhom/bottom-sheet'
+import BacklogBottomSheet from './BacklogBottomSheet'
 
 const win = Dimensions.get('window')
 
@@ -181,18 +181,9 @@ export const Profile = ({ userName }: { userName: string }) => {
                     rows={4}
                   ></Grid>
                   {/* Actions */}
-                  <Pressable onPress={() => stopEditProfile()}>
-                    <XStack gap={s.$2} style={{ justifyContent: 'center', width: '100%' }}>
-                      {editingRights && (
-                        <Button
-                          onPress={() => setAddingTo('backlog')}
-                          variant="raisedSecondary"
-                          title="Backlog"
-                          iconColor={c.muted}
-                          iconAfter="add-circle-outline"
-                        />
-                      )}
-                      {showMessageButtons && (
+                  {showMessageButtons && (
+                    <Pressable onPress={() => stopEditProfile()}>
+                      <XStack gap={s.$2} style={{ justifyContent: 'center', width: '100%' }}>
                         <>
                           <DMButton profile={profile} />
                           <Button
@@ -204,9 +195,9 @@ export const Profile = ({ userName }: { userName: string }) => {
                             iconBefore="bookmark"
                           />
                         </>
-                      )}
-                    </XStack>
-                  </Pressable>
+                      </XStack>
+                    </Pressable>
+                  )}
                 </Animated.View>
               ) : (
                 <Animated.View
@@ -227,6 +218,14 @@ export const Profile = ({ userName }: { userName: string }) => {
           {!user && <Heading tag="h1">Profile for {userName} not found</Heading>}
         </YStack>
       </ScrollView>
+
+      {editingRights && (
+        <BacklogBottomSheet
+          onAddToBacklogClick={() => {
+            setAddingTo('backlog')
+          }}
+        />
+      )}
 
       {removingId && (
         <Sheet full={false} onChange={(e: any) => e === -1 && setRemovingId('')}>

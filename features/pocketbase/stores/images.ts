@@ -9,6 +9,10 @@ export type OptimizeImageOptions = {
 type SignedUrlEntry = { expires: number; date: number; signedUrl: string }
 type SignedUrls = Record<string, SignedUrlEntry>
 
+// when we load a view with a lot of images, we have a lot of async requests
+// this is a pool of promises that we can use to store the promises for each image
+// so that if we request the same image twice, we don't make two requests
+// we can just wait for the first promise to resolve and then use that result for the second request
 type PromisePool = MutableRefObject<Record<string, Promise<SignedUrlEntry>>>
 const promisePool = createRef<Record<string, Promise<SignedUrlEntry>>>() as PromisePool
 promisePool.current = {}

@@ -202,14 +202,17 @@ export const base = StyleSheet.create({
     backgroundColor: c.surface2,
     justifyContent: 'center',
     alignItems: 'center',
-    // overflow: 'hidden',
     borderRadius: s.$075,
-    // flex: 1,
   },
   smallSquare: {
     width: s.$2,
     height: s.$2,
     borderRadius: 4,
+  },
+  largeSquare: {
+    width: s.$4,
+    height: s.$4,
+    borderRadius: 8,
   },
   nonEditableItem: {
     backgroundColor: c.surface,

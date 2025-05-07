@@ -1,5 +1,5 @@
-import { Link, usePathname, useGlobalSearchParams } from 'expo-router'
-import { Text, View } from 'react-native'
+import { Link, usePathname, useGlobalSearchParams, router } from 'expo-router'
+import { Text, View, Pressable } from 'react-native'
 import { Avatar } from '../atoms/Avatar'
 import { c, s } from '@/features/style'
 import { useUserStore } from '@/features/pocketbase/stores/users'
@@ -78,10 +78,10 @@ export const Navigation = () => {
         </Link>
       </View>
       <View style={{ top: -2 }}>
-        <Link dismissTo href="/messages">
+        <Pressable onPress={() => router.dismissTo('/messages')}>
           <Icon name="Messages" size={39} color={c.muted2} />
-        </Link>
-        {newMessages > 0 && <Badge count={newMessages} color={c.red} />}
+          {newMessages > 0 && <Badge count={newMessages} color={c.red} />}
+        </Pressable>
       </View>
     </View>
   )

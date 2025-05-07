@@ -16,6 +16,7 @@ import type { ImagePickerAsset } from 'expo-image-picker'
 import { EditableList } from '../lists/EditableList'
 import { CategoriseRef } from './CategoriseRef'
 import { ShareIntent as ShareIntentType, useShareIntentContext } from 'expo-share-intent'
+import { BottomSheetView } from '@gorhom/bottom-sheet'
 import { s } from '@/features/style'
 
 import * as Clipboard from 'expo-clipboard'
@@ -71,7 +72,9 @@ export const NewRef = ({
     setRefData(item.expand?.ref)
 
     if (item.list) {
+      console.log('edit list')
       setStep('editList')
+      console.log(itemData)
     } else {
       setStep('categorise')
     }
@@ -85,7 +88,6 @@ export const NewRef = ({
 
   useEffect(() => {
     onStep(step)
-    console.log('step changed', step)
   }, [step])
 
   useEffect(() => {
@@ -101,7 +103,7 @@ export const NewRef = ({
   }, [step])
 
   return (
-    <View style={{ paddingHorizontal: s.$2 }}>
+    <BottomSheetView style={{ paddingHorizontal: s.$2 }}>
       {step === '' && (
         <YStack gap={s.$08} style={{ paddingTop: s.$1, paddingBottom: s.$6 }}>
           <Button
@@ -181,6 +183,6 @@ export const NewRef = ({
           }}
         />
       )}
-    </View>
+    </BottomSheetView>
   )
 }

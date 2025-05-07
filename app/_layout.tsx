@@ -26,6 +26,8 @@ import { c } from '@/features/style'
 import * as SystemUI from 'expo-system-ui'
 import { RegisterPushNotifications } from '@/ui/notifications/RegisterPushNotifications'
 import { MessagesInit } from '@/features/messaging/message-loader'
+import { useUserStore } from '@/features/pocketbase/stores/users'
+
 install()
 polyfillEncoding()
 configureReanimatedLogger({ strict: false })
@@ -77,14 +79,19 @@ function FontProvider({ children }: { children: React.ReactNode }) {
 }
 
 export default function RootLayout() {
+  const { init } = useUserStore()
+
   useEffect(() => {
+    // Initialize user store to sync with PocketBase auth
+    init()
+
     const unsubscribe = NetInfo.addEventListener((state) => {
       console.log('Connection type', state.type)
       console.log('Is connected?', state.isConnected)
     })
 
     return unsubscribe
-  }, [])
+  }, [init])
 
   return (
     <Providers>

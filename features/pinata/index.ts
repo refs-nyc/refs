@@ -5,33 +5,6 @@ export type OptimizeImageOptions = {
   height: number
 }
 
-export const getPinataImage = async (url: string, imageOptions: OptimizeImageOptions) => {
-  const cid = /files\/(.*)(?:\?)/g.exec(url)
-
-  if (!cid?.[1] || !imageOptions?.width || !imageOptions?.height) return url
-
-  const constructedUrl = `https://violet-fashionable-blackbird-836.mypinata.cloud/files/${cid[1]}?img-width=${imageOptions.width}&img-height=${imageOptions.height}`
-
-  const options = {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${process.env.EXPO_PUBLIC_PIN_JWT}`,
-      'Content-Type': 'application/json',
-    },
-    body: `{"url":"${constructedUrl}","expires":500000,"date":${Date.now()},"method":"GET"}`,
-  }
-
-  try {
-    const response = await fetch('https://api.pinata.cloud/v3/files/sign', options)
-    const result = await response.json()
-    return result.data
-  } catch (error) {
-    console.error(error)
-  }
-
-  return url
-}
-
 export const constructPinataUrl = (url: string, imageOptions: OptimizeImageOptions) => {
   const cid = /files\/(.*)(?:\?)/g.exec(url)
 
@@ -43,21 +16,34 @@ export const constructPinataUrl = (url: string, imageOptions: OptimizeImageOptio
 /**
  * Create a signed pinata url
  */
-export const pinataSignedUrl = async (cid: string) => {
+
+export type SignedUrlEntry = { expires: number; date: number; signedUrl: string }
+
+export async function pinataSignedUrl(url: string): Promise<SignedUrlEntry> {
+  const date = Date.now()
+  const expires = 500000
+
   const options = {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${process.env.EXPO_PUBLIC_PIN_JWT}`,
       'Content-Type': 'application/json',
     },
-    body: `{"url":"https://violet-fashionable-blackbird-836.mypinata.cloud/files/${cid}","expires":500000,"date":${Date.now()},"method":"GET"}`,
+    body: JSON.stringify({
+      url,
+      expires,
+      date,
+      method: 'GET',
+    }),
   }
 
   try {
     const response = await fetch('https://api.pinata.cloud/v3/files/sign', options)
-    return await response.json()
+    const value = await response.json()
+    return { date, expires, signedUrl: value.data as string }
   } catch (error) {
     console.error(error)
+    throw error
   }
 }
 
@@ -98,9 +84,9 @@ export const pinataUpload = async (
     const response = await fetch('https://uploads.pinata.cloud/v3/files', options)
     const result = await response.json()
 
-    const { data: url } = await pinataSignedUrl(result.data.cid)
+    const { signedUrl } = await pinataSignedUrl(result.data.cid)
 
-    return url
+    return signedUrl
   } catch (error) {
     console.error(error)
     throw error

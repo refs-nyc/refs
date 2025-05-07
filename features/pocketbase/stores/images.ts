@@ -1,3 +1,4 @@
+import { pinataSignedUrl, SignedUrlEntry } from '@/features/pinata'
 import { createRef, MutableRefObject } from 'react'
 import { create } from 'zustand'
 
@@ -6,7 +7,6 @@ export type OptimizeImageOptions = {
   height: number
 }
 
-type SignedUrlEntry = { expires: number; date: number; signedUrl: string }
 type SignedUrls = Record<string, SignedUrlEntry>
 
 // when we load a view with a lot of images, we have a lot of async requests
@@ -16,34 +16,6 @@ type SignedUrls = Record<string, SignedUrlEntry>
 type PromisePool = MutableRefObject<Record<string, Promise<SignedUrlEntry>>>
 const promisePool = createRef<Record<string, Promise<SignedUrlEntry>>>() as PromisePool
 promisePool.current = {}
-
-async function getSignedUrlRequest(url: string): Promise<SignedUrlEntry> {
-  const date = Date.now()
-  const expires = 500000
-
-  const options = {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${process.env.EXPO_PUBLIC_PIN_JWT}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      url,
-      expires,
-      date,
-      method: 'GET',
-    }),
-  }
-
-  try {
-    const response = await fetch('https://api.pinata.cloud/v3/files/sign', options)
-    const value = await response.json()
-    return { date, expires, signedUrl: value.data as string }
-  } catch (error) {
-    console.error(error)
-    throw error
-  }
-}
 
 export const useImageStore = create<{
   promisePool: PromisePool
@@ -73,7 +45,7 @@ export const useImageStore = create<{
     if (cachedPromise) {
       promiseToAwait = cachedPromise
     } else {
-      promiseToAwait = getSignedUrlRequest(url)
+      promiseToAwait = pinataSignedUrl(url)
       currentPromisePool[url] = promiseToAwait
     }
 

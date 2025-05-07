@@ -7,6 +7,7 @@ import { Icon } from '@/assets/icomoon/IconFont'
 import { useMessageStore } from '@/features/pocketbase/stores/messages'
 import { Badge } from '../atoms/Badge'
 import { useMemo } from 'react'
+import SavesIcon from '@/assets/icons/saves.svg'
 
 export const Navigation = () => {
   const { user } = useUserStore()
@@ -14,7 +15,7 @@ export const Navigation = () => {
   const pathName = usePathname()
   const { addingTo, removingId } = useGlobalSearchParams()
 
-  const { messagesPerConversation, conversations, memberships } = useMessageStore()
+  const { saves, messagesPerConversation, conversations, memberships } = useMessageStore()
 
   const countNewMessages = () => {
     if (!user) return 0
@@ -76,6 +77,32 @@ export const Navigation = () => {
         <Link dismissTo href="/feed">
           <Text style={{ fontSize: 24, fontWeight: 'bold' }}>Refs</Text>
         </Link>
+      </View>
+      <View style={{ top: -2, left: -10 }}>
+        <Pressable onPress={() => router.push('/saves/modal')}>
+          <SavesIcon />
+          <View
+            style={{
+              position: 'absolute',
+              height: '85%',
+              width: '100%',
+              justifyContent: 'center',
+              alignItems: 'center',
+            }}
+          >
+            {saves.length > 0 && (
+              <Text
+                style={{
+                  color: c.white,
+                  fontWeight: 'bold',
+                  fontSize: s.$08,
+                }}
+              >
+                {saves.length}
+              </Text>
+            )}
+          </View>
+        </Pressable>
       </View>
       <View style={{ top: -2 }}>
         <Pressable onPress={() => router.dismissTo('/messages')}>

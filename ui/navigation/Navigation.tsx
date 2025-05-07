@@ -1,16 +1,13 @@
-import Animated, { SlideInDown, FadeOut } from 'react-native-reanimated'
 import { Link, usePathname, useGlobalSearchParams, router } from 'expo-router'
-import { Dimensions, View, Text, Pressable } from 'react-native'
+import { Text, View, Pressable } from 'react-native'
 import { Avatar } from '../atoms/Avatar'
 import { c, s } from '@/features/style'
 import { useUserStore } from '@/features/pocketbase/stores/users'
 import { Icon } from '@/assets/icomoon/IconFont'
-import { Ionicons } from '@expo/vector-icons'
 import { useMessageStore } from '@/features/pocketbase/stores/messages'
 import { Badge } from '../atoms/Badge'
 import { useMemo } from 'react'
-
-const win = Dimensions.get('window')
+import SavesIcon from '@/assets/icons/saves.svg'
 
 export const Navigation = () => {
   const { user } = useUserStore()
@@ -62,82 +59,57 @@ export const Navigation = () => {
   }
 
   return (
-    <Animated.View
+    <View
       style={{
-        position: 'absolute',
-        zIndex: 1,
-        justifyContent: 'center',
+        display: 'flex',
+        flexDirection: 'row',
+        marginTop: s.$6,
+        paddingHorizontal: s.$1,
         alignItems: 'center',
-        bottom: s.$5,
-        alignSelf: 'center',
       }}
-      entering={SlideInDown.duration(200)}
-      exiting={FadeOut.duration(200)}
-      onStartShouldSetResponder={(event) => true}
     >
-      <View
-        style={{
-          position: 'relative',
-          overflow: 'hidden',
-          paddingBottom: 6,
-        }}
-      >
-        <View
-          style={{
-            borderColor: c.black,
-            borderWidth: 2,
-            borderRadius: s.$3,
-            gap: 28,
-            flexDirection: 'row',
-            backgroundColor: c.surface,
-            paddingVertical: 8,
-            paddingHorizontal: 16,
-            zIndex: 1,
-          }}
-        >
-          <View style={{ position: 'relative', marginTop: 4, left: 5 }}>
-            <Link dismissTo href={`/`}>
-              <Avatar source={user.image} size={42} />
-            </Link>
-          </View>
-          <View style={{ position: 'relative', left: -2, marginTop: 3, paddingRight: 3 }}>
-            <Link dismissTo href="/feed">
-              {/* <Ionicons name="globe" size={42} color={c.accent} /> */}
-              <Icon name="Globe" size={39} color={c.accent} />
-            </Link>
-          </View>
-          <View style={{ position: 'relative', left: -10, marginTop: 3, paddingRight: 3 }}>
-            <Pressable onPress={()=>router.dismissTo('/messages')}>
-              <Icon name="Messages" size={39} color={c.muted2} />
-              {newMessages > 0 && <Badge count={newMessages} color={c.red} />}
-            </Pressable>
-          </View>
-          <View style={{ position: 'relative', left: -20, marginTop: 3, paddingRight: 3 }}>
-            <Pressable onPress={()=>router.push('/saves/modal')}>
-              <Ionicons name="paper-plane" size={39} color={c.muted2} />
-              {saves.length > 0 && <Badge count={saves.length} />}
-            </Pressable>
-          </View>
-        </View>
-        <View
-          style={[
-            {
-              // paddingHorizontal: s.$2,
-              // width: '100%',
-              height: '100%',
-              backgroundColor: c.black,
-              position: 'absolute',
-              zIndex: 0,
-              left: 0,
-              right: 0,
-              top: 6,
-              borderRadius: s.$3,
-              transformOrigin: 'bottom',
-              transform: 'scaleY(1.05)',
-            },
-          ]}
-        />
+      <View>
+        <Link dismissTo href={`/`}>
+          <Avatar source={user.image} size={42} />
+        </Link>
       </View>
-    </Animated.View>
+      <View style={{ margin: 'auto' }}>
+        <Link dismissTo href="/feed">
+          <Text style={{ fontSize: 24, fontWeight: 'bold' }}>Refs</Text>
+        </Link>
+      </View>
+      <View style={{ top: -2, left: -10 }}>
+        <Pressable onPress={() => router.push('/saves/modal')}>
+          <SavesIcon />
+          <View
+            style={{
+              position: 'absolute',
+              height: '85%',
+              width: '100%',
+              justifyContent: 'center',
+              alignItems: 'center',
+            }}
+          >
+            {saves.length > 0 && (
+              <Text
+                style={{
+                  color: c.white,
+                  fontWeight: 'bold',
+                  fontSize: s.$08,
+                }}
+              >
+                {saves.length}
+              </Text>
+            )}
+          </View>
+        </Pressable>
+      </View>
+      <View style={{ top: -2 }}>
+        <Pressable onPress={() => router.dismissTo('/messages')}>
+          <Icon name="Messages" size={39} color={c.muted2} />
+          {newMessages > 0 && <Badge count={newMessages} color={c.red} />}
+        </Pressable>
+      </View>
+    </View>
   )
 }

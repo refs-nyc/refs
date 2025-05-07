@@ -42,14 +42,14 @@ const ListItem = ({ item }: { item: ExpandedItem }) => {
           <Heading style={{ color: c.muted2 }} tag="p">
             added{' '}
           </Heading>
-          <Link href={item.expand?.creator ? (item.backlog ? creatorProfileUrl : itemUrl) : '/'}>
+          <Link href={item.expand?.creator ? itemUrl : '/'}>
             <Heading tag="semistrong">{item.expand?.ref?.title}</Heading>
           </Link>
         </Heading>
       </View>
 
       {item?.image ? (
-        <Link href={item.expand?.creator ? (item.backlog ? creatorProfileUrl : itemUrl) : '/'}>
+        <Link href={item.expand?.creator ? itemUrl : '/'}>
           <SimplePinataImage
             originalSource={item.image}
             imageOptions={{ width: s.$5, height: s.$5 }}
@@ -76,7 +76,6 @@ const ListItem = ({ item }: { item: ExpandedItem }) => {
 }
 
 export const Nearby = ({ items }: { items: ExpandedItem[] }) => {
-  const itemsWithoutBacklog = items.filter((item) => !item.backlog)
   return (
     <View
       style={{
@@ -98,7 +97,7 @@ export const Nearby = ({ items }: { items: ExpandedItem[] }) => {
           paddingBottom: s.$12,
         }}
       >
-        {itemsWithoutBacklog.map((item) => (
+        {items.map((item) => (
           <ListItem key={item.id} item={item} />
         ))}
       </YStack>

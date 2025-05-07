@@ -12,7 +12,6 @@ export const SearchResults = ({ results }: { results: ExpandedItem[] }) => {
     <KeyboardAvoidingView
       style={{
         paddingHorizontal: s.$1half,
-        paddingTop: win.height * 0.2,
         position: 'absolute',
         zIndex: -1,
       }}

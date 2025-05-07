@@ -37,7 +37,6 @@ export default function BacklogBottomSheet({
       handleIndicatorStyle={{
         width: s.$13,
         height: s.$075,
-        // display: index < 1 ? 'none' : 'flex',
         backgroundColor: index < 1 ? 'transparent' : c.white,
       }}
     >

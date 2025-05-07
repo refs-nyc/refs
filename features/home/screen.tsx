@@ -1,7 +1,7 @@
 import { View, Dimensions, DimensionValue } from 'react-native'
 import { useEffect } from 'react'
 import { Button, YStack, Heading } from '../../ui/index'
-import { useUserStore } from '@/features/pocketbase'
+import { pocketbase, useUserStore } from '@/features/pocketbase'
 import Animated, {
   useAnimatedStyle,
   Easing,
@@ -62,6 +62,11 @@ function RotatingImage() {
 
 export function HomeScreen() {
   const { user } = useUserStore()
+
+  useEffect(() => {
+    console.log('USER ON HOMESCREEN', user)
+    console.log('Pocketbase auth store', pocketbase.authStore.isValid)
+  }, [user, pocketbase])
 
   if (user) {
     // if the user is logged in, show the user's profile

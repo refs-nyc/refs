@@ -1,4 +1,5 @@
 import { pocketbase } from '../pocketbase'
+import { RecordModel } from 'pocketbase'
 import { create } from 'zustand'
 import { StagedItem, Item, ExpandedItem, CompleteRef } from './types'
 import { ItemsRecord } from './pocketbase-types'
@@ -11,19 +12,39 @@ import { canvasApp } from './canvas'
 export const useItemStore = create<{
   items: Item[]
   editing: string
+  addingToList: boolean
+  searchingNewRef: string
+  editedState: Partial<ExpandedItem>
   startEditing: (id: string) => void
+  setAddingToList: (newValue: boolean) => void
+  setSearchingNewRef: (id: string) => void
   stopEditing: () => void
   push: (newItem: StagedItem) => Promise<ExpandedItem>
   addToList: (id: string, ref: CompleteRef) => Promise<Item>
   removeFromList: (id: string, ref: CompleteRef) => Promise<Item>
+  update: (id?: string) => Promise<RecordModel>
+  updateEditedState: (e: Partial<ExpandedItem>) => void
   reference: () => void
   remove: (id: string) => void
   moveToBacklog: (id: string) => Promise<ItemsRecord>
-}>((set) => ({
+}>((set, get) => ({
   items: [],
+  addingToList: false,
   editing: '',
+  searchingNewRef: '', // the id to replace the ref for
+  editedState: {},
   startEditing: (id: string) => set(() => ({ editing: id })),
-  stopEditing: () => set(() => ({ editing: '' })),
+  setAddingToList: (newValue: boolean) => set(() => ({ addingToList: newValue })),
+  setSearchingNewRef: (id: string) => set(() => ({ searchingNewRef: id })),
+  stopEditing: () =>
+    set(() => {
+      return { editing: '', editedState: {}, setSearchingNewRef: '' }
+    }),
+  updateEditedState: (editedState: Partial<CompleteRef>) =>
+    set(() => ({
+      ...get().editedState,
+      editedState,
+    })),
   push: async (newItem: StagedItem) => {
     console.log('ITEMS PUSH')
     try {
@@ -59,13 +80,42 @@ export const useItemStore = create<{
     try {
       const record = await pocketbase
         .collection('items')
-        .update(id, { '+children': ref.id, expand: 'children' })
+        .update(id, { '+children': ref.id }, { expand: 'children' })
       await canvasApp.actions.addItemToList(id, ref)
+
+      console.log('returning record,', record)
+      return record
+    } catch (error) {
+      console.error(error)
+      throw error
+    }
+  },
+  removeFromList: async (id: string, ref: CompleteRef) => {
+    console.log('REMOVE FROM LIST')
+    try {
+      const record = await pocketbase
+        .collection('items')
+        .update(id, { '-children': ref.id }, { expand: 'children' })
+
+      console.log('record removed from children key', record)
 
       return record
     } catch (error) {
       console.error(error)
       throw error
+    }
+  },
+  update: async (id?: string) => {
+    try {
+      const record = await pocketbase
+        .collection('items')
+        .update(id || get().editing, get().editedState, { expand: 'children,ref' })
+      // Canvas stuff
+
+      return record
+    } catch (e) {
+      console.error(e)
+      throw e
     }
   },
   removeFromList: async (id: string, ref: CompleteRef) => {

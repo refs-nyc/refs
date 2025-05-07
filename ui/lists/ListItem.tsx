@@ -1,5 +1,5 @@
 import { XStack } from '../core/Stacks'
-import { View, Text } from 'react-native'
+import { View, Text, Pressable } from 'react-native'
 import { useState, useEffect } from 'react'
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { pocketbase } from '@/features/pocketbase'
@@ -11,12 +11,21 @@ export const ListItem = ({
   r,
   backgroundColor,
   showMeta = true,
+  withRemove = false,
+  largeImage = false,
+  onRemove,
 }: {
   r: CompleteRef
   backgroundColor?: string
   showMeta?: boolean
+  withRemove?: boolean
+  largeImage?: boolean
+  onRemove?: () => void
 }) => {
   let [count, setCount] = useState(-1)
+
+  console.log('WITH REMOVE', withRemove)
+  console.log('WITH large image', largeImage)
 
   useEffect(() => {
     const getReferenceCount = async () => {
@@ -35,9 +44,8 @@ export const ListItem = ({
   return (
     <View
       style={{
-        // marginVertical: s.$1half,
         paddingVertical: s.$08,
-        paddingHorizontal: s.$08,
+        paddingHorizontal: largeImage ? 0 : s.$08,
         borderRadius: s.$075,
         backgroundColor: backgroundColor || c.surface,
       }}
@@ -47,20 +55,25 @@ export const ListItem = ({
           {r?.image ? (
             <SimplePinataImage
               originalSource={r.image}
-              imageOptions={{ width: s.$2, height: s.$2 }}
-              style={base.smallSquare}
+              imageOptions={{ width: largeImage ? s.$4 : s.$2, height: largeImage ? s.$4 : s.$2 }}
+              style={largeImage ? base.largeSquare : base.smallSquare}
             />
           ) : (
-            <View style={base.smallSquare}></View>
+            <View style={largeImage ? base.largeSquare : base.smallSquare}></View>
           )}
           <Text>{r?.title}</Text>
         </XStack>
 
-        {showMeta && (
-          <XStack gap={s.$09} style={{ justifyContent: 'space-between', alignItems: 'center' }}>
-            <Text>{count === 1 ? 'You are' : count} referencing</Text>
-            {/* <Ionicons name="close" /> */}
-          </XStack>
+        {withRemove ? (
+          <Pressable onPress={onRemove}>
+            <Ionicons name="close" />
+          </Pressable>
+        ) : (
+          showMeta && (
+            <XStack gap={s.$09} style={{ justifyContent: 'space-between', alignItems: 'center' }}>
+              <Text>{count === 1 ? 'You are' : count} referencing</Text>
+            </XStack>
+          )
         )}
       </XStack>
     </View>

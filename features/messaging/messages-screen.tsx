@@ -144,16 +144,17 @@ export function MessagesScreen({ conversationId }: { conversationId: string }) {
         justifyContent: 'flex-start',
         height: s.full as DimensionValue,
         backgroundColor: c.surface,
+        paddingHorizontal: s.$075,
       }}
     >
       <XStack
         gap={s.$1}
         style={{
           alignItems: 'center',
-          padding: s.$1,
+          paddingBottom: 0,
           zIndex: 1,
           backgroundColor: c.surface,
-          paddingTop: s.$8,
+          paddingTop: s.$7,
         }}
       >
         <Pressable
@@ -163,7 +164,11 @@ export function MessagesScreen({ conversationId }: { conversationId: string }) {
         >
           <Ionicons name="chevron-back" size={s.$2} color={c.grey2} />
         </Pressable>
-        <Heading tag="h2semi">
+        <Heading
+          tag="h2semi"
+          style={{ width: conversation.is_direct ? undefined : '60%' }}
+          numberOfLines={2}
+        >
           {conversation.is_direct
             ? members[0].expand?.user.firstName + ' ' + members[0].expand?.user.lastName
             : conversation.title}
@@ -183,6 +188,7 @@ export function MessagesScreen({ conversationId }: { conversationId: string }) {
       <KeyboardAvoidingView
         style={{
           height: '85%',
+          paddingHorizontal: s.$075,
         }}
         behavior={'position'}
       >
@@ -194,14 +200,15 @@ export function MessagesScreen({ conversationId }: { conversationId: string }) {
             backgroundColor: c.surface,
           }}
         >
-          <FlatList
-            ref={flatListRef}
-            data={conversationMessages}
-            renderItem={(item) => renderMessage(item)}
-            inverted
-            onEndReached={loadMoreMessages}
-            onEndReachedThreshold={0.1}
-          />
+            <FlatList
+              ref={flatListRef}
+              data={conversationMessages}
+              renderItem={(item) => renderMessage(item)}
+              inverted
+              onEndReached={loadMoreMessages}
+              onEndReachedThreshold={0.1}
+              contentContainerStyle={{ minHeight: '100%', justifyContent: 'flex-end' }}
+            />
           {attachmentOpen && (
             <Sheet
               onChange={(i: number) => {

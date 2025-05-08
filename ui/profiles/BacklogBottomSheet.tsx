@@ -39,12 +39,13 @@ export default function BacklogBottomSheet({
         height: s.$075,
         backgroundColor: index < 1 ? 'transparent' : c.white,
       }}
+      handleStyle={{ display: index < 1 ? 'none' : 'flex', height: s.$3 }}
     >
       <Pressable
         onPress={() => {
           if (backlogSheetRef.current) backlogSheetRef.current.snapToIndex(1)
         }}
-        style={{ height: s.$7 }}
+        style={{ paddingTop: index < 1 ? s.$3 : 0, paddingBottom: index < 1 ? s.$6 : 0 }}
       >
         <XStack
           gap={s.$075}

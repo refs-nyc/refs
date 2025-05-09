@@ -9,10 +9,12 @@ export const DMButton = ({
   profile,
   fromSaves,
   disabled,
+  style,
 }: {
   profile: Profile
   fromSaves?: boolean
   disabled?: boolean
+  style?: any
 }) => {
   const { user } = useUserStore()
 
@@ -60,11 +62,11 @@ export const DMButton = ({
         if (fromSaves) router.replace(target as any)
         else router.push(target as any)
       }}
-      variant={fromSaves ? 'whiteInverted' : 'raisedSecondary'}
+      variant={'whiteInverted'}
       disabled={disabled}
       title="Message"
       iconColor={c.muted}
-      iconAfter={fromSaves ? undefined : 'paper-plane'}
+      style={style}
     />
   )
 }

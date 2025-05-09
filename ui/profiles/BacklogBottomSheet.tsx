@@ -1,13 +1,17 @@
 import { c, s } from '@/features/style'
 import BottomSheet, { BottomSheetBackdrop } from '@gorhom/bottom-sheet'
 import { useCallback, useRef, useState } from 'react'
-import { Pressable, View, Text } from 'react-native'
+import { Pressable, View } from 'react-native'
 import { Heading } from '../typo/Heading'
 import { XStack } from '../core/Stacks'
+import { Ionicons } from '@expo/vector-icons'
+import Animated, { FadeIn, FadeOut } from 'react-native-reanimated'
 
 export default function BacklogBottomSheet({
+  children,
   onAddToBacklogClick,
 }: {
+  children?: React.ReactNode
   onAddToBacklogClick: () => void
 }) {
   const [index, setIndex] = useState(0)
@@ -25,27 +29,41 @@ export default function BacklogBottomSheet({
     []
   )
 
+  const renderHandle = () => {
+    return (
+      <View
+        style={{
+          alignItems: 'center',
+          justifyContent: 'center',
+          display: index < 1 ? 'none' : 'flex',
+          height: s.$3,
+        }}
+      >
+        <Animated.View
+          entering={FadeIn.duration(200)}
+          exiting={FadeOut.duration(200)}
+          style={{ backgroundColor: c.white, width: s.$5, height: s.$05, borderRadius: s.$10 }}
+        />
+      </View>
+    )
+  }
+
   return (
     <BottomSheet
       enableDynamicSizing={false}
       ref={backlogSheetRef}
       enablePanDownToClose={false}
-      snapPoints={['15%', '50%']}
+      snapPoints={['15%', '80%']}
       onChange={(i: number) => setIndex(i)}
       backgroundStyle={{ backgroundColor: c.olive, borderRadius: s.$4, paddingTop: 0 }}
       backdropComponent={renderBackdrop}
-      handleIndicatorStyle={{
-        width: s.$13,
-        height: s.$075,
-        backgroundColor: index < 1 ? 'transparent' : c.white,
-      }}
-      handleStyle={{ display: index < 1 ? 'none' : 'flex', height: s.$3 }}
+      handleComponent={renderHandle}
     >
       <Pressable
         onPress={() => {
           if (backlogSheetRef.current) backlogSheetRef.current.snapToIndex(1)
         }}
-        style={{ paddingTop: index < 1 ? s.$3 : 0, paddingBottom: index < 1 ? s.$6 : 0 }}
+        style={{ paddingTop: index < 1 ? s.$3 : 0, paddingBottom: index < 1 ? s.$6 : s.$1 }}
       >
         <XStack
           gap={s.$075}
@@ -74,19 +92,15 @@ export default function BacklogBottomSheet({
           <Pressable
             onPress={onAddToBacklogClick}
             style={{
-              borderRadius: s.$10,
-              borderWidth: 1,
-              borderColor: c.white,
-              width: s.$3,
-              height: s.$3,
               alignItems: 'center',
               justifyContent: 'center',
             }}
           >
-            <Text style={{ color: c.white, fontSize: s.$1, lineHeight: s.$1 }}>+</Text>
+            <Ionicons name="add-circle-outline" size={s.$4} color={c.white} />
           </Pressable>
         </XStack>
       </Pressable>
+      {index > 0 && children}
     </BottomSheet>
   )
 }

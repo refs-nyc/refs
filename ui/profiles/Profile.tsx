@@ -26,6 +26,7 @@ import { gridSort, createdSort } from '../profiles/sorts'
 import { DMButton } from './DMButton'
 import { useMessageStore } from '@/features/pocketbase/stores/messages'
 import BacklogBottomSheet from './BacklogBottomSheet'
+import BacklogList from './BacklogList'
 
 const win = Dimensions.get('window')
 
@@ -224,7 +225,11 @@ export const Profile = ({ userName }: { userName: string }) => {
           onAddToBacklogClick={() => {
             setAddingTo('backlog')
           }}
-        />
+        >
+          <BacklogList
+            items={backlogItems.toReversed()}
+          />
+        </BacklogBottomSheet>
       )}
 
       {removingId && (

@@ -182,30 +182,58 @@ export const Profile = ({ userName }: { userName: string }) => {
                   ></Grid>
                   {/* Actions */}
                   <Pressable onPress={() => stopEditProfile()}>
-                    <XStack gap={s.$2} style={{ justifyContent: 'center', width: '100%' }}>
-                      {editingRights && (
-                        <Button
-                          onPress={() => setAddingTo('backlog')}
-                          variant="raisedSecondary"
-                          title="Backlog"
-                          iconColor={c.muted}
-                          iconAfter="add-circle-outline"
-                        />
-                      )}
-                      {showMessageButtons && (
-                        <>
-                          <DMButton profile={profile} />
+                    <View
+                      style={{
+                        borderRadius: s.$5,
+                        backgroundColor: c.olive,
+                        paddingTop: s.$1,
+                        paddingHorizontal: s.$2,
+                        height: s.$10,
+                        position: 'absolute',
+                        // bottom:
+                        left: -s.$1,
+                        right: -s.$1,
+                      }}
+                    >
+                      <XStack gap={s.$2} style={{ justifyContent: 'center', width: '100%' }}>
+                        {editingRights && (
                           <Button
-                            onPress={() => {
-                              addSave(profile.id, user?.id!)
-                            }}
-                            variant="raisedSecondary"
-                            title="Save"
-                            iconBefore="bookmark"
+                            onPress={() => setAddingTo('backlog')}
+                            variant="newOutline"
+                            title="Backlog"
+                            iconColor={c.muted}
+                            iconAfter="add-circle-outline"
                           />
-                        </>
-                      )}
-                    </XStack>
+                        )}
+                        {showMessageButtons && (
+                          <XStack gap={s.$1}>
+                            <View style={{ height: s.$4, width: s.$10 }}>
+                              <DMButton profile={profile} style={{ paddingHorizontal: s.$0 }} />
+                            </View>
+                            <View style={{ height: s.$4, width: s.$10 }}>
+                              <Button
+                                onPress={() => {
+                                  addSave(profile.id, user?.id!)
+                                }}
+                                variant="whiteOutline"
+                                title="Save"
+                                style={{ paddingHorizontal: s.$0 }}
+                              />
+                            </View>
+                            <View style={{ height: s.$4, width: s.$10 }}>
+                              <Button
+                                onPress={() => {
+                                  // addSave(profile.id, user?.id!)
+                                }}
+                                variant="whiteOutline"
+                                title="Backlog"
+                                style={{ paddingHorizontal: s.$0 }}
+                              />
+                            </View>
+                          </XStack>
+                        )}
+                      </XStack>
+                    </View>
                   </Pressable>
                 </Animated.View>
               ) : (

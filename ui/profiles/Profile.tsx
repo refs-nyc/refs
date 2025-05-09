@@ -223,7 +223,7 @@ export const Profile = ({ userName }: { userName: string }) => {
                             <View style={{ height: s.$4, width: s.$10 }}>
                               <Button
                                 onPress={() => {
-                                  // addSave(profile.id, user?.id!)
+                                  // TODO: open backlog
                                 }}
                                 variant="whiteOutline"
                                 title="Backlog"

@@ -181,22 +181,22 @@ export const Profile = ({ userName }: { userName: string }) => {
                     rows={4}
                   ></Grid>
                   {/* Actions */}
-                  <Pressable onPress={() => stopEditProfile()}>
-                    <View
-                      style={{
-                        borderRadius: s.$5,
-                        backgroundColor: c.olive,
-                        paddingTop: s.$1,
-                        paddingHorizontal: s.$2,
-                        height: s.$10,
-                        position: 'absolute',
-                        // bottom:
-                        left: -s.$1,
-                        right: -s.$1,
-                      }}
-                    >
-                      <XStack gap={s.$1}>
-                        {showMessageButtons && (
+                  {showMessageButtons && (
+                    <Pressable onPress={() => stopEditProfile()}>
+                      <View
+                        style={{
+                          borderRadius: s.$5,
+                          backgroundColor: c.olive,
+                          paddingTop: s.$1,
+                          paddingHorizontal: s.$2,
+                          height: s.$10,
+                          position: 'absolute',
+                          // bottom:
+                          left: -s.$1,
+                          right: -s.$1,
+                        }}
+                      >
+                        <XStack gap={s.$1}>
                           <>
                             <View style={{ height: s.$4, width: s.$10 }}>
                               <DMButton profile={profile} style={{ paddingHorizontal: s.$0 }} />
@@ -212,20 +212,21 @@ export const Profile = ({ userName }: { userName: string }) => {
                               />
                             </View>
                           </>
-                        )}
-                        <View style={{ height: s.$4, width: s.$10 }}>
-                          <Button
-                            onPress={() => {
-                              // TODO: open backlog
-                            }}
-                            variant="whiteOutline"
-                            title="Backlog"
-                            style={{ paddingHorizontal: s.$0 }}
-                          />
-                        </View>
-                      </XStack>
-                    </View>
-                  </Pressable>
+
+                          <View style={{ height: s.$4, width: s.$10 }}>
+                            <Button
+                              onPress={() => {
+                                // TODO: open backlog
+                              }}
+                              variant="whiteOutline"
+                              title="Backlog"
+                              style={{ paddingHorizontal: s.$0 }}
+                            />
+                          </View>
+                        </XStack>
+                      </View>
+                    </Pressable>
+                  )}
                 </Animated.View>
               ) : (
                 <Animated.View

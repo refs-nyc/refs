@@ -32,7 +32,7 @@ export const Grid = ({
           key={item.id}
           id={item.id}
           index={i}
-          canEdit={true}
+          canEdit={editingRights}
           onRemove={() => {
             if (onRemoveItem) onRemoveItem(item.id)
           }}

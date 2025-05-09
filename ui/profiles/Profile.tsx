@@ -25,7 +25,7 @@ import {
 import { gridSort, createdSort } from '../profiles/sorts'
 import { DMButton } from './DMButton'
 import { useMessageStore } from '@/features/pocketbase/stores/messages'
-import { BottomSheetScrollView, BottomSheetView } from '@gorhom/bottom-sheet'
+import BacklogBottomSheet from './BacklogBottomSheet'
 
 const win = Dimensions.get('window')
 
@@ -195,18 +195,9 @@ export const Profile = ({ userName }: { userName: string }) => {
                         right: -s.$1,
                       }}
                     >
-                      <XStack gap={s.$2} style={{ justifyContent: 'center', width: '100%' }}>
-                        {editingRights && (
-                          <Button
-                            onPress={() => setAddingTo('backlog')}
-                            variant="newOutline"
-                            title="Backlog"
-                            iconColor={c.muted}
-                            iconAfter="add-circle-outline"
-                          />
-                        )}
+                      <XStack gap={s.$1}>
                         {showMessageButtons && (
-                          <XStack gap={s.$1}>
+                          <>
                             <View style={{ height: s.$4, width: s.$10 }}>
                               <DMButton profile={profile} style={{ paddingHorizontal: s.$0 }} />
                             </View>
@@ -220,18 +211,18 @@ export const Profile = ({ userName }: { userName: string }) => {
                                 style={{ paddingHorizontal: s.$0 }}
                               />
                             </View>
-                            <View style={{ height: s.$4, width: s.$10 }}>
-                              <Button
-                                onPress={() => {
-                                  // TODO: open backlog
-                                }}
-                                variant="whiteOutline"
-                                title="Backlog"
-                                style={{ paddingHorizontal: s.$0 }}
-                              />
-                            </View>
-                          </XStack>
+                          </>
                         )}
+                        <View style={{ height: s.$4, width: s.$10 }}>
+                          <Button
+                            onPress={() => {
+                              // TODO: open backlog
+                            }}
+                            variant="whiteOutline"
+                            title="Backlog"
+                            style={{ paddingHorizontal: s.$0 }}
+                          />
+                        </View>
                       </XStack>
                     </View>
                   </Pressable>
@@ -255,6 +246,14 @@ export const Profile = ({ userName }: { userName: string }) => {
           {!user && <Heading tag="h1">Profile for {userName} not found</Heading>}
         </YStack>
       </ScrollView>
+
+      {editingRights && (
+        <BacklogBottomSheet
+          onAddToBacklogClick={() => {
+            setAddingTo('backlog')
+          }}
+        />
+      )}
 
       {removingId && (
         <Sheet full={false} onChange={(e: any) => e === -1 && setRemovingId('')}>

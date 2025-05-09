@@ -1,6 +1,6 @@
 import type { Item } from '@/features/pocketbase/stores/types'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { XStack, YStack } from '../core/Stacks'
+import { YStack } from '../core/Stacks'
 import { Button } from '../buttons/Button'
 import { Heading } from '../typo/Heading'
 import { NewRef } from '../actions/NewRef'
@@ -180,53 +180,6 @@ export const Profile = ({ userName }: { userName: string }) => {
                     items={gridItems}
                     rows={4}
                   ></Grid>
-                  {/* Actions */}
-                  {showMessageButtons && (
-                    <Pressable onPress={() => stopEditProfile()}>
-                      <View
-                        style={{
-                          borderRadius: s.$5,
-                          backgroundColor: c.olive,
-                          paddingTop: s.$1,
-                          paddingHorizontal: s.$2,
-                          height: s.$10,
-                          position: 'absolute',
-                          // bottom:
-                          left: -s.$1,
-                          right: -s.$1,
-                        }}
-                      >
-                        <XStack gap={s.$1}>
-                          <>
-                            <View style={{ height: s.$4, width: s.$10 }}>
-                              <DMButton profile={profile} style={{ paddingHorizontal: s.$0 }} />
-                            </View>
-                            <View style={{ height: s.$4, width: s.$10 }}>
-                              <Button
-                                onPress={() => {
-                                  addSave(profile.id, user?.id!)
-                                }}
-                                variant="whiteOutline"
-                                title="Save"
-                                style={{ paddingHorizontal: s.$0 }}
-                              />
-                            </View>
-                          </>
-
-                          <View style={{ height: s.$4, width: s.$10 }}>
-                            <Button
-                              onPress={() => {
-                                // TODO: open backlog
-                              }}
-                              variant="whiteOutline"
-                              title="Backlog"
-                              style={{ paddingHorizontal: s.$0 }}
-                            />
-                          </View>
-                        </XStack>
-                      </View>
-                    </Pressable>
-                  )}
                 </Animated.View>
               ) : (
                 <Animated.View
@@ -247,6 +200,52 @@ export const Profile = ({ userName }: { userName: string }) => {
           {!user && <Heading tag="h1">Profile for {userName} not found</Heading>}
         </YStack>
       </ScrollView>
+
+      {profile && showMessageButtons && (
+        <Pressable onPress={() => stopEditProfile()}>
+          <View
+            style={{
+              borderRadius: s.$5,
+              backgroundColor: c.olive,
+              paddingTop: s.$1,
+              paddingHorizontal: s.$2,
+              height: s.$10,
+              position: 'absolute',
+              bottom: s.$1,
+              left: -s.$05,
+              right: -s.$05,
+              display: 'flex',
+              flexDirection: 'row',
+              gap: s.$1,
+            }}
+          >
+            <View style={{ height: s.$4, width: s.$10 }}>
+              <DMButton profile={profile} style={{ paddingHorizontal: s.$0 }} />
+            </View>
+            <View style={{ height: s.$4, width: s.$10 }}>
+              <Button
+                onPress={() => {
+                  addSave(profile.id, user?.id!)
+                }}
+                variant="whiteOutline"
+                title="Save"
+                style={{ paddingHorizontal: s.$0 }}
+              />
+            </View>
+
+            <View style={{ height: s.$4, width: s.$10 }}>
+              <Button
+                onPress={() => {
+                  // TODO: open backlog
+                }}
+                variant="whiteOutline"
+                title="Backlog"
+                style={{ paddingHorizontal: s.$0 }}
+              />
+            </View>
+          </View>
+        </Pressable>
+      )}
 
       {editingRights && (
         <BacklogBottomSheet

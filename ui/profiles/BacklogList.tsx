@@ -22,7 +22,6 @@ export default function BacklogList({ items }: { items: ExpandedItem[] }) {
   const [showSearch, setShowSearch] = useState(false)
   const [hasScrolled, setHasScrolled] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
-  const [searchResults, setSearchResults] = useState<ExpandedItem[]>([...items])
   const calendars = useCalendars()
   const timeZone = calendars[0].timeZone || 'America/New_York'
 
@@ -64,7 +63,7 @@ export default function BacklogList({ items }: { items: ExpandedItem[] }) {
     return groups
   }
 
-  const groups = groupByDate(searchResults)
+  const groups = groupByDate(items)
 
   function onScroll(e: NativeSyntheticEvent<NativeScrollEvent>) {
     if (!hasScrolled && e.nativeEvent.contentOffset.y > 150) {
@@ -77,16 +76,11 @@ export default function BacklogList({ items }: { items: ExpandedItem[] }) {
 
   const onSearchTermChange = (searchTerm: string) => {
     setSearchTerm(searchTerm)
-    setSearchResults(
-      [...items].filter((itm) =>
-        itm.expand?.ref?.title?.toLowerCase().includes(searchTerm.toLowerCase())
-      )
-    )
   }
 
   return (
     <BottomSheetScrollView style={{ backgroundColor: c.olive }} onScroll={onScroll}>
-      <Animated.View entering={FadeIn.duration(500).delay(200)}>
+      <Animated.View entering={FadeIn.duration(500)}>
         {showSearch && (
           <TextInput
             style={{
@@ -114,39 +108,48 @@ export default function BacklogList({ items }: { items: ExpandedItem[] }) {
                 <Text style={{ color: c.surface, fontSize: s.$1, paddingBottom: s.$05 }}>
                   {groupnames[i]}
                 </Text>
-                {g.map((i) => (
-                  <XStack
-                    key={i.id}
-                    gap={s.$1}
-                    style={{
-                      paddingVertical: s.$05,
-                      paddingHorizontal: s.$1,
-                      alignItems: 'center',
-                    }}
-                  >
-                    <SimplePinataImage
-                      originalSource={i.image}
-                      imageOptions={{ width: s.$2, height: s.$2 }}
-                      style={{ width: s.$2, height: s.$2, borderRadius: s.$075 }}
-                    />
-                    <Text
-                      style={{ color: c.white, fontSize: s.$1, width: '80%' }}
-                      numberOfLines={2}
+                {g
+                  .filter((i) =>
+                    i.expand?.ref?.title?.toLowerCase().includes(searchTerm.toLowerCase())
+                  )
+                  .map((i) => (
+                    <XStack
+                      key={i.id}
+                      gap={s.$1}
+                      style={{
+                        paddingVertical: s.$05,
+                        paddingHorizontal: s.$1,
+                        alignItems: 'center',
+                      }}
                     >
-                      {i.expand?.ref?.title?.trim()}
-                    </Text>
-                    {i.expand?.ref?.url && (
-                      <Pressable onPress={() => Linking.openURL(i.expand.ref.url!)}>
-                        <Ionicons
-                          name="arrow-up"
-                          size={s.$2}
-                          color={c.white}
-                          style={{ transform: 'rotate(45deg)' }}
-                        />
-                      </Pressable>
-                    )}
-                  </XStack>
-                ))}
+                      <SimplePinataImage
+                        originalSource={i.image}
+                        imageOptions={{ width: s.$2, height: s.$2 }}
+                        style={{
+                          width: s.$2,
+                          height: s.$2,
+                          borderRadius: s.$075,
+                          backgroundColor: c.olive2,
+                        }}
+                      />
+                      <Text
+                        style={{ color: c.white, fontSize: s.$1, width: '80%' }}
+                        numberOfLines={2}
+                      >
+                        {i.expand?.ref?.title?.trim()}
+                      </Text>
+                      {i.expand?.ref?.url && (
+                        <Pressable onPress={() => Linking.openURL(i.expand.ref.url!)}>
+                          <Ionicons
+                            name="arrow-up"
+                            size={s.$2}
+                            color={c.white}
+                            style={{ transform: 'rotate(45deg)' }}
+                          />
+                        </Pressable>
+                      )}
+                    </XStack>
+                  ))}
               </View>
             )
           )}

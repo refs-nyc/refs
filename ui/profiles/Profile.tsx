@@ -11,7 +11,7 @@ import { ProfileHeader } from './ProfileHeader'
 import { Grid } from '../grid/Grid'
 import { Sheet } from '../core/Sheets'
 import { useLocalSearchParams, router } from 'expo-router'
-import { useEffect, useState, useMemo } from 'react'
+import { useEffect, useState, useMemo, useRef } from 'react'
 import { View, Dimensions, Pressable } from 'react-native'
 import { s, c } from '@/features/style'
 import { pocketbase, useUserStore, removeFromProfile, useItemStore } from '@/features/pocketbase'
@@ -27,6 +27,7 @@ import { DMButton } from './DMButton'
 import { useMessageStore } from '@/features/pocketbase/stores/messages'
 import BacklogBottomSheet from './BacklogBottomSheet'
 import BacklogList from './BacklogList'
+import BottomSheet from '@gorhom/bottom-sheet'
 
 const win = Dimensions.get('window')
 
@@ -48,6 +49,8 @@ export const Profile = ({ userName }: { userName: string }) => {
   const [term, setTerm] = useState('')
   const [allItems, setAllItems] = useState<ExpandedItem[]>([])
   const [results, setResults] = useState<ExpandedItem[]>([])
+
+  const backlogSheetRef = useRef<BottomSheet>(null)
 
   const maxDynamicContentSize = win.height - insets.top
   const snapPointWithoutKeys = maxDynamicContentSize - 300
@@ -237,7 +240,7 @@ export const Profile = ({ userName }: { userName: string }) => {
             <View style={{ height: s.$4, width: s.$10 }}>
               <Button
                 onPress={() => {
-                  // TODO: open backlog
+                  backlogSheetRef.current?.snapToIndex(0)
                 }}
                 variant="whiteOutline"
                 title="Backlog"
@@ -248,15 +251,15 @@ export const Profile = ({ userName }: { userName: string }) => {
         </Pressable>
       )}
 
-      {editingRights && (
+      {profile && (
         <BacklogBottomSheet
+          backlogSheetRef={backlogSheetRef}
           onAddToBacklogClick={() => {
             setAddingTo('backlog')
           }}
+          profile={profile}
         >
-          <BacklogList
-            items={backlogItems.toReversed()}
-          />
+          <BacklogList items={backlogItems.toReversed()} />
         </BacklogBottomSheet>
       )}
 

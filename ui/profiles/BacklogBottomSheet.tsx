@@ -1,32 +1,41 @@
 import { c, s } from '@/features/style'
 import BottomSheet, { BottomSheetBackdrop } from '@gorhom/bottom-sheet'
-import { useCallback, useRef, useState } from 'react'
+import { RefObject, useCallback, useState } from 'react'
 import { Pressable, View } from 'react-native'
 import { Heading } from '../typo/Heading'
 import { XStack } from '../core/Stacks'
 import { Ionicons } from '@expo/vector-icons'
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated'
+import { Profile } from '@/features/pocketbase/stores/types'
+import { useUserStore } from '@/features/pocketbase'
 
 export default function BacklogBottomSheet({
   children,
   onAddToBacklogClick,
+  backlogSheetRef,
+  profile,
 }: {
   children?: React.ReactNode
   onAddToBacklogClick: () => void
+  backlogSheetRef: RefObject<BottomSheet>
+  profile: Profile
 }) {
   const [index, setIndex] = useState(0)
-  const backlogSheetRef = useRef<BottomSheet>(null)
+  const { user } = useUserStore()
+
+  const ownProfile = profile.id === user?.id
+  const isMinimised = ownProfile && index === 0
 
   const renderBackdrop = useCallback(
     (p: any) => (
       <BottomSheetBackdrop
         {...p}
-        disappearsOnIndex={0}
-        appearsOnIndex={1}
-        pressBehavior={'collapse'}
+        disappearsOnIndex={ownProfile ? 0 : -1}
+        appearsOnIndex={ownProfile ? 1 : 0}
+        pressBehavior={ownProfile ? 'collapse' : 'close'}
       />
     ),
-    []
+    [ownProfile]
   )
 
   const renderHandle = () => {
@@ -35,7 +44,7 @@ export default function BacklogBottomSheet({
         style={{
           alignItems: 'center',
           justifyContent: 'center',
-          display: index < 1 ? 'none' : 'flex',
+          display: isMinimised ? 'none' : 'flex',
           height: s.$3,
         }}
       >
@@ -52,8 +61,9 @@ export default function BacklogBottomSheet({
     <BottomSheet
       enableDynamicSizing={false}
       ref={backlogSheetRef}
-      enablePanDownToClose={false}
-      snapPoints={['15%', '80%']}
+      index={ownProfile ? 0 : -1}
+      enablePanDownToClose={!ownProfile}
+      snapPoints={ownProfile ? ['15%', '80%'] : ['80%']}
       onChange={(i: number) => setIndex(i)}
       backgroundStyle={{ backgroundColor: c.olive, borderRadius: s.$4, paddingTop: 0 }}
       backdropComponent={renderBackdrop}
@@ -61,46 +71,40 @@ export default function BacklogBottomSheet({
     >
       <Pressable
         onPress={() => {
-          if (backlogSheetRef.current) backlogSheetRef.current.snapToIndex(1)
+          if (backlogSheetRef.current && isMinimised) backlogSheetRef.current.snapToIndex(1)
         }}
-        style={{ paddingTop: index < 1 ? s.$3 : 0, paddingBottom: index < 1 ? s.$6 : s.$1 }}
+        style={{ paddingTop: isMinimised ? s.$3 : 0, paddingBottom: isMinimised ? s.$6 : s.$1 }}
       >
-        <XStack
-          gap={s.$075}
-          style={{
-            alignItems: 'center',
-            justifyContent: 'center',
-            paddingHorizontal: s.$2,
-          }}
-        >
-          <Heading
-            tag="h2normal"
-            style={{
-              color: c.white,
-              // flex: 1,
-            }}
-          >
-            My Backlog
-          </Heading>
-          <View
-            style={{
-              height: 1,
-              flex: 1,
-              backgroundColor: c.white,
-            }}
-          ></View>
-          <Pressable
-            onPress={onAddToBacklogClick}
+        {ownProfile ? (
+          <XStack
+            gap={s.$075}
             style={{
               alignItems: 'center',
               justifyContent: 'center',
+              paddingHorizontal: s.$2,
             }}
           >
-            <Ionicons name="add-circle-outline" size={s.$4} color={c.white} />
-          </Pressable>
-        </XStack>
+            <Heading tag="h2normal" style={{ color: c.white }}>
+              My Backlog
+            </Heading>
+            <View style={{ height: 1, flex: 1, backgroundColor: c.white }}></View>
+            <Pressable
+              onPress={onAddToBacklogClick}
+              style={{
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <Ionicons name="add-circle-outline" size={s.$4} color={c.white} />
+            </Pressable>
+          </XStack>
+        ) : (
+          <Heading tag="h2normal" style={{ color: c.white, paddingHorizontal: s.$2 }}>
+            {`${profile.firstName}'s Library`}
+          </Heading>
+        )}
       </Pressable>
-      {index > 0 && children}
+      {!isMinimised && children}
     </BottomSheet>
   )
 }

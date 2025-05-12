@@ -1,6 +1,6 @@
 import type { Item } from '@/features/pocketbase/stores/types'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { XStack, YStack } from '../core/Stacks'
+import { YStack } from '../core/Stacks'
 import { Button } from '../buttons/Button'
 import { Heading } from '../typo/Heading'
 import { NewRef } from '../actions/NewRef'
@@ -11,7 +11,7 @@ import { ProfileHeader } from './ProfileHeader'
 import { Grid } from '../grid/Grid'
 import { Sheet } from '../core/Sheets'
 import { useLocalSearchParams, router } from 'expo-router'
-import { useEffect, useState, useMemo } from 'react'
+import { useEffect, useState, useMemo, useRef } from 'react'
 import { View, Dimensions, Pressable } from 'react-native'
 import { s, c } from '@/features/style'
 import { pocketbase, useUserStore, removeFromProfile, useItemStore } from '@/features/pocketbase'
@@ -25,7 +25,9 @@ import {
 import { gridSort, createdSort } from '../profiles/sorts'
 import { DMButton } from './DMButton'
 import { useMessageStore } from '@/features/pocketbase/stores/messages'
-import { BottomSheetScrollView, BottomSheetView } from '@gorhom/bottom-sheet'
+import BacklogBottomSheet from './BacklogBottomSheet'
+import BacklogList from './BacklogList'
+import BottomSheet from '@gorhom/bottom-sheet'
 
 const win = Dimensions.get('window')
 
@@ -47,6 +49,8 @@ export const Profile = ({ userName }: { userName: string }) => {
   const [term, setTerm] = useState('')
   const [allItems, setAllItems] = useState<ExpandedItem[]>([])
   const [results, setResults] = useState<ExpandedItem[]>([])
+
+  const backlogSheetRef = useRef<BottomSheet>(null)
 
   const maxDynamicContentSize = win.height - insets.top
   const snapPointWithoutKeys = maxDynamicContentSize - 300
@@ -180,33 +184,6 @@ export const Profile = ({ userName }: { userName: string }) => {
                     items={gridItems}
                     rows={4}
                   ></Grid>
-                  {/* Actions */}
-                  <Pressable onPress={() => stopEditProfile()}>
-                    <XStack gap={s.$2} style={{ justifyContent: 'center', width: '100%' }}>
-                      {editingRights && (
-                        <Button
-                          onPress={() => setAddingTo('backlog')}
-                          variant="raisedSecondary"
-                          title="Backlog"
-                          iconColor={c.muted}
-                          iconAfter="add-circle-outline"
-                        />
-                      )}
-                      {showMessageButtons && (
-                        <>
-                          <DMButton profile={profile} />
-                          <Button
-                            onPress={() => {
-                              addSave(profile.id, user?.id!)
-                            }}
-                            variant="raisedSecondary"
-                            title="Save"
-                            iconBefore="bookmark"
-                          />
-                        </>
-                      )}
-                    </XStack>
-                  </Pressable>
                 </Animated.View>
               ) : (
                 <Animated.View
@@ -227,6 +204,64 @@ export const Profile = ({ userName }: { userName: string }) => {
           {!user && <Heading tag="h1">Profile for {userName} not found</Heading>}
         </YStack>
       </ScrollView>
+
+      {profile && showMessageButtons && (
+        <Pressable onPress={() => stopEditProfile()}>
+          <View
+            style={{
+              borderRadius: s.$5,
+              backgroundColor: c.olive,
+              paddingTop: s.$1,
+              paddingHorizontal: s.$2,
+              height: s.$10,
+              position: 'absolute',
+              bottom: s.$1,
+              left: -s.$05,
+              right: -s.$05,
+              display: 'flex',
+              flexDirection: 'row',
+              gap: s.$1,
+            }}
+          >
+            <View style={{ height: s.$4, width: s.$10 }}>
+              <DMButton profile={profile} style={{ paddingHorizontal: s.$0 }} />
+            </View>
+            <View style={{ height: s.$4, width: s.$10 }}>
+              <Button
+                onPress={() => {
+                  addSave(profile.id, user?.id!)
+                }}
+                variant="whiteOutline"
+                title="Save"
+                style={{ paddingHorizontal: s.$0 }}
+              />
+            </View>
+
+            <View style={{ height: s.$4, width: s.$10 }}>
+              <Button
+                onPress={() => {
+                  backlogSheetRef.current?.snapToIndex(0)
+                }}
+                variant="whiteOutline"
+                title="Backlog"
+                style={{ paddingHorizontal: s.$0 }}
+              />
+            </View>
+          </View>
+        </Pressable>
+      )}
+
+      {profile && (
+        <BacklogBottomSheet
+          backlogSheetRef={backlogSheetRef}
+          onAddToBacklogClick={() => {
+            setAddingTo('backlog')
+          }}
+          profile={profile}
+        >
+          <BacklogList items={backlogItems.toReversed()} />
+        </BacklogBottomSheet>
+      )}
 
       {removingId && (
         <Sheet full={false} onChange={(e: any) => e === -1 && setRemovingId('')}>

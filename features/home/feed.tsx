@@ -41,6 +41,8 @@ export const Feed = () => {
     const getInitialData = async () => {
       try {
         const records = await pocketbase.collection('items').getList<ExpandedItem>(1, 30, {
+          // TODO: remove list = false once we have a way to display lists in the feed
+          // also consider showing backlog items in the feed, when we have a way to link to them
           filter: `creator != null && backlog = false && list = false`,
           sort: '-created',
           expand: 'ref,creator',

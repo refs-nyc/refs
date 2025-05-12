@@ -35,7 +35,7 @@ export const Button = (props: ButtonProps) => {
     iconColor = 'white',
     disabled = false,
     align = 'center',
-    iconSize = 24,
+    iconSize = s.$1half,
   } = props
 
   let buttonVariant = null

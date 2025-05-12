@@ -41,7 +41,7 @@ export const Feed = () => {
     const getInitialData = async () => {
       try {
         const records = await pocketbase.collection('items').getList<ExpandedItem>(1, 30, {
-          filter: `creator != null && backlog = false`,
+          filter: `creator != null && backlog = false && list = false`,
           sort: '-created',
           expand: 'ref,creator',
         })

@@ -1,6 +1,6 @@
 import type { Item } from '@/features/pocketbase/stores/types'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { YStack } from '../core/Stacks'
+import { XStack, YStack } from '../core/Stacks'
 import { Button } from '../buttons/Button'
 import { Heading } from '../typo/Heading'
 import { NewRef } from '../actions/NewRef'
@@ -12,7 +12,7 @@ import { Grid } from '../grid/Grid'
 import { Sheet } from '../core/Sheets'
 import { useLocalSearchParams, router } from 'expo-router'
 import { useEffect, useState, useMemo, useRef } from 'react'
-import { View, Dimensions, Pressable } from 'react-native'
+import { View, Dimensions, Pressable, Text } from 'react-native'
 import { s, c } from '@/features/style'
 import { pocketbase, useUserStore, removeFromProfile, useItemStore } from '@/features/pocketbase'
 import { ShareIntent as ShareIntentType, useShareIntentContext } from 'expo-share-intent'
@@ -137,73 +137,80 @@ export const Profile = ({ userName }: { userName: string }) => {
 
   return (
     <>
-      <ScrollView keyboardShouldPersistTaps="always">
-        <YStack
-          style={{
-            flex: 1,
-            justifyContent: 'center',
-            alignItems: 'center',
-            paddingHorizontal: s.$08,
-            marginBottom: s.$12,
-          }}
-          gap={s.$4}
-        >
-          {profile && (
-            <View
-              style={{
-                flex: 1,
-                width: '100%',
-                marginHorizontal: s.$1half,
+      {/* <ScrollView keyboardShouldPersistTaps="always"> */}
+      <XStack style={{ marginTop: s.$4 }}>
+        {/* back button */}
+        <Button onPress={() => router.back()} variant="outline" title="Back" />
+
+        {/* share button */}
+        <Button onPress={() => {}} variant="inlineSmallMuted" title="Share" />
+      </XStack>
+      <YStack
+        style={{
+          flex: 1,
+          justifyContent: 'center',
+          alignItems: 'center',
+          paddingHorizontal: s.$08,
+          marginBottom: s.$12,
+        }}
+        gap={s.$4}
+      >
+        {profile && (
+          <View
+            style={{
+              flex: 1,
+              width: '100%',
+              marginHorizontal: s.$1half,
+            }}
+          >
+            <ProfileHeader
+              profile={profile}
+              onPress={() => {
+                stopEditProfile()
+                if (!searching) {
+                  setResults(allItems)
+                }
+                setSearching(!searching)
               }}
-            >
-              <ProfileHeader
-                profile={profile}
-                onPress={() => {
-                  stopEditProfile()
-                  if (!searching) {
-                    setResults(allItems)
-                  }
-                  setSearching(!searching)
-                }}
-                onTermChange={search}
-              />
+              onTermChange={search}
+            />
 
-              {!searching ? (
-                <Animated.View
-                  entering={FadeIn.duration(500)}
-                  exiting={FadeOut.duration(500)}
-                  style={{ gap: s.$2 }}
-                >
-                  <Grid
-                    editingRights={editingRights}
-                    onRemoveItem={setRemovingId}
-                    onAddItem={() => {
-                      setAddingTo('grid')
-                    }}
-                    columns={3}
-                    items={gridItems}
-                    rows={4}
-                  ></Grid>
-                </Animated.View>
-              ) : (
-                <Animated.View
-                  entering={FadeIn.duration(500)}
-                  exiting={FadeOut.duration(500)}
-                  style={{ marginBottom: s.$20 }}
-                >
-                  {results
-                    .filter((item) => item.expand?.ref)
-                    .map((item) => (
-                      <SearchResultItem key={item.id} r={item.expand!.ref} />
-                    ))}
-                </Animated.View>
-              )}
-            </View>
-          )}
+            {!searching ? (
+              <Animated.View
+                entering={FadeIn.duration(500)}
+                exiting={FadeOut.duration(500)}
+                style={{ gap: s.$2 }}
+              >
+                <Grid
+                  editingRights={editingRights}
+                  onRemoveItem={setRemovingId}
+                  onAddItem={() => {
+                    setAddingTo('grid')
+                  }}
+                  columns={3}
+                  items={gridItems}
+                  rows={4}
+                ></Grid>
+              </Animated.View>
+            ) : (
+              <Animated.View
+                entering={FadeIn.duration(500)}
+                exiting={FadeOut.duration(500)}
+                style={{ marginBottom: s.$20 }}
+              >
+                {results
+                  .filter((item) => item.expand?.ref)
+                  .map((item) => (
+                    <SearchResultItem key={item.id} r={item.expand!.ref} />
+                  ))}
+              </Animated.View>
+            )}
+          </View>
+        )}
 
-          {!user && <Heading tag="h1">Profile for {userName} not found</Heading>}
-        </YStack>
-      </ScrollView>
+        {!user && <Heading tag="h1">Profile for {userName} not found</Heading>}
+      </YStack>
+      {/* </ScrollView> */}
 
       {profile && showMessageButtons && (
         <Pressable onPress={() => stopEditProfile()}>

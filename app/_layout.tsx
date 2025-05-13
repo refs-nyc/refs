@@ -24,6 +24,8 @@ import * as Notifications from 'expo-notifications'
 import { DeferredFonts } from '@/ui'
 import { c } from '@/features/style'
 import * as SystemUI from 'expo-system-ui'
+import { KeyboardProvider } from 'react-native-keyboard-controller'
+
 import { RegisterPushNotifications } from '@/ui/notifications/RegisterPushNotifications'
 import { MessagesInit } from '@/features/messaging/message-loader'
 import { useUserStore } from '@/features/pocketbase/stores/users'
@@ -106,7 +108,9 @@ const Providers = ({ children }: { children: React.ReactNode }) => {
     <ShareIntentProvider>
       <SafeAreaProvider>
         <GestureHandlerRootView>
-          <FontProvider>{children}</FontProvider>
+          <KeyboardProvider>
+            <FontProvider>{children}</FontProvider>
+          </KeyboardProvider>
         </GestureHandlerRootView>
       </SafeAreaProvider>
     </ShareIntentProvider>

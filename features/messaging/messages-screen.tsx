@@ -247,6 +247,21 @@ export function MessagesScreen({ conversationId }: { conversationId: string }) {
           onAttachmentPress={onAttachmentPress}
           disabled={attachmentOpen && !imageUrl}
         />
+        {showEmojiPicker && highlightedMessage && (
+          <EmojiPicker
+            open={true}
+            onClose={() => {
+              setHighlightedMessageId('')
+              setShowEmojiPicker(false)
+              setReplying(false)
+            }}
+            onEmojiSelected={(e: any) => {
+              sendReaction(user.id, highlightedMessageId, e.emoji)
+              setHighlightedMessageId('')
+              setShowEmojiPicker(false)
+            }}
+          />
+        )}
       </KeyboardAvoidingView>
     </View>
   )

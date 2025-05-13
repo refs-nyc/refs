@@ -47,6 +47,7 @@ export const Navigation = () => {
   if (
     !user ||
     pathName.includes('/onboarding') ||
+    pathName.includes('/user/') ||
     pathName.includes('/user/login') ||
     pathName.includes('/user/register') ||
     (pathName.includes('/modal') && !pathName.includes('/saves/modal')) || // want the navbar to stay visible under the saves modal

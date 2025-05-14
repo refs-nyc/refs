@@ -12,6 +12,7 @@ export default function ConversationList({ children }: { children: React.ReactNo
           paddingBottom: s.$14,
           paddingHorizontal: s.$1,
           margin: 'auto',
+          width: '100%',
         }}
       >
         {children}

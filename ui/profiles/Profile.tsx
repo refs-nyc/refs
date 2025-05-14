@@ -1,6 +1,6 @@
 import type { Item } from '@/features/pocketbase/stores/types'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { YStack } from '../core/Stacks'
+import { XStack, YStack } from '../core/Stacks'
 import { Button } from '../buttons/Button'
 import { Heading } from '../typo/Heading'
 import { NewRef } from '../actions/NewRef'
@@ -10,11 +10,10 @@ import { Grid } from '../grid/Grid'
 import { Sheet } from '../core/Sheets'
 import { useLocalSearchParams, router } from 'expo-router'
 import { useEffect, useState, useMemo, useRef } from 'react'
-import { View, Dimensions, Pressable } from 'react-native'
+import { View, Dimensions, Pressable, Text } from 'react-native'
 import { s, c } from '@/features/style'
 import { pocketbase, useUserStore, removeFromProfile, useItemStore } from '@/features/pocketbase'
 import { ShareIntent as ShareIntentType, useShareIntentContext } from 'expo-share-intent'
-import { ScrollView } from 'react-native-gesture-handler'
 import {
   Profile as ProfileType,
   ExpandedProfile,
@@ -26,6 +25,7 @@ import { useMessageStore } from '@/features/pocketbase/stores/messages'
 import BacklogBottomSheet from './BacklogBottomSheet'
 import BacklogList from './BacklogList'
 import BottomSheet from '@gorhom/bottom-sheet'
+import { Ionicons } from '@expo/vector-icons'
 
 export const Profile = ({ userName }: { userName: string }) => {
   const { addingTo, removingId } = useLocalSearchParams()
@@ -115,45 +115,42 @@ export const Profile = ({ userName }: { userName: string }) => {
 
   return (
     <>
-      <ScrollView keyboardShouldPersistTaps="always">
-        <YStack
-          style={{
-            flex: 1,
-            justifyContent: 'center',
-            alignItems: 'center',
-            paddingHorizontal: s.$08,
-            marginBottom: s.$12,
-          }}
-          gap={s.$4}
-        >
-          {profile && (
-            <View
-              style={{
-                flex: 1,
-                width: '100%',
-                marginHorizontal: s.$1half,
-              }}
-            >
-              <ProfileHeader profile={profile} />
+      <YStack
+        style={{
+          flex: 1,
+          justifyContent: 'center',
+          alignItems: 'center',
+          paddingHorizontal: s.$08,
+        }}
+        gap={s.$4}
+      >
+        {profile && (
+          <View
+            style={{
+              flex: 1,
+              width: '100%',
+              marginHorizontal: s.$1half,
+            }}
+          >
+            <ProfileHeader profile={profile} />
 
-              <View style={{ gap: s.$2 }}>
-                <Grid
-                  editingRights={editingRights}
-                  onRemoveItem={setRemovingId}
-                  onAddItem={() => {
-                    setAddingTo('grid')
-                  }}
-                  columns={3}
-                  items={gridItems}
-                  rows={4}
-                ></Grid>
-              </View>
+            <View style={{ gap: s.$2 }}>
+              <Grid
+                editingRights={editingRights}
+                onRemoveItem={setRemovingId}
+                onAddItem={() => {
+                  setAddingTo('grid')
+                }}
+                columns={3}
+                items={gridItems}
+                rows={4}
+              ></Grid>
             </View>
-          )}
+          </View>
+        )}
 
-          {!user && <Heading tag="h1">Profile for {userName} not found</Heading>}
-        </YStack>
-      </ScrollView>
+        {!user && <Heading tag="h1">Profile for {userName} not found</Heading>}
+      </YStack>
 
       {profile && showMessageButtons && (
         <Pressable onPress={() => stopEditProfile()}>
@@ -165,12 +162,12 @@ export const Profile = ({ userName }: { userName: string }) => {
               paddingHorizontal: s.$2,
               height: s.$10,
               position: 'absolute',
-              bottom: s.$1,
+              bottom: s.$0,
               left: -s.$05,
               right: -s.$05,
               display: 'flex',
               flexDirection: 'row',
-              gap: s.$1,
+              justifyContent: 'space-between',
             }}
           >
             <View style={{ height: s.$4, width: s.$10 }}>

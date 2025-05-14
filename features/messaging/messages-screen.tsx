@@ -1,5 +1,6 @@
 import { Heading, Sheet, XStack } from '@/ui'
-import { View, DimensionValue, KeyboardAvoidingView, FlatList } from 'react-native'
+import { View, DimensionValue, FlatList, Text, useWindowDimensions } from 'react-native'
+
 import { c, s } from '../style'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { pocketbase, useUserStore } from '../pocketbase'
@@ -14,6 +15,7 @@ import MessageInput from '@/ui/messaging/MessageInput'
 import { randomColors } from './utils'
 import { Message } from '../pocketbase/stores/types'
 import { AvatarPicker } from '@/ui/inputs/AvatarPicker'
+import { KeyboardAvoidingView } from 'react-native-keyboard-controller'
 
 export function MessagesScreen({ conversationId }: { conversationId: string }) {
   const { user } = useUserStore()
@@ -35,6 +37,7 @@ export function MessagesScreen({ conversationId }: { conversationId: string }) {
   const [attachmentOpen, setAttachmentOpen] = useState<boolean>(false)
   const [imageUrl, setImageUrl] = useState<string>('')
   const [showEmojiPicker, setShowEmojiPicker] = useState<boolean>(false)
+  const windowHeight = useWindowDimensions().height
 
   const conversation = conversations[conversationId]
   const members = memberships[conversationId].filter((m) => m.expand?.user.id !== user?.id)
@@ -146,9 +149,8 @@ export function MessagesScreen({ conversationId }: { conversationId: string }) {
   return (
     <View
       style={{
-        flex: 1,
         justifyContent: 'flex-start',
-        height: s.full as DimensionValue,
+        height: windowHeight,
         backgroundColor: c.surface,
         paddingHorizontal: s.$075,
       }}
@@ -159,7 +161,6 @@ export function MessagesScreen({ conversationId }: { conversationId: string }) {
           alignItems: 'center',
           paddingBottom: 0,
           zIndex: 1,
-          backgroundColor: c.surface,
           paddingTop: s.$7,
         }}
       >
@@ -193,46 +194,41 @@ export function MessagesScreen({ conversationId }: { conversationId: string }) {
       </XStack>
       <KeyboardAvoidingView
         style={{
-          height: '85%',
           paddingHorizontal: s.$075,
+          flex: 1,
+          display: 'flex',
         }}
-        behavior={'position'}
+        behavior={'height'}
       >
-        <View
-          style={{
-            width: '95%',
-            height: replying ? '80%' : '88%',
-            margin: 'auto',
-            backgroundColor: c.surface,
+        <FlatList
+          ref={flatListRef}
+          data={conversationMessages}
+          renderItem={(item) => renderMessage(item)}
+          inverted
+          onEndReached={loadMoreMessages}
+          onEndReachedThreshold={0.1}
+          contentContainerStyle={{
+            minHeight: '100%',
+            justifyContent: 'flex-end',
           }}
-        >
-          <FlatList
-            ref={flatListRef}
-            data={conversationMessages}
-            renderItem={(item) => renderMessage(item)}
-            inverted
-            onEndReached={loadMoreMessages}
-            onEndReachedThreshold={0.1}
-            contentContainerStyle={{ minHeight: '100%', justifyContent: 'flex-end' }}
-          />
-          {attachmentOpen && (
-            <Sheet
-              onChange={(i: number) => {
-                i === -1 && setAttachmentOpen(false)
-                setImageUrl('')
-              }}
-              style={{ padding: s.$2 }}
+        />
+        {attachmentOpen && (
+          <Sheet
+            onChange={(i: number) => {
+              i === -1 && setAttachmentOpen(false)
+              setImageUrl('')
+            }}
+            style={{ padding: s.$2 }}
+          >
+            <AvatarPicker
+              source={''}
+              onComplete={(s) => setImageUrl(s)}
+              onReplace={() => console.log('replace')}
             >
-              <AvatarPicker
-                source={''}
-                onComplete={(s) => setImageUrl(s)}
-                onReplace={() => console.log('replace')}
-              >
-                {null}
-              </AvatarPicker>
-            </Sheet>
-          )}
-        </View>
+              {null}
+            </AvatarPicker>
+          </Sheet>
+        )}
         <MessageInput
           onMessageSubmit={onMessageSubmit}
           setMessage={setMessage}

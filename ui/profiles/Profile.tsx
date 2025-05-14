@@ -115,26 +115,6 @@ export const Profile = ({ userName }: { userName: string }) => {
 
   return (
     <>
-      <XStack
-        style={{
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          paddingTop: s.$075,
-          paddingHorizontal: s.$1,
-        }}
-      >
-        {/* back button */}
-        <Pressable onPress={() => router.back()}>
-          <Ionicons name="chevron-back" size={s.$2} color={'#B6B5B2'} />
-        </Pressable>
-
-        {/* share button */}
-        <Pressable onPress={() => {}}>
-          <Heading tag="psemi" style={{ color: '#B6B5B2' }}>
-            Share
-          </Heading>
-        </Pressable>
-      </XStack>
       <YStack
         style={{
           flex: 1,

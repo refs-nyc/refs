@@ -58,49 +58,51 @@ export const Feed = () => {
   }, [])
 
   return (
-    <DismissKeyboard>
-      <ScrollView style={{ flex: 1 }}>
-        <View style={{ height: '100%' }}>
-          <YStack
-            gap={s.$2}
-            style={{
-              width: '100%',
-              paddingBottom: s.$2,
-              textAlign: 'center',
-            }}
-          >
+    <>
+      <DismissKeyboard>
+        <ScrollView style={{ flex: 1 }}>
+          <View style={{ height: '100%' }}>
             <YStack
               gap={s.$2}
               style={{
                 width: '100%',
-                zIndex: 9,
-                paddingTop: s.$2,
+                paddingBottom: s.$2,
                 textAlign: 'center',
               }}
             >
-              <SearchBar
-                onFocus={() => setSearching(true)}
-                onBlur={() => {
-                  setSearching(false)
-                  setSearchTerm('')
+              <YStack
+                gap={s.$2}
+                style={{
+                  width: '100%',
+                  zIndex: 9,
+                  paddingTop: s.$2,
+                  textAlign: 'center',
                 }}
-                onChange={setSearchTerm}
-              />
+              >
+                <SearchBar
+                  onFocus={() => setSearching(true)}
+                  onBlur={() => {
+                    setSearching(false)
+                    setSearchTerm('')
+                  }}
+                  onChange={setSearchTerm}
+                />
+              </YStack>
             </YStack>
-          </YStack>
 
-          {searchTerm === '' ? <Nearby items={items} /> : <SearchResults results={results} />}
+            {searchTerm === '' ? <Nearby items={items} /> : <SearchResults results={results} />}
 
-          <View style={{ marginBottom: s.$2, alignItems: 'center' }}>
-            <Button
-              style={{ width: 20 }}
-              variant="inlineSmallMuted"
-              title="Log out"
-              onPress={logout}
-            />
+            <View style={{ marginBottom: s.$2, alignItems: 'center' }}>
+              <Button
+                style={{ width: 20 }}
+                variant="inlineSmallMuted"
+                title="Log out"
+                onPress={logout}
+              />
+            </View>
           </View>
-        </View>
-      </ScrollView>
-    </DismissKeyboard>
+        </ScrollView>
+      </DismissKeyboard>
+    </>
   )
 }

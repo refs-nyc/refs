@@ -1,12 +1,13 @@
 import { Heading, XStack } from '@/ui'
 import { View, DimensionValue, Pressable, Text } from 'react-native'
-import { s } from '../style'
+import { c, s } from '../style'
 import { pocketbase, useUserStore } from '../pocketbase'
 import { useMessageStore } from '../pocketbase/stores/messages'
 import SwipeableConversation from '@/ui/messaging/SwipeableConversation'
 import { router } from 'expo-router'
 import { Conversation } from '../pocketbase/stores/types'
 import ConversationList from '@/ui/messaging/ConversationList'
+import { Ionicons } from '@expo/vector-icons'
 
 export function ConversationsScreen() {
   const { user } = useUserStore()
@@ -43,8 +44,24 @@ export function ConversationsScreen() {
         height: s.full as DimensionValue,
       }}
     >
-      <XStack style={{ alignItems: 'center', justifyContent: 'space-between', padding: s.$2 }}>
-        <Heading tag="h1" style={{ paddingVertical: 0 }}>
+      <XStack
+        style={{
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          paddingHorizontal: s.$1,
+          paddingVertical: s.$2,
+        }}
+      >
+        {/* back button */}
+        <Pressable onPress={() => router.back()}>
+          <Ionicons
+            name="chevron-back"
+            size={s.$2}
+            color={c.grey2}
+            style={{ margin: 0, left: -5, padding: 0 }}
+          />
+        </Pressable>
+        <Heading tag="h1" style={{ paddingVertical: 0, flexGrow: 1 }}>
           Messages
         </Heading>
         <Pressable

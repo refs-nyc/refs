@@ -150,7 +150,8 @@ export function MessagesScreen({ conversationId }: { conversationId: string }) {
     <View
       style={{
         justifyContent: 'flex-start',
-        height: windowHeight,
+        // window height minus the height of the navigation element
+        height: windowHeight - 120,
         backgroundColor: c.surface,
         paddingHorizontal: s.$075,
       }}
@@ -161,12 +162,12 @@ export function MessagesScreen({ conversationId }: { conversationId: string }) {
           alignItems: 'center',
           paddingBottom: 0,
           zIndex: 1,
-          paddingTop: s.$7,
+          paddingTop: s.$1,
         }}
       >
         <Pressable
           onPress={() => {
-            router.dismissTo('/messages')
+            router.back()
           }}
         >
           <Ionicons name="chevron-back" size={s.$2} color={c.grey2} />

@@ -55,7 +55,7 @@ export function ArchiveScreen() {
       >
         <Pressable
           onPress={() => {
-            router.dismissTo('/messages')
+            router.back()
           }}
         >
           <Ionicons

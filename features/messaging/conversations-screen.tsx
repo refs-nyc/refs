@@ -49,8 +49,7 @@ export function ConversationsScreen() {
           alignItems: 'center',
           justifyContent: 'space-between',
           paddingHorizontal: s.$1,
-          paddingTop: s.$6,
-          paddingBottom: s.$1,
+          paddingVertical: s.$2,
         }}
       >
         {/* back button */}

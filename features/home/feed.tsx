@@ -8,7 +8,6 @@ import { s } from '@/features/style'
 import { Nearby } from './nearby'
 
 import { SearchResults } from './results'
-import { Navigation } from '@/ui/navigation/Navigation'
 
 export const Feed = () => {
   const [items, setItems] = useState<ExpandedItem[]>([])
@@ -60,7 +59,6 @@ export const Feed = () => {
 
   return (
     <>
-      <Navigation />
       <DismissKeyboard>
         <ScrollView style={{ flex: 1 }}>
           <View style={{ height: '100%' }}>

@@ -44,7 +44,7 @@ export const Navigation = () => {
     [messagesPerConversation, memberships, user]
   )
 
-  if (!user) return null
+  if (!user || /\/user\/.*\/modal/.test(pathName)) return null
 
   return (
     <View

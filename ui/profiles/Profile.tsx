@@ -156,48 +156,20 @@ export const Profile = ({ userName }: { userName: string }) => {
                 marginHorizontal: s.$1half,
               }}
             >
-              <ProfileHeader
-                profile={profile}
-                onPress={() => {
-                  stopEditProfile()
-                  if (!searching) {
-                    setResults(allItems)
-                  }
-                  setSearching(!searching)
-                }}
-                onTermChange={search}
-              />
+              <ProfileHeader profile={profile} />
 
-              {!searching ? (
-                <Animated.View
-                  entering={FadeIn.duration(500)}
-                  exiting={FadeOut.duration(500)}
-                  style={{ gap: s.$2 }}
-                >
-                  <Grid
-                    editingRights={editingRights}
-                    onRemoveItem={setRemovingId}
-                    onAddItem={() => {
-                      setAddingTo('grid')
-                    }}
-                    columns={3}
-                    items={gridItems}
-                    rows={4}
-                  ></Grid>
-                </Animated.View>
-              ) : (
-                <Animated.View
-                  entering={FadeIn.duration(500)}
-                  exiting={FadeOut.duration(500)}
-                  style={{ marginBottom: s.$20 }}
-                >
-                  {results
-                    .filter((item) => item.expand?.ref)
-                    .map((item) => (
-                      <SearchResultItem key={item.id} r={item.expand!.ref} />
-                    ))}
-                </Animated.View>
-              )}
+              <View style={{ gap: s.$2 }}>
+                <Grid
+                  editingRights={editingRights}
+                  onRemoveItem={setRemovingId}
+                  onAddItem={() => {
+                    setAddingTo('grid')
+                  }}
+                  columns={3}
+                  items={gridItems}
+                  rows={4}
+                ></Grid>
+              </View>
             </View>
           )}
 

@@ -239,7 +239,7 @@ export const Profile = ({ userName }: { userName: string }) => {
               right: -s.$05,
               display: 'flex',
               flexDirection: 'row',
-              gap: s.$1,
+              justifyContent: 'space-between',
             }}
           >
             <View style={{ height: s.$4, width: s.$10 }}>

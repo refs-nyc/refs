@@ -10,8 +10,7 @@ export default function ConversationList({ children }: { children: React.ReactNo
         style={{
           flex: 1,
           paddingBottom: s.$14,
-          backgroundColor: c.surface,
-          width: '90%',
+          paddingHorizontal: s.$1,
           margin: 'auto',
         }}
       >

@@ -44,18 +44,18 @@ export function ArchiveScreen() {
         height: s.full as DimensionValue,
       }}
     >
-      <Pressable
-        onPress={() => {
-          router.dismissTo('/messages')
+      <XStack
+        style={{
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          paddingHorizontal: s.$1,
+          paddingTop: s.$6,
+          paddingBottom: s.$1,
         }}
       >
-        <XStack
-          style={{
-            alignItems: 'center',
-            justifyContent: 'flex-start',
-            paddingHorizontal: s.$1,
-            paddingTop: s.$6,
-            paddingBottom: s.$1,
+        <Pressable
+          onPress={() => {
+            router.dismissTo('/messages')
           }}
         >
           <Ionicons
@@ -64,9 +64,12 @@ export function ArchiveScreen() {
             color={c.grey2}
             style={{ margin: 0, left: -5, padding: 0 }}
           />
-          <Heading tag="h1"> Archive </Heading>
-        </XStack>
-      </Pressable>
+        </Pressable>
+        <Heading tag="h1" style={{ flexGrow: 1 }}>
+          Archive
+        </Heading>
+      </XStack>
+
       <ConversationList>
         {archivedConversations.map((i) => (
           <SwipeableConversation

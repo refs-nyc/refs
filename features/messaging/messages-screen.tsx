@@ -119,27 +119,27 @@ export function MessagesScreen({ conversationId }: { conversationId: string }) {
         )?.expand?.user
       : undefined
     return (
-        <MessageBubble
-          key={item.id}
-          message={item}
-          sender={
-            memberships[conversationId].find((member) => member.expand?.user.id === item.sender)
-              ?.expand?.user || user!
-          }
-          showSender={!conversation.is_direct}
-          senderColor={colorMap[item.sender]}
-          onReplyPress={onReplyPress}
-          onExpandReactionsPress={onExpandReactionsPress}
-          parentMessage={parentMessage}
-          parentMessageSender={parentMessageSender}
-          onParentMessagePress={() => {
-            flatListRef.current?.scrollToIndex({
-              index: parentMessageIndex,
-              animated: true,
-              viewPosition: 1,
-            })
-          }}
-        />
+      <MessageBubble
+        key={item.id}
+        message={item}
+        sender={
+          memberships[conversationId].find((member) => member.expand?.user.id === item.sender)
+            ?.expand?.user || user!
+        }
+        showSender={!conversation.is_direct}
+        senderColor={colorMap[item.sender]}
+        onReplyPress={onReplyPress}
+        onExpandReactionsPress={onExpandReactionsPress}
+        parentMessage={parentMessage}
+        parentMessageSender={parentMessageSender}
+        onParentMessagePress={() => {
+          flatListRef.current?.scrollToIndex({
+            index: parentMessageIndex,
+            animated: true,
+            viewPosition: 1,
+          })
+        }}
+      />
     )
   }
 
@@ -165,7 +165,7 @@ export function MessagesScreen({ conversationId }: { conversationId: string }) {
       >
         <Pressable
           onPress={() => {
-            router.dismissTo('/messages')
+            router.back()
           }}
         >
           <Ionicons name="chevron-back" size={s.$2} color={c.grey2} />
@@ -206,15 +206,15 @@ export function MessagesScreen({ conversationId }: { conversationId: string }) {
             backgroundColor: c.surface,
           }}
         >
-            <FlatList
-              ref={flatListRef}
-              data={conversationMessages}
-              renderItem={(item) => renderMessage(item)}
-              inverted
-              onEndReached={loadMoreMessages}
-              onEndReachedThreshold={0.1}
-              contentContainerStyle={{ minHeight: '100%', justifyContent: 'flex-end' }}
-            />
+          <FlatList
+            ref={flatListRef}
+            data={conversationMessages}
+            renderItem={(item) => renderMessage(item)}
+            inverted
+            onEndReached={loadMoreMessages}
+            onEndReachedThreshold={0.1}
+            contentContainerStyle={{ minHeight: '100%', justifyContent: 'flex-end' }}
+          />
           {attachmentOpen && (
             <Sheet
               onChange={(i: number) => {
@@ -252,7 +252,7 @@ export function MessagesScreen({ conversationId }: { conversationId: string }) {
           disabled={attachmentOpen && !imageUrl}
         />
         {showEmojiPicker && highlightedMessage && (
-          <EmojiPicker 
+          <EmojiPicker
             open={true}
             onClose={() => {
               setHighlightedMessageId('')
@@ -263,7 +263,7 @@ export function MessagesScreen({ conversationId }: { conversationId: string }) {
               sendReaction(user.id, highlightedMessageId, e.emoji)
               setHighlightedMessageId('')
               setShowEmojiPicker(false)
-            }}          
+            }}
           />
         )}
       </KeyboardAvoidingView>

@@ -49,8 +49,21 @@ export function ArchiveScreen() {
           router.dismissTo('/messages')
         }}
       >
-        <XStack style={{ alignItems: 'center', justifyContent: 'flex-start', padding: s.$2 }}>
-          <Ionicons name="chevron-back" size={s.$2} color={c.grey2} />
+        <XStack
+          style={{
+            alignItems: 'center',
+            justifyContent: 'flex-start',
+            paddingHorizontal: s.$1,
+            paddingTop: s.$6,
+            paddingBottom: s.$1,
+          }}
+        >
+          <Ionicons
+            name="chevron-back"
+            size={s.$2}
+            color={c.grey2}
+            style={{ margin: 0, left: -5, padding: 0 }}
+          />
           <Heading tag="h1"> Archive </Heading>
         </XStack>
       </Pressable>

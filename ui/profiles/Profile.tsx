@@ -4,8 +4,6 @@ import { YStack } from '../core/Stacks'
 import { Button } from '../buttons/Button'
 import { Heading } from '../typo/Heading'
 import { NewRef } from '../actions/NewRef'
-import Animated, { FadeIn, FadeOut } from 'react-native-reanimated'
-import { SearchResultItem } from '../atoms/SearchResultItem'
 import { useUIStore } from '../state'
 import { ProfileHeader } from './ProfileHeader'
 import { Grid } from '../grid/Grid'
@@ -29,33 +27,21 @@ import BacklogBottomSheet from './BacklogBottomSheet'
 import BacklogList from './BacklogList'
 import BottomSheet from '@gorhom/bottom-sheet'
 
-const win = Dimensions.get('window')
-
 export const Profile = ({ userName }: { userName: string }) => {
-  const insets = useSafeAreaInsets()
-
   const { addingTo, removingId } = useLocalSearchParams()
   const { stopEditProfile, stopEditBacklog, startEditBacklog } = useUIStore()
   const { hasShareIntent } = useShareIntentContext()
-  const { saves, addSave } = useMessageStore()
+  const { addSave } = useMessageStore()
 
   const [profile, setProfile] = useState<ProfileType>()
   const [gridItems, setGridItems] = useState<Item[]>([])
-  const [searching, setSearching] = useState(false)
   const [backlogItems, setBacklogItems] = useState<ExpandedItem[]>([])
   const [editingRights, seteditingRights] = useState<boolean>(false)
   const [showMessageButtons, setShowMessageButtons] = useState<boolean>(false)
   const [step, setStep] = useState('')
-  const [term, setTerm] = useState('')
   const [allItems, setAllItems] = useState<ExpandedItem[]>([])
-  const [results, setResults] = useState<ExpandedItem[]>([])
 
   const backlogSheetRef = useRef<BottomSheet>(null)
-
-  const maxDynamicContentSize = win.height - insets.top
-  const snapPointWithoutKeys = maxDynamicContentSize - 300
-
-  const snapPoints = useMemo<number[]>(() => [snapPointWithoutKeys, maxDynamicContentSize], [])
 
   const { user, getProfile } = useUserStore()
   const { remove, moveToBacklog } = useItemStore()
@@ -65,14 +51,6 @@ export const Profile = ({ userName }: { userName: string }) => {
   }
   const setRemovingId = (str: string) => {
     router.setParams({ removingId: str })
-  }
-
-  const search = async (t: string) => {
-    setTerm(t)
-    const newResults = [...allItems].filter((itm) =>
-      itm?.expand?.ref?.title?.toLowerCase().includes(t.toLowerCase())
-    )
-    setResults(newResults)
   }
 
   const handleMoveToBacklog = async () => {
@@ -156,48 +134,20 @@ export const Profile = ({ userName }: { userName: string }) => {
                 marginHorizontal: s.$1half,
               }}
             >
-              <ProfileHeader
-                profile={profile}
-                onPress={() => {
-                  stopEditProfile()
-                  if (!searching) {
-                    setResults(allItems)
-                  }
-                  setSearching(!searching)
-                }}
-                onTermChange={search}
-              />
+              <ProfileHeader profile={profile} />
 
-              {!searching ? (
-                <Animated.View
-                  entering={FadeIn.duration(500)}
-                  exiting={FadeOut.duration(500)}
-                  style={{ gap: s.$2 }}
-                >
-                  <Grid
-                    editingRights={editingRights}
-                    onRemoveItem={setRemovingId}
-                    onAddItem={() => {
-                      setAddingTo('grid')
-                    }}
-                    columns={3}
-                    items={gridItems}
-                    rows={4}
-                  ></Grid>
-                </Animated.View>
-              ) : (
-                <Animated.View
-                  entering={FadeIn.duration(500)}
-                  exiting={FadeOut.duration(500)}
-                  style={{ marginBottom: s.$20 }}
-                >
-                  {results
-                    .filter((item) => item.expand?.ref)
-                    .map((item) => (
-                      <SearchResultItem key={item.id} r={item.expand!.ref} />
-                    ))}
-                </Animated.View>
-              )}
+              <View style={{ gap: s.$2 }}>
+                <Grid
+                  editingRights={editingRights}
+                  onRemoveItem={setRemovingId}
+                  onAddItem={() => {
+                    setAddingTo('grid')
+                  }}
+                  columns={3}
+                  items={gridItems}
+                  rows={4}
+                ></Grid>
+              </View>
             </View>
           )}
 

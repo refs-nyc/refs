@@ -16,7 +16,6 @@ import { View, Dimensions, Pressable, Text } from 'react-native'
 import { s, c } from '@/features/style'
 import { pocketbase, useUserStore, removeFromProfile, useItemStore } from '@/features/pocketbase'
 import { ShareIntent as ShareIntentType, useShareIntentContext } from 'expo-share-intent'
-import { ScrollView } from 'react-native-gesture-handler'
 import {
   Profile as ProfileType,
   ExpandedProfile,
@@ -28,6 +27,7 @@ import { useMessageStore } from '@/features/pocketbase/stores/messages'
 import BacklogBottomSheet from './BacklogBottomSheet'
 import BacklogList from './BacklogList'
 import BottomSheet from '@gorhom/bottom-sheet'
+import { Ionicons } from '@expo/vector-icons'
 
 const win = Dimensions.get('window')
 
@@ -137,13 +137,26 @@ export const Profile = ({ userName }: { userName: string }) => {
 
   return (
     <>
-      {/* <ScrollView keyboardShouldPersistTaps="always"> */}
-      <XStack style={{ marginTop: s.$4 }}>
+      <XStack
+        style={{
+          marginTop: s.$4,
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          paddingTop: s.$1,
+          paddingHorizontal: s.$1,
+        }}
+      >
         {/* back button */}
-        <Button onPress={() => router.back()} variant="outline" title="Back" />
+        <Pressable onPress={() => router.back()}>
+          <Ionicons name="chevron-back" size={s.$2} color={'#B6B5B2'} />
+        </Pressable>
 
         {/* share button */}
-        <Button onPress={() => {}} variant="inlineSmallMuted" title="Share" />
+        <Pressable onPress={() => {}}>
+          <Heading tag="psemi" style={{ color: '#B6B5B2' }}>
+            Share
+          </Heading>
+        </Pressable>
       </XStack>
       <YStack
         style={{
@@ -210,7 +223,6 @@ export const Profile = ({ userName }: { userName: string }) => {
 
         {!user && <Heading tag="h1">Profile for {userName} not found</Heading>}
       </YStack>
-      {/* </ScrollView> */}
 
       {profile && showMessageButtons && (
         <Pressable onPress={() => stopEditProfile()}>

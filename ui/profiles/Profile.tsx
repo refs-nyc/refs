@@ -139,10 +139,9 @@ export const Profile = ({ userName }: { userName: string }) => {
     <>
       <XStack
         style={{
-          marginTop: s.$4,
           alignItems: 'center',
           justifyContent: 'space-between',
-          paddingTop: s.$1,
+          paddingTop: s.$075,
           paddingHorizontal: s.$1,
         }}
       >
@@ -164,7 +163,6 @@ export const Profile = ({ userName }: { userName: string }) => {
           justifyContent: 'center',
           alignItems: 'center',
           paddingHorizontal: s.$08,
-          marginBottom: s.$12,
         }}
         gap={s.$4}
       >

@@ -59,10 +59,13 @@ export default function NewDMScreen() {
           margin: 'auto',
           alignItems: 'center',
           justifyContent: 'start',
-          paddingTop: s.$4,
+          paddingHorizontal: s.$1,
         }}
       >
-        <XStack gap={s.$1} style={{ alignItems: 'center', padding: s.$1 }}>
+        <XStack
+          gap={s.$1}
+          style={{ alignItems: 'center', justifyContent: 'space-between', padding: s.$1 }}
+        >
           <Pressable
             onPress={() => {
               router.back()

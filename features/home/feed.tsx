@@ -8,6 +8,7 @@ import { s } from '@/features/style'
 import { Nearby } from './nearby'
 
 import { SearchResults } from './results'
+import { Navigation } from '@/ui/navigation/Navigation'
 
 export const Feed = () => {
   const [items, setItems] = useState<ExpandedItem[]>([])
@@ -60,6 +61,7 @@ export const Feed = () => {
   return (
     <DismissKeyboard>
       <ScrollView style={{ flex: 1 }}>
+        <Navigation />
         <View style={{ height: '100%' }}>
           <YStack
             gap={s.$2}

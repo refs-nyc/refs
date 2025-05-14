@@ -152,29 +152,22 @@ export const Profile = ({ userName }: { userName: string }) => {
               marginHorizontal: s.$1half,
             }}
           >
-            <ProfileHeader
-              profile={profile}
-              onPress={() => {
-                stopEditProfile()
-                setResults(allItems)
-              }}
-            >
-              <ProfileHeader profile={profile} />
+            <ProfileHeader profile={profile} />
 
-              <View style={{ gap: s.$2 }}>
-                <Grid
-                  editingRights={editingRights}
-                  onRemoveItem={setRemovingId}
-                  onAddItem={() => {
-                    setAddingTo('grid')
-                  }}
-                  columns={3}
-                  items={gridItems}
-                  rows={4}
-                ></Grid>
-              </View>
+            <View style={{ gap: s.$2 }}>
+              <Grid
+                editingRights={editingRights}
+                onRemoveItem={setRemovingId}
+                onAddItem={() => {
+                  setAddingTo('grid')
+                }}
+                columns={3}
+                items={gridItems}
+                rows={4}
+              ></Grid>
             </View>
-          )}
+          </View>
+        )}
 
         {!user && <Heading tag="h1">Profile for {userName} not found</Heading>}
       </YStack>

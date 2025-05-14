@@ -234,7 +234,7 @@ export const Profile = ({ userName }: { userName: string }) => {
               paddingHorizontal: s.$2,
               height: s.$10,
               position: 'absolute',
-              bottom: s.$1,
+              bottom: s.$0,
               left: -s.$05,
               right: -s.$05,
               display: 'flex',

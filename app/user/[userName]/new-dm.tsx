@@ -53,11 +53,19 @@ export default function NewDMScreen() {
         backgroundColor: c.surface,
       }}
     >
-      <YStack style={{ flex: 1, margin: 'auto', alignItems: 'center', justifyContent: 'start' }}>
+      <YStack
+        style={{
+          flex: 1,
+          margin: 'auto',
+          alignItems: 'center',
+          justifyContent: 'start',
+          paddingTop: s.$4,
+        }}
+      >
         <XStack gap={s.$1} style={{ alignItems: 'center', padding: s.$1 }}>
           <Pressable
             onPress={() => {
-              router.dismissTo(`/user/${userName}`)
+              router.back()
             }}
           >
             <Ionicons name="chevron-back" size={s.$2} color={c.grey2} />

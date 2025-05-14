@@ -1,4 +1,4 @@
-import { View, Dimensions } from 'react-native'
+import { View, Dimensions, StyleProp, ViewStyle } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 const dims = Dimensions.get('window')
@@ -12,7 +12,7 @@ export const YStack = ({
   ...props
 }: {
   children: React.ReactNode
-  style?: any
+  style?: StyleProp<ViewStyle>
   gap?: string | number
   screenHeight?: boolean
 }) => {
@@ -35,7 +35,7 @@ export const XStack = ({
   ...props
 }: {
   children: React.ReactNode
-  style?: any
+  style?: StyleProp<ViewStyle>
   gap?: string | number
 }) => (
   <View style={[style, { flexDirection: 'row', gap }]} {...props}>

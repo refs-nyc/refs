@@ -3,11 +3,11 @@ import { Text, View, Pressable } from 'react-native'
 import { Avatar } from '../atoms/Avatar'
 import { c, s } from '@/features/style'
 import { useUserStore } from '@/features/pocketbase/stores/users'
-import { Icon } from '@/assets/icomoon/IconFont'
 import { useMessageStore } from '@/features/pocketbase/stores/messages'
 import { Badge } from '../atoms/Badge'
 import { useMemo } from 'react'
 import SavesIcon from '@/assets/icons/saves.svg'
+import MessageIcon from '@/assets/icons/message.svg'
 
 export const Navigation = () => {
   const { user } = useUserStore()
@@ -106,7 +106,7 @@ export const Navigation = () => {
       </View>
       <View style={{ top: -2 }}>
         <Pressable onPress={() => router.dismissTo('/messages')}>
-          <Icon name="Messages" size={39} color={c.muted2} />
+          <MessageIcon />
           {newMessages > 0 && <Badge count={newMessages} color={c.red} />}
         </Pressable>
       </View>

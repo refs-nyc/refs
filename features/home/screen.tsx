@@ -13,6 +13,7 @@ import Animated, {
 import { router } from 'expo-router'
 import { c, s } from '@/features/style/index'
 import { UserProfileScreen } from '../user/profile-screen'
+import { Feed } from './feed'
 
 const dims = Dimensions.get('window')
 
@@ -70,7 +71,7 @@ export function HomeScreen() {
 
   if (user) {
     // if the user is logged in, show the user's profile
-    return <UserProfileScreen userName={user.userName} />
+    return <Feed />
   } else {
     // if the user is not logged in, show the home screen
     return (

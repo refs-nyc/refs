@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react' // Import useCallback, useMemo
 import { Link, useGlobalSearchParams, usePathname, useRouter } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { View, Dimensions, Pressable, Text, ViewStyle } from 'react-native'
+import { View, Dimensions, Pressable, Text, ViewStyle, useWindowDimensions } from 'react-native'
 import Carousel, { ICarouselInstance } from 'react-native-reanimated-carousel'
 import { c, s, t } from '@/features/style'
 import { gridSort } from './sorts'

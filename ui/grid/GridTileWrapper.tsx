@@ -37,7 +37,7 @@ export const GridTileWrapper = ({
   const openDetailScreen = () => {
     if (pathname.includes('onboarding')) return
     stopEditProfile()
-    const url = pathname === '/' ? '/modal' : `${pathname}/modal`
+    const url = `${pathname}/modal`
     const query = id ? `?initialId=${id}` : ''
     // @ts-ignore
     router.push(`${url}${query}`)

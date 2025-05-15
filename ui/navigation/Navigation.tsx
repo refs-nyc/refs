@@ -44,19 +44,7 @@ export const Navigation = () => {
     [messagesPerConversation, memberships, user]
   )
 
-  if (
-    !user ||
-    pathName.includes('/onboarding') ||
-    pathName.includes('/user/login') ||
-    pathName.includes('/user/register') ||
-    (pathName.includes('/modal') && !pathName.includes('/saves/modal')) || // want the navbar to stay visible under the saves modal
-    pathName.includes('/messages/') || // e.g. /messages/123
-    addingTo === 'grid' ||
-    addingTo === 'backlog' ||
-    !!removingId
-  ) {
-    return <></>
-  }
+  if (!user || /\/user\/.*\/modal/.test(pathName)) return null
 
   return (
     <View
@@ -69,12 +57,12 @@ export const Navigation = () => {
       }}
     >
       <View>
-        <Link dismissTo href={`/`}>
+        <Link href={`/user/${user.userName}`}>
           <Avatar source={user.image} size={42} />
         </Link>
       </View>
       <View style={{ margin: 'auto' }}>
-        <Link dismissTo href="/feed">
+        <Link dismissTo href="/">
           <Text style={{ fontSize: 24, fontWeight: 'bold' }}>Refs</Text>
         </Link>
       </View>
@@ -105,7 +93,7 @@ export const Navigation = () => {
         </Pressable>
       </View>
       <View style={{ top: -2 }}>
-        <Pressable onPress={() => router.dismissTo('/messages')}>
+        <Pressable onPress={() => router.push('/messages')}>
           <MessageIcon />
           {newMessages > 0 && <Badge count={newMessages} color={c.red} />}
         </Pressable>

@@ -14,6 +14,7 @@ import { CompleteRef } from '@/features/pocketbase/stores/types'
 import { pocketbase } from '@/features/pocketbase'
 import { SimplePinataImage } from '../images/SimplePinataImage'
 import { Ionicons } from '@expo/vector-icons'
+import { router } from 'expo-router'
 
 const HEADER_HEIGHT = s.$10
 
@@ -118,7 +119,7 @@ export default function BacklogBottomSheet() {
               <Button
                 variant="whiteInverted"
                 title={refs.length ? 'Search' : 'Stumble'}
-                onPress={() => console.log('stumble')}
+                onPress={()=>router.push(`/search?refs=${refs.map((r) => r.id).join(',')}`)}
                 style={{
                   paddingHorizontal: 0,
                   paddingVertical: s.$075,

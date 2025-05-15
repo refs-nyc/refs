@@ -58,8 +58,8 @@ export const Feed = () => {
   }, [])
 
   return (
-    <DismissKeyboard>
-      <>
+    <>
+      <DismissKeyboard>
         <ScrollView style={{ flex: 1 }}>
           <View style={{ height: '100%' }}>
             <YStack
@@ -102,8 +102,8 @@ export const Feed = () => {
             </View>
           </View>
         </ScrollView>
-        <SearchBottomSheet />
-      </>
-    </DismissKeyboard>
+      </DismissKeyboard>
+      <SearchBottomSheet />
+    </>
   )
 }

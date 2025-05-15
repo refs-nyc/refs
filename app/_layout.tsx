@@ -15,7 +15,7 @@ import NetInfo from '@react-native-community/netinfo'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { useEffect } from 'react'
-import { StatusBar, useColorScheme } from 'react-native'
+import { StatusBar, useColorScheme, useWindowDimensions, View } from 'react-native'
 import { Navigation } from '@/ui/navigation/Navigation'
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native'
 import { useFonts } from 'expo-font'
@@ -145,21 +145,6 @@ function RootLayoutNav() {
             presentation: 'transparentModal',
             headerShown: false,
             contentStyle: { backgroundColor: 'transparent' },
-          }}
-        />
-        {/* modal for the current user */}
-        <Stack.Screen
-          name="modal"
-          options={{
-            title: 'Details',
-            animation: 'none',
-          }}
-        />
-        <Stack.Screen
-          name="feed"
-          options={{
-            title: 'Feed',
-            headerShown: false,
           }}
         />
         <Stack.Screen

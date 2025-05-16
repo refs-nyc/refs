@@ -4,19 +4,16 @@ import { XStack, YStack } from '../core/Stacks'
 import { Button } from '../buttons/Button'
 import { Heading } from '../typo/Heading'
 import { NewRef } from '../actions/NewRef'
-import Animated, { FadeIn, FadeOut } from 'react-native-reanimated'
-import { ListItem } from '../lists/ListItem'
 import { useUIStore } from '../state'
 import { ProfileHeader } from './ProfileHeader'
 import { Grid } from '../grid/Grid'
 import { Sheet } from '../core/Sheets'
 import { useLocalSearchParams, router } from 'expo-router'
-import { useEffect, useState, useMemo } from 'react'
-import { View, Dimensions, Pressable } from 'react-native'
+import { useEffect, useState, useMemo, useRef } from 'react'
+import { View, Dimensions, Pressable, Text } from 'react-native'
 import { s, c } from '@/features/style'
 import { pocketbase, useUserStore, removeFromProfile, useItemStore } from '@/features/pocketbase'
 import { ShareIntent as ShareIntentType, useShareIntentContext } from 'expo-share-intent'
-import { ScrollView } from 'react-native-gesture-handler'
 import {
   Profile as ProfileType,
   ExpandedProfile,
@@ -25,33 +22,26 @@ import {
 import { gridSort, createdSort } from '../profiles/sorts'
 import { DMButton } from './DMButton'
 import { useMessageStore } from '@/features/pocketbase/stores/messages'
-import { BottomSheetScrollView, BottomSheetView } from '@gorhom/bottom-sheet'
-
-const win = Dimensions.get('window')
+import BacklogBottomSheet from './BacklogBottomSheet'
+import BacklogList from './BacklogList'
+import BottomSheet from '@gorhom/bottom-sheet'
+import { Ionicons } from '@expo/vector-icons'
 
 export const Profile = ({ userName }: { userName: string }) => {
-  const insets = useSafeAreaInsets()
-
   const { addingTo, removingId } = useLocalSearchParams()
   const { stopEditProfile, stopEditBacklog, startEditBacklog } = useUIStore()
   const { hasShareIntent } = useShareIntentContext()
-  const { saves, addSave } = useMessageStore()
+  const { addSave } = useMessageStore()
 
   const [profile, setProfile] = useState<ProfileType>()
   const [gridItems, setGridItems] = useState<Item[]>([])
-  const [searching, setSearching] = useState(false)
   const [backlogItems, setBacklogItems] = useState<ExpandedItem[]>([])
   const [editingRights, seteditingRights] = useState<boolean>(false)
   const [showMessageButtons, setShowMessageButtons] = useState<boolean>(false)
   const [step, setStep] = useState('')
-  const [term, setTerm] = useState('')
   const [allItems, setAllItems] = useState<ExpandedItem[]>([])
-  const [results, setResults] = useState<ExpandedItem[]>([])
 
-  const maxDynamicContentSize = win.height - insets.top
-  const snapPointWithoutKeys = maxDynamicContentSize - 300
-
-  const snapPoints = useMemo<number[]>(() => [snapPointWithoutKeys, maxDynamicContentSize], [])
+  const backlogSheetRef = useRef<BottomSheet>(null)
 
   const { user, getProfile } = useUserStore()
   const { remove, moveToBacklog } = useItemStore()
@@ -61,14 +51,6 @@ export const Profile = ({ userName }: { userName: string }) => {
   }
   const setRemovingId = (str: string) => {
     router.setParams({ removingId: str })
-  }
-
-  const search = async (t: string) => {
-    setTerm(t)
-    const newResults = [...allItems].filter((itm) =>
-      itm?.expand?.ref?.title?.toLowerCase().includes(t.toLowerCase())
-    )
-    setResults(newResults)
   }
 
   const handleMoveToBacklog = async () => {
@@ -133,103 +115,100 @@ export const Profile = ({ userName }: { userName: string }) => {
 
   return (
     <>
-      <ScrollView
-        keyboardShouldPersistTaps="always"
-        style={{ paddingTop: Math.max(insets.top, 16) }}
+      <YStack
+        style={{
+          flex: 1,
+          justifyContent: 'center',
+          alignItems: 'center',
+          paddingHorizontal: s.$08,
+        }}
+        gap={s.$4}
       >
-        <YStack
-          style={{
-            flex: 1,
-            justifyContent: 'center',
-            alignItems: 'center',
-            paddingHorizontal: s.$08,
-            marginBottom: s.$12,
-          }}
-          gap={s.$4}
-        >
-          {profile && (
-            <View
-              style={{
-                flex: 1,
-                width: '100%',
-                marginHorizontal: s.$1half,
-              }}
-            >
-              <ProfileHeader
-                profile={profile}
-                onPress={() => {
-                  stopEditProfile()
-                  if (!searching) {
-                    setResults(allItems)
-                  }
-                  setSearching(!searching)
+        {profile && (
+          <View
+            style={{
+              flex: 1,
+              width: '100%',
+              marginHorizontal: s.$1half,
+            }}
+          >
+            <ProfileHeader profile={profile} />
+
+            <View style={{ gap: s.$2 }}>
+              <Grid
+                editingRights={editingRights}
+                onRemoveItem={setRemovingId}
+                onAddItem={() => {
+                  setAddingTo('grid')
                 }}
-                onTermChange={search}
-              />
-
-              {!searching ? (
-                <Animated.View
-                  entering={FadeIn.duration(500)}
-                  exiting={FadeOut.duration(500)}
-                  style={{ gap: s.$2 }}
-                >
-                  <Grid
-                    editingRights={editingRights}
-                    onRemoveItem={setRemovingId}
-                    onAddItem={() => {
-                      setAddingTo('grid')
-                    }}
-                    columns={3}
-                    items={gridItems}
-                    rows={4}
-                  ></Grid>
-                  {/* Actions */}
-                  <Pressable onPress={() => stopEditProfile()}>
-                    <XStack gap={s.$2} style={{ justifyContent: 'center', width: '100%' }}>
-                      {editingRights && (
-                        <Button
-                          onPress={() => setAddingTo('backlog')}
-                          variant="raisedSecondary"
-                          title="Backlog"
-                          iconColor={c.muted}
-                          iconAfter="add-circle-outline"
-                        />
-                      )}
-                      {showMessageButtons && (
-                        <>
-                          <DMButton profile={profile} />
-                          <Button
-                            onPress={() => {
-                              addSave(profile.id, user?.id!)
-                            }}
-                            variant="raisedSecondary"
-                            title="Save"
-                            iconBefore="bookmark"
-                          />
-                        </>
-                      )}
-                    </XStack>
-                  </Pressable>
-                </Animated.View>
-              ) : (
-                <Animated.View
-                  entering={FadeIn.duration(500)}
-                  exiting={FadeOut.duration(500)}
-                  style={{ marginBottom: s.$20 }}
-                >
-                  {results
-                    .filter((item) => item.expand?.ref)
-                    .map((item) => (
-                      <ListItem key={item.id} r={item.expand!.ref} />
-                    ))}
-                </Animated.View>
-              )}
+                columns={3}
+                items={gridItems}
+                rows={4}
+              ></Grid>
             </View>
-          )}
+          </View>
+        )}
 
-          {!user && <Heading tag="h1">Profile for {userName} not found</Heading>}
-        </YStack>
-      </ScrollView>
+        {!user && <Heading tag="h1">Profile for {userName} not found</Heading>}
+      </YStack>
+
+      {profile && showMessageButtons && (
+        <Pressable onPress={() => stopEditProfile()}>
+          <View
+            style={{
+              borderRadius: s.$5,
+              backgroundColor: c.olive,
+              paddingTop: s.$1,
+              paddingHorizontal: s.$2,
+              height: s.$10,
+              position: 'absolute',
+              bottom: s.$0,
+              left: -s.$05,
+              right: -s.$05,
+              display: 'flex',
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+            }}
+          >
+            <View style={{ height: s.$4, width: s.$10 }}>
+              <DMButton profile={profile} style={{ paddingHorizontal: s.$0 }} />
+            </View>
+            <View style={{ height: s.$4, width: s.$10 }}>
+              <Button
+                onPress={() => {
+                  addSave(profile.id, user?.id!)
+                }}
+                variant="whiteOutline"
+                title="Save"
+                style={{ paddingHorizontal: s.$0 }}
+              />
+            </View>
+
+            <View style={{ height: s.$4, width: s.$10 }}>
+              <Button
+                onPress={() => {
+                  backlogSheetRef.current?.snapToIndex(0)
+                }}
+                variant="whiteOutline"
+                title="Backlog"
+                style={{ paddingHorizontal: s.$0 }}
+              />
+            </View>
+          </View>
+        </Pressable>
+      )}
+
+      {profile && (
+        <BacklogBottomSheet
+          backlogSheetRef={backlogSheetRef}
+          onAddToBacklogClick={() => {
+            setAddingTo('backlog')
+          }}
+          profile={profile}
+        >
+          <BacklogList items={backlogItems.toReversed()} />
+        </BacklogBottomSheet>
+      )}
 
       {removingId && (
         <Sheet full={false} onChange={(e: any) => e === -1 && setRemovingId('')}>

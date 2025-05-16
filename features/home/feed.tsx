@@ -1,25 +1,19 @@
-import Animated, { FadeInUp, FadeOutUp } from 'react-native-reanimated'
 import type { ExpandedItem } from '@/features/pocketbase/stores/types'
 import { useState, useEffect } from 'react'
-import { SearchBar, YStack, Heading, DismissKeyboard, Button } from '@/ui'
+import { SearchBar, YStack, DismissKeyboard, Button } from '@/ui'
 import { pocketbase } from '@/features/pocketbase'
 import { useUserStore } from '@/features/pocketbase/stores/users'
-import { View, ScrollView, Dimensions } from 'react-native'
+import { View, ScrollView } from 'react-native'
 import { s } from '@/features/style'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Nearby } from './nearby'
 
 import { SearchResults } from './results'
-import { router } from 'expo-router'
-
-const win = Dimensions.get('window')
 
 export const Feed = () => {
   const [items, setItems] = useState<ExpandedItem[]>([])
   const [searching, setSearching] = useState<boolean>(false)
   const [results, setResults] = useState<ExpandedItem[]>([])
   const [searchTerm, setSearchTerm] = useState<string>('')
-  const insets = useSafeAreaInsets()
   const { logout } = useUserStore()
 
   useEffect(() => {
@@ -47,7 +41,9 @@ export const Feed = () => {
     const getInitialData = async () => {
       try {
         const records = await pocketbase.collection('items').getList<ExpandedItem>(1, 30, {
-          filter: `creator != null`,
+          // TODO: remove list = false once we have a way to display lists in the feed
+          // also consider showing backlog items in the feed, when we have a way to link to them
+          filter: `creator != null && backlog = false && list = false`,
           sort: '-created',
           expand: 'ref,creator',
         })
@@ -62,60 +58,51 @@ export const Feed = () => {
   }, [])
 
   return (
-    <DismissKeyboard>
-      <ScrollView style={{ flex: 1, height: win.height }}>
-        <YStack
-          gap={s.$2}
-          style={{
-            height: win.height * 0.4,
-            // position: 'absolute',
-            width: '100%',
-            top: Math.max(insets.top, 16),
-            paddingTop: s.$2,
-            textAlign: 'center',
-          }}
-        >
-          <YStack
-            gap={s.$2}
-            style={{
-              // position: 'absolute',
-              width: '100%',
-              zIndex: 9,
-              height: win.height * 0.4,
-              paddingTop: s.$2,
-              textAlign: 'center',
-            }}
-          >
-            {!searching && (
-              <Animated.View entering={FadeInUp.duration(200)} exiting={FadeOutUp.duration(200)}>
-                <Heading style={{ textAlign: 'center' }} tag="h1">
-                  Refs
-                </Heading>
-              </Animated.View>
-            )}
-
-            <SearchBar
-              onFocus={() => setSearching(true)}
-              onBlur={() => {
-                setSearching(false)
-                setSearchTerm('')
+    <>
+      <DismissKeyboard>
+        <ScrollView style={{ flex: 1 }}>
+          <View style={{ height: '100%' }}>
+            <YStack
+              gap={s.$2}
+              style={{
+                width: '100%',
+                paddingBottom: s.$2,
+                textAlign: 'center',
               }}
-              onChange={setSearchTerm}
-            />
-          </YStack>
-        </YStack>
+            >
+              <YStack
+                gap={s.$2}
+                style={{
+                  width: '100%',
+                  zIndex: 9,
+                  paddingTop: s.$2,
+                  textAlign: 'center',
+                }}
+              >
+                <SearchBar
+                  onFocus={() => setSearching(true)}
+                  onBlur={() => {
+                    setSearching(false)
+                    setSearchTerm('')
+                  }}
+                  onChange={setSearchTerm}
+                />
+              </YStack>
+            </YStack>
 
-        {searchTerm === '' ? <Nearby items={items} /> : <SearchResults results={results} />}
+            {searchTerm === '' ? <Nearby items={items} /> : <SearchResults results={results} />}
 
-        <View style={{ marginBottom: s.$14, alignItems: 'center' }}>
-          <Button
-            style={{ width: 20 }}
-            variant="inlineSmallMuted"
-            title="Log out"
-            onPress={logout}
-          />
-        </View>
-      </ScrollView>
-    </DismissKeyboard>
+            <View style={{ marginBottom: s.$2, alignItems: 'center' }}>
+              <Button
+                style={{ width: 20 }}
+                variant="inlineSmallMuted"
+                title="Log out"
+                onPress={logout}
+              />
+            </View>
+          </View>
+        </ScrollView>
+      </DismissKeyboard>
+    </>
   )
 }

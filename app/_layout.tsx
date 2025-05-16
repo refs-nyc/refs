@@ -15,7 +15,7 @@ import NetInfo from '@react-native-community/netinfo'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { useEffect } from 'react'
-import { StatusBar, useColorScheme } from 'react-native'
+import { StatusBar, useColorScheme, useWindowDimensions, View } from 'react-native'
 import { Navigation } from '@/ui/navigation/Navigation'
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native'
 import { useFonts } from 'expo-font'
@@ -24,6 +24,8 @@ import * as Notifications from 'expo-notifications'
 import { DeferredFonts } from '@/ui'
 import { c } from '@/features/style'
 import * as SystemUI from 'expo-system-ui'
+import { KeyboardProvider } from 'react-native-keyboard-controller'
+
 import { RegisterPushNotifications } from '@/ui/notifications/RegisterPushNotifications'
 import { MessagesInit } from '@/features/messaging/message-loader'
 import { useUserStore } from '@/features/pocketbase/stores/users'
@@ -106,7 +108,9 @@ const Providers = ({ children }: { children: React.ReactNode }) => {
     <ShareIntentProvider>
       <SafeAreaProvider>
         <GestureHandlerRootView>
-          <FontProvider>{children}</FontProvider>
+          <KeyboardProvider>
+            <FontProvider>{children}</FontProvider>
+          </KeyboardProvider>
         </GestureHandlerRootView>
       </SafeAreaProvider>
     </ShareIntentProvider>
@@ -141,21 +145,6 @@ function RootLayoutNav() {
             presentation: 'transparentModal',
             headerShown: false,
             contentStyle: { backgroundColor: 'transparent' },
-          }}
-        />
-        {/* modal for the current user */}
-        <Stack.Screen
-          name="modal"
-          options={{
-            title: 'Details',
-            animation: 'none',
-          }}
-        />
-        <Stack.Screen
-          name="feed"
-          options={{
-            title: 'Feed',
-            headerShown: false,
           }}
         />
         <Stack.Screen

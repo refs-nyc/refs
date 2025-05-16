@@ -6,27 +6,29 @@ import BottomSheet, {
   BottomSheetView,
 } from '@gorhom/bottom-sheet'
 import { useCallback, useRef, useState } from 'react'
-import { Pressable, Text, ScrollView } from 'react-native'
+import { Pressable, Text, ScrollView, View } from 'react-native'
 import { Heading } from '../typo/Heading'
 import { XStack, YStack } from '../core/Stacks'
 import { Button } from '../buttons/Button'
-import { CompleteRef } from '@/features/pocketbase/stores/types'
+import { CompleteRef, Item } from '@/features/pocketbase/stores/types'
 import { pocketbase, useUserStore } from '@/features/pocketbase'
 import { SimplePinataImage } from '../images/SimplePinataImage'
 import { Ionicons } from '@expo/vector-icons'
 import { router } from 'expo-router'
+import { Sheet } from '../core/Sheets'
+import { NewRef, NewRefStep } from './NewRef'
 
 const HEADER_HEIGHT = s.$10
 
-export default function BacklogBottomSheet({
-  setAddingTo,
-}: {
-  setAddingTo: (str: string) => void
-}) {
+export default function BacklogBottomSheet() {
   const [index, setIndex] = useState(0)
 
   const isMinimised = index === 0
   const backlogSheetRef = useRef<BottomSheet>(null)
+  const [addingTo, setAddingTo] = useState('')
+  const [step, setStep] = useState('')
+  const [newRefTitle, setNewRefTitle] = useState('')
+  const [initialStep, setInitialStep] = useState<NewRefStep>('')
 
   const [searchTerm, setSearchTerm] = useState('')
   const [results, setResults] = useState<CompleteRef[]>([])
@@ -58,6 +60,18 @@ export default function BacklogBottomSheet({
     setResults(result)
   }
 
+  const onAddFromSearch = () => {
+    setInitialStep('add')
+    setNewRefTitle(searchTerm)
+    setAddingTo(user?.items && user.items?.length < 12 ? 'grid' : 'backlog')
+  }
+
+  const stopAdding = () => {
+    setInitialStep('')
+    setNewRefTitle('')
+    setAddingTo('')
+  }
+
   const renderBackdrop = useCallback(
     (p: any) => (
       <BottomSheetBackdrop
@@ -71,155 +85,211 @@ export default function BacklogBottomSheet({
   )
 
   return (
-    <BottomSheet
-      enableDynamicSizing={false}
-      ref={backlogSheetRef}
-      enablePanDownToClose={false}
-      snapPoints={[minSnapPoint, '50%']}
-      index={0}
-      onChange={(i: number) => {
-        setIndex(i)
-        if (i === 0) setResults([])
-      }}
-      backgroundStyle={{ backgroundColor: c.olive, borderRadius: s.$4, paddingTop: 0 }}
-      backdropComponent={renderBackdrop}
-      handleComponent={null}
-      keyboardBehavior="interactive"
-    >
-      <BottomSheetView>
-        <Pressable
-          onPress={() => {
-            if (backlogSheetRef.current && isMinimised) backlogSheetRef.current.snapToIndex(1)
-          }}
-          style={{
-            paddingTop: s.$2,
-            paddingBottom: s.$2,
-            height: HEADER_HEIGHT,
-          }}
-        >
-          <XStack
-            gap={s.$075}
+    <>
+      <BottomSheet
+        enableDynamicSizing={false}
+        ref={backlogSheetRef}
+        enablePanDownToClose={false}
+        snapPoints={[minSnapPoint, '50%']}
+        index={0}
+        onChange={(i: number) => {
+          setIndex(i)
+          if (i === 0) setResults([])
+        }}
+        backgroundStyle={{ backgroundColor: c.olive, borderRadius: s.$4, paddingTop: 0 }}
+        backdropComponent={renderBackdrop}
+        handleComponent={null}
+        keyboardBehavior="interactive"
+      >
+        <BottomSheetView>
+          <Pressable
+            onPress={() => {
+              if (backlogSheetRef.current && isMinimised) backlogSheetRef.current.snapToIndex(1)
+            }}
             style={{
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              paddingHorizontal: s.$2,
+              paddingTop: s.$2,
+              paddingBottom: s.$2,
+              height: HEADER_HEIGHT,
             }}
           >
-            {isMinimised ? (
-              <Text style={{ color: c.white, fontSize: s.$1 }}>Search anything</Text>
-            ) : (
-              <BottomSheetTextInput
-                autoFocus
-                placeholder="Search anything"
-                placeholderTextColor={c.white}
-                style={{ fontSize: s.$1, color: c.white }}
-                onChangeText={updateSearch}
-                value={searchTerm}
-              />
-            )}
-            <XStack gap={s.$05} style={{ alignItems: 'center' }}>
-              <Pressable
-                onPress={() =>
-                  setAddingTo(user?.items && user.items?.length < 12 ? 'grid' : 'backlog')
-                }
-              >
-                <Ionicons name="add-circle-outline" size={s.$4} color={c.white} />
-              </Pressable>
-              <Button
-                variant="whiteInverted"
-                title={refs.length ? 'Search' : 'Stumble'}
-                onPress={() => router.push(`/search?refs=${refs.map((r) => r.id).join(',')}`)}
-                style={{
-                  paddingHorizontal: 0,
-                  paddingVertical: s.$075,
-                }}
-              />
+            <XStack
+              gap={s.$075}
+              style={{
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                paddingHorizontal: s.$2,
+              }}
+            >
+              {isMinimised ? (
+                <Text style={{ color: c.white, fontSize: s.$1 }}>Search anything</Text>
+              ) : (
+                <BottomSheetTextInput
+                  autoFocus
+                  placeholder="Search anything"
+                  placeholderTextColor={c.white}
+                  style={{ fontSize: s.$1, color: c.white }}
+                  onChangeText={updateSearch}
+                  value={searchTerm}
+                />
+              )}
+              <XStack gap={s.$05} style={{ alignItems: 'center' }}>
+                <Pressable
+                  onPress={() =>
+                    setAddingTo(user?.items && user.items?.length < 12 ? 'grid' : 'backlog')
+                  }
+                >
+                  <Ionicons name="add-circle-outline" size={s.$4} color={c.white} />
+                </Pressable>
+                <Button
+                  variant="whiteInverted"
+                  title={refs.length ? 'Search' : 'Stumble'}
+                  onPress={() => router.push(`/search?refs=${refs.map((r) => r.id).join(',')}`)}
+                  style={{
+                    paddingHorizontal: 0,
+                    paddingVertical: s.$075,
+                  }}
+                />
+              </XStack>
             </XStack>
-          </XStack>
-        </Pressable>
-        {!isMinimised && (
-          <BottomSheetScrollView style={{ maxHeight: 300 }} keyboardShouldPersistTaps="handled">
-            <YStack>
-              {results.map((r) => (
-                <Pressable key={r.id} onPress={() => onAddRefToSearch(r)}>
+          </Pressable>
+          {!isMinimised && searchTerm !== '' && (
+            <BottomSheetScrollView style={{ maxHeight: 300 }} keyboardShouldPersistTaps="handled">
+              <YStack>
+                <Pressable onPress={() => onAddFromSearch()}>
                   <XStack
-                    gap={s.$1}
+                    gap={s.$025}
                     style={{
                       alignItems: 'center',
                       paddingVertical: s.$075,
                       paddingHorizontal: s.$5,
                     }}
                   >
-                    <SimplePinataImage
-                      originalSource={r.image!}
-                      imageOptions={{ width: s.$2, height: s.$2 }}
-                      style={{ width: s.$2, height: s.$2 }}
-                    />
+                    <View
+                      style={{
+                        width: s.$2,
+                        height: s.$2,
+                        borderWidth: 1,
+                        borderColor: c.white,
+                        borderRadius: s.$025,
+                      }}
+                    >
+                      <Text
+                        style={{
+                          color: c.white,
+                          margin: 'auto',
+                          fontSize: s.$09,
+                          backgroundColor: 'transparent',
+                        }}
+                      >
+                        +
+                      </Text>
+                    </View>
                     <Heading tag="h2normal" style={{ color: c.white, paddingHorizontal: s.$2 }}>
-                      {r.title}
+                      {`Add ${searchTerm}`}
                     </Heading>
                   </XStack>
                 </Pressable>
-              ))}
-            </YStack>
-          </BottomSheetScrollView>
-        )}
-        {searchTerm === '' && (
-          <ScrollView
-            keyboardShouldPersistTaps="handled"
-            style={{
-              height: '90%',
-              paddingBottom: s.$0,
-            }}
-          >
-            <YStack
-              gap={s.$1}
+                {results.map((r) => (
+                  <Pressable key={r.id} onPress={() => onAddRefToSearch(r)}>
+                    <XStack
+                      gap={s.$025}
+                      style={{
+                        alignItems: 'center',
+                        paddingVertical: s.$075,
+                        paddingHorizontal: s.$5,
+                      }}
+                    >
+                      <SimplePinataImage
+                        originalSource={r.image!}
+                        imageOptions={{ width: s.$2, height: s.$2 }}
+                        style={{ width: s.$2, height: s.$2 }}
+                      />
+                      <Heading tag="h2normal" style={{ color: c.white, paddingHorizontal: s.$2 }}>
+                        {r.title}
+                      </Heading>
+                    </XStack>
+                  </Pressable>
+                ))}
+              </YStack>
+            </BottomSheetScrollView>
+          )}
+          {searchTerm === '' && (
+            <ScrollView
+              keyboardShouldPersistTaps="handled"
               style={{
-                paddingBottom: s.$12,
+                height: '90%',
+                paddingBottom: s.$0,
               }}
             >
-              {refs.map((r) => (
-                <XStack
-                  key={r.id}
-                  gap={s.$025}
-                  style={{
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    paddingHorizontal: s.$1,
-                    height: s.$3,
-                  }}
-                >
-                  <XStack style={{ width: '85%' }}>
-                    <SimplePinataImage
-                      originalSource={r.image!}
-                      imageOptions={{ width: s.$3, height: s.$3 }}
-                      style={{ width: s.$3, height: s.$3, borderRadius: s.$075 }}
-                    />
-                    <Heading
-                      tag="h2normal"
-                      style={{
-                        color: c.white,
-                        paddingHorizontal: s.$2,
-                        marginVertical: 'auto',
-                      }}
-                      numberOfLines={1}
-                    >
-                      {r.title}
-                    </Heading>
-                  </XStack>
-                  <Pressable
-                    onPress={() => {
-                      setRefs((prevState) => [...prevState.filter((ref) => ref.id !== r.id)])
+              <YStack
+                gap={s.$1}
+                style={{
+                  paddingBottom: s.$12,
+                }}
+              >
+                {refs.map((r) => (
+                  <XStack
+                    key={r.id}
+                    gap={s.$025}
+                    style={{
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      paddingHorizontal: s.$1,
+                      height: s.$3,
                     }}
                   >
-                    <Ionicons name="close" size={s.$2} color={c.white} />
-                  </Pressable>
-                </XStack>
-              ))}
-            </YStack>
-          </ScrollView>
-        )}
-      </BottomSheetView>
-    </BottomSheet>
+                    <XStack style={{ width: '85%' }}>
+                      <SimplePinataImage
+                        originalSource={r.image!}
+                        imageOptions={{ width: s.$3, height: s.$3 }}
+                        style={{ width: s.$3, height: s.$3, borderRadius: s.$075 }}
+                      />
+                      <Heading
+                        tag="h2normal"
+                        style={{
+                          color: c.white,
+                          paddingHorizontal: s.$2,
+                          marginVertical: 'auto',
+                        }}
+                        numberOfLines={1}
+                      >
+                        {r.title}
+                      </Heading>
+                    </XStack>
+                    <Pressable
+                      onPress={() => {
+                        setRefs((prevState) => [...prevState.filter((ref) => ref.id !== r.id)])
+                      }}
+                    >
+                      <Ionicons name="close" size={s.$2} color={c.white} />
+                    </Pressable>
+                  </XStack>
+                ))}
+              </YStack>
+            </ScrollView>
+          )}
+        </BottomSheetView>
+      </BottomSheet>
+      {(addingTo === 'grid' || addingTo === 'backlog') && (
+        <Sheet
+          noPadding={true}
+          full={step !== ''}
+          onChange={(e: any) => e === -1 && stopAdding()}
+        >
+          <NewRef
+            initialRefData={{ title: newRefTitle }}
+            initialStep={initialStep}
+            backlog={addingTo === 'backlog'}
+            onStep={setStep}
+            onNewRef={async (itm: Item) => {
+              stopAdding()
+            }}
+            onCancel={() => {
+              stopAdding()
+            }}
+          />
+        </Sheet>
+      )}
+    </>
   )
 }

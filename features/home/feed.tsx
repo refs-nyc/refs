@@ -1,6 +1,6 @@
-import type { ExpandedItem, Item } from '@/features/pocketbase/stores/types'
+import type { ExpandedItem } from '@/features/pocketbase/stores/types'
 import { useState, useEffect } from 'react'
-import { SearchBar, YStack, DismissKeyboard, Button, Sheet, NewRef } from '@/ui'
+import { SearchBar, YStack, DismissKeyboard, Button } from '@/ui'
 import { pocketbase } from '@/features/pocketbase'
 import { useUserStore } from '@/features/pocketbase/stores/users'
 import { View, ScrollView } from 'react-native'
@@ -15,11 +15,6 @@ export const Feed = () => {
   const [results, setResults] = useState<ExpandedItem[]>([])
   const [searchTerm, setSearchTerm] = useState<string>('')
   const { logout } = useUserStore()
-  
-  const [addingTo, setAddingTo] = useState('')
-  const [step, setStep] = useState('')
-
-
 
   useEffect(() => {
     if (searchTerm === '') return
@@ -72,7 +67,6 @@ export const Feed = () => {
               style={{
                 width: '100%',
                 paddingBottom: s.$2,
-                textAlign: 'center',
               }}
             >
               <YStack
@@ -81,7 +75,6 @@ export const Feed = () => {
                   width: '100%',
                   zIndex: 9,
                   paddingTop: s.$2,
-                  textAlign: 'center',
                 }}
               >
                 <SearchBar
@@ -108,27 +101,7 @@ export const Feed = () => {
           </View>
         </ScrollView>
       </DismissKeyboard>
-      <SearchBottomSheet setAddingTo={setAddingTo} />
-
-      {(addingTo === 'grid' || addingTo === 'backlog') && (
-        <Sheet
-          noPadding={true}
-          full={step !== ''}
-          onChange={(e: any) => e === -1 && setAddingTo('')}
-        >
-          <NewRef
-            backlog={addingTo === 'backlog'}
-            onStep={setStep}
-            onNewRef={async (itm: Item) => {
-              console.log('new ref', itm)
-              setAddingTo('')
-            }}
-            onCancel={() => {
-              setAddingTo('')
-            }}
-          />
-        </Sheet>
-      )}
+      <SearchBottomSheet />
     </>
   )
 }

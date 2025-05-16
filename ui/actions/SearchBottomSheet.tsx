@@ -11,14 +11,18 @@ import { Heading } from '../typo/Heading'
 import { XStack, YStack } from '../core/Stacks'
 import { Button } from '../buttons/Button'
 import { CompleteRef } from '@/features/pocketbase/stores/types'
-import { pocketbase } from '@/features/pocketbase'
+import { pocketbase, useUserStore } from '@/features/pocketbase'
 import { SimplePinataImage } from '../images/SimplePinataImage'
 import { Ionicons } from '@expo/vector-icons'
 import { router } from 'expo-router'
 
 const HEADER_HEIGHT = s.$10
 
-export default function BacklogBottomSheet() {
+export default function BacklogBottomSheet({
+  setAddingTo,
+}: {
+  setAddingTo: (str: string) => void
+}) {
   const [index, setIndex] = useState(0)
 
   const isMinimised = index === 0
@@ -28,6 +32,8 @@ export default function BacklogBottomSheet() {
   const [results, setResults] = useState<CompleteRef[]>([])
 
   const [refs, setRefs] = useState<CompleteRef[]>([])
+
+  const { user } = useUserStore()
 
   const minSnapPoint = Math.min(refs.length, 4) * (s.$3 + s.$1) + s.$1 + HEADER_HEIGHT
 
@@ -88,7 +94,6 @@ export default function BacklogBottomSheet() {
           style={{
             paddingTop: s.$2,
             paddingBottom: s.$2,
-            // backgroundColor: '#f005',
             height: HEADER_HEIGHT,
           }}
         >
@@ -113,13 +118,17 @@ export default function BacklogBottomSheet() {
               />
             )}
             <XStack gap={s.$05} style={{ alignItems: 'center' }}>
-              {/* <Pressable>
+              <Pressable
+                onPress={() =>
+                  setAddingTo(user?.items && user.items?.length < 12 ? 'grid' : 'backlog')
+                }
+              >
                 <Ionicons name="add-circle-outline" size={s.$4} color={c.white} />
-              </Pressable> */}
+              </Pressable>
               <Button
                 variant="whiteInverted"
                 title={refs.length ? 'Search' : 'Stumble'}
-                onPress={()=>router.push(`/search?refs=${refs.map((r) => r.id).join(',')}`)}
+                onPress={() => router.push(`/search?refs=${refs.map((r) => r.id).join(',')}`)}
                 style={{
                   paddingHorizontal: 0,
                   paddingVertical: s.$075,
@@ -159,7 +168,6 @@ export default function BacklogBottomSheet() {
           <ScrollView
             keyboardShouldPersistTaps="handled"
             style={{
-              // backgroundColor: 'lavender',
               height: '90%',
               paddingBottom: s.$0,
             }}
@@ -167,9 +175,6 @@ export default function BacklogBottomSheet() {
             <YStack
               gap={s.$1}
               style={{
-                // backgroundColor: 'purple',
-                // height: '90%',
-                // paddingTop: s.$2,
                 paddingBottom: s.$12,
               }}
             >
@@ -181,7 +186,6 @@ export default function BacklogBottomSheet() {
                     alignItems: 'center',
                     justifyContent: 'space-between',
                     paddingHorizontal: s.$1,
-                    // backgroundColor: 'pink',
                     height: s.$3,
                   }}
                 >
@@ -196,7 +200,6 @@ export default function BacklogBottomSheet() {
                       style={{
                         color: c.white,
                         paddingHorizontal: s.$2,
-                        // backgroundColor: 'blue',
                         marginVertical: 'auto',
                       }}
                       numberOfLines={1}

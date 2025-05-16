@@ -1,9 +1,12 @@
-import { Heading, YStack } from '@/ui'
-import { s } from '../style'
+import { Heading, XStack, YStack } from '@/ui'
+import { c, s } from '../style'
 import { useEffect, useState } from 'react'
 import { pocketbase } from '../pocketbase'
 import { ExpandedItem, Profile } from '../pocketbase/stores/types'
 import UserListItem from '@/ui/atoms/UserListItem'
+import { Ionicons } from '@expo/vector-icons'
+import { router } from 'expo-router'
+import { Pressable } from 'react-native'
 
 export default function SearchResultsScreen({ refIds }: { refIds: string[] }) {
   const [results, setResults] = useState<Profile[]>([])
@@ -46,8 +49,19 @@ export default function SearchResultsScreen({ refIds }: { refIds: string[] }) {
   }, [refIds])
 
   return (
-    <YStack gap={s.$1} style={{ flex: 1, padding: s.$1 }}>
-      <Heading tag="h1">Results</Heading>
+    <YStack gap={s.$1} style={{ flex: 1, padding: s.$1, paddingTop: s.$2 }}>
+      <XStack style={{ alignItems: 'center' }}>
+        {/* back button */}
+        <Pressable onPress={() => router.back()}>
+          <Ionicons
+            name="chevron-back"
+            size={s.$2}
+            color={c.grey2}
+            style={{ margin: 0, left: -5, padding: 0 }}
+          />
+        </Pressable>
+        <Heading tag="h1">Results</Heading>
+      </XStack>
       <YStack gap={0} style={{ flex: 1 }}>
         {results.map((result) => (
           <UserListItem key={result.id} user={result} />

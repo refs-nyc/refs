@@ -35,7 +35,7 @@ export default function MemberListScreen() {
         >
           <Pressable
             onPress={() => {
-              router.dismissTo(`/messages/${conversationId}`)
+              router.back()
             }}
           >
             <Ionicons name="chevron-back" size={s.$2} color={c.grey2} />

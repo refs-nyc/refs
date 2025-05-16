@@ -38,7 +38,7 @@ export const useItemStore = create<{
   setSearchingNewRef: (id: string) => set(() => ({ searchingNewRef: id })),
   stopEditing: () =>
     set(() => {
-      return { editing: '', editedState: {}, setSearchingNewRef: '' }
+      return { editing: '', editedState: {}, searchingNewRef: '' }
     }),
   updateEditedState: (editedState: Partial<CompleteRef>) =>
     set(() => ({

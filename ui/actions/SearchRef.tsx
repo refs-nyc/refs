@@ -121,7 +121,7 @@ export const SearchRef = ({
 
   return (
     <>
-      <KeyboardAvoidingView style={{ backgroundColor: 'yellow' }}>
+      <KeyboardAvoidingView>
         <TextInput
           style={{
             backgroundColor: c.surface2,

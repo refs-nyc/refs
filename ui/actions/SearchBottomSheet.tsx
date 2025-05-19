@@ -37,7 +37,10 @@ export default function SearchBottomSheet() {
 
   const { user } = useUserStore()
 
-  const minSnapPoint = Math.min(refs.length, 4) * (s.$3 + s.$1) + s.$1 + HEADER_HEIGHT
+  // search console should expand when new refs are added to the search 
+  // but it shouldn't be taller than ~4 refs in its minimised form
+  const refHeightPlusGap = s.$3 + s.$1
+  const minSnapPoint = refHeightPlusGap * Math.min(refs.length, 4) + s.$1 + HEADER_HEIGHT
 
   const onAddRefToSearch = (r: CompleteRef) => {
     setRefs((prevState) => [...prevState.filter((ref) => ref.id !== r.id), r])

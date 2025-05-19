@@ -1,22 +1,19 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react' // Import useCallback, useMemo
-import { Link, useGlobalSearchParams, usePathname, useRouter } from 'expo-router'
+import { useRouter } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { View, Dimensions, Pressable, Text, ViewStyle, useWindowDimensions } from 'react-native'
+import { View, Dimensions, Pressable, ViewStyle } from 'react-native'
 import Carousel, { ICarouselInstance } from 'react-native-reanimated-carousel'
-import { c, s, t } from '@/features/style'
+import { c, s } from '@/features/style'
 import { gridSort } from './sorts'
-import Ionicons from '@expo/vector-icons/Ionicons'
 import { useItemStore } from '@/features/pocketbase/stores/items'
 import { SearchRef } from '../actions/SearchRef'
 import { EditableList } from '../lists/EditableList'
 import { Sheet, SheetScreen } from '../core/Sheets'
-import { useUserStore, isExpandedProfile } from '@/features/pocketbase/stores/users'
-import { ExpandedItem } from '@/features/pocketbase/stores/types'
+import { ExpandedItem, ExpandedProfile } from '@/features/pocketbase/stores/types'
 import { EditableItem } from './EditableItem' // Assuming EditableItem is memoized
 import { GridLines } from '../display/Gridlines'
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet'
 import { MeatballMenu, Checkbox } from '../atoms/MeatballMenu'
-import { Button } from '../buttons/Button'
 import { useUIStore } from '@/ui/state'
 
 const win = Dimensions.get('window')
@@ -141,30 +138,24 @@ export const renderItem = ({
 }
 
 export const Details = ({
+  profile,
   editingRights = false,
   initialId,
 }: {
+  profile: ExpandedProfile
   editingRights?: boolean
   initialId: string
 }) => {
-  const { profile, getProfile } = useUserStore()
-  const { userName } = useGlobalSearchParams()
-
   const router = useRouter()
-  const pathname = usePathname()
   const ref = useRef<ICarouselInstance>(null)
 
   const { addingToList, setAddingToList, addingItem, setShowContextMenu } = useUIStore()
   const { stopEditing, update, editing: editingId } = useItemStore()
 
-  const userNameParam =
-    pathname === '/' ? undefined : typeof userName === 'string' ? userName : userName?.[0]
-
-  const data = useMemo(() => {
-    return isExpandedProfile(profile) && profile.expand?.items
-      ? [...profile.expand.items].filter((itm) => !itm.backlog).sort(gridSort)
-      : []
-  }, [profile])
+  const data = useMemo(
+    () => [...profile.expand.items].filter((itm) => !itm.backlog).sort(gridSort),
+    [profile]
+  )
 
   const index = useMemo(() => {
     return Math.max(
@@ -195,12 +186,9 @@ export const Details = ({
   const close = useCallback(async () => {
     setAddingToList('')
 
-    if (userNameParam) {
-      await getProfile(userNameParam)
-    }
     await update()
     stopEditing()
-  }, [setAddingToList, getProfile, userNameParam])
+  }, [setAddingToList])
 
   const carouselStyle = useMemo<{
     overflow: ViewStyle['overflow']

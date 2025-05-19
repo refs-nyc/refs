@@ -1,17 +1,17 @@
 {
   "expo": {
     "name": "Refs",
-    "slug": "refs-nyc",
-    "version": "0.0.35",
+    "slug": "refsnyc",
+    "version": "0.0.36",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "refs-nyc",
+    "scheme": "refsnyc",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": false,
     "jsEngine": "jsc",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "refs-nyc.app",
+      "bundleIdentifier": "refsnyc.app",
       "associatedDomains": ["applinks:refs.nyc"],
       "config": {
         "usesNonExemptEncryption": false
@@ -45,12 +45,19 @@
     },
     "extra": {
       "eas": {
-        "projectId": "23b45cf1-7baf-4149-97b4-ff20b360b530"
+        "projectId": "da57a930-b9ea-4cf9-b722-b2ff8bbf7208"
+      },
+      "router": {
+        "origin": false
       }
     },
     "owner": "refs-nyc",
     "android": {
-      "package": "refsnyc.app"
+      "package": "refsnyc.app",
+      "permissions": [
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION"
+      ]
     }
   }
 }

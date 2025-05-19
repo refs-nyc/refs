@@ -7,7 +7,13 @@ import { s, c, base } from '@/features/style'
 import { SimplePinataImage } from '@/ui/images/SimplePinataImage'
 import type { CompleteRef } from '@/features/pocketbase/stores/types'
 
-export const NewListItemButton = ({ onPress }: { onPress: () => void }) => {
+export const NewListItemButton = ({
+  onPress,
+  label = 'Add a ref to the list',
+}: {
+  onPress: () => void
+  label: string
+}) => {
   return (
     <Pressable
       onPress={onPress}
@@ -41,7 +47,7 @@ export const NewListItemButton = ({ onPress }: { onPress: () => void }) => {
               +
             </Text>
           </View>
-          <Text>Add a ref to the list</Text>
+          <Text>{label}</Text>
         </XStack>
       </XStack>
     </Pressable>

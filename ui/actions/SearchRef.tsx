@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react'
 import { pocketbase, useItemStore } from '@/features/pocketbase'
+import type { ExpandedItem } from '@/features/pocketbase/stores/types'
 import { Pressable, FlatList, KeyboardAvoidingView, View } from 'react-native'
 import { BottomSheetTextInput as TextInput } from '@gorhom/bottom-sheet'
-import { SearchResultItem } from '@/ui/atoms/SearchResultItem'
+import { ListItem } from '@/ui/lists/ListItem'
 import { NewRefListItem } from '@/ui/atoms/NewRefListItem'
 import { YStack } from '@/ui/core/Stacks'
 import { s, c } from '@/features/style'
@@ -32,8 +33,6 @@ export const SearchRef = ({
   const [searchResults, setSearchResults] = useState<CompleteRef[]>([])
   const { hasShareIntent, shareIntent, resetShareIntent } = useShareIntentContext()
 
-  console.log('SEARCH')
-
   // Search result item
   const renderItem = ({ item }: { item: CompleteRef }) => {
     return (
@@ -43,7 +42,7 @@ export const SearchRef = ({
           onComplete(item)
         }}
       >
-        <SearchResultItem r={item} />
+        <ListItem r={item} />
       </Pressable>
     )
   }
@@ -79,7 +78,7 @@ export const SearchRef = ({
     }
 
     setSearchQuery(q)
-    const result = await search()
+    let result = await search()
     setSearchResults(result)
   }
 

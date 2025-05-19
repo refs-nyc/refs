@@ -28,7 +28,7 @@ export const RefForm = ({
 }: {
   r: StagedRef
   placeholder?: string
-  onComplete: (i: ExpandedItem) => void
+  onComplete: (i: ExpandedItem, p: boolean) => void
   onCancel: () => void
   pickerOpen?: boolean
   backlog?: boolean
@@ -89,7 +89,7 @@ export const RefForm = ({
     }
   }
 
-  const submit = async (extraFields?: any) => {
+  const submit = async (extraFields?: Partial<ExpandedItem>, promptList = false) => {
     console.log('extraFields')
     console.log(extraFields)
     const data = {
@@ -108,7 +108,7 @@ export const RefForm = ({
         backlog,
         ...extraFields,
       })
-      onComplete(item)
+      onComplete(item, promptList)
       setCreateInProgress(false)
       console.log('success')
     } catch (e) {
@@ -203,14 +203,23 @@ export const RefForm = ({
         {/* Lists can't have a url */}
         {!url && (
           <Button
-            title="Create List"
+            title="Add to list"
             variant="outlineFluid"
             style={{ width: '48%', minWidth: 0 }}
             disabled={!title || uploadInProgress || createInProgress}
             onPress={() => {
-              submit({ list: true })
+              submit({}, true)
             }}
           />
+          // <Button
+          //   title="Create List"
+          //   variant="outlineFluid"
+          //   style={{ width: '48%', minWidth: 0 }}
+          //   disabled={!title || uploadInProgress || createInProgress}
+          //   onPress={() => {
+          //     submit({ list: true })
+          //   }}
+          // />
         )}
         <Button
           title="Add Ref"

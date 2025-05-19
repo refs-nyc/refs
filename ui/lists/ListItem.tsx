@@ -5,7 +5,7 @@ import Ionicons from '@expo/vector-icons/Ionicons'
 import { pocketbase } from '@/features/pocketbase'
 import { s, c, base } from '@/features/style'
 import { SimplePinataImage } from '@/ui/images/SimplePinataImage'
-import type { CompleteRef } from '@/features/pocketbase/stores/types'
+import type { CompleteRef, ExpandedItem } from '@/features/pocketbase/stores/types'
 
 export const ListItem = ({
   r,
@@ -15,7 +15,7 @@ export const ListItem = ({
   largeImage = false,
   onRemove,
 }: {
-  r: CompleteRef
+  r: CompleteRef | ExpandedItem
   backgroundColor?: string
   showMeta?: boolean
   withRemove?: boolean
@@ -54,14 +54,19 @@ export const ListItem = ({
         <XStack gap={s.$09} style={{ justifyContent: 'space-between', alignItems: 'center' }}>
           {r?.image ? (
             <SimplePinataImage
-              originalSource={r.image}
+              originalSource={r.image || r.expand?.ref?.image}
               imageOptions={{ width: largeImage ? s.$4 : s.$2, height: largeImage ? s.$4 : s.$2 }}
               style={largeImage ? base.largeSquare : base.smallSquare}
             />
           ) : (
-            <View style={largeImage ? base.largeSquare : base.smallSquare}></View>
+            <View
+              style={[
+                largeImage ? base.largeSquare : base.smallSquare,
+                { backgroundColor: c.accent },
+              ]}
+            ></View>
           )}
-          <Text>{r?.title}</Text>
+          <Text>{r?.title || r?.expand?.ref?.title}</Text>
         </XStack>
 
         {withRemove ? (

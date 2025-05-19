@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react' // Import useCallback, useMemo
 import { useRouter } from 'expo-router'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { View, Dimensions, Pressable, ViewStyle } from 'react-native'
 import Carousel, { ICarouselInstance } from 'react-native-reanimated-carousel'
 import { c, s } from '@/features/style'
@@ -105,6 +104,7 @@ export const renderItem = ({
         <Sheet
           onClose={() => {
             console.log('close')
+            setSearchingNewRef('')
             // Do not update the ref
           }}
         >
@@ -204,6 +204,8 @@ export const Details = ({
         e === -1 && router.back()
         e === -1 && stopEditing()
       }}
+      snapPoints={['100%']}
+      maxDynamicContentSize={'100%'}
     >
       <ConditionalGridLines />
 

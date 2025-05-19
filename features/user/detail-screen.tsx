@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react'
 import { pocketbase } from '@/features/pocketbase'
-import { Profile as ProfileType } from '@/features/pocketbase/stores/types'
+import { ExpandedProfile } from '@/features/pocketbase/stores/types'
 import { Details } from '@/ui'
-import { useUserStore } from '@/features/pocketbase/stores/users'
 
 export function UserDetailsScreen({
   userName,
@@ -11,28 +10,32 @@ export function UserDetailsScreen({
   userName: string
   initialId: string
 }) {
-  const { profile, getProfile } = useUserStore()
-  const [editingRights, setEditingRights] = useState(false)
-
-  console.log('initialId', initialId)
+  const [profile, setProfile] = useState<ExpandedProfile | null>(null)
 
   useEffect(() => {
     const getProfileAsync = async () => {
-      setEditingRights(pocketbase?.authStore?.record?.userName === userName)
-      try {
-        await getProfile(userName)
-      } catch (error) {
-        console.error(error)
-      }
+      const record = await pocketbase
+        .collection('users')
+        .getFirstListItem<ExpandedProfile>(`userName = "${userName}"`, {
+          expand: 'items,items.ref,items.children',
+        })
+      setProfile(record)
     }
 
     getProfileAsync()
   }, [userName])
 
+  const editingRights = pocketbase?.authStore?.record?.userName === userName
+
   return (
     <>
       {profile && 'id' in profile && (
-        <Details key={initialId} editingRights={editingRights} initialId={initialId}></Details>
+        <Details
+          key={initialId}
+          profile={profile}
+          editingRights={editingRights}
+          initialId={initialId}
+        ></Details>
       )}
     </>
   )

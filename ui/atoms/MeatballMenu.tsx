@@ -26,7 +26,7 @@ export const MeatballMenu = ({
   color = c.grey2,
   onPress,
 }: {
-  color: string
+  color?: string
   onPress: () => void
 }) => {
   return (

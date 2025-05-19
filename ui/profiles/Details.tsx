@@ -33,18 +33,7 @@ const DetailsHeaderButton = React.memo(({ item }: { item: ExpandedItem }) => {
   const editing = useItemStore((state) => state.editing)
   const update = useItemStore((state) => state.update)
   const stopEditing = useItemStore((state) => state.stopEditing)
-  const router = useRouter()
-  const insets = useSafeAreaInsets()
   const { setShowContextMenu } = useUIStore()
-
-  const handlePress = useCallback(async () => {
-    if (editing === '') {
-      router.back()
-    } else {
-      await update()
-      stopEditing()
-    }
-  }, [editing, router, stopEditing])
 
   return (
     <Pressable
@@ -55,17 +44,18 @@ const DetailsHeaderButton = React.memo(({ item }: { item: ExpandedItem }) => {
         alignItems: 'flex-end',
         top: s.$4,
       }}
-      onPress={handlePress}
+      onPress={() => {
+        setShowContextMenu('')
+      }}
     >
       {editing !== '' ? (
         <Checkbox
-          onPress={() => {
-            setShowContextMenu('')
+          onPress={async () => {
+            await update()
             stopEditing()
           }}
         />
       ) : (
-        // <Ionicons size={s.$1} name="checkbox" color={c.muted} />
         <MeatballMenu
           onPress={() => {
             setShowContextMenu(item.id)

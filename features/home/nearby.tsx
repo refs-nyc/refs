@@ -1,4 +1,4 @@
-import { XStack, YStack, Heading } from '@/ui'
+import { XStack, YStack, Heading, Button } from '@/ui'
 import type { ExpandedItem } from '@/features/pocketbase/stores/types'
 import { Link } from 'expo-router'
 import { View, Dimensions } from 'react-native'
@@ -76,20 +76,18 @@ const ListItem = ({ item }: { item: ExpandedItem }) => {
 }
 
 export const Nearby = ({ items }: { items: ExpandedItem[] }) => {
+  const { logout } = useUserStore()
+
   return (
     <View
       style={{
         flex: 1,
         gap: s.$09,
-        // paddingTop: win.height * 0.4,
+        paddingTop: s.$1,
         paddingHorizontal: s.$1half,
         width: win.width,
       }}
     >
-      <Heading tag="p" style={{ marginBottom: s.$1 }}>
-        Nearby
-      </Heading>
-
       <YStack
         gap={s.$075}
         style={{
@@ -100,6 +98,15 @@ export const Nearby = ({ items }: { items: ExpandedItem[] }) => {
         {items.map((item) => (
           <ListItem key={item.id} item={item} />
         ))}
+
+        <View style={{ marginBottom: s.$2, alignItems: 'center' }}>
+          <Button
+            style={{ width: 20 }}
+            variant="inlineSmallMuted"
+            title="Log out"
+            onPress={logout}
+          />
+        </View>
       </YStack>
     </View>
   )

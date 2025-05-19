@@ -1,12 +1,8 @@
-import { DismissKeyboard } from '../atoms/DismissKeyboard'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { Picker } from '../inputs/Picker'
 import { Camera } from '../inputs/Camera'
 import { YStack } from '../core/Stacks'
-import { router } from 'expo-router'
 import { useUserStore, isProfile } from '@/features/pocketbase/stores/users'
 import { Button } from '../buttons/Button'
-import { Dimensions, View } from 'react-native'
+import { Dimensions } from 'react-native'
 import { useState, useEffect } from 'react'
 import { RefForm } from '../actions/RefForm'
 import { SearchRef } from '../actions/SearchRef'
@@ -27,7 +23,7 @@ import { pocketbase } from '@/features/pocketbase/pocketbase'
 
 import * as Clipboard from 'expo-clipboard'
 
-type NewRefStep = '' | 'add' | 'search' | 'editList' | 'addToList' | 'categorise'
+export type NewRefStep = '' | 'add' | 'search' | 'editList' | 'addToList' | 'categorise'
 
 const win = Dimensions.get('window')
 

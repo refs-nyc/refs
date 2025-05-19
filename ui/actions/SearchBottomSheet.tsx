@@ -51,13 +51,12 @@ export default function SearchBottomSheet() {
   const updateSearch = async (q: string) => {
     setSearchTerm(q)
 
-    let refsResults: CompleteRef[] = []
     if (q === '')
     {
       setResults([])
       return
     }
-    refsResults = await pocketbase
+    const refsResults = await pocketbase
       .collection<CompleteRef>('refs')
       .getFullList({ filter: `title ~ "${q}"` })
 

@@ -20,11 +20,11 @@ import { NewRef, NewRefStep } from './NewRef'
 
 const HEADER_HEIGHT = s.$10
 
-export default function BacklogBottomSheet() {
+export default function SearchBottomSheet() {
   const [index, setIndex] = useState(0)
 
   const isMinimised = index === 0
-  const backlogSheetRef = useRef<BottomSheet>(null)
+  const searchSheetRef = useRef<BottomSheet>(null)
   const [addingTo, setAddingTo] = useState('')
   const [step, setStep] = useState('')
   const [newRefTitle, setNewRefTitle] = useState('')
@@ -100,7 +100,7 @@ export default function BacklogBottomSheet() {
     <>
       <BottomSheet
         enableDynamicSizing={false}
-        ref={backlogSheetRef}
+        ref={searchSheetRef}
         enablePanDownToClose={false}
         snapPoints={[minSnapPoint, '50%']}
         index={0}
@@ -116,7 +116,7 @@ export default function BacklogBottomSheet() {
         <BottomSheetView>
           <Pressable
             onPress={() => {
-              if (backlogSheetRef.current && isMinimised) backlogSheetRef.current.snapToIndex(1)
+              if (searchSheetRef.current && isMinimised) searchSheetRef.current.snapToIndex(1)
             }}
             style={{
               paddingTop: s.$2,

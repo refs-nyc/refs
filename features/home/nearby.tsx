@@ -81,15 +81,11 @@ export const Nearby = ({ items }: { items: ExpandedItem[] }) => {
       style={{
         flex: 1,
         gap: s.$09,
-        // paddingTop: win.height * 0.4,
+        paddingTop: s.$1,
         paddingHorizontal: s.$1half,
         width: win.width,
       }}
     >
-      <Heading tag="p" style={{ marginBottom: s.$1 }}>
-        Nearby
-      </Heading>
-
       <YStack
         gap={s.$075}
         style={{

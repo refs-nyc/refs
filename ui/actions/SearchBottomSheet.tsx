@@ -10,7 +10,7 @@ import { Pressable, Text, ScrollView, View } from 'react-native'
 import { Heading } from '../typo/Heading'
 import { XStack, YStack } from '../core/Stacks'
 import { Button } from '../buttons/Button'
-import { CompleteRef, Item } from '@/features/pocketbase/stores/types'
+import { CompleteRef, Item, Profile } from '@/features/pocketbase/stores/types'
 import { pocketbase, useUserStore } from '@/features/pocketbase'
 import { SimplePinataImage } from '../images/SimplePinataImage'
 import { Ionicons } from '@expo/vector-icons'
@@ -70,6 +70,18 @@ export default function BacklogBottomSheet() {
     setInitialStep('')
     setNewRefTitle('')
     setAddingTo('')
+  }
+
+  const stumble = async () => {
+    const randomProfile = await pocketbase.collection('users').getList<Profile>(1, 1, {
+      filter: 'items:length > 5',
+      sort: '@random',
+    })
+    router.push(`/user/${randomProfile.items[0].userName}`)
+  }
+
+  const search = () => {
+    router.push(`/search?refs=${refs.map((r) => r.id).join(',')}`)
   }
 
   const renderBackdrop = useCallback(
@@ -143,7 +155,7 @@ export default function BacklogBottomSheet() {
                 <Button
                   variant="whiteInverted"
                   title={refs.length ? 'Search' : 'Stumble'}
-                  onPress={() => router.push(`/search?refs=${refs.map((r) => r.id).join(',')}`)}
+                  onPress={refs.length ? search : stumble}
                   style={{
                     paddingHorizontal: 0,
                     paddingVertical: s.$075,
@@ -271,11 +283,7 @@ export default function BacklogBottomSheet() {
         </BottomSheetView>
       </BottomSheet>
       {(addingTo === 'grid' || addingTo === 'backlog') && (
-        <Sheet
-          noPadding={true}
-          full={step !== ''}
-          onChange={(e: any) => e === -1 && stopAdding()}
-        >
+        <Sheet noPadding={true} full={step !== ''} onChange={(e: any) => e === -1 && stopAdding()}>
           <NewRef
             initialRefData={{ title: newRefTitle }}
             initialStep={initialStep}

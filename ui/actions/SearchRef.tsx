@@ -1,17 +1,17 @@
 import { useState, useEffect } from 'react'
-import { pocketbase, useItemStore } from '@/features/pocketbase'
-import type { ExpandedItem } from '@/features/pocketbase/stores/types'
-import { Pressable, FlatList, KeyboardAvoidingView, View } from 'react-native'
+import { pocketbase } from '@/features/pocketbase'
+import { Pressable } from 'react-native'
 import { BottomSheetTextInput as TextInput } from '@gorhom/bottom-sheet'
 import { ListItem } from '@/ui/lists/ListItem'
 import { NewRefListItem } from '@/ui/atoms/NewRefListItem'
 import { YStack } from '@/ui/core/Stacks'
 import { s, c } from '@/features/style'
-import { CompleteRef, StagedRef, Item } from '../../features/pocketbase/stores/types'
-import { getLinkPreview, getPreviewFromContent } from 'link-preview-js'
+import { CompleteRef } from '../../features/pocketbase/stores/types'
+import { getLinkPreview } from 'link-preview-js'
 import { ShareIntent as ShareIntentType, useShareIntentContext } from 'expo-share-intent'
 import * as Clipboard from 'expo-clipboard'
 import { RefsRecord } from '@/features/pocketbase/stores/pocketbase-types'
+import { KeyboardAvoidingView } from 'react-native-keyboard-controller'
 
 export const SearchRef = ({
   noNewRef,
@@ -121,42 +121,44 @@ export const SearchRef = ({
 
   return (
     <>
-      <TextInput
-        style={{
-          backgroundColor: c.surface2,
-          marginVertical: s.$1,
-          paddingVertical: s.$1,
-          paddingHorizontal: s.$1,
-          borderRadius: s.$075,
-          color: c.black,
-        }}
-        clearButtonMode="while-editing"
-        value={searchQuery}
-        placeholder="Search anything or start typing"
-        onChangeText={updateQuery}
-        autoFocus={true}
-      />
+      <KeyboardAvoidingView style={{ backgroundColor: 'yellow' }}>
+        <TextInput
+          style={{
+            backgroundColor: c.surface2,
+            marginVertical: s.$1,
+            paddingVertical: s.$1,
+            paddingHorizontal: s.$1,
+            borderRadius: s.$075,
+            color: c.black,
+          }}
+          clearButtonMode="while-editing"
+          value={searchQuery}
+          placeholder="Search anything or start typing"
+          onChangeText={updateQuery}
+          autoFocus={false}
+        />
 
-      {searchQuery !== '' && !noNewRef && !disableNewRef && (
-        <Pressable
-          onPress={() => {
-            // @ts-ignore
-            return onComplete({ title: searchQuery, image: imageState, url: urlState })
+        {searchQuery !== '' && !noNewRef && !disableNewRef && (
+          <Pressable
+            onPress={() => {
+              // @ts-ignore
+              return onComplete({ title: searchQuery, image: imageState, url: urlState })
+            }}
+          >
+            {/* @ts-ignore */}
+            <NewRefListItem title={searchQuery} image={image} />
+          </Pressable>
+        )}
+        <YStack
+          style={{
+            flex: 1,
+            gap: s.$025,
+            minHeight: s.$12,
           }}
         >
-          {/* @ts-ignore */}
-          <NewRefListItem title={searchQuery} image={image} />
-        </Pressable>
-      )}
-      <YStack
-        style={{
-          flex: 1,
-          gap: s.$025,
-          minHeight: s.$12,
-        }}
-      >
-        {searchResults.map((r) => renderItem({ item: r }))}
-      </YStack>
+          {searchResults.map((r) => renderItem({ item: r }))}
+        </YStack>
+      </KeyboardAvoidingView>
     </>
   )
 }

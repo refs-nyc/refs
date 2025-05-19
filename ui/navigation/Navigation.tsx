@@ -20,9 +20,11 @@ export const Navigation = () => {
   const countNewMessages = () => {
     if (!user) return 0
     if (!messagesPerConversation) return 0
+    // messages not loaded yet
+    if (Object.keys(memberships).length === 0) return 0
     let newMessages = 0
     for (const conversationId in conversations) {
-      const lastRead = (memberships[conversationId] || []).find(
+      const lastRead = memberships[conversationId].find(
         (m) => m.expand?.user.id === user?.id
       )?.last_read
       const lastReadDate = new Date(lastRead || '')

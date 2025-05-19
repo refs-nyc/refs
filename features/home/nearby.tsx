@@ -5,6 +5,7 @@ import { View, Dimensions } from 'react-native'
 import { s, c } from '@/features/style'
 import { SimplePinataImage } from '@/ui/images/SimplePinataImage'
 import { Avatar } from '@/ui/atoms/Avatar'
+import { useUserStore } from '@/features/pocketbase/stores/users'
 const win = Dimensions.get('window')
 
 const ListItem = ({ item }: { item: ExpandedItem }) => {

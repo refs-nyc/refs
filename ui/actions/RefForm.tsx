@@ -135,7 +135,13 @@ export const RefForm = ({
           />
         ) : pinataSource ? (
           <TouchableOpacity
-            style={{ flex: 1, width: 200, height: 200, borderRadius: s.$075, overflow: 'hidden' }}
+            style={{
+              flex: 1,
+              width: 200,
+              height: 200,
+              borderRadius: s.$09,
+              overflow: 'hidden',
+            }}
             onLongPress={() => setPicking(true)}
           >
             <Image style={{ flex: 1 }} source={pinataSource} placeholder={pinataSource} />
@@ -147,12 +153,15 @@ export const RefForm = ({
                 flex: 1,
                 justifyContent: 'center',
                 alignItems: 'center',
-                borderWidth: 2,
-                borderColor: c.black,
-                borderRadius: s.$075,
+                borderWidth: 3,
+                borderColor: c.surface,
+                borderRadius: s.$09,
+                borderStyle: 'dashed',
               }}
             >
-              <Heading tag="h1light">+</Heading>
+              <Heading tag="h1light" style={{ color: c.surface }}>
+                +
+              </Heading>
             </View>
           </TouchableOpacity>
         )}

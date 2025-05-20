@@ -14,8 +14,55 @@ import { ListContainer } from '../lists/ListContainer'
 import Animated, { useAnimatedStyle } from 'react-native-reanimated'
 import { BottomSheetTextInput, BottomSheetView } from '@gorhom/bottom-sheet'
 import { KeyboardAvoidingView } from 'react-native-keyboard-controller'
+import { XStack, YStack } from '../core/Stacks'
+import { RefsRecord } from '@/features/pocketbase/stores/pocketbase-types'
 
 const win = Dimensions.get('window')
+
+const LocationMeta = ({ location }: { location: string }) => {
+  return (
+    <XStack style={{ alignItems: 'center' }} gap={s.$05}>
+      <Ionicons name="location-outline" size={s.$1} color={c.muted} />
+      <Heading tag="smallmuted">{location}</Heading>
+    </XStack>
+  )
+}
+
+const AuthorMeta = ({ author }: { author: string }) => {
+  return (
+    <XStack style={{ alignItems: 'center' }} gap={s.$05}>
+      <Ionicons name="person-outline" size={s.$1} color={c.muted} />
+      <Heading tag="smallmuted">{author}</Heading>
+    </XStack>
+  )
+}
+
+const Meta = ({ refRecord }: { refRecord: RefsRecord }) => {
+  if (!refRecord) return
+
+  let refMeta: { location?: string; author?: string } = {}
+  try {
+    refMeta = JSON.parse(refRecord.meta!)
+  } catch (e) {
+    // ignore parsing errors, this must mean the meta is just a string  value
+  }
+
+  let location = refMeta.location
+  let author = refMeta.author
+
+  if (refRecord.type === 'place') {
+    location = refRecord.meta
+  } else if (refRecord.type === 'artwork') {
+    author = refRecord.meta
+  }
+
+  return (
+    <YStack gap={s.$05} style={{ paddingVertical: s.$05 }}>
+      {location && <LocationMeta location={location} />}
+      {author && <AuthorMeta author={author} />}
+    </YStack>
+  )
+}
 
 const EditableItemComponent = ({
   item,
@@ -145,7 +192,7 @@ const EditableItemComponent = ({
                 }}
               >
                 <Heading tag="h2">{item.expand?.ref?.title}</Heading>
-                <Heading tag="smallmuted">{item.expand?.ref?.meta}</Heading>
+                {item.expand?.ref ? <Meta refRecord={item.expand?.ref} /> : null}
               </BottomSheetView>
             </Pressable>
 

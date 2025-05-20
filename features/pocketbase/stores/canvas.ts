@@ -126,10 +126,10 @@ const refActions = {
     }
     this.db.set('ref', finalRef)
   },
-  async addRefMetadata(refId: string, { type, meta }: { type: string; meta: string }) {
+  async addRefMetadata(refId: string, { meta }: { meta: { location?: string; author?: string } }) {
     const ref = await this.db.get('ref', refId)
     if (!ref) return // TODO: ref might be missing id
-    this.db.set('ref', { ...ref, meta: { type, meta } })
+    this.db.set('ref', { ...ref, meta })
   },
   async removeRef(refId: string) {
     this.db.delete('ref', refId)

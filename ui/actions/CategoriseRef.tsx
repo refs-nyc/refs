@@ -36,9 +36,19 @@ export const CategoriseRef = ({
     if (!existingRef.id) return
 
     try {
-      const record = await addMetaData(existingRef.id, { cat: category, meta })
-      console.log('completed categorisation: ', record)
-      if (record) onComplete(record)
+      if (category === 'place') {
+        // meta is a location
+        const record = await addMetaData(existingRef.id, { location: meta })
+        console.log('completed categorisation: ', record)
+        if (record) onComplete(record)
+      } else if (category === 'artwork') {
+        // meta is an author
+        const record = await addMetaData(existingRef.id, { author: meta })
+        console.log('completed categorisation: ', record)
+        if (record) onComplete(record)
+      } else {
+        // meta is other
+      }
     } catch (error) {
       console.error(error)
       throw error
@@ -68,7 +78,7 @@ export const CategoriseRef = ({
               iconColor={c.accent}
               iconSize={s.$2}
               onPress={() => categorise('place')}
-              iconBefore={"Castle" as any}
+              iconBefore={'Castle' as any}
               iconBeforeCustom={true}
               title="Place"
             />
@@ -95,13 +105,12 @@ export const CategoriseRef = ({
         </YStack>
         <YStack gap={s.$08} style={{ justifyContent: 'center', width: '100%' }}>
           <View style={{ width: '100%', paddingHorizontal: s.$2 }}>
-            
             <Button
               variant="basicLeft"
               iconColor={c.accent}
               iconSize={s.$2}
               onPress={() => categorise('artwork')}
-              iconBefore={"Palette" as any}
+              iconBefore={'Palette' as any}
               iconBeforeCustom={true}
               title="Work of art"
             />
@@ -136,7 +145,7 @@ export const CategoriseRef = ({
                 categorise('other')
                 done()
               }}
-              iconBefore={"Infinity" as any}
+              iconBefore={'Infinity' as any}
               iconBeforeCustom={true}
               title="Other"
             />

@@ -73,13 +73,13 @@ export const RefForm = ({
 
     console.log('image success')
     // Prefetch image to ensure it's in cache
-    // Image.prefetch(imageUrl)
-    // .then(() => {
-    setPinataSource(imageUrl)
-    // })
-    // .catch((err) => {
-    // console.error('Failed to prefetch image:', err)
-    // })
+    Image.prefetch(imageUrl)
+      .then(() => {
+        setPinataSource(imageUrl)
+      })
+      .catch((err) => {
+        console.error('Failed to prefetch image:', err)
+      })
   }
 
   const handleDataChange = (d: { title: string; url: string; image?: string | undefined }) => {

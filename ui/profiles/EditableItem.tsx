@@ -1,20 +1,19 @@
-import React, { useState, useEffect, useRef, forwardRef } from 'react'
+import React, { useState } from 'react'
 import { Image } from 'expo-image'
 import { Zoomable } from '@likashefqet/react-native-image-zoom'
 import { ContextMenu } from '../atoms/ContextMenu'
 import { useUIStore } from '@/ui/state'
 import { useItemStore } from '@/features/pocketbase/stores/items'
 import { ExpandedItem } from '@/features/pocketbase/stores/types'
-import { Href, Link } from 'expo-router'
-import { View, Pressable, Text, Dimensions } from 'react-native'
+import { Link } from 'expo-router'
+import { Pressable, Text, Dimensions, Keyboard } from 'react-native'
 import { Heading } from '../typo/Heading'
 import { c, s, t, base } from '@/features/style'
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { ListContainer } from '../lists/ListContainer'
 import Animated, { useAnimatedStyle } from 'react-native-reanimated'
-import { BottomSheetTextInput, BottomSheetScrollView, BottomSheetView } from '@gorhom/bottom-sheet'
-import { Sheet } from '../core/Sheets'
-import { SearchRef } from '../actions/SearchRef'
+import { BottomSheetTextInput, BottomSheetView } from '@gorhom/bottom-sheet'
+import { KeyboardAvoidingView } from 'react-native-keyboard-controller'
 
 const win = Dimensions.get('window')
 
@@ -36,9 +35,13 @@ const EditableItemComponent = ({
   }, [editing, item])
 
   return (
-    <>
+    <KeyboardAvoidingView behavior={'position'}>
       <Pressable
-        style={{ gap: s.$09, paddingVertical: win.height * 0.1, paddingHorizontal: s.$2 }}
+        style={{
+          gap: s.$09,
+          paddingTop: win.height * 0.05,
+          paddingHorizontal: s.$2,
+        }}
         onPress={() => {
           setShowContextMenu('')
         }}
@@ -124,7 +127,7 @@ const EditableItemComponent = ({
             <Pressable
               onPress={() => {
                 if (!editing) return
-
+                Keyboard.dismiss()
                 setSearchingNewRef(editing)
               }}
               style={[
@@ -202,7 +205,7 @@ const EditableItemComponent = ({
           )}
         </Animated.View>
       </Pressable>
-    </>
+    </KeyboardAvoidingView>
   )
 }
 

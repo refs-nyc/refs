@@ -6,7 +6,7 @@ import { useUIStore } from '@/ui/state'
 import { useItemStore } from '@/features/pocketbase/stores/items'
 import { ExpandedItem } from '@/features/pocketbase/stores/types'
 import { Link } from 'expo-router'
-import { Pressable, Text, Dimensions, Keyboard } from 'react-native'
+import { Pressable, Text, Dimensions, Keyboard, View } from 'react-native'
 import { Heading } from '../typo/Heading'
 import { c, s, t, base } from '@/features/style'
 import Ionicons from '@expo/vector-icons/Ionicons'
@@ -14,6 +14,7 @@ import { ListContainer } from '../lists/ListContainer'
 import Animated, { useAnimatedStyle } from 'react-native-reanimated'
 import { BottomSheetTextInput, BottomSheetView } from '@gorhom/bottom-sheet'
 import { KeyboardAvoidingView } from 'react-native-keyboard-controller'
+import { TextInput } from 'react-native-gesture-handler'
 import { XStack, YStack } from '../core/Stacks'
 import { RefsRecord } from '@/features/pocketbase/stores/pocketbase-types'
 
@@ -71,11 +72,12 @@ const EditableItemComponent = ({
 }: {
   item: ExpandedItem
   editingRights?: boolean
-  index: number | undefined
+  index: number | undefined,
 }) => {
   const { showContextMenu, setShowContextMenu } = useUIStore()
-  const { editing, startEditing, updateEditedState, setSearchingNewRef } = useItemStore()
+  const { editing, startEditing, updateEditedState, setSearchingNewRef, editingLink, setEditingLink } = useItemStore()
   const [text, setText] = useState(item?.text)
+  const [url, setUrl] = useState(item?.url)
 
   const animatedStyle = useAnimatedStyle(() => {
     return editing === item.id ? base.editableItem : base.nonEditableItem
@@ -170,33 +172,47 @@ const EditableItemComponent = ({
               gap: s.$09,
             }}
           >
-            {/* Title */}
-            <Pressable
-              onPress={() => {
-                if (!editing) return
-                Keyboard.dismiss()
-                setSearchingNewRef(editing)
-              }}
-              style={[
-                {
-                  gap: s.$05,
-                  flex: 1,
-                  paddingHorizontal: s.$1,
-                },
-                editing === item.id ? base.editableItem : base.nonEditableItem,
-              ]}
-            >
-              <BottomSheetView
-                style={{
-                  paddingVertical: s.$08,
+            {/* Title OR textinput for editing link*/}
+            {editing === item.id && editingLink ? (
+              <TextInput
+                style={[{ flex: 1, paddingHorizontal: s.$1 }, base.editableItem]}
+                value={url}
+                placeholder="abc.xyz"
+                onChangeText={async (e) => {
+                  setUrl(e)
+                  updateEditedState({
+                    url: e,
+                  })
                 }}
+              />
+            ) : (
+              <Pressable
+                onPress={() => {
+                  if (!editing) return
+                  Keyboard.dismiss()
+                  setSearchingNewRef(editing)
+                }}
+                style={[
+                  {
+                    gap: s.$05,
+                    flex: 1,
+                    paddingHorizontal: s.$1,
+                  },
+                  editing === item.id ? base.editableItem : base.nonEditableItem,
+                ]}
               >
-                <Heading tag="h2">{item.expand?.ref?.title}</Heading>
-                {item.expand?.ref ? <Meta refRecord={item.expand?.ref} /> : null}
-              </BottomSheetView>
-            </Pressable>
+                <BottomSheetView
+                  style={{
+                    paddingVertical: s.$08,
+                  }}
+                >
+                  <Heading tag="h2">{item.expand?.ref?.title}</Heading>
+                  {item.expand?.ref ? <Meta refRecord={item.expand?.ref} /> : null}
+                </BottomSheetView>
+              </Pressable>
+            )}
 
-            <Pressable
+            <View
               style={[
                 {
                   width: s.$4,
@@ -206,12 +222,11 @@ const EditableItemComponent = ({
                 },
                 editing ? base.editableItem : base.nonEditableItem,
               ]}
-              onPress={() => {}}
             >
-              {item.expand?.ref.url && (
+              {!editing && item.url && (
                 <Link
                   style={{ transformOrigin: 'center', transform: 'rotate(-45deg)' }}
-                  href={item.expand?.ref.url}
+                  href={item.url}
                 >
                   <Ionicons
                     color={c.muted}
@@ -221,7 +236,17 @@ const EditableItemComponent = ({
                   />
                 </Link>
               )}
-            </Pressable>
+              {editing && (
+                <Pressable onPress={() => setEditingLink(!editingLink)}>
+                  <Ionicons
+                    name={editingLink ? 'checkmark' : 'arrow-forward-outline'}
+                    style={editingLink ? {} : { transform: [{ rotate: '-45deg' }] }}
+                    size={s.$2}
+                    color={c.muted}
+                  />
+                </Pressable>
+              )}
+            </View>
           </BottomSheetView>
         </BottomSheetView>
 
@@ -235,6 +260,7 @@ const EditableItemComponent = ({
           {editing === item.id ? (
             <BottomSheetTextInput
               defaultValue={item.text}
+              placeholder="Add a caption for your profile..."
               style={[{ width: '100%', minHeight: s.$10 }, t.pmuted]}
               multiline={true}
               numberOfLines={4}

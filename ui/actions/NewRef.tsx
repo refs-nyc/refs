@@ -172,7 +172,7 @@ export const NewRef = ({
 
       {step === 'categorise' && (
         <CategoriseRef
-          item={itemData}
+          item={itemData!}
           existingRef={refData}
           onComplete={onNewRef}
           onBack={() => setStep('add')}

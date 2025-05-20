@@ -36,19 +36,14 @@ export const CategoriseRef = ({
     if (!existingRef.id) return
 
     try {
+      const metaField: { location?: string; author?: string } = {}
       if (category === 'place') {
-        // meta is a location
-        const record = await addMetaData(existingRef.id, { location: meta })
-        console.log('completed categorisation: ', record)
-        if (record) onComplete(record)
+        metaField.location = meta
       } else if (category === 'artwork') {
-        // meta is an author
-        const record = await addMetaData(existingRef.id, { author: meta })
-        console.log('completed categorisation: ', record)
-        if (record) onComplete(record)
-      } else {
-        // meta is other
+        metaField.author = meta
       }
+      const record = await addMetaData(existingRef.id, metaField)
+      if (record) onComplete(record)
     } catch (error) {
       console.error(error)
       throw error

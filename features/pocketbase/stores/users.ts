@@ -10,20 +10,10 @@ export const isProfile = (profile: Profile | EmptyProfile | null): profile is Pr
   return profile !== null && Object.keys(profile).length > 0
 }
 
-export const isExpandedProfile = (
-  profile: ExpandedProfile | EmptyProfile
-): profile is ExpandedProfile => {
-  return Object.keys(profile).length > 0
-}
-
 export const useUserStore = create<{
   stagedUser: Partial<Profile>
   user: Profile | null
-  profile: Profile | EmptyProfile
-  profileItems: Item[]
-  backlogItems: Item[]
   register: () => Promise<ExpandedProfile>
-  getProfile: (userName: string) => Promise<ExpandedProfile>
   updateUser: (fields: Partial<Profile>) => Promise<Profile>
   updateStagedUser: (formFields: Partial<Profile>) => void
   attachItem: (itemId: string) => void
@@ -36,9 +26,6 @@ export const useUserStore = create<{
 }>((set, get) => ({
   stagedUser: {},
   user: null, // user is ALWAYS the user of the app, this is only set if the user is logged in
-  profile: {}, // profile can be any page you are currently viewing
-  profileItems: [],
-  backlogItems: [],
   users: [],
   //
   //
@@ -59,31 +46,6 @@ export const useUserStore = create<{
         // If we can't get the user record, clear the auth store
         pocketbase.authStore.clear()
       }
-    }
-  },
-  //
-  //
-  //
-  getProfile: async (userName: string) => {
-    try {
-      const record = await pocketbase
-        .collection('users')
-        .getFirstListItem<ExpandedProfile>(`userName = "${userName}"`, {
-          expand: 'items,items.ref,items.children',
-        })
-
-      set(() => ({
-        profile: record,
-        profileItems:
-          record?.expand?.items?.filter((itm: Item) => !itm.backlog).sort(gridSort) || [],
-        backlogItems:
-          record?.expand?.items?.filter((itm: Item) => itm.backlog).sort(createdSort) || [],
-      }))
-
-      return record
-    } catch (error) {
-      console.error(error)
-      throw error
     }
   },
   //

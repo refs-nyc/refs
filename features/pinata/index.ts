@@ -84,7 +84,8 @@ export const pinataUpload = async (
     const response = await fetch('https://uploads.pinata.cloud/v3/files', options)
     const result = await response.json()
 
-    const { signedUrl } = await pinataSignedUrl(result.data.cid)
+    const unsignedUrl = `https://violet-fashionable-blackbird-836.mypinata.cloud/files/${result.data.cid}`
+    const { signedUrl } = await pinataSignedUrl(unsignedUrl)
 
     return signedUrl
   } catch (error) {

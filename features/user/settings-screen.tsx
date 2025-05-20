@@ -1,31 +1,17 @@
-import { useEffect, useState } from 'react'
-import { pocketbase } from '@/features/pocketbase'
-import { Text, View } from 'react-native'
 import { router } from 'expo-router'
-import { Profile as ProfileType } from '@/features/pocketbase/stores/types'
 import { DeviceLocation } from '@/ui/inputs/DeviceLocation'
 import { FirstVisitScreen } from '@/ui/profiles/FirstVisitScreen'
 import { Button, ScreenWrapper } from '@/ui'
 import { useUserStore } from '@/features/pocketbase/stores/users'
 import { s } from '@/features/style'
 
-export function SettingsScreen({ userName }: { userName: string }) {
-  const { profile, getProfile, logout, updateUser } = useUserStore()
+export function SettingsScreen() {
+  const { logout, updateUser } = useUserStore()
 
   const handleLogout = async () => {
     await logout()
     router.push('/')
   }
-
-  useEffect(() => {
-    const load = async () => {
-      await getProfile(userName)
-
-      if (!pocketbase.authStore.isValid || ("id" in profile && pocketbase.authStore?.record?.id !== profile?.id))
-        router.push('/')
-    }
-    load()
-  }, [userName])
 
   return (
     <ScreenWrapper>

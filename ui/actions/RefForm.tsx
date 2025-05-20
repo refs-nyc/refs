@@ -119,7 +119,6 @@ export const RefForm = ({
     }
   }
 
-  console.log(pinataSource, title, uploadInProgress, createInProgress)
   return (
     <View
       style={{ justifyContent: 'center', alignItems: 'center', gap: s.$2, marginVertical: s.$4 }}

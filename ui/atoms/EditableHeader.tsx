@@ -99,8 +99,7 @@ export const EditableHeader = ({
                 tag="h2"
                 style={{
                   textAlign: 'left',
-                  // backgroundColor: 'blue',
-                  color: titleState == placeholder ? c.muted : c.black,
+                  color: c.surface,
                 }}
               >
                 {titleState || ''}
@@ -114,10 +113,10 @@ export const EditableHeader = ({
               t.h2,
               {
                 flex: 1,
-                // backgroundColor: 'blue',
                 padding: 0,
                 margin: 0,
                 transform: 'translate(0, -1px)',
+                color: c.surface,
               },
             ]}
             autoFocus={true}

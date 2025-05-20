@@ -156,11 +156,10 @@ const styles = StyleSheet.create({
   },
   basic: {
     backgroundColor: c.surface,
-    color: c.black,
+    color: c.surface,
   },
   basicLeft: {
     backgroundColor: c.none,
-    color: c.black,
     paddingHorizontal: 0,
     alignItems: 'flex-start',
   },
@@ -273,7 +272,7 @@ const styles = StyleSheet.create({
   basicLeftText: {
     ...t.h3normal,
     fontWeight: 'normal',
-    color: 'black',
+    color: c.surface,
     textAlign: 'left',
   },
   outlineFluidText: {

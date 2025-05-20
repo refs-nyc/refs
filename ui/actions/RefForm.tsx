@@ -71,6 +71,7 @@ export const RefForm = ({
   const handleImageSuccess = (imageUrl: string) => {
     setUploadInProgress(false)
 
+    console.log('image success')
     // Prefetch image to ensure it's in cache
     Image.prefetch(imageUrl)
       .then(() => {

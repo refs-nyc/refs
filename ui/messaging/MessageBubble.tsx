@@ -9,8 +9,8 @@ import { Pressable } from 'react-native'
 import { Avatar } from '../atoms/Avatar'
 import { XStack } from '../core/Stacks'
 import { Link } from 'expo-router'
-import { SimplePinataImage } from '../images/SimplePinataImage'
 import ContextMenu from 'react-native-context-menu-view'
+import PressableImage from '../atoms/PressableImage'
 
 export default function MessageBubble({
   message,
@@ -56,8 +56,8 @@ export default function MessageBubble({
       )}
       <ContextMenu
         actions={[
-          { title: 'Reply', systemIcon: 'arrowshape.turn.up.left' }, 
-          { title: 'React', systemIcon: 'chevron.forward' }
+          { title: 'Reply', systemIcon: 'arrowshape.turn.up.left' },
+          { title: 'React', systemIcon: 'chevron.forward' },
         ]}
         onPress={(e) => {
           if (e.nativeEvent.name === 'Reply') {
@@ -81,9 +81,7 @@ export default function MessageBubble({
             <Text style={{ color: senderColor, fontWeight: 'bold' }}>{sender.firstName}</Text>
           )}
           {parentMessage && (
-            <Pressable 
-              onPress={onParentMessagePress} 
-            >
+            <Pressable onPress={onParentMessagePress}>
               <View
                 style={{
                   borderLeftWidth: 4,
@@ -99,18 +97,7 @@ export default function MessageBubble({
               </View>
             </Pressable>
           )}
-          {message.image && (
-            <SimplePinataImage
-              originalSource={message.image}
-              imageOptions={{ width: s.$20, height: s.$20 }}
-              style={{
-                width: s.$20,
-                height: s.$20,
-                backgroundColor: c.accent,
-                borderRadius: s.$075,
-              }}
-            />
-          )}
+          {message.image && <PressableImage source={message.image} size={s.$15} />}
           <Text>{message.text}</Text>
           {messageReactions && (
             <XStack>

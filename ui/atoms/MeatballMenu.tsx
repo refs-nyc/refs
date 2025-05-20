@@ -7,13 +7,20 @@ export const Checkbox = ({ color = c.grey2, onPress }: { color?: string; onPress
     <Pressable
       onPress={onPress}
       style={{
-        width: s.$2,
-        height: s.$2,
+        width: s.$5,
+        height: s.$5,
+        borderRadius: s.$10,
         aspectRatio: 1,
-        // gap: 5,
         justifyContent: 'center',
         alignItems: 'center',
         backgroundColor: c.surface,
+        shadowColor: '#000',
+        shadowOffset: {
+          width: 1,
+          height: 5,
+        },
+        shadowOpacity: 0.25,
+        shadowRadius: 2,
       }}
     >
       <CheckboxIcon />
@@ -26,15 +33,15 @@ export const MeatballMenu = ({
   color = c.grey2,
   onPress,
 }: {
-  color: string
+  color?: string
   onPress: () => void
 }) => {
   return (
     <Pressable
       onPress={onPress}
       style={{
-        width: s.$2,
-        height: s.$2,
+        width: s.$5,
+        height: s.$5,
         aspectRatio: 1,
         gap: 5,
         justifyContent: 'center',

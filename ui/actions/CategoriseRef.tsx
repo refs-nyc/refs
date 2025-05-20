@@ -56,19 +56,21 @@ export const CategoriseRef = ({
         <View>
           {/* @ts-ignore */}
           {item?.expand?.ref?.image && <SimplePinataImage originalSource={item.expand.ref.image} />}
-          <Heading tag="h1">{item?.expand?.ref.title}</Heading>
+          <Heading tag="h1" style={{ color: c.surface }}>
+            {item?.expand?.ref.title}
+          </Heading>
         </View>
-        <Heading style={{ width: '100%', marginBottom: s.$2 }} tag="p">
+        <Heading style={{ width: '100%', marginBottom: s.$2, color: c.surface }} tag="p">
           Is it a
         </Heading>
         <YStack gap={s.$08} style={{ justifyContent: 'center', width: '100%' }}>
           <View style={{ width: '100%', paddingHorizontal: s.$2 }}>
             <Button
               variant="basicLeft"
-              iconColor={c.accent}
+              iconColor={c.surface}
               iconSize={s.$2}
               onPress={() => categorise('place')}
-              iconBefore={"Castle" as any}
+              iconBefore={'Castle' as any}
               iconBeforeCustom={true}
               title="Place"
             />
@@ -79,7 +81,7 @@ export const CategoriseRef = ({
                 autoFocus={true}
                 placeholderTextColor={c.muted}
                 style={{
-                  backgroundColor: c.white,
+                  backgroundColor: c.surface,
                   borderRadius: s.$075,
                   width: '100%',
                   paddingVertical: s.$08,
@@ -89,19 +91,18 @@ export const CategoriseRef = ({
                 placeholder="Enter a location (eg Clinton Hill, Brooklyn)"
                 onChangeText={setMeta}
               ></TextInput>
-              <Button variant="fluid" onPress={done} title="Done" />
+              <Button variant="whiteInverted" onPress={done} title="Done" />
             </>
           )}
         </YStack>
         <YStack gap={s.$08} style={{ justifyContent: 'center', width: '100%' }}>
           <View style={{ width: '100%', paddingHorizontal: s.$2 }}>
-            
             <Button
               variant="basicLeft"
-              iconColor={c.accent}
+              iconColor={c.surface}
               iconSize={s.$2}
               onPress={() => categorise('artwork')}
-              iconBefore={"Palette" as any}
+              iconBefore={'Palette' as any}
               iconBeforeCustom={true}
               title="Work of art"
             />
@@ -110,9 +111,9 @@ export const CategoriseRef = ({
             <>
               <TextInput
                 autoFocus={true}
-                placeholderTextColor={c.muted}
+                placeholderTextColor={c.grey2}
                 style={{
-                  backgroundColor: c.white,
+                  backgroundColor: c.surface,
                   borderRadius: s.$075,
                   width: '100%',
                   paddingVertical: s.$08,
@@ -122,7 +123,7 @@ export const CategoriseRef = ({
                 placeholder="Enter an author (eg Arlo Parks, Kubrick)"
                 onChangeText={setMeta}
               ></TextInput>
-              <Button variant="fluid" onPress={done} title="Done" />
+              <Button variant="whiteInverted" onPress={done} title="Done" />
             </>
           )}
         </YStack>
@@ -130,13 +131,13 @@ export const CategoriseRef = ({
           <View style={{ width: '100%', paddingHorizontal: s.$2 }}>
             <Button
               variant="basicLeft"
-              iconColor={c.accent}
+              iconColor={c.surface}
               iconSize={s.$2}
               onPress={() => {
                 categorise('other')
                 done()
               }}
-              iconBefore={"Infinity" as any}
+              iconBefore={'Infinity' as any}
               iconBeforeCustom={true}
               title="Other"
             />

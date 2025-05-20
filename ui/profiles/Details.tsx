@@ -102,6 +102,7 @@ export const renderItem = ({
 
       {searchingNewRef && (
         <Sheet
+          keyboardShouldPersistTaps="always"
           onClose={() => {
             console.log('close')
             setSearchingNewRef('')

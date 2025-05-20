@@ -6,7 +6,7 @@ import { useUIStore } from '@/ui/state'
 import { useItemStore } from '@/features/pocketbase/stores/items'
 import { ExpandedItem } from '@/features/pocketbase/stores/types'
 import { Link } from 'expo-router'
-import { Pressable, Text, Dimensions } from 'react-native'
+import { Pressable, Text, Dimensions, Keyboard } from 'react-native'
 import { Heading } from '../typo/Heading'
 import { c, s, t, base } from '@/features/style'
 import Ionicons from '@expo/vector-icons/Ionicons'
@@ -127,7 +127,7 @@ const EditableItemComponent = ({
             <Pressable
               onPress={() => {
                 if (!editing) return
-
+                Keyboard.dismiss()
                 setSearchingNewRef(editing)
               }}
               style={[

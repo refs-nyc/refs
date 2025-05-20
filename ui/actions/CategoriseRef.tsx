@@ -22,22 +22,21 @@ export const CategoriseRef = ({
   onComplete: (r: CompleteRef) => void
 }) => {
   const { addMetaData } = useRefStore()
-  const [category, setCategory] = useState('')
-  const [meta, setMeta] = useState('')
+
+  const [location, setLocation] = useState('')
+  const [author, setAuthor] = useState('')
 
   console.log('categorise ref with ID: ', existingRef.id)
-
-  const categorise = (cat: string) => {
-    setMeta('')
-    setCategory(cat)
-  }
 
   const done = async () => {
     if (!existingRef.id) return
 
     try {
-      const record = await addMetaData(existingRef.id, { cat: category, meta })
-      console.log('completed categorisation: ', record)
+      const metaField: { location?: string; author?: string } = {}
+      metaField.location = location !== '' ? location : undefined
+      metaField.author = author !== '' ? author : undefined
+
+      const record = await addMetaData(existingRef.id, metaField)
       if (record) onComplete(record)
     } catch (error) {
       console.error(error)
@@ -45,8 +44,6 @@ export const CategoriseRef = ({
     }
   }
 
-  console.log(item)
-  console.log('item.image', item.image)
   return (
     <>
       <ScrollView
@@ -97,7 +94,8 @@ export const CategoriseRef = ({
                 marginBottom: s.$08,
               }}
               placeholder="Is this a place? If not, no worries"
-              onChangeText={setMeta}
+              onChangeText={setLocation}
+              value={location}
             ></TextInput>
           </YStack>
           <YStack gap={s.$08} style={{ width: '100%' }}>
@@ -119,7 +117,8 @@ export const CategoriseRef = ({
                 marginBottom: s.$08,
               }}
               placeholder="Is this a book, movie or work of art?"
-              onChangeText={setMeta}
+              onChangeText={setAuthor}
+              value={author}
             ></TextInput>
           </YStack>
         </YStack>

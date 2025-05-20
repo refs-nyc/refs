@@ -1,22 +1,68 @@
-import React, { useState, useEffect, useRef, forwardRef } from 'react'
+import React, { useState } from 'react'
 import { Image } from 'expo-image'
 import { Zoomable } from '@likashefqet/react-native-image-zoom'
 import { ContextMenu } from '../atoms/ContextMenu'
 import { useUIStore } from '@/ui/state'
 import { useItemStore } from '@/features/pocketbase/stores/items'
 import { ExpandedItem } from '@/features/pocketbase/stores/types'
-import { Href, Link } from 'expo-router'
-import { View, Pressable, Text, Dimensions } from 'react-native'
+import { Link } from 'expo-router'
+import { Pressable, Text, Dimensions, Keyboard } from 'react-native'
 import { Heading } from '../typo/Heading'
 import { c, s, t, base } from '@/features/style'
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { ListContainer } from '../lists/ListContainer'
 import Animated, { useAnimatedStyle } from 'react-native-reanimated'
-import { BottomSheetTextInput, BottomSheetScrollView, BottomSheetView } from '@gorhom/bottom-sheet'
-import { Sheet } from '../core/Sheets'
-import { SearchRef } from '../actions/SearchRef'
+import { BottomSheetTextInput, BottomSheetView } from '@gorhom/bottom-sheet'
+import { KeyboardAvoidingView } from 'react-native-keyboard-controller'
+import { XStack, YStack } from '../core/Stacks'
+import { RefsRecord } from '@/features/pocketbase/stores/pocketbase-types'
 
 const win = Dimensions.get('window')
+
+const LocationMeta = ({ location }: { location: string }) => {
+  return (
+    <XStack style={{ alignItems: 'center' }} gap={s.$05}>
+      <Ionicons name="location-outline" size={s.$1} color={c.muted} />
+      <Heading tag="smallmuted">{location}</Heading>
+    </XStack>
+  )
+}
+
+const AuthorMeta = ({ author }: { author: string }) => {
+  return (
+    <XStack style={{ alignItems: 'center' }} gap={s.$05}>
+      <Ionicons name="person-outline" size={s.$1} color={c.muted} />
+      <Heading tag="smallmuted">{author}</Heading>
+    </XStack>
+  )
+}
+
+const Meta = ({ refRecord }: { refRecord: RefsRecord }) => {
+  if (!refRecord) return
+
+  let refMeta: { location?: string; author?: string } = {}
+  try {
+    refMeta = JSON.parse(refRecord.meta!)
+  } catch (e) {
+    // ignore parsing errors, this must mean the meta is just a string  value
+  }
+
+  let location = refMeta.location
+  let author = refMeta.author
+
+  if (refRecord.type === 'place') {
+    location = refRecord.meta
+  } else if (refRecord.type === 'artwork') {
+    author = refRecord.meta
+  }
+
+  return (
+    <YStack gap={s.$05} style={{ paddingVertical: s.$05 }}>
+      {location && <LocationMeta location={location} />}
+      {author && <AuthorMeta author={author} />}
+    </YStack>
+  )
+}
 
 const EditableItemComponent = ({
   item,
@@ -36,9 +82,13 @@ const EditableItemComponent = ({
   }, [editing, item])
 
   return (
-    <>
+    <KeyboardAvoidingView behavior={'position'}>
       <Pressable
-        style={{ gap: s.$09, paddingVertical: win.height * 0.1, paddingHorizontal: s.$2 }}
+        style={{
+          gap: s.$09,
+          paddingTop: win.height * 0.05,
+          paddingHorizontal: s.$2,
+        }}
         onPress={() => {
           setShowContextMenu('')
         }}
@@ -124,7 +174,7 @@ const EditableItemComponent = ({
             <Pressable
               onPress={() => {
                 if (!editing) return
-
+                Keyboard.dismiss()
                 setSearchingNewRef(editing)
               }}
               style={[
@@ -142,7 +192,7 @@ const EditableItemComponent = ({
                 }}
               >
                 <Heading tag="h2">{item.expand?.ref?.title}</Heading>
-                <Heading tag="smallmuted">{item.expand?.ref?.meta}</Heading>
+                {item.expand?.ref ? <Meta refRecord={item.expand?.ref} /> : null}
               </BottomSheetView>
             </Pressable>
 
@@ -202,7 +252,7 @@ const EditableItemComponent = ({
           )}
         </Animated.View>
       </Pressable>
-    </>
+    </KeyboardAvoidingView>
   )
 }
 

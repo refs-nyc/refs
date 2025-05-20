@@ -14,7 +14,7 @@ export const useRefStore = create<{
   updateOne: (id: string, fields: Partial<StagedRef>) => Promise<RecordModel>
   addMetaData: (
     id: string,
-    { cat, meta }: { cat: string; meta: string }
+    { location, author }: { location?: string; author?: string }
   ) => Promise<RecordModel | void>
 }>((set) => ({
   refs: [],
@@ -30,10 +30,10 @@ export const useRefStore = create<{
   },
   // Reference an existing Ref, and create an ref off it
   reference: () => {},
-  addMetaData: async (id: string, { cat, meta }: { cat: string; meta: string }) => {
+  addMetaData: async (id: string, { location, author }: { location?: string; author?: string }) => {
     try {
-      const updatedRecord = await pocketbase.collection('refs').update(id, { type: cat, meta })
-      await canvasApp.actions.addRefMetadata(id, { type: cat, meta })
+      const updatedRecord = await pocketbase.collection('refs').update(id, { location, author })
+      await canvasApp.actions.addRefMetadata(id, { location: location ?? '', author: author ?? '' })
       return updatedRecord
     } catch (error) {
       console.error(error)

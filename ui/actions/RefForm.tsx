@@ -71,14 +71,15 @@ export const RefForm = ({
   const handleImageSuccess = (imageUrl: string) => {
     setUploadInProgress(false)
 
+    console.log('image success')
     // Prefetch image to ensure it's in cache
-    Image.prefetch(imageUrl)
-      .then(() => {
-        setPinataSource(imageUrl)
-      })
-      .catch((err) => {
-        console.error('Failed to prefetch image:', err)
-      })
+    // Image.prefetch(imageUrl)
+    // .then(() => {
+    setPinataSource(imageUrl)
+    // })
+    // .catch((err) => {
+    // console.error('Failed to prefetch image:', err)
+    // })
   }
 
   const handleDataChange = (d: { title: string; url: string; image?: string | undefined }) => {
@@ -118,6 +119,7 @@ export const RefForm = ({
     }
   }
 
+  console.log(pinataSource, title, uploadInProgress, createInProgress)
   return (
     <View
       style={{ justifyContent: 'center', alignItems: 'center', gap: s.$2, marginVertical: s.$4 }}

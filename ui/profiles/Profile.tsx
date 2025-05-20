@@ -43,7 +43,7 @@ export const Profile = ({ userName }: { userName: string }) => {
 
   const backlogSheetRef = useRef<BottomSheet>(null)
 
-  const { user, getProfile } = useUserStore()
+  const { user } = useUserStore()
   const { remove, moveToBacklog } = useItemStore()
 
   const setAddingTo = (str: string) => {
@@ -102,7 +102,6 @@ export const Profile = ({ userName }: { userName: string }) => {
   useEffect(() => {
     const init = async () => {
       try {
-        await getProfile(userName)
         await refreshGrid(userName)
         seteditingRights(pocketbase?.authStore?.record?.userName === userName)
         setShowMessageButtons(!(pocketbase?.authStore?.record?.userName === userName))

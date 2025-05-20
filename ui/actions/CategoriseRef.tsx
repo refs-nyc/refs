@@ -2,9 +2,9 @@ import type { ExpandedItem, CompleteRef, StagedRef } from '@/features/pocketbase
 import { useState } from 'react'
 import { Heading } from '../typo/Heading'
 import { BottomSheetTextInput as TextInput } from '@gorhom/bottom-sheet'
-import { YStack } from '../core/Stacks'
+import { XStack, YStack } from '../core/Stacks'
 import { Button } from '../buttons/Button'
-import { View, ScrollView, Pressable } from 'react-native'
+import { View, ScrollView, Pressable, Text } from 'react-native'
 import { s, c } from '@/features/style'
 import { useRefStore } from '@/features/pocketbase/stores/refs'
 import { SimplePinataImage } from '@/ui/images/SimplePinataImage'
@@ -16,7 +16,7 @@ export const CategoriseRef = ({
   onBack,
   onComplete,
 }: {
-  item: ExpandedItem | null | undefined
+  item: ExpandedItem
   existingRef: CompleteRef | StagedRef
   onBack: () => void
   onComplete: (r: CompleteRef) => void
@@ -45,104 +45,87 @@ export const CategoriseRef = ({
     }
   }
 
+  console.log(item)
+  console.log('item.image', item.image)
   return (
     <>
       <ScrollView
         contentContainerStyle={{ alignItems: 'center', paddingTop: s.$4, paddingBottom: s.$8 }}
       >
-        <Pressable style={{ alignSelf: 'flex-start' }} onPress={onBack}>
-          <Ionicons name="caret-back" size={18} color={c.muted} />
-        </Pressable>
-        <View>
-          {/* @ts-ignore */}
-          {item?.expand?.ref?.image && <SimplePinataImage originalSource={item.expand.ref.image} />}
+        <YStack gap={s.$08} style={{ width: '100%', alignItems: 'center', paddingBottom: s.$4 }}>
+          <XStack style={{ width: '100%', alignItems: 'center', justifyContent: 'space-between' }}>
+            <Pressable onPress={onBack} style={{ flexGrow: 1, flexBasis: 0 }}>
+              <Ionicons name="chevron-back" size={s.$2} color={c.surface} />
+            </Pressable>
+            <View style={{ margin: 'auto' }}>
+              {item.image && (
+                <SimplePinataImage
+                  originalSource={item.image}
+                  imageOptions={{ width: s.$12 * 2, height: s.$12 * 2 }}
+                  style={{
+                    width: s.$12,
+                    height: s.$12,
+                    borderRadius: s.$09,
+                  }}
+                />
+              )}
+            </View>
+            {/* this is needed so that the image is centered */}
+            <View style={{ flexGrow: 1, flexBasis: 0 }} />
+          </XStack>
           <Heading tag="h1" style={{ color: c.surface }}>
             {item?.expand?.ref.title}
           </Heading>
-        </View>
-        <Heading style={{ width: '100%', marginBottom: s.$2, color: c.surface }} tag="p">
-          Is it a
-        </Heading>
-        <YStack gap={s.$08} style={{ justifyContent: 'center', width: '100%' }}>
-          <View style={{ width: '100%', paddingHorizontal: s.$2 }}>
-            <Button
-              variant="basicLeft"
-              iconColor={c.surface}
-              iconSize={s.$2}
-              onPress={() => categorise('place')}
-              iconBefore={'Castle' as any}
-              iconBeforeCustom={true}
-              title="Place"
-            />
-          </View>
-          {category === 'place' && (
-            <>
-              <TextInput
-                autoFocus={true}
-                placeholderTextColor={c.muted}
-                style={{
-                  backgroundColor: c.surface,
-                  borderRadius: s.$075,
-                  width: '100%',
-                  paddingVertical: s.$08,
-                  paddingHorizontal: s.$1,
-                  marginBottom: s.$08,
-                }}
-                placeholder="Enter a location (eg Clinton Hill, Brooklyn)"
-                onChangeText={setMeta}
-              ></TextInput>
-              <Button variant="whiteInverted" onPress={done} title="Done" />
-            </>
-          )}
         </YStack>
-        <YStack gap={s.$08} style={{ justifyContent: 'center', width: '100%' }}>
-          <View style={{ width: '100%', paddingHorizontal: s.$2 }}>
-            <Button
-              variant="basicLeft"
-              iconColor={c.surface}
-              iconSize={s.$2}
-              onPress={() => categorise('artwork')}
-              iconBefore={'Palette' as any}
-              iconBeforeCustom={true}
-              title="Work of art"
-            />
-          </View>
-          {category === 'artwork' && (
-            <>
-              <TextInput
-                autoFocus={true}
-                placeholderTextColor={c.grey2}
-                style={{
-                  backgroundColor: c.surface,
-                  borderRadius: s.$075,
-                  width: '100%',
-                  paddingVertical: s.$08,
-                  paddingHorizontal: s.$1,
-                  marginBottom: s.$08,
-                }}
-                placeholder="Enter an author (eg Arlo Parks, Kubrick)"
-                onChangeText={setMeta}
-              ></TextInput>
-              <Button variant="whiteInverted" onPress={done} title="Done" />
-            </>
-          )}
-        </YStack>
-        <YStack gap={s.$08} style={{ justifyContent: 'center', width: '100%' }}>
-          <View style={{ width: '100%', paddingHorizontal: s.$2 }}>
-            <Button
-              variant="basicLeft"
-              iconColor={c.surface}
-              iconSize={s.$2}
-              onPress={() => {
-                categorise('other')
-                done()
+        <YStack gap={s.$08} style={{ width: '100%' }}>
+          <YStack gap={s.$08} style={{ width: '100%' }}>
+            <XStack style={{ justifyContent: 'space-between' }}>
+              <Text style={{ color: c.white, fontWeight: 'bold' }}>Location</Text>
+              <Text style={{ color: c.white, fontStyle: 'italic' }}>
+                (e.g. Clinton Hill, Brooklyn)
+              </Text>
+            </XStack>
+            <TextInput
+              autoFocus={true}
+              placeholderTextColor={c.muted}
+              style={{
+                backgroundColor: c.surface,
+                borderRadius: s.$075,
+                width: '100%',
+                paddingVertical: s.$08,
+                paddingHorizontal: s.$1,
+                marginBottom: s.$08,
               }}
-              iconBefore={'Infinity' as any}
-              iconBeforeCustom={true}
-              title="Other"
-            />
-          </View>
+              placeholder="Is this a place? If not, no worries"
+              onChangeText={setMeta}
+            ></TextInput>
+          </YStack>
+          <YStack gap={s.$08} style={{ width: '100%' }}>
+            <XStack style={{ justifyContent: 'space-between' }}>
+              <Text style={{ color: c.white, fontWeight: 'bold' }}>Author</Text>
+              <Text style={{ color: c.white, fontStyle: 'italic' }}>
+                (e.g. Arlo Parks, Kubrick)
+              </Text>
+            </XStack>
+            <TextInput
+              autoFocus={true}
+              placeholderTextColor={c.grey2}
+              style={{
+                backgroundColor: c.surface,
+                borderRadius: s.$075,
+                width: '100%',
+                paddingVertical: s.$08,
+                paddingHorizontal: s.$1,
+                marginBottom: s.$08,
+              }}
+              placeholder="Is this a book, movie or work of art?"
+              onChangeText={setMeta}
+            ></TextInput>
+          </YStack>
         </YStack>
+        <View style={{ paddingTop: s.$6 }}>
+          <Button variant="whiteInverted" onPress={done} title="Finish" />
+        </View>
       </ScrollView>
     </>
   )

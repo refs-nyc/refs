@@ -30,9 +30,11 @@ export const useRefStore = create<{
   },
   // Reference an existing Ref, and create an ref off it
   reference: () => {},
-  addMetaData: async (id: string, meta: { meta: { location?: string; author?: string } }) => {
+  addMetaData: async (id: string, meta: { location?: string; author?: string }) => {
     try {
-      const updatedRecord = await pocketbase.collection('refs').update(id, { meta })
+      const updatedRecord = await pocketbase
+        .collection('refs')
+        .update(id, { meta: JSON.stringify(meta) })
       await canvasApp.actions.addRefMetadata(id, { meta })
       return updatedRecord
     } catch (error) {

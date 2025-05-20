@@ -126,7 +126,7 @@ const refActions = {
     }
     this.db.set('ref', finalRef)
   },
-  async addRefMetadata(refId: string, meta: { meta: { location?: string; author?: string } }) {
+  async addRefMetadata(refId: string, { meta }: { meta: { location?: string; author?: string } }) {
     const ref = await this.db.get('ref', refId)
     if (!ref) return // TODO: ref might be missing id
     this.db.set('ref', { ...ref, meta })

@@ -36,8 +36,13 @@ export const CategoriseRef = ({
     if (!existingRef.id) return
 
     try {
-      const record = await addMetaData(existingRef.id, { cat: category, meta })
-      console.log('completed categorisation: ', record)
+      const metaField: { location?: string; author?: string } = {}
+      if (category === 'place') {
+        metaField.location = meta
+      } else if (category === 'artwork') {
+        metaField.author = meta
+      }
+      const record = await addMetaData(existingRef.id, metaField)
       if (record) onComplete(record)
     } catch (error) {
       console.error(error)
@@ -68,7 +73,7 @@ export const CategoriseRef = ({
               iconColor={c.accent}
               iconSize={s.$2}
               onPress={() => categorise('place')}
-              iconBefore={"Castle" as any}
+              iconBefore={'Castle' as any}
               iconBeforeCustom={true}
               title="Place"
             />
@@ -95,13 +100,12 @@ export const CategoriseRef = ({
         </YStack>
         <YStack gap={s.$08} style={{ justifyContent: 'center', width: '100%' }}>
           <View style={{ width: '100%', paddingHorizontal: s.$2 }}>
-            
             <Button
               variant="basicLeft"
               iconColor={c.accent}
               iconSize={s.$2}
               onPress={() => categorise('artwork')}
-              iconBefore={"Palette" as any}
+              iconBefore={'Palette' as any}
               iconBeforeCustom={true}
               title="Work of art"
             />
@@ -136,7 +140,7 @@ export const CategoriseRef = ({
                 categorise('other')
                 done()
               }}
-              iconBefore={"Infinity" as any}
+              iconBefore={'Infinity' as any}
               iconBeforeCustom={true}
               title="Other"
             />

@@ -204,7 +204,7 @@ export const RefForm = ({
         {!url && (
           <Button
             title="Add to list"
-            variant="outlineFluid"
+            variant="whiteOutline"
             style={{ width: '48%', minWidth: 0 }}
             disabled={!title || uploadInProgress || createInProgress}
             onPress={() => {
@@ -223,7 +223,7 @@ export const RefForm = ({
         )}
         <Button
           title="Add Ref"
-          variant="fluid"
+          variant="whiteInverted"
           style={{ width: url ? '100%' : '48%', minWidth: 0 }}
           disabled={!(pinataSource && title) || uploadInProgress || createInProgress}
           onPress={() => submit()}

@@ -113,7 +113,7 @@ export const NewRef = ({
         <YStack gap={s.$08} style={{ paddingTop: s.$1, paddingBottom: s.$6 }}>
           <Button
             variant="basicLeft"
-            iconColor={c.black}
+            iconColor={c.surface}
             title="Type anything"
             iconSize={28}
             iconBefore="text-outline"
@@ -129,7 +129,7 @@ export const NewRef = ({
               title="Add from clipboard"
               iconBefore="clipboard-outline"
               iconSize={28}
-              iconColor={c.black}
+              iconColor={c.surface}
               onPress={() => {
                 setStep('search')
                 setUrlOpen(true)
@@ -141,7 +141,7 @@ export const NewRef = ({
             align="flex-start"
             title="Add from Camera Roll"
             iconBefore="image-outline"
-            iconColor={c.black}
+            iconColor={c.surface}
             iconSize={28}
             onPress={() => {
               setStep('add')

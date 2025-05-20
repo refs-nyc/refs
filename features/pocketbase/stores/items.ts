@@ -15,6 +15,8 @@ export const useItemStore = create<{
   addingToList: boolean
   searchingNewRef: string
   editedState: Partial<ExpandedItem>
+  editingLink: boolean
+  setEditingLink: (newValue: boolean) => void
   startEditing: (id: string) => void
   setAddingToList: (newValue: boolean) => void
   setSearchingNewRef: (id: string) => void
@@ -33,12 +35,14 @@ export const useItemStore = create<{
   editing: '',
   searchingNewRef: '', // the id to replace the ref for
   editedState: {},
+  editingLink: false,
+  setEditingLink: (newValue: boolean) => set(() => ({ editingLink: newValue })),
   startEditing: (id: string) => set(() => ({ editing: id })),
   setAddingToList: (newValue: boolean) => set(() => ({ addingToList: newValue })),
   setSearchingNewRef: (id: string) => set(() => ({ searchingNewRef: id })),
   stopEditing: () =>
     set(() => {
-      return { editing: '', editedState: {}, searchingNewRef: '' }
+      return { editing: '', editedState: {}, searchingNewRef: '', editingLink: false }
     }),
   updateEditedState: (editedState: Partial<CompleteRef>) =>
     set(() => ({

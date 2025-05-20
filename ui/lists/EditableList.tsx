@@ -42,8 +42,6 @@ export const EditableList = ({
     }
   }
 
-  useEffect(() => {}, [itemState])
-
   return (
     <BottomSheetView
       style={{

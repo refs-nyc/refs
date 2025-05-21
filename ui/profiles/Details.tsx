@@ -8,7 +8,7 @@ import { SearchRef } from '../actions/SearchRef'
 import { EditableList } from '../lists/EditableList'
 import { Sheet, SheetScreen } from '../core/Sheets'
 import { ExpandedItem } from '@/features/pocketbase/stores/types'
-import { EditableItem } from './EditableItem' // Assuming EditableItem is memoized
+import { EditableItem } from './EditableItem'
 import { GridLines } from '../display/Gridlines'
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet'
 import { MeatballMenu, Checkbox } from '../atoms/MeatballMenu'

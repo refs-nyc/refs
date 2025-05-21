@@ -67,7 +67,7 @@ const Meta = ({ refRecord }: { refRecord: RefsRecord }) => {
   )
 }
 
-const EditableItemComponent = ({
+export const EditableItem = ({
   item,
   editingRights,
   index,
@@ -292,5 +292,3 @@ const EditableItemComponent = ({
     </KeyboardAvoidingView>
   )
 }
-
-export const EditableItem = React.memo(EditableItemComponent)

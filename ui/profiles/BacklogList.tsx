@@ -118,22 +118,21 @@ export default function BacklogList({ items }: { items: ExpandedItem[] }) {
                       gap={s.$1}
                       style={{
                         paddingVertical: s.$05,
-                        paddingHorizontal: s.$1,
                         alignItems: 'center',
                       }}
                     >
                       <SimplePinataImage
                         originalSource={i.image}
-                        imageOptions={{ width: s.$2, height: s.$2 }}
+                        imageOptions={{ width: s.$4, height: s.$4 }}
                         style={{
-                          width: s.$2,
-                          height: s.$2,
+                          width: s.$4,
+                          height: s.$4,
                           borderRadius: s.$075,
                           backgroundColor: c.olive2,
                         }}
                       />
                       <Text
-                        style={{ color: c.white, fontSize: s.$1, width: '80%' }}
+                        style={{ color: c.white, fontSize: s.$1, flex: 1 }}
                         numberOfLines={2}
                       >
                         {i.expand?.ref?.title?.trim()}

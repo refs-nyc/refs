@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { Image, type ImageProps } from 'expo-image'
 import { constructPinataUrl, type OptimizeImageOptions } from '@/features/pinata'
 import { useImageStore } from '@/features/pocketbase/stores/images'
-import { View } from 'react-native'
+import { useWindowDimensions, View } from 'react-native'
 
 function useSignedImageUrl(originalSource: string, imageOptions: OptimizeImageOptions) {
   const [loading, setLoading] = useState(true)
@@ -40,7 +40,12 @@ export const SimplePinataImage = ({
   placeholderContentFit?: ImageProps['contentFit']
   imageOptions: OptimizeImageOptions
 } & Omit<ImageProps, 'source'>) => {
-  const { source, loading } = useSignedImageUrl(originalSource, imageOptions)
+  const scale =  useWindowDimensions().scale
+  const imageOptionsWithScale = {
+    height: imageOptions.height * scale,
+    width: imageOptions.width * scale,
+  }
+  const { source, loading } = useSignedImageUrl(originalSource, imageOptionsWithScale)
   // Always render an image - either the placeholder during loading or the final source
   return loading ? (
     <View />

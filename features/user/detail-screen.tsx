@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { pocketbase } from '@/features/pocketbase'
 import { ExpandedProfile } from '@/features/pocketbase/stores/types'
 import { Details } from '@/ui'
+import { ProfileDetailsProvider } from '@/ui/profiles/profileDetailsStore'
 
 export function UserDetailsScreen({
   userName,
@@ -30,12 +31,14 @@ export function UserDetailsScreen({
   return (
     <>
       {profile && 'id' in profile && (
-        <Details
-          key={initialId}
-          profile={profile}
-          editingRights={editingRights}
-          initialId={initialId}
-        ></Details>
+        <ProfileDetailsProvider>
+          <Details
+            key={initialId}
+            profile={profile}
+            editingRights={editingRights}
+            initialId={initialId}
+          />
+        </ProfileDetailsProvider>
       )}
     </>
   )

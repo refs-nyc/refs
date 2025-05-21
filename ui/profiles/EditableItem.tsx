@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useContext, useState } from 'react'
 import { Image } from 'expo-image'
 import { Zoomable } from '@likashefqet/react-native-image-zoom'
 import { ContextMenu } from '../atoms/ContextMenu'
@@ -17,6 +17,8 @@ import { KeyboardAvoidingView } from 'react-native-keyboard-controller'
 import { TextInput } from 'react-native-gesture-handler'
 import { XStack, YStack } from '../core/Stacks'
 import { RefsRecord } from '@/features/pocketbase/stores/pocketbase-types'
+import { ProfileDetailsContext } from './profileDetailsStore'
+import { useStore } from 'zustand'
 
 const win = Dimensions.get('window')
 
@@ -72,10 +74,19 @@ const EditableItemComponent = ({
 }: {
   item: ExpandedItem
   editingRights?: boolean
-  index: number | undefined,
+  index: number | undefined
 }) => {
-  const { showContextMenu, setShowContextMenu } = useUIStore()
-  const { editing, startEditing, updateEditedState, setSearchingNewRef, editingLink, setEditingLink } = useItemStore()
+  const profileDetailsStore = useContext(ProfileDetailsContext)
+  const { showContextMenu, setShowContextMenu, currentIndex } = useStore(profileDetailsStore)
+
+  const {
+    editing,
+    startEditing,
+    updateEditedState,
+    setSearchingNewRef,
+    editingLink,
+    setEditingLink,
+  } = useItemStore()
   const [text, setText] = useState(item?.text)
   const [url, setUrl] = useState(item?.url)
 
@@ -92,10 +103,10 @@ const EditableItemComponent = ({
           paddingHorizontal: s.$2,
         }}
         onPress={() => {
-          setShowContextMenu('')
+          setShowContextMenu(false)
         }}
         onLongPress={() => {
-          setShowContextMenu(item.id)
+          setShowContextMenu(true)
         }}
       >
         {/* Image */}
@@ -106,11 +117,11 @@ const EditableItemComponent = ({
           }}
         >
           {/* Menu */}
-          {showContextMenu === item.id && (
+          {showContextMenu && currentIndex == index && (
             <ContextMenu
               onEditPress={() => {
                 startEditing(item.id)
-                setShowContextMenu('')
+                setShowContextMenu(false)
               }}
               editingRights={editingRights}
             />

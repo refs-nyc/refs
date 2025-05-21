@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react' // Import useCallback, useMemo
+import React, { useEffect, useRef, useCallback, useMemo, useContext } from 'react'
 import { useRouter } from 'expo-router'
 import { View, Dimensions, Pressable, ViewStyle } from 'react-native'
 import Carousel, { ICarouselInstance } from 'react-native-reanimated-carousel'
@@ -14,6 +14,8 @@ import { GridLines } from '../display/Gridlines'
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet'
 import { MeatballMenu, Checkbox } from '../atoms/MeatballMenu'
 import { useUIStore } from '@/ui/state'
+import { ProfileDetailsContext } from './profileDetailsStore'
+import { useStore } from 'zustand'
 
 const win = Dimensions.get('window')
 
@@ -32,7 +34,8 @@ const DetailsHeaderButton = React.memo(({ item }: { item: ExpandedItem }) => {
   const editing = useItemStore((state) => state.editing)
   const update = useItemStore((state) => state.update)
   const stopEditing = useItemStore((state) => state.stopEditing)
-  const { setShowContextMenu } = useUIStore()
+  const profileDetailsStore = useContext(ProfileDetailsContext)
+  const setShowContextMenu = useStore(profileDetailsStore, (state) => state.setShowContextMenu)
 
   return (
     <Pressable
@@ -44,7 +47,7 @@ const DetailsHeaderButton = React.memo(({ item }: { item: ExpandedItem }) => {
         top: s.$4,
       }}
       onPress={() => {
-        setShowContextMenu('')
+        setShowContextMenu(false)
       }}
     >
       {editing !== '' ? (
@@ -57,7 +60,7 @@ const DetailsHeaderButton = React.memo(({ item }: { item: ExpandedItem }) => {
       ) : (
         <MeatballMenu
           onPress={() => {
-            setShowContextMenu(item.id)
+            setShowContextMenu(true)
           }}
         />
       )}
@@ -78,7 +81,6 @@ export const renderItem = ({
   index?: number
 }) => {
   const { searchingNewRef, updateEditedState, setSearchingNewRef, update, items } = useItemStore()
-  const [currentItem, setCurrentItem] = useState(item)
 
   return (
     <View
@@ -88,7 +90,7 @@ export const renderItem = ({
         gap: s.$1,
         justifyContent: 'flex-start',
       }}
-      key={currentItem.id}
+      key={item.id}
     >
       <BottomSheetScrollView
         showsVerticalScrollIndicator={false}
@@ -96,8 +98,8 @@ export const renderItem = ({
         keyboardShouldPersistTaps="handled"
         nestedScrollEnabled={true}
       >
-        <DetailsHeaderButton item={currentItem} />
-        <EditableItem item={currentItem} editingRights={editingRights} index={index} />
+        <DetailsHeaderButton item={item} />
+        <EditableItem item={item} editingRights={editingRights} index={index} />
       </BottomSheetScrollView>
 
       {searchingNewRef && (
@@ -140,7 +142,11 @@ export const Details = ({
   const router = useRouter()
   const ref = useRef<ICarouselInstance>(null)
 
-  const { addingToList, setAddingToList, addingItem, setShowContextMenu } = useUIStore()
+  const profileDetailsStore = useContext(ProfileDetailsContext)
+  const setShowContextMenu = useStore(profileDetailsStore, (state) => state.setShowContextMenu)
+  const setCurrentIndex = useStore(profileDetailsStore, (state) => state.setCurrentIndex)
+
+  const { addingToList, setAddingToList, addingItem } = useUIStore()
   const { stopEditing, update, editing: editingId } = useItemStore()
 
   const data = useMemo(
@@ -220,8 +226,9 @@ export const Details = ({
         style={carouselStyle}
         defaultIndex={index}
         onSnapToItem={(index) => {
+          setCurrentIndex(index)
           stopEditing()
-          setShowContextMenu('')
+          setShowContextMenu(false)
         }}
         onConfigurePanGesture={handleConfigurePanGesture}
         renderItem={carouselRenderItem}

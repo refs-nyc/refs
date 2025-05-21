@@ -83,7 +83,6 @@ export const CategoriseRef = ({
               </Text>
             </XStack>
             <TextInput
-              autoFocus={true}
               placeholderTextColor={c.muted}
               style={{
                 backgroundColor: c.surface,
@@ -106,7 +105,6 @@ export const CategoriseRef = ({
               </Text>
             </XStack>
             <TextInput
-              autoFocus={true}
               placeholderTextColor={c.grey2}
               style={{
                 backgroundColor: c.surface,

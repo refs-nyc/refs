@@ -145,7 +145,7 @@ function RootLayoutNav() {
             presentation: 'transparentModal',
             headerShown: false,
             contentStyle: { backgroundColor: 'transparent' },
-            animation: 'fade'
+            animation: 'fade',
           }}
         />
         <Stack.Screen
@@ -190,7 +190,10 @@ function RootLayoutNav() {
           name="user/[userName]/modal"
           options={{
             title: 'Details',
-            animation: 'none',
+            presentation: 'transparentModal',
+            headerShown: false,
+            contentStyle: { backgroundColor: 'transparent' },
+            animation: 'fade',
           }}
         />
       </Stack>

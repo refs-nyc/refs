@@ -147,6 +147,9 @@ export const EditableHeader = ({
             }}
             value={urlState}
             autoFocus={true}
+            autoCorrect={false}
+            autoCapitalize="none"
+            autoComplete="off"
             placeholder="Paste url"
             onChangeText={setUrlState}
             clearButtonMode="while-editing"

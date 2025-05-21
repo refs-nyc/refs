@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useCallback, useMemo, useContext } from 'react'
+import React, { useRef, useCallback, useMemo, useContext } from 'react'
 import { useRouter } from 'expo-router'
 import { View, Dimensions, Pressable, ViewStyle } from 'react-native'
 import Carousel, { ICarouselInstance } from 'react-native-reanimated-carousel'
@@ -7,7 +7,7 @@ import { useItemStore } from '@/features/pocketbase/stores/items'
 import { SearchRef } from '../actions/SearchRef'
 import { EditableList } from '../lists/EditableList'
 import { Sheet, SheetScreen } from '../core/Sheets'
-import { ExpandedItem, ExpandedProfile } from '@/features/pocketbase/stores/types'
+import { ExpandedItem } from '@/features/pocketbase/stores/types'
 import { EditableItem } from './EditableItem' // Assuming EditableItem is memoized
 import { GridLines } from '../display/Gridlines'
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet'
@@ -145,7 +145,7 @@ export const Details = ({
   const currentIndex = useStore(profileDetailsStore, (state) => state.currentIndex)
 
   const { addingToList, setAddingToList, addingItem } = useUIStore()
-  const { stopEditing, update, editing: editingId } = useItemStore()
+  const { stopEditing, update } = useItemStore()
 
   const handleConfigurePanGesture = useCallback((gesture: any) => {
     'worklet'

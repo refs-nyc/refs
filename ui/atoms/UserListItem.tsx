@@ -1,6 +1,7 @@
 import { Profile } from '@/features/pocketbase/stores/types'
 import { s, c } from '@/features/style'
-import { View, Text, Pressable } from 'react-native'
+import { View, Text } from 'react-native'
+import { Pressable } from 'react-native-gesture-handler'
 import { XStack, YStack } from '../core/Stacks'
 import { Avatar } from './Avatar'
 
@@ -44,7 +45,6 @@ export default function UserListItem({
           {text && (
             <Text
               style={{
-                // backgroundColor: 'blue',
                 flex: 1,
                 color: whiteText ? c.surface : c.muted,
                 alignSelf: 'flex-end',

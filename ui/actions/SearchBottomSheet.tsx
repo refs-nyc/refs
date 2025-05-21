@@ -18,7 +18,7 @@ import { router } from 'expo-router'
 import { Sheet } from '../core/Sheets'
 import { NewRef, NewRefStep } from './NewRef'
 
-const HEADER_HEIGHT = s.$10
+const HEADER_HEIGHT = s.$8
 
 export default function SearchBottomSheet() {
   const [index, setIndex] = useState(0)
@@ -121,8 +121,8 @@ export default function SearchBottomSheet() {
               if (searchSheetRef.current && isMinimised) searchSheetRef.current.snapToIndex(1)
             }}
             style={{
-              paddingTop: s.$2,
-              paddingBottom: s.$2,
+              paddingTop: s.$1,
+              paddingBottom: s.$1,
               height: HEADER_HEIGHT,
             }}
           >

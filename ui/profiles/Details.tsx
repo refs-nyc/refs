@@ -213,6 +213,7 @@ export const Details = ({
       <Carousel
         loop={data.length > 1}
         ref={ref}
+        mode="parallax"
         data={data as ExpandedItem[]}
         width={win.width}
         height={win.height}

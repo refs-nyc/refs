@@ -17,7 +17,7 @@ export const Avatar = ({ source, size = s.$3 }: { source: string | undefined; si
         <SimplePinataImage
           style={{ width: '100%', height: '100%', borderRadius: size / 2, backgroundColor: '#ddd' }}
           originalSource={source}
-          imageOptions={{ width: size * 2, height: size * 2 }}
+          imageOptions={{ width: size, height: size }}
         />
       </View>
     </>

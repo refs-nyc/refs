@@ -5,14 +5,14 @@ import { SimplePinataImage } from '../images/SimplePinataImage'
 export default function PressableImage({ source, size }: { source: string; size: number }) {
   const [visible, setVisible] = useState(false)
 
-  const { width, height, scale } = useWindowDimensions()
+  const { width, height } = useWindowDimensions()
 
   return (
     <>
       <Pressable onPress={() => setVisible(true)}>
         <SimplePinataImage
           originalSource={source}
-          imageOptions={{ width: size * scale, height: size * scale }}
+          imageOptions={{ width: size, height: size }}
           style={{ width: size, height: size, backgroundColor: 'transparent' }}
         />
       </Pressable>
@@ -23,8 +23,8 @@ export default function PressableImage({ source, size }: { source: string; size:
             originalSource={source}
             style={{ width: width, height: width }}
             imageOptions={{
-              width: width * scale,
-              height: height * scale,
+              width: width,
+              height: height,
             }}
           />
         </Pressable>

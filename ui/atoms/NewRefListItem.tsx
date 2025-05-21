@@ -15,14 +15,14 @@ export const NewRefListItem = ({ title, image = '' }: { title: string; image: st
       <XStack gap={s.$09} style={{ justifyContent: 'space-between', alignItems: 'center' }}>
         <XStack gap={s.$09} style={{ justifyContent: 'space-between', alignItems: 'center' }}>
           {image === '' ? (
-            <View style={[base.smallSquare, { backgroundColor: c.accent }]}></View>
+            <View style={[base.smallSquare, { backgroundColor: c.olive2 }]}></View>
           ) : (
-            <Image source={image} style={[base.smallSquare, { backgroundColor: c.accent }]}></Image>
+            <Image source={image} style={[base.smallSquare, { backgroundColor: c.olive2 }]}></Image>
           )}
-          <Text>{title}</Text>
+          <Text style={{ color: c.white }}>{title}</Text>
         </XStack>
         <XStack gap={s.$09} style={{ justifyContent: 'space-between', alignItems: 'center' }}>
-          <Text>New Ref</Text>
+          <Text style={{ color: c.white }}>New Ref</Text>
         </XStack>
       </XStack>
     </View>

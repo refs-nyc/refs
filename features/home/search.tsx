@@ -40,7 +40,9 @@ export default function SearchResultsScreen({ refIds }: { refIds: string[] }) {
 
         const results = Array.from(userItems.values())
           .filter(({ refs }) => refIds.every((id) => refs.has(id)))
-          .map((value) => { return { ...value.user, sharedRefCount: 0 } })
+          .map((value) => {
+            return { ...value.user, sharedRefCount: 0 }
+          })
 
         const currentUserRefs = await pocketbase.collection('items').getFullList<ExpandedItem>({
           filter: `creator = "${currentUser?.id}"`,
@@ -85,7 +87,13 @@ export default function SearchResultsScreen({ refIds }: { refIds: string[] }) {
       </XStack>
       <YStack gap={0} style={{ flex: 1 }}>
         {results.map((result) => (
-          <UserListItem key={result.id} user={result} text={result.sharedRefCount + ' refs shared'} />
+          <UserListItem
+            key={result.id}
+            user={result}
+            small={false}
+            onPress={() => router.push(`/user/${result.userName}`)}
+            text={result.sharedRefCount + ' refs shared'}
+          />
         ))}
       </YStack>
     </YStack>

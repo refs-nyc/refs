@@ -26,7 +26,6 @@ export const useItemStore = create<{
   removeFromList: (id: string, ref: CompleteRef) => Promise<Item>
   update: (id?: string) => Promise<RecordModel>
   updateEditedState: (e: Partial<ExpandedItem>) => void
-  reference: () => void
   remove: (id: string) => void
   moveToBacklog: (id: string) => Promise<ItemsRecord>
 }>((set, get) => ({
@@ -70,8 +69,6 @@ export const useItemStore = create<{
       throw error
     }
   },
-  // Reference an existing Ref, and create an item off it
-  reference: () => {},
   remove: async (id: string) => {
     await pocketbase.collection('items').delete(id)
     await canvasApp.actions.removeItem(id)

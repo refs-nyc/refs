@@ -1,4 +1,4 @@
-import React, { useRef, useCallback, useMemo, useContext } from 'react'
+import React, { useRef, useCallback, useMemo, useContext, useState } from 'react'
 import { useRouter } from 'expo-router'
 import { View, Dimensions, Pressable, ViewStyle } from 'react-native'
 import Carousel, { ICarouselInstance } from 'react-native-reanimated-carousel'
@@ -80,9 +80,11 @@ export const renderItem = ({
   editingRights?: boolean
   index?: number
 }) => {
-  const { searchingNewRef, updateEditedState, setSearchingNewRef, update, items } = useItemStore()
+  const { searchingNewRef, updateEditedState, setSearchingNewRef, update } = useItemStore()
   const profileDetailsStore = useContext(ProfileDetailsContext)
   const { currentIndex } = useStore(profileDetailsStore)
+
+  const [currentItem, setCurrentItem] = useState<ExpandedItem>(item)
 
   return (
     <View
@@ -92,7 +94,7 @@ export const renderItem = ({
         gap: s.$1,
         justifyContent: 'flex-start',
       }}
-      key={item.id}
+      key={currentItem.id}
     >
       <BottomSheetScrollView
         showsVerticalScrollIndicator={false}
@@ -100,7 +102,7 @@ export const renderItem = ({
         keyboardShouldPersistTaps="handled"
         nestedScrollEnabled={true}
       >
-        <EditableItem item={item} editingRights={editingRights} index={index} />
+        <EditableItem item={currentItem} editingRights={editingRights} index={index} />
       </BottomSheetScrollView>
 
       {searchingNewRef && currentIndex == index && (
@@ -121,7 +123,7 @@ export const renderItem = ({
                 ref: e.id,
               })
               const newRecord = await update()
-              setCurrentItem(newRecord)
+              setCurrentItem(newRecord as ExpandedItem)
               setSearchingNewRef('')
             }}
           />

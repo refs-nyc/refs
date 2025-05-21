@@ -81,6 +81,8 @@ export const renderItem = ({
   index?: number
 }) => {
   const { searchingNewRef, updateEditedState, setSearchingNewRef, update, items } = useItemStore()
+  const profileDetailsStore = useContext(ProfileDetailsContext)
+  const { currentIndex } = useStore(profileDetailsStore)
 
   return (
     <View
@@ -101,7 +103,7 @@ export const renderItem = ({
         <EditableItem item={item} editingRights={editingRights} index={index} />
       </BottomSheetScrollView>
 
-      {searchingNewRef && (
+      {searchingNewRef && currentIndex == index && (
         <Sheet
           keyboardShouldPersistTaps="always"
           onClose={() => {

@@ -9,12 +9,12 @@ import { useEffect, useState } from 'react'
 import { Pressable, Text, TextInput, View, useWindowDimensions } from 'react-native'
 import Animated, { useSharedValue, useAnimatedStyle, withTiming } from 'react-native-reanimated'
 import { Conversation } from '../pocketbase/stores/types'
-import UserListItem from '@/ui/atoms/UserListItem'
+import SwipeableUser from '@/ui/atoms/SwipeableUser'
 
 type Step = 'select' | 'add'
 
 export default function SavesList() {
-  const { saves, createMemberships } = useMessageStore()
+  const { saves, createMemberships, removeSave } = useMessageStore()
   const { width } = useWindowDimensions()
 
   const [selected, setSelected] = useState<Record<string, boolean>>({})
@@ -95,12 +95,12 @@ export default function SavesList() {
           <BottomSheetScrollView style={{ height: '75%' }}>
             <YStack gap={2} style={{ paddingBottom: s.$10 }}>
               {saves.map((save) => (
-                <UserListItem
-                  user={save.expand?.user}
+                <SwipeableUser
+                  key={save.expand.user.id}
+                  onActionPress={()=>removeSave(save.id)}
+                  user={save.expand.user}
                   onPress={() => toggleSelect(save.user)}
-                  style={{ backgroundColor: selected[save.user] ? c.olive2 : c.olive }}
-                  small={true}
-                  whiteText={true}
+                  backgroundColor={selected[save.user] ? c.olive2 : c.olive}
                 />
               ))}
             </YStack>

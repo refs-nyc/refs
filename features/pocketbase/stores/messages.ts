@@ -56,6 +56,7 @@ type MessageStore = {
   saves: ExpandedSave[]
   setSaves: (saves: ExpandedSave[]) => void
   addSave: (userId: string, savedBy: string) => Promise<void>
+  removeSave: (id: string) => Promise<void>
 }
 
 export const useMessageStore = create<MessageStore>((set) => ({
@@ -321,6 +322,18 @@ export const useMessageStore = create<MessageStore>((set) => ({
           saves: state.saves.some((m) => m.id === save.id)
             ? [...state.saves]
             : [...state.saves, save],
+        }
+      })
+    } catch (error) {
+      console.error(error)
+    }
+  },
+  removeSave: async (id: string) => {
+    try {
+      await pocketbase.collection('saves').delete(id)
+      set((state)=> {
+        return {
+          saves: state.saves.filter((m) => m.id !== id),
         }
       })
     } catch (error) {

@@ -99,8 +99,7 @@ export const EditableHeader = ({
                 tag="h2"
                 style={{
                   textAlign: 'left',
-                  // backgroundColor: 'blue',
-                  color: titleState == placeholder ? c.muted : c.black,
+                  color: c.surface,
                 }}
               >
                 {titleState || ''}
@@ -114,10 +113,10 @@ export const EditableHeader = ({
               t.h2,
               {
                 flex: 1,
-                // backgroundColor: 'blue',
                 padding: 0,
                 margin: 0,
                 transform: 'translate(0, -1px)',
+                color: c.surface,
               },
             ]}
             autoFocus={true}
@@ -148,6 +147,9 @@ export const EditableHeader = ({
             }}
             value={urlState}
             autoFocus={true}
+            autoCorrect={false}
+            autoCapitalize="none"
+            autoComplete="off"
             placeholder="Paste url"
             onChangeText={setUrlState}
             clearButtonMode="while-editing"
@@ -168,7 +170,7 @@ export const EditableHeader = ({
                 onTitleChange(titleState)
               }}
             >
-              <Ionicons size={28} name="checkbox-outline" color={c.muted} />
+              <Ionicons size={28} name="checkbox-outline" color={c.surface2} />
             </Pressable>
           ) : (
             !addingUrl && (
@@ -183,7 +185,7 @@ export const EditableHeader = ({
                 <Ionicons
                   size={24}
                   name={titleState === 'placeholder' || titleState === '' ? 'add' : 'pencil'}
-                  color={c.muted}
+                  color={c.white}
                 />
               </Pressable>
             )
@@ -200,7 +202,7 @@ export const EditableHeader = ({
               <Ionicons
                 name="link-outline"
                 size={28}
-                color={urlState === '' ? c.muted : c.accent}
+                color={urlState === '' ? c.olive2 : c.white}
               />
             </Pressable>
           )}
@@ -211,7 +213,7 @@ export const EditableHeader = ({
                 <></>
               ) : (
                 <Pressable onPress={() => setAddingUrl(false)}>
-                  <Ionicons name="checkbox-outline" size={28} color={c.muted} />
+                  <Ionicons name="checkbox-outline" size={28} color={c.surface2} />
                 </Pressable>
               )}
             </>

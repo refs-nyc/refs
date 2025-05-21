@@ -237,6 +237,10 @@ export const Profile = ({ userName }: { userName: string }) => {
           noPadding={true}
           full={step !== ''}
           onChange={(e: any) => e === -1 && setAddingTo('')}
+          backgroundStyle={{
+            backgroundColor: c.olive,
+          }}
+          handleIndicatorStyle={{ width: s.$10, backgroundColor: c.white, opacity: 0.5 }}
         >
           <NewRef
             backlog={addingTo === 'backlog'}

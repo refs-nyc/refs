@@ -1,4 +1,4 @@
-import { Link, usePathname, useGlobalSearchParams, router } from 'expo-router'
+import { Link, useGlobalSearchParams, router } from 'expo-router'
 import { Text, View, Pressable } from 'react-native'
 import { Avatar } from '../atoms/Avatar'
 import { c, s } from '@/features/style'
@@ -12,7 +12,6 @@ import MessageIcon from '@/assets/icons/message.svg'
 export const Navigation = () => {
   const { user } = useUserStore()
 
-  const pathName = usePathname()
   const { addingTo, removingId } = useGlobalSearchParams()
 
   const { saves, messagesPerConversation, conversations, memberships } = useMessageStore()
@@ -46,7 +45,7 @@ export const Navigation = () => {
     [messagesPerConversation, memberships, user]
   )
 
-  if (!user || /\/user\/.*\/modal/.test(pathName)) return null
+  if (!user) return null
 
   return (
     <View

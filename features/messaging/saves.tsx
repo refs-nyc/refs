@@ -1,7 +1,6 @@
 import { useMessageStore } from '@/features/pocketbase/stores/messages'
 import { c, s } from '@/features/style'
 import { Button, Heading, XStack, YStack } from '@/ui'
-import { Avatar } from '@/ui/atoms/Avatar'
 import { DMButton } from '@/ui/profiles/DMButton'
 import { Ionicons } from '@expo/vector-icons'
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet'
@@ -10,11 +9,12 @@ import { useEffect, useState } from 'react'
 import { Pressable, Text, TextInput, View, useWindowDimensions } from 'react-native'
 import Animated, { useSharedValue, useAnimatedStyle, withTiming } from 'react-native-reanimated'
 import { Conversation } from '../pocketbase/stores/types'
+import SwipeableUser from '@/ui/atoms/SwipeableUser'
 
 type Step = 'select' | 'add'
 
 export default function SavesList() {
-  const { saves, createMemberships } = useMessageStore()
+  const { saves, createMemberships, removeSave } = useMessageStore()
   const { width } = useWindowDimensions()
 
   const [selected, setSelected] = useState<Record<string, boolean>>({})
@@ -95,29 +95,13 @@ export default function SavesList() {
           <BottomSheetScrollView style={{ height: '75%' }}>
             <YStack gap={2} style={{ paddingBottom: s.$10 }}>
               {saves.map((save) => (
-                <Pressable
-                  onPress={() => {
-                    toggleSelect(save.user)
-                  }}
-                  key={save.id}
-                  style={{
-                    padding: s.$075,
-                    backgroundColor: selected[save.user] ? c.olive2 : c.olive,
-                    borderRadius: s.$1,
-                  }}
-                >
-                  <XStack gap={s.$1} style={{ alignItems: 'center' }}>
-                    <Avatar source={save.expand?.user.image} size={s.$4} />
-                    <YStack gap={0}>
-                      <Text style={{ color: c.white, fontSize: s.$1 }}>
-                        {save.expand?.user.firstName} {save.expand?.user.lastName}
-                      </Text>
-                      <Text style={{ color: c.white, fontSize: s.$08 }}>
-                        {save.expand?.user.location}{' '}
-                      </Text>
-                    </YStack>
-                  </XStack>
-                </Pressable>
+                <SwipeableUser
+                  key={save.expand.user.id}
+                  onActionPress={()=>removeSave(save.id)}
+                  user={save.expand.user}
+                  onPress={() => toggleSelect(save.user)}
+                  backgroundColor={selected[save.user] ? c.olive2 : c.olive}
+                />
               ))}
             </YStack>
           </BottomSheetScrollView>
@@ -154,7 +138,7 @@ export default function SavesList() {
                 setStep('select')
               }}
             >
-              <XStack style={{ justifyContent: 'start', alignItems: 'center' }}>
+              <XStack style={{ justifyContent: 'flex-start', alignItems: 'center' }}>
                 <Ionicons name="chevron-back" size={18} color={c.white} />
                 <Heading tag="h2" style={{ color: c.white }}>
                   Back to selection
@@ -178,7 +162,7 @@ export default function SavesList() {
             }}
           />
           <BottomSheetScrollView style={{ height: '75%' }}>
-            <YStack gap={2} style={{ paddingBottom: s.$10, color: c.white }}>
+            <YStack gap={2} style={{ paddingBottom: s.$10 }}>
               <Link
                 replace
                 href={`/messages/new-gc?members=${selectedUsers.map((u) => u!.id).join(',')}`}

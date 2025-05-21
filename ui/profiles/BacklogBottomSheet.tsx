@@ -25,6 +25,7 @@ export default function BacklogBottomSheet({
 
   const ownProfile = profile.id === user?.id
   const isMinimised = ownProfile && index === 0
+  const HANDLE_HEIGHT = s.$2
 
   const renderBackdrop = useCallback(
     (p: any) => (
@@ -45,7 +46,7 @@ export default function BacklogBottomSheet({
           alignItems: 'center',
           justifyContent: 'center',
           display: isMinimised ? 'none' : 'flex',
-          height: s.$3,
+          height: HANDLE_HEIGHT,
         }}
       >
         <Animated.View
@@ -73,7 +74,12 @@ export default function BacklogBottomSheet({
         onPress={() => {
           if (backlogSheetRef.current && isMinimised) backlogSheetRef.current.snapToIndex(1)
         }}
-        style={{ paddingTop: isMinimised ? s.$3 : 0, paddingBottom: isMinimised ? s.$6 : s.$1 }}
+        style={{
+          // handle is hidden while minimised, so this is needed to make sure 
+          // the "My backlog" heading doesn't shift around when opening/closing the sheet
+          paddingTop: isMinimised ? HANDLE_HEIGHT : 0, 
+          paddingBottom: isMinimised ? s.$6 : s.$1,
+        }}
       >
         {ownProfile ? (
           <XStack

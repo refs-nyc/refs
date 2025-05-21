@@ -1,29 +1,61 @@
 import { Profile } from '@/features/pocketbase/stores/types'
 import { s, c } from '@/features/style'
-import { Link } from 'expo-router'
-import { View, Text } from 'react-native'
+import { View, Text, Pressable } from 'react-native'
 import { XStack, YStack } from '../core/Stacks'
 import { Avatar } from './Avatar'
 
-export default function UserListItem({ user, text }: { user: Profile; text?: string }) {
+export default function UserListItem({
+  user,
+  small,
+  onPress,
+  text,
+  whiteText,
+  style,
+}: {
+  user: Profile
+  small: boolean
+  onPress?: () => void
+  text?: string
+  whiteText?: boolean
+  style?: any
+}) {
   return (
-    <View
-      style={{ padding: s.$05, borderRadius: s.$075, width: '100%' }}
+    <Pressable
+      onPress={onPress}
+      style={{
+        padding: small ? s.$05 : s.$075,
+        paddingHorizontal: s.$075,
+        borderRadius: s.$1,
+        width: '100%',
+        ...style,
+      }}
     >
-      <Link href={`/user/${user.userName}`}>
-        <XStack  style={{ justifyContent: 'space-between', width: '100%' }}>
-          <XStack gap={s.$1}>
-            <Avatar source={user.image} size={s.$5} />
+      <View>
+        <XStack style={{ justifyContent: 'space-between', width: '100%' }}>
+          <XStack gap={s.$1} style={{ flex: 1 }}>
+            <Avatar source={user.image} size={small ? s.$4 : s.$5} />
             <YStack>
-              <Text>
+              <Text style={{ fontSize: small ? 18 : 20, color: whiteText ? c.white : c.black }}>
                 {user.firstName} {user.lastName}
               </Text>
-              <Text style={{ color: c.muted}}>{user.location}</Text>
+              <Text style={{ color: whiteText ? c.surface : c.muted }}>{user.location}</Text>
             </YStack>
           </XStack>
-          {text && <Text style={{ color: c.muted, alignSelf: 'flex-end'  }}>{text}</Text>}
+          {text && (
+            <Text
+              style={{
+                // backgroundColor: 'blue',
+                flex: 1,
+                color: whiteText ? c.surface : c.muted,
+                alignSelf: 'flex-end',
+                textAlign: 'right',
+              }}
+            >
+              {text}
+            </Text>
+          )}
         </XStack>
-      </Link>
-    </View>
+      </View>
+    </Pressable>
   )
 }

@@ -193,6 +193,9 @@ export const Details = ({
         loop={data.length > 1}
         ref={ref}
         mode="parallax"
+        modeConfig={{
+          parallaxScrollingScale: 0.9,
+        }}
         data={data as ExpandedItem[]}
         width={win.width}
         height={win.height}

@@ -58,7 +58,7 @@ export const CategoriseRef = ({
               {item.image && (
                 <SimplePinataImage
                   originalSource={item.image}
-                  imageOptions={{ width: s.$12 * 2, height: s.$12 * 2 }}
+                  imageOptions={{ width: s.$12, height: s.$12 }}
                   style={{
                     width: s.$12,
                     height: s.$12,

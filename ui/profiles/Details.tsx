@@ -3,7 +3,6 @@ import { useRouter } from 'expo-router'
 import { View, Dimensions, Pressable, ViewStyle } from 'react-native'
 import Carousel, { ICarouselInstance } from 'react-native-reanimated-carousel'
 import { c, s } from '@/features/style'
-import { gridSort } from './sorts'
 import { useItemStore } from '@/features/pocketbase/stores/items'
 import { SearchRef } from '../actions/SearchRef'
 import { EditableList } from '../lists/EditableList'
@@ -16,6 +15,7 @@ import { MeatballMenu, Checkbox } from '../atoms/MeatballMenu'
 import { useUIStore } from '@/ui/state'
 import { ProfileDetailsContext } from './profileDetailsStore'
 import { useStore } from 'zustand'
+import { ItemsRecord } from '@/features/pocketbase/stores/pocketbase-types'
 
 const win = Dimensions.get('window')
 
@@ -30,7 +30,7 @@ const ConditionalGridLines = React.memo(() => {
 })
 ConditionalGridLines.displayName = 'ConditionalGridLines'
 
-const DetailsHeaderButton = React.memo(({ item }: { item: ExpandedItem }) => {
+const DetailsHeaderButton = React.memo(() => {
   const editing = useItemStore((state) => state.editing)
   const update = useItemStore((state) => state.update)
   const stopEditing = useItemStore((state) => state.stopEditing)
@@ -98,7 +98,6 @@ export const renderItem = ({
         keyboardShouldPersistTaps="handled"
         nestedScrollEnabled={true}
       >
-        <DetailsHeaderButton item={item} />
         <EditableItem item={item} editingRights={editingRights} index={index} />
       </BottomSheetScrollView>
 
@@ -131,13 +130,11 @@ export const renderItem = ({
 }
 
 export const Details = ({
-  profile,
+  data,
   editingRights = false,
-  initialId,
 }: {
-  profile: ExpandedProfile
+  data: ItemsRecord[]
   editingRights?: boolean
-  initialId: string
 }) => {
   const router = useRouter()
   const ref = useRef<ICarouselInstance>(null)
@@ -145,35 +142,10 @@ export const Details = ({
   const profileDetailsStore = useContext(ProfileDetailsContext)
   const setShowContextMenu = useStore(profileDetailsStore, (state) => state.setShowContextMenu)
   const setCurrentIndex = useStore(profileDetailsStore, (state) => state.setCurrentIndex)
+  const currentIndex = useStore(profileDetailsStore, (state) => state.currentIndex)
 
   const { addingToList, setAddingToList, addingItem } = useUIStore()
   const { stopEditing, update, editing: editingId } = useItemStore()
-
-  const data = useMemo(
-    () => [...profile.expand.items].filter((itm) => !itm.backlog).sort(gridSort),
-    [profile]
-  )
-
-  const index = useMemo(() => {
-    return Math.max(
-      0,
-      data.findIndex((itm) => itm.id === initialId)
-    )
-  }, [data, initialId])
-
-  useEffect(() => {
-    if (ref.current && data.length > 0) {
-      if (index >= 0 && index < data.length) {
-        // Check if component is mounted and index is valid before scrolling
-        try {
-          ref.current?.scrollTo({ index: index, animated: false })
-        } catch (error) {
-          console.error('Error scrolling carousel:', error)
-        }
-      }
-    }
-    // Add ref.current to dependencies? Usually not needed unless the ref itself changes identity.
-  }, [data, index])
 
   const handleConfigurePanGesture = useCallback((gesture: any) => {
     'worklet'
@@ -215,6 +187,7 @@ export const Details = ({
       maxDynamicContentSize={'100%'}
     >
       <ConditionalGridLines />
+      <DetailsHeaderButton />
 
       <Carousel
         loop={data.length > 1}
@@ -224,7 +197,7 @@ export const Details = ({
         width={win.width}
         height={win.height}
         style={carouselStyle}
-        defaultIndex={index}
+        defaultIndex={currentIndex}
         onSnapToItem={(index) => {
           setCurrentIndex(index)
           stopEditing()

@@ -3,6 +3,7 @@ import { pocketbase } from '@/features/pocketbase'
 import { ExpandedProfile } from '@/features/pocketbase/stores/types'
 import { Details } from '@/ui'
 import { ProfileDetailsProvider } from '@/ui/profiles/profileDetailsStore'
+import { gridSort } from '@/ui/profiles/sorts'
 
 export function UserDetailsScreen({
   userName,
@@ -28,18 +29,20 @@ export function UserDetailsScreen({
 
   const editingRights = pocketbase?.authStore?.record?.userName === userName
 
-  return (
-    <>
-      {profile && 'id' in profile && (
-        <ProfileDetailsProvider>
-          <Details
-            key={initialId}
-            profile={profile}
-            editingRights={editingRights}
-            initialId={initialId}
-          />
-        </ProfileDetailsProvider>
-      )}
-    </>
-  )
+  if (profile && 'id' in profile) {
+    const data = [...profile.expand.items].filter((itm) => !itm.backlog).sort(gridSort)
+
+    const initialIndex = Math.max(
+      0,
+      data.findIndex((itm) => itm.id === initialId)
+    )
+
+    return (
+      <ProfileDetailsProvider initialIndex={initialIndex}>
+        <Details data={data} editingRights={editingRights} />
+      </ProfileDetailsProvider>
+    )
+  } else {
+    return null
+  }
 }

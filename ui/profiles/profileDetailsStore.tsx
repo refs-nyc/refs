@@ -16,9 +16,15 @@ export const ProfileDetailsContext = createContext<StoreApi<ProfileDetailsState>
   undefined as unknown as StoreApi<ProfileDetailsState>
 )
 
-export const ProfileDetailsProvider = ({ children }: { children: ReactNode }) => {
+export const ProfileDetailsProvider = ({
+  children,
+  initialIndex,
+}: {
+  children: ReactNode
+  initialIndex: number
+}) => {
   const profileDetailsStore = createStore<ProfileDetailsState>((set) => ({
-    currentIndex: 0,
+    currentIndex: initialIndex,
     setCurrentIndex: (newCurrentIndex) => {
       console.log('setting new current index:', newCurrentIndex)
       set({ currentIndex: newCurrentIndex })

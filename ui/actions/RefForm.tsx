@@ -136,7 +136,13 @@ export const RefForm = ({
           />
         ) : pinataSource ? (
           <TouchableOpacity
-            style={{ flex: 1, width: 200, height: 200, borderRadius: s.$075, overflow: 'hidden' }}
+            style={{
+              flex: 1,
+              width: 200,
+              height: 200,
+              borderRadius: s.$09,
+              overflow: 'hidden',
+            }}
             onLongPress={() => setPicking(true)}
           >
             <Image style={{ flex: 1 }} source={pinataSource} placeholder={pinataSource} />
@@ -148,12 +154,15 @@ export const RefForm = ({
                 flex: 1,
                 justifyContent: 'center',
                 alignItems: 'center',
-                borderWidth: 2,
-                borderColor: c.black,
-                borderRadius: s.$075,
+                borderWidth: 3,
+                borderColor: c.surface,
+                borderRadius: s.$09,
+                borderStyle: 'dashed',
               }}
             >
-              <Heading tag="h1light">+</Heading>
+              <Heading tag="h1light" style={{ color: c.surface }}>
+                +
+              </Heading>
             </View>
           </TouchableOpacity>
         )}
@@ -205,7 +214,7 @@ export const RefForm = ({
         {!url && (
           <Button
             title="Add to list"
-            variant="outlineFluid"
+            variant="whiteOutline"
             style={{ width: '48%', minWidth: 0 }}
             disabled={!title || uploadInProgress || createInProgress}
             onPress={() => {
@@ -224,7 +233,7 @@ export const RefForm = ({
         )}
         <Button
           title="Add Ref"
-          variant="fluid"
+          variant="whiteInverted"
           style={{ width: url ? '100%' : '48%', minWidth: 0 }}
           disabled={!(pinataSource && title) || uploadInProgress || createInProgress}
           onPress={() => submit()}

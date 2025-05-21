@@ -37,7 +37,7 @@ export default function SearchBottomSheet() {
 
   const { user } = useUserStore()
 
-  // search console should expand when new refs are added to the search 
+  // search console should expand when new refs are added to the search
   // but it shouldn't be taller than ~4 refs in its minimised form
   const refHeightPlusGap = s.$3 + s.$1
   const minSnapPoint = refHeightPlusGap * Math.min(refs.length, 4) + s.$1 + HEADER_HEIGHT
@@ -51,8 +51,7 @@ export default function SearchBottomSheet() {
   const updateSearch = async (q: string) => {
     setSearchTerm(q)
 
-    if (q === '')
-    {
+    if (q === '') {
       setResults([])
       return
     }
@@ -286,7 +285,15 @@ export default function SearchBottomSheet() {
         </BottomSheetView>
       </BottomSheet>
       {(addingTo === 'grid' || addingTo === 'backlog') && (
-        <Sheet noPadding={true} full={step !== ''} onChange={(e: any) => e === -1 && stopAdding()}>
+        <Sheet
+          noPadding={true}
+          full={step !== ''}
+          onChange={(e: any) => e === -1 && stopAdding()}
+          backgroundStyle={{
+            backgroundColor: c.olive,
+          }}
+          handleIndicatorStyle={{ width: s.$10, backgroundColor: c.white, opacity: 0.5 }}
+        >
           <NewRef
             initialRefData={{ title: newRefTitle }}
             initialStep={initialStep}

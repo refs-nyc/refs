@@ -5,14 +5,11 @@ export const useUIStore = create<{
   editingProfile: boolean
   addingToList: string
   addingItem: ItemsRecord | null
-  showContextMenu: string
   setAddingToList: (newState: string) => void
-  toggleEditProfile: () => void
   stopEditProfile: () => void
   startEditProfile: () => void
 }>((set) => ({
   addingToList: '',
-  showContextMenu: '',
   addingItem: null,
   setAddingToList: (newState: string) => {
     set(() => ({
@@ -20,11 +17,6 @@ export const useUIStore = create<{
     }))
   },
   editingProfile: false,
-  toggleEditProfile: () => {
-    set((state) => ({
-      editingProfile: !state.editingProfile,
-    }))
-  },
   stopEditProfile: () => {
     set(() => ({
       editingProfile: false,

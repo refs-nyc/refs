@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useContext, useState } from 'react'
 import { Image } from 'expo-image'
 import { Zoomable } from '@likashefqet/react-native-image-zoom'
 import { ContextMenu } from '../atoms/ContextMenu'
@@ -17,6 +17,8 @@ import { KeyboardAvoidingView } from 'react-native-keyboard-controller'
 import { TextInput } from 'react-native-gesture-handler'
 import { XStack, YStack } from '../core/Stacks'
 import { RefsRecord } from '@/features/pocketbase/stores/pocketbase-types'
+import { ProfileDetailsContext } from './profileDetailsStore'
+import { useStore } from 'zustand'
 
 const win = Dimensions.get('window')
 
@@ -65,37 +67,48 @@ const Meta = ({ refRecord }: { refRecord: RefsRecord }) => {
   )
 }
 
-const EditableItemComponent = ({
+export const EditableItem = ({
   item,
   editingRights,
   index,
 }: {
   item: ExpandedItem
   editingRights?: boolean
-  index: number | undefined,
+  index: number | undefined
 }) => {
-  const { showContextMenu, setShowContextMenu } = useUIStore()
-  const { editing, startEditing, updateEditedState, setSearchingNewRef, editingLink, setEditingLink } = useItemStore()
+  const profileDetailsStore = useContext(ProfileDetailsContext)
+  const { showContextMenu, setShowContextMenu, currentIndex, openedFromFeed } =
+    useStore(profileDetailsStore)
+
+  const {
+    editing,
+    startEditing,
+    updateEditedState,
+    setSearchingNewRef,
+    editingLink,
+    setEditingLink,
+  } = useItemStore()
   const [text, setText] = useState(item?.text)
   const [url, setUrl] = useState(item?.url)
 
+  const editingThisItem = editing === item.id
+
   const animatedStyle = useAnimatedStyle(() => {
-    return editing === item.id ? base.editableItem : base.nonEditableItem
-  }, [editing, item])
+    return editingThisItem ? base.editableItem : base.nonEditableItem
+  }, [editingThisItem])
 
   return (
-    <KeyboardAvoidingView behavior={'position'}>
+    <KeyboardAvoidingView behavior={'position'} keyboardVerticalOffset={openedFromFeed ? 70 : 120}>
       <Pressable
         style={{
           gap: s.$09,
-          paddingTop: win.height * 0.05,
           paddingHorizontal: s.$2,
         }}
         onPress={() => {
-          setShowContextMenu('')
+          setShowContextMenu(false)
         }}
         onLongPress={() => {
-          setShowContextMenu(item.id)
+          setShowContextMenu(true)
         }}
       >
         {/* Image */}
@@ -106,11 +119,11 @@ const EditableItemComponent = ({
           }}
         >
           {/* Menu */}
-          {showContextMenu === item.id && (
+          {showContextMenu && currentIndex == index && (
             <ContextMenu
               onEditPress={() => {
                 startEditing(item.id)
-                setShowContextMenu('')
+                setShowContextMenu(false)
               }}
               editingRights={editingRights}
             />
@@ -173,7 +186,7 @@ const EditableItemComponent = ({
             }}
           >
             {/* Title OR textinput for editing link*/}
-            {editing === item.id && editingLink ? (
+            {editingThisItem && editingLink ? (
               <TextInput
                 style={[{ flex: 1, paddingHorizontal: s.$1 }, base.editableItem]}
                 value={url}
@@ -188,9 +201,9 @@ const EditableItemComponent = ({
             ) : (
               <Pressable
                 onPress={() => {
-                  if (!editing) return
+                  if (!editingThisItem) return
                   Keyboard.dismiss()
-                  setSearchingNewRef(editing)
+                  setSearchingNewRef(item.id)
                 }}
                 style={[
                   {
@@ -198,7 +211,7 @@ const EditableItemComponent = ({
                     flex: 1,
                     paddingHorizontal: s.$1,
                   },
-                  editing === item.id ? base.editableItem : base.nonEditableItem,
+                  editingThisItem ? base.editableItem : base.nonEditableItem,
                 ]}
               >
                 <BottomSheetView
@@ -220,10 +233,10 @@ const EditableItemComponent = ({
                   justifyContent: 'center',
                   alignItems: 'center',
                 },
-                editing ? base.editableItem : base.nonEditableItem,
+                editingThisItem ? base.editableItem : base.nonEditableItem,
               ]}
             >
-              {!editing && item.url && (
+              {!editingThisItem && item.url && (
                 <Link
                   style={{ transformOrigin: 'center', transform: 'rotate(-45deg)' }}
                   href={item.url}
@@ -236,7 +249,7 @@ const EditableItemComponent = ({
                   />
                 </Link>
               )}
-              {editing && (
+              {editingThisItem && (
                 <Pressable onPress={() => setEditingLink(!editingLink)}>
                   <Ionicons
                     name={editingLink ? 'checkmark' : 'arrow-forward-outline'}
@@ -257,7 +270,7 @@ const EditableItemComponent = ({
             animatedStyle,
           ]}
         >
-          {editing === item.id ? (
+          {editingThisItem ? (
             <BottomSheetTextInput
               defaultValue={item.text}
               placeholder="Add a caption for your profile..."
@@ -281,5 +294,3 @@ const EditableItemComponent = ({
     </KeyboardAvoidingView>
   )
 }
-
-export const EditableItem = React.memo(EditableItemComponent)

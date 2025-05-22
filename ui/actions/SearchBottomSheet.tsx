@@ -6,7 +6,7 @@ import BottomSheet, {
   BottomSheetView,
 } from '@gorhom/bottom-sheet'
 import { useCallback, useRef, useState } from 'react'
-import { Pressable, Text, ScrollView, View } from 'react-native'
+import { Pressable, Text } from 'react-native'
 import { Heading } from '../typo/Heading'
 import { XStack, YStack } from '../core/Stacks'
 import { Button } from '../buttons/Button'
@@ -108,7 +108,10 @@ export default function SearchBottomSheet() {
         index={0}
         onChange={(i: number) => {
           setIndex(i)
-          if (i === 0) setResults([])
+          if (i === 0) {
+            setResults([])
+            setSearchTerm('')
+          }
         }}
         backgroundStyle={{ backgroundColor: c.olive, borderRadius: s.$4, paddingTop: 0 }}
         backdropComponent={renderBackdrop}
@@ -178,7 +181,7 @@ export default function SearchBottomSheet() {
                       paddingHorizontal: s.$5,
                     }}
                   >
-                    <View
+                    <BottomSheetView
                       style={{
                         width: s.$2,
                         height: s.$2,
@@ -197,7 +200,7 @@ export default function SearchBottomSheet() {
                       >
                         +
                       </Text>
-                    </View>
+                    </BottomSheetView>
                     <Heading tag="h2normal" style={{ color: c.white, paddingHorizontal: s.$2 }}>
                       {`Add ${searchTerm}`}
                     </Heading>
@@ -228,7 +231,7 @@ export default function SearchBottomSheet() {
             </BottomSheetScrollView>
           )}
           {searchTerm === '' && (
-            <ScrollView
+            <BottomSheetScrollView
               keyboardShouldPersistTaps="handled"
               style={{
                 height: '90%',
@@ -280,7 +283,7 @@ export default function SearchBottomSheet() {
                   </XStack>
                 ))}
               </YStack>
-            </ScrollView>
+            </BottomSheetScrollView>
           )}
         </BottomSheetView>
       </BottomSheet>

@@ -9,6 +9,7 @@ type ProfileDetailsState = {
   isEditing: boolean
   setIsEditing: (newValue: boolean) => void
   openedFromFeed: boolean
+  editingRights: boolean
 }
 
 // define a "profile store"
@@ -21,10 +22,12 @@ export const ProfileDetailsProvider = ({
   children,
   initialIndex,
   openedFromFeed,
+  editingRights,
 }: {
   children: ReactNode
   initialIndex: number
   openedFromFeed: boolean
+  editingRights: boolean
 }) => {
   const profileDetailsStore = createStore<ProfileDetailsState>((set) => ({
     currentIndex: initialIndex,
@@ -34,6 +37,7 @@ export const ProfileDetailsProvider = ({
     isEditing: false,
     setIsEditing: (newIsEditing) => set({ isEditing: newIsEditing }),
     openedFromFeed,
+    editingRights,
   }))
 
   return (

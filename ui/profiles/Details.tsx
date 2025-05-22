@@ -1,16 +1,13 @@
-import React, { useRef, useCallback, useMemo, useContext, useState } from 'react'
+import React, { useRef, useCallback, useContext } from 'react'
 import { useRouter } from 'expo-router'
-import { View, Dimensions, Pressable, Text, ViewStyle } from 'react-native'
+import { View, Pressable, Text, useWindowDimensions } from 'react-native'
 import Carousel, { ICarouselInstance } from 'react-native-reanimated-carousel'
 import { c, s } from '@/features/style'
 import { useItemStore } from '@/features/pocketbase/stores/items'
-import { SearchRef } from '../actions/SearchRef'
 import { EditableList } from '../lists/EditableList'
 import { Sheet, SheetScreen } from '../core/Sheets'
 import { ExpandedItem, ExpandedProfile } from '@/features/pocketbase/stores/types'
-import { EditableItem } from './EditableItem'
 import { GridLines } from '../display/Gridlines'
-import { BottomSheetScrollView } from '@gorhom/bottom-sheet'
 import { MeatballMenu, Checkbox } from '../atoms/MeatballMenu'
 import { useUIStore } from '@/ui/state'
 import { ProfileDetailsContext } from './profileDetailsStore'
@@ -18,8 +15,7 @@ import { useStore } from 'zustand'
 import { ItemsRecord } from '@/features/pocketbase/stores/pocketbase-types'
 import { XStack } from '@/ui/core/Stacks'
 import { Avatar } from '../atoms/Avatar'
-
-const win = Dimensions.get('window')
+import { DetailsCarouselItem } from './DetailsCarouselItem'
 
 // --- Helper Components for State Isolation ---
 
@@ -84,79 +80,10 @@ ProfileLabel.displayName = 'ProfileLabel'
 
 // --- Main Components ---
 
-export const renderItem = ({
-  item,
-  editingRights,
-  index,
-}: {
-  item: ExpandedItem
-  editingRights?: boolean
-  index?: number
-}) => {
-  const { searchingNewRef, updateEditedState, setSearchingNewRef, update } = useItemStore()
-  const profileDetailsStore = useContext(ProfileDetailsContext)
-  const { currentIndex } = useStore(profileDetailsStore)
-
-  const [currentItem, setCurrentItem] = useState<ExpandedItem>(item)
-
-  return (
-    <View
-      style={{
-        width: win.width,
-        height: win.height,
-        gap: s.$1,
-        justifyContent: 'flex-start',
-      }}
-      key={currentItem.id}
-    >
-      <BottomSheetScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ gap: s.$1 }}
-        keyboardShouldPersistTaps="handled"
-        nestedScrollEnabled={true}
-      >
-        <EditableItem item={currentItem} editingRights={editingRights} index={index} />
-      </BottomSheetScrollView>
-
-      {searchingNewRef && currentIndex == index && (
-        <Sheet
-          keyboardShouldPersistTaps="always"
-          onClose={() => {
-            console.log('close')
-            setSearchingNewRef('')
-            // Do not update the ref
-          }}
-        >
-          <SearchRef
-            noNewRef
-            onComplete={async (e) => {
-              // Update the ref
-              console.log(e.id)
-              await updateEditedState({
-                ref: e.id,
-              })
-              const newRecord = await update()
-              setCurrentItem(newRecord as ExpandedItem)
-              setSearchingNewRef('')
-            }}
-          />
-        </Sheet>
-      )}
-    </View>
-  )
-}
-
-export const Details = ({
-  profile,
-  data,
-  editingRights = false,
-}: {
-  profile: ExpandedProfile
-  data: ItemsRecord[]
-  editingRights?: boolean
-}) => {
+export const Details = ({ profile, data }: { profile: ExpandedProfile; data: ItemsRecord[] }) => {
   const router = useRouter()
   const ref = useRef<ICarouselInstance>(null)
+  const win = useWindowDimensions()
 
   const profileDetailsStore = useContext(ProfileDetailsContext)
   const setShowContextMenu = useStore(profileDetailsStore, (state) => state.setShowContextMenu)
@@ -180,13 +107,6 @@ export const Details = ({
     await update()
     stopEditing()
   }, [setAddingToList])
-
-  const carouselRenderItem = useCallback(
-    ({ item, index: carouselIndex }: { item: ExpandedItem; index: number }) => {
-      return renderItem({ item, editingRights, index: carouselIndex })
-    },
-    [editingRights] // Depends only on the editingRights prop
-  )
 
   return (
     <SheetScreen
@@ -243,7 +163,7 @@ export const Details = ({
           setShowContextMenu(false)
         }}
         onConfigurePanGesture={handleConfigurePanGesture}
-        renderItem={carouselRenderItem}
+        renderItem={DetailsCarouselItem}
         windowSize={5}
         pagingEnabled={true}
         snapEnabled={true}

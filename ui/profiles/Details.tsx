@@ -32,44 +32,35 @@ const ConditionalGridLines = React.memo(() => {
 })
 ConditionalGridLines.displayName = 'ConditionalGridLines'
 
-const DetailsHeaderButton = React.memo(() => {
-  const editing = useItemStore((state) => state.editing)
-  const update = useItemStore((state) => state.update)
-  const stopEditing = useItemStore((state) => state.stopEditing)
+const DetailsHeaderButton = () => {
   const profileDetailsStore = useContext(ProfileDetailsContext)
+  const showContextMenu = useStore(profileDetailsStore, (state) => state.showContextMenu)
   const setShowContextMenu = useStore(profileDetailsStore, (state) => state.setShowContextMenu)
 
   return (
-    <Pressable
-      style={{
-        width: '100%',
-        zIndex: 99,
-        paddingHorizontal: s.$2,
-        alignItems: 'flex-end',
-        // top: s.$4,
-      }}
+    <MeatballMenu
       onPress={() => {
-        setShowContextMenu(false)
+        setShowContextMenu(!showContextMenu)
       }}
-    >
-      {editing !== '' ? (
-        <Checkbox
-          onPress={async () => {
-            await update()
-            stopEditing()
-          }}
-        />
-      ) : (
-        <MeatballMenu
-          onPress={() => {
-            setShowContextMenu(true)
-          }}
-        />
-      )}
-    </Pressable>
+    />
   )
-})
+}
 DetailsHeaderButton.displayName = 'DetailsHeaderButton'
+
+const ApplyChangesButton = () => {
+  const update = useItemStore((state) => state.update)
+  const stopEditing = useItemStore((state) => state.stopEditing)
+
+  return (
+    <Checkbox
+      onPress={async () => {
+        await update()
+        stopEditing()
+      }}
+    />
+  )
+}
+ApplyChangesButton.displayName = 'ApplyChangesButton'
 
 const ProfileLabel = ({ profile }: { profile: ExpandedProfile }) => {
   const router = useRouter()
@@ -173,6 +164,8 @@ export const Details = ({
   const currentIndex = useStore(profileDetailsStore, (state) => state.currentIndex)
   const openedFromFeed = useStore(profileDetailsStore, (state) => state.openedFromFeed)
 
+  const editing = useItemStore((state) => state.editing)
+
   const { addingToList, setAddingToList, addingItem } = useUIStore()
   const { stopEditing, update } = useItemStore()
 
@@ -207,11 +200,28 @@ export const Details = ({
       <ConditionalGridLines />
 
       {openedFromFeed ? (
-        <View style={{ paddingLeft: s.$3, paddingTop: s.$2 }}>
-          <ProfileLabel profile={profile} />
-        </View>
+        <>
+          <View style={{ paddingLeft: s.$3, paddingTop: s.$2, paddingBottom: s.$05 }}>
+            <ProfileLabel profile={profile} />
+          </View>
+          <View style={{ position: 'absolute', right: s.$3, top: s.$2, zIndex: 99 }}>
+            {editing && <ApplyChangesButton />}
+          </View>
+        </>
       ) : (
-        <DetailsHeaderButton />
+        <View
+          style={{
+            paddingLeft: s.$3,
+            paddingRight: s.$3,
+            paddingTop: s.$6,
+            paddingBottom: s.$1,
+            display: 'flex',
+            flexDirection: 'row',
+            justifyContent: 'flex-end',
+          }}
+        >
+          {editing ? <ApplyChangesButton /> : <DetailsHeaderButton />}
+        </View>
       )}
 
       <Carousel

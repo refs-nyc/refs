@@ -98,7 +98,7 @@ export const EditableItem = ({
   }, [editingThisItem])
 
   return (
-    <KeyboardAvoidingView behavior={'position'} keyboardVerticalOffset={openedFromFeed ? 10 : 120}>
+    <KeyboardAvoidingView behavior={'position'} keyboardVerticalOffset={openedFromFeed ? 70 : 120}>
       <Pressable
         style={{
           gap: s.$09,

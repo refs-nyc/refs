@@ -140,6 +140,7 @@ export const Details = ({
 }: {
   data: ItemsRecord[]
   editingRights?: boolean
+  openedFromFeed?: boolean
 }) => {
   const router = useRouter()
   const ref = useRef<ICarouselInstance>(null)
@@ -188,7 +189,7 @@ export const Details = ({
         e === -1 && router.back()
         e === -1 && stopEditing()
       }}
-      snapPoints={openedFromFeed ? ['70%'] : ['100%']}
+      snapPoints={openedFromFeed ? ['70%', '100%'] : ['100%']}
       maxDynamicContentSize={openedFromFeed ? '70%' : '100%'}
     >
       <ConditionalGridLines />

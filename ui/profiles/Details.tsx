@@ -1,6 +1,6 @@
 import React, { useRef, useCallback, useContext } from 'react'
 import { useRouter } from 'expo-router'
-import { View, Pressable, Text, useWindowDimensions } from 'react-native'
+import { View, Pressable, Text, useWindowDimensions, Button } from 'react-native'
 import Carousel, { ICarouselInstance } from 'react-native-reanimated-carousel'
 import { c, s } from '@/features/style'
 import { useItemStore } from '@/features/pocketbase/stores/items'
@@ -174,6 +174,25 @@ export const Details = ({ profile, data }: { profile: ExpandedProfile; data: Ite
           <EditableList item={addingItem} onComplete={() => {}} />
         </Sheet>
       )}
+
+      <View
+        style={{
+          borderTopLeftRadius: s.$4,
+          borderTopRightRadius: s.$4,
+          backgroundColor: c.olive,
+          height: s.$10,
+          position: 'absolute',
+          bottom: s.$0,
+          left: -s.$05,
+          right: -s.$05,
+          display: 'flex',
+          flexDirection: 'row',
+          justifyContent: 'center',
+          alignItems: 'center',
+        }}
+      >
+        <Text style={{ color: c.surface, fontSize: s.$2, fontWeight: 500 }}>Add Ref +</Text>
+      </View>
     </SheetScreen>
   )
 }

@@ -77,7 +77,8 @@ export const EditableItem = ({
   index: number | undefined
 }) => {
   const profileDetailsStore = useContext(ProfileDetailsContext)
-  const { showContextMenu, setShowContextMenu, currentIndex } = useStore(profileDetailsStore)
+  const { showContextMenu, setShowContextMenu, currentIndex, openedFromFeed } =
+    useStore(profileDetailsStore)
 
   const {
     editing,
@@ -97,11 +98,10 @@ export const EditableItem = ({
   }, [editingThisItem])
 
   return (
-    <KeyboardAvoidingView behavior={'position'} keyboardVerticalOffset={120}>
+    <KeyboardAvoidingView behavior={'position'} keyboardVerticalOffset={openedFromFeed ? 10 : 120}>
       <Pressable
         style={{
           gap: s.$09,
-          paddingTop: win.height * 0.05,
           paddingHorizontal: s.$2,
         }}
         onPress={() => {

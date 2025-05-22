@@ -207,7 +207,7 @@ export const Details = ({
       <ConditionalGridLines />
 
       {openedFromFeed ? (
-        <View style={{ paddingLeft: s.$3, paddingTop: s.$2, paddingBottom: s.$075 }}>
+        <View style={{ paddingLeft: s.$3, paddingTop: s.$2 }}>
           <ProfileLabel profile={profile} />
         </View>
       ) : (

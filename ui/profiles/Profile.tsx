@@ -44,7 +44,7 @@ export const Profile = ({ userName }: { userName: string }) => {
   const { user } = useUserStore()
   const { remove, moveToBacklog } = useItemStore()
 
-  const inSaves = profile && saves.map(s=>s.expand.user.id).includes(profile.id)
+  const inSaves = profile && saves.map((s) => s.expand.user.id).includes(profile.id)
 
   const setAddingTo = (str: string) => {
     router.setParams({ addingTo: str })
@@ -179,8 +179,8 @@ export const Profile = ({ userName }: { userName: string }) => {
                 }}
                 variant="whiteOutline"
                 disabled={inSaves}
-                title={inSaves ? "Saved" : "Save"}
-                style={inSaves ? styles.saved : { paddingHorizontal: s.$0 } }
+                title={inSaves ? 'Saved' : 'Save'}
+                style={inSaves ? styles.saved : { paddingHorizontal: s.$0 }}
               />
             </View>
 
@@ -262,10 +262,10 @@ export const Profile = ({ userName }: { userName: string }) => {
 }
 
 const styles = StyleSheet.create({
-  saved : {
+  saved: {
     borderWidth: 0,
     backgroundColor: 'rgba(0,0,0,0.15)',
     opacity: 0.5,
     paddingHorizontal: 0,
-  }
+  },
 })

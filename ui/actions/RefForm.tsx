@@ -1,19 +1,17 @@
 import { useState, useEffect } from 'react'
 import { usePathname } from 'expo-router'
 import { View, TouchableOpacity, Dimensions } from 'react-native'
-import { BottomSheetScrollView, BottomSheetTextInput as TextInput } from '@gorhom/bottom-sheet'
-
+import { BottomSheetTextInput as TextInput } from '@gorhom/bottom-sheet'
 import { Heading } from '@/ui/typo/Heading'
 import { Picker } from '../inputs/Picker'
 import { PinataImage } from '../images/PinataImage'
 import { Image } from 'expo-image'
-import { SimplePinataImage } from '../images/SimplePinataImage'
 import { EditableHeader } from '../atoms/EditableHeader'
 import { addToProfile } from '@/features/pocketbase'
 import { Button } from '../buttons/Button'
 import type { ImagePickerAsset } from 'expo-image-picker'
 import { c, s } from '@/features/style'
-import { StagedRef, Item, ExpandedItem } from '@/features/pocketbase/stores/types'
+import { StagedRef, ExpandedItem } from '@/features/pocketbase/stores/types'
 
 const win = Dimensions.get('window')
 
@@ -185,6 +183,7 @@ export const RefForm = ({
         placeholder={placeholder}
         title={title || placeholder}
         url={url || ''}
+        image={pinataSource}
       />
 
       {/* Notes */}

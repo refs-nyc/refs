@@ -8,11 +8,14 @@ import { gridSort } from '@/ui/profiles/sorts'
 export function UserDetailsScreen({
   userName,
   initialId,
+  openedFromFeed,
 }: {
   userName: string
   initialId: string
+  openedFromFeed: boolean
 }) {
   const [profile, setProfile] = useState<ExpandedProfile | null>(null)
+  console.log('opened from feed:', openedFromFeed)
 
   useEffect(() => {
     const getProfileAsync = async () => {

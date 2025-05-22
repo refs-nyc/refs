@@ -11,7 +11,7 @@ const win = Dimensions.get('window')
 const ListItem = ({ item }: { item: ExpandedItem }) => {
   const creator = item.expand!.creator
   const creatorProfileUrl = `/user/${creator.userName}/` as const
-  const itemUrl = `${creatorProfileUrl}modal?initialId=${item.id}` as const
+  const itemUrl = `${creatorProfileUrl}modal?initialId=${item.id}&openedFromFeed=true` as const
 
   return (
     <XStack

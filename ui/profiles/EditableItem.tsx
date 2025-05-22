@@ -90,9 +90,11 @@ export const EditableItem = ({
   const [text, setText] = useState(item?.text)
   const [url, setUrl] = useState(item?.url)
 
+  const editingThisItem = editing === item.id
+
   const animatedStyle = useAnimatedStyle(() => {
-    return editing === item.id ? base.editableItem : base.nonEditableItem
-  }, [editing, item])
+    return editingThisItem ? base.editableItem : base.nonEditableItem
+  }, [editingThisItem])
 
   return (
     <KeyboardAvoidingView behavior={'position'}>
@@ -184,7 +186,7 @@ export const EditableItem = ({
             }}
           >
             {/* Title OR textinput for editing link*/}
-            {editing === item.id && editingLink ? (
+            {editingThisItem && editingLink ? (
               <TextInput
                 style={[{ flex: 1, paddingHorizontal: s.$1 }, base.editableItem]}
                 value={url}
@@ -199,9 +201,9 @@ export const EditableItem = ({
             ) : (
               <Pressable
                 onPress={() => {
-                  if (!editing) return
+                  if (!editingThisItem) return
                   Keyboard.dismiss()
-                  setSearchingNewRef(editing)
+                  setSearchingNewRef(item.id)
                 }}
                 style={[
                   {
@@ -209,7 +211,7 @@ export const EditableItem = ({
                     flex: 1,
                     paddingHorizontal: s.$1,
                   },
-                  editing === item.id ? base.editableItem : base.nonEditableItem,
+                  editingThisItem ? base.editableItem : base.nonEditableItem,
                 ]}
               >
                 <BottomSheetView
@@ -231,10 +233,10 @@ export const EditableItem = ({
                   justifyContent: 'center',
                   alignItems: 'center',
                 },
-                editing ? base.editableItem : base.nonEditableItem,
+                editingThisItem ? base.editableItem : base.nonEditableItem,
               ]}
             >
-              {!editing && item.url && (
+              {!editingThisItem && item.url && (
                 <Link
                   style={{ transformOrigin: 'center', transform: 'rotate(-45deg)' }}
                   href={item.url}
@@ -247,7 +249,7 @@ export const EditableItem = ({
                   />
                 </Link>
               )}
-              {editing && (
+              {editingThisItem && (
                 <Pressable onPress={() => setEditingLink(!editingLink)}>
                   <Ionicons
                     name={editingLink ? 'checkmark' : 'arrow-forward-outline'}
@@ -268,7 +270,7 @@ export const EditableItem = ({
             animatedStyle,
           ]}
         >
-          {editing === item.id ? (
+          {editingThisItem ? (
             <BottomSheetTextInput
               defaultValue={item.text}
               placeholder="Add a caption for your profile..."

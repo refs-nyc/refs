@@ -8,6 +8,7 @@ type ProfileDetailsState = {
   setShowContextMenu: (newShowContextMenu: boolean) => void
   isEditing: boolean
   setIsEditing: (newValue: boolean) => void
+  openedFromFeed: boolean
 }
 
 // define a "profile store"
@@ -19,9 +20,11 @@ export const ProfileDetailsContext = createContext<StoreApi<ProfileDetailsState>
 export const ProfileDetailsProvider = ({
   children,
   initialIndex,
+  openedFromFeed,
 }: {
   children: ReactNode
   initialIndex: number
+  openedFromFeed: boolean
 }) => {
   const profileDetailsStore = createStore<ProfileDetailsState>((set) => ({
     currentIndex: initialIndex,
@@ -30,6 +33,7 @@ export const ProfileDetailsProvider = ({
     setShowContextMenu: (newShowContextMenu) => set({ showContextMenu: newShowContextMenu }),
     isEditing: false,
     setIsEditing: (newIsEditing) => set({ isEditing: newIsEditing }),
+    openedFromFeed,
   }))
 
   return (

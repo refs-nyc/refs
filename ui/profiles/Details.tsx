@@ -1,13 +1,13 @@
 import React, { useRef, useCallback, useMemo, useContext, useState } from 'react'
 import { useRouter } from 'expo-router'
-import { View, Dimensions, Pressable, ViewStyle } from 'react-native'
+import { View, Dimensions, Pressable, Text, ViewStyle } from 'react-native'
 import Carousel, { ICarouselInstance } from 'react-native-reanimated-carousel'
 import { c, s } from '@/features/style'
 import { useItemStore } from '@/features/pocketbase/stores/items'
 import { SearchRef } from '../actions/SearchRef'
 import { EditableList } from '../lists/EditableList'
 import { Sheet, SheetScreen } from '../core/Sheets'
-import { ExpandedItem } from '@/features/pocketbase/stores/types'
+import { ExpandedItem, ExpandedProfile } from '@/features/pocketbase/stores/types'
 import { EditableItem } from './EditableItem'
 import { GridLines } from '../display/Gridlines'
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet'
@@ -16,6 +16,8 @@ import { useUIStore } from '@/ui/state'
 import { ProfileDetailsContext } from './profileDetailsStore'
 import { useStore } from 'zustand'
 import { ItemsRecord } from '@/features/pocketbase/stores/pocketbase-types'
+import { XStack } from '@/ui/core/Stacks'
+import { Avatar } from '../atoms/Avatar'
 
 const win = Dimensions.get('window')
 
@@ -42,9 +44,9 @@ const DetailsHeaderButton = React.memo(() => {
       style={{
         width: '100%',
         zIndex: 99,
-        padding: s.$2,
+        paddingHorizontal: s.$2,
         alignItems: 'flex-end',
-        top: s.$4,
+        // top: s.$4,
       }}
       onPress={() => {
         setShowContextMenu(false)
@@ -68,6 +70,26 @@ const DetailsHeaderButton = React.memo(() => {
   )
 })
 DetailsHeaderButton.displayName = 'DetailsHeaderButton'
+
+const ProfileLabel = ({ profile }: { profile: ExpandedProfile }) => {
+  const router = useRouter()
+  return (
+    <Pressable
+      onPress={() => {
+        router.replace(`/user/${profile.userName}`)
+      }}
+    >
+      <XStack style={{ alignItems: 'center' }} gap={s.$075}>
+        {/* show user avatar and name */}
+        <Text style={{ fontSize: s.$1, fontWeight: 500, opacity: 0.6, color: c.muted }}>
+          {profile.firstName}
+        </Text>
+        <Avatar size={s.$1} source={profile.image} />
+      </XStack>
+    </Pressable>
+  )
+}
+ProfileLabel.displayName = 'ProfileLabel'
 
 // --- Main Components ---
 
@@ -134,13 +156,13 @@ export const renderItem = ({
 }
 
 export const Details = ({
+  profile,
   data,
   editingRights = false,
-  openedFromFeed = false,
 }: {
+  profile: ExpandedProfile
   data: ItemsRecord[]
   editingRights?: boolean
-  openedFromFeed?: boolean
 }) => {
   const router = useRouter()
   const ref = useRef<ICarouselInstance>(null)
@@ -149,6 +171,7 @@ export const Details = ({
   const setShowContextMenu = useStore(profileDetailsStore, (state) => state.setShowContextMenu)
   const setCurrentIndex = useStore(profileDetailsStore, (state) => state.setCurrentIndex)
   const currentIndex = useStore(profileDetailsStore, (state) => state.currentIndex)
+  const openedFromFeed = useStore(profileDetailsStore, (state) => state.openedFromFeed)
 
   const { addingToList, setAddingToList, addingItem } = useUIStore()
   const { stopEditing, update } = useItemStore()
@@ -165,17 +188,6 @@ export const Details = ({
     stopEditing()
   }, [setAddingToList])
 
-  const carouselStyle = useMemo<{
-    overflow: ViewStyle['overflow']
-    paddingVertical: number
-  }>(
-    () => ({
-      overflow: 'visible',
-      paddingVertical: win.height * 0.2, // Consider making this dynamic based on header/insets
-    }),
-    []
-  )
-
   const carouselRenderItem = useCallback(
     ({ item, index: carouselIndex }: { item: ExpandedItem; index: number }) => {
       return renderItem({ item, editingRights, index: carouselIndex })
@@ -189,11 +201,18 @@ export const Details = ({
         e === -1 && router.back()
         e === -1 && stopEditing()
       }}
-      snapPoints={openedFromFeed ? ['70%', '100%'] : ['100%']}
-      maxDynamicContentSize={openedFromFeed ? '70%' : '100%'}
+      snapPoints={openedFromFeed ? ['90%'] : ['100%']}
+      maxDynamicContentSize={openedFromFeed ? '90%' : '100%'}
     >
       <ConditionalGridLines />
-      <DetailsHeaderButton />
+
+      {openedFromFeed ? (
+        <View style={{ paddingLeft: s.$3, paddingTop: s.$2, paddingBottom: s.$075 }}>
+          <ProfileLabel profile={profile} />
+        </View>
+      ) : (
+        <DetailsHeaderButton />
+      )}
 
       <Carousel
         loop={data.length > 1}
@@ -203,10 +222,10 @@ export const Details = ({
           parallaxScrollingScale: 0.99999,
           parallaxScrollingOffset: 50,
         }}
+        containerStyle={{ padding: 0 }}
         data={data as ExpandedItem[]}
         width={win.width}
         height={win.height}
-        style={carouselStyle}
         defaultIndex={currentIndex}
         onSnapToItem={(index) => {
           setCurrentIndex(index)

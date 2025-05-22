@@ -24,9 +24,6 @@ export const ListItem = ({
 }) => {
   let [count, setCount] = useState(-1)
 
-  console.log('WITH REMOVE', withRemove)
-  console.log('WITH large image', largeImage)
-
   useEffect(() => {
     const getReferenceCount = async () => {
       const count = await pocketbase

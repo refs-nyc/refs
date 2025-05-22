@@ -136,6 +136,7 @@ export const renderItem = ({
 export const Details = ({
   data,
   editingRights = false,
+  openedFromFeed = false,
 }: {
   data: ItemsRecord[]
   editingRights?: boolean
@@ -187,8 +188,8 @@ export const Details = ({
         e === -1 && router.back()
         e === -1 && stopEditing()
       }}
-      snapPoints={['100%']}
-      maxDynamicContentSize={'100%'}
+      snapPoints={openedFromFeed ? ['70%'] : ['100%']}
+      maxDynamicContentSize={openedFromFeed ? '70%' : '100%'}
     >
       <ConditionalGridLines />
       <DetailsHeaderButton />

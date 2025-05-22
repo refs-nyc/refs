@@ -15,7 +15,6 @@ export function UserDetailsScreen({
   openedFromFeed: boolean
 }) {
   const [profile, setProfile] = useState<ExpandedProfile | null>(null)
-  console.log('opened from feed:', openedFromFeed)
 
   useEffect(() => {
     const getProfileAsync = async () => {
@@ -42,7 +41,7 @@ export function UserDetailsScreen({
 
     return (
       <ProfileDetailsProvider initialIndex={initialIndex}>
-        <Details data={data} editingRights={editingRights} />
+        <Details data={data} editingRights={editingRights} openedFromFeed={openedFromFeed} />
       </ProfileDetailsProvider>
     )
   } else {

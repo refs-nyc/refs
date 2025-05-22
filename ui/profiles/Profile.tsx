@@ -247,8 +247,8 @@ export const Profile = ({ userName }: { userName: string }) => {
             onStep={setStep}
             onNewRef={async (itm: Item) => {
               await refreshGrid(userName)
-              if (addingTo !== 'backlog') router.push(`/user/${userName}/modal?initialId=${itm.id}`)
               setAddingTo('')
+              if (addingTo !== 'backlog') router.push(`/user/${userName}/modal?initialId=${itm.id}`)
             }}
             onCancel={() => {
               setAddingTo('')

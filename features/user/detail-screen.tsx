@@ -40,8 +40,12 @@ export function UserDetailsScreen({
     )
 
     return (
-      <ProfileDetailsProvider initialIndex={initialIndex} openedFromFeed={openedFromFeed}>
-        <Details profile={profile} data={data} editingRights={editingRights} />
+      <ProfileDetailsProvider
+        editingRights={editingRights}
+        initialIndex={initialIndex}
+        openedFromFeed={openedFromFeed}
+      >
+        <Details profile={profile} data={data} />
       </ProfileDetailsProvider>
     )
   } else {

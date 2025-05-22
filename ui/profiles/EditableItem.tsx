@@ -69,15 +69,13 @@ const Meta = ({ refRecord }: { refRecord: RefsRecord }) => {
 
 export const EditableItem = ({
   item,
-  editingRights,
   index,
 }: {
   item: ExpandedItem
-  editingRights?: boolean
   index: number | undefined
 }) => {
   const profileDetailsStore = useContext(ProfileDetailsContext)
-  const { showContextMenu, setShowContextMenu, currentIndex, openedFromFeed } =
+  const { showContextMenu, setShowContextMenu, currentIndex, openedFromFeed, editingRights } =
     useStore(profileDetailsStore)
 
   const {

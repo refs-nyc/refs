@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react'
-import { pocketbase } from '@/features/pocketbase'
+import { pocketbase, useItemStore } from '@/features/pocketbase'
 import { ExpandedProfile } from '@/features/pocketbase/stores/types'
 import { Details } from '@/ui'
 import { ProfileDetailsProvider } from '@/ui/profiles/profileDetailsStore'
-import { gridSort } from '@/ui/profiles/sorts'
+import { ItemsRecord } from '../pocketbase/stores/pocketbase-types'
 
 export function UserDetailsScreen({
   userName,
@@ -15,15 +15,18 @@ export function UserDetailsScreen({
   openedFromFeed: boolean
 }) {
   const [profile, setProfile] = useState<ExpandedProfile | null>(null)
+  const [items, setItems] = useState<ItemsRecord[]>([])
+  const getProfileItems = useItemStore((state) => state.getProfileItems)
 
   useEffect(() => {
     const getProfileAsync = async () => {
-      const record = await pocketbase
+      const items = await getProfileItems(userName)
+      setItems(items)
+
+      const profile = await pocketbase
         .collection('users')
-        .getFirstListItem<ExpandedProfile>(`userName = "${userName}"`, {
-          expand: 'items,items.ref,items.children',
-        })
-      setProfile(record)
+        .getFirstListItem<ExpandedProfile>(`userName = "${userName}"`)
+      setProfile(profile)
     }
 
     getProfileAsync()
@@ -32,11 +35,9 @@ export function UserDetailsScreen({
   const editingRights = pocketbase?.authStore?.record?.userName === userName
 
   if (profile && 'id' in profile) {
-    const data = [...profile.expand.items].filter((itm) => !itm.backlog).sort(gridSort)
-
     const initialIndex = Math.max(
       0,
-      data.findIndex((itm) => itm.id === initialId)
+      items.findIndex((itm) => itm.id === initialId)
     )
 
     return (
@@ -45,7 +46,7 @@ export function UserDetailsScreen({
         initialIndex={initialIndex}
         openedFromFeed={openedFromFeed}
       >
-        <Details profile={profile} data={data} />
+        <Details profile={profile} data={items} />
       </ProfileDetailsProvider>
     )
   } else {

@@ -18,7 +18,6 @@ import {
   ExpandedProfile,
   ExpandedItem,
 } from '@/features/pocketbase/stores/types'
-import { gridSort, createdSort } from '../profiles/sorts'
 import { DMButton } from './DMButton'
 import { useMessageStore } from '@/features/pocketbase/stores/messages'
 import BacklogBottomSheet from './BacklogBottomSheet'
@@ -28,6 +27,7 @@ import BottomSheet from '@gorhom/bottom-sheet'
 export const Profile = ({ userName }: { userName: string }) => {
   const { addingTo, removingId } = useLocalSearchParams()
   const { stopEditProfile } = useUIStore()
+  const { getProfileItems, getBacklogItems } = useItemStore()
   const { hasShareIntent } = useShareIntentContext()
   const { saves, addSave } = useMessageStore()
 
@@ -37,7 +37,6 @@ export const Profile = ({ userName }: { userName: string }) => {
   const [editingRights, seteditingRights] = useState<boolean>(false)
   const [showMessageButtons, setShowMessageButtons] = useState<boolean>(false)
   const [step, setStep] = useState('')
-  const [allItems, setAllItems] = useState<ExpandedItem[]>([])
 
   const backlogSheetRef = useRef<BottomSheet>(null)
 
@@ -67,31 +66,21 @@ export const Profile = ({ userName }: { userName: string }) => {
 
   const refreshGrid = async (userName: string) => {
     try {
-      setGridItems([])
-      setBacklogItems([])
-      const record = await pocketbase
+      const profile = await pocketbase
         .collection<ProfileType>('users')
-        .getFirstListItem<ExpandedProfile>(`userName = "${userName}"`, {
-          expand: 'items,items.ref',
-        })
+        .getFirstListItem<ProfileType>(`userName = "${userName}"`)
+      setProfile(profile)
 
-      setProfile(record)
+      const gridItems = await getProfileItems(userName)
+      console.log(JSON.stringify(gridItems))
+      setGridItems(gridItems)
 
-      const itms = record?.expand?.items?.filter((itm: Item) => !itm.backlog).sort(gridSort) || []
-      const bklg = record?.expand?.items?.filter((itm: Item) => itm.backlog).sort(createdSort) || []
-
-      // Filter out backlog and normal
-      setGridItems(itms)
-      setBacklogItems(bklg as ExpandedItem[])
+      const backlogItems = await getBacklogItems(userName)
+      setBacklogItems(backlogItems as ExpandedItem[])
     } catch (error) {
       console.error(error)
     }
   }
-
-  useEffect(() => {
-    const all = [...backlogItems, ...gridItems] as ExpandedItem[]
-    setAllItems(all)
-  }, [backlogItems, gridItems])
 
   useEffect(() => {
     if (hasShareIntent) {

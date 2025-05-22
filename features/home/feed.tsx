@@ -5,6 +5,7 @@ import { pocketbase } from '@/features/pocketbase'
 import { View, ScrollView } from 'react-native'
 import { Nearby } from './nearby'
 import SearchBottomSheet from '@/ui/actions/SearchBottomSheet'
+import { s } from '../style'
 
 export const Feed = () => {
   const [items, setItems] = useState<ExpandedItem[]>([])
@@ -32,7 +33,7 @@ export const Feed = () => {
   return (
     <>
       <DismissKeyboard>
-        <ScrollView style={{ flex: 1 }}>
+        <ScrollView style={{ flex: 1, paddingTop: s.$05 }}>
           <View style={{ height: '100%' }}>
             <Nearby items={items} />
           </View>

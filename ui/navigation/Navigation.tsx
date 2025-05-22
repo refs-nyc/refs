@@ -55,6 +55,7 @@ export const Navigation = () => {
         marginTop: s.$6,
         paddingHorizontal: s.$1,
         alignItems: 'center',
+        paddingBottom: s.$05,
       }}
     >
       <View>

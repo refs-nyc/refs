@@ -32,22 +32,32 @@ export default function BacklogList({ items }: { items: ExpandedItem[] }) {
       new Date(Date.now() - i * 86400000).toLocaleDateString('en-US', { weekday: 'long' })
     )
   }
+  for (let i = 0; i < 12; i++) {
+    groupnames.push(
+      new Date(Date.now() - i * 30 * 86400000).toLocaleDateString('en-US', { month: 'long' })
+    )
+  }
   groupnames.push('Older')
 
   function groupByDate(items: ExpandedItem[]) {
-    const groups: ExpandedItem[][] = Array.from({ length: 8 }, () => [])
+    const groups: ExpandedItem[][] = Array.from({ length: 20 }, () => [])
     const now = DateTime.now().setZone(timeZone)
 
     for (const item of items) {
-      const dt = DateTime.fromFormat(item.created.slice(0, -1), 'yyyy-MM-dd HH:mm:ss.SSS', {
+      const utcString = item.created.slice(0, -1)
+
+      const dt = DateTime.fromFormat(utcString, 'yyyy-MM-dd HH:mm:ss.SSS', {
         zone: 'utc',
       }).setZone(timeZone)
 
       const daysAgo = now.diff(dt, 'days').days
+
       if (daysAgo >= 6) {
-        groups[7].push(item)
+        const month = DateTime.fromFormat(utcString, 'yyyy-MM-dd HH:mm:ss.SSS', {
+          zone: 'utc',
+        }).setZone(timeZone).monthLong
+        groups[groupnames.indexOf(month!)].push(item)
       } else {
-        const utcString = item.created.slice(0, -1)
         const dayOfWeek = DateTime.fromFormat(utcString, 'yyyy-MM-dd HH:mm:ss.SSS', {
           zone: 'utc',
         }).setZone(timeZone).weekdayLong
@@ -131,10 +141,7 @@ export default function BacklogList({ items }: { items: ExpandedItem[] }) {
                           backgroundColor: c.olive2,
                         }}
                       />
-                      <Text
-                        style={{ color: c.white, fontSize: s.$1, flex: 1 }}
-                        numberOfLines={2}
-                      >
+                      <Text style={{ color: c.white, fontSize: s.$1, flex: 1 }} numberOfLines={2}>
                         {i.expand?.ref?.title?.trim()}
                       </Text>
                       {i.expand?.ref?.url && (

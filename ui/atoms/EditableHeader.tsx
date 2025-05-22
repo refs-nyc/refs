@@ -6,7 +6,7 @@ import { Heading } from '@/ui/typo/Heading'
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { s, c, t } from '@/features/style'
 import * as Clipboard from 'expo-clipboard'
-import { getLinkPreview, getPreviewFromContent } from 'link-preview-js'
+import { getLinkPreview } from 'link-preview-js'
 
 export const EditableHeader = ({
   title,
@@ -56,7 +56,12 @@ export const EditableHeader = ({
   }
 
   useEffect(() => {
-    console.log(titleState, imageState, urlState)
+    // make sure that if an image was uploaded, EditableHeader knows about it
+    // and won't overwrite it with an image from the url
+    if (image) setImageState(image)
+  }, [image])
+
+  useEffect(() => {
     onDataChange({ title: titleState, url: urlState, image: imageState })
   }, [titleState, imageState, urlState])
 
@@ -91,7 +96,7 @@ export const EditableHeader = ({
             style={{
               flexShrink: 1,
               flexDirection: 'row',
-              alignItems: 'start',
+              alignItems: 'flex-start',
             }}
           >
             <Pressable onPress={() => setEditing(true)}>
@@ -123,7 +128,6 @@ export const EditableHeader = ({
             value={titleState == placeholder ? '' : titleState}
             placeholder={placeholder}
             onChangeText={(e) => {
-              console.log('set title state', e)
               setTitleState(e)
             }}
             multiline={true}

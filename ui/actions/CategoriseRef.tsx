@@ -26,8 +26,6 @@ export const CategoriseRef = ({
   const [location, setLocation] = useState('')
   const [author, setAuthor] = useState('')
 
-  console.log('categorise ref with ID: ', existingRef.id)
-
   const done = async () => {
     if (!existingRef.id) return
 

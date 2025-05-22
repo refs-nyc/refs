@@ -70,7 +70,7 @@ export const NewRef = ({
   }
 
   const handleNewRefCreated = (item: ExpandedItem, addToList: boolean = false) => {
-    console.log('HANDLE NEW REF CREATED', item)
+    console.log('HANDLE NEW REF CREATED', item.expand.ref.title)
     if (!item.expand?.ref)
       throw new Error('unexpected: handleNewRefCreated should always be called with ExpandedItem')
     setItemData(item)

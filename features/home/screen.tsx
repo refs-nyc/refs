@@ -65,7 +65,7 @@ export function HomeScreen() {
   const { user } = useUserStore()
 
   useEffect(() => {
-    console.log('USER ON HOMESCREEN', user)
+    console.log('USER ON HOMESCREEN', user?.userName)
     console.log('Pocketbase auth store', pocketbase.authStore.isValid)
   }, [user, pocketbase])
 

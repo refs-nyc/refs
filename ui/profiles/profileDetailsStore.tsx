@@ -25,10 +25,7 @@ export const ProfileDetailsProvider = ({
 }) => {
   const profileDetailsStore = createStore<ProfileDetailsState>((set) => ({
     currentIndex: initialIndex,
-    setCurrentIndex: (newCurrentIndex) => {
-      console.log('setting new current index:', newCurrentIndex)
-      set({ currentIndex: newCurrentIndex })
-    },
+    setCurrentIndex: (newCurrentIndex) => set({ currentIndex: newCurrentIndex }),
     showContextMenu: false,
     setShowContextMenu: (newShowContextMenu) => set({ showContextMenu: newShowContextMenu }),
     isEditing: false,

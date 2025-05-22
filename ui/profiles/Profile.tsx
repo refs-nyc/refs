@@ -1,6 +1,5 @@
 import type { Item } from '@/features/pocketbase/stores/types'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { XStack, YStack } from '../core/Stacks'
+import { YStack } from '../core/Stacks'
 import { Button } from '../buttons/Button'
 import { Heading } from '../typo/Heading'
 import { NewRef } from '../actions/NewRef'
@@ -9,8 +8,8 @@ import { ProfileHeader } from './ProfileHeader'
 import { Grid } from '../grid/Grid'
 import { Sheet } from '../core/Sheets'
 import { useLocalSearchParams, router } from 'expo-router'
-import { useEffect, useState, useMemo, useRef } from 'react'
-import { View, Dimensions, Pressable, Text } from 'react-native'
+import { useEffect, useState, useRef } from 'react'
+import { View, Pressable, StyleSheet } from 'react-native'
 import { s, c } from '@/features/style'
 import { pocketbase, useUserStore, removeFromProfile, useItemStore } from '@/features/pocketbase'
 import { ShareIntent as ShareIntentType, useShareIntentContext } from 'expo-share-intent'
@@ -25,13 +24,12 @@ import { useMessageStore } from '@/features/pocketbase/stores/messages'
 import BacklogBottomSheet from './BacklogBottomSheet'
 import BacklogList from './BacklogList'
 import BottomSheet from '@gorhom/bottom-sheet'
-import { Ionicons } from '@expo/vector-icons'
 
 export const Profile = ({ userName }: { userName: string }) => {
   const { addingTo, removingId } = useLocalSearchParams()
   const { stopEditProfile } = useUIStore()
   const { hasShareIntent } = useShareIntentContext()
-  const { addSave } = useMessageStore()
+  const { saves, addSave } = useMessageStore()
 
   const [profile, setProfile] = useState<ProfileType>()
   const [gridItems, setGridItems] = useState<Item[]>([])
@@ -45,6 +43,8 @@ export const Profile = ({ userName }: { userName: string }) => {
 
   const { user } = useUserStore()
   const { remove, moveToBacklog } = useItemStore()
+
+  const inSaves = profile && saves.map(s=>s.expand.user.id).includes(profile.id)
 
   const setAddingTo = (str: string) => {
     router.setParams({ addingTo: str })
@@ -178,8 +178,9 @@ export const Profile = ({ userName }: { userName: string }) => {
                   addSave(profile.id, user?.id!)
                 }}
                 variant="whiteOutline"
-                title="Save"
-                style={{ paddingHorizontal: s.$0 }}
+                disabled={inSaves}
+                title={inSaves ? "Saved" : "Save"}
+                style={inSaves ? styles.saved : { paddingHorizontal: s.$0 } }
               />
             </View>
 
@@ -259,3 +260,12 @@ export const Profile = ({ userName }: { userName: string }) => {
     </>
   )
 }
+
+const styles = StyleSheet.create({
+  saved : {
+    borderWidth: 0,
+    backgroundColor: 'rgba(0,0,0,0.15)',
+    opacity: 0.5,
+    paddingHorizontal: 0,
+  }
+})

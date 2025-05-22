@@ -198,7 +198,8 @@ export const Details = ({
         ref={ref}
         mode="parallax"
         modeConfig={{
-          parallaxScrollingScale: 0.9,
+          parallaxScrollingScale: 0.99999,
+          parallaxScrollingOffset: 50,
         }}
         data={data as ExpandedItem[]}
         width={win.width}

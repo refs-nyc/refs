@@ -119,19 +119,6 @@ export const useItemStore = create<{
       throw e
     }
   },
-  removeFromList: async (id: string, ref: CompleteRef) => {
-    try {
-      const record = await pocketbase
-        .collection('items')
-        .update(id, { 'children-': ref.id, expand: 'children' })
-      await canvasApp.actions.removeItemFromList(id, ref)
-
-      return record
-    } catch (error) {
-      console.error(error)
-      throw error
-    }
-  },
   moveToBacklog: async (id: string) => {
     try {
       const record = await pocketbase.collection<ItemsRecord>('items').update(id, { backlog: true })

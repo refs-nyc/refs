@@ -322,7 +322,21 @@
       },
       {
         "autogeneratePattern": "",
-        "hidden": true,
+        "hidden": false,
+        "id": "text2481550892",
+        "max": 0,
+        "min": 0,
+        "name": "pushToken",
+        "pattern": "",
+        "presentable": false,
+        "primaryKey": false,
+        "required": false,
+        "system": false,
+        "type": "text"
+      },
+      {
+        "autogeneratePattern": "",
+        "hidden": false,
         "id": "text1587448267",
         "max": 0,
         "min": 0,
@@ -335,18 +349,28 @@
         "type": "text"
       },
       {
-        "autogeneratePattern": "",
-        "hidden": true,
-        "id": "text2646664628",
-        "max": 0,
-        "min": 0,
-        "name": "geolocation",
-        "pattern": "",
+        "hidden": false,
+        "id": "number2499937429",
+        "max": null,
+        "min": null,
+        "name": "lat",
+        "onlyInt": false,
         "presentable": false,
-        "primaryKey": false,
         "required": false,
         "system": false,
-        "type": "text"
+        "type": "number"
+      },
+      {
+        "hidden": false,
+        "id": "number4142125153",
+        "max": null,
+        "min": null,
+        "name": "lon",
+        "onlyInt": false,
+        "presentable": false,
+        "required": false,
+        "system": false,
+        "type": "number"
       },
       {
         "hidden": false,
@@ -440,6 +464,93 @@
       "subject": "Confirm your {APP_NAME} new email address",
       "body": "<p>Hello,</p>\n<p>Click on the button below to confirm your new email address.</p>\n<p>\n  <a class=\"btn\" href=\"{APP_URL}/_/#/auth/confirm-email-change/{TOKEN}\" target=\"_blank\" rel=\"noopener\">Confirm new email</a>\n</p>\n<p><i>If you didn't ask to change your email address, you can ignore this email.</i></p>\n<p>\n  Thanks,<br/>\n  {APP_NAME} team\n</p>"
     }
+  },
+  {
+    "id": "pbc_1964758410",
+    "listRule": "",
+    "viewRule": "",
+    "createRule": "",
+    "updateRule": "",
+    "deleteRule": null,
+    "name": "Signups",
+    "type": "base",
+    "fields": [
+      {
+        "autogeneratePattern": "[a-z0-9]{15}",
+        "hidden": false,
+        "id": "text3208210256",
+        "max": 15,
+        "min": 15,
+        "name": "id",
+        "pattern": "^[a-z0-9]+$",
+        "presentable": false,
+        "primaryKey": true,
+        "required": true,
+        "system": true,
+        "type": "text"
+      },
+      {
+        "exceptDomains": null,
+        "hidden": false,
+        "id": "email3885137012",
+        "name": "email",
+        "onlyDomains": null,
+        "presentable": false,
+        "required": false,
+        "system": false,
+        "type": "email"
+      },
+      {
+        "hidden": false,
+        "id": "select1789936913",
+        "maxSelect": 1,
+        "name": "os",
+        "presentable": false,
+        "required": false,
+        "system": false,
+        "type": "select",
+        "values": [
+          "android",
+          "ios"
+        ]
+      },
+      {
+        "autogeneratePattern": "",
+        "hidden": false,
+        "id": "text3414656994",
+        "max": 0,
+        "min": 0,
+        "name": "cell",
+        "pattern": "",
+        "presentable": false,
+        "primaryKey": false,
+        "required": false,
+        "system": false,
+        "type": "text"
+      },
+      {
+        "hidden": false,
+        "id": "autodate2990389176",
+        "name": "created",
+        "onCreate": true,
+        "onUpdate": false,
+        "presentable": false,
+        "system": false,
+        "type": "autodate"
+      },
+      {
+        "hidden": false,
+        "id": "autodate3332085495",
+        "name": "updated",
+        "onCreate": true,
+        "onUpdate": true,
+        "presentable": false,
+        "system": false,
+        "type": "autodate"
+      }
+    ],
+    "indexes": [],
+    "system": false
   },
   {
     "id": "pbc_4275539003",
@@ -838,12 +949,73 @@
     "system": true
   },
   {
-    "id": "pbc_3952703650",
-    "listRule": "",
-    "viewRule": "",
+    "id": "pbc_728114816",
+    "listRule": "@request.auth.id != \"\" &&\nmemberships_via_conversation.user ?= @request.auth.id",
+    "viewRule": "@request.auth.id != \"\" &&\nmemberships_via_conversation.user ?= @request.auth.id",
     "createRule": "",
     "updateRule": "",
     "deleteRule": "",
+    "name": "conversations",
+    "type": "base",
+    "fields": [
+      {
+        "autogeneratePattern": "[a-z0-9]{15}",
+        "hidden": false,
+        "id": "text3208210256",
+        "max": 15,
+        "min": 15,
+        "name": "id",
+        "pattern": "^[a-z0-9]+$",
+        "presentable": false,
+        "primaryKey": true,
+        "required": true,
+        "system": true,
+        "type": "text"
+      },
+      {
+        "hidden": false,
+        "id": "bool1885247633",
+        "name": "is_direct",
+        "presentable": false,
+        "required": false,
+        "system": false,
+        "type": "bool"
+      },
+      {
+        "autogeneratePattern": "",
+        "hidden": false,
+        "id": "text724990059",
+        "max": 0,
+        "min": 0,
+        "name": "title",
+        "pattern": "",
+        "presentable": false,
+        "primaryKey": false,
+        "required": false,
+        "system": false,
+        "type": "text"
+      },
+      {
+        "hidden": false,
+        "id": "autodate2990389176",
+        "name": "created",
+        "onCreate": true,
+        "onUpdate": false,
+        "presentable": false,
+        "system": false,
+        "type": "autodate"
+      }
+    ],
+    "indexes": [],
+    "system": false
+  },
+  {
+    "id": "pbc_3952703650",
+    "listRule": "",
+    "viewRule": "",
+    "createRule": "@request.auth.id != \"\" && \ncreator.id = @request.auth.id",
+    "updateRule": "@request.auth.id != \"\" && \ncreator.id = @request.auth.id",
+    "deleteRule": "@request.auth.id != \"\" && \ncreator.id = @request.auth.id",
     "name": "items",
     "type": "base",
     "fields": [
@@ -979,19 +1151,12 @@
       },
       {
         "hidden": false,
-        "id": "select2363381545",
-        "maxSelect": 1,
-        "name": "type",
+        "id": "bool1154021400",
+        "name": "list",
         "presentable": false,
         "required": false,
         "system": false,
-        "type": "select",
-        "values": [
-          "list",
-          "place",
-          "artwork",
-          "other"
-        ]
+        "type": "bool"
       },
       {
         "hidden": false,
@@ -1017,6 +1182,207 @@
         "hidden": false,
         "id": "autodate3946532403",
         "name": "deleted",
+        "onCreate": true,
+        "onUpdate": false,
+        "presentable": false,
+        "system": false,
+        "type": "autodate"
+      }
+    ],
+    "indexes": [],
+    "system": false
+  },
+  {
+    "id": "pbc_1990943746",
+    "listRule": "",
+    "viewRule": "",
+    "createRule": "@request.auth.id != \"\"",
+    "updateRule": "@request.auth.id != \"\" && user = @request.auth.id",
+    "deleteRule": null,
+    "name": "memberships",
+    "type": "base",
+    "fields": [
+      {
+        "autogeneratePattern": "[a-z0-9]{15}",
+        "hidden": false,
+        "id": "text3208210256",
+        "max": 15,
+        "min": 15,
+        "name": "id",
+        "pattern": "^[a-z0-9]+$",
+        "presentable": false,
+        "primaryKey": true,
+        "required": true,
+        "system": true,
+        "type": "text"
+      },
+      {
+        "cascadeDelete": false,
+        "collectionId": "pbc_728114816",
+        "hidden": false,
+        "id": "relation1542800728",
+        "maxSelect": 1,
+        "minSelect": 0,
+        "name": "conversation",
+        "presentable": false,
+        "required": true,
+        "system": false,
+        "type": "relation"
+      },
+      {
+        "cascadeDelete": false,
+        "collectionId": "_pb_users_auth_",
+        "hidden": false,
+        "id": "relation2134807182",
+        "maxSelect": 1,
+        "minSelect": 0,
+        "name": "user",
+        "presentable": false,
+        "required": true,
+        "system": false,
+        "type": "relation"
+      },
+      {
+        "hidden": false,
+        "id": "date243041595",
+        "max": "",
+        "min": "",
+        "name": "last_read",
+        "presentable": false,
+        "required": false,
+        "system": false,
+        "type": "date"
+      },
+      {
+        "hidden": false,
+        "id": "bool1639016958",
+        "name": "archived",
+        "presentable": false,
+        "required": false,
+        "system": false,
+        "type": "bool"
+      },
+      {
+        "hidden": false,
+        "id": "autodate2990389176",
+        "name": "created",
+        "onCreate": true,
+        "onUpdate": false,
+        "presentable": false,
+        "system": false,
+        "type": "autodate"
+      },
+      {
+        "hidden": false,
+        "id": "autodate3332085495",
+        "name": "updated",
+        "onCreate": true,
+        "onUpdate": true,
+        "presentable": false,
+        "system": false,
+        "type": "autodate"
+      }
+    ],
+    "indexes": [
+      "CREATE UNIQUE INDEX `idx_9de5yi6EEw` ON `memberships` (\n  `conversation`,\n  `user`\n)"
+    ],
+    "system": false
+  },
+  {
+    "id": "pbc_2605467279",
+    "listRule": "@request.auth.id != \"\" && \nconversation.memberships_via_conversation.user ?= @request.auth.id",
+    "viewRule": "@request.auth.id != \"\" && \nconversation.memberships_via_conversation.user ?= @request.auth.id",
+    "createRule": "@request.auth.id != \"\" && \nconversation.memberships_via_conversation.user ?= @request.auth.id",
+    "updateRule": null,
+    "deleteRule": null,
+    "name": "messages",
+    "type": "base",
+    "fields": [
+      {
+        "autogeneratePattern": "[a-z0-9]{15}",
+        "hidden": false,
+        "id": "text3208210256",
+        "max": 15,
+        "min": 15,
+        "name": "id",
+        "pattern": "^[a-z0-9]+$",
+        "presentable": false,
+        "primaryKey": true,
+        "required": true,
+        "system": true,
+        "type": "text"
+      },
+      {
+        "cascadeDelete": false,
+        "collectionId": "pbc_728114816",
+        "hidden": false,
+        "id": "relation2324571881",
+        "maxSelect": 1,
+        "minSelect": 0,
+        "name": "conversation",
+        "presentable": false,
+        "required": false,
+        "system": false,
+        "type": "relation"
+      },
+      {
+        "cascadeDelete": false,
+        "collectionId": "_pb_users_auth_",
+        "hidden": false,
+        "id": "relation1593854671",
+        "maxSelect": 1,
+        "minSelect": 0,
+        "name": "sender",
+        "presentable": false,
+        "required": true,
+        "system": false,
+        "type": "relation"
+      },
+      {
+        "autogeneratePattern": "",
+        "hidden": false,
+        "id": "text999008199",
+        "max": 0,
+        "min": 0,
+        "name": "text",
+        "pattern": "",
+        "presentable": false,
+        "primaryKey": false,
+        "required": false,
+        "system": false,
+        "type": "text"
+      },
+      {
+        "cascadeDelete": false,
+        "collectionId": "pbc_2605467279",
+        "hidden": false,
+        "id": "relation3392192000",
+        "maxSelect": 1,
+        "minSelect": 0,
+        "name": "replying_to",
+        "presentable": false,
+        "required": false,
+        "system": false,
+        "type": "relation"
+      },
+      {
+        "autogeneratePattern": "",
+        "hidden": false,
+        "id": "text3309110367",
+        "max": 0,
+        "min": 0,
+        "name": "image",
+        "pattern": "",
+        "presentable": false,
+        "primaryKey": false,
+        "required": false,
+        "system": false,
+        "type": "text"
+      },
+      {
+        "hidden": false,
+        "id": "autodate2990389176",
+        "name": "created",
         "onCreate": true,
         "onUpdate": false,
         "presentable": false,
@@ -1173,6 +1539,96 @@
     "system": false
   },
   {
+    "id": "pbc_1549310251",
+    "listRule": "@request.auth.id != '' &&\nmessage.conversation.memberships_via_conversation.user ?= @request.auth.id",
+    "viewRule": "@request.auth.id != '' &&\nmessage.conversation.memberships_via_conversation.user ?= @request.auth.id",
+    "createRule": "@request.auth.id != '' &&\nmessage.conversation.memberships_via_conversation.user ?= @request.auth.id &&\n@request.auth.id = user",
+    "updateRule": "@request.auth.id = user",
+    "deleteRule": "@request.auth.id = user",
+    "name": "reactions",
+    "type": "base",
+    "fields": [
+      {
+        "autogeneratePattern": "[a-z0-9]{15}",
+        "hidden": false,
+        "id": "text3208210256",
+        "max": 15,
+        "min": 15,
+        "name": "id",
+        "pattern": "^[a-z0-9]+$",
+        "presentable": false,
+        "primaryKey": true,
+        "required": true,
+        "system": true,
+        "type": "text"
+      },
+      {
+        "autogeneratePattern": "",
+        "hidden": false,
+        "id": "text3058431538",
+        "max": 0,
+        "min": 0,
+        "name": "emoji",
+        "pattern": "",
+        "presentable": false,
+        "primaryKey": false,
+        "required": true,
+        "system": false,
+        "type": "text"
+      },
+      {
+        "cascadeDelete": false,
+        "collectionId": "pbc_2605467279",
+        "hidden": false,
+        "id": "relation3065852031",
+        "maxSelect": 1,
+        "minSelect": 0,
+        "name": "message",
+        "presentable": false,
+        "required": true,
+        "system": false,
+        "type": "relation"
+      },
+      {
+        "cascadeDelete": false,
+        "collectionId": "_pb_users_auth_",
+        "hidden": false,
+        "id": "relation2375276105",
+        "maxSelect": 1,
+        "minSelect": 0,
+        "name": "user",
+        "presentable": false,
+        "required": true,
+        "system": false,
+        "type": "relation"
+      },
+      {
+        "hidden": false,
+        "id": "autodate2990389176",
+        "name": "created",
+        "onCreate": true,
+        "onUpdate": false,
+        "presentable": false,
+        "system": false,
+        "type": "autodate"
+      },
+      {
+        "hidden": false,
+        "id": "autodate3332085495",
+        "name": "updated",
+        "onCreate": true,
+        "onUpdate": true,
+        "presentable": false,
+        "system": false,
+        "type": "autodate"
+      }
+    ],
+    "indexes": [
+      "CREATE UNIQUE INDEX `idx_qJqiGB3uHs` ON `reactions` (\n  `message`,\n  `user`\n)"
+    ],
+    "system": false
+  },
+  {
     "id": "pbc_1942500823",
     "listRule": "",
     "viewRule": "",
@@ -1253,6 +1709,46 @@
       },
       {
         "hidden": false,
+        "id": "select2363381545",
+        "maxSelect": 1,
+        "name": "type",
+        "presentable": false,
+        "required": false,
+        "system": false,
+        "type": "select",
+        "values": [
+          "place",
+          "artwork",
+          "other"
+        ]
+      },
+      {
+        "autogeneratePattern": "",
+        "hidden": false,
+        "id": "text3622966325",
+        "max": 0,
+        "min": 0,
+        "name": "meta",
+        "pattern": "",
+        "presentable": false,
+        "primaryKey": false,
+        "required": false,
+        "system": false,
+        "type": "text"
+      },
+      {
+        "exceptDomains": null,
+        "hidden": false,
+        "id": "url4101391790",
+        "name": "url",
+        "onlyDomains": null,
+        "presentable": false,
+        "required": false,
+        "system": false,
+        "type": "url"
+      },
+      {
+        "hidden": false,
         "id": "autodate2990389176",
         "name": "created",
         "onCreate": true,
@@ -1277,6 +1773,130 @@
         "name": "deleted",
         "onCreate": true,
         "onUpdate": false,
+        "presentable": false,
+        "system": false,
+        "type": "autodate"
+      }
+    ],
+    "indexes": [],
+    "system": false
+  },
+  {
+    "id": "pbc_2977359881",
+    "listRule": "@request.auth.id != \"\" &&\n@request.auth.id = saved_by",
+    "viewRule": "@request.auth.id != \"\" &&\n@request.auth.id = saved_by",
+    "createRule": "@request.auth.id != \"\" &&\n@request.auth.id = saved_by",
+    "updateRule": "@request.auth.id != \"\" &&\n@request.auth.id = saved_by",
+    "deleteRule": "@request.auth.id != \"\" &&\n@request.auth.id = saved_by",
+    "name": "saves",
+    "type": "base",
+    "fields": [
+      {
+        "autogeneratePattern": "[a-z0-9]{15}",
+        "hidden": false,
+        "id": "text3208210256",
+        "max": 15,
+        "min": 15,
+        "name": "id",
+        "pattern": "^[a-z0-9]+$",
+        "presentable": false,
+        "primaryKey": true,
+        "required": true,
+        "system": true,
+        "type": "text"
+      },
+      {
+        "cascadeDelete": false,
+        "collectionId": "_pb_users_auth_",
+        "hidden": false,
+        "id": "relation1260638670",
+        "maxSelect": 1,
+        "minSelect": 0,
+        "name": "saved_by",
+        "presentable": false,
+        "required": true,
+        "system": false,
+        "type": "relation"
+      },
+      {
+        "cascadeDelete": false,
+        "collectionId": "_pb_users_auth_",
+        "hidden": false,
+        "id": "relation2375276105",
+        "maxSelect": 1,
+        "minSelect": 0,
+        "name": "user",
+        "presentable": false,
+        "required": true,
+        "system": false,
+        "type": "relation"
+      },
+      {
+        "hidden": false,
+        "id": "autodate2990389176",
+        "name": "created",
+        "onCreate": true,
+        "onUpdate": false,
+        "presentable": false,
+        "system": false,
+        "type": "autodate"
+      },
+      {
+        "hidden": false,
+        "id": "autodate3332085495",
+        "name": "updated",
+        "onCreate": true,
+        "onUpdate": true,
+        "presentable": false,
+        "system": false,
+        "type": "autodate"
+      }
+    ],
+    "indexes": [
+      "CREATE UNIQUE INDEX `idx_nzWX7Pv51V` ON `saves` (\n  `saved_by`,\n  `user`\n)"
+    ],
+    "system": false
+  },
+  {
+    "id": "pbc_4285667772",
+    "listRule": "",
+    "viewRule": "",
+    "createRule": "",
+    "updateRule": "",
+    "deleteRule": "",
+    "name": "test",
+    "type": "base",
+    "fields": [
+      {
+        "autogeneratePattern": "[a-z0-9]{15}",
+        "hidden": false,
+        "id": "text3208210256",
+        "max": 15,
+        "min": 15,
+        "name": "id",
+        "pattern": "^[a-z0-9]+$",
+        "presentable": false,
+        "primaryKey": true,
+        "required": true,
+        "system": true,
+        "type": "text"
+      },
+      {
+        "hidden": false,
+        "id": "autodate2990389176",
+        "name": "created",
+        "onCreate": true,
+        "onUpdate": false,
+        "presentable": false,
+        "system": false,
+        "type": "autodate"
+      },
+      {
+        "hidden": false,
+        "id": "autodate3332085495",
+        "name": "updated",
+        "onCreate": true,
+        "onUpdate": true,
         "presentable": false,
         "system": false,
         "type": "autodate"

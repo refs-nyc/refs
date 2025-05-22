@@ -2,13 +2,17 @@ import { useEffect, useState } from 'react'
 import { pocketbase } from '@/features/pocketbase'
 import { ExpandedProfile } from '@/features/pocketbase/stores/types'
 import { Details } from '@/ui'
+import { ProfileDetailsProvider } from '@/ui/profiles/profileDetailsStore'
+import { gridSort } from '@/ui/profiles/sorts'
 
 export function UserDetailsScreen({
   userName,
   initialId,
+  openedFromFeed,
 }: {
   userName: string
   initialId: string
+  openedFromFeed: boolean
 }) {
   const [profile, setProfile] = useState<ExpandedProfile | null>(null)
 
@@ -27,16 +31,20 @@ export function UserDetailsScreen({
 
   const editingRights = pocketbase?.authStore?.record?.userName === userName
 
-  return (
-    <>
-      {profile && 'id' in profile && (
-        <Details
-          key={initialId}
-          profile={profile}
-          editingRights={editingRights}
-          initialId={initialId}
-        ></Details>
-      )}
-    </>
-  )
+  if (profile && 'id' in profile) {
+    const data = [...profile.expand.items].filter((itm) => !itm.backlog).sort(gridSort)
+
+    const initialIndex = Math.max(
+      0,
+      data.findIndex((itm) => itm.id === initialId)
+    )
+
+    return (
+      <ProfileDetailsProvider initialIndex={initialIndex} openedFromFeed={openedFromFeed}>
+        <Details profile={profile} data={data} editingRights={editingRights} />
+      </ProfileDetailsProvider>
+    )
+  } else {
+    return null
+  }
 }

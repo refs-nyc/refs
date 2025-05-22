@@ -1,19 +1,23 @@
-import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react' // Import useCallback, useMemo
+import React, { useRef, useCallback, useMemo, useContext, useState } from 'react'
 import { useRouter } from 'expo-router'
-import { View, Dimensions, Pressable, ViewStyle } from 'react-native'
+import { View, Dimensions, Pressable, Text, ViewStyle } from 'react-native'
 import Carousel, { ICarouselInstance } from 'react-native-reanimated-carousel'
 import { c, s } from '@/features/style'
-import { gridSort } from './sorts'
 import { useItemStore } from '@/features/pocketbase/stores/items'
 import { SearchRef } from '../actions/SearchRef'
 import { EditableList } from '../lists/EditableList'
 import { Sheet, SheetScreen } from '../core/Sheets'
 import { ExpandedItem, ExpandedProfile } from '@/features/pocketbase/stores/types'
-import { EditableItem } from './EditableItem' // Assuming EditableItem is memoized
+import { EditableItem } from './EditableItem'
 import { GridLines } from '../display/Gridlines'
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet'
 import { MeatballMenu, Checkbox } from '../atoms/MeatballMenu'
 import { useUIStore } from '@/ui/state'
+import { ProfileDetailsContext } from './profileDetailsStore'
+import { useStore } from 'zustand'
+import { ItemsRecord } from '@/features/pocketbase/stores/pocketbase-types'
+import { XStack } from '@/ui/core/Stacks'
+import { Avatar } from '../atoms/Avatar'
 
 const win = Dimensions.get('window')
 
@@ -28,43 +32,55 @@ const ConditionalGridLines = React.memo(() => {
 })
 ConditionalGridLines.displayName = 'ConditionalGridLines'
 
-const DetailsHeaderButton = React.memo(({ item }: { item: ExpandedItem }) => {
-  const editing = useItemStore((state) => state.editing)
-  const update = useItemStore((state) => state.update)
-  const stopEditing = useItemStore((state) => state.stopEditing)
-  const { setShowContextMenu } = useUIStore()
+const DetailsHeaderButton = () => {
+  const profileDetailsStore = useContext(ProfileDetailsContext)
+  const showContextMenu = useStore(profileDetailsStore, (state) => state.showContextMenu)
+  const setShowContextMenu = useStore(profileDetailsStore, (state) => state.setShowContextMenu)
 
   return (
-    <Pressable
-      style={{
-        width: '100%',
-        zIndex: 99,
-        padding: s.$2,
-        alignItems: 'flex-end',
-        top: s.$4,
-      }}
+    <MeatballMenu
       onPress={() => {
-        setShowContextMenu('')
+        setShowContextMenu(!showContextMenu)
+      }}
+    />
+  )
+}
+DetailsHeaderButton.displayName = 'DetailsHeaderButton'
+
+const ApplyChangesButton = () => {
+  const update = useItemStore((state) => state.update)
+  const stopEditing = useItemStore((state) => state.stopEditing)
+
+  return (
+    <Checkbox
+      onPress={async () => {
+        await update()
+        stopEditing()
+      }}
+    />
+  )
+}
+ApplyChangesButton.displayName = 'ApplyChangesButton'
+
+const ProfileLabel = ({ profile }: { profile: ExpandedProfile }) => {
+  const router = useRouter()
+  return (
+    <Pressable
+      onPress={() => {
+        router.replace(`/user/${profile.userName}`)
       }}
     >
-      {editing !== '' ? (
-        <Checkbox
-          onPress={async () => {
-            await update()
-            stopEditing()
-          }}
-        />
-      ) : (
-        <MeatballMenu
-          onPress={() => {
-            setShowContextMenu(item.id)
-          }}
-        />
-      )}
+      <XStack style={{ alignItems: 'center' }} gap={s.$075}>
+        {/* show user avatar and name */}
+        <Text style={{ fontSize: s.$1, fontWeight: 500, opacity: 0.6, color: c.muted }}>
+          {profile.firstName}
+        </Text>
+        <Avatar size={s.$1} source={profile.image} />
+      </XStack>
     </Pressable>
   )
-})
-DetailsHeaderButton.displayName = 'DetailsHeaderButton'
+}
+ProfileLabel.displayName = 'ProfileLabel'
 
 // --- Main Components ---
 
@@ -77,8 +93,11 @@ export const renderItem = ({
   editingRights?: boolean
   index?: number
 }) => {
-  const { searchingNewRef, updateEditedState, setSearchingNewRef, update, items } = useItemStore()
-  const [currentItem, setCurrentItem] = useState(item)
+  const { searchingNewRef, updateEditedState, setSearchingNewRef, update } = useItemStore()
+  const profileDetailsStore = useContext(ProfileDetailsContext)
+  const { currentIndex } = useStore(profileDetailsStore)
+
+  const [currentItem, setCurrentItem] = useState<ExpandedItem>(item)
 
   return (
     <View
@@ -96,11 +115,10 @@ export const renderItem = ({
         keyboardShouldPersistTaps="handled"
         nestedScrollEnabled={true}
       >
-        <DetailsHeaderButton item={currentItem} />
         <EditableItem item={currentItem} editingRights={editingRights} index={index} />
       </BottomSheetScrollView>
 
-      {searchingNewRef && (
+      {searchingNewRef && currentIndex == index && (
         <Sheet
           keyboardShouldPersistTaps="always"
           onClose={() => {
@@ -118,7 +136,7 @@ export const renderItem = ({
                 ref: e.id,
               })
               const newRecord = await update()
-              setCurrentItem(newRecord)
+              setCurrentItem(newRecord as ExpandedItem)
               setSearchingNewRef('')
             }}
           />
@@ -130,44 +148,26 @@ export const renderItem = ({
 
 export const Details = ({
   profile,
+  data,
   editingRights = false,
-  initialId,
 }: {
   profile: ExpandedProfile
+  data: ItemsRecord[]
   editingRights?: boolean
-  initialId: string
 }) => {
   const router = useRouter()
   const ref = useRef<ICarouselInstance>(null)
 
-  const { addingToList, setAddingToList, addingItem, setShowContextMenu } = useUIStore()
-  const { stopEditing, update, editing: editingId } = useItemStore()
+  const profileDetailsStore = useContext(ProfileDetailsContext)
+  const setShowContextMenu = useStore(profileDetailsStore, (state) => state.setShowContextMenu)
+  const setCurrentIndex = useStore(profileDetailsStore, (state) => state.setCurrentIndex)
+  const currentIndex = useStore(profileDetailsStore, (state) => state.currentIndex)
+  const openedFromFeed = useStore(profileDetailsStore, (state) => state.openedFromFeed)
 
-  const data = useMemo(
-    () => [...profile.expand.items].filter((itm) => !itm.backlog).sort(gridSort),
-    [profile]
-  )
+  const editing = useItemStore((state) => state.editing)
 
-  const index = useMemo(() => {
-    return Math.max(
-      0,
-      data.findIndex((itm) => itm.id === initialId)
-    )
-  }, [data, initialId])
-
-  useEffect(() => {
-    if (ref.current && data.length > 0) {
-      if (index >= 0 && index < data.length) {
-        // Check if component is mounted and index is valid before scrolling
-        try {
-          ref.current?.scrollTo({ index: index, animated: false })
-        } catch (error) {
-          console.error('Error scrolling carousel:', error)
-        }
-      }
-    }
-    // Add ref.current to dependencies? Usually not needed unless the ref itself changes identity.
-  }, [data, index])
+  const { addingToList, setAddingToList, addingItem } = useUIStore()
+  const { stopEditing, update } = useItemStore()
 
   const handleConfigurePanGesture = useCallback((gesture: any) => {
     'worklet'
@@ -180,17 +180,6 @@ export const Details = ({
     await update()
     stopEditing()
   }, [setAddingToList])
-
-  const carouselStyle = useMemo<{
-    overflow: ViewStyle['overflow']
-    paddingVertical: number
-  }>(
-    () => ({
-      overflow: 'visible',
-      paddingVertical: win.height * 0.2, // Consider making this dynamic based on header/insets
-    }),
-    []
-  )
 
   const carouselRenderItem = useCallback(
     ({ item, index: carouselIndex }: { item: ExpandedItem; index: number }) => {
@@ -205,22 +194,53 @@ export const Details = ({
         e === -1 && router.back()
         e === -1 && stopEditing()
       }}
-      snapPoints={['100%']}
-      maxDynamicContentSize={'100%'}
+      snapPoints={openedFromFeed ? ['90%'] : ['100%']}
+      maxDynamicContentSize={openedFromFeed ? '90%' : '100%'}
     >
       <ConditionalGridLines />
+
+      {openedFromFeed ? (
+        <>
+          <View style={{ paddingLeft: s.$3, paddingTop: s.$2, paddingBottom: s.$05 }}>
+            <ProfileLabel profile={profile} />
+          </View>
+          <View style={{ position: 'absolute', right: s.$3, top: s.$2, zIndex: 99 }}>
+            {editing && <ApplyChangesButton />}
+          </View>
+        </>
+      ) : (
+        <View
+          style={{
+            paddingLeft: s.$3,
+            paddingRight: s.$3,
+            paddingTop: s.$6,
+            paddingBottom: s.$1,
+            display: 'flex',
+            flexDirection: 'row',
+            justifyContent: 'flex-end',
+          }}
+        >
+          {editing ? <ApplyChangesButton /> : <DetailsHeaderButton />}
+        </View>
+      )}
 
       <Carousel
         loop={data.length > 1}
         ref={ref}
+        mode="parallax"
+        modeConfig={{
+          parallaxScrollingScale: 0.99999,
+          parallaxScrollingOffset: 50,
+        }}
+        containerStyle={{ padding: 0 }}
         data={data as ExpandedItem[]}
         width={win.width}
         height={win.height}
-        style={carouselStyle}
-        defaultIndex={index}
+        defaultIndex={currentIndex}
         onSnapToItem={(index) => {
+          setCurrentIndex(index)
           stopEditing()
-          setShowContextMenu('')
+          setShowContextMenu(false)
         }}
         onConfigurePanGesture={handleConfigurePanGesture}
         renderItem={carouselRenderItem}

@@ -30,9 +30,16 @@ import { RegisterPushNotifications } from '@/ui/notifications/RegisterPushNotifi
 import { MessagesInit } from '@/features/messaging/message-loader'
 import { useUserStore } from '@/features/pocketbase/stores/users'
 
+import { LogBox } from 'react-native'
+
 install()
 polyfillEncoding()
 configureReanimatedLogger({ strict: false })
+
+// TODO: this error keeps getting thrown whenever the app fast reloads in development
+// I suspect that pocketbase subscribes to updates and then doesn't unsubscribe when the app is being reloaded
+// Ignoring these error messages for now
+LogBox.ignoreLogs(['ClientResponseError 404'])
 
 export {
   // Catch any errors thrown by the Layout component.

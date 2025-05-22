@@ -97,7 +97,7 @@ export const EditableItem = ({
   }, [editingThisItem])
 
   return (
-    <KeyboardAvoidingView behavior={'position'}>
+    <KeyboardAvoidingView behavior={'position'} keyboardVerticalOffset={120}>
       <Pressable
         style={{
           gap: s.$09,

@@ -4,7 +4,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router'
 
 export default function ModalScreen() {
   const { user } = useUserStore()
-  const { userName, initialId } = useLocalSearchParams()
+  const { userName, initialId, openedFromFeed } = useLocalSearchParams()
 
   // Only show the modal if the user is logged in
   const router = useRouter()
@@ -16,5 +16,11 @@ export default function ModalScreen() {
 
   const initialIdParam = typeof initialId === 'string' ? initialId : initialId?.[0]
 
-  return <UserDetailsScreen userName={userName as string} initialId={initialIdParam} />
+  return (
+    <UserDetailsScreen
+      userName={userName as string}
+      initialId={initialIdParam}
+      openedFromFeed={!!openedFromFeed}
+    />
+  )
 }

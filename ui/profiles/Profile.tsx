@@ -29,7 +29,7 @@ import { Ionicons } from '@expo/vector-icons'
 
 export const Profile = ({ userName }: { userName: string }) => {
   const { addingTo, removingId } = useLocalSearchParams()
-  const { stopEditProfile, stopEditBacklog, startEditBacklog } = useUIStore()
+  const { stopEditProfile } = useUIStore()
   const { hasShareIntent } = useShareIntentContext()
   const { addSave } = useMessageStore()
 

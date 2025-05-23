@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react'
-import { pocketbase, useItemStore } from '@/features/pocketbase'
+import { pocketbase } from '@/features/pocketbase'
 import { ExpandedProfile } from '@/features/pocketbase/stores/types'
 import { Details } from '@/ui'
 import { ProfileDetailsProvider } from '@/ui/profiles/profileDetailsStore'
-import { ItemsRecord } from '../pocketbase/stores/pocketbase-types'
+import { ItemsRecord } from '@/features/pocketbase/stores/pocketbase-types'
+import { getProfileItems } from '@/features/pocketbase/stores/items'
 
 export function UserDetailsScreen({
   userName,
@@ -16,7 +17,6 @@ export function UserDetailsScreen({
 }) {
   const [profile, setProfile] = useState<ExpandedProfile | null>(null)
   const [items, setItems] = useState<ItemsRecord[]>([])
-  const getProfileItems = useItemStore((state) => state.getProfileItems)
 
   useEffect(() => {
     const getProfileAsync = async () => {

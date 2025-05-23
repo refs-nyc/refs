@@ -13,7 +13,7 @@ import { c, s } from '@/features/style'
 import BottomSheet, { BottomSheetBackdrop } from '@gorhom/bottom-sheet'
 import { router, useLocalSearchParams } from 'expo-router'
 import { ShareIntent as ShareIntentType, useShareIntentContext } from 'expo-share-intent'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Pressable, View } from 'react-native'
 import { Button } from '../buttons/Button'
 import { YStack } from '../core/Stacks'
@@ -86,7 +86,6 @@ export const Profile = ({ userName }: { userName: string }) => {
   }, [userName])
 
   const { animatedIndex } = useBackdropStore()
-  // const { setAppearsOnIndex, setDisappearsOnIndex, setMaxOpacity } = useBackdropStore()
 
   const bottomSheetRef = useRef<BottomSheet>(null)
   const [index, setIndex] = useState(0)
@@ -115,46 +114,33 @@ export const Profile = ({ userName }: { userName: string }) => {
   const isMinimised = ownProfile && index === 0
   const HANDLE_HEIGHT = s.$2
 
-  let view:
-    | 'my_backlog'
-    | 'other_backlog'
-    | 'other_buttons'
-    | 'removing'
-    | 'adding_to_grid'
-    | 'adding_to_backlog' = 'my_backlog'
-
-  let snapPoints: (number | string)[]
-  if (ownProfile) {
-    if (removingId) {
-      view = 'removing'
-      snapPoints = ['50%']
-    } else if (addingTo === 'grid') {
-      view = 'adding_to_grid'
-      if (step === '') {
-        snapPoints = ['1%', '30%']
+  let { view, snapPoints } = useMemo(() => {
+    if (ownProfile) {
+      if (removingId) {
+        return { view: 'removing', snapPoints: ['1%', '25%'] }
+      } else if (addingTo === 'grid') {
+        if (step === '') {
+          return { view: 'adding_to_grid', snapPoints: ['1%', '30%', '90%'] }
+        } else {
+          return { view: 'adding_to_grid', snapPoints: ['1%', '90%'] }
+        }
+      } else if (addingTo === 'backlog') {
+        if (step === '') {
+          return { view: 'adding_to_backlog', snapPoints: ['1%', '30%', '90%'] }
+        } else {
+          return { view: 'adding_to_backlog', snapPoints: ['1%', '90%'] }
+        }
       } else {
-        snapPoints = ['1%', '90%']
-      }
-    } else if (addingTo === 'backlog') {
-      view = 'adding_to_backlog'
-      if (step === '') {
-        snapPoints = ['1%', '30%']
-      } else {
-        snapPoints = ['1%', '90%']
+        return { view: 'my_backlog', snapPoints: ['15%'] }
       }
     } else {
-      view = 'my_backlog'
-      snapPoints = ['50%']
+      if (openOtherUsersBacklog) {
+        return { view: 'other_backlog', snapPoints: ['50%'] }
+      } else {
+        return { view: 'other_buttons', snapPoints: ['50%'] }
+      }
     }
-  } else {
-    if (openOtherUsersBacklog) {
-      view = 'other_backlog'
-      snapPoints = ['50%']
-    } else {
-      view = 'other_buttons'
-      snapPoints = ['50%']
-    }
-  }
+  }, [ownProfile, removingId, addingTo, openOtherUsersBacklog])
 
   return (
     <>
@@ -180,7 +166,10 @@ export const Profile = ({ userName }: { userName: string }) => {
             <View style={{ gap: s.$2 }}>
               <Grid
                 editingRights={editingRights}
-                onRemoveItem={setRemovingId}
+                onRemoveItem={(id) => {
+                  setRemovingId(id)
+                  setIndex(1)
+                }}
                 onAddItem={() => {
                   setAddingTo('grid')
                   setIndex(1)
@@ -198,17 +187,19 @@ export const Profile = ({ userName }: { userName: string }) => {
       {profile && (
         <BottomSheet
           animatedIndex={animatedIndex}
-          enableDynamicSizing={false}
+          enableDynamicSizing={true}
           ref={bottomSheetRef}
+          enablePanDownToClose={false}
           index={index}
-          enablePanDownToClose={!ownProfile}
           snapPoints={snapPoints}
           onChange={(i: number) => {
-            if (i === 0 && addingTo !== '') {
+            setIndex(i)
+            if (i === 0 && addingTo) {
               setAddingTo('')
             }
-
-            setIndex(i)
+            if (i === 0 && removingId) {
+              setRemovingId('')
+            }
           }}
           backgroundStyle={{ backgroundColor: c.olive, borderRadius: s.$4, paddingTop: 0 }}
           backdropComponent={(p) => (
@@ -269,7 +260,6 @@ export const Profile = ({ userName }: { userName: string }) => {
                     <View style={{ height: 1, flex: 1, backgroundColor: c.white }}></View>
                     <Pressable
                       onPress={() => {
-                        bottomSheetRef.current?.collapse()
                         setAddingTo('backlog')
                         setIndex(1)
                       }}
@@ -290,7 +280,7 @@ export const Profile = ({ userName }: { userName: string }) => {
               <BacklogList items={backlogItems.toReversed()} ownProfile={profile.id === user?.id} />
             </>
           ) : view === 'other_buttons' ? (
-            <>
+            <XStack>
               <View style={{ height: s.$4, width: s.$10 }}>
                 <DMButton profile={profile} style={{ paddingHorizontal: s.$0 }} />
               </View>
@@ -313,7 +303,7 @@ export const Profile = ({ userName }: { userName: string }) => {
                   style={{ paddingHorizontal: s.$0 }}
                 />
               </View>
-            </>
+            </XStack>
           ) : view === 'removing' ? (
             <>
               <YStack gap={s.$08} style={{ marginTop: s.$1, marginBottom: s.$5 }}>

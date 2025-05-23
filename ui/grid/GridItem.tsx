@@ -16,16 +16,17 @@ export const GridItem = ({
   i: number
   onPress?: () => {}
 }) => {
+  const image = item.expand.ref?.image || item.image
   return (
     <>
       {item && (
         <>
-          {item.list || !item?.expand?.ref?.image ? (
+          {item.list || !image ? (
             <Text numberOfLines={3} style={{ textAlign: 'center', padding: s.$08 }}>
               {item?.expand?.ref?.title}
             </Text>
           ) : (
-            <GridTileImage key={item.id} source={item.expand.ref.image} />
+            <GridTileImage key={item.id} source={image} />
           )}
         </>
       )}

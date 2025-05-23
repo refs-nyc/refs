@@ -36,7 +36,7 @@ export const Grid = ({
           onRemove={() => {
             if (onRemoveItem) onRemoveItem(item.id)
           }}
-          type={item.list ? 'list' : item.expand.ref?.image ? 'image' : 'text'}
+          type={item.list ? 'list' : item.expand.ref?.image || item.image ? 'image' : 'text'}
         >
           <GridItem item={item} i={i} />
         </GridTileWrapper>

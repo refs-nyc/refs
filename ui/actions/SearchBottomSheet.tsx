@@ -16,7 +16,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { router, useNavigation } from 'expo-router'
 import { Sheet } from '../core/Sheets'
 import { NewRef, NewRefStep } from './NewRef'
-import { useBackdropStore } from '@/features/style/backdrop'
+import { useBackdropStore } from '@/features/pocketbase/stores/backdrop'
 
 const HEADER_HEIGHT = s.$8
 

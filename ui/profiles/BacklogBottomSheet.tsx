@@ -8,7 +8,7 @@ import { Ionicons } from '@expo/vector-icons'
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated'
 import { Profile } from '@/features/pocketbase/stores/types'
 import { useUserStore } from '@/features/pocketbase'
-import { useBackdropStore } from '@/features/style/backdrop'
+import { useBackdropStore } from '@/features/pocketbase/stores/backdrop'
 import { useNavigation } from 'expo-router'
 
 export default function BacklogBottomSheet({

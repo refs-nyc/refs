@@ -45,7 +45,7 @@ export const useItemStore = create<{
   removeFromList: (id: string, ref: CompleteRef) => Promise<Item>
   update: (id?: string) => Promise<RecordModel>
   updateEditedState: (e: Partial<ExpandedItem>) => void
-  remove: (id: string) => void
+  remove: (id: string) => Promise<void>
   moveToBacklog: (id: string) => Promise<ItemsRecord>
 }>((set, get) => ({
   items: [],
@@ -88,7 +88,7 @@ export const useItemStore = create<{
       throw error
     }
   },
-  remove: async (id: string) => {
+  remove: async (id: string): Promise<void> => {
     await pocketbase.collection('items').delete(id)
     await canvasApp.actions.removeItem(id)
 
@@ -141,7 +141,7 @@ export const useItemStore = create<{
   moveToBacklog: async (id: string) => {
     try {
       const record = await pocketbase.collection<ItemsRecord>('items').update(id, { backlog: true })
-      await canvasApp.actions.moveItemToBacklog(id)
+      //await canvasApp.actions.moveItemToBacklog(id)
 
       return record
     } catch (error) {

@@ -68,7 +68,7 @@ export const Profile = ({ userName }: { userName: string }) => {
   useEffect(() => {
     if (hasShareIntent) {
       setAddingTo(gridItems.length < 12 ? 'grid' : 'backlog')
-      setIndex(1)
+      bottomSheetRef.current?.snapToIndex(1)
     }
   }, [hasShareIntent])
 
@@ -119,25 +119,17 @@ export const Profile = ({ userName }: { userName: string }) => {
       if (removingId) {
         return { view: 'removing', snapPoints: ['1%', '25%'] }
       } else if (addingTo === 'grid') {
-        if (step === '') {
-          return { view: 'adding_to_grid', snapPoints: ['1%', '30%', '90%'] }
-        } else {
-          return { view: 'adding_to_grid', snapPoints: ['1%', '90%'] }
-        }
+        return { view: 'adding_to_grid', snapPoints: ['1%', '30%', '90%'] }
       } else if (addingTo === 'backlog') {
-        if (step === '') {
-          return { view: 'adding_to_backlog', snapPoints: ['1%', '30%', '90%'] }
-        } else {
-          return { view: 'adding_to_backlog', snapPoints: ['1%', '90%'] }
-        }
+        return { view: 'adding_to_backlog', snapPoints: ['1%', '30%', '90%'] }
       } else {
-        return { view: 'my_backlog', snapPoints: ['15%'] }
+        return { view: 'my_backlog', snapPoints: ['15%', '90%'] }
       }
     } else {
       if (openOtherUsersBacklog) {
-        return { view: 'other_backlog', snapPoints: ['50%'] }
+        return { view: 'other_backlog', snapPoints: ['1%', '50%', '90%'] }
       } else {
-        return { view: 'other_buttons', snapPoints: ['50%'] }
+        return { view: 'other_buttons', snapPoints: ['15%'] }
       }
     }
   }, [ownProfile, removingId, addingTo, openOtherUsersBacklog])
@@ -168,11 +160,11 @@ export const Profile = ({ userName }: { userName: string }) => {
                 editingRights={editingRights}
                 onRemoveItem={(id) => {
                   setRemovingId(id)
-                  setIndex(1)
+                  bottomSheetRef.current?.snapToIndex(1)
                 }}
                 onAddItem={() => {
                   setAddingTo('grid')
-                  setIndex(1)
+                  bottomSheetRef.current?.snapToIndex(1)
                 }}
                 columns={3}
                 items={gridItems}
@@ -186,19 +178,24 @@ export const Profile = ({ userName }: { userName: string }) => {
       </YStack>
       {profile && (
         <BottomSheet
-          animatedIndex={animatedIndex}
-          enableDynamicSizing={true}
+          enableDynamicSizing={false}
           ref={bottomSheetRef}
           enablePanDownToClose={false}
-          index={index}
           snapPoints={snapPoints}
+          index={0}
+          animatedIndex={animatedIndex}
           onChange={(i: number) => {
             setIndex(i)
-            if (i === 0 && addingTo) {
-              setAddingTo('')
-            }
-            if (i === 0 && removingId) {
-              setRemovingId('')
+            if (i === 0) {
+              if (addingTo) {
+                setAddingTo('')
+              }
+              if (removingId) {
+                setRemovingId('')
+              }
+              if (openOtherUsersBacklog) {
+                setOpenOtherUsersBacklog(false)
+              }
             }
           }}
           backgroundStyle={{ backgroundColor: c.olive, borderRadius: s.$4, paddingTop: 0 }}
@@ -213,6 +210,8 @@ export const Profile = ({ userName }: { userName: string }) => {
           handleComponent={() => (
             <View
               style={{
+                width: '100%',
+                position: 'absolute',
                 alignItems: 'center',
                 justifyContent: 'center',
                 display: isMinimised ? 'none' : 'flex',
@@ -231,6 +230,7 @@ export const Profile = ({ userName }: { userName: string }) => {
               />
             </View>
           )}
+          keyboardBehavior="interactive"
         >
           {view === 'my_backlog' || view === 'other_backlog' ? (
             <>
@@ -241,8 +241,8 @@ export const Profile = ({ userName }: { userName: string }) => {
                 style={{
                   // handle is hidden while minimised, so this is needed to make sure
                   // the "My backlog" heading doesn't shift around when opening/closing the sheet
-                  paddingTop: isMinimised ? HANDLE_HEIGHT : 0,
-                  paddingBottom: isMinimised ? s.$6 : s.$1,
+                  paddingTop: HANDLE_HEIGHT,
+                  paddingBottom: s.$2 + s.$05,
                 }}
               >
                 {ownProfile ? (
@@ -261,7 +261,9 @@ export const Profile = ({ userName }: { userName: string }) => {
                     <Pressable
                       onPress={() => {
                         setAddingTo('backlog')
-                        setIndex(1)
+                        console.log('just clicked add to backlog')
+                        console.log(index, snapPoints)
+                        bottomSheetRef.current?.snapToIndex(1)
                       }}
                       style={{
                         alignItems: 'center',
@@ -280,7 +282,7 @@ export const Profile = ({ userName }: { userName: string }) => {
               <BacklogList items={backlogItems.toReversed()} ownProfile={profile.id === user?.id} />
             </>
           ) : view === 'other_buttons' ? (
-            <XStack>
+            <XStack style={{ paddingTop: s.$2, justifyContent: 'center' }} gap={s.$1}>
               <View style={{ height: s.$4, width: s.$10 }}>
                 <DMButton profile={profile} style={{ paddingHorizontal: s.$0 }} />
               </View>
@@ -296,7 +298,7 @@ export const Profile = ({ userName }: { userName: string }) => {
               <View style={{ height: s.$4, width: s.$10 }}>
                 <Button
                   onPress={() => {
-                    bottomSheetRef.current?.snapToIndex(0)
+                    setOpenOtherUsersBacklog(true)
                   }}
                   variant="whiteOutline"
                   title="Backlog"
@@ -331,13 +333,14 @@ export const Profile = ({ userName }: { userName: string }) => {
               onStep={setStep}
               onNewRef={async (itm: Item) => {
                 await refreshGrid(userName)
-                setIndex(0)
+                bottomSheetRef.current?.collapse()
                 setAddingTo('')
+                refreshGrid(userName)
                 if (addingTo !== 'backlog')
                   router.push(`/user/${userName}/modal?initialId=${itm.id}`)
               }}
               onCancel={() => {
-                setIndex(0)
+                bottomSheetRef.current?.snapToIndex(0)
                 setAddingTo('')
               }}
             />

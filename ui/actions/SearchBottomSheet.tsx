@@ -38,7 +38,7 @@ export default function SearchBottomSheet() {
 
   const { user } = useUserStore()
 
-  const { animatedIndex, setAppearsOnIndex, setDisappearsOnIndex, setMaxOpacity } =
+  const { animatedIndex, setAppearsOnIndex, setDisappearsOnIndex, setMaxOpacity, setDoPress } =
     useBackdropStore()
 
   const navigation = useNavigation()
@@ -49,6 +49,11 @@ export default function SearchBottomSheet() {
       setAppearsOnIndex(1)
       setDisappearsOnIndex(0)
       setMaxOpacity(0.5)
+      setDoPress(() => {
+        if (searchSheetRef.current) {
+          searchSheetRef.current.collapse()
+        }
+      })
     }
   }, [focused])
 

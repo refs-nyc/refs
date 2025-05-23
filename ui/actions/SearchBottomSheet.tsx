@@ -46,7 +46,6 @@ export default function SearchBottomSheet() {
 
   useEffect(() => {
     if (focused) {
-      console.log(`updating: ${1} ${0} ${0.5}`)
       setAppearsOnIndex(1)
       setDisappearsOnIndex(0)
       setMaxOpacity(0.5)

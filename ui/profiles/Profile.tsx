@@ -12,6 +12,7 @@ import { useEffect, useState, useRef } from 'react'
 import { View, Pressable, StyleSheet } from 'react-native'
 import { s, c } from '@/features/style'
 import { pocketbase, useUserStore, removeFromProfile, useItemStore } from '@/features/pocketbase'
+import { getBacklogItems, getProfileItems } from '@/features/pocketbase/stores/items'
 import { ShareIntent as ShareIntentType, useShareIntentContext } from 'expo-share-intent'
 import {
   Profile as ProfileType,
@@ -27,7 +28,6 @@ import BottomSheet from '@gorhom/bottom-sheet'
 export const Profile = ({ userName }: { userName: string }) => {
   const { addingTo, removingId } = useLocalSearchParams()
   const { stopEditProfile } = useUIStore()
-  const { getProfileItems, getBacklogItems } = useItemStore()
   const { hasShareIntent } = useShareIntentContext()
   const { saves, addSave } = useMessageStore()
 

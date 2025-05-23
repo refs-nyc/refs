@@ -47,8 +47,6 @@ export const useItemStore = create<{
   updateEditedState: (e: Partial<ExpandedItem>) => void
   remove: (id: string) => void
   moveToBacklog: (id: string) => Promise<ItemsRecord>
-  getProfileItems: (userName: string) => Promise<ItemsRecord[]>
-  getBacklogItems: (userName: string) => Promise<ItemsRecord[]>
 }>((set, get) => ({
   items: [],
   addingToList: false,
@@ -151,40 +149,42 @@ export const useItemStore = create<{
       throw error
     }
   },
-  getProfileItems: async (userName: string) => {
-    const items = await pocketbase.collection<ExpandedItem>('items').getFullList({
-      filter: pocketbase.filter('creator.userName = {:userName} && backlog = false', {
-        userName,
-      }),
-      expand: 'children, ref',
-    })
-
-    // if an item appears in another item's list, then don't return it
-    const seenChildren = new Set()
-    for (const item of items) {
-      for (const child of item.children) {
-        seenChildren.add(child)
-      }
-    }
-    const itemsWithoutSeenChildren = items.filter((item) => !seenChildren.has(item.ref))
-
-    return gridSort(itemsWithoutSeenChildren)
-  },
-  getBacklogItems: async (userName: string) => {
-    const items = await pocketbase.collection('items').getFullList({
-      filter: pocketbase.filter('creator.userName = {:userName} && backlog = true', {
-        userName,
-      }),
-      expand: 'children, ref',
-    })
-
-    const seenChildren = new Set()
-    for (const item of items) {
-      for (const child of item.children) {
-        seenChildren.add(child)
-      }
-    }
-
-    return items.filter((item) => !seenChildren.has(item.ref)).sort(createdSort)
-  },
 }))
+
+export const getProfileItems = async (userName: string) => {
+  const items = await pocketbase.collection<ExpandedItem>('items').getFullList({
+    filter: pocketbase.filter('creator.userName = {:userName} && backlog = false', {
+      userName,
+    }),
+    expand: 'children, ref',
+  })
+
+  // if an item appears in another item's list, then don't return it
+  const seenChildren = new Set()
+  for (const item of items) {
+    for (const child of item.children) {
+      seenChildren.add(child)
+    }
+  }
+  const itemsWithoutSeenChildren = items.filter((item) => !seenChildren.has(item.ref))
+
+  return gridSort(itemsWithoutSeenChildren)
+}
+
+export const getBacklogItems = async (userName: string) => {
+  const items = await pocketbase.collection('items').getFullList({
+    filter: pocketbase.filter('creator.userName = {:userName} && backlog = true', {
+      userName,
+    }),
+    expand: 'children, ref',
+  })
+
+  const seenChildren = new Set()
+  for (const item of items) {
+    for (const child of item.children) {
+      seenChildren.add(child)
+    }
+  }
+
+  return items.filter((item) => !seenChildren.has(item.ref)).sort(createdSort)
+}

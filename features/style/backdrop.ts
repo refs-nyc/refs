@@ -3,6 +3,8 @@ import { create } from 'zustand'
 
 type BackdropState = {
   animatedIndex?: SharedValue<number>
+  doPress: () => void
+  setDoPress: (doPress: () => void) => void
   maxOpacity: number
   setMaxOpacity: (opacity: number) => void
   disappearsOnIndex: number
@@ -15,6 +17,8 @@ const animatedIndex = makeMutable(0)
 
 export const useBackdropStore = create<BackdropState>((set) => ({
   animatedIndex,
+  doPress: () => {},
+  setDoPress: (doPress: () => void) => set({ doPress }),
   maxOpacity: 0.5,
   setMaxOpacity: (opacity: number) => set({ maxOpacity: opacity }),
   disappearsOnIndex: 0,

@@ -1,6 +1,6 @@
 import { c, s } from '@/features/style'
 import BottomSheet, { BottomSheetBackdrop } from '@gorhom/bottom-sheet'
-import { RefObject, useCallback, useEffect, useState } from 'react'
+import { RefObject, useCallback, useEffect, useRef, useState } from 'react'
 import { Pressable, View } from 'react-native'
 import { Heading } from '../typo/Heading'
 import { XStack } from '../core/Stacks'
@@ -27,7 +27,7 @@ export default function BacklogBottomSheet({
   const navigation = useNavigation()
   const focused = navigation.isFocused()
 
-  const { animatedIndex, setAppearsOnIndex, setDisappearsOnIndex, setMaxOpacity } =
+  const { animatedIndex, setAppearsOnIndex, setDisappearsOnIndex, setMaxOpacity, setDoPress } =
     useBackdropStore()
 
   const ownProfile = profile.id === user?.id
@@ -43,6 +43,15 @@ export default function BacklogBottomSheet({
       setAppearsOnIndex(appearsOnIndex)
       setDisappearsOnIndex(disappearsOnIndex)
       setMaxOpacity(maxOpacity)
+      setDoPress(() => {
+        if (backlogSheetRef.current) {
+          if (ownProfile) {
+            backlogSheetRef.current.collapse()
+          } else {
+            backlogSheetRef.current.close()
+          }
+        }
+      })
     }
   }, [focused, appearsOnIndex, disappearsOnIndex, maxOpacity])
 

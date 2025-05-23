@@ -1,11 +1,17 @@
 import Animated from 'react-native-reanimated'
 import { useBackdropStyle } from '@/hooks/useBackdropStyle'
+import { useBackdropStore } from '@/features/style/backdrop'
+import { Pressable } from 'react-native'
+
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable)
 
 export const NavigationBackdrop = () => {
   const containerAnimatedStyle = useBackdropStyle()
+  const { doPress } = useBackdropStore()
 
   return (
-    <Animated.View
+    <AnimatedPressable
+      onPress={doPress}
       style={[
         {
           zIndex: 1000,

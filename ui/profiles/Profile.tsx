@@ -12,13 +12,13 @@ import { useEffect, useState, useRef } from 'react'
 import { View, Pressable, StyleSheet } from 'react-native'
 import { s, c } from '@/features/style'
 import { pocketbase, useUserStore, removeFromProfile, useItemStore } from '@/features/pocketbase'
+import { getBacklogItems, getProfileItems } from '@/features/pocketbase/stores/items'
 import { ShareIntent as ShareIntentType, useShareIntentContext } from 'expo-share-intent'
 import {
   Profile as ProfileType,
   ExpandedProfile,
   ExpandedItem,
 } from '@/features/pocketbase/stores/types'
-import { gridSort, createdSort } from '../profiles/sorts'
 import { DMButton } from './DMButton'
 import { useMessageStore } from '@/features/pocketbase/stores/messages'
 import BacklogBottomSheet from './BacklogBottomSheet'
@@ -37,7 +37,6 @@ export const Profile = ({ userName }: { userName: string }) => {
   const [editingRights, seteditingRights] = useState<boolean>(false)
   const [showMessageButtons, setShowMessageButtons] = useState<boolean>(false)
   const [step, setStep] = useState('')
-  const [allItems, setAllItems] = useState<ExpandedItem[]>([])
 
   const backlogSheetRef = useRef<BottomSheet>(null)
 
@@ -67,31 +66,21 @@ export const Profile = ({ userName }: { userName: string }) => {
 
   const refreshGrid = async (userName: string) => {
     try {
-      setGridItems([])
-      setBacklogItems([])
-      const record = await pocketbase
+      const profile = await pocketbase
         .collection<ProfileType>('users')
-        .getFirstListItem<ExpandedProfile>(`userName = "${userName}"`, {
-          expand: 'items,items.ref',
-        })
+        .getFirstListItem<ProfileType>(`userName = "${userName}"`)
+      setProfile(profile)
 
-      setProfile(record)
+      const gridItems = await getProfileItems(userName)
+      console.log(JSON.stringify(gridItems))
+      setGridItems(gridItems)
 
-      const itms = record?.expand?.items?.filter((itm: Item) => !itm.backlog).sort(gridSort) || []
-      const bklg = record?.expand?.items?.filter((itm: Item) => itm.backlog).sort(createdSort) || []
-
-      // Filter out backlog and normal
-      setGridItems(itms)
-      setBacklogItems(bklg as ExpandedItem[])
+      const backlogItems = await getBacklogItems(userName)
+      setBacklogItems(backlogItems as ExpandedItem[])
     } catch (error) {
       console.error(error)
     }
   }
-
-  useEffect(() => {
-    const all = [...backlogItems, ...gridItems] as ExpandedItem[]
-    setAllItems(all)
-  }, [backlogItems, gridItems])
 
   useEffect(() => {
     if (hasShareIntent) {
@@ -248,8 +237,8 @@ export const Profile = ({ userName }: { userName: string }) => {
             onStep={setStep}
             onNewRef={async (itm: Item) => {
               await refreshGrid(userName)
-              if (addingTo !== 'backlog') router.push(`/user/${userName}/modal?initialId=${itm.id}`)
               setAddingTo('')
+              if (addingTo !== 'backlog') router.push(`/user/${userName}/modal?initialId=${itm.id}`)
             }}
             onCancel={() => {
               setAddingTo('')

@@ -4,7 +4,6 @@ import { Profile, EmptyProfile, ExpandedProfile, Item } from './types'
 import { UsersRecord, UsersResponse, ItemsResponse } from './pocketbase-types'
 import { canvasApp } from './canvas'
 import { ClientResponseError } from 'pocketbase'
-import { gridSort, createdSort } from '@/ui/profiles/sorts'
 
 export const isProfile = (profile: Profile | EmptyProfile | null): profile is Profile => {
   return profile !== null && Object.keys(profile).length > 0

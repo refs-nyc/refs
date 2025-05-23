@@ -4,7 +4,7 @@ import BottomSheet, {
   BottomSheetScrollView,
   BottomSheetView,
 } from '@gorhom/bottom-sheet'
-import { useEffect, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
 import { Pressable, Text, TextInput } from 'react-native'
 import { Heading } from '../typo/Heading'
 import { XStack, YStack } from '../core/Stacks'
@@ -13,7 +13,7 @@ import { CompleteRef, Item, Profile } from '@/features/pocketbase/stores/types'
 import { pocketbase, useUserStore } from '@/features/pocketbase'
 import { SimplePinataImage } from '../images/SimplePinataImage'
 import { Ionicons } from '@expo/vector-icons'
-import { router, useNavigation } from 'expo-router'
+import { router } from 'expo-router'
 import { Sheet } from '../core/Sheets'
 import { NewRef, NewRefStep } from './NewRef'
 import { useBackdropStore } from '@/features/pocketbase/stores/backdrop'
@@ -39,22 +39,6 @@ export default function SearchBottomSheet() {
 
   const { animatedIndex, setAppearsOnIndex, setDisappearsOnIndex, setMaxOpacity, setDoPress } =
     useBackdropStore()
-
-  const navigation = useNavigation()
-  const focused = navigation.isFocused()
-
-  useEffect(() => {
-    if (focused) {
-      setAppearsOnIndex(1)
-      setDisappearsOnIndex(0)
-      setMaxOpacity(0.5)
-      setDoPress(() => {
-        if (searchSheetRef.current) {
-          searchSheetRef.current.collapse()
-        }
-      })
-    }
-  }, [focused])
 
   // search console should expand when new refs are added to the search
   // but it shouldn't be taller than ~4 refs in its minimised form
@@ -168,9 +152,21 @@ export default function SearchBottomSheet() {
               )}
               <XStack gap={s.$05} style={{ alignItems: 'center' }}>
                 <Pressable
-                  onPress={() =>
+                  onPress={() => {
+                    console.log('pressed the add button')
+                    if (searchSheetRef.current) {
+                      searchSheetRef.current.collapse()
+                    }
+                    setDisappearsOnIndex(-1)
+                    setAppearsOnIndex(0)
+                    setMaxOpacity(0.5)
+                    setDoPress(() => {
+                      if (searchSheetRef.current) {
+                        searchSheetRef.current.expand()
+                      }
+                    })
                     setAddingTo(user?.items && user.items?.length < 12 ? 'grid' : 'backlog')
-                  }
+                  }}
                 >
                   <Ionicons name="add-circle-outline" size={s.$4} color={c.white} />
                 </Pressable>
@@ -308,11 +304,24 @@ export default function SearchBottomSheet() {
         <Sheet
           noPadding={true}
           full={step !== ''}
-          onChange={(e: any) => e === -1 && stopAdding()}
+          onChange={(e: any) => {
+            if (e === -1) {
+              stopAdding()
+              setAppearsOnIndex(1)
+              setDisappearsOnIndex(0)
+              setMaxOpacity(0.5)
+              setDoPress(() => {
+                if (searchSheetRef.current) {
+                  searchSheetRef.current.collapse()
+                }
+              })
+            }
+          }}
           backgroundStyle={{
             backgroundColor: c.olive,
           }}
           handleIndicatorStyle={{ width: s.$10, backgroundColor: c.white, opacity: 0.5 }}
+          animatedIndex={animatedIndex}
         >
           <NewRef
             initialRefData={{ title: newRefTitle }}

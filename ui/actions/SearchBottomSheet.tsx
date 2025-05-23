@@ -2,11 +2,10 @@ import { c, s } from '@/features/style'
 import BottomSheet, {
   BottomSheetBackdrop,
   BottomSheetScrollView,
-  BottomSheetTextInput,
   BottomSheetView,
 } from '@gorhom/bottom-sheet'
 import { useEffect, useRef, useState } from 'react'
-import { Pressable, Text } from 'react-native'
+import { Pressable, Text, TextInput } from 'react-native'
 import { Heading } from '../typo/Heading'
 import { XStack, YStack } from '../core/Stacks'
 import { Button } from '../buttons/Button'

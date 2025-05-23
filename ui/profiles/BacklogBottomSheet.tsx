@@ -1,6 +1,6 @@
 import { c, s } from '@/features/style'
 import BottomSheet, { BottomSheetBackdrop } from '@gorhom/bottom-sheet'
-import { RefObject, useCallback, useState } from 'react'
+import { RefObject, useCallback, useEffect, useRef, useState } from 'react'
 import { Pressable, View } from 'react-native'
 import { Heading } from '../typo/Heading'
 import { XStack } from '../core/Stacks'
@@ -8,6 +8,8 @@ import { Ionicons } from '@expo/vector-icons'
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated'
 import { Profile } from '@/features/pocketbase/stores/types'
 import { useUserStore } from '@/features/pocketbase'
+import { useBackdropStore } from '@/features/pocketbase/stores/backdrop'
+import { useNavigation } from 'expo-router'
 
 export default function BacklogBottomSheet({
   children,
@@ -22,17 +24,43 @@ export default function BacklogBottomSheet({
 }) {
   const [index, setIndex] = useState(0)
   const { user } = useUserStore()
+  const navigation = useNavigation()
+  const focused = navigation.isFocused()
+
+  const { animatedIndex, setAppearsOnIndex, setDisappearsOnIndex, setMaxOpacity, setDoPress } =
+    useBackdropStore()
 
   const ownProfile = profile.id === user?.id
   const isMinimised = ownProfile && index === 0
   const HANDLE_HEIGHT = s.$2
 
+  const disappearsOnIndex = ownProfile ? 0 : -1
+  const appearsOnIndex = ownProfile ? 1 : 0
+  const maxOpacity = 0.5
+
+  useEffect(() => {
+    if (focused) {
+      setAppearsOnIndex(appearsOnIndex)
+      setDisappearsOnIndex(disappearsOnIndex)
+      setMaxOpacity(maxOpacity)
+      setDoPress(() => {
+        if (backlogSheetRef.current) {
+          if (ownProfile) {
+            backlogSheetRef.current.collapse()
+          } else {
+            backlogSheetRef.current.close()
+          }
+        }
+      })
+    }
+  }, [focused, appearsOnIndex, disappearsOnIndex, maxOpacity])
+
   const renderBackdrop = useCallback(
     (p: any) => (
       <BottomSheetBackdrop
         {...p}
-        disappearsOnIndex={ownProfile ? 0 : -1}
-        appearsOnIndex={ownProfile ? 1 : 0}
+        disappearsOnIndex={disappearsOnIndex}
+        appearsOnIndex={appearsOnIndex}
         pressBehavior={ownProfile ? 'collapse' : 'close'}
       />
     ),
@@ -60,6 +88,7 @@ export default function BacklogBottomSheet({
 
   return (
     <BottomSheet
+      animatedIndex={animatedIndex}
       enableDynamicSizing={false}
       ref={backlogSheetRef}
       index={ownProfile ? 0 : -1}
@@ -75,9 +104,9 @@ export default function BacklogBottomSheet({
           if (backlogSheetRef.current && isMinimised) backlogSheetRef.current.snapToIndex(1)
         }}
         style={{
-          // handle is hidden while minimised, so this is needed to make sure 
+          // handle is hidden while minimised, so this is needed to make sure
           // the "My backlog" heading doesn't shift around when opening/closing the sheet
-          paddingTop: isMinimised ? HANDLE_HEIGHT : 0, 
+          paddingTop: isMinimised ? HANDLE_HEIGHT : 0,
           paddingBottom: isMinimised ? s.$6 : s.$1,
         }}
       >

@@ -22,6 +22,7 @@ import { RefsTypeOptions } from '@/features/pocketbase/stores/pocketbase-types'
 import { pocketbase } from '@/features/pocketbase/pocketbase'
 
 import * as Clipboard from 'expo-clipboard'
+import { Heading } from '../typo/Heading'
 
 export type NewRefStep = '' | 'add' | 'search' | 'editList' | 'addToList' | 'categorise'
 
@@ -108,11 +109,20 @@ export const NewRef = ({
   }, [step])
 
   return (
-    <BottomSheetView style={{ paddingHorizontal: s.$2 }}>
+    <BottomSheetView
+      style={{
+        paddingHorizontal: s.$2,
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+    >
       {step === '' && (
         <YStack gap={s.$08} style={{ paddingTop: s.$1, paddingBottom: s.$6 }}>
+          <Heading tag="h2normal" style={{ color: c.white, paddingBottom: s.$05 }}>
+            Add a new ref to {backlog ? 'your backlog' : 'your grid'}
+          </Heading>
           <Button
-            variant="basicLeft"
+            variant="whiteOutline"
             iconColor={c.surface}
             title="Type anything"
             iconSize={28}
@@ -124,7 +134,7 @@ export const NewRef = ({
           />
           {hasUrl && (
             <Button
-              variant="basicLeft"
+              variant="whiteOutline"
               align="flex-start"
               title="Add from clipboard"
               iconBefore="clipboard-outline"
@@ -137,7 +147,7 @@ export const NewRef = ({
             />
           )}
           <Button
-            variant="basicLeft"
+            variant="whiteOutline"
             align="flex-start"
             title="Add from Camera Roll"
             iconBefore="image-outline"

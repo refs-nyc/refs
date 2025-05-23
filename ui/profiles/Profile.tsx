@@ -14,10 +14,7 @@ import { s, c } from '@/features/style'
 import { pocketbase, useUserStore, removeFromProfile, useItemStore } from '@/features/pocketbase'
 import { getBacklogItems, getProfileItems } from '@/features/pocketbase/stores/items'
 import { ShareIntent as ShareIntentType, useShareIntentContext } from 'expo-share-intent'
-import {
-  Profile as ProfileType,
-  ExpandedItem,
-} from '@/features/pocketbase/stores/types'
+import { Profile as ProfileType, ExpandedItem } from '@/features/pocketbase/stores/types'
 import { DMButton } from './DMButton'
 import { useMessageStore } from '@/features/pocketbase/stores/messages'
 import BacklogBottomSheet from './BacklogBottomSheet'
@@ -28,7 +25,7 @@ export const Profile = ({ userName }: { userName: string }) => {
   const { addingTo, removingId } = useLocalSearchParams()
   const { stopEditProfile } = useUIStore()
   const { hasShareIntent } = useShareIntentContext()
-  const { saves, addSave } = useMessageStore()
+  const { saves, addSave, removeSave } = useMessageStore()
 
   const [profile, setProfile] = useState<ProfileType>()
   const [gridItems, setGridItems] = useState<Item[]>([])
@@ -42,7 +39,7 @@ export const Profile = ({ userName }: { userName: string }) => {
   const { user } = useUserStore()
   const { remove, moveToBacklog } = useItemStore()
 
-  const inSaves = profile && saves.map((s) => s.expand.user.id).includes(profile.id)
+  const saveId = saves.find((s) => s.expand.user.id === profile?.id)?.id
 
   const setAddingTo = (str: string) => {
     router.setParams({ addingTo: str })
@@ -162,13 +159,10 @@ export const Profile = ({ userName }: { userName: string }) => {
             </View>
             <View style={{ height: s.$4, width: s.$10 }}>
               <Button
-                onPress={() => {
-                  addSave(profile.id, user?.id!)
-                }}
+                onPress={saveId ? () => removeSave(saveId) : () => addSave(profile.id, user?.id!)}
                 variant="whiteOutline"
-                disabled={inSaves}
-                title={inSaves ? 'Saved' : 'Save'}
-                style={inSaves ? styles.saved : { paddingHorizontal: s.$0 }}
+                title={saveId ? 'Saved' : 'Save'}
+                style={saveId ? styles.saved : { paddingHorizontal: s.$0 }}
               />
             </View>
 

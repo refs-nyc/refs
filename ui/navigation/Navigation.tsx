@@ -75,7 +75,6 @@ export const Navigation = () => {
         <View style={{ top: -2, left: -10 }}>
           <Pressable
             onPress={() => {
-              console.log('pressing saves')
               router.push('/saves/modal')
             }}
           >

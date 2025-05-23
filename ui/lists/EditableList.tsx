@@ -1,16 +1,17 @@
 import type { ExpandedItem, CompleteRef } from '@/features/pocketbase/stores/types'
 import { BottomSheetView, BottomSheetScrollView, BottomSheetTextInput } from '@gorhom/bottom-sheet'
-import { EditableHeader } from '../atoms/EditableHeader'
 import { Button } from '../buttons/Button'
-import { t, c, base, s } from '@/features/style'
-import { useEffect, useState } from 'react'
-import { Dimensions } from 'react-native'
+import { t, c, s } from '@/features/style'
+import { useRef, useState } from 'react'
+import { Dimensions, Pressable, TextInput } from 'react-native'
 import { SearchRef } from '../actions/SearchRef'
 import { useRefStore } from '@/features/pocketbase/stores/refs'
 import { useItemStore } from '@/features/pocketbase/stores/items'
 import { ListItem } from './ListItem'
 import { NewListItemButton } from './NewListItemButton'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { XStack } from '../core/Stacks'
+import { Ionicons } from '@expo/vector-icons'
 
 export const EditableList = ({
   item,
@@ -22,8 +23,23 @@ export const EditableList = ({
   const { addingToList, addToList, removeFromList, setAddingToList } = useItemStore()
   const { updateOne } = useRefStore()
   const [itemState, setItemState] = useState<ExpandedItem>(item)
+  const [title, setTitle] = useState<string>('')
+  const [editingTitle, setEditingTitle] = useState<boolean>(true)
+  const titleRef = useRef<TextInput>(null)
   const insets = useSafeAreaInsets()
   const win = Dimensions.get('window')
+
+  const onTitleChange = async (e: string) => {
+    titleRef.current?.blur()
+    setEditingTitle(false)
+    try {
+      await updateOne(item.ref, {
+        title: e,
+      })
+    } catch (error) {
+      console.log(error)
+    }
+  }
 
   const onRefFound = async (ref: CompleteRef) => {
     try {
@@ -45,26 +61,32 @@ export const EditableList = ({
   return (
     <BottomSheetView
       style={{
-        height: win.height - insets.top - insets.bottom - 20,
+        height: win.height - insets.top - insets.bottom - 100,
       }}
     >
       <BottomSheetScrollView style={{ flex: 1, gap: s.$09 }}>
         <BottomSheetView>
           {/* Title */}
-          <EditableHeader
-            withUrl={false}
-            onTitleChange={async (e) => {
-              try {
-                const rec = await updateOne(item.ref, {
-                  title: e,
-                })
-              } catch (error) {}
-            }}
-            onDataChange={() => {}}
-            placeholder={'Add a list title'}
-            title={item.expand?.ref?.title || ''}
-            url=""
-          />
+          <XStack style={{ justifyContent: 'space-between', alignItems: 'center' }}>
+            <BottomSheetTextInput
+              ref={titleRef}
+              style={{
+                ...t.h2,
+                paddingVertical: s.$1,
+                color: editingTitle ? c.grey2 : c.white,
+              }}
+              placeholder="Add a list title"
+              value={title}
+              onChangeText={(e) => setTitle(e)}
+              onBlur={() => onTitleChange(title)}
+              onFocus={() => setEditingTitle(true)}
+            />
+            {editingTitle && (
+              <Pressable onPress={() => onTitleChange(title)}>
+                <Ionicons name="checkbox-outline" size={s.$2} color={c.surface2} />
+              </Pressable>
+            )}
+          </XStack>
         </BottomSheetView>
         <BottomSheetView style={{ flex: 1 }}>
           {addingToList ? (

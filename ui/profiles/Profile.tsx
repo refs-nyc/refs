@@ -16,7 +16,6 @@ import { getBacklogItems, getProfileItems } from '@/features/pocketbase/stores/i
 import { ShareIntent as ShareIntentType, useShareIntentContext } from 'expo-share-intent'
 import {
   Profile as ProfileType,
-  ExpandedProfile,
   ExpandedItem,
 } from '@/features/pocketbase/stores/types'
 import { DMButton } from './DMButton'
@@ -195,7 +194,7 @@ export const Profile = ({ userName }: { userName: string }) => {
           }}
           profile={profile}
         >
-          <BacklogList items={backlogItems.toReversed()} />
+          <BacklogList items={backlogItems.toReversed()} ownProfile={profile.id === user?.id} />
         </BacklogBottomSheet>
       )}
 

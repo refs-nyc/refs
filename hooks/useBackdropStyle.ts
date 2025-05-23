@@ -1,4 +1,4 @@
-import { useBackdropStore } from '@/features/style/backdrop'
+import { useBackdropStore } from '@/features/pocketbase/stores/backdrop'
 import { Extrapolation, interpolate, useAnimatedStyle } from 'react-native-reanimated'
 
 export const useBackdropStyle = () => {

@@ -1,6 +1,6 @@
 import Animated from 'react-native-reanimated'
 import { useBackdropStyle } from '@/hooks/useBackdropStyle'
-import { useBackdropStore } from '@/features/style/backdrop'
+import { useBackdropStore } from '@/features/pocketbase/stores/backdrop'
 import { Pressable } from 'react-native'
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable)

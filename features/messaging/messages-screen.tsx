@@ -194,10 +194,12 @@ export function MessagesScreen({ conversationId }: { conversationId: string }) {
         )}
       </XStack>
       <KeyboardAvoidingView
+        keyboardVerticalOffset={100}
         style={{
           paddingHorizontal: s.$075,
           flex: 1,
           display: 'flex',
+          paddingBottom: s.$1,
         }}
         behavior={'height'}
       >
@@ -209,7 +211,7 @@ export function MessagesScreen({ conversationId }: { conversationId: string }) {
           onEndReached={loadMoreMessages}
           onEndReachedThreshold={0.1}
           contentContainerStyle={{
-            minHeight: '100%',
+            minHeight: '90%',
             justifyContent: 'flex-end',
           }}
         />

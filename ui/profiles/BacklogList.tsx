@@ -1,29 +1,27 @@
 import { ExpandedItem } from '@/features/pocketbase/stores/types'
-import { Pressable } from 'react-native-gesture-handler'
-import {
-  Linking,
-  NativeScrollEvent,
-  NativeSyntheticEvent,
-  Text,
-  TextInput,
-  View,
-} from 'react-native'
-import { SimplePinataImage } from '../images/SimplePinataImage'
+import { NativeScrollEvent, NativeSyntheticEvent, Text, TextInput, View } from 'react-native'
 import { c, s } from '@/features/style'
 import Animated, { FadeIn } from 'react-native-reanimated'
-import { XStack, YStack } from '../core/Stacks'
+import { YStack } from '../core/Stacks'
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useCalendars } from 'expo-localization'
 import { DateTime } from 'luxon'
-import { Ionicons } from '@expo/vector-icons'
+import SwipeableBacklogItem from './SwipeableBacklogItem'
+import { useItemStore } from '@/features/pocketbase'
 
-export default function BacklogList({ items }: { items: ExpandedItem[] }) {
+export default function BacklogList({ items: itemsInit, ownProfile }: { items: ExpandedItem[], ownProfile: boolean }) {
   const [showSearch, setShowSearch] = useState(false)
   const [hasScrolled, setHasScrolled] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
+  const [items, setItems] = useState<ExpandedItem[]>(itemsInit)
+  const { remove } = useItemStore()
   const calendars = useCalendars()
   const timeZone = calendars[0].timeZone || 'America/New_York'
+
+  useEffect(() => {
+    if (itemsInit.length) setItems(itemsInit);
+  }, [itemsInit]);
 
   const groupnames = ['Today', 'Yesterday']
 
@@ -88,6 +86,16 @@ export default function BacklogList({ items }: { items: ExpandedItem[] }) {
     setSearchTerm(searchTerm)
   }
 
+  async function onRemoveFromBacklog(i: ExpandedItem): Promise<void> {
+    try {
+      await remove(i.id)
+      setItems(items.filter((item) => item.id !== i.id))
+    }
+    catch (error) {
+      console.error(error)
+    }
+  }
+
   return (
     <BottomSheetScrollView style={{ backgroundColor: c.olive }} onScroll={onScroll}>
       <Animated.View entering={FadeIn.duration(500)}>
@@ -123,38 +131,12 @@ export default function BacklogList({ items }: { items: ExpandedItem[] }) {
                     i.expand?.ref?.title?.toLowerCase().includes(searchTerm.toLowerCase())
                   )
                   .map((i) => (
-                    <XStack
+                    <SwipeableBacklogItem
                       key={i.id}
-                      gap={s.$1}
-                      style={{
-                        paddingVertical: s.$05,
-                        alignItems: 'center',
-                      }}
-                    >
-                      <SimplePinataImage
-                        originalSource={i.image}
-                        imageOptions={{ width: s.$4, height: s.$4 }}
-                        style={{
-                          width: s.$4,
-                          height: s.$4,
-                          borderRadius: s.$075,
-                          backgroundColor: c.olive2,
-                        }}
-                      />
-                      <Text style={{ color: c.white, fontSize: s.$1, flex: 1 }} numberOfLines={2}>
-                        {i.expand?.ref?.title?.trim()}
-                      </Text>
-                      {i.expand?.ref?.url && (
-                        <Pressable onPress={() => Linking.openURL(i.expand.ref.url!)}>
-                          <Ionicons
-                            name="arrow-up"
-                            size={s.$2}
-                            color={c.white}
-                            style={{ transform: 'rotate(45deg)' }}
-                          />
-                        </Pressable>
-                      )}
-                    </XStack>
+                      item={i}
+                      onActionPress={() => onRemoveFromBacklog(i)}
+                      enabled={ownProfile}
+                    />
                   ))}
               </View>
             )

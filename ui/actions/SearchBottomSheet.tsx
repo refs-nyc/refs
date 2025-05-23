@@ -112,7 +112,7 @@ export default function SearchBottomSheet() {
         enableDynamicSizing={false}
         ref={searchSheetRef}
         enablePanDownToClose={false}
-        snapPoints={[minSnapPoint, '50%']}
+        snapPoints={[minSnapPoint, '90%']}
         index={0}
         animatedIndex={animatedIndex}
         onChange={(i: number) => {
@@ -158,7 +158,7 @@ export default function SearchBottomSheet() {
               {isMinimised ? (
                 <Text style={{ color: c.white, fontSize: s.$1 }}>Search anything</Text>
               ) : (
-                <BottomSheetTextInput
+                <TextInput
                   autoFocus
                   placeholder="Search anything"
                   placeholderTextColor={c.white}

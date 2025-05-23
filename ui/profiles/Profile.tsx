@@ -72,7 +72,6 @@ export const Profile = ({ userName }: { userName: string }) => {
       setProfile(profile)
 
       const gridItems = await getProfileItems(userName)
-      console.log(JSON.stringify(gridItems))
       setGridItems(gridItems)
 
       const backlogItems = await getBacklogItems(userName)

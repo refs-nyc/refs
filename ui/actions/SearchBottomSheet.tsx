@@ -14,7 +14,6 @@ import { pocketbase, useUserStore } from '@/features/pocketbase'
 import { SimplePinataImage } from '../images/SimplePinataImage'
 import { Ionicons } from '@expo/vector-icons'
 import { router } from 'expo-router'
-import { Sheet } from '../core/Sheets'
 import { NewRef, NewRefStep } from './NewRef'
 import { useBackdropStore } from '@/features/pocketbase/stores/backdrop'
 
@@ -37,13 +36,7 @@ export default function SearchBottomSheet() {
 
   const { user } = useUserStore()
 
-  const { animatedIndex, setAppearsOnIndex, setDisappearsOnIndex, setMaxOpacity, setDoPress } =
-    useBackdropStore()
-
-  // search console should expand when new refs are added to the search
-  // but it shouldn't be taller than ~4 refs in its minimised form
-  const refHeightPlusGap = s.$3 + s.$1
-  const minSnapPoint = refHeightPlusGap * Math.min(refs.length, 4) + s.$1 + HEADER_HEIGHT
+  const { animatedIndex } = useBackdropStore()
 
   const onAddRefToSearch = (r: CompleteRef) => {
     setRefs((prevState) => [...prevState.filter((ref) => ref.id !== r.id), r])
@@ -89,20 +82,34 @@ export default function SearchBottomSheet() {
     router.push(`/search?refs=${refs.map((r) => r.id).join(',')}`)
   }
 
+  const isAddingNewRef = addingTo === 'grid' || addingTo === 'backlog'
+
+  let snapPoints: (string | number)[] = []
+  if (isAddingNewRef) {
+    snapPoints = ['1%', '30%', '90%']
+  } else {
+    // search console should expand when new refs are added to the search
+    // but it shouldn't be taller than ~4 refs in its minimised form
+    const refHeightPlusGap = s.$3 + s.$1
+    const minSnapPoint = refHeightPlusGap * Math.min(refs.length, 4) + s.$1 + HEADER_HEIGHT
+    snapPoints = [minSnapPoint, '90%']
+  }
+
   return (
     <>
       <BottomSheet
         enableDynamicSizing={false}
         ref={searchSheetRef}
         enablePanDownToClose={false}
-        snapPoints={[minSnapPoint, '90%']}
-        index={0}
+        snapPoints={snapPoints}
+        index={index}
         animatedIndex={animatedIndex}
         onChange={(i: number) => {
           setIndex(i)
           if (i === 0) {
             setResults([])
             setSearchTerm('')
+            stopAdding()
           }
         }}
         backgroundStyle={{ backgroundColor: c.olive, borderRadius: s.$4, paddingTop: 0 }}
@@ -119,108 +126,78 @@ export default function SearchBottomSheet() {
         handleComponent={null}
         keyboardBehavior="interactive"
       >
-        <BottomSheetView>
-          <Pressable
-            onPress={() => {
-              if (searchSheetRef.current && isMinimised) searchSheetRef.current.snapToIndex(1)
+        {addingTo === 'grid' || addingTo === 'backlog' ? (
+          <NewRef
+            initialRefData={{ title: newRefTitle }}
+            initialStep={initialStep}
+            backlog={addingTo === 'backlog'}
+            onStep={setStep}
+            onNewRef={async (itm: Item) => {
+              stopAdding()
+              searchSheetRef.current?.collapse()
             }}
-            style={{
-              paddingTop: s.$1,
-              paddingBottom: s.$1,
-              height: HEADER_HEIGHT,
+            onCancel={() => {
+              stopAdding()
+              searchSheetRef.current?.collapse()
             }}
-          >
-            <XStack
-              gap={s.$075}
+          />
+        ) : (
+          <BottomSheetView>
+            <Pressable
+              onPress={() => {
+                if (searchSheetRef.current && isMinimised) searchSheetRef.current.snapToIndex(1)
+              }}
               style={{
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                paddingHorizontal: s.$2,
+                paddingTop: s.$1,
+                paddingBottom: s.$1,
+                height: HEADER_HEIGHT,
               }}
             >
-              {isMinimised ? (
-                <Text style={{ color: c.white, fontSize: s.$1 }}>Search anything</Text>
-              ) : (
-                <TextInput
-                  autoFocus
-                  placeholder="Search anything"
-                  placeholderTextColor={c.white}
-                  style={{ fontSize: s.$1, color: c.white }}
-                  onChangeText={updateSearch}
-                  value={searchTerm}
-                />
-              )}
-              <XStack gap={s.$05} style={{ alignItems: 'center' }}>
-                <Pressable
-                  onPress={() => {
-                    console.log('pressed the add button')
-                    if (searchSheetRef.current) {
-                      searchSheetRef.current.collapse()
-                    }
-                    setDisappearsOnIndex(-1)
-                    setAppearsOnIndex(0)
-                    setMaxOpacity(0.5)
-                    setDoPress(() => {
-                      if (searchSheetRef.current) {
-                        searchSheetRef.current.expand()
-                      }
-                    })
-                    setAddingTo(user?.items && user.items?.length < 12 ? 'grid' : 'backlog')
-                  }}
-                >
-                  <Ionicons name="add-circle-outline" size={s.$4} color={c.white} />
-                </Pressable>
-                <Button
-                  variant="whiteInverted"
-                  title={refs.length ? 'Search' : 'Stumble'}
-                  onPress={refs.length ? search : stumble}
-                  style={{
-                    paddingHorizontal: 0,
-                    paddingVertical: s.$075,
-                  }}
-                />
-              </XStack>
-            </XStack>
-          </Pressable>
-          {!isMinimised && searchTerm !== '' && (
-            <BottomSheetScrollView style={{ maxHeight: 300 }} keyboardShouldPersistTaps="handled">
-              <YStack>
-                <Pressable onPress={() => onAddFromSearch()}>
-                  <XStack
-                    gap={s.$025}
-                    style={{
-                      alignItems: 'center',
-                      paddingVertical: s.$075,
-                      paddingHorizontal: s.$5,
+              <XStack
+                gap={s.$075}
+                style={{
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  paddingHorizontal: s.$2,
+                }}
+              >
+                {isMinimised ? (
+                  <Text style={{ color: c.white, fontSize: s.$1 }}>Search anything</Text>
+                ) : (
+                  <TextInput
+                    autoFocus
+                    placeholder="Search anything"
+                    placeholderTextColor={c.white}
+                    style={{ fontSize: s.$1, color: c.white }}
+                    onChangeText={updateSearch}
+                    value={searchTerm}
+                  />
+                )}
+                <XStack gap={s.$05} style={{ alignItems: 'center' }}>
+                  <Pressable
+                    onPress={() => {
+                      setAddingTo(user?.items && user.items?.length < 12 ? 'grid' : 'backlog')
+                      setIndex(1)
                     }}
                   >
-                    <BottomSheetView
-                      style={{
-                        width: s.$2,
-                        height: s.$2,
-                        borderWidth: 1,
-                        borderColor: c.white,
-                        borderRadius: s.$025,
-                      }}
-                    >
-                      <Text
-                        style={{
-                          color: c.white,
-                          margin: 'auto',
-                          fontSize: s.$09,
-                          backgroundColor: 'transparent',
-                        }}
-                      >
-                        +
-                      </Text>
-                    </BottomSheetView>
-                    <Heading tag="h2normal" style={{ color: c.white, paddingHorizontal: s.$2 }}>
-                      {`Add ${searchTerm}`}
-                    </Heading>
-                  </XStack>
-                </Pressable>
-                {results.map((r) => (
-                  <Pressable key={r.id} onPress={() => onAddRefToSearch(r)}>
+                    <Ionicons name="add-circle-outline" size={s.$4} color={c.white} />
+                  </Pressable>
+                  <Button
+                    variant="whiteInverted"
+                    title={refs.length ? 'Search' : 'Stumble'}
+                    onPress={refs.length ? search : stumble}
+                    style={{
+                      paddingHorizontal: 0,
+                      paddingVertical: s.$075,
+                    }}
+                  />
+                </XStack>
+              </XStack>
+            </Pressable>
+            {!isMinimised && searchTerm !== '' && (
+              <BottomSheetScrollView style={{ maxHeight: 300 }} keyboardShouldPersistTaps="handled">
+                <YStack>
+                  <Pressable onPress={() => onAddFromSearch()}>
                     <XStack
                       gap={s.$025}
                       style={{
@@ -229,114 +206,113 @@ export default function SearchBottomSheet() {
                         paddingHorizontal: s.$5,
                       }}
                     >
-                      <SimplePinataImage
-                        originalSource={r.image!}
-                        imageOptions={{ width: s.$2, height: s.$2 }}
-                        style={{ width: s.$2, height: s.$2 }}
-                      />
+                      <BottomSheetView
+                        style={{
+                          width: s.$2,
+                          height: s.$2,
+                          borderWidth: 1,
+                          borderColor: c.white,
+                          borderRadius: s.$025,
+                        }}
+                      >
+                        <Text
+                          style={{
+                            color: c.white,
+                            margin: 'auto',
+                            fontSize: s.$09,
+                            backgroundColor: 'transparent',
+                          }}
+                        >
+                          +
+                        </Text>
+                      </BottomSheetView>
                       <Heading tag="h2normal" style={{ color: c.white, paddingHorizontal: s.$2 }}>
-                        {r.title}
+                        {`Add ${searchTerm}`}
                       </Heading>
                     </XStack>
                   </Pressable>
-                ))}
-              </YStack>
-            </BottomSheetScrollView>
-          )}
-          {searchTerm === '' && (
-            <BottomSheetScrollView
-              keyboardShouldPersistTaps="handled"
-              style={{
-                height: '90%',
-                paddingBottom: s.$0,
-              }}
-            >
-              <YStack
-                gap={s.$1}
+                  {results.map((r) => (
+                    <Pressable key={r.id} onPress={() => onAddRefToSearch(r)}>
+                      <XStack
+                        gap={s.$025}
+                        style={{
+                          alignItems: 'center',
+                          paddingVertical: s.$075,
+                          paddingHorizontal: s.$5,
+                        }}
+                      >
+                        <SimplePinataImage
+                          originalSource={r.image!}
+                          imageOptions={{ width: s.$2, height: s.$2 }}
+                          style={{ width: s.$2, height: s.$2 }}
+                        />
+                        <Heading tag="h2normal" style={{ color: c.white, paddingHorizontal: s.$2 }}>
+                          {r.title}
+                        </Heading>
+                      </XStack>
+                    </Pressable>
+                  ))}
+                </YStack>
+              </BottomSheetScrollView>
+            )}
+            {searchTerm === '' && (
+              <BottomSheetScrollView
+                keyboardShouldPersistTaps="handled"
                 style={{
-                  paddingBottom: s.$12,
+                  height: '90%',
+                  paddingBottom: s.$0,
                 }}
               >
-                {refs.map((r) => (
-                  <XStack
-                    key={r.id}
-                    gap={s.$025}
-                    style={{
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      paddingHorizontal: s.$1,
-                      height: s.$3,
-                    }}
-                  >
-                    <XStack style={{ width: '85%' }}>
-                      <SimplePinataImage
-                        originalSource={r.image!}
-                        imageOptions={{ width: s.$3, height: s.$3 }}
-                        style={{ width: s.$3, height: s.$3, borderRadius: s.$075 }}
-                      />
-                      <Heading
-                        tag="h2normal"
-                        style={{
-                          color: c.white,
-                          paddingHorizontal: s.$2,
-                          marginVertical: 'auto',
-                        }}
-                        numberOfLines={1}
-                      >
-                        {r.title}
-                      </Heading>
-                    </XStack>
-                    <Pressable
-                      onPress={() => {
-                        setRefs((prevState) => [...prevState.filter((ref) => ref.id !== r.id)])
+                <YStack
+                  gap={s.$1}
+                  style={{
+                    paddingBottom: s.$12,
+                  }}
+                >
+                  {refs.map((r) => (
+                    <XStack
+                      key={r.id}
+                      gap={s.$025}
+                      style={{
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        paddingHorizontal: s.$1,
+                        height: s.$3,
                       }}
                     >
-                      <Ionicons name="close" size={s.$2} color={c.white} />
-                    </Pressable>
-                  </XStack>
-                ))}
-              </YStack>
-            </BottomSheetScrollView>
-          )}
-        </BottomSheetView>
+                      <XStack style={{ width: '85%' }}>
+                        <SimplePinataImage
+                          originalSource={r.image!}
+                          imageOptions={{ width: s.$3, height: s.$3 }}
+                          style={{ width: s.$3, height: s.$3, borderRadius: s.$075 }}
+                        />
+                        <Heading
+                          tag="h2normal"
+                          style={{
+                            color: c.white,
+                            paddingHorizontal: s.$2,
+                            marginVertical: 'auto',
+                          }}
+                          numberOfLines={1}
+                        >
+                          {r.title}
+                        </Heading>
+                      </XStack>
+                      <Pressable
+                        onPress={() => {
+                          setRefs((prevState) => [...prevState.filter((ref) => ref.id !== r.id)])
+                        }}
+                      >
+                        <Ionicons name="close" size={s.$2} color={c.white} />
+                      </Pressable>
+                    </XStack>
+                  ))}
+                </YStack>
+              </BottomSheetScrollView>
+            )}
+          </BottomSheetView>
+        )}
       </BottomSheet>
-      {(addingTo === 'grid' || addingTo === 'backlog') && (
-        <Sheet
-          noPadding={true}
-          full={step !== ''}
-          onChange={(e: any) => {
-            if (e === -1) {
-              stopAdding()
-              setAppearsOnIndex(1)
-              setDisappearsOnIndex(0)
-              setMaxOpacity(0.5)
-              setDoPress(() => {
-                if (searchSheetRef.current) {
-                  searchSheetRef.current.collapse()
-                }
-              })
-            }
-          }}
-          backgroundStyle={{
-            backgroundColor: c.olive,
-          }}
-          handleIndicatorStyle={{ width: s.$10, backgroundColor: c.white, opacity: 0.5 }}
-          animatedIndex={animatedIndex}
-        >
-          <NewRef
-            initialRefData={{ title: newRefTitle }}
-            initialStep={initialStep}
-            backlog={addingTo === 'backlog'}
-            onStep={setStep}
-            onNewRef={async (itm: Item) => {
-              stopAdding()
-            }}
-            onCancel={() => {
-              stopAdding()
-            }}
-          />
-        </Sheet>
-      )}
     </>
   )
 }

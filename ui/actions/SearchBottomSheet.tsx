@@ -6,7 +6,7 @@ import BottomSheet, {
   BottomSheetView,
 } from '@gorhom/bottom-sheet'
 import { useCallback, useRef, useState } from 'react'
-import { Pressable, Text } from 'react-native'
+import { Pressable, Text, TextInput } from 'react-native'
 import { Heading } from '../typo/Heading'
 import { XStack, YStack } from '../core/Stacks'
 import { Button } from '../buttons/Button'
@@ -104,7 +104,7 @@ export default function SearchBottomSheet() {
         enableDynamicSizing={false}
         ref={searchSheetRef}
         enablePanDownToClose={false}
-        snapPoints={[minSnapPoint, '50%']}
+        snapPoints={[minSnapPoint, '90%']}
         index={0}
         onChange={(i: number) => {
           setIndex(i)
@@ -140,7 +140,7 @@ export default function SearchBottomSheet() {
               {isMinimised ? (
                 <Text style={{ color: c.white, fontSize: s.$1 }}>Search anything</Text>
               ) : (
-                <BottomSheetTextInput
+                <TextInput
                   autoFocus
                   placeholder="Search anything"
                   placeholderTextColor={c.white}

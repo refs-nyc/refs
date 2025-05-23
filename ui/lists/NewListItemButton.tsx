@@ -1,18 +1,13 @@
 import { XStack } from '../core/Stacks'
 import { View, Text, Pressable } from 'react-native'
-import { useState, useEffect } from 'react'
-import Ionicons from '@expo/vector-icons/Ionicons'
-import { pocketbase } from '@/features/pocketbase'
 import { s, c, base } from '@/features/style'
-import { SimplePinataImage } from '@/ui/images/SimplePinataImage'
-import type { CompleteRef } from '@/features/pocketbase/stores/types'
 
 export const NewListItemButton = ({
   onPress,
   label = 'Add a ref to the list',
 }: {
   onPress: () => void
-  label: string
+  label?: string
 }) => {
   return (
     <Pressable

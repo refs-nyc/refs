@@ -43,7 +43,7 @@ export const Sheet = (props: any = { full: false, noNotch: false, noPadding: fal
       {...props}
     >
       <BottomSheetScrollView
-        keyboardShouldPersistTaps={props.keyboardShouldPersistTaps || "handled"}
+        keyboardShouldPersistTaps={props.keyboardShouldPersistTaps || 'handled'}
         showsVerticalScrollIndicator={false}
       >
         {props?.children}

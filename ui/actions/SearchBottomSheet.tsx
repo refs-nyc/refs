@@ -5,7 +5,7 @@ import BottomSheet, {
   BottomSheetTextInput,
   BottomSheetView,
 } from '@gorhom/bottom-sheet'
-import { useCallback, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Pressable, Text } from 'react-native'
 import { Heading } from '../typo/Heading'
 import { XStack, YStack } from '../core/Stacks'
@@ -14,9 +14,10 @@ import { CompleteRef, Item, Profile } from '@/features/pocketbase/stores/types'
 import { pocketbase, useUserStore } from '@/features/pocketbase'
 import { SimplePinataImage } from '../images/SimplePinataImage'
 import { Ionicons } from '@expo/vector-icons'
-import { router } from 'expo-router'
+import { router, useNavigation } from 'expo-router'
 import { Sheet } from '../core/Sheets'
 import { NewRef, NewRefStep } from './NewRef'
+import { useBackdropStore } from '@/features/style/backdrop'
 
 const HEADER_HEIGHT = s.$8
 
@@ -36,6 +37,21 @@ export default function SearchBottomSheet() {
   const [refs, setRefs] = useState<CompleteRef[]>([])
 
   const { user } = useUserStore()
+
+  const { animatedIndex, setAppearsOnIndex, setDisappearsOnIndex, setMaxOpacity } =
+    useBackdropStore()
+
+  const navigation = useNavigation()
+  const focused = navigation.isFocused()
+
+  useEffect(() => {
+    if (focused) {
+      console.log(`updating: ${1} ${0} ${0.5}`)
+      setAppearsOnIndex(1)
+      setDisappearsOnIndex(0)
+      setMaxOpacity(0.5)
+    }
+  }, [focused])
 
   // search console should expand when new refs are added to the search
   // but it shouldn't be taller than ~4 refs in its minimised form
@@ -86,18 +102,6 @@ export default function SearchBottomSheet() {
     router.push(`/search?refs=${refs.map((r) => r.id).join(',')}`)
   }
 
-  const renderBackdrop = useCallback(
-    (p: any) => (
-      <BottomSheetBackdrop
-        {...p}
-        disappearsOnIndex={0}
-        appearsOnIndex={1}
-        pressBehavior={'collapse'}
-      />
-    ),
-    []
-  )
-
   return (
     <>
       <BottomSheet
@@ -106,6 +110,7 @@ export default function SearchBottomSheet() {
         enablePanDownToClose={false}
         snapPoints={[minSnapPoint, '50%']}
         index={0}
+        animatedIndex={animatedIndex}
         onChange={(i: number) => {
           setIndex(i)
           if (i === 0) {
@@ -114,7 +119,16 @@ export default function SearchBottomSheet() {
           }
         }}
         backgroundStyle={{ backgroundColor: c.olive, borderRadius: s.$4, paddingTop: 0 }}
-        backdropComponent={renderBackdrop}
+        backdropComponent={(p) => {
+          return (
+            <BottomSheetBackdrop
+              {...p}
+              disappearsOnIndex={0}
+              appearsOnIndex={1}
+              pressBehavior={'collapse'}
+            />
+          )
+        }}
         handleComponent={null}
         keyboardBehavior="interactive"
       >

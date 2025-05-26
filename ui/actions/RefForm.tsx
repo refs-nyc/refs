@@ -119,7 +119,13 @@ export const RefForm = ({
 
   return (
     <View
-      style={{ justifyContent: 'center', alignItems: 'center', gap: s.$2, marginVertical: s.$4 }}
+      style={{
+        justifyContent: 'center',
+        alignItems: 'center',
+        gap: s.$2,
+        marginVertical: s.$4,
+        width: '90%',
+      }}
     >
       <View style={{ width: 200, height: 200 }}>
         {imageAsset ? (

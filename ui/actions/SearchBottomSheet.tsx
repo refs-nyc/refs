@@ -131,7 +131,10 @@ export default function SearchBottomSheet() {
             initialRefData={{ title: newRefTitle }}
             initialStep={initialStep}
             backlog={addingTo === 'backlog'}
-            onStep={setStep}
+            onStep={(step) => {
+              setStep(step)
+              if (step === 'add') searchSheetRef.current?.snapToIndex(2)
+            }}
             onNewRef={async (itm: Item) => {
               stopAdding()
               searchSheetRef.current?.collapse()

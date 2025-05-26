@@ -15,7 +15,7 @@ import NetInfo from '@react-native-community/netinfo'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { useEffect } from 'react'
-import { StatusBar, useColorScheme, useWindowDimensions, View } from 'react-native'
+import { StatusBar, useColorScheme } from 'react-native'
 import { Navigation } from '@/ui/navigation/Navigation'
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native'
 import { useFonts } from 'expo-font'
@@ -73,12 +73,7 @@ function FontProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     SystemUI.setBackgroundColorAsync(c.surface)
-
-    if (interLoaded || interError) {
-      // Hide the splash screen after the fonts have loaded (or an error was returned) and the UI is ready.
-      SplashScreen.hideAsync()
-    }
-  }, [interLoaded, interError])
+  }, [])
 
   if (!interLoaded && !interError) {
     return null

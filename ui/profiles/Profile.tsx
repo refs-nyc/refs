@@ -236,7 +236,7 @@ export const Profile = ({ userName }: { userName: string }) => {
             <>
               <Pressable
                 onPress={() => {
-                  // if (bottomSheetRef.current && isMinimised) bottomSheetRef.current.snapToIndex(1)
+                  if (bottomSheetRef.current && isMinimised) bottomSheetRef.current.snapToIndex(1)
                 }}
                 style={{
                   // handle is hidden while minimised, so this is needed to make sure

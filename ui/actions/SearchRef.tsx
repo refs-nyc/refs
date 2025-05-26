@@ -121,7 +121,7 @@ export const SearchRef = ({
 
   return (
     <>
-      <KeyboardAvoidingView>
+      <KeyboardAvoidingView style={{ width: '90%'}}>
         <TextInput
           style={{
             backgroundColor: c.surface2,

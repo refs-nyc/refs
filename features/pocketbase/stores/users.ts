@@ -4,6 +4,7 @@ import { Profile, EmptyProfile, ExpandedProfile, Item } from './types'
 import { UsersRecord, UsersResponse, ItemsResponse } from './pocketbase-types'
 import { canvasApp } from './canvas'
 import { ClientResponseError } from 'pocketbase'
+import { SplashScreen } from 'expo-router'
 
 export const isProfile = (profile: Profile | EmptyProfile | null): profile is Profile => {
   return profile !== null && Object.keys(profile).length > 0
@@ -12,6 +13,7 @@ export const isProfile = (profile: Profile | EmptyProfile | null): profile is Pr
 export const useUserStore = create<{
   stagedUser: Partial<Profile>
   user: Profile | null
+  userLoaded: boolean
   register: () => Promise<ExpandedProfile>
   updateUser: (fields: Partial<Profile>) => Promise<Profile>
   updateStagedUser: (formFields: Partial<Profile>) => void
@@ -26,6 +28,7 @@ export const useUserStore = create<{
   stagedUser: {},
   user: null, // user is ALWAYS the user of the app, this is only set if the user is logged in
   users: [],
+  userLoaded: false,
   //
   //
   //
@@ -39,11 +42,13 @@ export const useUserStore = create<{
 
         set(() => ({
           user: record,
+          userLoaded: true,
         }))
       } catch (error) {
         console.error('Failed to sync user state:', error)
         // If we can't get the user record, clear the auth store
         pocketbase.authStore.clear()
+        set(() => ({ userLoaded: true }))
       }
     }
   },

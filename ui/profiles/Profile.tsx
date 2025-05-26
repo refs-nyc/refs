@@ -330,7 +330,10 @@ export const Profile = ({ userName }: { userName: string }) => {
           ) : (
             <NewRef
               backlog={addingTo === 'backlog'}
-              onStep={setStep}
+              onStep={(step) => {
+                setStep(step)
+                if (step === 'add') bottomSheetRef.current?.snapToIndex(2)
+              }}
               onNewRef={async (itm: Item) => {
                 await refreshGrid(userName)
                 bottomSheetRef.current?.collapse()

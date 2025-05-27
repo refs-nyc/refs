@@ -44,7 +44,7 @@ export const FilteredItems = ({
           onComplete(item)
         }}
       >
-        <ListItem largeImage={true} r={item} />
+        <ListItem largeImage={true} r={item} backgroundColor={c.olive} />
       </Pressable>
     )
   }

@@ -24,7 +24,6 @@ import { ProfileDetailsContext } from './profileDetailsStore'
 const LocationMeta = ({ location }: { location: string }) => {
   return (
     <XStack style={{ alignItems: 'center' }} gap={s.$05}>
-      <Ionicons name="location-outline" size={s.$1} color={c.muted} />
       <Heading tag="smallmuted">{location}</Heading>
     </XStack>
   )
@@ -33,7 +32,6 @@ const LocationMeta = ({ location }: { location: string }) => {
 const AuthorMeta = ({ author }: { author: string }) => {
   return (
     <XStack style={{ alignItems: 'center' }} gap={s.$05}>
-      <Ionicons name="person-outline" size={s.$1} color={c.muted} />
       <Heading tag="smallmuted">{author}</Heading>
     </XStack>
   )

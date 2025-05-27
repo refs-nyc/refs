@@ -102,7 +102,7 @@ export default function SearchBottomSheet() {
         ref={searchSheetRef}
         enablePanDownToClose={false}
         snapPoints={snapPoints}
-        index={index}
+        index={Math.min(index, snapPoints.length - 1)}
         animatedIndex={animatedIndex}
         onChange={(i: number) => {
           setIndex(i)
@@ -133,7 +133,7 @@ export default function SearchBottomSheet() {
             backlog={addingTo === 'backlog'}
             onStep={(step) => {
               setStep(step)
-              if (step === 'add') searchSheetRef.current?.snapToIndex(2)
+              if (step === 'add' && snapPoints.length > 2) searchSheetRef.current?.snapToIndex(2)
             }}
             onNewRef={async (itm: Item) => {
               stopAdding()

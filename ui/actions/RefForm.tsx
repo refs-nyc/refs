@@ -12,6 +12,8 @@ import { Button } from '../buttons/Button'
 import type { ImagePickerAsset } from 'expo-image-picker'
 import { c, s } from '@/features/style'
 import { StagedRef, ExpandedItem } from '@/features/pocketbase/stores/types'
+import { KeyboardAvoidingView } from 'react-native-keyboard-controller'
+import { DismissKeyboard } from '../atoms/DismissKeyboard'
 
 const win = Dimensions.get('window')
 
@@ -118,132 +120,136 @@ export const RefForm = ({
   }
 
   return (
-    <View
-      style={{
-        justifyContent: 'center',
-        alignItems: 'center',
-        gap: s.$2,
-        marginVertical: s.$4,
-        width: '90%',
-      }}
-    >
-      <View style={{ width: 200, height: 200 }}>
-        {imageAsset ? (
-          <PinataImage
-            asset={imageAsset}
-            onReplace={() => setPicking(true)}
-            onSuccess={handleImageSuccess}
-            onFail={() => {
-              console.error('Upload failed')
-              setUploadInProgress(false)
-            }}
-          />
-        ) : pinataSource ? (
-          <TouchableOpacity
-            style={{
-              flex: 1,
-              width: 200,
-              height: 200,
-              borderRadius: s.$09,
-              overflow: 'hidden',
-            }}
-            onLongPress={() => setPicking(true)}
-          >
-            <Image style={{ flex: 1 }} source={pinataSource} placeholder={pinataSource} />
-          </TouchableOpacity>
-        ) : (
-          <TouchableOpacity style={{ flex: 1 }} onPress={() => setPicking(true)}>
-            <View
+    <DismissKeyboard>
+      <KeyboardAvoidingView
+        style={{
+          justifyContent: 'center',
+          alignItems: 'center',
+          gap: s.$2,
+          marginVertical: s.$4,
+          width: '100%',
+        }}
+        behavior="padding"
+        keyboardVerticalOffset={Dimensions.get('window').height * 0.25}
+      >
+        <View style={{ width: 200, height: 200 }}>
+          {imageAsset ? (
+            <PinataImage
+              asset={imageAsset}
+              onReplace={() => setPicking(true)}
+              onSuccess={handleImageSuccess}
+              onFail={() => {
+                console.error('Upload failed')
+                setUploadInProgress(false)
+              }}
+            />
+          ) : pinataSource ? (
+            <TouchableOpacity
               style={{
                 flex: 1,
-                justifyContent: 'center',
-                alignItems: 'center',
-                borderWidth: 3,
-                borderColor: c.surface,
+                width: 200,
+                height: 200,
                 borderRadius: s.$09,
-                borderStyle: 'dashed',
+                overflow: 'hidden',
               }}
+              onLongPress={() => setPicking(true)}
             >
-              <Heading tag="h1light" style={{ color: c.surface }}>
-                +
-              </Heading>
-            </View>
-          </TouchableOpacity>
-        )}
-      </View>
+              <Image style={{ flex: 1 }} source={pinataSource} placeholder={pinataSource} />
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity style={{ flex: 1 }} onPress={() => setPicking(true)}>
+              <View
+                style={{
+                  flex: 1,
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  borderWidth: 3,
+                  borderColor: c.surface,
+                  borderRadius: s.$09,
+                  borderStyle: 'dashed',
+                }}
+              >
+                <Heading tag="h1light" style={{ color: c.surface }}>
+                  +
+                </Heading>
+              </View>
+            </TouchableOpacity>
+          )}
+        </View>
 
-      {picking && (
-        <Picker
-          onSuccess={(a: ImagePickerAsset) => {
-            setImageAsset(a)
-            setPicking(false)
-            setUploadInProgress(true)
-          }}
-          onCancel={() => setPicking(false)}
-        />
-      )}
-
-      <EditableHeader
-        onTitleChange={handleTitleChange}
-        onDataChange={handleDataChange}
-        placeholder={placeholder}
-        title={title || placeholder}
-        url={url || ''}
-        image={pinataSource}
-      />
-
-      {/* Notes */}
-      <TextInput
-        multiline={true}
-        numberOfLines={4}
-        placeholder="Add a caption for your profile"
-        placeholderTextColor={c.muted}
-        onChangeText={setComment}
-        style={{
-          backgroundColor: c.white,
-          borderRadius: s.$075,
-          width: '100%',
-          padding: s.$1,
-          minHeight: s.$12,
-        }}
-      />
-
-      <View
-        style={{
-          width: '100%',
-          flexDirection: 'row',
-          justifyContent: 'space-between',
-        }}
-      >
-        {/* Lists can't have a url */}
-        {!url && (
-          <Button
-            title="Add to list"
-            variant="whiteOutline"
-            style={{ width: '48%', minWidth: 0 }}
-            disabled={!title || uploadInProgress || createInProgress}
-            onPress={() => {
-              submit({}, true)
+        {picking && (
+          <Picker
+            onSuccess={(a: ImagePickerAsset) => {
+              setImageAsset(a)
+              setPicking(false)
+              setUploadInProgress(true)
             }}
+            onCancel={() => setPicking(false)}
           />
-          // <Button
-          //   title="Create List"
-          //   variant="outlineFluid"
-          //   style={{ width: '48%', minWidth: 0 }}
-          //   disabled={!title || uploadInProgress || createInProgress}
-          //   onPress={() => {
-          //     submit({ list: true })
-          //   }}
-          // />
         )}
-        <Button
-          title="Add Ref"
-          variant="whiteInverted"
-          style={{ width: url ? '100%' : '48%', minWidth: 0 }}
-          disabled={!(pinataSource && title) || uploadInProgress || createInProgress}
-          onPress={() => submit()}
+
+        <EditableHeader
+          onTitleChange={handleTitleChange}
+          onDataChange={handleDataChange}
+          placeholder={placeholder}
+          title={title || placeholder}
+          url={url || ''}
+          image={pinataSource}
         />
-      </View>
-    </View>
+
+        {/* Notes */}
+        <TextInput
+          multiline={true}
+          numberOfLines={4}
+          placeholder="Add a caption for your profile"
+          placeholderTextColor={c.muted}
+          onChangeText={setComment}
+          style={{
+            backgroundColor: c.white,
+            borderRadius: s.$075,
+            width: '100%',
+            padding: s.$1,
+            minHeight: s.$12,
+          }}
+        />
+
+        <View
+          style={{
+            width: '100%',
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+          }}
+        >
+          {/* Lists can't have a url */}
+          {!url && (
+            <Button
+              title="Add to list"
+              variant="whiteOutline"
+              style={{ width: '48%', minWidth: 0 }}
+              disabled={!title || uploadInProgress || createInProgress}
+              onPress={() => {
+                submit({}, true)
+              }}
+            />
+            // <Button
+            //   title="Create List"
+            //   variant="outlineFluid"
+            //   style={{ width: '48%', minWidth: 0 }}
+            //   disabled={!title || uploadInProgress || createInProgress}
+            //   onPress={() => {
+            //     submit({ list: true })
+            //   }}
+            // />
+          )}
+          <Button
+            title="Add Ref"
+            variant="whiteInverted"
+            style={{ width: url ? '100%' : '48%', minWidth: 0 }}
+            disabled={!(pinataSource && title) || uploadInProgress || createInProgress}
+            onPress={() => submit()}
+          />
+        </View>
+      </KeyboardAvoidingView>
+    </DismissKeyboard>
   )
 }

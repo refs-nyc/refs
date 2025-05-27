@@ -14,9 +14,8 @@ export const NewListItemButton = ({
       onPress={onPress}
       style={{
         paddingVertical: s.$08,
-        // paddingHorizontal: s.$08,
         borderRadius: s.$075,
-        backgroundColor: c.surface,
+        backgroundColor: c.olive,
       }}
     >
       <XStack gap={s.$09} style={{ justifyContent: 'space-between', alignItems: 'center' }}>

@@ -2,12 +2,11 @@ import { Camera } from '../inputs/Camera'
 import { YStack } from '../core/Stacks'
 import { useUserStore, isProfile } from '@/features/pocketbase/stores/users'
 import { Button } from '../buttons/Button'
-import { Dimensions } from 'react-native'
+import { Dimensions, View } from 'react-native'
 import { useState, useEffect } from 'react'
 import { RefForm } from '../actions/RefForm'
 import { SearchRef } from '../actions/SearchRef'
 import { FilteredItems } from '../actions/FilteredItems'
-// import { SearchItem } from '../actions/SearchItem'
 import { c } from '@/features/style'
 import { StagedRef, CompleteRef, Item, ExpandedItem } from '@/features/pocketbase/stores/types'
 import type { ImagePickerAsset } from 'expo-image-picker'
@@ -190,56 +189,58 @@ export const NewRef = ({
       )}
 
       {step === 'addToList' && (
-        <FilteredItems
-          filter={`children:length > 0 && creator = "${user?.id}"`}
-          onComplete={async (item) => {
-            // Fetch the expanded item data first
-            const expandedItem = await pocketbase
-              .collection('items')
-              .getOne<ExpandedItem>(item.id, {
-                expand: 'ref,children',
-              })
-            // Add the reference to the list
-            await addToList(expandedItem.id, refData as CompleteRef)
-            // Fetch fresh data after adding
-            const updatedItem = await pocketbase
-              .collection('items')
-              .getOne<ExpandedItem>(expandedItem.id, {
-                expand: 'ref,children',
-              })
-            setItemData(updatedItem)
-            setStep('editList')
-          }}
-          onCreateList={async () => {
-            // Create new ref for the list
-            const newRef = await pushRef({
-              title: '',
-              type: RefsTypeOptions.other,
-              creator: user?.id,
-            })
-
-            // Create new item with the ref
-            const newItem = await pushItem({
-              ref: newRef.id,
-              creator: user?.id,
-              list: true,
-            })
-
-            // Add current ref to the new list
-            await addToList(newItem.id, refData as CompleteRef)
-
-            // Fetch the expanded item data
-            const expandedItem = await pocketbase
-              .collection('items')
-              .getOne<ExpandedItem>(newItem.id, {
-                expand: 'ref,children',
+        <View style={{paddingVertical: s.$1, width: '100%'}}>
+          <FilteredItems
+            filter={`children:length > 0 && creator = "${user?.id}"`}
+            onComplete={async (item) => {
+              // Fetch the expanded item data first
+              const expandedItem = await pocketbase
+                .collection('items')
+                .getOne<ExpandedItem>(item.id, {
+                  expand: 'ref,children',
+                })
+              // Add the reference to the list
+              await addToList(expandedItem.id, refData as CompleteRef)
+              // Fetch fresh data after adding
+              const updatedItem = await pocketbase
+                .collection('items')
+                .getOne<ExpandedItem>(expandedItem.id, {
+                  expand: 'ref,children',
+                })
+              setItemData(updatedItem)
+              setStep('editList')
+            }}
+            onCreateList={async () => {
+              // Create new ref for the list
+              const newRef = await pushRef({
+                title: '',
+                type: RefsTypeOptions.other,
+                creator: user?.id,
               })
 
-            // Set the expanded item as current and show edit list
-            setItemData(expandedItem)
-            setStep('editList')
-          }}
-        />
+              // Create new item with the ref
+              const newItem = await pushItem({
+                ref: newRef.id,
+                creator: user?.id,
+                list: true,
+              })
+
+              // Add current ref to the new list
+              await addToList(newItem.id, refData as CompleteRef)
+
+              // Fetch the expanded item data
+              const expandedItem = await pocketbase
+                .collection('items')
+                .getOne<ExpandedItem>(newItem.id, {
+                  expand: 'ref,children',
+                })
+
+              // Set the expanded item as current and show edit list
+              setItemData(expandedItem)
+              setStep('editList')
+            }}
+          />
+        </View>
       )}
 
       {step === 'editList' && itemData && (

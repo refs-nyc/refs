@@ -61,7 +61,9 @@ export const EditableList = ({
   return (
     <BottomSheetView
       style={{
-        height: win.height - insets.top - insets.bottom - 100,
+        height: '90%',
+        width: '100%',
+        paddingVertical: s.$1,
       }}
     >
       <BottomSheetScrollView style={{ flex: 1, gap: s.$09 }}>
@@ -102,6 +104,7 @@ export const EditableList = ({
                     r={kid}
                     largeImage={true}
                     withRemove={true}
+                    backgroundColor={c.olive}
                     onRemove={async () => {
                       try {
                         await removeFromList(item.id, kid)
@@ -122,10 +125,9 @@ export const EditableList = ({
         </BottomSheetView>
       </BottomSheetScrollView>
       <Button
-        style={{ position: 'absolute', bottom: 0, width: '100%' }}
         onPress={onComplete}
         title="Done"
-        variant="raised"
+        variant="whiteInverted"
       ></Button>
     </BottomSheetView>
   )

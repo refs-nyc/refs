@@ -2,13 +2,28 @@ import type { ExpandedItem } from '@/features/pocketbase/stores/types'
 import { useState, useEffect } from 'react'
 import { DismissKeyboard } from '@/ui'
 import { pocketbase } from '@/features/pocketbase'
-import { View, ScrollView } from 'react-native'
+import { View, ScrollView, Pressable, Text, StyleSheet } from 'react-native'
 import { Nearby } from './nearby'
 import SearchBottomSheet from '@/ui/actions/SearchBottomSheet'
 import { s } from '../style'
 
+// Suggested refs (replace with your real data)
+const suggestedRefs = [
+  { title: 'Playing Tennis' },
+  { title: 'Wes Anderson' },
+  { title: '3D Printing' },
+  { title: 'Wet Leg' },
+  { title: 'Cooking' },
+  { title: 'Jazz' },
+  { title: 'Cycling' },
+  { title: 'Photography' },
+  { title: 'Poetry' },
+  { title: 'Board Games' },
+]
+
 export const Feed = () => {
   const [items, setItems] = useState<ExpandedItem[]>([])
+  const [selected, setSelected] = useState<string[]>([])
 
   useEffect(() => {
     const getInitialData = async () => {
@@ -30,6 +45,13 @@ export const Feed = () => {
     getInitialData()
   }, [])
 
+  // Toggle pill selection
+  const toggleSelect = (title: string) => {
+    setSelected((prev) =>
+      prev.includes(title) ? prev.filter((t) => t !== title) : [...prev, title]
+    )
+  }
+
   return (
     <>
       <DismissKeyboard>
@@ -39,7 +61,74 @@ export const Feed = () => {
           </View>
         </ScrollView>
       </DismissKeyboard>
+      {/* Suggested Refs Pillbox */}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        style={{ paddingVertical: 12, paddingLeft: 8, height: 38 }}
+        contentContainerStyle={{ alignItems: 'center' }}
+      >
+        {suggestedRefs.map((ref) => {
+          const isSelected = selected.includes(ref.title)
+          return (
+            <Pressable
+              key={ref.title}
+              onPress={() => toggleSelect(ref.title)}
+              style={({ pressed }) => [
+                pillStyles.pill,
+                isSelected ? pillStyles.selected : pillStyles.unselected,
+                pressed && pillStyles.pressed,
+              ]}
+            >
+              <Text
+                style={[
+                  pillStyles.text,
+                  isSelected ? pillStyles.selectedText : pillStyles.unselectedText,
+                ]}
+              >
+                {ref.title}
+              </Text>
+            </Pressable>
+          )
+        })}
+      </ScrollView>
       <SearchBottomSheet />
     </>
   )
 }
+
+const pillStyles = StyleSheet.create({
+  pill: {
+    borderRadius: 20,
+    borderWidth: 2,
+    borderColor: '#A5B89F', // Actual Olive
+    paddingVertical: 10,
+    paddingHorizontal: 10,
+    marginRight: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+    minHeight: 38,
+    minWidth: 38,
+  },
+  unselected: {
+    backgroundColor: '#F3F2ED', // Surface
+  },
+  selected: {
+    backgroundColor: '#A5B89F', // Actual Olive
+  },
+  pressed: {
+    opacity: 0.7,
+  },
+  text: {
+    fontFamily: 'Inter-Medium',
+    fontSize: 14,
+    lineHeight: 18,
+    textAlign: 'center',
+  },
+  unselectedText: {
+    color: '#A5B89F', // Actual Olive
+  },
+  selectedText: {
+    color: 'rgba(0,0,0,0.54)', // Mellow Black
+  },
+})

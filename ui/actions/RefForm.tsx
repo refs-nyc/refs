@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { usePathname } from 'expo-router'
-import { View, TouchableOpacity, Dimensions } from 'react-native'
+import { View, TouchableOpacity, Dimensions, Animated } from 'react-native'
 import { BottomSheetTextInput as TextInput } from '@gorhom/bottom-sheet'
 import { Heading } from '@/ui/typo/Heading'
 import { Picker } from '../inputs/Picker'
@@ -12,6 +12,7 @@ import { Button } from '../buttons/Button'
 import type { ImagePickerAsset } from 'expo-image-picker'
 import { c, s } from '@/features/style'
 import { StagedRef, ExpandedItem } from '@/features/pocketbase/stores/types'
+// @ts-ignore
 import { KeyboardAvoidingView } from 'react-native-keyboard-controller'
 import { DismissKeyboard } from '../atoms/DismissKeyboard'
 
@@ -45,6 +46,10 @@ export const RefForm = ({
   const [createInProgress, setCreateInProgress] = useState(false)
 
   const pathname = usePathname()
+
+  // Animation refs
+  const titleShake = useRef(new Animated.Value(0)).current
+  const imageShake = useRef(new Animated.Value(0)).current
 
   // Initialize state based on incoming ref
   useEffect(() => {
@@ -90,9 +95,30 @@ export const RefForm = ({
     }
   }
 
+  // Shake animation function
+  const triggerShake = (anim: Animated.Value) => {
+    anim.setValue(0)
+    Animated.sequence([
+      Animated.timing(anim, { toValue: 1, duration: 80, useNativeDriver: true }),
+      Animated.timing(anim, { toValue: -1, duration: 80, useNativeDriver: true }),
+      Animated.timing(anim, { toValue: 0.7, duration: 80, useNativeDriver: true }),
+      Animated.timing(anim, { toValue: 0, duration: 80, useNativeDriver: true }),
+    ]).start()
+  }
+
   const submit = async (extraFields?: Partial<ExpandedItem>, promptList = false) => {
-    console.log('extraFields')
-    console.log(extraFields)
+    // Check for missing fields
+    let missing = false
+    if (!title) {
+      triggerShake(titleShake)
+      missing = true
+    }
+    if (!pinataSource) {
+      triggerShake(imageShake)
+      missing = true
+    }
+    if (missing) return
+
     const data = {
       ...r,
       title,
@@ -132,7 +158,26 @@ export const RefForm = ({
         behavior="padding"
         keyboardVerticalOffset={Dimensions.get('window').height * 0.25}
       >
-        <View style={{ width: 200, height: 200 }}>
+        <Animated.View
+          style={{
+            width: 200,
+            height: 200,
+            transform: [
+              {
+                translateX: imageShake.interpolate({
+                  inputRange: [-1, 0, 1],
+                  outputRange: [-10, 0, 10],
+                }),
+              },
+              {
+                scale: imageShake.interpolate({
+                  inputRange: [-1, 0, 1],
+                  outputRange: [1.05, 1, 1.05],
+                }),
+              },
+            ],
+          }}
+        >
           {imageAsset ? (
             <PinataImage
               asset={imageAsset}
@@ -175,7 +220,7 @@ export const RefForm = ({
               </View>
             </TouchableOpacity>
           )}
-        </View>
+        </Animated.View>
 
         {picking && (
           <Picker
@@ -188,14 +233,34 @@ export const RefForm = ({
           />
         )}
 
-        <EditableHeader
-          onTitleChange={handleTitleChange}
-          onDataChange={handleDataChange}
-          placeholder={placeholder}
-          title={title || placeholder}
-          url={url || ''}
-          image={pinataSource}
-        />
+        <Animated.View
+          style={{
+            width: '100%',
+            transform: [
+              {
+                translateX: titleShake.interpolate({
+                  inputRange: [-1, 0, 1],
+                  outputRange: [-10, 0, 10],
+                }),
+              },
+              {
+                scale: titleShake.interpolate({
+                  inputRange: [-1, 0, 1],
+                  outputRange: [1.05, 1, 1.05],
+                }),
+              },
+            ],
+          }}
+        >
+          <EditableHeader
+            onTitleChange={handleTitleChange}
+            onDataChange={handleDataChange}
+            placeholder={placeholder}
+            title={title || placeholder}
+            url={url || ''}
+            image={pinataSource}
+          />
+        </Animated.View>
 
         {/* Notes */}
         <TextInput

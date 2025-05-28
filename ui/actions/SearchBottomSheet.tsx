@@ -4,8 +4,8 @@ import BottomSheet, {
   BottomSheetScrollView,
   BottomSheetView,
 } from '@gorhom/bottom-sheet'
-import { useRef, useState } from 'react'
-import { Pressable, Text, TextInput } from 'react-native'
+import { useRef, useState, useEffect } from 'react'
+import { Pressable, Text, TextInput, ScrollView, StyleSheet } from 'react-native'
 import { Heading } from '../typo/Heading'
 import { XStack, YStack } from '../core/Stacks'
 import { Button } from '../buttons/Button'
@@ -18,6 +18,25 @@ import { NewRef, NewRefStep } from './NewRef'
 import { useBackdropStore } from '@/features/pocketbase/stores/backdrop'
 
 const HEADER_HEIGHT = s.$8
+
+// Hardcoded suggested refs (edit this array as needed)
+const suggestedRefs = [
+  { 
+    id: 'my08nqseypicy8e', 
+    title: 'Memorizing Poems', 
+    image: 'https://violet-fashionable-blackbird-836.mypinata.cloud/files/bafkreie5z4rvlr3qsnycliba66pf3eytg7cpwggjdiiozufntan3fxmmia?X-Algorithm=PINATA1&X-Date=1748310959851&X-Expires=500000&X-Method=GET&X-Signature=2c3a59e5e84c220cd498afff13848e173e203950df04453490d808083bfce5bc'
+  },
+  { 
+    id: '7i2m3fimd3e4xao', 
+    title: 'Paris', 
+    image: 'https://violet-fashionable-blackbird-836.mypinata.cloud/files/bafybeia4lg3py57qopgryhohlihqqb3zwv2c5cixj3u2lyiulrcz2otjhq?X-Algorithm=PINATA1&X-Date=1741197105210&X-Expires=500000&X-Method=GET&X-Signature=e3cf3a4d80e38b997ea617322be2066df800b5c5d726e385dc3db963f2f5714a'
+  },
+  { 
+    id: '7n0632930q23zdj', 
+    title: 'This Sake', 
+    image: 'https://violet-fashionable-blackbird-836.mypinata.cloud/files/bafybeic2jj457wrr6swmvn3n4czyizu2cwjvilzgddthit3tyliqrsvhma?X-Algorithm=PINATA1&X-Date=1741011345712&X-Expires=500000&X-Method=GET&X-Signature=f6cf43ecf31c464fe5949e2a20d62b5187ee3a3d3a24526f90753dafaa540e5d'
+  }
+]
 
 export default function SearchBottomSheet() {
   const [index, setIndex] = useState(0)
@@ -38,11 +57,50 @@ export default function SearchBottomSheet() {
 
   const { animatedIndex } = useBackdropStore()
 
+  const [error, setError] = useState('')
+
+  // Helper: find suggested ref by title
+  const findSuggestedRef = (title: string) => suggestedRefs.find(r => r.title.toLowerCase() === title.toLowerCase())
+
+  // Helper: check if a ref is already selected
+  const isRefSelected = (title: string) => refs.some(r => r.title && r.title.toLowerCase() === title.toLowerCase())
+
+  // Pillbox handler
+  const onPillPress = (refObj: typeof suggestedRefs[0]) => {
+    if (isRefSelected(refObj.title)) {
+      // Remove from refs
+      setRefs(prev => prev.filter(r => r.title && r.title.toLowerCase() !== refObj.title.toLowerCase()))
+      setError('')
+    } else {
+      // Add to top of refs
+      setRefs(prev => [refObj, ...prev])
+      setError('')
+    }
+  }
+
+  // When user tries to add a ref manually
   const onAddRefToSearch = (r: CompleteRef) => {
-    setRefs((prevState) => [...prevState.filter((ref) => ref.id !== r.id), r])
+    if (!r.title) return;
+    if (isRefSelected(r.title)) {
+      setError('already added!')
+      return
+    }
+    setRefs((prevState) => [r, ...prevState.filter((ref) => ref.id !== r.id)])
     setSearchTerm('')
     updateSearch('')
+    setError('')
   }
+
+  // When user types a term that matches a suggested ref, auto-select the pill
+  useEffect(() => {
+    if (searchTerm && findSuggestedRef(searchTerm) && !isRefSelected(searchTerm)) {
+      // Optionally, auto-select the pill or just highlight it
+      // For now, do nothing (let user click pill or add manually)
+    }
+    if (error && (!searchTerm || !isRefSelected(searchTerm))) {
+      setError('')
+    }
+  }, [searchTerm, refs, error])
 
   const updateSearch = async (q: string) => {
     setSearchTerm(q)
@@ -146,6 +204,89 @@ export default function SearchBottomSheet() {
           />
         ) : (
           <BottomSheetView>
+            {/* Pillbox: always show ticker */}
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={{ paddingVertical: 12, paddingLeft: 8, height: 38 }}
+              contentContainerStyle={{ alignItems: 'center' }}
+            >
+              {suggestedRefs.map((ref) => {
+                const isSelected = isRefSelected(ref.title)
+                return (
+                  <Pressable
+                    key={ref.id}
+                    onPress={() => onPillPress(ref)}
+                    style={({ pressed }) => [
+                      pillStyles.pill,
+                      isSelected ? pillStyles.selected : pillStyles.unselected,
+                      pressed && pillStyles.pressed,
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        pillStyles.text,
+                        isSelected ? pillStyles.selectedText : pillStyles.unselectedText,
+                      ]}
+                    >
+                      {ref.title}
+                    </Text>
+                  </Pressable>
+                )
+              })}
+            </ScrollView>
+            {/* Chips/tags for selected refs (below search input) */}
+            {refs.filter(r => r.title && r.image).length > 0 && (
+              <YStack style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 8 }}>
+                {refs.filter(r => r.title && r.image).map((r, idx) => (
+                  <XStack
+                    key={String(r.id || r.title || `ref-chip-${idx}`)}
+                    style={{
+                      backgroundColor: c.olive,
+                      borderRadius: 16,
+                      alignItems: 'center',
+                      paddingVertical: 4,
+                      paddingHorizontal: 8,
+                      marginRight: 8,
+                      marginBottom: 4,
+                    }}
+                  >
+                    <SimplePinataImage
+                      originalSource={r.image as string}
+                      imageOptions={{ width: 24, height: 24 }}
+                      style={{ width: 24, height: 24, borderRadius: 12, marginRight: 6 }}
+                    />
+                    <Text style={{ color: c.white, fontFamily: 'Inter-Medium', fontSize: 14 }}>
+                      {r.title}
+                    </Text>
+                    <Pressable
+                      onPress={() => {
+                        setRefs((prev) => prev.filter((ref) => ref.id !== r.id))
+                        setError('')
+                      }}
+                      style={{ marginLeft: 6 }}
+                    >
+                      <Ionicons name="close" size={18} color={c.white} />
+                    </Pressable>
+                  </XStack>
+                ))}
+              </YStack>
+            )}
+            {/* Error message */}
+            {error && (
+              <Text
+                style={{
+                  color: c.surface,
+                  fontFamily: 'Inter-Medium',
+                  fontSize: 14,
+                  textAlign: 'center',
+                  marginTop: 10,
+                  marginBottom: 0,
+                }}
+              >
+                {error}
+              </Text>
+            )}
             <Pressable
               onPress={() => {
                 if (searchSheetRef.current && isMinimised) searchSheetRef.current.snapToIndex(1)
@@ -245,7 +386,7 @@ export default function SearchBottomSheet() {
                         }}
                       >
                         <SimplePinataImage
-                          originalSource={r.image!}
+                          originalSource={r.image as string}
                           imageOptions={{ width: s.$2, height: s.$2 }}
                           style={{ width: s.$2, height: s.$2 }}
                         />
@@ -274,7 +415,7 @@ export default function SearchBottomSheet() {
                 >
                   {refs.map((r) => (
                     <XStack
-                      key={r.id}
+                      key={String(r.id || r.title || `ref-chip-${refs.indexOf(r)}`)}
                       gap={s.$025}
                       style={{
                         alignItems: 'center',
@@ -285,7 +426,7 @@ export default function SearchBottomSheet() {
                     >
                       <XStack style={{ width: '85%' }}>
                         <SimplePinataImage
-                          originalSource={r.image!}
+                          originalSource={r.image as string}
                           imageOptions={{ width: s.$3, height: s.$3 }}
                           style={{ width: s.$3, height: s.$3, borderRadius: s.$075 }}
                         />
@@ -319,3 +460,40 @@ export default function SearchBottomSheet() {
     </>
   )
 }
+
+// Pill styles (copy from Feed or adjust as needed)
+const pillStyles = StyleSheet.create({
+  pill: {
+    borderRadius: 20,
+    borderWidth: 2,
+    borderColor: '#A5B89F', // Actual Olive
+    paddingVertical: 10,
+    paddingHorizontal: 10,
+    marginRight: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+    minHeight: 38,
+    minWidth: 38,
+  },
+  unselected: {
+    backgroundColor: '#F3F2ED', // Surface
+  },
+  selected: {
+    backgroundColor: '#A5B89F', // Actual Olive
+  },
+  pressed: {
+    opacity: 0.7,
+  },
+  text: {
+    fontFamily: 'Inter-Medium',
+    fontSize: 14,
+    lineHeight: 18,
+    textAlign: 'center',
+  },
+  unselectedText: {
+    color: '#A5B89F', // Actual Olive
+  },
+  selectedText: {
+    color: 'rgba(0,0,0,0.54)', // Mellow Black
+  },
+})

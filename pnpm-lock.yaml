@@ -24,17 +24,17 @@ importers:
         specifier: ^7.26.0
         version: 7.27.4
       '@canvas-js/core':
-        specifier: ^0.14.1-next.0
-        version: 0.14.1-next.10(@types/react@18.3.23)(bufferutil@4.0.9)(expo@52.0.46(@babel/core@7.27.4)(@babel/preset-env@7.27.2(@babel/core@7.27.4))(@expo/metro-runtime@4.0.1(react-native@0.76.9(@babel/core@7.27.4)(@babel/preset-env@7.27.2(@babel/core@7.27.4))(@types/react@18.3.23)(bufferutil@4.0.9)(react@18.3.1)(utf-8-validate@5.0.10)))(bufferutil@4.0.9)(react-native-webview@13.12.5(react-native@0.76.9(@babel/core@7.27.4)(@babel/preset-env@7.27.2(@babel/core@7.27.4))(@types/react@18.3.23)(bufferutil@4.0.9)(react@18.3.1)(utf-8-validate@5.0.10))(react@18.3.1))(react-native@0.76.9(@babel/core@7.27.4)(@babel/preset-env@7.27.2(@babel/core@7.27.4))(@types/react@18.3.23)(bufferutil@4.0.9)(react@18.3.1)(utf-8-validate@5.0.10))(react@18.3.1)(utf-8-validate@5.0.10))(react@18.3.1)(utf-8-validate@5.0.10)
+        specifier: 0.15.0
+        version: 0.15.0(@types/react@18.3.23)(bufferutil@4.0.9)(expo@52.0.46(@babel/core@7.27.4)(@babel/preset-env@7.27.2(@babel/core@7.27.4))(@expo/metro-runtime@4.0.1(react-native@0.76.9(@babel/core@7.27.4)(@babel/preset-env@7.27.2(@babel/core@7.27.4))(@types/react@18.3.23)(bufferutil@4.0.9)(react@18.3.1)(utf-8-validate@5.0.10)))(bufferutil@4.0.9)(react-native-webview@13.12.5(react-native@0.76.9(@babel/core@7.27.4)(@babel/preset-env@7.27.2(@babel/core@7.27.4))(@types/react@18.3.23)(bufferutil@4.0.9)(react@18.3.1)(utf-8-validate@5.0.10))(react@18.3.1))(react-native@0.76.9(@babel/core@7.27.4)(@babel/preset-env@7.27.2(@babel/core@7.27.4))(@types/react@18.3.23)(bufferutil@4.0.9)(react@18.3.1)(utf-8-validate@5.0.10))(react@18.3.1)(utf-8-validate@5.0.10))(react@18.3.1)(utf-8-validate@5.0.10)
       '@canvas-js/gossiplog':
-        specifier: ^0.14.1-next.0
-        version: 0.14.1-next.10(@types/react@18.3.23)(bufferutil@4.0.9)(expo@52.0.46(@babel/core@7.27.4)(@babel/preset-env@7.27.2(@babel/core@7.27.4))(@expo/metro-runtime@4.0.1(react-native@0.76.9(@babel/core@7.27.4)(@babel/preset-env@7.27.2(@babel/core@7.27.4))(@types/react@18.3.23)(bufferutil@4.0.9)(react@18.3.1)(utf-8-validate@5.0.10)))(bufferutil@4.0.9)(react-native-webview@13.12.5(react-native@0.76.9(@babel/core@7.27.4)(@babel/preset-env@7.27.2(@babel/core@7.27.4))(@types/react@18.3.23)(bufferutil@4.0.9)(react@18.3.1)(utf-8-validate@5.0.10))(react@18.3.1))(react-native@0.76.9(@babel/core@7.27.4)(@babel/preset-env@7.27.2(@babel/core@7.27.4))(@types/react@18.3.23)(bufferutil@4.0.9)(react@18.3.1)(utf-8-validate@5.0.10))(react@18.3.1)(utf-8-validate@5.0.10))(react@18.3.1)(utf-8-validate@5.0.10)
+        specifier: 0.15.0
+        version: 0.15.0(@types/react@18.3.23)(bufferutil@4.0.9)(expo@52.0.46(@babel/core@7.27.4)(@babel/preset-env@7.27.2(@babel/core@7.27.4))(@expo/metro-runtime@4.0.1(react-native@0.76.9(@babel/core@7.27.4)(@babel/preset-env@7.27.2(@babel/core@7.27.4))(@types/react@18.3.23)(bufferutil@4.0.9)(react@18.3.1)(utf-8-validate@5.0.10)))(bufferutil@4.0.9)(react-native-webview@13.12.5(react-native@0.76.9(@babel/core@7.27.4)(@babel/preset-env@7.27.2(@babel/core@7.27.4))(@types/react@18.3.23)(bufferutil@4.0.9)(react@18.3.1)(utf-8-validate@5.0.10))(react@18.3.1))(react-native@0.76.9(@babel/core@7.27.4)(@babel/preset-env@7.27.2(@babel/core@7.27.4))(@types/react@18.3.23)(bufferutil@4.0.9)(react@18.3.1)(utf-8-validate@5.0.10))(react@18.3.1)(utf-8-validate@5.0.10))(react@18.3.1)(utf-8-validate@5.0.10)
       '@canvas-js/hooks':
-        specifier: ^0.14.1-next.0
-        version: 0.14.1-next.10(@types/react@18.3.23)(bufferutil@4.0.9)(expo@52.0.46(@babel/core@7.27.4)(@babel/preset-env@7.27.2(@babel/core@7.27.4))(@expo/metro-runtime@4.0.1(react-native@0.76.9(@babel/core@7.27.4)(@babel/preset-env@7.27.2(@babel/core@7.27.4))(@types/react@18.3.23)(bufferutil@4.0.9)(react@18.3.1)(utf-8-validate@5.0.10)))(bufferutil@4.0.9)(react-native-webview@13.12.5(react-native@0.76.9(@babel/core@7.27.4)(@babel/preset-env@7.27.2(@babel/core@7.27.4))(@types/react@18.3.23)(bufferutil@4.0.9)(react@18.3.1)(utf-8-validate@5.0.10))(react@18.3.1))(react-native@0.76.9(@babel/core@7.27.4)(@babel/preset-env@7.27.2(@babel/core@7.27.4))(@types/react@18.3.23)(bufferutil@4.0.9)(react@18.3.1)(utf-8-validate@5.0.10))(react@18.3.1)(utf-8-validate@5.0.10))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.8.3)(utf-8-validate@5.0.10)(viem@2.30.5(bufferutil@4.0.9)(typescript@5.8.3)(utf-8-validate@5.0.10)(zod@3.25.42))(zod@3.25.42)
+        specifier: 0.15.0
+        version: 0.15.0(@types/react@18.3.23)(bufferutil@4.0.9)(expo@52.0.46(@babel/core@7.27.4)(@babel/preset-env@7.27.2(@babel/core@7.27.4))(@expo/metro-runtime@4.0.1(react-native@0.76.9(@babel/core@7.27.4)(@babel/preset-env@7.27.2(@babel/core@7.27.4))(@types/react@18.3.23)(bufferutil@4.0.9)(react@18.3.1)(utf-8-validate@5.0.10)))(bufferutil@4.0.9)(react-native-webview@13.12.5(react-native@0.76.9(@babel/core@7.27.4)(@babel/preset-env@7.27.2(@babel/core@7.27.4))(@types/react@18.3.23)(bufferutil@4.0.9)(react@18.3.1)(utf-8-validate@5.0.10))(react@18.3.1))(react-native@0.76.9(@babel/core@7.27.4)(@babel/preset-env@7.27.2(@babel/core@7.27.4))(@types/react@18.3.23)(bufferutil@4.0.9)(react@18.3.1)(utf-8-validate@5.0.10))(react@18.3.1)(utf-8-validate@5.0.10))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.8.3)(utf-8-validate@5.0.10)(viem@2.30.5(bufferutil@4.0.9)(typescript@5.8.3)(utf-8-validate@5.0.10)(zod@3.25.42))(zod@3.25.42)
       '@canvas-js/signer-ethereum':
-        specifier: ^0.14.1-next.0
-        version: 0.14.1-next.10(bufferutil@4.0.9)(utf-8-validate@5.0.10)
+        specifier: 0.15.0
+        version: 0.15.0(bufferutil@4.0.9)(utf-8-validate@5.0.10)
       '@ethersproject/providers':
         specifier: ^5.7.2
         version: 5.8.0(bufferutil@4.0.9)(utf-8-validate@5.0.10)
@@ -1031,50 +1031,50 @@ packages:
   '@bcoe/v8-coverage@0.2.3':
     resolution: {integrity: sha512-0hYQ8SB4Db5zvZB4axdMHGwEaQjkZzFjQiN9LVYvIFB2nSUHW9tYpxWriPrWDASIxiaXax83REcLxuSdnGPZtw==}
 
-  '@canvas-js/core@0.14.1-next.10':
-    resolution: {integrity: sha512-iNSy3/C1utbsY5F5kinG/qjujVJNiF8uj6Xf/S4pQ8beZNca5ygiFw9GpSt+m8oNWgXHxhxBT6vBVaxnIrPuAg==}
+  '@canvas-js/core@0.15.0':
+    resolution: {integrity: sha512-3UwwIbab9SVCc5B7I1vFbFjrhTkEmXdwxT9BOksFGZ9G/dZDk3Gtl4k481f+QRPr9DiadSn9J2ArvEoXTwPfFg==}
     engines: {node: '>=20.0.0'}
 
-  '@canvas-js/gossiplog@0.14.1-next.10':
-    resolution: {integrity: sha512-TKJB7f0H/EJpGzHOtWBCqBlO/rAGr00zu6FpEOyuqazVBxQ2hGM8p3if9mw2HaL1gZ3cf4xD3zznC30sc1mLlg==}
+  '@canvas-js/gossiplog@0.15.0':
+    resolution: {integrity: sha512-EbNiq4q8lwyb51ABzdb45jS7V+KAsRsLpI6K6H5q9cpzvgqbxRbh8FfsorQZIcFoLA+ftYl5TCzqXyKw+qIyRw==}
     engines: {node: '>=20.0.0'}
 
-  '@canvas-js/hooks@0.14.1-next.10':
-    resolution: {integrity: sha512-9F2xsoCCeDT+4OWyBBQt134M3j8n1VB29t2ayzNpmTDQEp/ffXnZgHv8BxRUf1S8Ex/SJ5yMfq/oyrfm6TjodA==}
+  '@canvas-js/hooks@0.15.0':
+    resolution: {integrity: sha512-+YyskHNM43kfvIFrSvHLOFFqYS6yorP5liHKt9/3SPaE+yhYYQS6jXyKK2UsQaYfXSB1D9vHNc+bP7xM2FahSA==}
     peerDependencies:
       react: ^18.3.1
 
-  '@canvas-js/interfaces@0.14.1-next.10':
-    resolution: {integrity: sha512-yEYpF10LKL2tlD0AfoXb86z7WuKAYevdaBbELMKNflAmYGs6B0B1eiQl6Ajuj2Z+ksQfSKcqu6OP3cJmdQvORA==}
+  '@canvas-js/interfaces@0.15.0':
+    resolution: {integrity: sha512-nkNIRmxUdZExpdk31iFYmU4wvr2ldXlwj7tukfGOSRwmq/tXQBOQu8+JcFI5fD28wdKqd26kA4/FYEOOn2BemQ==}
 
   '@canvas-js/libp2p-rendezvous@0.4.5':
     resolution: {integrity: sha512-Z0iil6IsZ5XsumJSQWkxz1Tlin1xAcVFqsygDMm/2duM+YbNDpv5O1C23w8ScPEYT+jwC6du2hbrlePUCJCsnQ==}
 
-  '@canvas-js/modeldb-durable-objects@0.14.1-next.10':
-    resolution: {integrity: sha512-xhlGtEkr/FdpoYcBZ7uUH/H2Q5eGGkaDRA8CSInz3qaXFmEwXdfhuiY98EPimZr2+ah0xbKlVtS72/1KyxDJhg==}
+  '@canvas-js/modeldb-durable-objects@0.15.0':
+    resolution: {integrity: sha512-1GplLKklshevcCsiQ014c5a70a+fTAxBZm5gS4IhyOVyhkQNySJZ4KvVWrK1GzFmI7iOcs3wJNfxlYARtIa+3A==}
     engines: {node: '>=20.0.0'}
 
-  '@canvas-js/modeldb-idb@0.14.1-next.10':
-    resolution: {integrity: sha512-wDIHZldsVR5OVnZAeAfto3zMP5o3xYIwTJARgLcJ+zgXU3RYsnghONe7UpdAIve/OezH0Dex4siPNnzGPbFO7w==}
+  '@canvas-js/modeldb-idb@0.15.0':
+    resolution: {integrity: sha512-vaUqwNPZOsSn7rwzIQ4a7B1lix19VN/jCF7BEggL9FCxeytCXhf++NzL9qlGWcLYoHhzjFQp831shJJXrtn0fg==}
     engines: {node: '>=20.0.0'}
     peerDependencies:
       '@types/react': ^18.3.9
       react: ^18.3.1
 
-  '@canvas-js/modeldb-pg@0.14.1-next.10':
-    resolution: {integrity: sha512-cW1H++ucTy1lfjcRHDGX5xBsm7/g/RLyKr+JQJ2OB0hOJApfFmACQ3p4Sv2Lc3hqhyRFEbU4AOhztzJQVL+ZFA==}
+  '@canvas-js/modeldb-pg@0.15.0':
+    resolution: {integrity: sha512-zEPd9Sch4efBU6we4CuNg2ltV+dj3Sw48o97SGnhr1TtEgbXu+fpDdSZI8k8Rsn6V3SzgIFOS4dfjxjmUKDFHA==}
     engines: {node: '>=20.0.0'}
 
-  '@canvas-js/modeldb-sqlite-expo@0.14.1-next.10':
-    resolution: {integrity: sha512-AR7Y8157Ie08YBFcB5UVSrX9WNCLVs7UiLhRarxRd4G3wxTSvySjcPkXn+NzLCY5WfqfuDJNO/Y2w3YdhxrtLw==}
+  '@canvas-js/modeldb-sqlite-expo@0.15.0':
+    resolution: {integrity: sha512-lKNQw429cuWjZ/gvjnVBcwqKF3PfwjqJJCPJ8NvK1KJOZz7bU6If+v0ND5MyeWZoGRwmwUYhmKXK9UX6MFAphQ==}
     engines: {node: '>=20.0.0'}
 
-  '@canvas-js/modeldb-sqlite@0.14.1-next.10':
-    resolution: {integrity: sha512-/oT/h3C7NrUcCBPoZ4Mx2EfH4L9VsgFEvULuQYehbF7GllR2jh6lF1pYH6KCkQrW0yvukPydsvmuY+O5GYbxBg==}
+  '@canvas-js/modeldb-sqlite@0.15.0':
+    resolution: {integrity: sha512-6jymEzGHabMoSAGGCjwkzIlc7SBZWsFgJgYoI2RdcWvCBXXzrcykG5Z99b7EpjnMFKEJmE/xponTSzsiCWvVGA==}
     engines: {node: '>=20.0.0'}
 
-  '@canvas-js/modeldb@0.14.1-next.10':
-    resolution: {integrity: sha512-o+5Qqad99z5VTfq11FnF3Hpp5rB0emm9YPcYkMNePQtFUyrueY2OjmbRkHkH8Ap7/qelorke/ASgtHadRdUuig==}
+  '@canvas-js/modeldb@0.15.0':
+    resolution: {integrity: sha512-k3Efqm3x4qmGYpLyVQNYQ0P8Kwq0dLYFCIBwNetnm3Nzk1VIugCujsIH/ifzep2BcKZIlaltTrmwyUK6BAlpBA==}
     engines: {node: '>=20.0.0'}
 
   '@canvas-js/okra-lmdb@0.2.4':
@@ -1087,19 +1087,19 @@ packages:
   '@canvas-js/okra@0.4.7':
     resolution: {integrity: sha512-FETiUEPEX8J33z6tNDZm8mY1/qFqAa9ZFiHY0JI8TQphN70/6362W56lGIqqyZCTA9Ec8j3daxCten7dwX+YYQ==}
 
-  '@canvas-js/signatures@0.14.1-next.10':
-    resolution: {integrity: sha512-oVZUuDqORj/XzvY+paSRxiHXgiXzy7RmMwqIZ4Gr1SYSxHZp9A/yJWAqJsYIw7N4xjjKZSLjkvLtPKnFUlxgWw==}
+  '@canvas-js/signatures@0.15.0':
+    resolution: {integrity: sha512-wastOwTg1DTDqRpnzVurRTu9HRHDYZdPaLpHZYnRIKLXlfC/2pDArX0tlEApdknbSlOeh+IoRbz4J7wp3AVw+g==}
     engines: {node: '>=20.0.0'}
 
-  '@canvas-js/signer-ethereum@0.14.1-next.10':
-    resolution: {integrity: sha512-5fQjKFInqUGO9k8Mi0AdMrfYnY9w3e7J8wTbjNYqfQAEGjSOOB6xyQCWr0u5O+cfgzuDk7+nnksBIgRe6rFvtg==}
+  '@canvas-js/signer-ethereum@0.15.0':
+    resolution: {integrity: sha512-Sof0g+FWNhlWMVV+mM7djXDhodkLXBPlZBPFdQ54P4iDc+gf5752R2a0lm+6WiKUSJvp9YoQsOz+mkbTtPqFWQ==}
 
   '@canvas-js/utils@1.0.0':
     resolution: {integrity: sha512-DzOhbiwyzspCl1MEwkkoD3BOGcQzl8g9aJz+PZRCpoRaMOuC4apFlXv7YHvFplCur2nRLx0h2h9QbpdQ2SoPmA==}
     engines: {node: '>=20.0.0'}
 
-  '@canvas-js/vm@0.14.1-next.10':
-    resolution: {integrity: sha512-V05ghpKhX0FhQiTOMVeNjZ2oejeMG9iJv+0qbnazs119LC71hCwLJLXpr3MoHtb3efJcUzhupoxvSwfgN9CTUA==}
+  '@canvas-js/vm@0.15.0':
+    resolution: {integrity: sha512-cK2eO5PQwMLmKteCNRCQU2gx3CffFD0SavbbC8YB1nWTLnFkBQ/uMk3Re6Xv2888Yl6qoxNtQgPkZhhpuN/M5g==}
     engines: {node: '>=20.0.0'}
 
   '@chainsafe/as-chacha20poly1305@0.1.0':
@@ -6528,6 +6528,9 @@ packages:
   printable-characters@1.0.42:
     resolution: {integrity: sha512-dKp+C4iXWK4vVYZmYSd0KBH5F/h1HoZRsbJ82AVKRO3PEo8L4lBS/vLwhVtpwwuYcoIsVY+1JYKR268yn480uQ==}
 
+  prng-xoshiro@1.0.1:
+    resolution: {integrity: sha512-PZWg48zx2mxZaWKO0SfgAfUsKXOUBgkANRCoJ2eU8Otnkwjtsy5H+ogJkX8j74FoWxyCmepBsFVegDXQycJ/Gg==}
+
   proc-log@4.2.0:
     resolution: {integrity: sha512-g8+OnU/L2v+wyiVK+D5fA34J7EH8jZ8DDlvwhRCMxmMj7UCBvxiO1mGeN+36JXIKF4zevU4kRBd8lVgG9vLelA==}
     engines: {node: ^14.17.0 || ^16.13.0 || >=18.0.0}
@@ -9177,19 +9180,19 @@ snapshots:
 
   '@bcoe/v8-coverage@0.2.3': {}
 
-  '@canvas-js/core@0.14.1-next.10(@types/react@18.3.23)(bufferutil@4.0.9)(expo@52.0.46(@babel/core@7.27.4)(@babel/preset-env@7.27.2(@babel/core@7.27.4))(@expo/metro-runtime@4.0.1(react-native@0.76.9(@babel/core@7.27.4)(@babel/preset-env@7.27.2(@babel/core@7.27.4))(@types/react@18.3.23)(bufferutil@4.0.9)(react@18.3.1)(utf-8-validate@5.0.10)))(bufferutil@4.0.9)(react-native-webview@13.12.5(react-native@0.76.9(@babel/core@7.27.4)(@babel/preset-env@7.27.2(@babel/core@7.27.4))(@types/react@18.3.23)(bufferutil@4.0.9)(react@18.3.1)(utf-8-validate@5.0.10))(react@18.3.1))(react-native@0.76.9(@babel/core@7.27.4)(@babel/preset-env@7.27.2(@babel/core@7.27.4))(@types/react@18.3.23)(bufferutil@4.0.9)(react@18.3.1)(utf-8-validate@5.0.10))(react@18.3.1)(utf-8-validate@5.0.10))(react@18.3.1)(utf-8-validate@5.0.10)':
+  '@canvas-js/core@0.15.0(@types/react@18.3.23)(bufferutil@4.0.9)(expo@52.0.46(@babel/core@7.27.4)(@babel/preset-env@7.27.2(@babel/core@7.27.4))(@expo/metro-runtime@4.0.1(react-native@0.76.9(@babel/core@7.27.4)(@babel/preset-env@7.27.2(@babel/core@7.27.4))(@types/react@18.3.23)(bufferutil@4.0.9)(react@18.3.1)(utf-8-validate@5.0.10)))(bufferutil@4.0.9)(react-native-webview@13.12.5(react-native@0.76.9(@babel/core@7.27.4)(@babel/preset-env@7.27.2(@babel/core@7.27.4))(@types/react@18.3.23)(bufferutil@4.0.9)(react@18.3.1)(utf-8-validate@5.0.10))(react@18.3.1))(react-native@0.76.9(@babel/core@7.27.4)(@babel/preset-env@7.27.2(@babel/core@7.27.4))(@types/react@18.3.23)(bufferutil@4.0.9)(react@18.3.1)(utf-8-validate@5.0.10))(react@18.3.1)(utf-8-validate@5.0.10))(react@18.3.1)(utf-8-validate@5.0.10)':
     dependencies:
-      '@canvas-js/gossiplog': 0.14.1-next.10(@types/react@18.3.23)(bufferutil@4.0.9)(expo@52.0.46(@babel/core@7.27.4)(@babel/preset-env@7.27.2(@babel/core@7.27.4))(@expo/metro-runtime@4.0.1(react-native@0.76.9(@babel/core@7.27.4)(@babel/preset-env@7.27.2(@babel/core@7.27.4))(@types/react@18.3.23)(bufferutil@4.0.9)(react@18.3.1)(utf-8-validate@5.0.10)))(bufferutil@4.0.9)(react-native-webview@13.12.5(react-native@0.76.9(@babel/core@7.27.4)(@babel/preset-env@7.27.2(@babel/core@7.27.4))(@types/react@18.3.23)(bufferutil@4.0.9)(react@18.3.1)(utf-8-validate@5.0.10))(react@18.3.1))(react-native@0.76.9(@babel/core@7.27.4)(@babel/preset-env@7.27.2(@babel/core@7.27.4))(@types/react@18.3.23)(bufferutil@4.0.9)(react@18.3.1)(utf-8-validate@5.0.10))(react@18.3.1)(utf-8-validate@5.0.10))(react@18.3.1)(utf-8-validate@5.0.10)
-      '@canvas-js/interfaces': 0.14.1-next.10
-      '@canvas-js/modeldb': 0.14.1-next.10
-      '@canvas-js/modeldb-durable-objects': 0.14.1-next.10(bufferutil@4.0.9)(utf-8-validate@5.0.10)
-      '@canvas-js/modeldb-idb': 0.14.1-next.10(@types/react@18.3.23)(react@18.3.1)
-      '@canvas-js/modeldb-pg': 0.14.1-next.10
-      '@canvas-js/modeldb-sqlite': 0.14.1-next.10
-      '@canvas-js/signatures': 0.14.1-next.10
-      '@canvas-js/signer-ethereum': 0.14.1-next.10(bufferutil@4.0.9)(utf-8-validate@5.0.10)
+      '@canvas-js/gossiplog': 0.15.0(@types/react@18.3.23)(bufferutil@4.0.9)(expo@52.0.46(@babel/core@7.27.4)(@babel/preset-env@7.27.2(@babel/core@7.27.4))(@expo/metro-runtime@4.0.1(react-native@0.76.9(@babel/core@7.27.4)(@babel/preset-env@7.27.2(@babel/core@7.27.4))(@types/react@18.3.23)(bufferutil@4.0.9)(react@18.3.1)(utf-8-validate@5.0.10)))(bufferutil@4.0.9)(react-native-webview@13.12.5(react-native@0.76.9(@babel/core@7.27.4)(@babel/preset-env@7.27.2(@babel/core@7.27.4))(@types/react@18.3.23)(bufferutil@4.0.9)(react@18.3.1)(utf-8-validate@5.0.10))(react@18.3.1))(react-native@0.76.9(@babel/core@7.27.4)(@babel/preset-env@7.27.2(@babel/core@7.27.4))(@types/react@18.3.23)(bufferutil@4.0.9)(react@18.3.1)(utf-8-validate@5.0.10))(react@18.3.1)(utf-8-validate@5.0.10))(react@18.3.1)(utf-8-validate@5.0.10)
+      '@canvas-js/interfaces': 0.15.0
+      '@canvas-js/modeldb': 0.15.0
+      '@canvas-js/modeldb-durable-objects': 0.15.0(bufferutil@4.0.9)(utf-8-validate@5.0.10)
+      '@canvas-js/modeldb-idb': 0.15.0(@types/react@18.3.23)(react@18.3.1)
+      '@canvas-js/modeldb-pg': 0.15.0
+      '@canvas-js/modeldb-sqlite': 0.15.0
+      '@canvas-js/signatures': 0.15.0
+      '@canvas-js/signer-ethereum': 0.15.0(bufferutil@4.0.9)(utf-8-validate@5.0.10)
       '@canvas-js/utils': 1.0.0
-      '@canvas-js/vm': 0.14.1-next.10
+      '@canvas-js/vm': 0.15.0
       '@ipld/dag-cbor': 9.2.4
       '@ipld/dag-json': 10.2.5
       '@ipld/schema': 6.0.9
@@ -9216,6 +9219,7 @@ snapshots:
       p-defer: 4.0.1
       p-queue: 8.1.0
       pg: 8.16.0
+      prng-xoshiro: 1.0.1
       prom-client: 15.1.3
       quickjs-emscripten: 0.31.0
       uint8arraylist: 2.4.8
@@ -9230,20 +9234,20 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@canvas-js/gossiplog@0.14.1-next.10(@types/react@18.3.23)(bufferutil@4.0.9)(expo@52.0.46(@babel/core@7.27.4)(@babel/preset-env@7.27.2(@babel/core@7.27.4))(@expo/metro-runtime@4.0.1(react-native@0.76.9(@babel/core@7.27.4)(@babel/preset-env@7.27.2(@babel/core@7.27.4))(@types/react@18.3.23)(bufferutil@4.0.9)(react@18.3.1)(utf-8-validate@5.0.10)))(bufferutil@4.0.9)(react-native-webview@13.12.5(react-native@0.76.9(@babel/core@7.27.4)(@babel/preset-env@7.27.2(@babel/core@7.27.4))(@types/react@18.3.23)(bufferutil@4.0.9)(react@18.3.1)(utf-8-validate@5.0.10))(react@18.3.1))(react-native@0.76.9(@babel/core@7.27.4)(@babel/preset-env@7.27.2(@babel/core@7.27.4))(@types/react@18.3.23)(bufferutil@4.0.9)(react@18.3.1)(utf-8-validate@5.0.10))(react@18.3.1)(utf-8-validate@5.0.10))(react@18.3.1)(utf-8-validate@5.0.10)':
+  '@canvas-js/gossiplog@0.15.0(@types/react@18.3.23)(bufferutil@4.0.9)(expo@52.0.46(@babel/core@7.27.4)(@babel/preset-env@7.27.2(@babel/core@7.27.4))(@expo/metro-runtime@4.0.1(react-native@0.76.9(@babel/core@7.27.4)(@babel/preset-env@7.27.2(@babel/core@7.27.4))(@types/react@18.3.23)(bufferutil@4.0.9)(react@18.3.1)(utf-8-validate@5.0.10)))(bufferutil@4.0.9)(react-native-webview@13.12.5(react-native@0.76.9(@babel/core@7.27.4)(@babel/preset-env@7.27.2(@babel/core@7.27.4))(@types/react@18.3.23)(bufferutil@4.0.9)(react@18.3.1)(utf-8-validate@5.0.10))(react@18.3.1))(react-native@0.76.9(@babel/core@7.27.4)(@babel/preset-env@7.27.2(@babel/core@7.27.4))(@types/react@18.3.23)(bufferutil@4.0.9)(react@18.3.1)(utf-8-validate@5.0.10))(react@18.3.1)(utf-8-validate@5.0.10))(react@18.3.1)(utf-8-validate@5.0.10)':
     dependencies:
-      '@canvas-js/interfaces': 0.14.1-next.10
+      '@canvas-js/interfaces': 0.15.0
       '@canvas-js/libp2p-rendezvous': 0.4.5
-      '@canvas-js/modeldb': 0.14.1-next.10
-      '@canvas-js/modeldb-durable-objects': 0.14.1-next.10(bufferutil@4.0.9)(utf-8-validate@5.0.10)
-      '@canvas-js/modeldb-idb': 0.14.1-next.10(@types/react@18.3.23)(react@18.3.1)
-      '@canvas-js/modeldb-pg': 0.14.1-next.10
-      '@canvas-js/modeldb-sqlite': 0.14.1-next.10
-      '@canvas-js/modeldb-sqlite-expo': 0.14.1-next.10(expo@52.0.46(@babel/core@7.27.4)(@babel/preset-env@7.27.2(@babel/core@7.27.4))(@expo/metro-runtime@4.0.1(react-native@0.76.9(@babel/core@7.27.4)(@babel/preset-env@7.27.2(@babel/core@7.27.4))(@types/react@18.3.23)(bufferutil@4.0.9)(react@18.3.1)(utf-8-validate@5.0.10)))(bufferutil@4.0.9)(react-native-webview@13.12.5(react-native@0.76.9(@babel/core@7.27.4)(@babel/preset-env@7.27.2(@babel/core@7.27.4))(@types/react@18.3.23)(bufferutil@4.0.9)(react@18.3.1)(utf-8-validate@5.0.10))(react@18.3.1))(react-native@0.76.9(@babel/core@7.27.4)(@babel/preset-env@7.27.2(@babel/core@7.27.4))(@types/react@18.3.23)(bufferutil@4.0.9)(react@18.3.1)(utf-8-validate@5.0.10))(react@18.3.1)(utf-8-validate@5.0.10))
+      '@canvas-js/modeldb': 0.15.0
+      '@canvas-js/modeldb-durable-objects': 0.15.0(bufferutil@4.0.9)(utf-8-validate@5.0.10)
+      '@canvas-js/modeldb-idb': 0.15.0(@types/react@18.3.23)(react@18.3.1)
+      '@canvas-js/modeldb-pg': 0.15.0
+      '@canvas-js/modeldb-sqlite': 0.15.0
+      '@canvas-js/modeldb-sqlite-expo': 0.15.0(expo@52.0.46(@babel/core@7.27.4)(@babel/preset-env@7.27.2(@babel/core@7.27.4))(@expo/metro-runtime@4.0.1(react-native@0.76.9(@babel/core@7.27.4)(@babel/preset-env@7.27.2(@babel/core@7.27.4))(@types/react@18.3.23)(bufferutil@4.0.9)(react@18.3.1)(utf-8-validate@5.0.10)))(bufferutil@4.0.9)(react-native-webview@13.12.5(react-native@0.76.9(@babel/core@7.27.4)(@babel/preset-env@7.27.2(@babel/core@7.27.4))(@types/react@18.3.23)(bufferutil@4.0.9)(react@18.3.1)(utf-8-validate@5.0.10))(react@18.3.1))(react-native@0.76.9(@babel/core@7.27.4)(@babel/preset-env@7.27.2(@babel/core@7.27.4))(@types/react@18.3.23)(bufferutil@4.0.9)(react@18.3.1)(utf-8-validate@5.0.10))(react@18.3.1)(utf-8-validate@5.0.10))
       '@canvas-js/okra': 0.4.7
       '@canvas-js/okra-lmdb': 0.2.4
       '@canvas-js/okra-memory': 0.4.7
-      '@canvas-js/signatures': 0.14.1-next.10
+      '@canvas-js/signatures': 0.15.0
       '@canvas-js/utils': 1.0.0
       '@chainsafe/libp2p-gossipsub': 14.1.1
       '@chainsafe/libp2p-noise': 16.1.3
@@ -9300,13 +9304,13 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@canvas-js/hooks@0.14.1-next.10(@types/react@18.3.23)(bufferutil@4.0.9)(expo@52.0.46(@babel/core@7.27.4)(@babel/preset-env@7.27.2(@babel/core@7.27.4))(@expo/metro-runtime@4.0.1(react-native@0.76.9(@babel/core@7.27.4)(@babel/preset-env@7.27.2(@babel/core@7.27.4))(@types/react@18.3.23)(bufferutil@4.0.9)(react@18.3.1)(utf-8-validate@5.0.10)))(bufferutil@4.0.9)(react-native-webview@13.12.5(react-native@0.76.9(@babel/core@7.27.4)(@babel/preset-env@7.27.2(@babel/core@7.27.4))(@types/react@18.3.23)(bufferutil@4.0.9)(react@18.3.1)(utf-8-validate@5.0.10))(react@18.3.1))(react-native@0.76.9(@babel/core@7.27.4)(@babel/preset-env@7.27.2(@babel/core@7.27.4))(@types/react@18.3.23)(bufferutil@4.0.9)(react@18.3.1)(utf-8-validate@5.0.10))(react@18.3.1)(utf-8-validate@5.0.10))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.8.3)(utf-8-validate@5.0.10)(viem@2.30.5(bufferutil@4.0.9)(typescript@5.8.3)(utf-8-validate@5.0.10)(zod@3.25.42))(zod@3.25.42)':
+  '@canvas-js/hooks@0.15.0(@types/react@18.3.23)(bufferutil@4.0.9)(expo@52.0.46(@babel/core@7.27.4)(@babel/preset-env@7.27.2(@babel/core@7.27.4))(@expo/metro-runtime@4.0.1(react-native@0.76.9(@babel/core@7.27.4)(@babel/preset-env@7.27.2(@babel/core@7.27.4))(@types/react@18.3.23)(bufferutil@4.0.9)(react@18.3.1)(utf-8-validate@5.0.10)))(bufferutil@4.0.9)(react-native-webview@13.12.5(react-native@0.76.9(@babel/core@7.27.4)(@babel/preset-env@7.27.2(@babel/core@7.27.4))(@types/react@18.3.23)(bufferutil@4.0.9)(react@18.3.1)(utf-8-validate@5.0.10))(react@18.3.1))(react-native@0.76.9(@babel/core@7.27.4)(@babel/preset-env@7.27.2(@babel/core@7.27.4))(@types/react@18.3.23)(bufferutil@4.0.9)(react@18.3.1)(utf-8-validate@5.0.10))(react@18.3.1)(utf-8-validate@5.0.10))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.8.3)(utf-8-validate@5.0.10)(viem@2.30.5(bufferutil@4.0.9)(typescript@5.8.3)(utf-8-validate@5.0.10)(zod@3.25.42))(zod@3.25.42)':
     dependencies:
-      '@canvas-js/core': 0.14.1-next.10(@types/react@18.3.23)(bufferutil@4.0.9)(expo@52.0.46(@babel/core@7.27.4)(@babel/preset-env@7.27.2(@babel/core@7.27.4))(@expo/metro-runtime@4.0.1(react-native@0.76.9(@babel/core@7.27.4)(@babel/preset-env@7.27.2(@babel/core@7.27.4))(@types/react@18.3.23)(bufferutil@4.0.9)(react@18.3.1)(utf-8-validate@5.0.10)))(bufferutil@4.0.9)(react-native-webview@13.12.5(react-native@0.76.9(@babel/core@7.27.4)(@babel/preset-env@7.27.2(@babel/core@7.27.4))(@types/react@18.3.23)(bufferutil@4.0.9)(react@18.3.1)(utf-8-validate@5.0.10))(react@18.3.1))(react-native@0.76.9(@babel/core@7.27.4)(@babel/preset-env@7.27.2(@babel/core@7.27.4))(@types/react@18.3.23)(bufferutil@4.0.9)(react@18.3.1)(utf-8-validate@5.0.10))(react@18.3.1)(utf-8-validate@5.0.10))(react@18.3.1)(utf-8-validate@5.0.10)
-      '@canvas-js/gossiplog': 0.14.1-next.10(@types/react@18.3.23)(bufferutil@4.0.9)(expo@52.0.46(@babel/core@7.27.4)(@babel/preset-env@7.27.2(@babel/core@7.27.4))(@expo/metro-runtime@4.0.1(react-native@0.76.9(@babel/core@7.27.4)(@babel/preset-env@7.27.2(@babel/core@7.27.4))(@types/react@18.3.23)(bufferutil@4.0.9)(react@18.3.1)(utf-8-validate@5.0.10)))(bufferutil@4.0.9)(react-native-webview@13.12.5(react-native@0.76.9(@babel/core@7.27.4)(@babel/preset-env@7.27.2(@babel/core@7.27.4))(@types/react@18.3.23)(bufferutil@4.0.9)(react@18.3.1)(utf-8-validate@5.0.10))(react@18.3.1))(react-native@0.76.9(@babel/core@7.27.4)(@babel/preset-env@7.27.2(@babel/core@7.27.4))(@types/react@18.3.23)(bufferutil@4.0.9)(react@18.3.1)(utf-8-validate@5.0.10))(react@18.3.1)(utf-8-validate@5.0.10))(react@18.3.1)(utf-8-validate@5.0.10)
-      '@canvas-js/interfaces': 0.14.1-next.10
-      '@canvas-js/modeldb': 0.14.1-next.10
-      '@canvas-js/modeldb-idb': 0.14.1-next.10(@types/react@18.3.23)(react@18.3.1)
+      '@canvas-js/core': 0.15.0(@types/react@18.3.23)(bufferutil@4.0.9)(expo@52.0.46(@babel/core@7.27.4)(@babel/preset-env@7.27.2(@babel/core@7.27.4))(@expo/metro-runtime@4.0.1(react-native@0.76.9(@babel/core@7.27.4)(@babel/preset-env@7.27.2(@babel/core@7.27.4))(@types/react@18.3.23)(bufferutil@4.0.9)(react@18.3.1)(utf-8-validate@5.0.10)))(bufferutil@4.0.9)(react-native-webview@13.12.5(react-native@0.76.9(@babel/core@7.27.4)(@babel/preset-env@7.27.2(@babel/core@7.27.4))(@types/react@18.3.23)(bufferutil@4.0.9)(react@18.3.1)(utf-8-validate@5.0.10))(react@18.3.1))(react-native@0.76.9(@babel/core@7.27.4)(@babel/preset-env@7.27.2(@babel/core@7.27.4))(@types/react@18.3.23)(bufferutil@4.0.9)(react@18.3.1)(utf-8-validate@5.0.10))(react@18.3.1)(utf-8-validate@5.0.10))(react@18.3.1)(utf-8-validate@5.0.10)
+      '@canvas-js/gossiplog': 0.15.0(@types/react@18.3.23)(bufferutil@4.0.9)(expo@52.0.46(@babel/core@7.27.4)(@babel/preset-env@7.27.2(@babel/core@7.27.4))(@expo/metro-runtime@4.0.1(react-native@0.76.9(@babel/core@7.27.4)(@babel/preset-env@7.27.2(@babel/core@7.27.4))(@types/react@18.3.23)(bufferutil@4.0.9)(react@18.3.1)(utf-8-validate@5.0.10)))(bufferutil@4.0.9)(react-native-webview@13.12.5(react-native@0.76.9(@babel/core@7.27.4)(@babel/preset-env@7.27.2(@babel/core@7.27.4))(@types/react@18.3.23)(bufferutil@4.0.9)(react@18.3.1)(utf-8-validate@5.0.10))(react@18.3.1))(react-native@0.76.9(@babel/core@7.27.4)(@babel/preset-env@7.27.2(@babel/core@7.27.4))(@types/react@18.3.23)(bufferutil@4.0.9)(react@18.3.1)(utf-8-validate@5.0.10))(react@18.3.1)(utf-8-validate@5.0.10))(react@18.3.1)(utf-8-validate@5.0.10)
+      '@canvas-js/interfaces': 0.15.0
+      '@canvas-js/modeldb': 0.15.0
+      '@canvas-js/modeldb-idb': 0.15.0(@types/react@18.3.23)(react@18.3.1)
       '@farcaster/auth-kit': 0.6.1(@types/react@18.3.23)(bufferutil@4.0.9)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(utf-8-validate@5.0.10)(viem@2.30.5(bufferutil@4.0.9)(typescript@5.8.3)(utf-8-validate@5.0.10)(zod@3.25.42))
       '@farcaster/frame-sdk': 0.0.35(typescript@5.8.3)(zod@3.25.42)
       '@ipld/dag-cbor': 9.2.4
@@ -9325,7 +9329,7 @@ snapshots:
       - viem
       - zod
 
-  '@canvas-js/interfaces@0.14.1-next.10': {}
+  '@canvas-js/interfaces@0.15.0': {}
 
   '@canvas-js/libp2p-rendezvous@0.4.5':
     dependencies:
@@ -9346,9 +9350,9 @@ snapshots:
       uint8arraylist: 2.4.8
       uint8arrays: 5.1.0
 
-  '@canvas-js/modeldb-durable-objects@0.14.1-next.10(bufferutil@4.0.9)(utf-8-validate@5.0.10)':
+  '@canvas-js/modeldb-durable-objects@0.15.0(bufferutil@4.0.9)(utf-8-validate@5.0.10)':
     dependencies:
-      '@canvas-js/modeldb': 0.14.1-next.10
+      '@canvas-js/modeldb': 0.15.0
       '@canvas-js/utils': 1.0.0
       '@cloudflare/workers-types': 4.20250529.0
       '@ipld/dag-json': 10.2.5
@@ -9358,9 +9362,9 @@ snapshots:
       - bufferutil
       - utf-8-validate
 
-  '@canvas-js/modeldb-idb@0.14.1-next.10(@types/react@18.3.23)(react@18.3.1)':
+  '@canvas-js/modeldb-idb@0.15.0(@types/react@18.3.23)(react@18.3.1)':
     dependencies:
-      '@canvas-js/modeldb': 0.14.1-next.10
+      '@canvas-js/modeldb': 0.15.0
       '@canvas-js/utils': 1.0.0
       '@ipld/dag-json': 10.2.5
       '@libp2p/logger': 5.1.18
@@ -9368,9 +9372,9 @@ snapshots:
       idb: 8.0.3
       react: 18.3.1
 
-  '@canvas-js/modeldb-pg@0.14.1-next.10':
+  '@canvas-js/modeldb-pg@0.15.0':
     dependencies:
-      '@canvas-js/modeldb': 0.14.1-next.10
+      '@canvas-js/modeldb': 0.15.0
       '@canvas-js/utils': 1.0.0
       '@ipld/dag-json': 10.2.5
       '@types/pg': 8.15.2
@@ -9380,24 +9384,24 @@ snapshots:
     transitivePeerDependencies:
       - pg-native
 
-  '@canvas-js/modeldb-sqlite-expo@0.14.1-next.10(expo@52.0.46(@babel/core@7.27.4)(@babel/preset-env@7.27.2(@babel/core@7.27.4))(@expo/metro-runtime@4.0.1(react-native@0.76.9(@babel/core@7.27.4)(@babel/preset-env@7.27.2(@babel/core@7.27.4))(@types/react@18.3.23)(bufferutil@4.0.9)(react@18.3.1)(utf-8-validate@5.0.10)))(bufferutil@4.0.9)(react-native-webview@13.12.5(react-native@0.76.9(@babel/core@7.27.4)(@babel/preset-env@7.27.2(@babel/core@7.27.4))(@types/react@18.3.23)(bufferutil@4.0.9)(react@18.3.1)(utf-8-validate@5.0.10))(react@18.3.1))(react-native@0.76.9(@babel/core@7.27.4)(@babel/preset-env@7.27.2(@babel/core@7.27.4))(@types/react@18.3.23)(bufferutil@4.0.9)(react@18.3.1)(utf-8-validate@5.0.10))(react@18.3.1)(utf-8-validate@5.0.10))':
+  '@canvas-js/modeldb-sqlite-expo@0.15.0(expo@52.0.46(@babel/core@7.27.4)(@babel/preset-env@7.27.2(@babel/core@7.27.4))(@expo/metro-runtime@4.0.1(react-native@0.76.9(@babel/core@7.27.4)(@babel/preset-env@7.27.2(@babel/core@7.27.4))(@types/react@18.3.23)(bufferutil@4.0.9)(react@18.3.1)(utf-8-validate@5.0.10)))(bufferutil@4.0.9)(react-native-webview@13.12.5(react-native@0.76.9(@babel/core@7.27.4)(@babel/preset-env@7.27.2(@babel/core@7.27.4))(@types/react@18.3.23)(bufferutil@4.0.9)(react@18.3.1)(utf-8-validate@5.0.10))(react@18.3.1))(react-native@0.76.9(@babel/core@7.27.4)(@babel/preset-env@7.27.2(@babel/core@7.27.4))(@types/react@18.3.23)(bufferutil@4.0.9)(react@18.3.1)(utf-8-validate@5.0.10))(react@18.3.1)(utf-8-validate@5.0.10))':
     dependencies:
-      '@canvas-js/modeldb': 0.14.1-next.10
+      '@canvas-js/modeldb': 0.15.0
       '@canvas-js/utils': 1.0.0
       '@ipld/dag-json': 10.2.5
       expo-sqlite: 14.0.6(expo@52.0.46(@babel/core@7.27.4)(@babel/preset-env@7.27.2(@babel/core@7.27.4))(@expo/metro-runtime@4.0.1(react-native@0.76.9(@babel/core@7.27.4)(@babel/preset-env@7.27.2(@babel/core@7.27.4))(@types/react@18.3.23)(bufferutil@4.0.9)(react@18.3.1)(utf-8-validate@5.0.10)))(bufferutil@4.0.9)(react-native-webview@13.12.5(react-native@0.76.9(@babel/core@7.27.4)(@babel/preset-env@7.27.2(@babel/core@7.27.4))(@types/react@18.3.23)(bufferutil@4.0.9)(react@18.3.1)(utf-8-validate@5.0.10))(react@18.3.1))(react-native@0.76.9(@babel/core@7.27.4)(@babel/preset-env@7.27.2(@babel/core@7.27.4))(@types/react@18.3.23)(bufferutil@4.0.9)(react@18.3.1)(utf-8-validate@5.0.10))(react@18.3.1)(utf-8-validate@5.0.10))
     transitivePeerDependencies:
       - expo
 
-  '@canvas-js/modeldb-sqlite@0.14.1-next.10':
+  '@canvas-js/modeldb-sqlite@0.15.0':
     dependencies:
-      '@canvas-js/modeldb': 0.14.1-next.10
+      '@canvas-js/modeldb': 0.15.0
       '@canvas-js/utils': 1.0.0
       '@ipld/dag-json': 10.2.5
       '@types/better-sqlite3': 7.6.13
       better-sqlite3: 11.10.0
 
-  '@canvas-js/modeldb@0.14.1-next.10':
+  '@canvas-js/modeldb@0.15.0':
     dependencies:
       '@canvas-js/utils': 1.0.0
       '@ipld/dag-json': 10.2.5
@@ -9427,9 +9431,9 @@ snapshots:
       uint8arrays: 5.1.0
       weald: 1.0.4
 
-  '@canvas-js/signatures@0.14.1-next.10':
+  '@canvas-js/signatures@0.15.0':
     dependencies:
-      '@canvas-js/interfaces': 0.14.1-next.10
+      '@canvas-js/interfaces': 0.15.0
       '@canvas-js/utils': 1.0.0
       '@ipld/dag-cbor': 9.2.4
       '@ipld/dag-json': 10.2.5
@@ -9438,10 +9442,10 @@ snapshots:
       '@noble/hashes': 1.8.0
       multiformats: 13.3.6
 
-  '@canvas-js/signer-ethereum@0.14.1-next.10(bufferutil@4.0.9)(utf-8-validate@5.0.10)':
+  '@canvas-js/signer-ethereum@0.15.0(bufferutil@4.0.9)(utf-8-validate@5.0.10)':
     dependencies:
-      '@canvas-js/interfaces': 0.14.1-next.10
-      '@canvas-js/signatures': 0.14.1-next.10
+      '@canvas-js/interfaces': 0.15.0
+      '@canvas-js/signatures': 0.15.0
       '@canvas-js/utils': 1.0.0
       '@ipld/dag-json': 10.2.5
       '@libp2p/logger': 5.1.18
@@ -9454,7 +9458,7 @@ snapshots:
 
   '@canvas-js/utils@1.0.0': {}
 
-  '@canvas-js/vm@0.14.1-next.10':
+  '@canvas-js/vm@0.15.0':
     dependencies:
       '@canvas-js/utils': 1.0.0
       '@libp2p/logger': 5.1.18
@@ -11414,11 +11418,11 @@ snapshots:
 
   '@types/bn.js@4.11.6':
     dependencies:
-      '@types/node': 12.20.55
+      '@types/node': 22.15.29
 
   '@types/bn.js@5.1.6':
     dependencies:
-      '@types/node': 12.20.55
+      '@types/node': 22.15.29
 
   '@types/body-parser@1.19.5':
     dependencies:
@@ -11517,7 +11521,7 @@ snapshots:
 
   '@types/pbkdf2@3.1.2':
     dependencies:
-      '@types/node': 12.20.55
+      '@types/node': 22.15.29
 
   '@types/pg-cursor@2.7.2':
     dependencies:
@@ -11551,7 +11555,7 @@ snapshots:
 
   '@types/secp256k1@4.0.6':
     dependencies:
-      '@types/node': 12.20.55
+      '@types/node': 22.15.29
 
   '@types/send@0.17.4':
     dependencies:
@@ -16417,6 +16421,8 @@ snapshots:
       react-is: 18.3.1
 
   printable-characters@1.0.42: {}
+
+  prng-xoshiro@1.0.1: {}
 
   proc-log@4.2.0: {}
 

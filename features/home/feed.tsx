@@ -64,11 +64,8 @@ export const Feed = () => {
           </View>
         </ScrollView>
       </DismissKeyboard>
-      {/* Surface rectangle and layout for ticker + search area */}
-      <View style={{ backgroundColor: '#F3F2ED', paddingTop: 11, paddingBottom: 0 }}>
-        <Ticker selectedRefs={selectedRefs} setSelectedRefs={setSelectedRefs} />
-        <SearchBottomSheet selectedRefs={selectedRefs} setSelectedRefs={setSelectedRefs} />
-      </View>
+      <Ticker selectedRefs={selectedRefs} setSelectedRefs={setSelectedRefs} />
+      <SearchBottomSheet selectedRefs={selectedRefs} setSelectedRefs={setSelectedRefs} />
     </>
   )
 }

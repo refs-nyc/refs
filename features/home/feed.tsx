@@ -59,13 +59,13 @@ export const Feed = () => {
     <>
       <DismissKeyboard>
         <ScrollView style={{ flex: 1, paddingTop: s.$05 }}>
-          <View style={{ height: '100%' }}>
+          <View>
             <Nearby items={items} />
           </View>
-          {/* Spacer between feed and ticker */}
-          <View style={{ height: 11 }} />
         </ScrollView>
       </DismissKeyboard>
+      {/* Spacer between feed ScrollView and ticker */}
+      <View style={{ height: 11 }} />
       <Ticker selectedRefs={selectedRefs} setSelectedRefs={setSelectedRefs} />
       {/* Spacer between ticker and bottom sheet */}
       <View style={{ height: 11 }} />

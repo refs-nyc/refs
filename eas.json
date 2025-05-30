@@ -23,7 +23,8 @@
   "submit": {
     "production": {
       "ios": {
-        "ascAppId": "6746046194"
+        "ascAppId": "6746046194",
+        "appleId": "johnheald2017@u.northwestern.edu"
       }
     }
   }

@@ -6,6 +6,7 @@ import { View, ScrollView, Pressable, Text, StyleSheet } from 'react-native'
 import { Nearby } from './nearby'
 import SearchBottomSheet from '@/ui/actions/SearchBottomSheet'
 import { s } from '../style'
+import Ticker from '@/ui/Ticker'
 
 // Suggested refs (replace with your real data)
 const suggestedRefs = [
@@ -23,7 +24,8 @@ const suggestedRefs = [
 
 export const Feed = () => {
   const [items, setItems] = useState<ExpandedItem[]>([])
-  const [selected, setSelected] = useState<string[]>([])
+  // Shared state for selected refs (array of CompleteRef)
+  const [selectedRefs, setSelectedRefs] = useState<any[]>([])
 
   useEffect(() => {
     const getInitialData = async () => {
@@ -47,11 +49,12 @@ export const Feed = () => {
 
   // Toggle pill selection
   const toggleSelect = (title: string) => {
-    setSelected((prev) =>
+    setSelectedRefs((prev) =>
       prev.includes(title) ? prev.filter((t) => t !== title) : [...prev, title]
     )
   }
 
+  // Layout: Feed, then Ticker, then SearchBottomSheet
   return (
     <>
       <DismissKeyboard>
@@ -61,38 +64,11 @@ export const Feed = () => {
           </View>
         </ScrollView>
       </DismissKeyboard>
-      {/* Suggested Refs Pillbox */}
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        style={{ paddingVertical: 12, paddingLeft: 8, height: 38 }}
-        contentContainerStyle={{ alignItems: 'center' }}
-      >
-        {suggestedRefs.map((ref) => {
-          const isSelected = selected.includes(ref.title)
-          return (
-            <Pressable
-              key={ref.title}
-              onPress={() => toggleSelect(ref.title)}
-              style={({ pressed }) => [
-                pillStyles.pill,
-                isSelected ? pillStyles.selected : pillStyles.unselected,
-                pressed && pillStyles.pressed,
-              ]}
-            >
-              <Text
-                style={[
-                  pillStyles.text,
-                  isSelected ? pillStyles.selectedText : pillStyles.unselectedText,
-                ]}
-              >
-                {ref.title}
-              </Text>
-            </Pressable>
-          )
-        })}
-      </ScrollView>
-      <SearchBottomSheet />
+      {/* Surface rectangle and layout for ticker + search area */}
+      <View style={{ backgroundColor: '#F3F2ED', paddingTop: 11, paddingBottom: 0 }}>
+        <Ticker selectedRefs={selectedRefs} setSelectedRefs={setSelectedRefs} />
+        <SearchBottomSheet selectedRefs={selectedRefs} setSelectedRefs={setSelectedRefs} />
+      </View>
     </>
   )
 }

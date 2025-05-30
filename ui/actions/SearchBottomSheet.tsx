@@ -19,64 +19,22 @@ import { useBackdropStore } from '@/features/pocketbase/stores/backdrop'
 
 const HEADER_HEIGHT = s.$8
 
-// Hardcoded suggested refs (edit this array as needed)
-const suggestedRefs = [
-  { 
-    id: 'my08nqseypicy8e', 
-    title: 'Memorizing Poems', 
-    image: 'https://violet-fashionable-blackbird-836.mypinata.cloud/files/bafkreie5z4rvlr3qsnycliba66pf3eytg7cpwggjdiiozufntan3fxmmia?X-Algorithm=PINATA1&X-Date=1748310959851&X-Expires=500000&X-Method=GET&X-Signature=2c3a59e5e84c220cd498afff13848e173e203950df04453490d808083bfce5bc'
-  },
-  { 
-    id: '7i2m3fimd3e4xao', 
-    title: 'Paris', 
-    image: 'https://violet-fashionable-blackbird-836.mypinata.cloud/files/bafybeia4lg3py57qopgryhohlihqqb3zwv2c5cixj3u2lyiulrcz2otjhq?X-Algorithm=PINATA1&X-Date=1741197105210&X-Expires=500000&X-Method=GET&X-Signature=e3cf3a4d80e38b997ea617322be2066df800b5c5d726e385dc3db963f2f5714a'
-  },
-  { 
-    id: '7n0632930q23zdj', 
-    title: 'This Sake', 
-    image: 'https://violet-fashionable-blackbird-836.mypinata.cloud/files/bafybeic2jj457wrr6swmvn3n4czyizu2cwjvilzgddthit3tyliqrsvhma?X-Algorithm=PINATA1&X-Date=1741011345712&X-Expires=500000&X-Method=GET&X-Signature=f6cf43ecf31c464fe5949e2a20d62b5187ee3a3d3a24526f90753dafaa540e5d'
-  }
-]
-
-export default function SearchBottomSheet() {
+export default function SearchBottomSheet({ selectedRefs, setSelectedRefs }: { selectedRefs: any[], setSelectedRefs: (refs: any[]) => void }) {
   const [index, setIndex] = useState(0)
-
   const isMinimised = index === 0
   const searchSheetRef = useRef<BottomSheet>(null)
   const [addingTo, setAddingTo] = useState('')
   const [step, setStep] = useState('')
   const [newRefTitle, setNewRefTitle] = useState('')
   const [initialStep, setInitialStep] = useState<NewRefStep>('')
-
   const [searchTerm, setSearchTerm] = useState('')
   const [results, setResults] = useState<CompleteRef[]>([])
-
-  const [refs, setRefs] = useState<CompleteRef[]>([])
-
   const { user } = useUserStore()
-
   const { animatedIndex } = useBackdropStore()
-
   const [error, setError] = useState('')
 
-  // Helper: find suggested ref by title
-  const findSuggestedRef = (title: string) => suggestedRefs.find(r => r.title.toLowerCase() === title.toLowerCase())
-
   // Helper: check if a ref is already selected
-  const isRefSelected = (title: string) => refs.some(r => r.title && r.title.toLowerCase() === title.toLowerCase())
-
-  // Pillbox handler
-  const onPillPress = (refObj: typeof suggestedRefs[0]) => {
-    if (isRefSelected(refObj.title)) {
-      // Remove from refs
-      setRefs(prev => prev.filter(r => r.title && r.title.toLowerCase() !== refObj.title.toLowerCase()))
-      setError('')
-    } else {
-      // Add to top of refs
-      setRefs(prev => [refObj, ...prev])
-      setError('')
-    }
-  }
+  const isRefSelected = (title: string) => selectedRefs.some(r => r.title && r.title.toLowerCase() === title.toLowerCase())
 
   // When user tries to add a ref manually
   const onAddRefToSearch = (r: CompleteRef) => {
@@ -85,22 +43,17 @@ export default function SearchBottomSheet() {
       setError('already added!')
       return
     }
-    setRefs((prevState) => [r, ...prevState.filter((ref) => ref.id !== r.id)])
+    setSelectedRefs([r, ...selectedRefs.filter((ref: any) => ref.id !== r.id)])
     setSearchTerm('')
     updateSearch('')
     setError('')
   }
 
-  // When user types a term that matches a suggested ref, auto-select the pill
-  useEffect(() => {
-    if (searchTerm && findSuggestedRef(searchTerm) && !isRefSelected(searchTerm)) {
-      // Optionally, auto-select the pill or just highlight it
-      // For now, do nothing (let user click pill or add manually)
-    }
-    if (error && (!searchTerm || !isRefSelected(searchTerm))) {
-      setError('')
-    }
-  }, [searchTerm, refs, error])
+  // Remove ref from selectedRefs
+  const removeRef = (id: string) => {
+    setSelectedRefs(selectedRefs.filter((ref: any) => ref.id !== id))
+    setError('')
+  }
 
   const updateSearch = async (q: string) => {
     setSearchTerm(q)
@@ -134,10 +87,12 @@ export default function SearchBottomSheet() {
       sort: '@random',
     })
     router.push(`/user/${randomProfile.items[0].userName}`)
+    setSelectedRefs([])
   }
 
   const search = () => {
-    router.push(`/search?refs=${refs.map((r) => r.id).join(',')}`)
+    router.push(`/search?refs=${selectedRefs.map((r) => r.id).join(',')}`)
+    setSelectedRefs([])
   }
 
   const isAddingNewRef = addingTo === 'grid' || addingTo === 'backlog'
@@ -149,7 +104,7 @@ export default function SearchBottomSheet() {
     // search console should expand when new refs are added to the search
     // but it shouldn't be taller than ~4 refs in its minimised form
     const refHeightPlusGap = s.$3 + s.$1
-    const minSnapPoint = refHeightPlusGap * Math.min(refs.length, 4) + s.$1 + HEADER_HEIGHT
+    const minSnapPoint = refHeightPlusGap * Math.min(selectedRefs.length, 4) + s.$1 + HEADER_HEIGHT
     snapPoints = [minSnapPoint, '90%']
   }
 
@@ -204,41 +159,10 @@ export default function SearchBottomSheet() {
           />
         ) : (
           <BottomSheetView>
-            {/* Pillbox: always show ticker */}
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              style={{ paddingVertical: 12, paddingLeft: 8, height: 38 }}
-              contentContainerStyle={{ alignItems: 'center' }}
-            >
-              {suggestedRefs.map((ref) => {
-                const isSelected = isRefSelected(ref.title)
-                return (
-                  <Pressable
-                    key={ref.id}
-                    onPress={() => onPillPress(ref)}
-                    style={({ pressed }) => [
-                      pillStyles.pill,
-                      isSelected ? pillStyles.selected : pillStyles.unselected,
-                      pressed && pillStyles.pressed,
-                    ]}
-                  >
-                    <Text
-                      style={[
-                        pillStyles.text,
-                        isSelected ? pillStyles.selectedText : pillStyles.unselectedText,
-                      ]}
-                    >
-                      {ref.title}
-                    </Text>
-                  </Pressable>
-                )
-              })}
-            </ScrollView>
-            {/* Chips/tags for selected refs (below search input) */}
-            {refs.filter(r => r.title && r.image).length > 0 && (
+            {/* Chips/tags for selected refs (in search area) */}
+            {selectedRefs.length > 0 && (
               <YStack style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 8 }}>
-                {refs.filter(r => r.title && r.image).map((r, idx) => (
+                {selectedRefs.map((r, idx) => (
                   <XStack
                     key={String(r.id || r.title || `ref-chip-${idx}`)}
                     style={{
@@ -259,13 +183,7 @@ export default function SearchBottomSheet() {
                     <Text style={{ color: c.white, fontFamily: 'Inter-Medium', fontSize: 14 }}>
                       {r.title}
                     </Text>
-                    <Pressable
-                      onPress={() => {
-                        setRefs((prev) => prev.filter((ref) => ref.id !== r.id))
-                        setError('')
-                      }}
-                      style={{ marginLeft: 6 }}
-                    >
+                    <Pressable onPress={() => removeRef(r.id)} style={{ marginLeft: 6 }}>
                       <Ionicons name="close" size={18} color={c.white} />
                     </Pressable>
                   </XStack>
@@ -328,8 +246,8 @@ export default function SearchBottomSheet() {
                   </Pressable>
                   <Button
                     variant="whiteInverted"
-                    title={refs.length ? 'Search' : 'Stumble'}
-                    onPress={refs.length ? search : stumble}
+                    title={selectedRefs.length ? 'Search' : 'Stumble'}
+                    onPress={selectedRefs.length ? search : stumble}
                     style={{
                       paddingHorizontal: 0,
                       paddingVertical: s.$075,
@@ -413,9 +331,9 @@ export default function SearchBottomSheet() {
                     paddingBottom: s.$12,
                   }}
                 >
-                  {refs.map((r) => (
+                  {selectedRefs.map((r) => (
                     <XStack
-                      key={String(r.id || r.title || `ref-chip-${refs.indexOf(r)}`)}
+                      key={String(r.id || r.title || `ref-chip-${selectedRefs.indexOf(r)}`)}
                       gap={s.$025}
                       style={{
                         alignItems: 'center',
@@ -444,7 +362,7 @@ export default function SearchBottomSheet() {
                       </XStack>
                       <Pressable
                         onPress={() => {
-                          setRefs((prevState) => [...prevState.filter((ref) => ref.id !== r.id)])
+                          removeRef(r.id)
                         }}
                       >
                         <Ionicons name="close" size={s.$2} color={c.white} />

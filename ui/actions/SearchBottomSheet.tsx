@@ -16,6 +16,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { router } from 'expo-router'
 import { NewRef, NewRefStep } from './NewRef'
 import { useBackdropStore } from '@/features/pocketbase/stores/backdrop'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 const HEADER_HEIGHT = s.$8
 
@@ -32,6 +33,7 @@ export default function SearchBottomSheet({ selectedRefs, setSelectedRefs }: { s
   const { user } = useUserStore()
   const { animatedIndex } = useBackdropStore()
   const [error, setError] = useState('')
+  const insets = useSafeAreaInsets()
 
   // Helper: check if a ref is already selected
   const isRefSelected = (title: string) => selectedRefs.some(r => r.title && r.title.toLowerCase() === title.toLowerCase())
@@ -158,7 +160,7 @@ export default function SearchBottomSheet({ selectedRefs, setSelectedRefs }: { s
             }}
           />
         ) : (
-          <BottomSheetView>
+          <BottomSheetView style={{ paddingBottom: insets.bottom }}>
             {/* Chips/tags for selected refs (in search area) */}
             {selectedRefs.length > 0 && (
               <YStack style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 8 }}>

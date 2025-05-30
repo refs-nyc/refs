@@ -76,7 +76,6 @@ export const Nearby = ({ items }: { items: ExpandedItem[] }) => {
   return (
     <View
       style={{
-        flex: 1,
         gap: s.$09,
         paddingTop: s.$1,
         paddingHorizontal: s.$1half,

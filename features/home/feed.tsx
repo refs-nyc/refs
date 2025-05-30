@@ -54,23 +54,21 @@ export const Feed = () => {
     )
   }
 
-  // Layout: Feed, then Ticker, then SearchBottomSheet
+  // Layout: Main container, then Feed ScrollView, then Ticker, then SearchBottomSheet
   return (
-    <>
-      <DismissKeyboard>
-        <ScrollView style={{ flex: 1, paddingTop: s.$05 }}>
-          <View style={{ height: '100%' }}>
-            <Nearby items={items} />
-          </View>
-          {/* Spacer between feed and ticker */}
-          <View style={{ height: 11 }} />
+    <DismissKeyboard>
+      <View style={{ flex: 1, backgroundColor: '#F3F2ED' }}>
+        <ScrollView 
+          style={{ flex: 1, paddingTop: s.$05 }} 
+          contentContainerStyle={{ paddingBottom: 0 }}
+          showsVerticalScrollIndicator={false}
+        >
+          <Nearby items={items} />
         </ScrollView>
-      </DismissKeyboard>
-      <Ticker selectedRefs={selectedRefs} setSelectedRefs={setSelectedRefs} />
-      {/* Spacer between ticker and bottom sheet */}
-      <View style={{ height: 11 }} />
-      <SearchBottomSheet selectedRefs={selectedRefs} setSelectedRefs={setSelectedRefs} />
-    </>
+        <Ticker selectedRefs={selectedRefs} setSelectedRefs={setSelectedRefs} />
+        <SearchBottomSheet selectedRefs={selectedRefs} setSelectedRefs={setSelectedRefs} />
+      </View>
+    </DismissKeyboard>
   )
 }
 

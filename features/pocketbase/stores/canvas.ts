@@ -1,5 +1,7 @@
 import { Item, Profile, CompleteRef } from './types'
-import { Canvas, CanvasLoadable, Actions, ModelSchema } from '@canvas-js/core'
+import { Canvas as Core, ModelSchema } from '@canvas-js/core'
+import { Contract } from '@canvas-js/core/contract'
+import { Canvas } from '@canvas-js/core/sync'
 
 const models = {
   item: {
@@ -73,7 +75,9 @@ const models = {
   },
 } satisfies ModelSchema
 
-const itemActions = {
+class RefsContract extends Contract<typeof RefsContract.models> {
+  static models = models
+
   pushItem(item: Item) {
     const finalItem = {
       ...item,
@@ -92,24 +96,22 @@ const itemActions = {
       children: item.children ?? [],
     }
     this.db.set('item', finalItem)
-  },
+  }
   removeItem(itemId: string) {
     this.db.delete('item', itemId)
-  },
+  }
   addItemToList(itemId: string, ref: CompleteRef) {
     this.db.set('item_ref_association', { id: `${itemId}/${ref.id}`, item: itemId, ref: ref.id })
-  },
+  }
   removeItemFromList(itemId: string, ref: CompleteRef) {
     this.db.delete('item_ref_association', `${itemId}/${ref.id}`)
-  },
+  }
   async moveItemToBacklog(itemId: string) {
     const item = await this.db.get('item', itemId)
     if (!item) throw new Error()
     this.db.set('item', { ...item, backlog: true })
-  },
-} satisfies Actions<typeof models>
+  }
 
-const refActions = {
   pushRef(ref: CompleteRef) {
     const finalRef = {
       ...ref,
@@ -125,23 +127,21 @@ const refActions = {
       url: ref.url ?? null,
     }
     this.db.set('ref', finalRef)
-  },
+  }
   async addRefMetadata(refId: string, { meta }: { meta: { location?: string; author?: string } }) {
     const ref = await this.db.get('ref', refId)
     if (!ref) return // TODO: ref might be missing id
     this.db.set('ref', { ...ref, meta })
-  },
+  }
   async removeRef(refId: string) {
     this.db.delete('ref', refId)
-  },
-} satisfies Actions<typeof models>
+  }
 
-const userActions = {
   async updateUser(userId: string, fields: Partial<Profile>) {
     const user = await this.db.get('user', userId)
     if (user === null) throw new Error('invalid userId')
     this.db.set('user', { ...user, ...fields })
-  },
+  }
   async registerUser(profile: Omit<Profile, 'id'>) {
     const finalUser = {
       id: this.id,
@@ -162,22 +162,16 @@ const userActions = {
       items: profile.items ?? [],
     }
     this.db.set('user', finalUser)
-  },
+  }
   async attachItem(userId: string, itemId: string) {
     this.db.set('user_item_association', { id: `${userId}/${itemId}`, user: userId, item: itemId })
-  },
+  }
   async removeUserItemAssociation(userId: string, itemId: string) {
     this.db.delete('user_item_association', `${userId}/${itemId}`)
-  },
-} satisfies Actions<typeof models>
-
-export const actions = {
-  ...itemActions,
-  ...userActions,
-  ...refActions,
+  }
 }
 
-export const canvasApp = new CanvasLoadable({
+export const canvasApp = new Canvas({
   topic: 'alpha.refs.nyc',
-  contract: { models, actions },
-}) as unknown as Canvas<typeof models, typeof actions>
+  contract: RefsContract,
+})

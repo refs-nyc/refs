@@ -2,7 +2,7 @@ import type { ExpandedItem } from '@/features/pocketbase/stores/types'
 import { useState, useEffect } from 'react'
 import { DismissKeyboard } from '@/ui'
 import { pocketbase } from '@/features/pocketbase'
-import { View, ScrollView, Pressable, Text, StyleSheet } from 'react-native'
+import { View, ScrollView, Text, StyleSheet } from 'react-native'
 import { Nearby } from './nearby'
 import SearchBottomSheet from '@/ui/actions/SearchBottomSheet'
 import { s } from '../style'
@@ -24,53 +24,37 @@ const suggestedRefs = [
 
 export const Feed = () => {
   const [items, setItems] = useState<ExpandedItem[]>([])
-  // Shared state for selected refs (array of CompleteRef)
   const [selectedRefs, setSelectedRefs] = useState<any[]>([])
 
   useEffect(() => {
     const getInitialData = async () => {
       try {
         const records = await pocketbase.collection('items').getList<ExpandedItem>(1, 30, {
-          // TODO: remove list = false once we have a way to display lists in the feed
-          // also consider showing backlog items in the feed, when we have a way to link to them
           filter: `creator != null && backlog = false && list = false`,
           sort: '-created',
           expand: 'ref,creator',
         })
-
         setItems(records.items)
       } catch (error) {
         console.error(error)
       }
     }
-
     getInitialData()
   }, [])
 
-  // Toggle pill selection
-  const toggleSelect = (title: string) => {
-    setSelectedRefs((prev) =>
-      prev.includes(title) ? prev.filter((t) => t !== title) : [...prev, title]
-    )
-  }
-
-  // Layout: Feed, then Ticker, then SearchBottomSheet
   return (
-    <>
-      <DismissKeyboard>
+    <DismissKeyboard>
+      <View style={{ flex: 1 }}>
         <ScrollView style={{ flex: 1, paddingTop: s.$05 }}>
-          <View>
-            <Nearby items={items} />
-          </View>
+          <Nearby items={items} />
         </ScrollView>
-      </DismissKeyboard>
-      {/* Spacer between feed ScrollView and ticker */}
-      <View style={{ height: 11 }} />
-      <Ticker selectedRefs={selectedRefs} setSelectedRefs={setSelectedRefs} />
-      {/* Spacer between ticker and bottom sheet */}
-      <View style={{ height: 11 }} />
-      <SearchBottomSheet selectedRefs={selectedRefs} setSelectedRefs={setSelectedRefs} />
-    </>
+
+        <View style={{ height: 11 }} />
+        <Ticker selectedRefs={selectedRefs} setSelectedRefs={setSelectedRefs} />
+        <View style={{ height: 11 }} />
+        <SearchBottomSheet selectedRefs={selectedRefs} setSelectedRefs={setSelectedRefs} />
+      </View>
+    </DismissKeyboard>
   )
 }
 

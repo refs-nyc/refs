@@ -5,14 +5,20 @@ const suggestedRefs = [
   {
     id: 'my08nqseypicy8e',
     title: 'Memorizing Poems',
+    image:
+      'https://violet-fashionable-blackbird-836.mypinata.cloud/files/bafkreie5z4rvlr3qsnycliba66pf3eytg7cpwggjdiiozufntan3fxmmia?X-Algorithm=PINATA1&X-Date=1748310959851&X-Expires=500000&X-Method=GET&X-Signature=2c3a59e5e84c220cd498afff13848e173e203950df04453490d808083bfce5bc',
   },
   {
     id: '7i2m3fimd3e4xao',
     title: 'Paris',
+    image:
+      'https://violet-fashionable-blackbird-836.mypinata.cloud/files/bafybeia4lg3py57qopgryhohlihqqb3zwv2c5cixj3u2lyiulrcz2otjhq?X-Algorithm=PINATA1&X-Date=1741197105210&X-Expires=500000&X-Method=GET&X-Signature=e3cf3a4d80e38b997ea617322be2066df800b5c5d726e385dc3db963f2f5714a',
   },
   {
     id: '7n0632930q23zdj',
     title: 'This Sake',
+    image:
+      'https://violet-fashionable-blackbird-836.mypinata.cloud/files/bafybeic2jj457wrr6swmvn3n4czyizu2cwjvilzgddthit3tyliqrsvhma?X-Algorithm=PINATA1&X-Date=1741011345712&X-Expires=500000&X-Method=GET&X-Signature=f6cf43ecf31c464fe5949e2a20d62b5187ee3a3d3a24526f90753dafaa540e5d',
   },
 ]
 

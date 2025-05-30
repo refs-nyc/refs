@@ -87,7 +87,7 @@ export const Nearby = ({ items }: { items: ExpandedItem[] }) => {
         gap={s.$075}
         style={{
           flex: 1,
-          paddingBottom: s.$12,
+          paddingBottom: s.$1,
         }}
       >
         {items.map((item) => (

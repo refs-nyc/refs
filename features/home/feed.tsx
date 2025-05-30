@@ -58,7 +58,7 @@ export const Feed = () => {
   return (
     <>
       <DismissKeyboard>
-        <ScrollView style={{ flex: 1, paddingTop: s.$05 }}>
+        <ScrollView style={{ paddingTop: s.$05 }}>
           <View>
             <Nearby items={items} />
           </View>

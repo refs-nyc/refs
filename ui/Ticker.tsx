@@ -33,7 +33,7 @@ export default function Ticker({ selectedRefs, setSelectedRefs }: { selectedRefs
     <ScrollView
       horizontal
       showsHorizontalScrollIndicator={false}
-      style={{ paddingVertical: 12, paddingLeft: 8, height: 38, marginTop: 11, marginBottom: 11 }}
+      style={{ paddingVertical: 12, paddingLeft: 8, height: 38 }}
       contentContainerStyle={{ alignItems: 'center' }}
     >
       {suggestedRefs.map((ref) => {

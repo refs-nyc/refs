@@ -42,10 +42,22 @@ export const Feed = () => {
     getInitialData()
   }, [])
 
+  // Toggle pill selection
+  const toggleSelect = (title: string) => {
+    setSelectedRefs((prev) =>
+      prev.includes(title) ? prev.filter((t) => t !== title) : [...prev, title]
+    )
+  }
+
+  // Layout: Main container, then Feed ScrollView, then Ticker, then SearchBottomSheet
   return (
     <DismissKeyboard>
-      <View style={{ flex: 1 }}>
-        <ScrollView style={{ flex: 1, paddingTop: s.$05 }}>
+      <View style={{ flex: 1, backgroundColor: '#F3F2ED' }}>
+        <ScrollView 
+          style={{ flex: 1, paddingTop: s.$05 }} 
+          contentContainerStyle={{ paddingBottom: 0 }}
+          showsVerticalScrollIndicator={false}
+        >
           <Nearby items={items} />
         </ScrollView>
 

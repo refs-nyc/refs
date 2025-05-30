@@ -18,7 +18,7 @@ import { NewRef, NewRefStep } from './NewRef'
 import { useBackdropStore } from '@/features/pocketbase/stores/backdrop'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
-const HEADER_HEIGHT = s.$8
+const HEADER_HEIGHT = s.$5
 
 export default function SearchBottomSheet({ selectedRefs, setSelectedRefs }: { selectedRefs: any[], setSelectedRefs: (refs: any[]) => void }) {
   const [index, setIndex] = useState(0)
@@ -161,37 +161,6 @@ export default function SearchBottomSheet({ selectedRefs, setSelectedRefs }: { s
           />
         ) : (
           <BottomSheetView style={{ paddingBottom: insets.bottom }}>
-            {/* Chips/tags for selected refs (in search area) */}
-            {selectedRefs.length > 0 && (
-              <YStack style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 8 }}>
-                {selectedRefs.map((r, idx) => (
-                  <XStack
-                    key={String(r.id || r.title || `ref-chip-${idx}`)}
-                    style={{
-                      backgroundColor: c.olive,
-                      borderRadius: 16,
-                      alignItems: 'center',
-                      paddingVertical: 4,
-                      paddingHorizontal: 8,
-                      marginRight: 8,
-                      marginBottom: 4,
-                    }}
-                  >
-                    <SimplePinataImage
-                      originalSource={r.image as string}
-                      imageOptions={{ width: 24, height: 24 }}
-                      style={{ width: 24, height: 24, borderRadius: 12, marginRight: 6 }}
-                    />
-                    <Text style={{ color: c.white, fontFamily: 'Inter-Medium', fontSize: 14 }}>
-                      {r.title}
-                    </Text>
-                    <Pressable onPress={() => removeRef(r.id)} style={{ marginLeft: 6 }}>
-                      <Ionicons name="close" size={18} color={c.white} />
-                    </Pressable>
-                  </XStack>
-                ))}
-              </YStack>
-            )}
             {/* Error message */}
             {error && (
               <Text

@@ -25,7 +25,7 @@ export const EditableList = ({
   const [itemState, setItemState] = useState<ExpandedItem>(item)
   const [title, setTitle] = useState<string>('')
   const [editingTitle, setEditingTitle] = useState<boolean>(true)
-  const titleRef = useRef<TextInput>(null)
+  const titleRef = useRef<any>(null)
   const insets = useSafeAreaInsets()
   const win = Dimensions.get('window')
 

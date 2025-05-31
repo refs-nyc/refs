@@ -49,9 +49,9 @@ export const ListItem = ({
     >
       <XStack gap={s.$09} style={{ justifyContent: 'space-between', alignItems: 'center' }}>
         <XStack gap={s.$09} style={{ justifyContent: 'space-between', alignItems: 'center' }}>
-          {r?.image ? (
+          {(r as any)?.image || (r as any).expand?.ref?.image ? (
             <SimplePinataImage
-              originalSource={r.image || r.expand?.ref?.image}
+              originalSource={(r as any).image || (r as any).expand?.ref?.image}
               imageOptions={{ width: largeImage ? s.$4 : s.$2, height: largeImage ? s.$4 : s.$2 }}
               style={largeImage ? base.largeSquare : base.smallSquare}
             />
@@ -63,7 +63,7 @@ export const ListItem = ({
               ]}
             ></View>
           )}
-          <Text>{r?.title || r?.expand?.ref?.title}</Text>
+          <Text>{(r as any)?.title || (r as any)?.expand?.ref?.title}</Text>
         </XStack>
 
         {withRemove ? (

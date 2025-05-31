@@ -58,7 +58,7 @@ export default function NewDMScreen() {
           flex: 1,
           margin: 'auto',
           alignItems: 'center',
-          justifyContent: 'start',
+          justifyContent: 'flex-start',
           paddingHorizontal: s.$1,
         }}
       >

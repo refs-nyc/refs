@@ -60,7 +60,6 @@ export default function MessageInput({
             paddingVertical: s.$09,
             paddingHorizontal: s.$1,
             justifyContent: 'space-between',
-            fontSize: s.$09,
             alignItems: 'center',
             flex: 1,
           }}

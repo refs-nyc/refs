@@ -84,7 +84,6 @@ const ListItem = ({ item }: { item: ExpandedItem }) => {
 
 export const Feed = () => {
   const [items, setItems] = useState<ExpandedItem[]>([])
-  const { logout } = useUserStore()
 
   useEffect(() => {
     const getInitialData = async () => {
@@ -109,7 +108,7 @@ export const Feed = () => {
   return (
     <>
       <DismissKeyboard>
-        <ScrollView style={{ flex: 1, paddingTop: s.$05 }}>
+        <ScrollView style={{ flex: 1 }}>
           <View style={{ height: '100%' }}>
           <View
             style={{
@@ -123,21 +122,12 @@ export const Feed = () => {
               gap={s.$075}
               style={{
                 flex: 1,
-                paddingBottom: s.$1,
+                paddingBottom: s.$12,
               }}
             >
               {items.map((item) => (
                 <ListItem key={item.id} item={item} />
               ))}
-
-              <View style={{ marginBottom: s.$2, alignItems: 'center' }}>
-                <Button
-                  style={{ width: 20 }}
-                  variant="inlineSmallMuted"
-                  title="Log out"
-                  onPress={logout}
-                />
-              </View>
             </YStack>
           </View>
           </View>

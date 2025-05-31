@@ -220,6 +220,9 @@ export const Profile = ({ userName }: { userName: string }) => {
               }
               if (openOtherUsersBacklog) {
                 setOpenOtherUsersBacklog(false)
+                setTimeout(() => {
+                  bottomSheetRef.current?.snapToIndex(0)
+                }, 50)
               }
             }
           }}

@@ -70,6 +70,7 @@ export default function MessageInput({
             multiline={true}
             value={message}
             onChangeText={setMessage}
+            autoFocus={true}
           />
           <Pressable onPress={onMessageSubmit} disabled={disabled}>
             <Ionicons name="paper-plane-outline" size={s.$2} color={c.grey2} />

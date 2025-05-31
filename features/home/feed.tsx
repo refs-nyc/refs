@@ -22,9 +22,15 @@ const suggestedRefs = [
   { title: 'Board Games' },
 ]
 
+interface SelectedRefType {
+  id: string;
+  title: string;
+  image?: string;
+}
+
 export const Feed = () => {
   const [items, setItems] = useState<ExpandedItem[]>([])
-  const [selectedRefs, setSelectedRefs] = useState<any[]>([])
+  const [selectedRefs, setSelectedRefs] = useState<SelectedRefType[]>([])
 
   useEffect(() => {
     const getInitialData = async () => {
@@ -42,13 +48,6 @@ export const Feed = () => {
     getInitialData()
   }, [])
 
-  // Toggle pill selection
-  const toggleSelect = (title: string) => {
-    setSelectedRefs((prev) =>
-      prev.includes(title) ? prev.filter((t) => t !== title) : [...prev, title]
-    )
-  }
-
   // Layout: Main container, then Feed ScrollView, then Ticker, then SearchBottomSheet
   return (
     <DismissKeyboard>
@@ -63,7 +62,6 @@ export const Feed = () => {
 
         <View style={{ height: 11 }} />
         <Ticker selectedRefs={selectedRefs} setSelectedRefs={setSelectedRefs} />
-        <View style={{ height: 11 }} />
         <SearchBottomSheet selectedRefs={selectedRefs} setSelectedRefs={setSelectedRefs} />
       </View>
     </DismissKeyboard>

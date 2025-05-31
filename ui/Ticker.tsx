@@ -1,6 +1,12 @@
 import { ScrollView, Pressable, Text, StyleSheet } from 'react-native'
 import React from 'react'
 
+interface SelectedRefType {
+  id: string;
+  title: string;
+  image?: string;
+}
+
 const suggestedRefs = [
   {
     id: 'my08nqseypicy8e',
@@ -22,7 +28,7 @@ const suggestedRefs = [
   },
 ]
 
-export default function Ticker({ selectedRefs, setSelectedRefs }: { selectedRefs: any[]; setSelectedRefs: (refs: any[]) => void }) {
+export default function Ticker({ selectedRefs, setSelectedRefs }: { selectedRefs: SelectedRefType[]; setSelectedRefs: (refs: SelectedRefType[]) => void }) {
   // Helper: check if a ref is already selected
   const isRefSelected = (id: string) => selectedRefs.some((r) => r.id === id)
 

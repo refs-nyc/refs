@@ -73,17 +73,16 @@ export default function SearchResultsScreen({ refIds }: { refIds: string[] }) {
 
   return (
     <YStack gap={s.$1} style={{ flex: 1, padding: s.$1, paddingTop: s.$2 }}>
-      <XStack style={{ alignItems: 'center' }}>
-        {/* back button */}
-        <Pressable onPress={() => router.back()}>
-          <Ionicons
-            name="chevron-back"
-            size={s.$2}
-            color={c.grey2}
-            style={{ margin: 0, left: -5, padding: 0 }}
-          />
-        </Pressable>
-        <Heading tag="h1">Results</Heading>
+      <XStack
+        gap={s.$1}
+        style={{
+          alignItems: 'center',
+          paddingBottom: s.$1,
+          paddingLeft: s.$1,
+          paddingTop: s.$1,
+        }}
+      >
+        <Heading tag="h2semi">Search</Heading>
       </XStack>
       <YStack gap={0} style={{ flex: 1 }}>
         {results.map((result) => (

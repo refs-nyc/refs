@@ -1,4 +1,4 @@
-import { Link, useGlobalSearchParams, router } from 'expo-router'
+import { Link, useGlobalSearchParams, router, usePathname } from 'expo-router'
 import { Text, View, Pressable } from 'react-native'
 import { Avatar } from '../atoms/Avatar'
 import { c, s } from '@/features/style'
@@ -9,13 +9,17 @@ import { Badge } from '../atoms/Badge'
 import { useMemo } from 'react'
 import SavesIcon from '@/assets/icons/saves.svg'
 import MessageIcon from '@/assets/icons/message.svg'
+import { Ionicons } from '@expo/vector-icons'
 
 export const Navigation = () => {
   const { user } = useUserStore()
+  const pathname = usePathname()
 
   const { addingTo, removingId } = useGlobalSearchParams()
 
   const { saves, messagesPerConversation, conversations, memberships } = useMessageStore()
+
+  const isHomePage = pathname === '/' || pathname === '/index'
 
   const countNewMessages = () => {
     if (!user) return 0
@@ -65,9 +69,19 @@ export const Navigation = () => {
         }}
       >
         <View style={{ flex: 1, paddingRight: 10 }}>
-          <Link dismissTo href="/">
-            <Text style={{ fontSize: 24, fontWeight: 'bold', textAlign: "left" }}>Refs</Text>
-          </Link>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            {!isHomePage && (
+              <Pressable 
+                onPress={() => router.back()}
+                style={{ marginRight: 8 }}
+              >
+                <Ionicons name="chevron-back" size={20} color={c.grey2} />
+              </Pressable>
+            )}
+            <Link dismissTo href="/">
+              <Text style={{ fontSize: 24, fontWeight: 'bold', textAlign: "left" }}>Refs</Text>
+            </Link>
+          </View>
         </View>
         <View style={{ top: 1, paddingRight: 14 }}>
           <Link href={`/user/${user.userName}`}>

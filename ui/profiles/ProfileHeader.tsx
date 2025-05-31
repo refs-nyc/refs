@@ -17,13 +17,9 @@ export const ProfileHeader = ({ profile }: { profile: Profile }) => {
         marginBottom: s.$075,
         paddingTop: s.$1,
         paddingBottom: s.$075,
+        paddingLeft: s.$075,
       }}
     >
-      {/* back button */}
-      <Pressable onPress={() => router.back()}>
-        <Ionicons name="chevron-back" size={s.$2} style={{ left: -s.$075 }} color={c.grey2} />
-      </Pressable>
-
       <View style={{ left: -s.$075 }}>
         <Avatar source={profile.image} size={s.$6} />
       </View>

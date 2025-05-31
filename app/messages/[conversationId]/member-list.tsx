@@ -20,7 +20,7 @@ export default function MemberListScreen() {
         style={{
           flex: 1,
           alignItems: 'flex-start',
-          justifyContent: 'start',
+          justifyContent: 'flex-start',
           paddingVertical: s.$5,
         }}
       >
@@ -54,7 +54,7 @@ export default function MemberListScreen() {
             style={{
               flex: 1,
               alignItems: 'flex-start',
-              justifyContent: 'start',
+              justifyContent: 'flex-start',
               paddingHorizontal: s.$4,
               paddingVertical: s.$2,
             }}

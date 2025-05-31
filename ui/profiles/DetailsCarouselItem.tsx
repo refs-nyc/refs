@@ -253,7 +253,7 @@ export const DetailsCarouselItem = ({ item, index }: { item: ExpandedItem; index
                   {!editingThisItem && item.url && (
                     <Link
                       style={{ transformOrigin: 'center', transform: 'rotate(-45deg)' }}
-                      href={item.url}
+                      href={item.url as any}
                     >
                       <Ionicons
                         color={c.muted}

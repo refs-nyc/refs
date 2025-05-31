@@ -73,7 +73,7 @@ export default function NewGCScreen() {
         gap={s.$2}
         style={{ 
           flex: 1, 
-          alignItems: 'start', 
+          alignItems: 'flex-start', 
           width: '80%', 
           paddingTop: s.$5, 
           margin: 'auto',

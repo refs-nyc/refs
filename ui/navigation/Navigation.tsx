@@ -49,7 +49,7 @@ export const Navigation = () => {
   if (!user) return null
 
   return (
-    <View style={{ display: 'flex', flexDirection: 'row' }}>
+    <View style={{ display: 'flex', flexDirection: 'row', paddingLeft: 2 }}>
       <NavigationBackdrop />
       <View
         style={{
@@ -59,26 +59,26 @@ export const Navigation = () => {
           width: '100%',
           paddingHorizontal: s.$1,
           alignItems: 'center',
-          paddingBottom: s.$05,
+          paddingBottom: s.$08,
+          borderBottomColor: '#ddd',
+          borderBottomWidth: 1,
         }}
       >
-        <View>
-          <Link href={`/user/${user.userName}`}>
-            <Avatar source={user.image} size={42} />
-          </Link>
-        </View>
-        <View style={{ margin: 'auto' }}>
+        <View style={{ flex: 1, paddingRight: 10 }}>
           <Link dismissTo href="/">
-            <Text style={{ fontSize: 24, fontWeight: 'bold' }}>Refs</Text>
+            <Text style={{ fontSize: 24, fontWeight: 'bold', textAlign: "left" }}>Refs</Text>
           </Link>
         </View>
-        <View style={{ top: -2, left: -10 }}>
-          <Pressable
-            onPress={() => {
-              router.push('/saves/modal')
-            }}
-          >
-            <SavesIcon />
+        <View style={{ top: 1, paddingRight: 14 }}>
+          <Link href={`/user/${user.userName}`}>
+            <Avatar source={user.image} size={26} />
+          </Link>
+        </View>
+        <View style={{ display: "flex", flexDirection: "row", paddingRight: 16 }}>
+          <Pressable onPress={() => router.push('/saves/modal')}>
+            <View style={{ top: -1 }}>
+              <SavesIcon width={24} height={24} />
+            </View>
             <View
               style={{
                 position: 'absolute',
@@ -88,24 +88,18 @@ export const Navigation = () => {
                 alignItems: 'center',
               }}
             >
-              {saves.length > 0 && (
-                <Text
-                  style={{
-                    color: c.white,
-                    fontWeight: 'bold',
-                    fontSize: s.$08,
-                  }}
-                >
-                  {saves.length}
-                </Text>
-              )}
+              <View style={{ top: -4, right: -6, zIndex: 1 }}>
+                {saves.length > 0 && <Badge count={saves.length} color='#7e8f78' />}
+              </View>
             </View>
           </Pressable>
         </View>
-        <View style={{ top: -2 }}>
+        <View style={{ display: "flex", flexDirection: "row", paddingRight: 6 }}>
           <Pressable onPress={() => router.push('/messages')}>
-            <MessageIcon />
-            {newMessages > 0 && <Badge count={newMessages} color={c.red} />}
+            <View style={{ top: -1.5 }}>
+              <MessageIcon width={30} />
+            </View>
+            {newMessages > 0 && <Badge count={newMessages} color={'#FF2244'} />}
           </Pressable>
         </View>
       </View>

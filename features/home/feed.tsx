@@ -12,6 +12,10 @@ import { Avatar } from '@/ui/atoms/Avatar'
 
 const win = Dimensions.get('window')
 
+// Needed to compensate for differences between paragraph padding vs image padding.
+const COMPENSATE_PADDING = 5
+const FEED_PREVIEW_IMAGE_SIZE = 42
+
 const ListItem = ({ item }: { item: ExpandedItem }) => {
   const creator = item.expand!.creator
   const creatorProfileUrl = `/user/${creator.userName}/` as const
@@ -22,7 +26,7 @@ const ListItem = ({ item }: { item: ExpandedItem }) => {
       key={item.id}
       gap={s.$08}
       style={{
-        paddingVertical: s.$05,
+        paddingBottom: 1,
         alignItems: 'center',
         width: '100%',
         justifyContent: 'space-between',
@@ -30,7 +34,9 @@ const ListItem = ({ item }: { item: ExpandedItem }) => {
     >
       {item.expand?.creator && (
         <Link href={creatorProfileUrl}>
-          <Avatar source={creator.image} size={s.$4} />
+          <View style={{ paddingTop: COMPENSATE_PADDING }}>
+            <Avatar source={creator.image} size={FEED_PREVIEW_IMAGE_SIZE} />
+          </View>
         </Link>
       )}
       <View style={{ overflow: 'hidden', flex: 1 }}>
@@ -49,22 +55,24 @@ const ListItem = ({ item }: { item: ExpandedItem }) => {
 
       {item?.image ? (
         <Link href={itemUrl}>
-          <SimplePinataImage
-            originalSource={item.image}
-            imageOptions={{ width: s.$5, height: s.$5 }}
-            style={{
-              width: s.$4,
-              height: s.$4,
-              backgroundColor: c.accent,
-              borderRadius: s.$075,
-            }}
-          />
+          <View style={{ paddingTop: COMPENSATE_PADDING }}>
+            <SimplePinataImage
+              originalSource={item.image}
+              imageOptions={{ width: FEED_PREVIEW_IMAGE_SIZE, height: FEED_PREVIEW_IMAGE_SIZE }}
+              style={{
+                width: FEED_PREVIEW_IMAGE_SIZE,
+                height: FEED_PREVIEW_IMAGE_SIZE,
+                backgroundColor: c.accent,
+                borderRadius: s.$075,
+              }}
+            />
+          </View>
         </Link>
       ) : (
         <View
           style={{
-            width: s.$5,
-            height: s.$5,
+            width: FEED_PREVIEW_IMAGE_SIZE,
+            height: FEED_PREVIEW_IMAGE_SIZE,
             backgroundColor: c.accent,
             borderRadius: s.$075,
           }}

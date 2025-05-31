@@ -36,6 +36,7 @@ export const Profile = ({ userName }: { userName: string }) => {
   const [editingRights, seteditingRights] = useState<boolean>(false)
   const [showMessageButtons, setShowMessageButtons] = useState<boolean>(false)
   const [step, setStep] = useState('')
+  const [loading, setLoading] = useState<boolean>(true)
 
   const [openOtherUsersBacklog, setOpenOtherUsersBacklog] = useState(false)
 
@@ -49,6 +50,7 @@ export const Profile = ({ userName }: { userName: string }) => {
   }
 
   const refreshGrid = async (userName: string) => {
+    setLoading(true)
     try {
       const profile = await pocketbase
         .collection<ProfileType>('users')
@@ -62,6 +64,8 @@ export const Profile = ({ userName }: { userName: string }) => {
       setBacklogItems(backlogItems as ExpandedItem[])
     } catch (error) {
       console.error(error)
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -156,20 +160,22 @@ export const Profile = ({ userName }: { userName: string }) => {
             <ProfileHeader profile={profile} />
 
             <View style={{ gap: s.$2 }}>
-              <Grid
-                editingRights={editingRights}
-                onRemoveItem={(id) => {
-                  setRemovingId(id)
-                  bottomSheetRef.current?.snapToIndex(1)
-                }}
-                onAddItem={() => {
-                  setAddingTo('grid')
-                  bottomSheetRef.current?.snapToIndex(1)
-                }}
-                columns={3}
-                items={gridItems}
-                rows={4}
-              ></Grid>
+              {!loading && (
+                <Grid
+                  editingRights={editingRights}
+                  onRemoveItem={(id) => {
+                    setRemovingId(id)
+                    bottomSheetRef.current?.snapToIndex(1)
+                  }}
+                  onAddItem={() => {
+                    setAddingTo('grid')
+                    bottomSheetRef.current?.snapToIndex(1)
+                  }}
+                  columns={3}
+                  items={gridItems}
+                  rows={4}
+                ></Grid>
+              )}
             </View>
           </View>
         )}

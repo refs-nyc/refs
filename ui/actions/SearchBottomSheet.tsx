@@ -18,9 +18,15 @@ import { NewRef, NewRefStep } from './NewRef'
 import { useBackdropStore } from '@/features/pocketbase/stores/backdrop'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
+interface SelectedRefType {
+  id: string;
+  title: string;
+  image?: string;
+}
+
 const HEADER_HEIGHT = s.$5
 
-export default function SearchBottomSheet({ selectedRefs, setSelectedRefs }: { selectedRefs: any[], setSelectedRefs: (refs: any[]) => void }) {
+export default function SearchBottomSheet({ selectedRefs, setSelectedRefs }: { selectedRefs: SelectedRefType[], setSelectedRefs: (refs: SelectedRefType[]) => void }) {
   const [index, setIndex] = useState(0)
   const isMinimised = index === 0
   const searchSheetRef = useRef<BottomSheet>(null)
@@ -42,18 +48,23 @@ export default function SearchBottomSheet({ selectedRefs, setSelectedRefs }: { s
   const onAddRefToSearch = (r: CompleteRef) => {
     if (!r.title) return;
     if (isRefSelected(r.title)) {
-      setError('already added!')
-      return
+      setError('already added!');
+      return;
     }
-    setSelectedRefs([r, ...selectedRefs.filter((ref: any) => ref.id !== r.id)])
-    setSearchTerm('')
-    updateSearch('')
-    setError('')
-  }
+    const newSelectedRef: SelectedRefType = {
+      id: r.id,
+      title: r.title,
+      image: r.image,
+    };
+    setSelectedRefs([newSelectedRef, ...selectedRefs.filter((ref: SelectedRefType) => ref.id !== newSelectedRef.id)]);
+    setSearchTerm('');
+    updateSearch('');
+    setError('');
+  };
 
   // Remove ref from selectedRefs
   const removeRef = (id: string) => {
-    setSelectedRefs(selectedRefs.filter((ref: any) => ref.id !== id))
+    setSelectedRefs(selectedRefs.filter((ref: SelectedRefType) => ref.id !== id))
     setError('')
   }
 
@@ -288,7 +299,7 @@ export default function SearchBottomSheet({ selectedRefs, setSelectedRefs }: { s
                 </YStack>
               </BottomSheetScrollView>
             )}
-            {searchTerm === '' && (
+            {!isMinimised && searchTerm === '' && (
               <BottomSheetScrollView
                 keyboardShouldPersistTaps="handled"
                 style={{

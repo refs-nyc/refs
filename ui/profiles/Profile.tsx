@@ -300,14 +300,14 @@ export const Profile = ({ userName }: { userName: string }) => {
                   </XStack>
                 ) : (
                   <Heading tag="h2normal" style={{ color: c.white, paddingHorizontal: s.$2 }}>
-                    {`${profile.firstName}'s Library`}
+                    {`${profile.firstName}'s Backlog`}
                   </Heading>
                 )}
               </Pressable>
               <BacklogList items={backlogItems.toReversed()} ownProfile={profile.id === user?.id} />
             </>
           ) : view === 'other_buttons' ? (
-            <XStack style={{ paddingTop: s.$2, justifyContent: 'center' }} gap={s.$1}>
+            <XStack style={{ paddingTop: s.$2, justifyContent: 'center' }} gap={12}>
               <View style={{ height: s.$4, width: s.$10 }}>
                 <DMButton profile={profile} style={{ paddingHorizontal: s.$0 }} />
               </View>

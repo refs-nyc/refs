@@ -4,8 +4,8 @@ import BottomSheet, {
   BottomSheetScrollView,
   BottomSheetView,
 } from '@gorhom/bottom-sheet'
-import { useRef, useState, useEffect } from 'react'
-import { Pressable, Text, TextInput, ScrollView, StyleSheet } from 'react-native'
+import { useRef, useState } from 'react'
+import { Pressable, Text, TextInput } from 'react-native'
 import { Heading } from '../typo/Heading'
 import { XStack, YStack } from '../core/Stacks'
 import { Button } from '../buttons/Button'
@@ -16,56 +16,32 @@ import { Ionicons } from '@expo/vector-icons'
 import { router } from 'expo-router'
 import { NewRef, NewRefStep } from './NewRef'
 import { useBackdropStore } from '@/features/pocketbase/stores/backdrop'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
-interface SelectedRefType {
-  id: string;
-  title: string;
-  image?: string;
-}
+const HEADER_HEIGHT = s.$8
 
-const HEADER_HEIGHT = s.$5
-
-export default function SearchBottomSheet({ selectedRefs, setSelectedRefs }: { selectedRefs: SelectedRefType[], setSelectedRefs: (refs: SelectedRefType[]) => void }) {
+export default function SearchBottomSheet() {
   const [index, setIndex] = useState(0)
+
   const isMinimised = index === 0
   const searchSheetRef = useRef<BottomSheet>(null)
   const [addingTo, setAddingTo] = useState('')
   const [step, setStep] = useState('')
   const [newRefTitle, setNewRefTitle] = useState('')
   const [initialStep, setInitialStep] = useState<NewRefStep>('')
+
   const [searchTerm, setSearchTerm] = useState('')
   const [results, setResults] = useState<CompleteRef[]>([])
+
+  const [refs, setRefs] = useState<CompleteRef[]>([])
+
   const { user } = useUserStore()
+
   const { animatedIndex } = useBackdropStore()
-  const [error, setError] = useState('')
-  const insets = useSafeAreaInsets()
 
-  // Helper: check if a ref is already selected
-  const isRefSelected = (title: string) => selectedRefs.some(r => r.title && r.title.toLowerCase() === title.toLowerCase())
-
-  // When user tries to add a ref manually
   const onAddRefToSearch = (r: CompleteRef) => {
-    if (!r.title) return;
-    if (isRefSelected(r.title)) {
-      setError('already added!');
-      return;
-    }
-    const newSelectedRef: SelectedRefType = {
-      id: r.id,
-      title: r.title,
-      image: r.image,
-    };
-    setSelectedRefs([newSelectedRef, ...selectedRefs.filter((ref: SelectedRefType) => ref.id !== newSelectedRef.id)]);
-    setSearchTerm('');
-    updateSearch('');
-    setError('');
-  };
-
-  // Remove ref from selectedRefs
-  const removeRef = (id: string) => {
-    setSelectedRefs(selectedRefs.filter((ref: SelectedRefType) => ref.id !== id))
-    setError('')
+    setRefs((prevState) => [...prevState.filter((ref) => ref.id !== r.id), r])
+    setSearchTerm('')
+    updateSearch('')
   }
 
   const updateSearch = async (q: string) => {
@@ -100,12 +76,10 @@ export default function SearchBottomSheet({ selectedRefs, setSelectedRefs }: { s
       sort: '@random',
     })
     router.push(`/user/${randomProfile.items[0].userName}`)
-    setSelectedRefs([])
   }
 
   const search = () => {
-    router.push(`/search?refs=${selectedRefs.map((r) => r.id).join(',')}`)
-    setSelectedRefs([])
+    router.push(`/search?refs=${refs.map((r) => r.id).join(',')}`)
   }
 
   const isAddingNewRef = addingTo === 'grid' || addingTo === 'backlog'
@@ -117,7 +91,7 @@ export default function SearchBottomSheet({ selectedRefs, setSelectedRefs }: { s
     // search console should expand when new refs are added to the search
     // but it shouldn't be taller than ~4 refs in its minimised form
     const refHeightPlusGap = s.$3 + s.$1
-    const minSnapPoint = refHeightPlusGap * Math.min(selectedRefs.length, 4) + s.$1 + HEADER_HEIGHT
+    const minSnapPoint = refHeightPlusGap * Math.min(refs.length, 4) + s.$1 + HEADER_HEIGHT
     snapPoints = [minSnapPoint, '90%']
   }
 
@@ -171,22 +145,7 @@ export default function SearchBottomSheet({ selectedRefs, setSelectedRefs }: { s
             }}
           />
         ) : (
-          <BottomSheetView style={{ paddingBottom: insets.bottom }}>
-            {/* Error message */}
-            {error && (
-              <Text
-                style={{
-                  color: c.surface,
-                  fontFamily: 'Inter-Medium',
-                  fontSize: 14,
-                  textAlign: 'center',
-                  marginTop: 10,
-                  marginBottom: 0,
-                }}
-              >
-                {error}
-              </Text>
-            )}
+          <BottomSheetView>
             <Pressable
               onPress={() => {
                 if (searchSheetRef.current && isMinimised) searchSheetRef.current.snapToIndex(1)
@@ -228,8 +187,8 @@ export default function SearchBottomSheet({ selectedRefs, setSelectedRefs }: { s
                   </Pressable>
                   <Button
                     variant="whiteInverted"
-                    title={selectedRefs.length ? 'Search' : 'Stumble'}
-                    onPress={selectedRefs.length ? search : stumble}
+                    title={refs.length ? 'Search' : 'Stumble'}
+                    onPress={refs.length ? search : stumble}
                     style={{
                       paddingHorizontal: 0,
                       paddingVertical: s.$075,
@@ -286,7 +245,7 @@ export default function SearchBottomSheet({ selectedRefs, setSelectedRefs }: { s
                         }}
                       >
                         <SimplePinataImage
-                          originalSource={r.image as string}
+                          originalSource={r.image!}
                           imageOptions={{ width: s.$2, height: s.$2 }}
                           style={{ width: s.$2, height: s.$2 }}
                         />
@@ -299,7 +258,7 @@ export default function SearchBottomSheet({ selectedRefs, setSelectedRefs }: { s
                 </YStack>
               </BottomSheetScrollView>
             )}
-            {!isMinimised && searchTerm === '' && (
+            {searchTerm === '' && (
               <BottomSheetScrollView
                 keyboardShouldPersistTaps="handled"
                 style={{
@@ -313,9 +272,9 @@ export default function SearchBottomSheet({ selectedRefs, setSelectedRefs }: { s
                     paddingBottom: s.$12,
                   }}
                 >
-                  {selectedRefs.map((r) => (
+                  {refs.map((r) => (
                     <XStack
-                      key={String(r.id || r.title || `ref-chip-${selectedRefs.indexOf(r)}`)}
+                      key={r.id}
                       gap={s.$025}
                       style={{
                         alignItems: 'center',
@@ -326,7 +285,7 @@ export default function SearchBottomSheet({ selectedRefs, setSelectedRefs }: { s
                     >
                       <XStack style={{ width: '85%' }}>
                         <SimplePinataImage
-                          originalSource={r.image as string}
+                          originalSource={r.image!}
                           imageOptions={{ width: s.$3, height: s.$3 }}
                           style={{ width: s.$3, height: s.$3, borderRadius: s.$075 }}
                         />
@@ -344,7 +303,7 @@ export default function SearchBottomSheet({ selectedRefs, setSelectedRefs }: { s
                       </XStack>
                       <Pressable
                         onPress={() => {
-                          removeRef(r.id)
+                          setRefs((prevState) => [...prevState.filter((ref) => ref.id !== r.id)])
                         }}
                       >
                         <Ionicons name="close" size={s.$2} color={c.white} />
@@ -360,40 +319,3 @@ export default function SearchBottomSheet({ selectedRefs, setSelectedRefs }: { s
     </>
   )
 }
-
-// Pill styles (copy from Feed or adjust as needed)
-const pillStyles = StyleSheet.create({
-  pill: {
-    borderRadius: 20,
-    borderWidth: 2,
-    borderColor: '#A5B89F', // Actual Olive
-    paddingVertical: 10,
-    paddingHorizontal: 10,
-    marginRight: 10,
-    justifyContent: 'center',
-    alignItems: 'center',
-    minHeight: 38,
-    minWidth: 38,
-  },
-  unselected: {
-    backgroundColor: '#F3F2ED', // Surface
-  },
-  selected: {
-    backgroundColor: '#A5B89F', // Actual Olive
-  },
-  pressed: {
-    opacity: 0.7,
-  },
-  text: {
-    fontFamily: 'Inter-Medium',
-    fontSize: 14,
-    lineHeight: 18,
-    textAlign: 'center',
-  },
-  unselectedText: {
-    color: '#A5B89F', // Actual Olive
-  },
-  selectedText: {
-    color: 'rgba(0,0,0,0.54)', // Mellow Black
-  },
-})

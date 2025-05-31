@@ -18,6 +18,7 @@ import { Pressable, View } from 'react-native'
 import { Button } from '../buttons/Button'
 import { YStack } from '../core/Stacks'
 import { Grid } from '../grid/Grid'
+import { PlaceholderGrid } from '../grid/PlaceholderGrid'
 import { useUIStore } from '../state'
 import { Heading } from '../typo/Heading'
 import BacklogList from './BacklogList'
@@ -160,7 +161,12 @@ export const Profile = ({ userName }: { userName: string }) => {
             <ProfileHeader profile={profile} />
 
             <View style={{ gap: s.$2 }}>
-              {!loading && (
+              {loading ? (
+                <PlaceholderGrid
+                  columns={3}
+                  rows={4}
+                />
+              ) : (
                 <Grid
                   editingRights={editingRights}
                   onRemoveItem={(id) => {

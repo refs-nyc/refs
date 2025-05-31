@@ -1,4 +1,5 @@
 import { View as NativeView, Text } from 'react-native'
+export { Text } from 'react-native'
 
 export * from './core/Stacks'
 export * from './core/Sheets'
@@ -27,3 +28,4 @@ export * from './SwipeToGoBack'
 
 export const Spinner = () => <Text>Loading</Text>
 export const Paragraph = ({ children }: { children: React.ReactNode }) => <Text>{children}</Text>
+

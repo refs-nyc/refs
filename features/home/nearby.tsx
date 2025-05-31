@@ -1,4 +1,4 @@
-import { XStack, YStack, Heading, Button } from '@/ui'
+import { XStack, YStack, Heading, Button, Text } from '@/ui'
 import type { ExpandedItem } from '@/features/pocketbase/stores/types'
 import { Link } from 'expo-router'
 import { View, Dimensions } from 'react-native'
@@ -16,7 +16,7 @@ const ListItem = ({ item }: { item: ExpandedItem }) => {
   return (
     <XStack
       key={item.id}
-      gap={s.$09}
+      gap={s.$08}
       style={{
         paddingVertical: s.$05,
         alignItems: 'center',
@@ -26,21 +26,21 @@ const ListItem = ({ item }: { item: ExpandedItem }) => {
     >
       {item.expand?.creator && (
         <Link href={creatorProfileUrl}>
-          <Avatar source={creator.image} size={s.$5} />
+          <Avatar source={creator.image} size={s.$4} />
         </Link>
       )}
       <View style={{ overflow: 'hidden', flex: 1 }}>
-        <Heading tag="p">
+        <Text style={{ fontSize: 16 }}>
           <Link href={creatorProfileUrl}>
             <Heading tag="semistrong">{item.expand?.creator?.firstName || 'Anonymous'} </Heading>
           </Link>
-          <Heading style={{ color: c.muted2 }} tag="p">
+          <Text style={{ color: c.muted2 }}>
             added{' '}
-          </Heading>
+          </Text>
           <Link href={itemUrl}>
             <Heading tag="semistrong">{item.expand?.ref?.title}</Heading>
           </Link>
-        </Heading>
+        </Text>
       </View>
 
       {item?.image ? (
@@ -49,8 +49,8 @@ const ListItem = ({ item }: { item: ExpandedItem }) => {
             originalSource={item.image}
             imageOptions={{ width: s.$5, height: s.$5 }}
             style={{
-              width: s.$5,
-              height: s.$5,
+              width: s.$4,
+              height: s.$4,
               backgroundColor: c.accent,
               borderRadius: s.$075,
             }}

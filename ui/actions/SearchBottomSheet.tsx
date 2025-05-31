@@ -185,15 +185,21 @@ export default function SearchBottomSheet() {
                   >
                     <Ionicons name="add-circle-outline" size={s.$4} color={c.white} />
                   </Pressable>
-                  <Button
-                    variant="whiteInverted"
-                    title={refs.length ? 'Search' : 'Stumble'}
-                    onPress={refs.length ? search : stumble}
-                    style={{
-                      paddingHorizontal: 0,
-                      paddingVertical: s.$075,
-                    }}
-                  />
+                  {refs.length ? (
+                    <Button
+                      variant="whiteInverted"
+                      title="Search"
+                      onPress={search}
+                      style={{
+                        paddingHorizontal: 0,
+                        paddingVertical: s.$075,
+                      }}
+                    />
+                  ) : (
+                    <Pressable onPress={stumble}>
+                      <Ionicons name="shuffle" size={34} color={c.white} />
+                    </Pressable>
+                  )}
                 </XStack>
               </XStack>
             </Pressable>

@@ -14,7 +14,7 @@ import BottomSheet, { BottomSheetBackdrop } from '@gorhom/bottom-sheet'
 import { router, useLocalSearchParams } from 'expo-router'
 import { ShareIntent as ShareIntentType, useShareIntentContext } from 'expo-share-intent'
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Pressable, View } from 'react-native'
+import { Pressable, View, ScrollView } from 'react-native'
 import { Button } from '../buttons/Button'
 import { YStack } from '../core/Stacks'
 import { Grid } from '../grid/Grid'
@@ -91,6 +91,7 @@ export const Profile = ({ userName }: { userName: string }) => {
   }, [userName])
 
   const { animatedIndex } = useBackdropStore()
+  const { logout } = useUserStore()
 
   const bottomSheetRef = useRef<BottomSheet>(null)
   const [index, setIndex] = useState(0)
@@ -141,14 +142,16 @@ export const Profile = ({ userName }: { userName: string }) => {
 
   return (
     <>
-      <YStack
-        style={{
-          flex: 1,
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={{
           justifyContent: 'center',
           alignItems: 'center',
           paddingHorizontal: s.$08,
+          gap: s.$4,
+          minHeight: '100%',
         }}
-        gap={s.$4}
+        showsVerticalScrollIndicator={false}
       >
         {profile && (
           <View
@@ -182,12 +185,22 @@ export const Profile = ({ userName }: { userName: string }) => {
                   rows={4}
                 ></Grid>
               )}
+              {ownProfile && (
+                <View style={{ marginBottom: s.$2, alignItems: 'center' }}>
+                  <Button
+                    style={{ width: 20 }}
+                    variant="inlineSmallMuted"
+                    title="Log out"
+                    onPress={logout}
+                  />
+                </View>
+              )}
             </View>
           </View>
         )}
 
         {!user && <Heading tag="h1">Profile for {userName} not found</Heading>}
-      </YStack>
+      </ScrollView>
       {profile && (
         <BottomSheet
           enableDynamicSizing={false}

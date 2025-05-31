@@ -30,8 +30,8 @@ export const GridTileWrapper = ({
   const [actions, setActions] = useState(false)
 
   const specificStyles = {
-    borderWidth: type !== 'image' && type !== '' ? 2 : 0,
-    borderColor: 'black',
+    borderWidth: type !== 'image' && type !== '' ? 1.5 : 0,
+    borderColor: '#333',
   }
 
   const openDetailScreen = () => {

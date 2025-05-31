@@ -161,17 +161,11 @@ export function MessagesScreen({ conversationId }: { conversationId: string }) {
         style={{
           alignItems: 'center',
           paddingBottom: 0,
+          paddingLeft: s.$1,
           zIndex: 1,
           paddingTop: s.$1,
         }}
       >
-        <Pressable
-          onPress={() => {
-            router.back()
-          }}
-        >
-          <Ionicons name="chevron-back" size={s.$2} color={c.grey2} />
-        </Pressable>
         <Heading
           tag="h2semi"
           style={{ width: conversation.is_direct ? undefined : '60%' }}

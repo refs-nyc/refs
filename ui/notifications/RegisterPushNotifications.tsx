@@ -12,11 +12,16 @@ export function RegisterPushNotifications() {
   const notificationListener = useRef<Notifications.EventSubscription>()
   const responseListener = useRef<Notifications.EventSubscription>()
 
-  const { updateUser } = useUserStore()
+  const { updateUser, user, isInitialized } = useUserStore()
 
   const projectId = Constants?.expoConfig?.extra?.eas?.projectId ?? Constants?.easConfig?.projectId
 
   useEffect(() => {
+    // Only register for push notifications if user is logged in and initialized
+    if (!isInitialized || !user) {
+      return
+    }
+
     const logInformation = async () => {
       const { data: pushTokenString } = await Notifications.getExpoPushTokenAsync({ projectId })
       console.log(pushTokenString)
@@ -25,7 +30,10 @@ export function RegisterPushNotifications() {
     registerForPushNotificationsAsync()
       .then(async (token) => {
         setExpoPushToken(token ?? '')
-        await updateUser({ pushToken: token ?? '' })
+        // Only update user if we still have a logged in user
+        if (user && token) {
+          await updateUser({ pushToken: token })
+        }
       })
       .catch((error: any) => setExpoPushToken(`${error}`))
 
@@ -45,7 +53,7 @@ export function RegisterPushNotifications() {
       responseListener.current &&
         Notifications.removeNotificationSubscription(responseListener.current)
     }
-  }, [])
+  }, [isInitialized, user])
 
   return <></>
 }

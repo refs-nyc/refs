@@ -5,7 +5,7 @@ import BottomSheet, {
   BottomSheetView,
 } from '@gorhom/bottom-sheet'
 import { useRef, useState } from 'react'
-import { Pressable, Text, TextInput } from 'react-native'
+import { Pressable, Text, TextInput, View } from 'react-native'
 import { Heading } from '../typo/Heading'
 import { XStack, YStack } from '../core/Stacks'
 import { Button } from '../buttons/Button'
@@ -265,11 +265,13 @@ export default function SearchBottomSheet() {
                           paddingHorizontal: s.$5,
                         }}
                       >
-                        <SimplePinataImage
-                          originalSource={r.image!}
-                          imageOptions={{ width: s.$2, height: s.$2 }}
-                          style={{ width: s.$2, height: s.$2 }}
-                        />
+                        <View style={{ width: s.$2, height: s.$2, backgroundColor: c.olive2, borderRadius: s.$05 }}>
+                          <SimplePinataImage
+                            originalSource={r.image!}
+                            imageOptions={{ width: s.$2, height: s.$2 }}
+                            style={{ width: s.$2, height: s.$2 }}
+                          />
+                        </View>
                         <Heading tag="h2normal" style={{ color: c.white, paddingHorizontal: s.$2 }}>
                           {r.title}
                         </Heading>

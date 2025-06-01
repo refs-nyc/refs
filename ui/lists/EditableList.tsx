@@ -3,7 +3,7 @@ import { BottomSheetView, BottomSheetScrollView, BottomSheetTextInput } from '@g
 import { Button } from '../buttons/Button'
 import { t, c, s } from '@/features/style'
 import { useRef, useState } from 'react'
-import { Dimensions, Pressable, TextInput } from 'react-native'
+import { Dimensions, Pressable, TextInput, View } from 'react-native'
 import { SearchRef } from '../actions/SearchRef'
 import { useRefStore } from '@/features/pocketbase/stores/refs'
 import { useItemStore } from '@/features/pocketbase/stores/items'
@@ -75,9 +75,10 @@ export const EditableList = ({
               style={{
                 ...t.h2,
                 paddingVertical: s.$1,
-                color: editingTitle ? c.grey2 : c.white,
+                color: c.surface,
               }}
               placeholder="Add a list title"
+              placeholderTextColor={c.surface}
               value={title}
               onChangeText={(e) => setTitle(e)}
               onBlur={() => onTitleChange(title)}
@@ -124,11 +125,13 @@ export const EditableList = ({
           )}
         </BottomSheetView>
       </BottomSheetScrollView>
-      <Button
-        onPress={onComplete}
-        title="Done"
-        variant="whiteInverted"
-      ></Button>
+      <View style={{ position: 'absolute', left: 0, right: 0, bottom: insets.bottom + 10, paddingHorizontal: 20 }}>
+        <Button
+          onPress={onComplete}
+          title="Done"
+          variant="whiteInverted"
+        />
+      </View>
     </BottomSheetView>
   )
 }

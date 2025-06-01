@@ -41,7 +41,7 @@ export const NewListItemButton = ({
               +
             </Text>
           </View>
-          <Text>{label}</Text>
+          <Text style={{ color: c.surface, fontWeight: '700' }}>{label}</Text>
         </XStack>
       </XStack>
     </Pressable>

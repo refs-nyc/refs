@@ -174,8 +174,6 @@ export const RefForm = ({
             width: 207.6, // 200 + 2*3.8 for border
             height: 207.6,
             marginBottom: 8,
-            borderWidth: 3.8,
-            borderColor: 'rgba(243,242,237,0.3)',
             borderRadius: s.$09 + 3.8,
             alignItems: 'center',
             justifyContent: 'center',

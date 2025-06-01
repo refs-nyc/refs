@@ -145,11 +145,11 @@ export const EditableHeader = ({
             style={{
               flexShrink: 1,
               width: '100%',
-              backgroundColor: c.surface2,
+              backgroundColor: c.surface,
               paddingVertical: s.$08,
               paddingHorizontal: s.$1,
               borderRadius: s.$075,
-              color: c.black,
+              color: c.muted,
             }}
             value={urlState}
             autoFocus={true}

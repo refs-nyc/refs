@@ -63,23 +63,24 @@ export const ListItem = ({
               ]}
             ></View>
           )}
-          <Text style={{ color: c.surface }}>
+          <Text style={{ color: c.surface, fontWeight: '700' }}>
             {(r as any)?.title || (r as any)?.expand?.ref?.title}
           </Text>
         </XStack>
 
         {withRemove ? (
           <Pressable onPress={onRemove}>
-            <Ionicons name="close" />
+            <Ionicons name="close" color={c.surface} />
           </Pressable>
         ) : (
-          showMeta && (
-            <XStack gap={s.$09} style={{ justifyContent: 'space-between', alignItems: 'center' }}>
-              <Text style={{ color: c.surface }}>
-                {count === 1 ? 'You are' : count} referencing
-              </Text>
-            </XStack>
-          )
+          // showMeta && (
+          //   <XStack gap={s.$09} style={{ justifyContent: 'space-between', alignItems: 'center' }}>
+          //     <Text style={{ color: c.surface }}>
+          //       {count === 1 ? 'You are' : count} referencing
+          //     </Text>
+          //   </XStack>
+          // )
+          null
         )}
       </XStack>
     </View>

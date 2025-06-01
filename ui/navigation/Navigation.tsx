@@ -1,12 +1,12 @@
 import { Link, useGlobalSearchParams, router, usePathname } from 'expo-router'
-import { Text, View, Pressable } from 'react-native'
+import { Text, View, Pressable, Animated } from 'react-native'
 import { Avatar } from '../atoms/Avatar'
 import { c, s } from '@/features/style'
 import { useUserStore } from '@/features/pocketbase/stores/users'
 import { useMessageStore } from '@/features/pocketbase/stores/messages'
 import { NavigationBackdrop } from '@/ui/navigation/NavigationBackdrop'
 import { Badge } from '../atoms/Badge'
-import { useMemo } from 'react'
+import { useMemo, useRef, useEffect } from 'react'
 import SavesIcon from '@/assets/icons/saves.svg'
 import MessageIcon from '@/assets/icons/message.svg'
 import { Ionicons } from '@expo/vector-icons'
@@ -20,6 +20,29 @@ export const Navigation = () => {
   const { saves, messagesPerConversation, conversations, memberships } = useMessageStore()
 
   const isHomePage = pathname === '/' || pathname === '/index'
+
+  const scaleAnim = useRef(new Animated.Value(1)).current
+
+  const animateBadge = () => {
+    Animated.sequence([
+      Animated.timing(scaleAnim, {
+        toValue: 1.2,
+        duration: 200,
+        useNativeDriver: true,
+      }),
+      Animated.timing(scaleAnim, {
+        toValue: 1,
+        duration: 200,
+        useNativeDriver: true,
+      }),
+    ]).start()
+  }
+
+  useEffect(() => {
+    if (saves.length > 0) {
+      animateBadge()
+    }
+  }, [saves.length])
 
   const countNewMessages = () => {
     if (!user) return 0
@@ -102,9 +125,9 @@ export const Navigation = () => {
                 alignItems: 'center',
               }}
             >
-              <View style={{ top: -4, right: -6, zIndex: 1 }}>
+              <Animated.View style={{ top: -4, right: -6, zIndex: 1, transform: [{ scale: scaleAnim }] }}>
                 {saves.length > 0 && <Badge count={saves.length} color='#7e8f78' />}
-              </View>
+              </Animated.View>
             </View>
           </Pressable>
         </View>
@@ -113,7 +136,19 @@ export const Navigation = () => {
             <View style={{ top: -1.5 }}>
               <MessageIcon width={30} />
             </View>
-            {newMessages > 0 && <Badge count={newMessages} color={'#FF2244'} />}
+            <View
+              style={{
+                position: 'absolute',
+                height: '85%',
+                width: '100%',
+                justifyContent: 'center',
+                alignItems: 'center',
+              }}
+            >
+              <View style={{ bottom: 2, right: -10, zIndex: 1 }}>
+                {newMessages > 0 && <Badge count={newMessages} color='#7e8f78' />}
+              </View>
+            </View>
           </Pressable>
         </View>
       </View>

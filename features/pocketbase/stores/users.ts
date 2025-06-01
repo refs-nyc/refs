@@ -12,6 +12,7 @@ export const isProfile = (profile: Profile | EmptyProfile | null): profile is Pr
 export const useUserStore = create<{
   stagedUser: Partial<Profile>
   user: Profile | null
+  isInitialized: boolean
   register: () => Promise<ExpandedProfile>
   updateUser: (fields: Partial<Profile>) => Promise<Profile>
   updateStagedUser: (formFields: Partial<Profile>) => void
@@ -25,26 +26,46 @@ export const useUserStore = create<{
 }>((set, get) => ({
   stagedUser: {},
   user: null, // user is ALWAYS the user of the app, this is only set if the user is logged in
+  isInitialized: false,
   users: [],
   //
   //
   //
   init: async () => {
-    // If PocketBase has a valid auth store, sync it with our store
-    if (pocketbase.authStore.isValid && pocketbase.authStore.record) {
-      try {
-        const record = await pocketbase
-          .collection<Profile>('users')
-          .getOne(pocketbase.authStore.record.id, { expand: 'items,items.ref' })
+    try {
+      // If PocketBase has a valid auth store, sync it with our store
+      if (pocketbase.authStore.isValid && pocketbase.authStore.record) {
+        try {
+          const record = await pocketbase
+            .collection<Profile>('users')
+            .getOne(pocketbase.authStore.record.id, { expand: 'items,items.ref' })
 
+          set(() => ({
+            user: record,
+            isInitialized: true,
+          }))
+        } catch (error) {
+          console.error('Failed to sync user state:', error)
+          // If we can't get the user record, clear the auth store
+          pocketbase.authStore.clear()
+          set(() => ({
+            user: null,
+            isInitialized: true,
+          }))
+        }
+      } else {
+        // No valid auth, mark as initialized with no user
         set(() => ({
-          user: record,
+          user: null,
+          isInitialized: true,
         }))
-      } catch (error) {
-        console.error('Failed to sync user state:', error)
-        // If we can't get the user record, clear the auth store
-        pocketbase.authStore.clear()
       }
+    } catch (error) {
+      console.error('Init error:', error)
+      set(() => ({
+        user: null,
+        isInitialized: true,
+      }))
     }
   },
   //
@@ -207,6 +228,7 @@ export const useUserStore = create<{
     set(() => ({
       user: null,
       stagedUser: {},
+      isInitialized: true,
     }))
     pocketbase.realtime.unsubscribe()
     pocketbase.authStore.clear()

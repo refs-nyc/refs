@@ -43,7 +43,7 @@ export const SearchItem = ({ onComplete }: { onComplete: (r: ExpandedItem) => vo
 
     setSearchQuery(q)
     let result = await search()
-    setSearchResults(result)
+    setSearchResults(result as ExpandedItem[])
   }
 
   return (

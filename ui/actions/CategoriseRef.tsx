@@ -9,6 +9,7 @@ import { s, c } from '@/features/style'
 import { useRefStore } from '@/features/pocketbase/stores/refs'
 import { SimplePinataImage } from '@/ui/images/SimplePinataImage'
 import Ionicons from '@expo/vector-icons/Ionicons'
+import { useRouter } from 'expo-router'
 
 export const CategoriseRef = ({
   item,
@@ -22,6 +23,7 @@ export const CategoriseRef = ({
   onComplete: (r: CompleteRef) => void
 }) => {
   const { addMetaData } = useRefStore()
+  const router = useRouter()
 
   const [location, setLocation] = useState('')
   const [author, setAuthor] = useState('')
@@ -49,8 +51,10 @@ export const CategoriseRef = ({
       >
         <YStack gap={s.$08} style={{ width: '100%', alignItems: 'center', paddingBottom: s.$4 }}>
           <XStack style={{ width: '100%', alignItems: 'center', justifyContent: 'space-between' }}>
-            <Pressable onPress={onBack} style={{ flexGrow: 1, flexBasis: 0 }}>
-              <Ionicons name="chevron-back" size={s.$2} color={c.surface} />
+            <Pressable
+              onPress={() => router.back()}
+            >
+              <Text style={{ fontSize: s.$2, color: c.surface }}>Cancel</Text>
             </Pressable>
             <View style={{ margin: 'auto' }}>
               {item.image && (

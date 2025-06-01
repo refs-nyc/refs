@@ -60,7 +60,6 @@ export default function MessageInput({
             paddingVertical: s.$09,
             paddingHorizontal: s.$1,
             justifyContent: 'space-between',
-            fontSize: s.$09,
             alignItems: 'center',
             flex: 1,
           }}
@@ -71,6 +70,7 @@ export default function MessageInput({
             multiline={true}
             value={message}
             onChangeText={setMessage}
+            autoFocus={true}
           />
           <Pressable onPress={onMessageSubmit} disabled={disabled}>
             <Ionicons name="paper-plane-outline" size={s.$2} color={c.grey2} />

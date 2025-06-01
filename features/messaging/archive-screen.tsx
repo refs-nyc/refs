@@ -45,28 +45,15 @@ export function ArchiveScreen() {
       }}
     >
       <XStack
+        gap={s.$1}
         style={{
           alignItems: 'center',
-          justifyContent: 'space-between',
-          paddingHorizontal: s.$1,
-          paddingVertical: s.$2,
+          paddingBottom: s.$1,
+          paddingLeft: s.$1,
+          paddingTop: s.$1,
         }}
       >
-        <Pressable
-          onPress={() => {
-            router.back()
-          }}
-        >
-          <Ionicons
-            name="chevron-back"
-            size={s.$2}
-            color={c.grey2}
-            style={{ margin: 0, left: -5, padding: 0 }}
-          />
-        </Pressable>
-        <Heading tag="h1" style={{ flexGrow: 1 }}>
-          Archive
-        </Heading>
+        <Heading tag="h2semi">Archive</Heading>
       </XStack>
 
       <ConversationList>

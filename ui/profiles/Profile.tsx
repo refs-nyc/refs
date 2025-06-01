@@ -14,10 +14,11 @@ import BottomSheet, { BottomSheetBackdrop } from '@gorhom/bottom-sheet'
 import { router, useLocalSearchParams } from 'expo-router'
 import { ShareIntent as ShareIntentType, useShareIntentContext } from 'expo-share-intent'
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Pressable, View } from 'react-native'
+import { Pressable, View, ScrollView } from 'react-native'
 import { Button } from '../buttons/Button'
 import { YStack } from '../core/Stacks'
 import { Grid } from '../grid/Grid'
+import { PlaceholderGrid } from '../grid/PlaceholderGrid'
 import { useUIStore } from '../state'
 import { Heading } from '../typo/Heading'
 import BacklogList from './BacklogList'
@@ -36,8 +37,11 @@ export const Profile = ({ userName }: { userName: string }) => {
   const [editingRights, seteditingRights] = useState<boolean>(false)
   const [showMessageButtons, setShowMessageButtons] = useState<boolean>(false)
   const [step, setStep] = useState('')
+  const [loading, setLoading] = useState<boolean>(true)
 
   const [openOtherUsersBacklog, setOpenOtherUsersBacklog] = useState(false)
+  const [view, setView] = useState<string>('')
+  const [snapPoints, setSnapPoints] = useState<string[]>([])
 
   const { user } = useUserStore()
 
@@ -49,6 +53,7 @@ export const Profile = ({ userName }: { userName: string }) => {
   }
 
   const refreshGrid = async (userName: string) => {
+    setLoading(true)
     try {
       const profile = await pocketbase
         .collection<ProfileType>('users')
@@ -62,6 +67,8 @@ export const Profile = ({ userName }: { userName: string }) => {
       setBacklogItems(backlogItems as ExpandedItem[])
     } catch (error) {
       console.error(error)
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -86,6 +93,7 @@ export const Profile = ({ userName }: { userName: string }) => {
   }, [userName])
 
   const { animatedIndex } = useBackdropStore()
+  const { logout } = useUserStore()
 
   const bottomSheetRef = useRef<BottomSheet>(null)
   const [index, setIndex] = useState(0)
@@ -114,36 +122,44 @@ export const Profile = ({ userName }: { userName: string }) => {
   const isMinimised = ownProfile && index === 0
   const HANDLE_HEIGHT = s.$2
 
-  let { view, snapPoints } = useMemo(() => {
+  useEffect(() => {
     if (ownProfile) {
       if (removingId) {
-        return { view: 'removing', snapPoints: ['1%', '25%'] }
+        setView('removing')
+        setSnapPoints(['1%', '25%'])
       } else if (addingTo === 'grid') {
-        return { view: 'adding_to_grid', snapPoints: ['1%', '30%', '90%'] }
+        setView('adding_to_grid')
+        setSnapPoints(['1%', '30%', '90%'])
       } else if (addingTo === 'backlog') {
-        return { view: 'adding_to_backlog', snapPoints: ['1%', '30%', '90%'] }
+        setView('adding_to_backlog')
+        setSnapPoints(['1%', '30%', '90%'])
       } else {
-        return { view: 'my_backlog', snapPoints: ['15%', '90%'] }
+        setView('my_backlog')
+        setSnapPoints(['15%', '90%'])
       }
     } else {
       if (openOtherUsersBacklog) {
-        return { view: 'other_backlog', snapPoints: ['1%', '50%', '90%'] }
+        setView('other_backlog')
+        setSnapPoints(['1%', '50%', '90%'])
       } else {
-        return { view: 'other_buttons', snapPoints: ['15%'] }
+        setView('other_buttons')
+        setSnapPoints(['15%'])
       }
     }
   }, [ownProfile, removingId, addingTo, openOtherUsersBacklog])
 
   return (
     <>
-      <YStack
-        style={{
-          flex: 1,
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={{
           justifyContent: 'center',
           alignItems: 'center',
           paddingHorizontal: s.$08,
+          gap: s.$4,
+          minHeight: '100%',
         }}
-        gap={s.$4}
+        showsVerticalScrollIndicator={false}
       >
         {profile && (
           <View
@@ -156,26 +172,43 @@ export const Profile = ({ userName }: { userName: string }) => {
             <ProfileHeader profile={profile} />
 
             <View style={{ gap: s.$2 }}>
-              <Grid
-                editingRights={editingRights}
-                onRemoveItem={(id) => {
-                  setRemovingId(id)
-                  bottomSheetRef.current?.snapToIndex(1)
-                }}
-                onAddItem={() => {
-                  setAddingTo('grid')
-                  bottomSheetRef.current?.snapToIndex(1)
-                }}
-                columns={3}
-                items={gridItems}
-                rows={4}
-              ></Grid>
+              {loading ? (
+                <PlaceholderGrid
+                  columns={3}
+                  rows={4}
+                />
+              ) : (
+                <Grid
+                  editingRights={editingRights}
+                  onRemoveItem={(id) => {
+                    setRemovingId(id)
+                    bottomSheetRef.current?.snapToIndex(1)
+                  }}
+                  onAddItem={() => {
+                    setAddingTo('grid')
+                    bottomSheetRef.current?.snapToIndex(1)
+                  }}
+                  columns={3}
+                  items={gridItems}
+                  rows={4}
+                ></Grid>
+              )}
+              {ownProfile && (
+                <View style={{ marginBottom: s.$2, alignItems: 'center' }}>
+                  <Button
+                    style={{ width: 20 }}
+                    variant="inlineSmallMuted"
+                    title="Log out"
+                    onPress={logout}
+                  />
+                </View>
+              )}
             </View>
           </View>
         )}
 
         {!user && <Heading tag="h1">Profile for {userName} not found</Heading>}
-      </YStack>
+      </ScrollView>
       {profile && (
         <BottomSheet
           enableDynamicSizing={false}
@@ -195,6 +228,9 @@ export const Profile = ({ userName }: { userName: string }) => {
               }
               if (openOtherUsersBacklog) {
                 setOpenOtherUsersBacklog(false)
+                setTimeout(() => {
+                  bottomSheetRef.current?.snapToIndex(0)
+                }, 50)
               }
             }
           }}
@@ -275,14 +311,14 @@ export const Profile = ({ userName }: { userName: string }) => {
                   </XStack>
                 ) : (
                   <Heading tag="h2normal" style={{ color: c.white, paddingHorizontal: s.$2 }}>
-                    {`${profile.firstName}'s Library`}
+                    {`${profile.firstName}'s Backlog`}
                   </Heading>
                 )}
               </Pressable>
               <BacklogList items={backlogItems.toReversed()} ownProfile={profile.id === user?.id} />
             </>
           ) : view === 'other_buttons' ? (
-            <XStack style={{ paddingTop: s.$2, justifyContent: 'center' }} gap={s.$1}>
+            <XStack style={{ paddingTop: s.$2, justifyContent: 'center' }} gap={12}>
               <View style={{ height: s.$4, width: s.$10 }}>
                 <DMButton profile={profile} style={{ paddingHorizontal: s.$0 }} />
               </View>

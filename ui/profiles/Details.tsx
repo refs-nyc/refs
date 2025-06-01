@@ -171,7 +171,7 @@ export const Details = ({ profile, data }: { profile: ExpandedProfile; data: Ite
 
       {addingToList !== '' && addingItem && (
         <Sheet full={true} onChange={(e: any) => e === -1 && close()}>
-          <EditableList item={addingItem} onComplete={() => {}} />
+          <EditableList item={addingItem as ExpandedItem} onComplete={() => {}} />
         </Sheet>
       )}
     </SheetScreen>

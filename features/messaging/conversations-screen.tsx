@@ -8,6 +8,7 @@ import { router } from 'expo-router'
 import { Conversation } from '../pocketbase/stores/types'
 import ConversationList from '@/ui/messaging/ConversationList'
 import { Ionicons } from '@expo/vector-icons'
+import { Link } from 'expo-router'
 
 export function ConversationsScreen() {
   const { user } = useUserStore()
@@ -45,32 +46,15 @@ export function ConversationsScreen() {
       }}
     >
       <XStack
+        gap={s.$1}
         style={{
           alignItems: 'center',
-          justifyContent: 'space-between',
-          paddingHorizontal: s.$1,
-          paddingVertical: s.$2,
+          paddingBottom: s.$1,
+          paddingLeft: s.$1,
+          paddingTop: s.$1,
         }}
       >
-        {/* back button */}
-        <Pressable onPress={() => router.back()}>
-          <Ionicons
-            name="chevron-back"
-            size={s.$2}
-            color={c.grey2}
-            style={{ margin: 0, left: -5, padding: 0 }}
-          />
-        </Pressable>
-        <Heading tag="h1" style={{ paddingVertical: 0, flexGrow: 1 }}>
-          Messages
-        </Heading>
-        <Pressable
-          onPress={() => {
-            router.push('/messages/archive')
-          }}
-        >
-          <Text>Archive</Text>
-        </Pressable>
+        <Heading tag="h2semi">Messages</Heading>
       </XStack>
       <ConversationList>
         {activeConversations.map((i) => (

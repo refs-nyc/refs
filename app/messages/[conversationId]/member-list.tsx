@@ -20,7 +20,7 @@ export default function MemberListScreen() {
         style={{
           flex: 1,
           alignItems: 'flex-start',
-          justifyContent: 'start',
+          justifyContent: 'flex-start',
           paddingVertical: s.$5,
         }}
       >
@@ -28,21 +28,12 @@ export default function MemberListScreen() {
           gap={s.$1}
           style={{
             alignItems: 'center',
-            width: '100%',
-            height: s.$10,
-            paddingHorizontal: s.$075,
+            paddingBottom: s.$1,
+            paddingLeft: s.$1,
+            paddingTop: s.$1,
           }}
         >
-          <Pressable
-            onPress={() => {
-              router.back()
-            }}
-          >
-            <Ionicons name="chevron-back" size={s.$2} color={c.grey2} />
-          </Pressable>
-          <Heading tag="h2semi" style={{ width: '80%' }} numberOfLines={2}>
-            {conversation.title}
-          </Heading>
+          <Heading tag="h2semi">Members</Heading>
         </XStack>
         <ScrollView
           style={{
@@ -54,7 +45,7 @@ export default function MemberListScreen() {
             style={{
               flex: 1,
               alignItems: 'flex-start',
-              justifyContent: 'start',
+              justifyContent: 'flex-start',
               paddingHorizontal: s.$4,
               paddingVertical: s.$2,
             }}

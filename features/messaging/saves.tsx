@@ -132,19 +132,12 @@ export default function SavesList() {
 
         {/* Add Step */}
         <View style={{ width, paddingVertical: s.$1, paddingHorizontal: s.$3 }}>
-          <View style={{ paddingBottom: s.$1 }}>
-            <Pressable
-              onPress={() => {
-                setStep('select')
-              }}
-            >
-              <XStack style={{ justifyContent: 'flex-start', alignItems: 'center' }}>
-                <Ionicons name="chevron-back" size={18} color={c.white} />
-                <Heading tag="h2" style={{ color: c.white }}>
-                  Back to selection
-                </Heading>
-              </XStack>
-            </Pressable>
+          <View style={{ paddingBottom: s.$1, paddingLeft: s.$1 }}>
+            <XStack style={{ justifyContent: 'flex-start', alignItems: 'center' }}>
+              <Heading tag="h2" style={{ color: c.white }}>
+                Back to selection
+              </Heading>
+            </XStack>
           </View>
           <TextInput
             placeholder="Search"

@@ -1,13 +1,13 @@
 import { useState, useEffect, useRef } from 'react'
 import { usePathname } from 'expo-router'
-import { View, TouchableOpacity, Dimensions, Animated } from 'react-native'
+import { View, TouchableOpacity, Dimensions, Animated, Text, Pressable, ActivityIndicator } from 'react-native'
 import { BottomSheetTextInput as TextInput } from '@gorhom/bottom-sheet'
 import { Heading } from '@/ui/typo/Heading'
 import { Picker } from '../inputs/Picker'
 import { PinataImage } from '../images/PinataImage'
 import { Image } from 'expo-image'
 import { EditableHeader } from '../atoms/EditableHeader'
-import { addToProfile } from '@/features/pocketbase'
+import { addToProfile, addMetaData } from '@/features/pocketbase'
 import { Button } from '../buttons/Button'
 import type { ImagePickerAsset } from 'expo-image-picker'
 import { c, s } from '@/features/style'
@@ -44,6 +44,9 @@ export const RefForm = ({
   const [picking, setPicking] = useState(pickerOpen)
   const [uploadInProgress, setUploadInProgress] = useState(false)
   const [createInProgress, setCreateInProgress] = useState(false)
+  const [location, setLocation] = useState<string>('')
+  const [author, setAuthor] = useState<string>('')
+  const [editingField, setEditingField] = useState<'location' | 'author' | null>(null)
 
   const pathname = usePathname()
 
@@ -119,12 +122,19 @@ export const RefForm = ({
     }
     if (missing) return
 
+    // Only include meta if location or author is present
+    let meta: string | undefined = undefined
+    if (location || author) {
+      meta = JSON.stringify({ location, author })
+    }
+
     const data = {
       ...r,
       title,
       url,
       image: pinataSource,
       backlog,
+      meta,
       ...extraFields,
     }
 
@@ -149,78 +159,95 @@ export const RefForm = ({
     <DismissKeyboard>
       <KeyboardAvoidingView
         style={{
-          justifyContent: 'center',
+          justifyContent: 'flex-start',
           alignItems: 'center',
-          gap: s.$2,
-          marginVertical: s.$4,
+          gap: s.$1,
+          marginTop: s.$2,
+          marginBottom: s.$2 + 10,
           width: '100%',
         }}
         behavior="padding"
         keyboardVerticalOffset={Dimensions.get('window').height * 0.25}
       >
-        <Animated.View
+        <View
           style={{
-            width: 200,
-            height: 200,
-            transform: [
-              {
-                translateX: imageShake.interpolate({
-                  inputRange: [-1, 0, 1],
-                  outputRange: [-10, 0, 10],
-                }),
-              },
-              {
-                scale: imageShake.interpolate({
-                  inputRange: [-1, 0, 1],
-                  outputRange: [1.05, 1, 1.05],
-                }),
-              },
-            ],
+            width: 207.6, // 200 + 2*3.8 for border
+            height: 207.6,
+            marginBottom: 8,
+            borderWidth: 3.8,
+            borderColor: 'rgba(243,242,237,0.3)',
+            borderRadius: s.$09 + 3.8,
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: 'transparent',
           }}
         >
-          {imageAsset ? (
-            <PinataImage
-              asset={imageAsset}
-              onReplace={() => setPicking(true)}
-              onSuccess={handleImageSuccess}
-              onFail={() => {
-                console.error('Upload failed')
-                setUploadInProgress(false)
-              }}
-            />
-          ) : pinataSource ? (
-            <TouchableOpacity
-              style={{
-                flex: 1,
-                width: 200,
-                height: 200,
-                borderRadius: s.$09,
-                overflow: 'hidden',
-              }}
-              onLongPress={() => setPicking(true)}
-            >
-              <Image style={{ flex: 1 }} source={pinataSource} placeholder={pinataSource} />
-            </TouchableOpacity>
-          ) : (
-            <TouchableOpacity style={{ flex: 1 }} onPress={() => setPicking(true)}>
-              <View
+          <Animated.View
+            style={{
+              width: 200,
+              height: 200,
+              borderRadius: s.$09,
+              overflow: 'hidden',
+              transform: [
+                {
+                  translateX: imageShake.interpolate({
+                    inputRange: [-1, 0, 1],
+                    outputRange: [-10, 0, 10],
+                  }),
+                },
+                {
+                  scale: imageShake.interpolate({
+                    inputRange: [-1, 0, 1],
+                    outputRange: [1.05, 1, 1.05],
+                  }),
+                },
+              ],
+            }}
+          >
+            {imageAsset ? (
+              <PinataImage
+                asset={imageAsset}
+                onReplace={() => setPicking(true)}
+                onSuccess={handleImageSuccess}
+                onFail={() => {
+                  console.error('Upload failed')
+                  setUploadInProgress(false)
+                }}
+              />
+            ) : pinataSource ? (
+              <TouchableOpacity
                 style={{
                   flex: 1,
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  borderWidth: 3,
-                  borderColor: c.surface,
+                  width: 200,
+                  height: 200,
                   borderRadius: s.$09,
-                  borderStyle: 'dashed',
+                  overflow: 'hidden',
                 }}
+                onLongPress={() => setPicking(true)}
               >
-                <Heading tag="h1light" style={{ color: c.surface }}>
-                  +
-                </Heading>
-              </View>
-            </TouchableOpacity>
-          )}
-        </Animated.View>
+                <Image style={{ flex: 1 }} source={pinataSource} placeholder={pinataSource} />
+              </TouchableOpacity>
+            ) : (
+              <TouchableOpacity style={{ flex: 1 }} onPress={() => setPicking(true)}>
+                <View
+                  style={{
+                    flex: 1,
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    borderWidth: 3,
+                    borderColor: c.surface,
+                    borderRadius: s.$09,
+                    borderStyle: 'dashed',
+                  }}
+                >
+                  <Heading tag="h1light" style={{ color: c.surface }}>
+                    +
+                  </Heading>
+                </View>
+              </TouchableOpacity>
+            )}
+          </Animated.View>
+        </View>
 
         {picking && (
           <Picker
@@ -236,6 +263,7 @@ export const RefForm = ({
         <Animated.View
           style={{
             width: '100%',
+            marginBottom: 0,
             transform: [
               {
                 translateX: titleShake.interpolate({
@@ -262,6 +290,77 @@ export const RefForm = ({
           />
         </Animated.View>
 
+        {/* Inline subtitle row for location/author, now directly below title with minimal spacing */}
+        <View style={{ width: '100%', alignItems: 'flex-start', marginTop: -17, marginBottom: 2 }}>
+          {/* Only show one: location or author, never both */}
+          {editingField === 'location' ? (
+            <TextInput
+              value={location}
+              onChangeText={t => t.length <= 150 && setLocation(t)}
+              onBlur={() => setEditingField(null)}
+              autoFocus
+              placeholder="Add location"
+              style={{
+                minWidth: 80,
+                maxWidth: 250,
+                color: c.surface,
+                fontSize: 18,
+                fontWeight: '600',
+                opacity: 0.5,
+                backgroundColor: 'transparent',
+                padding: 0,
+                margin: 0,
+                textAlign: 'left',
+              }}
+              maxLength={150}
+              returnKeyType="done"
+            />
+          ) : editingField === 'author' ? (
+            <TextInput
+              value={author}
+              onChangeText={t => t.length <= 150 && setAuthor(t)}
+              onBlur={() => setEditingField(null)}
+              autoFocus
+              placeholder="Add author"
+              style={{
+                minWidth: 80,
+                maxWidth: 250,
+                color: c.surface,
+                fontSize: 18,
+                fontWeight: '600',
+                opacity: 0.5,
+                backgroundColor: 'transparent',
+                padding: 0,
+                margin: 0,
+                textAlign: 'left',
+              }}
+              maxLength={150}
+              returnKeyType="done"
+            />
+          ) : location ? (
+            <Pressable onPress={() => {
+              setTimeout(() => setEditingField('location'), 0);
+            }}>
+              <Text style={{ color: c.surface, fontSize: 18, fontWeight: '600', opacity: 0.5, textAlign: 'left' }}>{location}</Text>
+            </Pressable>
+          ) : author ? (
+            <Pressable onPress={() => {
+              setTimeout(() => setEditingField('author'), 0);
+            }}>
+              <Text style={{ color: c.surface, fontSize: 18, fontWeight: '600', opacity: 0.5, textAlign: 'left' }}>{author}</Text>
+            </Pressable>
+          ) : (
+            <View style={{ flexDirection: 'row', gap: 16 }}>
+              <Pressable onPress={() => setEditingField('location')}>
+                <Text style={{ color: c.surface, fontSize: 17.6, opacity: 0.7, textAlign: 'left', fontWeight: '600' }}>+ location</Text>
+              </Pressable>
+              <Pressable onPress={() => setEditingField('author')}>
+                <Text style={{ color: c.surface, fontSize: 17.6, opacity: 0.7, textAlign: 'left', fontWeight: '600' }}>+ author</Text>
+              </Pressable>
+            </View>
+          )}
+        </View>
+
         {/* Notes */}
         <TextInput
           multiline={true}
@@ -275,6 +374,8 @@ export const RefForm = ({
             width: '100%',
             padding: s.$1,
             minHeight: s.$12,
+            fontSize: 17,
+            fontWeight: '500',
           }}
         />
 
@@ -287,32 +388,35 @@ export const RefForm = ({
         >
           {/* Lists can't have a url */}
           {!url && (
-            <Button
-              title="Add to list"
-              variant="whiteOutline"
-              style={{ width: '48%', minWidth: 0 }}
-              disabled={!title || uploadInProgress || createInProgress}
-              onPress={() => {
-                submit({}, true)
-              }}
-            />
-            // <Button
-            //   title="Create List"
-            //   variant="outlineFluid"
-            //   style={{ width: '48%', minWidth: 0 }}
-            //   disabled={!title || uploadInProgress || createInProgress}
-            //   onPress={() => {
-            //     submit({ list: true })
-            //   }}
-            // />
+            uploadInProgress ? (
+              <View style={{ width: '48%', minWidth: 0, alignItems: 'center', justifyContent: 'center', height: 48 }}>
+                <ActivityIndicator size="small" color={c.surface} />
+              </View>
+            ) : (
+              <Button
+                title="Add to list"
+                variant="whiteOutline"
+                style={{ width: '48%', minWidth: 0 }}
+                disabled={!title || createInProgress}
+                onPress={() => {
+                  submit({}, true)
+                }}
+              />
+            )
           )}
-          <Button
-            title="Add Ref"
-            variant="whiteInverted"
-            style={{ width: url ? '100%' : '48%', minWidth: 0 }}
-            disabled={!(pinataSource && title) || uploadInProgress || createInProgress}
-            onPress={() => submit()}
-          />
+          {uploadInProgress ? (
+            <View style={{ width: url ? '100%' : '48%', minWidth: 0, alignItems: 'center', justifyContent: 'center', height: 48 }}>
+              <ActivityIndicator size="small" color={c.surface} />
+            </View>
+          ) : (
+            <Button
+              title="Add Ref"
+              variant="whiteInverted"
+              style={{ width: url ? '100%' : '48%', minWidth: 0 }}
+              disabled={!(pinataSource && title) || createInProgress}
+              onPress={() => submit()}
+            />
+          )}
         </View>
       </KeyboardAvoidingView>
     </DismissKeyboard>

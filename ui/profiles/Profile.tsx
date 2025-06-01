@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons'
-import { StyleSheet } from 'react-native'
+import { StyleSheet, Text } from 'react-native'
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated'
 import { XStack } from '../core/Stacks'
 
@@ -25,6 +25,7 @@ import BacklogList from './BacklogList'
 import { DMButton } from './DMButton'
 import { ProfileHeader } from './ProfileHeader'
 import { NewRef } from '../actions/NewRef'
+import { Paragraph } from '..'
 
 export const Profile = ({ userName }: { userName: string }) => {
   const { addingTo, removingId } = useLocalSearchParams()
@@ -325,12 +326,33 @@ export const Profile = ({ userName }: { userName: string }) => {
                 <DMButton profile={profile} style={{ paddingHorizontal: s.$0 }} />
               </View>
               <View style={{ height: s.$4, width: s.$10 }}>
-                <Button
+                <Pressable
                   onPress={saveId ? () => removeSave(saveId) : () => addSave(profile.id, user?.id!)}
-                  variant="whiteOutline"
-                  title={saveId ? 'Saved' : 'Save'}
-                  style={saveId ? styles.saved : { paddingHorizontal: s.$0 }}
-                />
+                  style={[
+                    {
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      borderRadius: s.$4,
+                      paddingVertical: 10,
+                      paddingHorizontal: s.$2,
+                      minWidth: s.$8,
+                      borderColor: c.white,
+                      borderWidth: 1,
+                      backgroundColor: 'transparent',
+                      height: 47,
+                    },
+                    saveId ? styles.saved : {}
+                  ]}
+                >
+                  <Heading tag="h3" style={{ 
+                    color: c.white,
+                  }}>
+                    <Text style={{ fontSize: 16.5 }}>
+                      
+                      {saveId ? 'Saved' : 'Save'}
+                    </Text>
+                  </Heading>
+                </Pressable>
               </View>
 
               <View style={{ height: s.$4, width: s.$10 }}>

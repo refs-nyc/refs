@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { pocketbase } from '@/features/pocketbase'
-import { Pressable } from 'react-native'
+import { Pressable, View } from 'react-native'
 import { BottomSheetTextInput as TextInput } from '@gorhom/bottom-sheet'
 import { ListItem } from '@/ui/lists/ListItem'
 import { NewRefListItem } from '@/ui/atoms/NewRefListItem'
@@ -12,6 +12,7 @@ import { ShareIntent as ShareIntentType, useShareIntentContext } from 'expo-shar
 import * as Clipboard from 'expo-clipboard'
 import { RefsRecord } from '@/features/pocketbase/stores/pocketbase-types'
 import { KeyboardAvoidingView } from 'react-native-keyboard-controller'
+import { Ionicons } from '@expo/vector-icons'
 
 export const SearchRef = ({
   noNewRef,
@@ -42,7 +43,7 @@ export const SearchRef = ({
           onComplete(item)
         }}
       >
-        <ListItem r={item} />
+        <ListItem r={item} backgroundColor={c.olive} />
       </Pressable>
     )
   }
@@ -121,22 +122,39 @@ export const SearchRef = ({
 
   return (
     <>
-      <KeyboardAvoidingView style={{ width: '90%'}}>
-        <TextInput
-          style={{
-            backgroundColor: c.surface2,
-            marginVertical: s.$1,
-            paddingVertical: s.$1,
-            paddingHorizontal: s.$1,
-            borderRadius: s.$075,
-            color: c.black,
-          }}
-          clearButtonMode="while-editing"
-          value={searchQuery}
-          placeholder="Search anything or start typing"
-          onChangeText={updateQuery}
-          autoFocus={false}
-        />
+      <KeyboardAvoidingView style={{ width: '100%' }}>
+        <View style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          backgroundColor: 'transparent',
+          marginVertical: s.$1,
+          height: 42,
+          paddingVertical: 0,
+          paddingHorizontal: 10,
+          borderRadius: 50,
+          borderWidth: 1,
+          borderColor: c.surface,
+        }}>
+          <TextInput
+            style={{
+              flex: 1,
+              color: c.surface,
+              fontSize: 16,
+              width: '100%',
+              textAlignVertical: 'center',
+            }}
+            value={searchQuery}
+            placeholder="Search anything or start typing"
+            placeholderTextColor={c.surface}
+            onChangeText={updateQuery}
+            autoFocus={false}
+          />
+          {searchQuery.length > 0 && (
+            <Pressable onPress={() => setSearchQuery('')} hitSlop={10} style={{ marginLeft: 8 }}>
+              <Ionicons name="close-circle" size={22} color={c.surface} />
+            </Pressable>
+          )}
+        </View>
 
         {searchQuery !== '' && !noNewRef && !disableNewRef && (
           <Pressable

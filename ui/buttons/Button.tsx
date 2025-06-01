@@ -20,12 +20,13 @@ type ButtonProps = {
   align?: 'center' | 'flex-start' | 'flex-end'
   style?: any
   iconSize?: number
+  children?: React.ReactNode
 }
 
 export const Button = (props: ButtonProps) => {
   const {
     onPress,
-    title = 'Save',
+    title,
     variant = '',
     iconBefore = '' as keyof typeof Ionicons.glyphMap,
     iconBeforeCustom = false,
@@ -36,6 +37,7 @@ export const Button = (props: ButtonProps) => {
     disabled = false,
     align = 'center',
     iconSize = s.$1half,
+    children,
   } = props
 
   let buttonVariant = null
@@ -88,7 +90,11 @@ export const Button = (props: ButtonProps) => {
           />
         )}
 
-        {!iconButton && <Text style={[styles.text, textVariant]}>{title}</Text>}
+        {!iconButton && (
+          children
+            ? children
+            : <Text style={[styles.text, textVariant]}>{title ?? 'Save'}</Text>
+        )}
 
         {iconAfter && iconAfterCustom ? (
           <Icon size={iconSize} name={iconAfter} color={iconColor} />

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { pocketbase } from '@/features/pocketbase'
 import { Pressable, View } from 'react-native'
 import { BottomSheetTextInput as TextInput } from '@gorhom/bottom-sheet'
@@ -33,6 +33,9 @@ export const SearchRef = ({
   const [imageState, setImageState] = useState(image)
   const [searchResults, setSearchResults] = useState<CompleteRef[]>([])
   const { hasShareIntent, shareIntent, resetShareIntent } = useShareIntentContext()
+  
+  // Track the current query to prevent race conditions
+  const currentQueryRef = useRef('')
 
   // Search result item
   const renderItem = ({ item }: { item: CompleteRef }) => {
@@ -61,26 +64,36 @@ export const SearchRef = ({
 
   // Update the search query
   const updateQuery = async (q: string) => {
-    const search = async () => {
+    // Update the current query ref immediately
+    currentQueryRef.current = q
+    
+    const search = async (query: string) => {
       let refsResults: RefsRecord[] = []
 
-      if (q === '') return []
+      if (query === '') return []
 
-      if (q.includes('http')) {
-        const data = await getLinkPreview(q)
-        updateState(q, data)
+      if (query.includes('http')) {
+        const data = await getLinkPreview(query)
+        // Only update state if this is still the current query
+        if (currentQueryRef.current === query) {
+          updateState(query, data)
+        }
       } else {
         // Search items and refs db
         refsResults = await pocketbase
           .collection<CompleteRef>('refs')
-          .getFullList({ filter: `title ~ "${q}"` })
+          .getFullList({ filter: `title ~ "${query}"` })
       }
       return refsResults
     }
 
     setSearchQuery(q)
-    let result = await search()
-    setSearchResults(result)
+    let result = await search(q)
+    
+    // Only update search results if this is still the current query
+    if (currentQueryRef.current === q) {
+      setSearchResults(result)
+    }
   }
 
   useEffect(() => {

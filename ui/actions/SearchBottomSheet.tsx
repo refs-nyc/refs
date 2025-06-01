@@ -88,6 +88,10 @@ export default function SearchBottomSheet() {
   if (isAddingNewRef) {
     if (step === 'add' || step === 'categorise') {
       snapPoints = ['1%', '80%']
+    } else if (step === 'addToList') {
+      snapPoints = ['1%', '70%']
+    } else if (step === 'editList') {
+      snapPoints = ['1%', '70%']
     } else if (addingTo === 'grid' && step === '') {
       snapPoints = ['1%', '35%']
     } else {

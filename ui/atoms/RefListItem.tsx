@@ -53,10 +53,11 @@ export const RefListItem = ({
           )}
           <Text>{r?.title}</Text>
         </XStack>
+        {/*
         <XStack gap={s.$09} style={{ justifyContent: 'space-between', alignItems: 'center' }}>
           <Text>{count === 1 ? 'You are' : count} referencing</Text>
-          {/* <Ionicons name="close" /> */}
         </XStack>
+        */}
       </XStack>
     </View>
   )

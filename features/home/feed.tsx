@@ -17,6 +17,39 @@ const COMPENSATE_PADDING = 5
 const FEED_PREVIEW_IMAGE_SIZE = 42
 const FEED_REF_IMAGE_SIZE = Math.round(FEED_PREVIEW_IMAGE_SIZE * 1.33)
 
+const formatDate = (isoDateString: string): string => {
+  const date = new Date(isoDateString)
+  const now = new Date()
+  const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60))
+  const diffInDays = Math.floor(diffInHours / 24)
+
+  // Use built-in relative time formatter for recent items
+  const rtf = new Intl.RelativeTimeFormat('en', { numeric: 'auto' })
+  
+  if (diffInHours < 24) {
+    if (diffInHours < 1) {
+      const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60))
+      if (diffInMinutes < 1) return 'now'
+      return rtf.format(-diffInMinutes, 'minute')
+    }
+    return rtf.format(-diffInHours, 'hour')
+  }
+
+  // Show relative days for up to 7 days
+  if (diffInDays <= 7) {
+    return rtf.format(-diffInDays, 'day')
+  }
+
+  // Use built-in date formatter for older items
+  const dtf = new Intl.DateTimeFormat('en', {
+    month: 'short',
+    day: 'numeric',
+    year: date.getFullYear() === now.getFullYear() ? undefined : 'numeric'
+  })
+  
+  return dtf.format(date)
+}
+
 const ListItem = ({ item }: { item: ExpandedItem }) => {
   const creator = item.expand!.creator
   const creatorProfileUrl = `/user/${creator.userName}/` as const
@@ -63,6 +96,7 @@ const ListItem = ({ item }: { item: ExpandedItem }) => {
               <Heading tag="semistrong">{item.expand?.ref?.title}</Heading>
             </Link>
           </Text>
+          <Text style={{ fontSize: 12, color: c.muted, paddingTop: 2 }}>{formatDate(item.created)}</Text>
         </View>
 
         {item?.image ? (

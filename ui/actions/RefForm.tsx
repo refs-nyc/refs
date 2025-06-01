@@ -293,7 +293,7 @@ export const RefForm = ({
             onTitleChange={handleTitleChange}
             onDataChange={handleDataChange}
             placeholder={placeholder}
-            title={title || placeholder}
+            title={title}
             url={url || ''}
             image={pinataSource}
           />

@@ -8,7 +8,7 @@ export const c = {
   white: '#fff',
   black: '#000',
   // Accent colors
-  accent: '#7F70B8',
+  accent: '#A5B89F',
   accent2: '#D5CDF3',
   // Green
   olive: '#A5B89F',

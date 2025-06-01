@@ -243,29 +243,31 @@ export const Profile = ({ userName }: { userName: string }) => {
               pressBehavior={ownProfile ? 'collapse' : 'close'}
             />
           )}
-          handleComponent={() => (
-            <View
-              style={{
-                width: '100%',
-                position: 'absolute',
-                alignItems: 'center',
-                justifyContent: 'center',
-                display: isMinimised ? 'none' : 'flex',
-                height: HANDLE_HEIGHT,
-              }}
-            >
-              <Animated.View
-                entering={FadeIn.duration(200)}
-                exiting={FadeOut.duration(200)}
+          handleComponent={() =>
+            ownProfile ? (
+              <View
                 style={{
-                  backgroundColor: c.white,
-                  width: s.$5,
-                  height: s.$05,
-                  borderRadius: s.$10,
+                  width: '100%',
+                  position: 'absolute',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  display: isMinimised ? 'none' : 'flex',
+                  height: HANDLE_HEIGHT,
                 }}
-              />
-            </View>
-          )}
+              >
+                <Animated.View
+                  entering={FadeIn.duration(200)}
+                  exiting={FadeOut.duration(200)}
+                  style={{
+                    backgroundColor: c.white,
+                    width: s.$5,
+                    height: s.$05,
+                    borderRadius: s.$10,
+                  }}
+                />
+              </View>
+            ) : null
+          }
           keyboardBehavior="interactive"
         >
           {view === 'my_backlog' || view === 'other_backlog' ? (

@@ -15,6 +15,7 @@ const win = Dimensions.get('window')
 // Needed to compensate for differences between paragraph padding vs image padding.
 const COMPENSATE_PADDING = 5
 const FEED_PREVIEW_IMAGE_SIZE = 42
+const FEED_REF_IMAGE_SIZE = Math.round(FEED_PREVIEW_IMAGE_SIZE * 1.33)
 
 const ListItem = ({ item }: { item: ExpandedItem }) => {
   const creator = item.expand!.creator
@@ -22,63 +23,75 @@ const ListItem = ({ item }: { item: ExpandedItem }) => {
   const itemUrl = `${creatorProfileUrl}modal?initialId=${item.id}&openedFromFeed=true` as const
 
   return (
-    <XStack
-      key={item.id}
-      gap={s.$08}
+    <View
       style={{
-        paddingBottom: 1,
-        alignItems: 'center',
-        width: '100%',
-        justifyContent: 'space-between',
+        backgroundColor: c.surface2,
+        borderRadius: 10,
+        paddingHorizontal: 10,
+        paddingVertical: 10,
+        width: win.width - 20,
+        alignSelf: 'center',
+        marginBottom: 6,
       }}
     >
-      {item.expand?.creator && (
-        <Link href={creatorProfileUrl}>
-          <View style={{ paddingTop: COMPENSATE_PADDING }}>
-            <Avatar source={creator.image} size={FEED_PREVIEW_IMAGE_SIZE} />
-          </View>
-        </Link>
-      )}
-      <View style={{ overflow: 'hidden', flex: 1 }}>
-        <Text style={{ fontSize: 16 }}>
+      <XStack
+        key={item.id}
+        gap={s.$08}
+        style={{
+          alignItems: 'center',
+          width: '100%',
+          justifyContent: 'space-between',
+          paddingHorizontal: 10,
+        }}
+      >
+        {item.expand?.creator && (
           <Link href={creatorProfileUrl}>
-            <Heading tag="semistrong">{item.expand?.creator?.firstName || 'Anonymous'} </Heading>
+            <View style={{}}>
+              <Avatar source={creator.image} size={FEED_PREVIEW_IMAGE_SIZE} />
+            </View>
           </Link>
-          <Text style={{ color: c.muted2 }}>
-            added{' '}
+        )}
+        <View style={{ overflow: 'hidden', flex: 1 }}>
+          <Text style={{ fontSize: 16 }}>
+            <Link href={creatorProfileUrl}>
+              <Heading tag="semistrong">{item.expand?.creator?.firstName || 'Anonymous'} </Heading>
+            </Link>
+            <Text style={{ color: c.muted2 }}>
+              added{' '}
+            </Text>
+            <Link href={itemUrl}>
+              <Heading tag="semistrong">{item.expand?.ref?.title}</Heading>
+            </Link>
           </Text>
-          <Link href={itemUrl}>
-            <Heading tag="semistrong">{item.expand?.ref?.title}</Heading>
-          </Link>
-        </Text>
-      </View>
+        </View>
 
-      {item?.image ? (
-        <Link href={itemUrl}>
-          <View style={{ paddingTop: COMPENSATE_PADDING }}>
-            <SimplePinataImage
-              originalSource={item.image}
-              imageOptions={{ width: FEED_PREVIEW_IMAGE_SIZE, height: FEED_PREVIEW_IMAGE_SIZE }}
-              style={{
-                width: FEED_PREVIEW_IMAGE_SIZE,
-                height: FEED_PREVIEW_IMAGE_SIZE,
-                backgroundColor: c.accent,
-                borderRadius: s.$075,
-              }}
-            />
-          </View>
-        </Link>
-      ) : (
-        <View
-          style={{
-            width: FEED_PREVIEW_IMAGE_SIZE,
-            height: FEED_PREVIEW_IMAGE_SIZE,
-            backgroundColor: c.accent,
-            borderRadius: s.$075,
-          }}
-        />
-      )}
-    </XStack>
+        {item?.image ? (
+          <Link href={itemUrl}>
+            <View style={{}}>
+              <SimplePinataImage
+                originalSource={item.image}
+                imageOptions={{ width: FEED_REF_IMAGE_SIZE, height: FEED_REF_IMAGE_SIZE }}
+                style={{
+                  width: FEED_REF_IMAGE_SIZE,
+                  height: FEED_REF_IMAGE_SIZE,
+                  backgroundColor: c.accent,
+                  borderRadius: s.$075,
+                }}
+              />
+            </View>
+          </Link>
+        ) : (
+          <View
+            style={{
+              width: FEED_REF_IMAGE_SIZE,
+              height: FEED_REF_IMAGE_SIZE,
+              backgroundColor: c.accent,
+              borderRadius: s.$075,
+            }}
+          />
+        )}
+      </XStack>
+    </View>
   )
 }
 
@@ -119,7 +132,7 @@ export const Feed = () => {
             }}
           >
             <YStack
-              gap={s.$075}
+              gap={0}
               style={{
                 flex: 1,
                 paddingBottom: s.$12,

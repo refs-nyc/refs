@@ -35,6 +35,7 @@ export const useItemStore = create<{
   searchingNewRef: string
   editedState: Partial<ExpandedItem>
   editingLink: boolean
+  feedRefreshTrigger: number
   setEditingLink: (newValue: boolean) => void
   startEditing: (id: string) => void
   setAddingToList: (newValue: boolean) => void
@@ -47,6 +48,7 @@ export const useItemStore = create<{
   updateEditedState: (e: Partial<ExpandedItem>) => void
   remove: (id: string) => Promise<void>
   moveToBacklog: (id: string) => Promise<ItemsRecord>
+  triggerFeedRefresh: () => void
 }>((set, get) => ({
   items: [],
   addingToList: false,
@@ -54,6 +56,7 @@ export const useItemStore = create<{
   searchingNewRef: '', // the id to replace the ref for
   editedState: {},
   editingLink: false,
+  feedRefreshTrigger: 0,
   setEditingLink: (newValue: boolean) => set(() => ({ editingLink: newValue })),
   startEditing: (id: string) => set(() => ({ editing: id })),
   setAddingToList: (newValue: boolean) => set(() => ({ addingToList: newValue })),
@@ -67,6 +70,7 @@ export const useItemStore = create<{
       ...get().editedState,
       editedState,
     })),
+  triggerFeedRefresh: () => set((state) => ({ feedRefreshTrigger: state.feedRefreshTrigger + 1 })),
   push: async (newItem: StagedItem) => {
     console.log('ITEMS PUSH')
     try {
@@ -77,7 +81,7 @@ export const useItemStore = create<{
 
       set((state) => {
         const newItems = [...state.items, record]
-        return { items: newItems }
+        return { items: newItems, feedRefreshTrigger: state.feedRefreshTrigger + 1 }
       })
 
       console.log('PUSHED ItEM', record)
@@ -94,6 +98,7 @@ export const useItemStore = create<{
 
     set((state) => ({
       items: [...state.items?.filter((i) => i.id !== id)],
+      feedRefreshTrigger: state.feedRefreshTrigger + 1,
     }))
   },
   addToList: async (id: string, ref: CompleteRef) => {
@@ -132,6 +137,9 @@ export const useItemStore = create<{
         .update(id || get().editing, get().editedState, { expand: 'children,ref' })
       // Canvas stuff
 
+      // Trigger feed refresh since updates might affect feed visibility
+      get().triggerFeedRefresh()
+
       return record
     } catch (e) {
       console.error(e)
@@ -142,6 +150,9 @@ export const useItemStore = create<{
     try {
       const record = await pocketbase.collection<ItemsRecord>('items').update(id, { backlog: true })
       //await canvasApp.actions.moveItemToBacklog(id)
+
+      // Trigger feed refresh since backlog items don't appear in the feed
+      get().triggerFeedRefresh()
 
       return record
     } catch (error) {

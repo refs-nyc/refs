@@ -3,7 +3,7 @@ import { View, ScrollView, Dimensions } from 'react-native'
 import { Link } from 'expo-router'
 
 import type { ExpandedItem } from '@/features/pocketbase/stores/types'
-import { pocketbase, useUserStore } from '@/features/pocketbase'
+import { pocketbase, useItemStore } from '@/features/pocketbase'
 import { s, c } from '@/features/style'
 import { DismissKeyboard, XStack, YStack, Heading, Button, Text } from '@/ui'
 import SearchBottomSheet from '@/ui/actions/SearchBottomSheet'
@@ -84,26 +84,26 @@ const ListItem = ({ item }: { item: ExpandedItem }) => {
 
 export const Feed = () => {
   const [items, setItems] = useState<ExpandedItem[]>([])
+  const feedRefreshTrigger = useItemStore((state) => state.feedRefreshTrigger)
+
+  const fetchFeedItems = async () => {
+    try {
+      const records = await pocketbase.collection('items').getList<ExpandedItem>(1, 30, {
+        // TODO: remove list = false once we have a way to display lists in the feed
+        // also consider showing backlog items in the feed, when we have a way to link to them
+        filter: `creator != null && backlog = false && list = false`,
+        sort: '-created',
+        expand: 'ref,creator',
+      })
+      setItems(records.items)
+    } catch (error) {
+      console.error('Error fetching feed items:', error)
+    }
+  }
 
   useEffect(() => {
-    const getInitialData = async () => {
-      try {
-        const records = await pocketbase.collection('items').getList<ExpandedItem>(1, 30, {
-          // TODO: remove list = false once we have a way to display lists in the feed
-          // also consider showing backlog items in the feed, when we have a way to link to them
-          filter: `creator != null && backlog = false && list = false`,
-          sort: '-created',
-          expand: 'ref,creator',
-        })
-
-        setItems(records.items)
-      } catch (error) {
-        console.error(error)
-      }
-    }
-
-    getInitialData()
-  }, [])
+    fetchFeedItems()
+  }, [feedRefreshTrigger]) // Refetch whenever the trigger changes
 
   return (
     <>

@@ -9,6 +9,7 @@ import { Pressable, Text, TextInput } from 'react-native'
 import { Heading } from '../typo/Heading'
 import { XStack, YStack } from '../core/Stacks'
 import { Button } from '../buttons/Button'
+import { getProfileItems } from '@/features/pocketbase/stores/items'
 import { CompleteRef, Item, Profile } from '@/features/pocketbase/stores/types'
 import { pocketbase, useUserStore } from '@/features/pocketbase'
 import { SimplePinataImage } from '../images/SimplePinataImage'
@@ -58,10 +59,12 @@ export default function SearchBottomSheet() {
     setResults(refsResults)
   }
 
-  const onAddFromSearch = () => {
+  const onAddFromSearch = async () => {
+    if (!user?.userName) return
     setInitialStep('add')
     setNewRefTitle(searchTerm)
-    setAddingTo(user?.items && user.items?.length < 12 ? 'grid' : 'backlog')
+    const gridItems = await getProfileItems(user.userName)
+    setAddingTo(gridItems.length < 12 ? 'grid' : 'backlog')
   }
 
   const stopAdding = () => {
@@ -188,8 +191,10 @@ export default function SearchBottomSheet() {
                 )}
                 <XStack gap={s.$05} style={{ alignItems: 'center' }}>
                   <Pressable
-                    onPress={() => {
-                      setAddingTo(user?.items && user.items?.length < 12 ? 'grid' : 'backlog')
+                    onPress={async () => {
+                      if (!user?.userName) return
+                      const gridItems = await getProfileItems(user.userName)
+                      setAddingTo(gridItems.length < 12 ? 'grid' : 'backlog')
                       setIndex(1)
                     }}
                   >

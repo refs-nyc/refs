@@ -181,7 +181,6 @@ export default function SearchBottomSheet() {
                   <Text style={{ color: c.white, fontSize: s.$1 }}>Search anything</Text>
                 ) : (
                   <TextInput
-                    ref={searchInputRef}
                     autoFocus
                     placeholder="Search anything"
                     placeholderTextColor={c.white}

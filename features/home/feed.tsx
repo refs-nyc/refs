@@ -101,7 +101,10 @@ const ListItem = ({ item }: { item: ExpandedItem }) => {
 
         {item?.image ? (
           <Link href={itemUrl}>
-            <View style={{}}>
+            <View style={{
+              minWidth: FEED_REF_IMAGE_SIZE,
+              minHeight: FEED_REF_IMAGE_SIZE,
+            }}>
               <SimplePinataImage
                 originalSource={item.image}
                 imageOptions={{ width: FEED_REF_IMAGE_SIZE, height: FEED_REF_IMAGE_SIZE }}
@@ -110,6 +113,7 @@ const ListItem = ({ item }: { item: ExpandedItem }) => {
                   height: FEED_REF_IMAGE_SIZE,
                   backgroundColor: c.accent,
                   borderRadius: s.$075,
+                  top: 2,
                 }}
               />
             </View>

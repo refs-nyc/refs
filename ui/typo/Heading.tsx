@@ -20,7 +20,7 @@ export const Heading = ({
   if (tag in typo) typeStyle = typo[tag]
 
   return (
-    <Text style={[style, typeStyle]} {...props}>
+    <Text style={[typeStyle, style]} {...props}>
       {children}
     </Text>
   )

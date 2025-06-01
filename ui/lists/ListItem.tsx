@@ -63,7 +63,9 @@ export const ListItem = ({
               ]}
             ></View>
           )}
-          <Text>{r?.title || r?.expand?.ref?.title}</Text>
+          <Text
+            style={{ color: c.surface }}
+          >{r?.title || r?.expand?.ref?.title}</Text>
         </XStack>
 
         {withRemove ? (
@@ -73,7 +75,7 @@ export const ListItem = ({
         ) : (
           showMeta && (
             <XStack gap={s.$09} style={{ justifyContent: 'space-between', alignItems: 'center' }}>
-              <Text>{count === 1 ? 'You are' : count} referencing</Text>
+              <Text style={{ color: c.surface }}>{count === 1 ? 'You are' : count} referencing</Text>
             </XStack>
           )
         )}

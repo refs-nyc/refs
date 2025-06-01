@@ -105,6 +105,7 @@ export const EditableHeader = ({
                 style={{
                   textAlign: 'left',
                   color: c.surface,
+                  fontSize: 24,
                 }}
               >
                 {titleState || ''}
@@ -122,6 +123,7 @@ export const EditableHeader = ({
                 margin: 0,
                 transform: 'translate(0, -1px)',
                 color: c.surface,
+                fontSize: 24,
               },
             ]}
             autoFocus={true}

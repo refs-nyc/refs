@@ -86,7 +86,13 @@ export default function SearchBottomSheet() {
 
   let snapPoints: (string | number)[] = []
   if (isAddingNewRef) {
-    snapPoints = ['1%', '30%', '90%']
+    if (step === 'add' || step === 'categorise') {
+      snapPoints = ['1%', '80%']
+    } else if (addingTo === 'grid' && step === '') {
+      snapPoints = ['1%', '35%']
+    } else {
+      snapPoints = ['1%', '35%']
+    }
   } else {
     // search console should expand when new refs are added to the search
     // but it shouldn't be taller than ~4 refs in its minimised form

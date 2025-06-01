@@ -22,6 +22,7 @@ import { pocketbase } from '@/features/pocketbase/pocketbase'
 
 import * as Clipboard from 'expo-clipboard'
 import { Heading } from '../typo/Heading'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 export type NewRefStep = '' | 'add' | 'search' | 'editList' | 'addToList' | 'categorise'
 
@@ -56,6 +57,7 @@ export const NewRef = ({
   const { push: pushItem } = useItemStore()
 
   const { user } = useUserStore()
+  const insets = useSafeAreaInsets()
 
   const addImageRef = async (asset: ImagePickerAsset) => {
     // @ts-ignore
@@ -81,7 +83,15 @@ export const NewRef = ({
       setStep('addToList')
       console.log(itemData)
     } else {
-      setStep('categorise')
+      // Just complete the flow
+      if (!isProfile(user) || !user.userName) {
+        onCancel()
+      } else {
+        onNewRef(item)
+      }
+      setStep('')
+      setItemData(null)
+      setRefData({})
     }
   }
 
@@ -116,9 +126,9 @@ export const NewRef = ({
       }}
     >
       {step === '' && (
-        <YStack gap={s.$08} style={{ paddingTop: s.$1, paddingBottom: s.$6 }}>
-          <Heading tag="h2normal" style={{ color: c.white, paddingBottom: s.$05 }}>
-            Add a new ref to {backlog ? 'your backlog' : 'your grid'}
+        <YStack gap={s.$08} style={{ paddingTop: s.$2, width: '100%', paddingBottom: insets.bottom }}>
+          <Heading tag="h2normal" style={{ color: c.white, marginBottom: s.$2, textAlign: 'center' }}>
+            Add a ref to {backlog ? 'your backlog' : 'your grid'}
           </Heading>
           <Button
             variant="whiteOutline"
@@ -126,6 +136,7 @@ export const NewRef = ({
             title="Type anything"
             iconSize={28}
             iconBefore="text-outline"
+            style={{ width: '100%' }}
             onPress={() => {
               setStep('search')
               setTextOpen(true)
@@ -139,6 +150,7 @@ export const NewRef = ({
               iconBefore="clipboard-outline"
               iconSize={28}
               iconColor={c.surface}
+              style={{ width: '100%' }}
               onPress={() => {
                 setStep('search')
                 setUrlOpen(true)
@@ -152,11 +164,13 @@ export const NewRef = ({
             iconBefore="image-outline"
             iconColor={c.surface}
             iconSize={28}
+            style={{ width: '100%' }}
             onPress={() => {
               setStep('add')
               setPickerOpen(true)
             }}
           />
+          <View style={{ height: 24 }} />
         </YStack>
       )}
 
@@ -176,15 +190,6 @@ export const NewRef = ({
           onComplete={handleNewRefCreated}
           onCancel={() => setRefData({})}
           backlog={backlog}
-        />
-      )}
-
-      {step === 'categorise' && (
-        <CategoriseRef
-          item={itemData!}
-          existingRef={refData}
-          onComplete={onNewRef}
-          onBack={() => setStep('add')}
         />
       )}
 

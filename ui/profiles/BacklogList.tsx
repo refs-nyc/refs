@@ -115,6 +115,7 @@ export default function BacklogList({ items: itemsInit, ownProfile }: { items: E
             }}
             value={searchTerm}
             placeholderTextColor={c.white}
+            autoFocus
             placeholder="Search anything"
             onChangeText={onSearchTermChange}
           />

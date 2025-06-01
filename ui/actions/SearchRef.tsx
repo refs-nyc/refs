@@ -147,7 +147,7 @@ export const SearchRef = ({
             placeholder="Search anything or start typing"
             placeholderTextColor={c.surface}
             onChangeText={updateQuery}
-            autoFocus={false}
+            autoFocus
           />
           {searchQuery.length > 0 && (
             <Pressable onPress={() => setSearchQuery('')} hitSlop={10} style={{ marginLeft: 8 }}>

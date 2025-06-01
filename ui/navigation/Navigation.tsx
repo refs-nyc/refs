@@ -91,30 +91,36 @@ export const Navigation = () => {
           borderBottomWidth: 1,
         }}
       >
-        <View style={{ flex: 1, paddingRight: 10 }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+        <View style={{ flex: 1 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', position: 'relative' }}>
             {!isHomePage && (
               <Pressable 
                 onPress={() => router.back()}
-                style={{ marginRight: 8 }}
+                style={{ 
+                  position: 'absolute',
+                  left: -15,
+                  top: 6,
+                  zIndex: 1,
+                  paddingRight: 8,
+                }}
               >
-                <Ionicons name="chevron-back" size={20} color={c.grey2} />
+                <Ionicons name="chevron-back" size={18} color={c.grey2} />
               </Pressable>
             )}
-            <Link dismissTo href="/">
+            <Link dismissTo href="/" style={{ paddingLeft: 6 }}>
               <Text style={{ fontSize: 24, fontWeight: 'bold', textAlign: "left" }}>Refs</Text>
             </Link>
           </View>
         </View>
-        <View style={{ top: 1, paddingRight: 14 }}>
+        <View style={{ top: 1.5, paddingRight: 17 }}>
           <Link href={`/user/${user.userName}`}>
-            <Avatar source={user.image} size={26} />
+            <Avatar source={user.image} size={30} />
           </Link>
         </View>
-        <View style={{ display: "flex", flexDirection: "row", paddingRight: 16 }}>
+        <View style={{ display: "flex", flexDirection: "row", paddingRight: 18 }}>
           <Pressable onPress={() => router.push('/saves/modal')}>
-            <View style={{ top: -1 }}>
-              <SavesIcon width={24} height={24} />
+            <View style={{ top: -2 }}>
+              <SavesIcon width={28} height={28} />
             </View>
             <View
               style={{
@@ -125,7 +131,7 @@ export const Navigation = () => {
                 alignItems: 'center',
               }}
             >
-              <Animated.View style={{ top: -4, right: -6, zIndex: 1, transform: [{ scale: scaleAnim }] }}>
+              <Animated.View style={{ top: -2, right: -6, zIndex: 1, transform: [{ scale: scaleAnim }] }}>
                 {saves.length > 0 && <Badge count={saves.length} color='#7e8f78' />}
               </Animated.View>
             </View>
@@ -133,7 +139,7 @@ export const Navigation = () => {
         </View>
         <View style={{ display: "flex", flexDirection: "row", paddingRight: 6 }}>
           <Pressable onPress={() => router.push('/messages')}>
-            <View style={{ top: -1.5 }}>
+            <View style={{ top: -3 }}>
               <MessageIcon width={30} />
             </View>
             <View

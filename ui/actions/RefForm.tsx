@@ -44,6 +44,7 @@ export const RefForm = ({
   const [picking, setPicking] = useState(pickerOpen)
   const [uploadInProgress, setUploadInProgress] = useState(false)
   const [createInProgress, setCreateInProgress] = useState(false)
+  const [uploadInitiated, setUploadInitiated] = useState(false)
   const [location, setLocation] = useState<string>('')
   const [author, setAuthor] = useState<string>('')
   const [editingField, setEditingField] = useState<'location' | 'author' | null>(null)
@@ -89,6 +90,13 @@ export const RefForm = ({
         console.error('Failed to prefetch image:', err)
       })
   }
+
+  // Reset uploadInitiated when both required fields are available
+  useEffect(() => {
+    if (uploadInitiated && pinataSource && title) {
+      setUploadInitiated(false)
+    }
+  }, [uploadInitiated, pinataSource, title])
 
   const handleDataChange = (d: { title: string; url: string; image?: string | undefined }) => {
     setTitle(d.title)
@@ -255,6 +263,7 @@ export const RefForm = ({
               setImageAsset(a)
               setPicking(false)
               setUploadInProgress(true)
+              setUploadInitiated(true)
             }}
             onCancel={() => setPicking(false)}
           />
@@ -388,26 +397,35 @@ export const RefForm = ({
         >
           {/* Lists can't have a url */}
           {!url && (
-            uploadInProgress ? (
-              <View style={{ width: '48%', minWidth: 0, alignItems: 'center', justifyContent: 'center', height: 48 }}>
-                <ActivityIndicator size="small" color={c.surface} />
-              </View>
-            ) : (
-              <Button
-                title="Add to list"
-                variant="whiteOutline"
-                style={{ width: '48%', minWidth: 0 }}
-                disabled={!title || createInProgress}
-                onPress={() => {
-                  submit({}, true)
-                }}
-              />
-            )
+            <Button
+              title="Add to list"
+              variant="whiteOutline"
+              style={{ width: '48%', minWidth: 0 }}
+              disabled={!title || createInProgress}
+              onPress={() => {
+                submit({}, true)
+              }}
+            />
           )}
-          {uploadInProgress ? (
-            <View style={{ width: url ? '100%' : '48%', minWidth: 0, alignItems: 'center', justifyContent: 'center', height: 48 }}>
-              <ActivityIndicator size="small" color={c.surface} />
-            </View>
+          {(createInProgress || uploadInProgress || (uploadInitiated && (!pinataSource || !title))) ? (
+            <Pressable
+              style={{
+                width: url ? '100%' : '48%',
+                minWidth: 0,
+                height: 48,
+                alignItems: 'center',
+                justifyContent: 'center',
+                borderRadius: s.$4,
+                borderColor: 'white',
+                borderWidth: 1,
+                backgroundColor: 'white',
+                paddingVertical: s.$08,
+                paddingHorizontal: s.$2,
+              }}
+              disabled={true}
+            >
+              <ActivityIndicator size="small" color={c.olive} />
+            </Pressable>
           ) : (
             <Button
               title="Add Ref"

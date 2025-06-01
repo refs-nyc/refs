@@ -106,9 +106,10 @@ export const EditableHeader = ({
                   textAlign: 'left',
                   color: c.surface,
                   fontSize: 24,
+                  opacity: titleState ? 1 : 0.7,
                 }}
               >
-                {titleState || ''}
+                {titleState || placeholder}
               </Heading>
             </Pressable>
           </XStack>

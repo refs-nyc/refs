@@ -157,6 +157,7 @@ export const Profile = ({ userName }: { userName: string }) => {
           justifyContent: 'center',
           alignItems: 'center',
           paddingHorizontal: s.$08,
+          paddingBottom: s.$10,
           gap: s.$4,
           minHeight: '100%',
         }}

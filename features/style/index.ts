@@ -9,7 +9,7 @@ export const c = {
   black: '#000',
   // Accent colors
   accent: '#A5B89F',
-  accent2: '#D5CDF3',
+  accent2: '#dfe9db',
   // Green
   olive: '#A5B89F',
   olive2: '#8D9C89',

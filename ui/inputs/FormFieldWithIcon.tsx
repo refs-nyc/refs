@@ -103,7 +103,7 @@ export const ErrorView = ({ error }: { error?: GlobalError }) => {
         justifyContent: 'flex-start',
       }}
     >
-      {error && <SizableText style={styles.errorText}>{error.message}</SizableText>}
+      <SizableText style={styles.errorText}>{error ? error.message : <>&nbsp;</>}</SizableText>
     </View>
   )
 }

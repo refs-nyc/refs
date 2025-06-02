@@ -63,7 +63,7 @@ export const ListItem = ({
               ]}
             ></View>
           )}
-          <Text style={{ color: c.surface, fontWeight: '700' }}>
+          <Text style={{ color: c.muted, fontWeight: '700' }}>
             {(r as any)?.title || (r as any)?.expand?.ref?.title}
           </Text>
         </XStack>

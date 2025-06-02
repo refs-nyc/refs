@@ -57,10 +57,15 @@ export const pinataUpload = async (
   asset: ImagePicker.ImagePickerAsset,
   config: { prefix?: string } = { prefix: 'refs' }
 ): Promise<string> => {
-  console.log('Called pinata with', asset)
+  const startTime = Date.now()
+  console.log('🚀 Starting Pinata upload with asset:', asset)
+  console.log('📝 Upload config:', config)
+  console.log('⏱️ Upload started at:', new Date(startTime).toISOString())
 
   const form = new FormData()
   const fileName = `${config.prefix}-${Date.now()}`
+
+  console.log('📂 Generated filename:', fileName)
 
   form.append('name', fileName)
   // TODO: uri isn't supposed to be on Blob?
@@ -87,8 +92,19 @@ export const pinataUpload = async (
     const unsignedUrl = `https://violet-fashionable-blackbird-836.mypinata.cloud/files/${result.data.cid}`
     const { signedUrl } = await pinataSignedUrl(unsignedUrl)
 
+    const endTime = Date.now()
+    const duration = endTime - startTime
+    console.log('✅ Upload completed at:', new Date(endTime).toISOString())
+    console.log('🕐 Total upload duration:', `${duration}ms`)
+    console.log('🔗 Generated signed URL:', signedUrl)
+    console.log('📁 File CID:', result.data.cid)
+
     return signedUrl
   } catch (error) {
+    const endTime = Date.now()
+    const duration = endTime - startTime
+    console.log('❌ Upload failed at:', new Date(endTime).toISOString())
+    console.log('🕐 Failed after:', `${duration}ms`)
     console.error(error)
     throw error
   }

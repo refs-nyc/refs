@@ -51,9 +51,12 @@ export const Navigation = () => {
     if (Object.keys(memberships).length === 0) return 0
     let newMessages = 0
     for (const conversationId in conversations) {
-      const lastRead = memberships[conversationId].find(
+      const membership = memberships[conversationId].find(
         (m) => m.expand?.user.id === user?.id
-      )?.last_read
+      )
+      if (!membership) continue
+      if (membership?.archived) continue
+      const lastRead = membership?.last_read
       const lastReadDate = new Date(lastRead || '')
       const conversationMessages = messagesPerConversation[conversationId]
       if (!conversationMessages) continue

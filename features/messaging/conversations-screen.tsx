@@ -54,7 +54,26 @@ export function ConversationsScreen() {
           paddingTop: s.$1,
         }}
       >
-        <Heading tag="h2semi">Messages</Heading>
+        <View
+          style={{
+            display: 'flex',
+            flexDirection: 'row',
+            alignItems: 'baseline',
+            gap: 8,
+            paddingRight: s.$2,
+          }}
+        >
+          <View style={{ flex: 1 }}>
+            <Heading tag="h2semi">Messages</Heading>
+          </View>
+          <Pressable
+            onPress={() => {
+              router.push('/messages/archive')
+            }}
+          >
+            <Text>Archive</Text>
+          </Pressable>
+        </View>
       </XStack>
       <ConversationList>
         {activeConversations.map((i) => (

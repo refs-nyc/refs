@@ -197,7 +197,7 @@ const styles = StyleSheet.create({
   raised: {
     transform: 'translateY(0px)',
     backgroundColor: c.accent,
-    shadowColor: '#655797',
+    shadowColor: c.accent2,
     shadowOffset: {
       width: 0,
       height: 4,

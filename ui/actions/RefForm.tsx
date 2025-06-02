@@ -15,6 +15,7 @@ import { StagedRef, ExpandedItem } from '@/features/pocketbase/stores/types'
 // @ts-ignore
 import { KeyboardAvoidingView } from 'react-native-keyboard-controller'
 import { DismissKeyboard } from '../atoms/DismissKeyboard'
+import { Paragraph } from '..'
 
 const win = Dimensions.get('window')
 
@@ -79,16 +80,14 @@ export const RefForm = ({
 
   const handleImageSuccess = (imageUrl: string) => {
     setUploadInProgress(false)
+    // Set pinataSource immediately to update UI
+    setPinataSource(imageUrl)
 
     console.log('image success')
-    // Prefetch image to ensure it's in cache
-    Image.prefetch(imageUrl)
-      .then(() => {
-        setPinataSource(imageUrl)
-      })
-      .catch((err) => {
-        console.error('Failed to prefetch image:', err)
-      })
+    // Prefetch image in background as optimization, but don't block UI updates
+    Image.prefetch(imageUrl).catch((err) => {
+      console.error('Failed to prefetch image:', err)
+    })
   }
 
   // Reset uploadInitiated when both required fields are available
@@ -404,7 +403,7 @@ export const RefForm = ({
               }}
             />
           )}
-          {(createInProgress || uploadInProgress || (uploadInitiated && (!pinataSource || !title))) ? (
+          {(createInProgress || uploadInProgress || (uploadInitiated && !pinataSource)) ? (
             <Pressable
               style={{
                 width: url ? '100%' : '48%',
@@ -425,7 +424,7 @@ export const RefForm = ({
             </Pressable>
           ) : (
             <Button
-              title="Add Ref"
+              title={title ? "Add Ref" : "Title required"}
               variant="whiteInverted"
               style={{ width: url ? '100%' : '48%', minWidth: 0 }}
               disabled={!(pinataSource && title) || createInProgress}

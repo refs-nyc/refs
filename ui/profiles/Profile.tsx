@@ -174,10 +174,7 @@ export const Profile = ({ userName }: { userName: string }) => {
 
             <View style={{ gap: s.$2 }}>
               {loading ? (
-                <PlaceholderGrid
-                  columns={3}
-                  rows={4}
-                />
+                <PlaceholderGrid columns={3} rows={4} />
               ) : (
                 <Grid
                   editingRights={editingRights}
@@ -233,6 +230,10 @@ export const Profile = ({ userName }: { userName: string }) => {
                   bottomSheetRef.current?.snapToIndex(0)
                 }, 50)
               }
+            } else if (i === -1) {
+              setTimeout(() => {
+                bottomSheetRef.current?.snapToIndex(0)
+              }, 50)
             }
           }}
           backgroundStyle={{ backgroundColor: c.olive, borderRadius: s.$4, paddingTop: 0 }}
@@ -341,16 +342,16 @@ export const Profile = ({ userName }: { userName: string }) => {
                       backgroundColor: 'transparent',
                       height: 47,
                     },
-                    saveId ? styles.saved : {}
+                    saveId ? styles.saved : {},
                   ]}
                 >
-                  <Heading tag="h3" style={{ 
-                    color: c.white,
-                  }}>
-                    <Text style={{ fontSize: 16.5 }}>
-                      
-                      {saveId ? 'Saved' : 'Save'}
-                    </Text>
+                  <Heading
+                    tag="h3"
+                    style={{
+                      color: c.white,
+                    }}
+                  >
+                    <Text style={{ fontSize: 16.5 }}>{saveId ? 'Saved' : 'Save'}</Text>
                   </Heading>
                 </Pressable>
               </View>
@@ -359,6 +360,9 @@ export const Profile = ({ userName }: { userName: string }) => {
                 <Button
                   onPress={() => {
                     setOpenOtherUsersBacklog(true)
+                    setTimeout(() => {
+                      bottomSheetRef.current?.snapToIndex(1)
+                    }, 250)
                   }}
                   variant="whiteOutline"
                   title="Backlog"

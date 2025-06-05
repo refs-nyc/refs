@@ -130,10 +130,10 @@ export const Profile = ({ userName }: { userName: string }) => {
         setSnapPoints(['1%', '25%'])
       } else if (addingTo === 'grid') {
         setView('adding_to_grid')
-        setSnapPoints(['1%', '30%', '90%'])
+        setSnapPoints(['1%', '40%', '90%'])
       } else if (addingTo === 'backlog') {
         setView('adding_to_backlog')
-        setSnapPoints(['1%', '30%', '90%'])
+        setSnapPoints(['1%', '40%', '90%'])
       } else {
         setView('my_backlog')
         setSnapPoints(['15%', '90%'])
@@ -302,9 +302,8 @@ export const Profile = ({ userName }: { userName: string }) => {
                     <Pressable
                       onPress={() => {
                         setAddingTo('backlog')
-                        console.log('just clicked add to backlog')
-                        console.log(index, snapPoints)
-                        bottomSheetRef.current?.snapToIndex(1)
+                        bottomSheetRef.current?.snapToPosition('40%')
+                        setIndex(1)
                       }}
                       style={{
                         alignItems: 'center',

@@ -41,8 +41,6 @@ export const Profile = ({ userName }: { userName: string }) => {
   const [loading, setLoading] = useState<boolean>(true)
 
   const [openOtherUsersBacklog, setOpenOtherUsersBacklog] = useState(false)
-  const [view, setView] = useState<string>('')
-  const [snapPoints, setSnapPoints] = useState<string[]>([])
 
   const { user } = useUserStore()
 
@@ -123,31 +121,32 @@ export const Profile = ({ userName }: { userName: string }) => {
   const isMinimised = ownProfile && index === 0
   const HANDLE_HEIGHT = s.$2
 
-  useEffect(() => {
-    if (ownProfile) {
-      if (removingId) {
-        setView('removing')
-        setSnapPoints(['1%', '25%'])
-      } else if (addingTo === 'grid') {
-        setView('adding_to_grid')
-        setSnapPoints(['1%', '40%', '90%'])
-      } else if (addingTo === 'backlog') {
-        setView('adding_to_backlog')
-        setSnapPoints(['1%', '40%', '90%'])
-      } else {
-        setView('my_backlog')
-        setSnapPoints(['15%', '90%'])
-      }
+  let snapPoints: (string | number)[] = []
+  let view = ''
+
+  if (ownProfile) {
+    if (removingId) {
+      view = 'removing'
+      snapPoints = ['1%', '25%']
+    } else if (addingTo === 'grid') {
+      view = 'adding_to_grid'
+      snapPoints = ['1%', '40%', '90%']
+    } else if (addingTo === 'backlog') {
+      view = 'adding_to_backlog'
+      snapPoints = ['1%', '40%', '90%']
     } else {
-      if (openOtherUsersBacklog) {
-        setView('other_backlog')
-        setSnapPoints(['1%', '50%', '90%'])
-      } else {
-        setView('other_buttons')
-        setSnapPoints(['15%'])
-      }
+      view = 'my_backlog'
+      snapPoints = ['15%', '90%']
     }
-  }, [ownProfile, removingId, addingTo, openOtherUsersBacklog])
+  } else {
+    if (openOtherUsersBacklog) {
+      view = 'other_backlog'
+      snapPoints = ['1%', '50%', '90%']
+    } else {
+      view = 'other_buttons'
+      snapPoints = ['15%']
+    }
+  }
 
   return (
     <>

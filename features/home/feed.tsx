@@ -5,7 +5,7 @@ import { Link } from 'expo-router'
 import type { ExpandedItem } from '@/features/pocketbase/stores/types'
 import { pocketbase, useItemStore } from '@/features/pocketbase'
 import { s, c } from '@/features/style'
-import { DismissKeyboard, XStack, YStack, Heading, Button, Text } from '@/ui'
+import { DismissKeyboard, XStack, YStack, Heading, Text } from '@/ui'
 import SearchBottomSheet from '@/ui/actions/SearchBottomSheet'
 import { SimplePinataImage } from '@/ui/images/SimplePinataImage'
 import { Avatar } from '@/ui/atoms/Avatar'
@@ -25,7 +25,7 @@ const formatDate = (isoDateString: string): string => {
 
   // Use built-in relative time formatter for recent items
   const rtf = new Intl.RelativeTimeFormat('en', { numeric: 'auto' })
-  
+
   if (diffInHours < 24) {
     if (diffInHours < 1) {
       const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60))
@@ -44,9 +44,9 @@ const formatDate = (isoDateString: string): string => {
   const dtf = new Intl.DateTimeFormat('en', {
     month: 'short',
     day: 'numeric',
-    year: date.getFullYear() === now.getFullYear() ? undefined : 'numeric'
+    year: date.getFullYear() === now.getFullYear() ? undefined : 'numeric',
   })
-  
+
   return dtf.format(date)
 }
 
@@ -89,22 +89,24 @@ const ListItem = ({ item }: { item: ExpandedItem }) => {
             <Link href={creatorProfileUrl}>
               <Heading tag="semistrong">{item.expand?.creator?.firstName || 'Anonymous'} </Heading>
             </Link>
-            <Text style={{ color: c.muted2 }}>
-              added{' '}
-            </Text>
+            <Text style={{ color: c.muted2 }}>added </Text>
             <Link href={itemUrl}>
               <Heading tag="semistrong">{item.expand?.ref?.title}</Heading>
             </Link>
           </Text>
-          <Text style={{ fontSize: 12, color: c.muted, paddingTop: 2 }}>{formatDate(item.created)}</Text>
+          <Text style={{ fontSize: 12, color: c.muted, paddingTop: 2 }}>
+            {formatDate(item.created)}
+          </Text>
         </View>
 
         {item?.image ? (
           <Link href={itemUrl}>
-            <View style={{
-              minWidth: FEED_REF_IMAGE_SIZE,
-              minHeight: FEED_REF_IMAGE_SIZE,
-            }}>
+            <View
+              style={{
+                minWidth: FEED_REF_IMAGE_SIZE,
+                minHeight: FEED_REF_IMAGE_SIZE,
+              }}
+            >
               <SimplePinataImage
                 originalSource={item.image}
                 imageOptions={{ width: FEED_REF_IMAGE_SIZE, height: FEED_REF_IMAGE_SIZE }}
@@ -142,7 +144,7 @@ export const Feed = () => {
       const records = await pocketbase.collection('items').getList<ExpandedItem>(1, 30, {
         // TODO: remove list = false once we have a way to display lists in the feed
         // also consider showing backlog items in the feed, when we have a way to link to them
-        filter: `creator != null && backlog = false && list = false`,
+        filter: `creator != null && backlog = false && list = false && parent = null`,
         sort: '-created',
         expand: 'ref,creator',
       })
@@ -161,26 +163,26 @@ export const Feed = () => {
       <DismissKeyboard>
         <ScrollView style={{ flex: 1 }}>
           <View style={{ height: '100%' }}>
-          <View
-            style={{
-              gap: s.$09,
-              paddingTop: s.$1,
-              paddingHorizontal: s.$1half,
-              width: win.width,
-            }}
-          >
-            <YStack
-              gap={0}
+            <View
               style={{
-                flex: 1,
-                paddingBottom: s.$12,
+                gap: s.$09,
+                paddingTop: s.$1,
+                paddingHorizontal: s.$1half,
+                width: win.width,
               }}
             >
-              {items.map((item) => (
-                <ListItem key={item.id} item={item} />
-              ))}
-            </YStack>
-          </View>
+              <YStack
+                gap={0}
+                style={{
+                  flex: 1,
+                  paddingBottom: s.$12,
+                }}
+              >
+                {items.map((item) => (
+                  <ListItem key={item.id} item={item} />
+                ))}
+              </YStack>
+            </View>
           </View>
         </ScrollView>
       </DismissKeyboard>

@@ -14,7 +14,7 @@ export type ExpandedProfile = PBTypes.UsersResponse<{ items: PBTypes.ItemsRecord
 export type ExpandedItem = PBTypes.ItemsResponse<{
   ref: PBTypes.RefsRecord
   creator: PBTypes.UsersRecord
-  children: PBTypes.ItemsRecord[]
+  items_via_parent: PBTypes.ItemsRecord[] // list children
 }>
 
 export type GridTileType = 'add' | 'image' | 'text' | 'list' | ''

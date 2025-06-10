@@ -14,7 +14,7 @@ import { ShareIntentProvider } from 'expo-share-intent'
 import NetInfo from '@react-native-community/netinfo'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
-import { useEffect } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { StatusBar, useColorScheme, useWindowDimensions, View } from 'react-native'
 import { Navigation } from '@/ui/navigation/Navigation'
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native'
@@ -31,6 +31,8 @@ import { MessagesInit } from '@/features/messaging/message-loader'
 import { useUserStore } from '@/features/pocketbase/stores/users'
 
 import { LogBox } from 'react-native'
+import BottomSheet from '@gorhom/bottom-sheet'
+import Saves from '@/features/saves/saves-sheet'
 
 install()
 polyfillEncoding()
@@ -125,6 +127,7 @@ const Providers = ({ children }: { children: React.ReactNode }) => {
 }
 
 function RootLayoutNav() {
+  const savesBottomSheetRef = useRef<BottomSheet>(null)
   const colorScheme = useColorScheme()
 
   return (
@@ -132,7 +135,8 @@ function RootLayoutNav() {
       <StatusBar barStyle={colorScheme === 'dark' ? 'light-content' : 'dark-content'} />
       <RegisterPushNotifications />
       <MessagesInit />
-      <Navigation />
+      <Navigation savesBottomSheetRef={savesBottomSheetRef} />
+
       <Stack
         screenOptions={{
           headerShown: false,
@@ -144,15 +148,6 @@ function RootLayoutNav() {
           options={{
             title: 'Refs',
             animation: 'fade_from_bottom',
-          }}
-        />
-        <Stack.Screen
-          name="saves/modal"
-          options={{
-            presentation: 'transparentModal',
-            headerShown: false,
-            contentStyle: { backgroundColor: 'transparent' },
-            animation: 'fade',
           }}
         />
         <Stack.Screen
@@ -204,6 +199,7 @@ function RootLayoutNav() {
           }}
         />
       </Stack>
+      <Saves savesBottomSheetRef={savesBottomSheetRef} />
     </ThemeProvider>
   )
 }

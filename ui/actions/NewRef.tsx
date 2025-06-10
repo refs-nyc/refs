@@ -37,7 +37,7 @@ export const NewRef = ({
 }: {
   initialStep?: NewRefStep
   initialRefData?: StagedRef | CompleteRef
-  onNewRef: (itm: Item) => void
+  onNewRef: (itm: ExpandedItem) => void
   onStep: (step: string) => void
   onCancel: () => void
   backlog?: boolean

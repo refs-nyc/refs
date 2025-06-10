@@ -1,26 +1,47 @@
-import BottomSheet, { BottomSheetBackdrop } from '@gorhom/bottom-sheet'
-import { ProfileDetailsProvider } from './profileDetailsStore'
-import { Details } from './Details'
+import { pocketbase, useUserStore } from '@/features/pocketbase'
 import { useBackdropStore } from '@/features/pocketbase/stores/backdrop'
-import { useCallback } from 'react'
+import { getProfileItems } from '@/features/pocketbase/stores/items'
 import { ExpandedItem, ExpandedProfile } from '@/features/pocketbase/stores/types'
 import { c } from '@/features/style'
+import BottomSheet, { BottomSheetBackdrop } from '@gorhom/bottom-sheet'
+import { useCallback, useEffect, useState } from 'react'
+import { Details } from './Details'
+import { ProfileDetailsProvider } from './profileDetailsStore'
 
 export const ProfileDetailsSheet = ({
   onChange,
   detailsSheetRef,
-  editingRights,
+  profileUsername,
   detailsItemId,
-  profile,
-  gridItems,
+  openedFromFeed,
 }: {
-  editingRights: boolean
+  profileUsername: string
   detailsItemId: string
-  profile: ExpandedProfile
-  gridItems: ExpandedItem[]
   onChange: (index: number) => void
   detailsSheetRef: React.RefObject<BottomSheet>
+  openedFromFeed: boolean
 }) => {
+  const [profile, setProfile] = useState<ExpandedProfile | null>(null)
+  const [gridItems, setGridItems] = useState<ExpandedItem[]>([])
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      const profile = await pocketbase
+        .collection('users')
+        .getFirstListItem<ExpandedProfile>(`userName = "${profileUsername}"`)
+      const gridItems = await getProfileItems(profile.userName)
+
+      setProfile(profile)
+      setGridItems(gridItems)
+    }
+    fetchProfile()
+  }, [profileUsername])
+
+  // get current user
+  const { user } = useUserStore()
+  // if the current user is the item creator, then they have editing rights
+  const editingRights = profile?.id === user?.id
+
   const snapPoints = ['100%']
 
   const { detailsBackdropAnimatedIndex } = useBackdropStore()
@@ -52,13 +73,15 @@ export const ProfileDetailsSheet = ({
       keyboardBehavior="interactive"
       onChange={onChange}
     >
-      <ProfileDetailsProvider
-        editingRights={editingRights}
-        initialIndex={initialIndex}
-        openedFromFeed={false}
-      >
-        <Details profile={profile} data={gridItems} />
-      </ProfileDetailsProvider>
+      {profile && gridItems.length > 0 && (
+        <ProfileDetailsProvider
+          editingRights={editingRights}
+          initialIndex={initialIndex}
+          openedFromFeed={openedFromFeed}
+        >
+          <Details profile={profile} data={gridItems} />
+        </ProfileDetailsProvider>
+      )}
     </BottomSheet>
   )
 }

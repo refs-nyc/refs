@@ -11,11 +11,11 @@ import { ScrollView, View } from 'react-native'
 import { Button } from '../buttons/Button'
 import { Grid } from '../grid/Grid'
 import { PlaceholderGrid } from '../grid/PlaceholderGrid'
+import { useUIStore } from '../state'
 import { Heading } from '../typo/Heading'
-import { ProfileHeader } from './ProfileHeader'
 import { ProfileBottomSheet } from './ProfileBottomSheet'
 import { ProfileDetailsSheet } from './ProfileDetailsSheet'
-import { useUIStore } from '../state'
+import { ProfileHeader } from './ProfileHeader'
 
 export const Profile = ({ userName }: { userName: string }) => {
   const { hasShareIntent } = useShareIntentContext()
@@ -114,7 +114,7 @@ export const Profile = ({ userName }: { userName: string }) => {
 
   const stopEditing = useItemStore((state) => state.stopEditing)
 
-  const [detailsItemId, setDetailsItemId] = useState<string>('')
+  const [detailsItem, setDetailsItem] = useState<ExpandedItem | null>(null)
 
   // timeout used to stop editing the profile after 10 seconds
   let timeout: ReturnType<typeof setTimeout>
@@ -149,8 +149,8 @@ export const Profile = ({ userName }: { userName: string }) => {
               ) : (
                 <Grid
                   editingRights={editingRights}
-                  onPressItem={(id) => {
-                    setDetailsItemId(id!)
+                  onPressItem={(item) => {
+                    setDetailsItem(item!)
                     detailsSheetRef.current?.snapToIndex(0)
                   }}
                   onLongPressItem={() => {
@@ -202,19 +202,18 @@ export const Profile = ({ userName }: { userName: string }) => {
             handleRemoveFromProfile={handleRemoveFromProfile}
             handleCreateNewRef={handleCreateNewRef}
           />
-          {detailsItemId && (
+          {detailsItem && (
             <ProfileDetailsSheet
-              detailsSheetRef={detailsSheetRef}
-              detailsItemId={detailsItemId}
-              editingRights={editingRights}
-              gridItems={gridItems}
+              profileUsername={profile.userName}
+              detailsItemId={detailsItem.id}
               onChange={(index: number) => {
                 if (index === -1) {
                   stopEditing()
-                  setDetailsItemId('')
+                  setDetailsItem(null)
                 }
               }}
-              profile={profile}
+              openedFromFeed={false}
+              detailsSheetRef={detailsSheetRef}
             />
           )}
         </>

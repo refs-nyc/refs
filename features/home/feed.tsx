@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { View, ScrollView, Dimensions } from 'react-native'
+import { View, ScrollView, Dimensions, Pressable } from 'react-native'
 import { Link } from 'expo-router'
 
 import type { ExpandedItem } from '@/features/pocketbase/stores/types'
@@ -55,7 +55,6 @@ const formatDate = (isoDateString: string): string => {
 const ListItem = ({ item, onPress }: { item: ExpandedItem; onPress: () => void }) => {
   const creator = item.expand!.creator
   const creatorProfileUrl = `/user/${creator.userName}/` as const
-  const itemUrl = `${creatorProfileUrl}modal?initialId=${item.id}&openedFromFeed=true` as const
 
   return (
     <View
@@ -92,10 +91,9 @@ const ListItem = ({ item, onPress }: { item: ExpandedItem; onPress: () => void }
               <Heading tag="semistrong">{item.expand?.creator?.firstName || 'Anonymous'} </Heading>
             </Link>
             <Text style={{ color: c.muted2 }}>added </Text>
-            {/* @ts-ignore */}
-            <Link href={itemUrl}>
-              <Heading tag="semistrong">{item.expand?.ref?.title}</Heading>
-            </Link>
+            <Heading tag="semistrong" onPress={onPress}>
+              {item.expand?.ref?.title}
+            </Heading>
           </Text>
           <Text style={{ fontSize: 12, color: c.muted, paddingTop: 2 }}>
             {formatDate(item.created)}
@@ -103,8 +101,7 @@ const ListItem = ({ item, onPress }: { item: ExpandedItem; onPress: () => void }
         </View>
 
         {item?.image ? (
-          // @ts-ignore
-          <Link href="" onPress={onPress}>
+          <Pressable onPress={onPress}>
             <View
               style={{
                 minWidth: FEED_REF_IMAGE_SIZE,
@@ -123,7 +120,7 @@ const ListItem = ({ item, onPress }: { item: ExpandedItem; onPress: () => void }
                 }}
               />
             </View>
-          </Link>
+          </Pressable>
         ) : (
           <View
             style={{

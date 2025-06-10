@@ -37,7 +37,7 @@ export default function SearchBottomSheet() {
 
   const { user } = useUserStore()
 
-  const { animatedIndex } = useBackdropStore()
+  const { moduleBackdropAnimatedIndex } = useBackdropStore()
 
   const onAddRefToSearch = (r: CompleteRef) => {
     setRefs((prevState) => [...prevState.filter((ref) => ref.id !== r.id), r])
@@ -116,7 +116,7 @@ export default function SearchBottomSheet() {
         enablePanDownToClose={false}
         snapPoints={snapPoints}
         index={Math.min(index, snapPoints.length - 1)}
-        animatedIndex={animatedIndex}
+        animatedIndex={moduleBackdropAnimatedIndex}
         onChange={(i: number) => {
           setIndex(i)
           if (i === 0) {
@@ -184,7 +184,7 @@ export default function SearchBottomSheet() {
                     autoFocus
                     placeholder="Search anything"
                     placeholderTextColor={c.white}
-                    style={{ fontSize: s.$1, color: c.white, minWidth: "50%" }}
+                    style={{ fontSize: s.$1, color: c.white, minWidth: '50%' }}
                     onChangeText={updateSearch}
                     value={searchTerm}
                   />
@@ -259,7 +259,14 @@ export default function SearchBottomSheet() {
                           paddingHorizontal: s.$5,
                         }}
                       >
-                        <View style={{ width: s.$2, height: s.$2, backgroundColor: c.olive2, borderRadius: s.$05 }}>
+                        <View
+                          style={{
+                            width: s.$2,
+                            height: s.$2,
+                            backgroundColor: c.olive2,
+                            borderRadius: s.$05,
+                          }}
+                        >
                           <SimplePinataImage
                             originalSource={r.image!}
                             imageOptions={{ width: s.$2, height: s.$2 }}

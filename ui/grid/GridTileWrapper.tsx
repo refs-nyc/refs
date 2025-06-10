@@ -1,62 +1,37 @@
-import { useState } from 'react'
 import { YStack } from '../core/Stacks'
 import { TouchableOpacity, Pressable } from 'react-native'
 import { base } from '@/features/style'
 import { GridTileType } from '@/features/pocketbase/stores/types'
 import { useUIStore } from '../state'
-import { router, usePathname } from 'expo-router'
 import Ionicons from '@expo/vector-icons/Ionicons'
-import { s, c } from '@/features/style'
+import { c } from '@/features/style'
 
 export const GridTileWrapper = ({
   type,
   children,
   id,
-  canEdit,
-  index,
   onRemove,
+  onPress,
+  onLongPress,
 }: {
   type: GridTileType
   children: React.ReactNode
-  canEdit: boolean
   id?: string
-  index?: number
   onRemove?: () => void
+  onPress?: (id?: string) => void
+  onLongPress?: () => void
 }) => {
-  const pathname = usePathname()
-  const { editingProfile, startEditProfile, stopEditProfile } = useUIStore()
-
-  let timeout: ReturnType<typeof setTimeout>
-  const [actions, setActions] = useState(false)
+  const { editingProfile, stopEditProfile } = useUIStore()
 
   const specificStyles = {
     borderWidth: type !== 'image' && type !== '' ? 1.5 : 0,
     borderColor: '#333',
   }
 
-  const openDetailScreen = () => {
-    if (pathname.includes('onboarding')) return
-    stopEditProfile()
-    const url = `${pathname}/modal`
-    const query = id ? `?initialId=${id}` : ''
-    // @ts-ignore
-    router.push(`${url}${query}`)
-  }
-
-  const handleLongPress = () => {
-    if (canEdit) {
-      clearTimeout(timeout)
-      timeout = setTimeout(() => {
-        stopEditProfile()
-      }, 10000)
-      startEditProfile()
-    }
-  }
-
   return (
     <TouchableOpacity
-      onPress={openDetailScreen}
-      onLongPress={handleLongPress}
+      onPress={() => onPress && onPress(id)}
+      onLongPress={onLongPress}
       style={[base.gridTile, specificStyles]}
     >
       {editingProfile && type !== 'add' && id && (

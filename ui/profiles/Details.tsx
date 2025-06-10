@@ -1,21 +1,21 @@
-import React, { useRef, useCallback, useContext } from 'react'
-import { useRouter } from 'expo-router'
-import { View, Pressable, Text, useWindowDimensions } from 'react-native'
-import Carousel, { ICarouselInstance } from 'react-native-reanimated-carousel'
-import { c, s } from '@/features/style'
 import { useItemStore } from '@/features/pocketbase/stores/items'
-import { EditableList } from '../lists/EditableList'
-import { Sheet, SheetScreen } from '../core/Sheets'
-import { ExpandedItem, ExpandedProfile } from '@/features/pocketbase/stores/types'
-import { GridLines } from '../display/Gridlines'
-import { MeatballMenu, Checkbox } from '../atoms/MeatballMenu'
-import { useUIStore } from '@/ui/state'
-import { ProfileDetailsContext } from './profileDetailsStore'
-import { useStore } from 'zustand'
 import { ItemsRecord } from '@/features/pocketbase/stores/pocketbase-types'
+import { ExpandedItem, ExpandedProfile } from '@/features/pocketbase/stores/types'
+import { c, s } from '@/features/style'
 import { XStack } from '@/ui/core/Stacks'
+import { useUIStore } from '@/ui/state'
+import { useRouter } from 'expo-router'
+import React, { useCallback, useContext, useRef } from 'react'
+import { Pressable, Text, useWindowDimensions, View } from 'react-native'
+import Carousel, { ICarouselInstance } from 'react-native-reanimated-carousel'
+import { useStore } from 'zustand'
 import { Avatar } from '../atoms/Avatar'
+import { Checkbox, MeatballMenu } from '../atoms/MeatballMenu'
+import { Sheet } from '../core/Sheets'
+import { GridLines } from '../display/Gridlines'
+import { EditableList } from '../lists/EditableList'
 import { DetailsCarouselItem } from './DetailsCarouselItem'
+import { ProfileDetailsContext } from './profileDetailsStore'
 
 // --- Helper Components for State Isolation ---
 
@@ -109,14 +109,7 @@ export const Details = ({ profile, data }: { profile: ExpandedProfile; data: Ite
   }, [setAddingToList])
 
   return (
-    <SheetScreen
-      onChange={(e: any) => {
-        e === -1 && router.back()
-        e === -1 && stopEditing()
-      }}
-      snapPoints={openedFromFeed ? ['90%'] : ['100%']}
-      maxDynamicContentSize={openedFromFeed ? '90%' : '100%'}
-    >
+    <>
       <ConditionalGridLines />
 
       {openedFromFeed ? (
@@ -174,6 +167,6 @@ export const Details = ({ profile, data }: { profile: ExpandedProfile; data: Ite
           <EditableList item={addingItem as ExpandedItem} onComplete={() => {}} />
         </Sheet>
       )}
-    </SheetScreen>
+    </>
   )
 }

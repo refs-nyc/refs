@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react'
-import { View, ScrollView, Dimensions } from 'react-native'
+import { useState, useEffect, useRef } from 'react'
+import { View, ScrollView, Dimensions, Pressable } from 'react-native'
 import { Link } from 'expo-router'
 
 import type { ExpandedItem } from '@/features/pocketbase/stores/types'
@@ -9,6 +9,8 @@ import { DismissKeyboard, XStack, YStack, Heading, Text } from '@/ui'
 import SearchBottomSheet from '@/ui/actions/SearchBottomSheet'
 import { SimplePinataImage } from '@/ui/images/SimplePinataImage'
 import { Avatar } from '@/ui/atoms/Avatar'
+import { ProfileDetailsSheet } from '@/ui/profiles/ProfileDetailsSheet'
+import BottomSheet from '@gorhom/bottom-sheet'
 
 const win = Dimensions.get('window')
 
@@ -50,10 +52,9 @@ const formatDate = (isoDateString: string): string => {
   return dtf.format(date)
 }
 
-const ListItem = ({ item }: { item: ExpandedItem }) => {
+const ListItem = ({ item, onPress }: { item: ExpandedItem; onPress: () => void }) => {
   const creator = item.expand!.creator
   const creatorProfileUrl = `/user/${creator.userName}/` as const
-  const itemUrl = `${creatorProfileUrl}modal?initialId=${item.id}&openedFromFeed=true` as const
 
   return (
     <View
@@ -90,9 +91,9 @@ const ListItem = ({ item }: { item: ExpandedItem }) => {
               <Heading tag="semistrong">{item.expand?.creator?.firstName || 'Anonymous'} </Heading>
             </Link>
             <Text style={{ color: c.muted2 }}>added </Text>
-            <Link href={itemUrl}>
-              <Heading tag="semistrong">{item.expand?.ref?.title}</Heading>
-            </Link>
+            <Heading tag="semistrong" onPress={onPress}>
+              {item.expand?.ref?.title}
+            </Heading>
           </Text>
           <Text style={{ fontSize: 12, color: c.muted, paddingTop: 2 }}>
             {formatDate(item.created)}
@@ -100,7 +101,7 @@ const ListItem = ({ item }: { item: ExpandedItem }) => {
         </View>
 
         {item?.image ? (
-          <Link href={itemUrl}>
+          <Pressable onPress={onPress}>
             <View
               style={{
                 minWidth: FEED_REF_IMAGE_SIZE,
@@ -119,7 +120,7 @@ const ListItem = ({ item }: { item: ExpandedItem }) => {
                 }}
               />
             </View>
-          </Link>
+          </Pressable>
         ) : (
           <View
             style={{
@@ -138,6 +139,8 @@ const ListItem = ({ item }: { item: ExpandedItem }) => {
 export const Feed = () => {
   const [items, setItems] = useState<ExpandedItem[]>([])
   const feedRefreshTrigger = useItemStore((state) => state.feedRefreshTrigger)
+  const [detailsItem, setDetailsItem] = useState<ExpandedItem | null>(null)
+  const detailsSheetRef = useRef<BottomSheet>(null)
 
   const fetchFeedItems = async () => {
     try {
@@ -179,7 +182,16 @@ export const Feed = () => {
                 }}
               >
                 {items.map((item) => (
-                  <ListItem key={item.id} item={item} />
+                  <ListItem
+                    key={item.id}
+                    item={item}
+                    onPress={() => {
+                      // set the current item
+                      setDetailsItem(item)
+                      // open the details sheet
+                      detailsSheetRef.current?.snapToIndex(0)
+                    }}
+                  />
                 ))}
               </YStack>
             </View>
@@ -187,6 +199,20 @@ export const Feed = () => {
         </ScrollView>
       </DismissKeyboard>
       <SearchBottomSheet />
+      {detailsItem && (
+        <ProfileDetailsSheet
+          detailsSheetRef={detailsSheetRef}
+          profileUsername={detailsItem.expand!.creator.userName}
+          detailsItemId={detailsItem.id}
+          onChange={(index) => {
+            // if the index is -1, then the user has closed the sheet
+            if (index === -1) {
+              setDetailsItem(null)
+            }
+          }}
+          openedFromFeed={true}
+        />
+      )}
     </>
   )
 }

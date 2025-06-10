@@ -10,8 +10,13 @@ import { useMemo, useRef, useEffect } from 'react'
 import SavesIcon from '@/assets/icons/saves.svg'
 import MessageIcon from '@/assets/icons/message.svg'
 import { Ionicons } from '@expo/vector-icons'
+import BottomSheet from '@gorhom/bottom-sheet'
 
-export const Navigation = () => {
+export const Navigation = ({
+  savesBottomSheetRef,
+}: {
+  savesBottomSheetRef: React.RefObject<BottomSheet>
+}) => {
   const { user } = useUserStore()
   const pathname = usePathname()
 
@@ -51,9 +56,7 @@ export const Navigation = () => {
     if (Object.keys(memberships).length === 0) return 0
     let newMessages = 0
     for (const conversationId in conversations) {
-      const membership = memberships[conversationId].find(
-        (m) => m.expand?.user.id === user?.id
-      )
+      const membership = memberships[conversationId].find((m) => m.expand?.user.id === user?.id)
       if (!membership) continue
       if (membership?.archived) continue
       const lastRead = membership?.last_read
@@ -97,9 +100,9 @@ export const Navigation = () => {
         <View style={{ flex: 1 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', position: 'relative' }}>
             {!isHomePage && (
-              <Pressable 
+              <Pressable
                 onPress={() => router.back()}
-                style={{ 
+                style={{
                   position: 'absolute',
                   left: -15,
                   top: 6,
@@ -111,7 +114,7 @@ export const Navigation = () => {
               </Pressable>
             )}
             <Link dismissTo href="/" style={{ paddingLeft: 6 }}>
-              <Text style={{ fontSize: 24, fontWeight: 'bold', textAlign: "left" }}>Refs</Text>
+              <Text style={{ fontSize: 24, fontWeight: 'bold', textAlign: 'left' }}>Refs</Text>
             </Link>
           </View>
         </View>
@@ -120,8 +123,8 @@ export const Navigation = () => {
             <Avatar source={user.image} size={30} />
           </Link>
         </View>
-        <View style={{ display: "flex", flexDirection: "row", paddingRight: 18 }}>
-          <Pressable onPress={() => router.push('/saves/modal')}>
+        <View style={{ display: 'flex', flexDirection: 'row', paddingRight: 18 }}>
+          <Pressable onPress={() => savesBottomSheetRef.current?.expand()}>
             <View style={{ top: -2 }}>
               <SavesIcon width={28} height={28} />
             </View>
@@ -134,13 +137,15 @@ export const Navigation = () => {
                 alignItems: 'center',
               }}
             >
-              <Animated.View style={{ top: -2, right: -6, zIndex: 1, transform: [{ scale: scaleAnim }] }}>
-                {saves.length > 0 && <Badge count={saves.length} color='#7e8f78' />}
+              <Animated.View
+                style={{ top: -2, right: -6, zIndex: 1, transform: [{ scale: scaleAnim }] }}
+              >
+                {saves.length > 0 && <Badge count={saves.length} color="#7e8f78" />}
               </Animated.View>
             </View>
           </Pressable>
         </View>
-        <View style={{ display: "flex", flexDirection: "row", paddingRight: 6 }}>
+        <View style={{ display: 'flex', flexDirection: 'row', paddingRight: 6 }}>
           <Pressable onPress={() => router.push('/messages')}>
             <View style={{ top: -3 }}>
               <MessageIcon width={30} />
@@ -155,7 +160,7 @@ export const Navigation = () => {
               }}
             >
               <View style={{ bottom: 2, right: -10, zIndex: 1 }}>
-                {newMessages > 0 && <Badge count={newMessages} color='#7e8f78' />}
+                {newMessages > 0 && <Badge count={newMessages} color="#7e8f78" />}
               </View>
             </View>
           </Pressable>

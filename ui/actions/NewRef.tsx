@@ -38,7 +38,7 @@ export const NewRef = ({
 }: {
   initialStep?: NewRefStep
   initialRefData?: StagedRef | CompleteRef
-  onNewRef: (itm: Item) => void
+  onNewRef: (itm: ExpandedItem) => void
   onStep: (step: string) => void
   onCancel: () => void
   backlog?: boolean
@@ -126,8 +126,14 @@ export const NewRef = ({
       }}
     >
       {step === '' && (
-        <YStack gap={s.$08} style={{ paddingTop: s.$2, width: '100%', paddingBottom: insets.bottom }}>
-          <Heading tag="h2normal" style={{ color: c.white, marginBottom: s.$2, textAlign: 'center' }}>
+        <YStack
+          gap={s.$08}
+          style={{ paddingTop: s.$2, width: '100%', paddingBottom: insets.bottom }}
+        >
+          <Heading
+            tag="h2normal"
+            style={{ color: c.white, marginBottom: s.$2, textAlign: 'center' }}
+          >
             Add a ref to {backlog ? 'your backlog' : 'your grid'}
           </Heading>
           <Button
@@ -194,7 +200,7 @@ export const NewRef = ({
       )}
 
       {step === 'addToList' && (
-        <View style={{paddingVertical: s.$1, width: '100%'}}>
+        <View style={{ paddingVertical: s.$1, width: '100%' }}>
           <FilteredItems
             filter={`children:length > 0 && creator = "${user?.id}"`}
             onComplete={async (item) => {

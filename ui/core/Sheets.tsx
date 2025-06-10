@@ -4,6 +4,7 @@ import { c, s } from '@/features/style'
 import { useAnimatedKeyboard, useDerivedValue } from 'react-native-reanimated'
 import { Dimensions, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { useBackdropStore } from '@/features/pocketbase/stores/backdrop'
 
 const win = Dimensions.get('window')
 
@@ -55,6 +56,7 @@ export const Sheet = (props: any = { full: false, noNotch: false, noPadding: fal
 export const SheetScreen = (props: any) => {
   const keyboard = useAnimatedKeyboard()
   const insets = useSafeAreaInsets()
+  const { detailsBackdropAnimatedIndex } = useBackdropStore()
 
   // Render backdrop remains unchanged
   const renderBackdrop = useCallback(
@@ -76,6 +78,7 @@ export const SheetScreen = (props: any) => {
         backgroundColor: c.surface,
         padding: 0,
       }}
+      animatedIndex={detailsBackdropAnimatedIndex}
       backdropComponent={renderBackdrop}
       handleComponent={null}
       enableDynamicSizing={false}

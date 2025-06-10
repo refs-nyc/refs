@@ -51,9 +51,6 @@ export const ProfileBottomSheet = ({
 
   const ownProfile = profile && profile.id === user?.id
 
-  const [step, setStep] = useState('')
-
-  // useEffect(() => {
   let view: string = ''
   let snapPoints: string[] = []
   if (ownProfile) {
@@ -79,7 +76,6 @@ export const ProfileBottomSheet = ({
       snapPoints = ['15%']
     }
   }
-  // }, [ownProfile, removingId, addingTo, openOtherUsersBacklog])
 
   const saveId = saves.find((s) => s.expand.user.id === profile?.id)?.id
   const disappearsOnIndex = 0
@@ -265,7 +261,6 @@ export const ProfileBottomSheet = ({
         <NewRef
           backlog={addingTo === 'backlog'}
           onStep={(step) => {
-            setStep(step)
             if (step === 'add') bottomSheetRef.current?.snapToIndex(2)
           }}
           onNewRef={handleCreateNewRef}

@@ -6,6 +6,8 @@ import { GridTileWrapper } from './GridTileWrapper'
 import { GridTileActionAdd } from './GridTileActionAdd'
 
 export const Grid = ({
+  onPressItem,
+  onLongPressItem,
   onAddItem,
   onRemoveItem,
   columns = 3,
@@ -13,6 +15,8 @@ export const Grid = ({
   items,
   editingRights = false,
 }: {
+  onPressItem?: (id?: string) => void
+  onLongPressItem?: () => void
   onAddItem?: () => void
   onRemoveItem?: (id: string) => void
   columns: number
@@ -31,8 +35,8 @@ export const Grid = ({
         <GridTileWrapper
           key={item.id}
           id={item.id}
-          index={i}
-          canEdit={editingRights}
+          onPress={onPressItem}
+          onLongPress={onLongPressItem}
           onRemove={() => {
             if (onRemoveItem) onRemoveItem(item.id)
           }}
@@ -45,7 +49,7 @@ export const Grid = ({
       {editingRights && (
         <>
           {items.length < gridSize && (
-            <GridTileWrapper canEdit={false} key="add" type="add">
+            <GridTileWrapper key="add" type="add">
               <GridTileActionAdd onPress={onAddItem ?? (() => {})}></GridTileActionAdd>
             </GridTileWrapper>
           )}
@@ -53,7 +57,7 @@ export const Grid = ({
       )}
 
       {Array.from({ length: gridSize - items.length - (editingRights ? 1 : 0) }).map((_, i) => (
-        <GridTileWrapper canEdit={false} key={`empty-${i}`} type="">
+        <GridTileWrapper key={`empty-${i}`} type="">
           <GridTile key={i} />
         </GridTileWrapper>
       ))}

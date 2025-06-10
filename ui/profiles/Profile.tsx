@@ -3,7 +3,6 @@ import { getBacklogItems, getProfileItems } from '@/features/pocketbase/stores/i
 import type { ExpandedProfile, Item } from '@/features/pocketbase/stores/types'
 import { ExpandedItem } from '@/features/pocketbase/stores/types'
 import { s } from '@/features/style'
-import { SheetScreen } from '@/ui/core/Sheets'
 import BottomSheet from '@gorhom/bottom-sheet'
 import { router, useLocalSearchParams } from 'expo-router'
 import { useShareIntentContext } from 'expo-share-intent'
@@ -14,15 +13,16 @@ import { Grid } from '../grid/Grid'
 import { PlaceholderGrid } from '../grid/PlaceholderGrid'
 import { Heading } from '../typo/Heading'
 import { ProfileHeader } from './ProfileHeader'
-import { Details } from './Details'
 import { ProfileBottomSheet } from './ProfileBottomSheet'
-import { ProfileDetailsProvider } from './profileDetailsStore'
+import { ProfileDetailsSheet } from './ProfileDetailsSheet'
+import { useUIStore } from '../state'
 
 export const Profile = ({ userName }: { userName: string }) => {
   const { hasShareIntent } = useShareIntentContext()
+  const { startEditProfile, stopEditProfile } = useUIStore()
 
   const [profile, setProfile] = useState<ExpandedProfile>()
-  const [gridItems, setGridItems] = useState<Item[]>([])
+  const [gridItems, setGridItems] = useState<ExpandedItem[]>([])
   const [backlogItems, setBacklogItems] = useState<ExpandedItem[]>([])
   const [editingRights, seteditingRights] = useState<boolean>(false)
   const [loading, setLoading] = useState<boolean>(true)
@@ -108,6 +108,7 @@ export const Profile = ({ userName }: { userName: string }) => {
   const { logout } = useUserStore()
 
   const bottomSheetRef = useRef<BottomSheet>(null)
+  const detailsSheetRef = useRef<BottomSheet>(null)
 
   const ownProfile = profile && profile.id === user?.id
 
@@ -115,10 +116,8 @@ export const Profile = ({ userName }: { userName: string }) => {
 
   const [detailsItemId, setDetailsItemId] = useState<string>('')
 
-  const initialIndex = Math.max(
-    0,
-    gridItems.findIndex((itm) => itm.id === detailsItemId)
-  )
+  // timeout used to stop editing the profile after 10 seconds
+  let timeout: ReturnType<typeof setTimeout>
 
   return (
     <>
@@ -150,6 +149,19 @@ export const Profile = ({ userName }: { userName: string }) => {
               ) : (
                 <Grid
                   editingRights={editingRights}
+                  onPressItem={(id) => {
+                    setDetailsItemId(id!)
+                    detailsSheetRef.current?.snapToIndex(0)
+                  }}
+                  onLongPressItem={() => {
+                    if (editingRights) {
+                      clearTimeout(timeout)
+                      timeout = setTimeout(() => {
+                        stopEditProfile()
+                      }, 10000)
+                      startEditProfile()
+                    }
+                  }}
                   onRemoveItem={(id) => {
                     setRemovingId(id)
                     bottomSheetRef.current?.snapToIndex(1)
@@ -161,7 +173,7 @@ export const Profile = ({ userName }: { userName: string }) => {
                   columns={3}
                   items={gridItems}
                   rows={4}
-                ></Grid>
+                />
               )}
               {ownProfile && (
                 <View style={{ marginBottom: s.$2, alignItems: 'center' }}>
@@ -190,22 +202,21 @@ export const Profile = ({ userName }: { userName: string }) => {
             handleRemoveFromProfile={handleRemoveFromProfile}
             handleCreateNewRef={handleCreateNewRef}
           />
-          <SheetScreen
-            onChange={(e: any) => {
-              // e === -1 && router.back()
-              e === -1 && stopEditing()
-            }}
-            snapPoints={['100%']}
-            maxDynamicContentSize={'100%'}
-          >
-            <ProfileDetailsProvider
+          {detailsItemId && (
+            <ProfileDetailsSheet
+              detailsSheetRef={detailsSheetRef}
+              detailsItemId={detailsItemId}
               editingRights={editingRights}
-              initialIndex={initialIndex}
-              openedFromFeed={false}
-            >
-              <Details profile={profile} data={gridItems} />
-            </ProfileDetailsProvider>
-          </SheetScreen>
+              gridItems={gridItems}
+              onChange={(index: number) => {
+                if (index === -1) {
+                  stopEditing()
+                  setDetailsItemId('')
+                }
+              }}
+              profile={profile}
+            />
+          )}
         </>
       )}
     </>

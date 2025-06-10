@@ -5,7 +5,7 @@ import Carousel, { ICarouselInstance } from 'react-native-reanimated-carousel'
 import { c, s } from '@/features/style'
 import { useItemStore } from '@/features/pocketbase/stores/items'
 import { EditableList } from '../lists/EditableList'
-import { Sheet, SheetScreen } from '../core/Sheets'
+import { Sheet } from '../core/Sheets'
 import { ExpandedItem, ExpandedProfile } from '@/features/pocketbase/stores/types'
 import { GridLines } from '../display/Gridlines'
 import { MeatballMenu, Checkbox } from '../atoms/MeatballMenu'
@@ -109,14 +109,7 @@ export const Details = ({ profile, data }: { profile: ExpandedProfile; data: Ite
   }, [setAddingToList])
 
   return (
-    <SheetScreen
-      onChange={(e: any) => {
-        e === -1 && router.back()
-        e === -1 && stopEditing()
-      }}
-      snapPoints={openedFromFeed ? ['90%'] : ['100%']}
-      maxDynamicContentSize={openedFromFeed ? '90%' : '100%'}
-    >
+    <>
       <ConditionalGridLines />
 
       {openedFromFeed ? (
@@ -174,6 +167,6 @@ export const Details = ({ profile, data }: { profile: ExpandedProfile; data: Ite
           <EditableList item={addingItem as ExpandedItem} onComplete={() => {}} />
         </Sheet>
       )}
-    </SheetScreen>
+    </>
   )
 }

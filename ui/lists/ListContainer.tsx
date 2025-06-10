@@ -1,8 +1,6 @@
 import type { ExpandedItem } from '@/features/pocketbase/stores/types'
-import { useItemStore } from '@/features/pocketbase/stores/items'
 import { useUIStore } from '@/ui/state'
-import { useState } from 'react'
-import { ScrollView, View, Text, Pressable } from 'react-native'
+import { ScrollView, View, Pressable } from 'react-native'
 import { Button } from '../buttons/Button'
 import { ListItem } from './ListItem'
 import { s } from '@/features/style'
@@ -15,12 +13,12 @@ export const ListContainer = ({
   item: ExpandedItem
   editingRights: boolean
 }) => {
-  const { addingToList, setAddingToList } = useUIStore()
+  const { setAddingToList } = useUIStore()
 
-  return (item?.expand?.children ?? []).length > 0 ? (
+  return (item?.expand?.items_via_parent ?? []).length > 0 ? (
     <ScrollView style={{ flex: 1, padding: s.$075 }}>
       <YStack gap={s.$075}>
-        {item?.expand?.children.map((itm) => (
+        {item?.expand?.items_via_parent.map((itm) => (
           <ListItem largeImage={true} key={itm.id} r={itm} showMeta={false} />
         ))}
       </YStack>

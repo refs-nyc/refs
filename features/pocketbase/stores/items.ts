@@ -42,8 +42,7 @@ export const useItemStore = create<{
   setSearchingNewRef: (id: string) => void
   stopEditing: () => void
   push: (newItem: StagedItem) => Promise<ExpandedItem>
-  addToList: (id: string, ref: CompleteRef) => Promise<Item>
-  removeFromList: (id: string, ref: CompleteRef) => Promise<Item>
+  addItemToList: (listId: string, itemId: string) => Promise<void>
   update: (id?: string) => Promise<RecordModel>
   updateEditedState: (e: Partial<ExpandedItem>) => void
   remove: (id: string) => Promise<void>
@@ -101,30 +100,11 @@ export const useItemStore = create<{
       feedRefreshTrigger: state.feedRefreshTrigger + 1,
     }))
   },
-  addToList: async (id: string, ref: CompleteRef) => {
+  addItemToList: async (listId: string, itemId: string) => {
     try {
-      const record = await pocketbase
+      await pocketbase
         .collection('items')
-        .update(id, { '+children': ref.id }, { expand: 'children' })
-      await canvasApp.actions.addItemToList(id, ref)
-
-      console.log('returning record,', record)
-      return record
-    } catch (error) {
-      console.error(error)
-      throw error
-    }
-  },
-  removeFromList: async (id: string, ref: CompleteRef) => {
-    console.log('REMOVE FROM LIST')
-    try {
-      const record = await pocketbase
-        .collection('items')
-        .update(id, { '-children': ref.id }, { expand: 'children' })
-
-      console.log('record removed from children key', record)
-
-      return record
+        .update(itemId, { 'parent': listId })
     } catch (error) {
       console.error(error)
       throw error
@@ -164,38 +144,20 @@ export const useItemStore = create<{
 
 export const getProfileItems = async (userName: string) => {
   const items = await pocketbase.collection<ExpandedItem>('items').getFullList({
-    filter: pocketbase.filter('creator.userName = {:userName} && backlog = false', {
+    filter: pocketbase.filter('creator.userName = {:userName} && backlog = false && parent = null', {
       userName,
     }),
-    expand: 'children, ref',
+    expand: 'items_via_parent, ref, items_via_parent.ref',
   })
-
-  // if an item appears in another item's list, then don't return it
-  const seenChildren = new Set()
-  for (const item of items) {
-    for (const child of item.children) {
-      seenChildren.add(child)
-    }
-  }
-  const itemsWithoutSeenChildren = items.filter((item) => !seenChildren.has(item.ref))
-
-  return gridSort(itemsWithoutSeenChildren)
+  return gridSort(items)
 }
 
 export const getBacklogItems = async (userName: string) => {
   const items = await pocketbase.collection('items').getFullList({
-    filter: pocketbase.filter('creator.userName = {:userName} && backlog = true', {
+    filter: pocketbase.filter('creator.userName = {:userName} && backlog = true && parent = null', {
       userName,
     }),
     expand: 'children, ref',
   })
-
-  const seenChildren = new Set()
-  for (const item of items) {
-    for (const child of item.children) {
-      seenChildren.add(child)
-    }
-  }
-
-  return items.filter((item) => !seenChildren.has(item.ref)).sort(createdSort)
+  return items.sort(createdSort)
 }

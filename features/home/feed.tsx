@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react'
-import { View, ScrollView, Dimensions } from 'react-native'
+import { useState, useEffect, useRef } from 'react'
+import { View, ScrollView, Dimensions, Pressable } from 'react-native'
 import { Link } from 'expo-router'
 
 import type { ExpandedItem } from '@/features/pocketbase/stores/types'
@@ -9,6 +9,8 @@ import { DismissKeyboard, XStack, YStack, Heading, Button, Text } from '@/ui'
 import SearchBottomSheet from '@/ui/actions/SearchBottomSheet'
 import { SimplePinataImage } from '@/ui/images/SimplePinataImage'
 import { Avatar } from '@/ui/atoms/Avatar'
+import { ProfileDetailsSheet } from '@/ui/profiles/ProfileDetailsSheet'
+import BottomSheet from '@gorhom/bottom-sheet'
 
 const win = Dimensions.get('window')
 
@@ -25,7 +27,7 @@ const formatDate = (isoDateString: string): string => {
 
   // Use built-in relative time formatter for recent items
   const rtf = new Intl.RelativeTimeFormat('en', { numeric: 'auto' })
-  
+
   if (diffInHours < 24) {
     if (diffInHours < 1) {
       const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60))
@@ -44,13 +46,13 @@ const formatDate = (isoDateString: string): string => {
   const dtf = new Intl.DateTimeFormat('en', {
     month: 'short',
     day: 'numeric',
-    year: date.getFullYear() === now.getFullYear() ? undefined : 'numeric'
+    year: date.getFullYear() === now.getFullYear() ? undefined : 'numeric',
   })
-  
+
   return dtf.format(date)
 }
 
-const ListItem = ({ item }: { item: ExpandedItem }) => {
+const ListItem = ({ item, onPress }: { item: ExpandedItem; onPress: () => void }) => {
   const creator = item.expand!.creator
   const creatorProfileUrl = `/user/${creator.userName}/` as const
   const itemUrl = `${creatorProfileUrl}modal?initialId=${item.id}&openedFromFeed=true` as const
@@ -89,22 +91,24 @@ const ListItem = ({ item }: { item: ExpandedItem }) => {
             <Link href={creatorProfileUrl}>
               <Heading tag="semistrong">{item.expand?.creator?.firstName || 'Anonymous'} </Heading>
             </Link>
-            <Text style={{ color: c.muted2 }}>
-              added{' '}
-            </Text>
-            <Link href={itemUrl}>
+            <Text style={{ color: c.muted2 }}>added </Text>
+            <Link href="" onPress={onPress}>
               <Heading tag="semistrong">{item.expand?.ref?.title}</Heading>
             </Link>
           </Text>
-          <Text style={{ fontSize: 12, color: c.muted, paddingTop: 2 }}>{formatDate(item.created)}</Text>
+          <Text style={{ fontSize: 12, color: c.muted, paddingTop: 2 }}>
+            {formatDate(item.created)}
+          </Text>
         </View>
 
         {item?.image ? (
-          <Link href={itemUrl}>
-            <View style={{
-              minWidth: FEED_REF_IMAGE_SIZE,
-              minHeight: FEED_REF_IMAGE_SIZE,
-            }}>
+          <Pressable onPress={onPress}>
+            <View
+              style={{
+                minWidth: FEED_REF_IMAGE_SIZE,
+                minHeight: FEED_REF_IMAGE_SIZE,
+              }}
+            >
               <SimplePinataImage
                 originalSource={item.image}
                 imageOptions={{ width: FEED_REF_IMAGE_SIZE, height: FEED_REF_IMAGE_SIZE }}
@@ -117,7 +121,7 @@ const ListItem = ({ item }: { item: ExpandedItem }) => {
                 }}
               />
             </View>
-          </Link>
+          </Pressable>
         ) : (
           <View
             style={{
@@ -136,6 +140,8 @@ const ListItem = ({ item }: { item: ExpandedItem }) => {
 export const Feed = () => {
   const [items, setItems] = useState<ExpandedItem[]>([])
   const feedRefreshTrigger = useItemStore((state) => state.feedRefreshTrigger)
+  const [detailsItem, setDetailsItem] = useState<ExpandedItem | null>(null)
+  const detailsSheetRef = useRef<BottomSheet>(null)
 
   const fetchFeedItems = async () => {
     try {
@@ -161,30 +167,53 @@ export const Feed = () => {
       <DismissKeyboard>
         <ScrollView style={{ flex: 1 }}>
           <View style={{ height: '100%' }}>
-          <View
-            style={{
-              gap: s.$09,
-              paddingTop: s.$1,
-              paddingHorizontal: s.$1half,
-              width: win.width,
-            }}
-          >
-            <YStack
-              gap={0}
+            <View
               style={{
-                flex: 1,
-                paddingBottom: s.$12,
+                gap: s.$09,
+                paddingTop: s.$1,
+                paddingHorizontal: s.$1half,
+                width: win.width,
               }}
             >
-              {items.map((item) => (
-                <ListItem key={item.id} item={item} />
-              ))}
-            </YStack>
-          </View>
+              <YStack
+                gap={0}
+                style={{
+                  flex: 1,
+                  paddingBottom: s.$12,
+                }}
+              >
+                {items.map((item) => (
+                  <ListItem
+                    key={item.id}
+                    item={item}
+                    onPress={() => {
+                      // set the current item
+                      setDetailsItem(item)
+                      // open the details sheet
+                      detailsSheetRef.current?.snapToIndex(0)
+                    }}
+                  />
+                ))}
+              </YStack>
+            </View>
           </View>
         </ScrollView>
       </DismissKeyboard>
       <SearchBottomSheet />
+      {detailsItem && (
+        <ProfileDetailsSheet
+          detailsSheetRef={detailsSheetRef}
+          profileUsername={detailsItem.expand!.creator.userName}
+          detailsItemId={detailsItem.id}
+          onChange={(index) => {
+            // if the index is -1, then the user has closed the sheet
+            if (index === -1) {
+              setDetailsItem(null)
+            }
+          }}
+          openedFromFeed={true}
+        />
+      )}
     </>
   )
 }

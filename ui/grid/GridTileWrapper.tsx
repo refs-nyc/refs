@@ -18,7 +18,7 @@ export const GridTileWrapper = ({
   children: React.ReactNode
   id?: string
   onRemove?: () => void
-  onPress?: (id?: string) => void
+  onPress?: () => void
   onLongPress?: () => void
 }) => {
   const { editingProfile, stopEditProfile } = useUIStore()
@@ -30,7 +30,7 @@ export const GridTileWrapper = ({
 
   return (
     <TouchableOpacity
-      onPress={() => onPress && onPress(id)}
+      onPress={() => onPress && onPress()}
       onLongPress={onLongPress}
       style={[base.gridTile, specificStyles]}
     >

@@ -1,9 +1,9 @@
-import { useEffect } from 'react'
 import { GridWrapper } from './GridWrapper'
 import { GridTile } from './GridTile'
 import { GridItem } from './GridItem'
 import { GridTileWrapper } from './GridTileWrapper'
 import { GridTileActionAdd } from './GridTileActionAdd'
+import { ExpandedItem } from '@/features/pocketbase/stores/types'
 
 export const Grid = ({
   onPressItem,
@@ -15,7 +15,7 @@ export const Grid = ({
   items,
   editingRights = false,
 }: {
-  onPressItem?: (id?: string) => void
+  onPressItem?: (item?: ExpandedItem) => void
   onLongPressItem?: () => void
   onAddItem?: () => void
   onRemoveItem?: (id: string) => void
@@ -24,9 +24,6 @@ export const Grid = ({
   items: any[]
   editingRights?: boolean
 }) => {
-  useEffect(() => {
-    // console.log('grid: items updated', items.length)
-  }, [items])
   const gridSize = columns * rows
 
   return (
@@ -35,7 +32,7 @@ export const Grid = ({
         <GridTileWrapper
           key={item.id}
           id={item.id}
-          onPress={onPressItem}
+          onPress={() => onPressItem && onPressItem(item)}
           onLongPress={onLongPressItem}
           onRemove={() => {
             if (onRemoveItem) onRemoveItem(item.id)

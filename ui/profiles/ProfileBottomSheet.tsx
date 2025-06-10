@@ -31,7 +31,7 @@ export const ProfileBottomSheet = ({
   user: UsersRecord | null
   handleMoveToBacklog: () => Promise<void>
   handleRemoveFromProfile: () => Promise<void>
-  handleCreateNewRef: (itm: Item) => Promise<void>
+  handleCreateNewRef: (itm: ExpandedItem) => Promise<void>
 }) => {
   const setAddingTo = (str: string) => {
     router.setParams({ addingTo: str })

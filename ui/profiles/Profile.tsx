@@ -78,12 +78,15 @@ export const Profile = ({ userName }: { userName: string }) => {
     await refreshGrid(userName)
   }
 
-  const handleCreateNewRef = async (itm: Item) => {
+  const handleCreateNewRef = async (item: ExpandedItem) => {
     await refreshGrid(userName)
     bottomSheetRef.current?.collapse()
     setAddingTo('')
     await refreshGrid(userName)
-    if (addingTo !== 'backlog') router.push(`/user/${userName}/modal?initialId=${itm.id}`)
+    if (addingTo !== 'backlog') {
+      setDetailsItem(item)
+      detailsSheetRef.current?.snapToIndex(0)
+    }
   }
 
   useEffect(() => {

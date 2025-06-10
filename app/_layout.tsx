@@ -48,11 +48,6 @@ export {
   ErrorBoundary,
 } from 'expo-router'
 
-export const unstable_settings = {
-  // Ensure that reloading on `/modal` keeps a back button present.
-  initialRouteName: '(tabs)',
-}
-
 // Notifications setup
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -186,16 +181,6 @@ function RootLayoutNav() {
             gestureEnabled: true,
             gestureDirection: 'horizontal',
             headerShown: false,
-          }}
-        />
-        <Stack.Screen
-          name="user/[userName]/modal"
-          options={{
-            title: 'Details',
-            presentation: 'transparentModal',
-            headerShown: false,
-            contentStyle: { backgroundColor: 'transparent' },
-            animation: 'fade',
           }}
         />
       </Stack>

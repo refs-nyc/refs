@@ -131,6 +131,7 @@ export type ItemsRecord = {
   list?: boolean
   location?: string
   order?: number
+  parent?: RecordIdString
   ref?: RecordIdString
   text?: string
   updated?: IsoDateString

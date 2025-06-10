@@ -14,6 +14,7 @@ export const Heading = ({
   style?: any
   tag: TypoTag
   numberOfLines?: number
+  onPress?: () => void
 }) => {
   let typeStyle = null
 

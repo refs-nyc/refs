@@ -1,11 +1,11 @@
 import { useState, useEffect, useRef } from 'react'
-import { View, ScrollView, Dimensions, Pressable } from 'react-native'
+import { View, ScrollView, Dimensions } from 'react-native'
 import { Link } from 'expo-router'
 
 import type { ExpandedItem } from '@/features/pocketbase/stores/types'
 import { pocketbase, useItemStore } from '@/features/pocketbase'
 import { s, c } from '@/features/style'
-import { DismissKeyboard, XStack, YStack, Heading, Button, Text } from '@/ui'
+import { DismissKeyboard, XStack, YStack, Heading, Text } from '@/ui'
 import SearchBottomSheet from '@/ui/actions/SearchBottomSheet'
 import { SimplePinataImage } from '@/ui/images/SimplePinataImage'
 import { Avatar } from '@/ui/atoms/Avatar'
@@ -92,7 +92,8 @@ const ListItem = ({ item, onPress }: { item: ExpandedItem; onPress: () => void }
               <Heading tag="semistrong">{item.expand?.creator?.firstName || 'Anonymous'} </Heading>
             </Link>
             <Text style={{ color: c.muted2 }}>added </Text>
-            <Link href="" onPress={onPress}>
+            {/* @ts-ignore */}
+            <Link href={itemUrl}>
               <Heading tag="semistrong">{item.expand?.ref?.title}</Heading>
             </Link>
           </Text>
@@ -102,7 +103,8 @@ const ListItem = ({ item, onPress }: { item: ExpandedItem; onPress: () => void }
         </View>
 
         {item?.image ? (
-          <Pressable onPress={onPress}>
+          // @ts-ignore
+          <Link href="" onPress={onPress}>
             <View
               style={{
                 minWidth: FEED_REF_IMAGE_SIZE,
@@ -121,7 +123,7 @@ const ListItem = ({ item, onPress }: { item: ExpandedItem; onPress: () => void }
                 }}
               />
             </View>
-          </Pressable>
+          </Link>
         ) : (
           <View
             style={{
@@ -148,7 +150,7 @@ export const Feed = () => {
       const records = await pocketbase.collection('items').getList<ExpandedItem>(1, 30, {
         // TODO: remove list = false once we have a way to display lists in the feed
         // also consider showing backlog items in the feed, when we have a way to link to them
-        filter: `creator != null && backlog = false && list = false`,
+        filter: `creator != null && backlog = false && list = false && parent = null`,
         sort: '-created',
         expand: 'ref,creator',
       })

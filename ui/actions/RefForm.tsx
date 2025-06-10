@@ -15,7 +15,6 @@ import { StagedRef, ExpandedItem } from '@/features/pocketbase/stores/types'
 // @ts-ignore
 import { KeyboardAvoidingView } from 'react-native-keyboard-controller'
 import { DismissKeyboard } from '../atoms/DismissKeyboard'
-import { Paragraph } from '..'
 
 const win = Dimensions.get('window')
 
@@ -116,7 +115,7 @@ export const RefForm = ({
     ]).start()
   }
 
-  const submit = async (extraFields?: Partial<ExpandedItem>, promptList = false) => {
+  const submit = async (willAddToList: boolean, extraFields?: Partial<ExpandedItem>, promptList = false) => {
     // Check for missing fields
     let missing = false
     if (!title) {
@@ -147,7 +146,8 @@ export const RefForm = ({
 
     try {
       setCreateInProgress(true)
-      const item = await addToProfile(data, !pathname.includes('onboarding'), {
+      const attach = !pathname.includes('onboarding') && !willAddToList
+      const item = await addToProfile(data, attach, {
         comment,
         backlog,
         ...extraFields,
@@ -399,7 +399,7 @@ export const RefForm = ({
               style={{ width: '48%', minWidth: 0 }}
               disabled={!title || createInProgress}
               onPress={() => {
-                submit({}, true)
+                submit(true, {}, true)
               }}
             />
           )}
@@ -428,7 +428,7 @@ export const RefForm = ({
               variant="whiteInverted"
               style={{ width: url ? '100%' : '48%', minWidth: 0 }}
               disabled={!(pinataSource && title) || createInProgress}
-              onPress={() => submit()}
+              onPress={() => submit(false)}
             />
           )}
         </View>

@@ -108,6 +108,10 @@ export const useItemStore = create<{
   addItemToList: async (listId: string, itemId: string) => {
     try {
       await pocketbase.collection('items').update(itemId, { parent: listId })
+      // newly created item might appear in feed before it is added to a list
+      // so we should refresh after choosing a list
+      // (because currently we are filtering out list children from feed)
+      get().triggerFeedRefresh()
     } catch (error) {
       console.error(error)
       throw error

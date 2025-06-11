@@ -25,11 +25,10 @@ export const EditableList = ({
   const { updateOne } = useRefStore()
   const { push } = useItemStore()
   const [itemState, setItemState] = useState<ExpandedItem>(item)
-  const [title, setTitle] = useState<string>('')
-  const [editingTitle, setEditingTitle] = useState<boolean>(true)
+  const [title, setTitle] = useState<string>(item.expand.ref.title || '')
+  const [editingTitle, setEditingTitle] = useState<boolean>(!item.expand.ref.title)
   const titleRef = useRef<any>(null)
   const insets = useSafeAreaInsets()
-  const win = Dimensions.get('window')
 
   const onTitleChange = async (e: string) => {
     titleRef.current?.blur()

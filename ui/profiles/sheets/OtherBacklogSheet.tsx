@@ -26,9 +26,9 @@ export const OtherBacklogSheet = ({
     <BottomSheet
       enableDynamicSizing={false}
       ref={bottomSheetRef}
-      enablePanDownToClose={false}
-      snapPoints={['1%', '50%', '90%']}
-      index={0}
+      enablePanDownToClose={true}
+      snapPoints={['50%', '90%']}
+      index={-1}
       animatedIndex={moduleBackdropAnimatedIndex}
       backgroundStyle={{ backgroundColor: c.olive, borderRadius: s.$4, paddingTop: 0 }}
       backdropComponent={(p) => (

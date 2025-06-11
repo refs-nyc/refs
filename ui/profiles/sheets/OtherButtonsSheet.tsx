@@ -38,6 +38,7 @@ export const OtherButtonsSheet = ({
       index={0}
       animatedIndex={moduleBackdropAnimatedIndex}
       backgroundStyle={{ backgroundColor: c.olive, borderRadius: s.$4, paddingTop: 0 }}
+      handleComponent={() => null}
       backdropComponent={(p) => (
         <BottomSheetBackdrop
           {...p}

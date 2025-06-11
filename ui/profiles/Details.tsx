@@ -46,12 +46,14 @@ DetailsHeaderButton.displayName = 'DetailsHeaderButton'
 const ApplyChangesButton = () => {
   const update = useItemStore((state) => state.update)
   const stopEditing = useItemStore((state) => state.stopEditing)
+  const triggerProfileRefresh = useItemStore((state) => state.triggerProfileRefresh)
 
   return (
     <Checkbox
       onPress={async () => {
         await update()
         stopEditing()
+        triggerProfileRefresh()
       }}
     />
   )

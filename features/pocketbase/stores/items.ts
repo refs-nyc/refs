@@ -33,9 +33,10 @@ export const useItemStore = create<{
   editing: string
   addingToList: boolean
   searchingNewRef: string
-  editedState: Partial<ExpandedItem>
+  editedState: Partial<ExpandedItem & { listTitle: string }>
   editingLink: boolean
   feedRefreshTrigger: number
+  profileRefreshTrigger: number
   setEditingLink: (newValue: boolean) => void
   startEditing: (id: string) => void
   setAddingToList: (newValue: boolean) => void
@@ -44,10 +45,11 @@ export const useItemStore = create<{
   push: (newItem: StagedItem) => Promise<ExpandedItem>
   addItemToList: (listId: string, itemId: string) => Promise<void>
   update: (id?: string) => Promise<RecordModel>
-  updateEditedState: (e: Partial<ExpandedItem>) => void
+  updateEditedState: (e: Partial<ExpandedItem & { listTitle: string }>) => void
   remove: (id: string) => Promise<void>
   moveToBacklog: (id: string) => Promise<ItemsRecord>
   triggerFeedRefresh: () => void
+  triggerProfileRefresh: () => void
 }>((set, get) => ({
   items: [],
   addingToList: false,
@@ -56,6 +58,7 @@ export const useItemStore = create<{
   editedState: {},
   editingLink: false,
   feedRefreshTrigger: 0,
+  profileRefreshTrigger: 0,
   setEditingLink: (newValue: boolean) => set(() => ({ editingLink: newValue })),
   startEditing: (id: string) => set(() => ({ editing: id })),
   setAddingToList: (newValue: boolean) => set(() => ({ addingToList: newValue })),
@@ -70,6 +73,8 @@ export const useItemStore = create<{
       editedState,
     })),
   triggerFeedRefresh: () => set((state) => ({ feedRefreshTrigger: state.feedRefreshTrigger + 1 })),
+  triggerProfileRefresh: () =>
+    set((state) => ({ profileRefreshTrigger: state.profileRefreshTrigger + 1 })),
   push: async (newItem: StagedItem) => {
     console.log('ITEMS PUSH')
     try {
@@ -102,9 +107,7 @@ export const useItemStore = create<{
   },
   addItemToList: async (listId: string, itemId: string) => {
     try {
-      await pocketbase
-        .collection('items')
-        .update(itemId, { 'parent': listId })
+      await pocketbase.collection('items').update(itemId, { parent: listId })
     } catch (error) {
       console.error(error)
       throw error
@@ -115,6 +118,13 @@ export const useItemStore = create<{
       const record = await pocketbase
         .collection('items')
         .update(id || get().editing, get().editedState, { expand: 'children,ref' })
+
+      if (get().editedState.listTitle && record.list) {
+        const ref = await pocketbase
+          .collection('refs')
+          .update(record.ref, { title: get().editedState.listTitle })
+        if (record.expand?.ref) record.expand.ref = ref
+      }
       // Canvas stuff
 
       // Trigger feed refresh since updates might affect feed visibility
@@ -144,9 +154,12 @@ export const useItemStore = create<{
 
 export const getProfileItems = async (userName: string) => {
   const items = await pocketbase.collection<ExpandedItem>('items').getFullList({
-    filter: pocketbase.filter('creator.userName = {:userName} && backlog = false && parent = null', {
-      userName,
-    }),
+    filter: pocketbase.filter(
+      'creator.userName = {:userName} && backlog = false && parent = null',
+      {
+        userName,
+      }
+    ),
     expand: 'items_via_parent, ref, items_via_parent.ref',
   })
   return gridSort(items)

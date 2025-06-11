@@ -1,6 +1,14 @@
 import { useState, useEffect, useRef } from 'react'
 import { usePathname } from 'expo-router'
-import { View, TouchableOpacity, Dimensions, Animated, Text, Pressable, ActivityIndicator } from 'react-native'
+import {
+  View,
+  TouchableOpacity,
+  Dimensions,
+  Animated,
+  Text,
+  Pressable,
+  ActivityIndicator,
+} from 'react-native'
 import { BottomSheetTextInput as TextInput } from '@gorhom/bottom-sheet'
 import { Heading } from '@/ui/typo/Heading'
 import { Picker } from '../inputs/Picker'
@@ -115,7 +123,11 @@ export const RefForm = ({
     ]).start()
   }
 
-  const submit = async (willAddToList: boolean, extraFields?: Partial<ExpandedItem>, promptList = false) => {
+  const submit = async (
+    willAddToList: boolean,
+    extraFields?: Partial<ExpandedItem>,
+    promptList = false
+  ) => {
     // Check for missing fields
     let missing = false
     if (!title) {
@@ -301,7 +313,7 @@ export const RefForm = ({
           {editingField === 'location' ? (
             <TextInput
               value={location}
-              onChangeText={t => t.length <= 150 && setLocation(t)}
+              onChangeText={(t) => t.length <= 150 && setLocation(t)}
               onBlur={() => setEditingField(null)}
               autoFocus
               placeholder="Add location"
@@ -323,7 +335,7 @@ export const RefForm = ({
           ) : editingField === 'author' ? (
             <TextInput
               value={author}
-              onChangeText={t => t.length <= 150 && setAuthor(t)}
+              onChangeText={(t) => t.length <= 150 && setAuthor(t)}
               onBlur={() => setEditingField(null)}
               autoFocus
               placeholder="Add author"
@@ -343,24 +355,68 @@ export const RefForm = ({
               returnKeyType="done"
             />
           ) : location ? (
-            <Pressable onPress={() => {
-              setTimeout(() => setEditingField('location'), 0);
-            }}>
-              <Text style={{ color: c.surface, fontSize: 18, fontWeight: '600', opacity: 0.5, textAlign: 'left' }}>{location}</Text>
+            <Pressable
+              onPress={() => {
+                setTimeout(() => setEditingField('location'), 0)
+              }}
+            >
+              <Text
+                style={{
+                  color: c.surface,
+                  fontSize: 18,
+                  fontWeight: '600',
+                  opacity: 0.5,
+                  textAlign: 'left',
+                }}
+              >
+                {location}
+              </Text>
             </Pressable>
           ) : author ? (
-            <Pressable onPress={() => {
-              setTimeout(() => setEditingField('author'), 0);
-            }}>
-              <Text style={{ color: c.surface, fontSize: 18, fontWeight: '600', opacity: 0.5, textAlign: 'left' }}>{author}</Text>
+            <Pressable
+              onPress={() => {
+                setTimeout(() => setEditingField('author'), 0)
+              }}
+            >
+              <Text
+                style={{
+                  color: c.surface,
+                  fontSize: 18,
+                  fontWeight: '600',
+                  opacity: 0.5,
+                  textAlign: 'left',
+                }}
+              >
+                {author}
+              </Text>
             </Pressable>
           ) : (
             <View style={{ flexDirection: 'row', gap: 16 }}>
               <Pressable onPress={() => setEditingField('location')}>
-                <Text style={{ color: c.surface, fontSize: 17.6, opacity: 0.7, textAlign: 'left', fontWeight: '600' }}>+ location</Text>
+                <Text
+                  style={{
+                    color: c.surface,
+                    fontSize: 17.6,
+                    opacity: 0.7,
+                    textAlign: 'left',
+                    fontWeight: '600',
+                  }}
+                >
+                  + location
+                </Text>
               </Pressable>
               <Pressable onPress={() => setEditingField('author')}>
-                <Text style={{ color: c.surface, fontSize: 17.6, opacity: 0.7, textAlign: 'left', fontWeight: '600' }}>+ author</Text>
+                <Text
+                  style={{
+                    color: c.surface,
+                    fontSize: 17.6,
+                    opacity: 0.7,
+                    textAlign: 'left',
+                    fontWeight: '600',
+                  }}
+                >
+                  + author
+                </Text>
               </Pressable>
             </View>
           )}
@@ -391,22 +447,19 @@ export const RefForm = ({
             justifyContent: 'space-between',
           }}
         >
-          {/* Lists can't have a url */}
-          {!url && (
-            <Button
-              title="Add to list"
-              variant="whiteOutline"
-              style={{ width: '48%', minWidth: 0 }}
-              disabled={!title || createInProgress}
-              onPress={() => {
-                submit(true, {}, true)
-              }}
-            />
-          )}
-          {(createInProgress || uploadInProgress || (uploadInitiated && !pinataSource)) ? (
+          <Button
+            title="Add to list"
+            variant="whiteOutline"
+            style={{ width: '48%', minWidth: 0 }}
+            disabled={!title || createInProgress}
+            onPress={() => {
+              submit(true, {}, true)
+            }}
+          />
+          {createInProgress || uploadInProgress || (uploadInitiated && !pinataSource) ? (
             <Pressable
               style={{
-                width: url ? '100%' : '48%',
+                width: '48%',
                 minWidth: 0,
                 height: 48,
                 alignItems: 'center',
@@ -424,9 +477,9 @@ export const RefForm = ({
             </Pressable>
           ) : (
             <Button
-              title={title ? "Add Ref" : "Title required"}
+              title={title ? 'Add Ref' : 'Title required'}
               variant="whiteInverted"
-              style={{ width: url ? '100%' : '48%', minWidth: 0 }}
+              style={{ width: '48%', minWidth: 0 }}
               disabled={!(pinataSource && title) || createInProgress}
               onPress={() => submit(false)}
             />

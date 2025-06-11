@@ -1,6 +1,6 @@
 import { pocketbase, removeFromProfile, useItemStore, useUserStore } from '@/features/pocketbase'
 import { getBacklogItems, getProfileItems } from '@/features/pocketbase/stores/items'
-import type { ExpandedProfile, Item } from '@/features/pocketbase/stores/types'
+import type { ExpandedProfile } from '@/features/pocketbase/stores/types'
 import { ExpandedItem } from '@/features/pocketbase/stores/types'
 import { s } from '@/features/style'
 import BottomSheet from '@gorhom/bottom-sheet'
@@ -28,7 +28,7 @@ export const Profile = ({ userName }: { userName: string }) => {
   const [loading, setLoading] = useState<boolean>(true)
 
   const { user } = useUserStore()
-  const { moveToBacklog } = useItemStore()
+  const { moveToBacklog, profileRefreshTrigger } = useItemStore()
   const { addingTo, removingId } = useLocalSearchParams()
 
   const setAddingTo = (str: string) => {
@@ -106,7 +106,7 @@ export const Profile = ({ userName }: { userName: string }) => {
       }
     }
     init()
-  }, [userName])
+  }, [userName, profileRefreshTrigger])
 
   const { logout } = useUserStore()
 

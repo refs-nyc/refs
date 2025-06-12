@@ -5,7 +5,6 @@ import { Button } from '@/ui/buttons/Button'
 import { XStack, YStack } from '@/ui/core/Stacks'
 import { Heading } from '@/ui/typo/Heading'
 import BottomSheet, { BottomSheetBackdrop } from '@gorhom/bottom-sheet'
-import { useState } from 'react'
 import { View } from 'react-native'
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated'
 
@@ -76,7 +75,7 @@ export const RemoveRefSheet = ({
         </XStack>
         <YStack gap={s.$1 + s.$05}>
           <Button onPress={handleRemoveFromProfile} title="Remove" variant="basic" />
-          <Button onPress={handleMoveToBacklog} title={`Send to Backlog`} variant="fluid" />
+          <Button onPress={handleMoveToBacklog} title={`Send to Backlog`} />
         </YStack>
       </YStack>
     </BottomSheet>

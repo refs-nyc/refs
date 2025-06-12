@@ -90,11 +90,8 @@ export const Button = (props: ButtonProps) => {
           />
         )}
 
-        {!iconButton && (
-          children
-            ? children
-            : <Text style={[styles.text, textVariant]}>{title ?? 'Save'}</Text>
-        )}
+        {!iconButton &&
+          (children ? children : <Text style={[styles.text, textVariant]}>{title ?? 'Save'}</Text>)}
 
         {iconAfter && iconAfterCustom ? (
           <Icon size={iconSize} name={iconAfter} color={iconColor} />
@@ -161,7 +158,7 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   basic: {
-    backgroundColor: c.surface,
+    backgroundColor: c.surface2,
     color: c.surface,
   },
   basicLeft: {
@@ -174,20 +171,6 @@ const styles = StyleSheet.create({
     paddingVertical: s.$1,
     paddingHorizontal: s.$3,
     minWidth: s.$20,
-  },
-  outline: {
-    backgroundColor: c.surface,
-    borderColor: c.black,
-    borderWidth: 2,
-  },
-  fluid: {
-    width: '100%',
-  },
-  outlineFluid: {
-    width: '100%',
-    backgroundColor: c.surface,
-    borderColor: c.black,
-    borderWidth: 2,
   },
   inlineSmallMuted: {
     backgroundColor: c.surface2,
@@ -280,12 +263,6 @@ const styles = StyleSheet.create({
     fontWeight: 'normal',
     color: c.surface,
     textAlign: 'left',
-  },
-  outlineFluidText: {
-    color: c.black,
-  },
-  outlineText: {
-    color: c.black,
   },
   smallWhiteOutlineText: {
     ...t.small,

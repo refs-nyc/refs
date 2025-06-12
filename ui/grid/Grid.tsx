@@ -18,7 +18,7 @@ export const Grid = ({
   onPressItem?: (item?: ExpandedItem) => void
   onLongPressItem?: () => void
   onAddItem?: () => void
-  onRemoveItem?: (id: string) => void
+  onRemoveItem?: (item: ExpandedItem) => void
   columns: number
   rows: number
   items: any[]
@@ -35,7 +35,7 @@ export const Grid = ({
           onPress={() => onPressItem && onPressItem(item)}
           onLongPress={onLongPressItem}
           onRemove={() => {
-            if (onRemoveItem) onRemoveItem(item.id)
+            if (onRemoveItem) onRemoveItem(item)
           }}
           type={item.list ? 'list' : item.expand.ref?.image || item.image ? 'image' : 'text'}
         >

@@ -7,7 +7,7 @@ import BacklogList from '@/ui/profiles/BacklogList'
 import { Heading } from '@/ui/typo/Heading'
 import { Ionicons } from '@expo/vector-icons'
 import BottomSheet, { BottomSheetBackdrop } from '@gorhom/bottom-sheet'
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Pressable, View } from 'react-native'
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated'
 
@@ -23,7 +23,20 @@ export const MyBacklogSheet = ({
   openAddtoBacklog: () => void
 }) => {
   const bottomSheetRef = useRef<BottomSheet>(null)
-  const { moduleBackdropAnimatedIndex } = useBackdropStore()
+
+  const { moduleBackdropAnimatedIndex, registerBackdropPress, unregisterBackdropPress } =
+    useBackdropStore()
+
+  // close the new ref sheet when the user taps the navigation backdrop
+  useEffect(() => {
+    const key = registerBackdropPress(() => {
+      bottomSheetRef.current?.collapse()
+    })
+    return () => {
+      unregisterBackdropPress(key)
+    }
+  }, [])
+
   const [index, setIndex] = useState(0)
 
   const disappearsOnIndex = 0

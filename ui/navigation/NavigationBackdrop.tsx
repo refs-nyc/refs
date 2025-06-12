@@ -13,6 +13,7 @@ export const NavigationBackdrop = () => {
     otherProfileBackdropAnimatedIndex,
     newRefSheetBackdropAnimatedIndex,
     removeRefSheetBackdropAnimatedIndex,
+    backdropPressHandlers,
   } = useBackdropStore()
 
   const animatedStyle = useAnimatedStyle(() => {
@@ -86,6 +87,10 @@ export const NavigationBackdrop = () => {
         },
         animatedStyle,
       ]}
+      onPress={() => {
+        // close all of the sheets
+        Object.values(backdropPressHandlers).forEach((handler) => handler())
+      }}
     />
   )
 }

@@ -32,7 +32,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
   const { moveToBacklog } = useItemStore()
 
   const [addingTo, setAddingTo] = useState<'' | 'grid' | 'backlog'>('')
-  const [removingId, setRemovingId] = useState<string>('')
+  const [removingItem, setRemovingItem] = useState<ExpandedItem | null>(null)
 
   const refreshGrid = async (userName: string) => {
     setLoading(true)
@@ -55,13 +55,11 @@ export const MyProfile = ({ userName }: { userName: string }) => {
   }
 
   const handleMoveToBacklog = async () => {
+    if (!removingItem) return
     try {
       removeRefSheetRef.current?.close()
-      const updatedRecord = await moveToBacklog(
-        typeof removingId === 'string' ? removingId : (removingId as string[])[0]
-      )
-
-      setRemovingId('')
+      const updatedRecord = await moveToBacklog(removingItem?.id)
+      setRemovingItem(null)
       await refreshGrid(userName)
     } catch (error) {
       console.error(error)
@@ -69,11 +67,10 @@ export const MyProfile = ({ userName }: { userName: string }) => {
   }
 
   const handleRemoveFromProfile = async () => {
+    if (!removingItem) return
     removeRefSheetRef.current?.close()
-    await removeFromProfile(
-      typeof removingId === 'string' ? removingId : (removingId as string[])[0]
-    )
-    setRemovingId('')
+    await removeFromProfile(removingItem.id)
+    setRemovingItem(null)
     await refreshGrid(userName)
   }
 
@@ -165,8 +162,8 @@ export const MyProfile = ({ userName }: { userName: string }) => {
                       startEditProfile()
                     }
                   }}
-                  onRemoveItem={(id) => {
-                    setRemovingId(id)
+                  onRemoveItem={(item) => {
+                    setRemovingItem(item)
                     removeRefSheetRef.current?.expand()
                   }}
                   onAddItem={() => {
@@ -208,6 +205,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
             bottomSheetRef={removeRefSheetRef}
             handleMoveToBacklog={handleMoveToBacklog}
             handleRemoveFromProfile={handleRemoveFromProfile}
+            item={removingItem}
           />
           <NewRefSheet
             addingTo={addingTo}

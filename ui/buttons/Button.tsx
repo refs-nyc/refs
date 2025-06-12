@@ -161,7 +161,7 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   basic: {
-    backgroundColor: c.surface,
+    backgroundColor: c.surface2,
     color: c.surface,
   },
   basicLeft: {

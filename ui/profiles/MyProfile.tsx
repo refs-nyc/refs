@@ -56,9 +56,11 @@ export const MyProfile = ({ userName }: { userName: string }) => {
 
   const handleMoveToBacklog = async () => {
     try {
+      removeRefSheetRef.current?.close()
       const updatedRecord = await moveToBacklog(
         typeof removingId === 'string' ? removingId : (removingId as string[])[0]
       )
+
       setRemovingId('')
       await refreshGrid(userName)
     } catch (error) {
@@ -67,6 +69,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
   }
 
   const handleRemoveFromProfile = async () => {
+    removeRefSheetRef.current?.close()
     await removeFromProfile(
       typeof removingId === 'string' ? removingId : (removingId as string[])[0]
     )
@@ -164,7 +167,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
                   }}
                   onRemoveItem={(id) => {
                     setRemovingId(id)
-                    removeRefSheetRef.current?.snapToIndex(1)
+                    removeRefSheetRef.current?.expand()
                   }}
                   onAddItem={() => {
                     setAddingTo('grid')

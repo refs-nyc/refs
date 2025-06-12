@@ -16,11 +16,11 @@ export const RemoveRefSheet = ({
   handleMoveToBacklog: () => Promise<void>
   handleRemoveFromProfile: () => Promise<void>
 }) => {
-  const { moduleBackdropAnimatedIndex } = useBackdropStore()
+  const { removeRefSheetBackdropAnimatedIndex } = useBackdropStore()
   const [index, setIndex] = useState(0)
 
-  const disappearsOnIndex = 0
-  const appearsOnIndex = 1
+  const disappearsOnIndex = -1
+  const appearsOnIndex = 0
   const isMinimised = index === 0
   const HANDLE_HEIGHT = s.$2
 
@@ -28,20 +28,20 @@ export const RemoveRefSheet = ({
     <BottomSheet
       enableDynamicSizing={false}
       ref={bottomSheetRef}
-      enablePanDownToClose={false}
-      snapPoints={['1%', '25%']}
-      index={0}
-      animatedIndex={moduleBackdropAnimatedIndex}
+      enablePanDownToClose={true}
+      snapPoints={['25%']}
+      index={-1}
+      animatedIndex={removeRefSheetBackdropAnimatedIndex}
       onChange={(i: number) => {
         setIndex(i)
       }}
-      backgroundStyle={{ backgroundColor: c.olive, borderRadius: s.$4, paddingTop: 0 }}
+      backgroundStyle={{ backgroundColor: c.surface, borderRadius: s.$4, paddingTop: 0 }}
       backdropComponent={(p) => (
         <BottomSheetBackdrop
           {...p}
           disappearsOnIndex={disappearsOnIndex}
           appearsOnIndex={appearsOnIndex}
-          pressBehavior={'collapse'}
+          pressBehavior={'close'}
         />
       )}
       handleComponent={() => (

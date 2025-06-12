@@ -4,6 +4,7 @@ import { c, s } from '@/features/style'
 import BacklogList from '@/ui/profiles/BacklogList'
 import { Heading } from '@/ui/typo/Heading'
 import BottomSheet, { BottomSheetBackdrop } from '@gorhom/bottom-sheet'
+import { useEffect } from 'react'
 import { Pressable } from 'react-native'
 
 export const OtherBacklogSheet = ({
@@ -15,7 +16,18 @@ export const OtherBacklogSheet = ({
   backlogItems: ExpandedItem[]
   profile: ExpandedProfile
 }) => {
-  const { otherProfileBackdropAnimatedIndex } = useBackdropStore()
+  const { otherProfileBackdropAnimatedIndex, registerBackdropPress, unregisterBackdropPress } =
+    useBackdropStore()
+
+  // close the new ref sheet when the user taps the navigation backdrop
+  useEffect(() => {
+    const key = registerBackdropPress(() => {
+      bottomSheetRef.current?.close()
+    })
+    return () => {
+      unregisterBackdropPress(key)
+    }
+  }, [])
 
   const disappearsOnIndex = -1
   const appearsOnIndex = 0

@@ -20,6 +20,7 @@ export const OtherProfile = ({ userName }: { userName: string }) => {
   const [backlogItems, setBacklogItems] = useState<ExpandedItem[]>([])
   const [loading, setLoading] = useState<boolean>(true)
 
+  const { profileRefreshTrigger } = useItemStore()
   const { user } = useUserStore()
 
   const refreshGrid = async (userName: string) => {
@@ -51,7 +52,7 @@ export const OtherProfile = ({ userName }: { userName: string }) => {
       }
     }
     init()
-  }, [userName])
+  }, [userName, profileRefreshTrigger])
 
   const bottomSheetRef = useRef<BottomSheet>(null)
   const detailsSheetRef = useRef<BottomSheet>(null)

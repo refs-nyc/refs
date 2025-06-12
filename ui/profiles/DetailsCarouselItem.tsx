@@ -84,6 +84,7 @@ export const DetailsCarouselItem = ({ item, index }: { item: ExpandedItem; index
   } = useItemStore()
   const [text, setText] = useState(item?.text)
   const [url, setUrl] = useState(item?.url)
+  const [listTitle, setListTitle] = useState(item.list ? item?.expand.ref.title : '')
 
   const editingThisItem = editing === item.id
 
@@ -212,6 +213,22 @@ export const DetailsCarouselItem = ({ item, index }: { item: ExpandedItem; index
                       })
                     }}
                   />
+                ) : editingThisItem && item.list ? (
+                  <TextInput
+                    style={[
+                      { flex: 1, paddingHorizontal: s.$1, paddingVertical: s.$1 },
+                      base.editableItem,
+                    ]}
+                    defaultValue={item.expand.ref.title}
+                    value={listTitle}
+                    placeholder="Add a list title"
+                    onChangeText={async (e) => {
+                      setListTitle(e),
+                        updateEditedState({
+                          listTitle: e,
+                        })
+                    }}
+                  />
                 ) : (
                   <Pressable
                     onPress={() => {
@@ -238,42 +255,44 @@ export const DetailsCarouselItem = ({ item, index }: { item: ExpandedItem; index
                     </BottomSheetView>
                   </Pressable>
                 )}
-
-                <View
-                  style={[
-                    {
-                      width: s.$4,
-                      height: s.$4,
-                      justifyContent: 'center',
-                      alignItems: 'center',
-                    },
-                    editingThisItem ? base.editableItem : base.nonEditableItem,
-                  ]}
-                >
-                  {!editingThisItem && item.url && (
-                    <Link
-                      style={{ transformOrigin: 'center', transform: 'rotate(-45deg)' }}
-                      href={item.url as any}
-                    >
-                      <Ionicons
-                        color={c.muted}
-                        size={s.$2}
-                        fillColor="red"
-                        name="arrow-forward-outline"
-                      />
-                    </Link>
-                  )}
-                  {editingThisItem && (
-                    <Pressable onPress={() => setEditingLink(!editingLink)}>
-                      <Ionicons
-                        name={editingLink ? 'checkmark' : 'arrow-forward-outline'}
-                        style={editingLink ? {} : { transform: [{ rotate: '-45deg' }] }}
-                        size={s.$2}
-                        color={c.muted}
-                      />
-                    </Pressable>
-                  )}
-                </View>
+                {/* Button for editing link */}
+                {!item.list && (
+                  <View
+                    style={[
+                      {
+                        width: s.$4,
+                        height: s.$4,
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                      },
+                      editingThisItem ? base.editableItem : base.nonEditableItem,
+                    ]}
+                  >
+                    {!editingThisItem && item.url && (
+                      <Link
+                        style={{ transformOrigin: 'center', transform: 'rotate(-45deg)' }}
+                        href={item.url as any}
+                      >
+                        <Ionicons
+                          color={c.muted}
+                          size={s.$2}
+                          fillColor="red"
+                          name="arrow-forward-outline"
+                        />
+                      </Link>
+                    )}
+                    {editingThisItem && (
+                      <Pressable onPress={() => setEditingLink(!editingLink)}>
+                        <Ionicons
+                          name={editingLink ? 'checkmark' : 'arrow-forward-outline'}
+                          style={editingLink ? {} : { transform: [{ rotate: '-45deg' }] }}
+                          size={s.$2}
+                          color={c.muted}
+                        />
+                      </Pressable>
+                    )}
+                  </View>
+                )}
               </BottomSheetView>
             </BottomSheetView>
 

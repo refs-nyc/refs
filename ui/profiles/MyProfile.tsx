@@ -29,7 +29,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
   const [loading, setLoading] = useState<boolean>(true)
 
   const { user } = useUserStore()
-  const { moveToBacklog } = useItemStore()
+  const { moveToBacklog, profileRefreshTrigger } = useItemStore()
 
   const [addingTo, setAddingTo] = useState<'' | 'grid' | 'backlog'>('')
   const [removingItem, setRemovingItem] = useState<ExpandedItem | null>(null)
@@ -102,7 +102,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
       }
     }
     init()
-  }, [userName])
+  }, [userName, profileRefreshTrigger])
 
   const { logout } = useUserStore()
 

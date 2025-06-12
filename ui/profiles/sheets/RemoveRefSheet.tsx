@@ -5,6 +5,7 @@ import { Button } from '@/ui/buttons/Button'
 import { XStack, YStack } from '@/ui/core/Stacks'
 import { Heading } from '@/ui/typo/Heading'
 import BottomSheet, { BottomSheetBackdrop } from '@gorhom/bottom-sheet'
+import { useEffect } from 'react'
 import { View } from 'react-native'
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated'
 
@@ -19,7 +20,18 @@ export const RemoveRefSheet = ({
   handleRemoveFromProfile: () => Promise<void>
   item: ExpandedItem | null
 }) => {
-  const { removeRefSheetBackdropAnimatedIndex } = useBackdropStore()
+  const { removeRefSheetBackdropAnimatedIndex, registerBackdropPress, unregisterBackdropPress } =
+    useBackdropStore()
+
+  // close the new ref sheet when the user taps the navigation backdrop
+  useEffect(() => {
+    const key = registerBackdropPress(() => {
+      bottomSheetRef.current?.close()
+    })
+    return () => {
+      unregisterBackdropPress(key)
+    }
+  }, [])
 
   const disappearsOnIndex = -1
   const appearsOnIndex = 0

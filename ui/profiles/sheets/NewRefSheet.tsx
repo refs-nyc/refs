@@ -78,7 +78,7 @@ export const NewRefSheet = ({
           }}
           onNewRef={handleCreateNewRef}
           onCancel={() => {
-            bottomSheetRef.current?.snapToIndex(0)
+            bottomSheetRef.current?.close()
           }}
         />
       )}

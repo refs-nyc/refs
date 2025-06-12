@@ -76,7 +76,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
 
   const handleCreateNewRef = async (item: ExpandedItem) => {
     await refreshGrid(userName)
-    bottomSheetRef.current?.collapse()
+    newRefSheetRef.current?.close()
     setAddingTo('')
     await refreshGrid(userName)
     if (addingTo !== 'backlog') {

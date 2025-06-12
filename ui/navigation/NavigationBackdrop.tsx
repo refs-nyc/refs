@@ -51,6 +51,7 @@ export const NavigationBackdrop = () => {
       Extrapolation.CLAMP
     )
 
+    // mix together the opacity values
     const opacityValue =
       1 -
       (1 - moduleOpacityValue) *
@@ -61,7 +62,7 @@ export const NavigationBackdrop = () => {
 
     return {
       opacity: opacityValue,
-      display: opacityValue === 0 ? 'none' : 'flex',
+      display: opacityValue < 0.001 ? 'none' : 'flex',
     }
   }, [
     moduleBackdropAnimatedIndex,
@@ -77,8 +78,10 @@ export const NavigationBackdrop = () => {
         {
           zIndex: 1000,
           position: 'absolute',
-          height: '100%',
-          width: '100%',
+          top: 0,
+          bottom: 0,
+          right: 0,
+          left: 0,
           backgroundColor: 'black',
         },
         animatedStyle,

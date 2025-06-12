@@ -3,45 +3,46 @@ import { ExpandedItem } from '@/features/pocketbase/stores/types'
 import { c, s } from '@/features/style'
 import { NewRef } from '@/ui/actions/NewRef'
 import BottomSheet, { BottomSheetBackdrop } from '@gorhom/bottom-sheet'
-import { useState } from 'react'
 import { View } from 'react-native'
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated'
 
 export const NewRefSheet = ({
-  backlog,
+  addingTo,
   bottomSheetRef,
   handleCreateNewRef,
+  onClose,
 }: {
-  backlog: boolean
+  addingTo: '' | 'grid' | 'backlog'
   bottomSheetRef: React.RefObject<BottomSheet>
   handleCreateNewRef: (itm: ExpandedItem) => Promise<void>
+  onClose: () => void
 }) => {
-  const { moduleBackdropAnimatedIndex } = useBackdropStore()
-  const [index, setIndex] = useState(0)
+  const { newRefSheetBackdropAnimatedIndex } = useBackdropStore()
 
-  const disappearsOnIndex = 0
-  const appearsOnIndex = 1
-  const isMinimised = index === 0
+  const disappearsOnIndex = -1
+  const appearsOnIndex = 0
   const HANDLE_HEIGHT = s.$2
+
+  const isOpen = addingTo !== ''
 
   return (
     <BottomSheet
       enableDynamicSizing={false}
       ref={bottomSheetRef}
-      enablePanDownToClose={false}
-      snapPoints={['1%', '30%', '90%']}
-      index={0}
-      animatedIndex={moduleBackdropAnimatedIndex}
-      onChange={(i: number) => {
-        setIndex(i)
-      }}
+      enablePanDownToClose={true}
+      snapPoints={['40%', '90%']}
+      index={-1}
+      animatedIndex={newRefSheetBackdropAnimatedIndex}
       backgroundStyle={{ backgroundColor: c.olive, borderRadius: s.$4, paddingTop: 0 }}
+      onChange={(i: number) => {
+        if (i === -1) onClose()
+      }}
       backdropComponent={(p) => (
         <BottomSheetBackdrop
           {...p}
           disappearsOnIndex={disappearsOnIndex}
           appearsOnIndex={appearsOnIndex}
-          pressBehavior={'collapse'}
+          pressBehavior={'close'}
         />
       )}
       handleComponent={() => (
@@ -51,7 +52,7 @@ export const NewRefSheet = ({
             position: 'absolute',
             alignItems: 'center',
             justifyContent: 'center',
-            display: isMinimised ? 'none' : 'flex',
+            display: 'flex',
             height: HANDLE_HEIGHT,
           }}
         >
@@ -69,16 +70,18 @@ export const NewRefSheet = ({
       )}
       keyboardBehavior="interactive"
     >
-      <NewRef
-        backlog={backlog}
-        onStep={(step) => {
-          if (step === 'add') bottomSheetRef.current?.snapToIndex(2)
-        }}
-        onNewRef={handleCreateNewRef}
-        onCancel={() => {
-          bottomSheetRef.current?.snapToIndex(0)
-        }}
-      />
+      {isOpen && (
+        <NewRef
+          backlog={addingTo === 'backlog'}
+          onStep={(step) => {
+            if (step === 'add') bottomSheetRef.current?.snapToIndex(1)
+          }}
+          onNewRef={handleCreateNewRef}
+          onCancel={() => {
+            bottomSheetRef.current?.snapToIndex(0)
+          }}
+        />
+      )}
     </BottomSheet>
   )
 }

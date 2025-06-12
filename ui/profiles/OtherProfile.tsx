@@ -89,7 +89,15 @@ export const OtherProfile = ({ userName }: { userName: string }) => {
               {loading ? (
                 <PlaceholderGrid columns={3} rows={4} />
               ) : (
-                <Grid columns={3} items={gridItems} rows={4} />
+                <Grid
+                  columns={3}
+                  items={gridItems}
+                  rows={4}
+                  onPressItem={(item) => {
+                    setDetailsItem(item!)
+                    detailsSheetRef.current?.snapToIndex(0)
+                  }}
+                />
               )}
             </View>
           </View>

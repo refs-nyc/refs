@@ -12,6 +12,7 @@ export const NavigationBackdrop = () => {
     detailsBackdropAnimatedIndex,
     otherProfileBackdropAnimatedIndex,
     newRefSheetBackdropAnimatedIndex,
+    removeRefSheetBackdropAnimatedIndex,
   } = useBackdropStore()
 
   const moduleBackdropAnimatedStyle = useAnimatedStyle(() => {
@@ -70,6 +71,20 @@ export const NavigationBackdrop = () => {
     }
   }, [newRefSheetBackdropAnimatedIndex])
 
+  const removeRefSheetBackdropAnimatedStyle = useAnimatedStyle(() => {
+    const opacityValue = interpolate(
+      removeRefSheetBackdropAnimatedIndex!.value || 0,
+      [-1, 0],
+      [0, 0.5],
+      Extrapolation.CLAMP
+    )
+
+    return {
+      opacity: opacityValue,
+      display: opacityValue === 0 ? 'none' : 'flex',
+    }
+  }, [removeRefSheetBackdropAnimatedIndex])
+
   return (
     <>
       <AnimatedPressable
@@ -118,6 +133,18 @@ export const NavigationBackdrop = () => {
             backgroundColor: 'black',
           },
           newRefSheetBackdropAnimatedStyle,
+        ]}
+      />
+      <AnimatedPressable
+        style={[
+          {
+            zIndex: 1000,
+            position: 'absolute',
+            height: '100%',
+            width: '100%',
+            backgroundColor: 'black',
+          },
+          removeRefSheetBackdropAnimatedStyle,
         ]}
       />
     </>

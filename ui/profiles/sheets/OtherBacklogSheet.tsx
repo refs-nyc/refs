@@ -15,10 +15,10 @@ export const OtherBacklogSheet = ({
   backlogItems: ExpandedItem[]
   profile: ExpandedProfile
 }) => {
-  const { moduleBackdropAnimatedIndex } = useBackdropStore()
+  const { otherProfileBackdropAnimatedIndex } = useBackdropStore()
 
-  const disappearsOnIndex = 0
-  const appearsOnIndex = 1
+  const disappearsOnIndex = -1
+  const appearsOnIndex = 0
 
   const HANDLE_HEIGHT = s.$2
 
@@ -29,7 +29,7 @@ export const OtherBacklogSheet = ({
       enablePanDownToClose={true}
       snapPoints={['50%', '90%']}
       index={-1}
-      animatedIndex={moduleBackdropAnimatedIndex}
+      animatedIndex={otherProfileBackdropAnimatedIndex}
       backgroundStyle={{ backgroundColor: c.olive, borderRadius: s.$4, paddingTop: 0 }}
       backdropComponent={(p) => (
         <BottomSheetBackdrop

@@ -7,7 +7,11 @@ import { Pressable } from 'react-native'
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable)
 
 export const NavigationBackdrop = () => {
-  const { moduleBackdropAnimatedIndex, detailsBackdropAnimatedIndex } = useBackdropStore()
+  const {
+    moduleBackdropAnimatedIndex,
+    detailsBackdropAnimatedIndex,
+    otherProfileBackdropAnimatedIndex,
+  } = useBackdropStore()
 
   const moduleBackdropAnimatedStyle = useAnimatedStyle(() => {
     const opacityValue = interpolate(
@@ -37,6 +41,20 @@ export const NavigationBackdrop = () => {
     }
   }, [detailsBackdropAnimatedIndex])
 
+  const otherProfileBackdropAnimatedStyle = useAnimatedStyle(() => {
+    const opacityValue = interpolate(
+      otherProfileBackdropAnimatedIndex!.value || 0,
+      [-1, 0],
+      [0, 0.5],
+      Extrapolation.CLAMP
+    )
+
+    return {
+      opacity: opacityValue,
+      display: opacityValue === 0 ? 'none' : 'flex',
+    }
+  }, [otherProfileBackdropAnimatedIndex])
+
   return (
     <>
       <AnimatedPressable
@@ -61,6 +79,18 @@ export const NavigationBackdrop = () => {
             backgroundColor: 'black',
           },
           detailsBackdropAnimatedStyle,
+        ]}
+      />
+      <AnimatedPressable
+        style={[
+          {
+            zIndex: 1000,
+            position: 'absolute',
+            height: '100%',
+            width: '100%',
+            backgroundColor: 'black',
+          },
+          otherProfileBackdropAnimatedStyle,
         ]}
       />
     </>

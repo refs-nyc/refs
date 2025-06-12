@@ -1,4 +1,4 @@
-import { Link, useGlobalSearchParams, router, usePathname } from 'expo-router'
+import { Link, router, usePathname } from 'expo-router'
 import { Text, View, Pressable, Animated } from 'react-native'
 import { Avatar } from '../atoms/Avatar'
 import { c, s } from '@/features/style'
@@ -19,8 +19,6 @@ export const Navigation = ({
 }) => {
   const { user } = useUserStore()
   const pathname = usePathname()
-
-  const { addingTo, removingId } = useGlobalSearchParams()
 
   const { saves, messagesPerConversation, conversations, memberships } = useMessageStore()
 

@@ -45,7 +45,17 @@ export const ProfileDetailsSheet = ({
 
   const snapPoints = ['100%']
 
-  const { detailsBackdropAnimatedIndex } = useBackdropStore()
+  const { detailsBackdropAnimatedIndex, registerBackdropPress, unregisterBackdropPress } =
+    useBackdropStore()
+
+  useEffect(() => {
+    const key = registerBackdropPress(() => {
+      detailsSheetRef.current?.close()
+    })
+    return () => {
+      unregisterBackdropPress(key)
+    }
+  }, [])
 
   // Render backdrop remains unchanged
   const renderBackdrop = useCallback(

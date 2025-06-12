@@ -1,6 +1,6 @@
 import { pocketbase, useUserStore } from '@/features/pocketbase'
 import { useBackdropStore } from '@/features/pocketbase/stores/backdrop'
-import { getProfileItems } from '@/features/pocketbase/stores/items'
+import { getProfileItems, useItemStore } from '@/features/pocketbase/stores/items'
 import { ExpandedItem, ExpandedProfile } from '@/features/pocketbase/stores/types'
 import { c } from '@/features/style'
 import BottomSheet, { BottomSheetBackdrop } from '@gorhom/bottom-sheet'
@@ -23,6 +23,7 @@ export const ProfileDetailsSheet = ({
 }) => {
   const [profile, setProfile] = useState<ExpandedProfile | null>(null)
   const [gridItems, setGridItems] = useState<ExpandedItem[]>([])
+  const { profileRefreshTrigger } = useItemStore()
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -35,7 +36,7 @@ export const ProfileDetailsSheet = ({
       setGridItems(gridItems)
     }
     fetchProfile()
-  }, [profileUsername])
+  }, [profileUsername, profileRefreshTrigger])
 
   // get current user
   const { user } = useUserStore()

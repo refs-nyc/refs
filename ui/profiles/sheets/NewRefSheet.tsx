@@ -3,6 +3,7 @@ import { ExpandedItem } from '@/features/pocketbase/stores/types'
 import { c, s } from '@/features/style'
 import { NewRef } from '@/ui/actions/NewRef'
 import BottomSheet, { BottomSheetBackdrop } from '@gorhom/bottom-sheet'
+import { useEffect } from 'react'
 import { View } from 'react-native'
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated'
 
@@ -17,7 +18,19 @@ export const NewRefSheet = ({
   handleCreateNewRef: (itm: ExpandedItem) => Promise<void>
   onClose: () => void
 }) => {
-  const { newRefSheetBackdropAnimatedIndex } = useBackdropStore()
+  const { newRefSheetBackdropAnimatedIndex, registerBackdropPress, unregisterBackdropPress } =
+    useBackdropStore()
+
+  // close the new ref sheet when the user taps the navigation backdrop
+  useEffect(() => {
+    const key = registerBackdropPress(() => {
+      bottomSheetRef.current?.close()
+      onClose()
+    })
+    return () => {
+      unregisterBackdropPress(key)
+    }
+  }, [onClose])
 
   const disappearsOnIndex = -1
   const appearsOnIndex = 0

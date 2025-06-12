@@ -101,6 +101,7 @@ export const MyBacklogSheet = ({
           <View style={{ height: 1, flex: 1, backgroundColor: c.white }}></View>
           <Pressable
             onPress={() => {
+              bottomSheetRef.current?.collapse()
               openAddtoBacklog()
             }}
             style={{

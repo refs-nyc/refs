@@ -4,7 +4,7 @@ import BottomSheet, {
   BottomSheetScrollView,
   BottomSheetView,
 } from '@gorhom/bottom-sheet'
-import { useRef, useState } from 'react'
+import { useRef, useState, useEffect } from 'react'
 import { Pressable, Text, TextInput, View } from 'react-native'
 import { Heading } from '../typo/Heading'
 import { XStack, YStack } from '../core/Stacks'
@@ -29,34 +29,45 @@ export default function SearchBottomSheet() {
   const [step, setStep] = useState('')
   const [newRefTitle, setNewRefTitle] = useState('')
   const [initialStep, setInitialStep] = useState<NewRefStep>('')
+  const [searching, setSearching] = useState(false)
 
   const [searchTerm, setSearchTerm] = useState('')
+  const [debouncedTerm, setDebouncedTerm] = useState('')
   const [results, setResults] = useState<CompleteRef[]>([])
-
   const [refs, setRefs] = useState<CompleteRef[]>([])
 
   const { user } = useUserStore()
-
   const { moduleBackdropAnimatedIndex } = useBackdropStore()
+
+  useEffect(() => {
+    const timeout = setTimeout(() => setDebouncedTerm(searchTerm), 300)
+    return () => clearTimeout(timeout)
+  }, [searchTerm])
+
+  useEffect(() => {
+    const runSearch = async () => {
+      if (debouncedTerm === '') {
+        setResults([])
+        return
+      }
+      const refsResults = await pocketbase
+        .collection<CompleteRef>('refs')
+        .getFullList({ filter: `title ~ "${debouncedTerm}"` })
+      setResults(refsResults)
+    }
+    runSearch()
+  }, [debouncedTerm])
+
+  const onSearchIconPress = () => {
+    setSearching(true)
+    if (index === 0) {
+      searchSheetRef.current?.snapToIndex(1)
+    }
+  }
 
   const onAddRefToSearch = (r: CompleteRef) => {
     setRefs((prevState) => [...prevState.filter((ref) => ref.id !== r.id), r])
     setSearchTerm('')
-    updateSearch('')
-  }
-
-  const updateSearch = async (q: string) => {
-    setSearchTerm(q)
-
-    if (q === '') {
-      setResults([])
-      return
-    }
-    const refsResults = await pocketbase
-      .collection<CompleteRef>('refs')
-      .getFullList({ filter: `title ~ "${q}"` })
-
-    setResults(refsResults)
   }
 
   const onAddFromSearch = async () => {
@@ -101,10 +112,7 @@ export default function SearchBottomSheet() {
       snapPoints = ['1%', '35%']
     }
   } else {
-    // search console should expand when new refs are added to the search
-    // but it shouldn't be taller than ~4 refs in its minimised form
-    const refHeightPlusGap = s.$3 + s.$1
-    const minSnapPoint = refHeightPlusGap * Math.min(refs.length, 4) + s.$1 + HEADER_HEIGHT
+    const minSnapPoint = s.$1 + HEADER_HEIGHT
     snapPoints = [minSnapPoint, '90%']
   }
 
@@ -121,8 +129,10 @@ export default function SearchBottomSheet() {
           setIndex(i)
           if (i === 0) {
             setResults([])
+            setRefs([])
             setSearchTerm('')
             stopAdding()
+            setSearching(false)
           }
         }}
         backgroundStyle={{ backgroundColor: c.olive, borderRadius: s.$4, paddingTop: 0 }}
@@ -160,46 +170,34 @@ export default function SearchBottomSheet() {
         ) : (
           <BottomSheetView>
             <Pressable
-              onPress={() => {
-                if (searchSheetRef.current && isMinimised) searchSheetRef.current.snapToIndex(1)
-              }}
               style={{
                 paddingTop: s.$1,
                 paddingBottom: s.$1,
                 height: HEADER_HEIGHT,
+                justifyContent: 'center',
               }}
             >
-              <XStack
-                gap={s.$075}
-                style={{
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  paddingHorizontal: s.$2,
-                }}
-              >
-                {isMinimised ? (
-                  <Text style={{ color: c.white, fontSize: s.$1 }}>Search anything</Text>
-                ) : (
-                  <TextInput
-                    autoFocus
-                    placeholder="Search anything"
-                    placeholderTextColor={c.white}
-                    style={{ fontSize: s.$1, color: c.white, minWidth: '50%' }}
-                    onChangeText={updateSearch}
-                    value={searchTerm}
-                  />
-                )}
-                <XStack gap={s.$05} style={{ alignItems: 'center' }}>
-                  <Pressable
-                    onPress={async () => {
-                      if (!user?.userName) return
-                      const gridItems = await getProfileItems(user.userName)
-                      setAddingTo(gridItems.length < 12 ? 'grid' : 'backlog')
-                      setIndex(1)
-                    }}
-                  >
-                    <Ionicons name="add-circle-outline" size={s.$4} color={c.white} />
-                  </Pressable>
+              {searching ? (
+                <XStack
+                  gap={s.$075}
+                  style={{
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    paddingHorizontal: s.$2,
+                  }}
+                >
+                  {isMinimised ? (
+                    <Text style={{ color: c.white, fontSize: s.$1 }}>Search anything</Text>
+                  ) : (
+                    <TextInput
+                      autoFocus
+                      placeholder="Search anything"
+                      placeholderTextColor={c.white}
+                      style={{ fontSize: s.$1, color: c.white, minWidth: '50%' }}
+                      onChangeText={setSearchTerm}
+                      value={searchTerm}
+                    />
+                  )}
                   <Button
                     variant="whiteInverted"
                     title={refs.length ? 'Search' : 'Stumble'}
@@ -210,7 +208,33 @@ export default function SearchBottomSheet() {
                     }}
                   />
                 </XStack>
-              </XStack>
+              ) : (
+                <XStack
+                  gap={s.$075}
+                  style={{
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    paddingHorizontal: s.$2,
+                  }}
+                >
+                  <Pressable
+                    onPress={async () => {
+                      if (!user?.userName) return
+                      const gridItems = await getProfileItems(user.userName)
+                      setAddingTo(gridItems.length < 12 ? 'grid' : 'backlog')
+                      setIndex(1)
+                    }}
+                  >
+                    <Text style={{ color: c.white, fontSize: 26, fontWeight: 'bold' }}>
+                      {' '}
+                      Add Ref +
+                    </Text>
+                  </Pressable>
+                  <Pressable onPress={onSearchIconPress}>
+                    <Ionicons name="search" size={s.$2} color={c.white} />
+                  </Pressable>
+                </XStack>
+              )}
             </Pressable>
             {!isMinimised && searchTerm !== '' && (
               <BottomSheetScrollView style={{ maxHeight: 300 }} keyboardShouldPersistTaps="handled">

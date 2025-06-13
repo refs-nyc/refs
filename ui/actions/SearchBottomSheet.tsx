@@ -4,7 +4,7 @@ import BottomSheet, {
   BottomSheetScrollView,
   BottomSheetView,
 } from '@gorhom/bottom-sheet'
-import { useRef, useState } from 'react'
+import { useRef, useState, useEffect } from 'react'
 import { Pressable, Text, TextInput, View } from 'react-native'
 import { Heading } from '../typo/Heading'
 import { XStack, YStack } from '../core/Stacks'
@@ -32,13 +32,31 @@ export default function SearchBottomSheet() {
   const [searching, setSearching] = useState(false)
 
   const [searchTerm, setSearchTerm] = useState('')
+  const [debouncedTerm, setDebouncedTerm] = useState('')
   const [results, setResults] = useState<CompleteRef[]>([])
-
   const [refs, setRefs] = useState<CompleteRef[]>([])
 
   const { user } = useUserStore()
-
   const { moduleBackdropAnimatedIndex } = useBackdropStore()
+
+  useEffect(() => {
+    const timeout = setTimeout(() => setDebouncedTerm(searchTerm), 300)
+    return () => clearTimeout(timeout)
+  }, [searchTerm])
+
+  useEffect(() => {
+    const runSearch = async () => {
+      if (debouncedTerm === '') {
+        setResults([])
+        return
+      }
+      const refsResults = await pocketbase
+        .collection<CompleteRef>('refs')
+        .getFullList({ filter: `title ~ "${debouncedTerm}"` })
+      setResults(refsResults)
+    }
+    runSearch()
+  }, [debouncedTerm])
 
   const onSearchIconPress = () => {
     setSearching(true)
@@ -50,21 +68,6 @@ export default function SearchBottomSheet() {
   const onAddRefToSearch = (r: CompleteRef) => {
     setRefs((prevState) => [...prevState.filter((ref) => ref.id !== r.id), r])
     setSearchTerm('')
-    updateSearch('')
-  }
-
-  const updateSearch = async (q: string) => {
-    setSearchTerm(q)
-
-    if (q === '') {
-      setResults([])
-      return
-    }
-    const refsResults = await pocketbase
-      .collection<CompleteRef>('refs')
-      .getFullList({ filter: `title ~ "${q}"` })
-
-    setResults(refsResults)
   }
 
   const onAddFromSearch = async () => {
@@ -191,7 +194,7 @@ export default function SearchBottomSheet() {
                       placeholder="Search anything"
                       placeholderTextColor={c.white}
                       style={{ fontSize: s.$1, color: c.white, minWidth: '50%' }}
-                      onChangeText={updateSearch}
+                      onChangeText={setSearchTerm}
                       value={searchTerm}
                     />
                   )}

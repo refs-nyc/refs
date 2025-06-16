@@ -19,6 +19,7 @@ type ButtonProps = {
   disabled?: boolean
   align?: 'center' | 'flex-start' | 'flex-end'
   style?: any
+  textStyle?: any
   iconSize?: number
   children?: React.ReactNode
 }
@@ -38,6 +39,7 @@ export const Button = (props: ButtonProps) => {
     align = 'center',
     iconSize = s.$1half,
     children,
+    textStyle,
   } = props
 
   let buttonVariant = null
@@ -91,7 +93,11 @@ export const Button = (props: ButtonProps) => {
         )}
 
         {!iconButton &&
-          (children ? children : <Text style={[styles.text, textVariant]}>{title ?? 'Save'}</Text>)}
+          (children ? (
+            children
+          ) : (
+            <Text style={[styles.text, textVariant, textStyle]}>{title ?? 'Save'}</Text>
+          ))}
 
         {iconAfter && iconAfterCustom ? (
           <Icon size={iconSize} name={iconAfter} color={iconColor} />

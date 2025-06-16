@@ -16,6 +16,8 @@ import { GridLines } from '../display/Gridlines'
 import { EditableList } from '../lists/EditableList'
 import { DetailsCarouselItem } from './DetailsCarouselItem'
 import { ProfileDetailsContext } from './profileDetailsStore'
+import { Button } from '../buttons/Button'
+import { useUserStore } from '@/features/pocketbase/stores/users'
 
 // --- Helper Components for State Isolation ---
 
@@ -95,6 +97,10 @@ export const Details = ({ profile, data }: { profile: ExpandedProfile; data: Ite
 
   const editing = useItemStore((state) => state.editing)
 
+  const { user } = useUserStore()
+
+  const showAddRefButton = profile?.id !== user?.id && !editing
+
   const { addingToList, setAddingToList, addingItem } = useUIStore()
   const { stopEditing, update } = useItemStore()
 
@@ -168,6 +174,27 @@ export const Details = ({ profile, data }: { profile: ExpandedProfile; data: Ite
         <Sheet full={true} onChange={(e: any) => e === -1 && close()}>
           <EditableList item={addingItem as ExpandedItem} onComplete={() => {}} />
         </Sheet>
+      )}
+
+      {showAddRefButton && (
+        <View
+          style={{
+            position: 'absolute',
+            bottom: s.$5,
+            left: s.$0,
+            right: s.$0,
+            borderRadius: s.$20,
+          }}
+        >
+          <Button
+            style={{ paddingTop: s.$1, paddingBottom: s.$4 }}
+            onPress={() => {
+              // open a dialog for adding this ref to your profile
+            }}
+            variant="raised"
+            title="Add Ref +"
+          ></Button>
+        </View>
       )}
     </>
   )

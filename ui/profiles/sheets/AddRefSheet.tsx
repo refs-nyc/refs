@@ -11,7 +11,7 @@ import { Button } from '@/ui/buttons/Button'
 import { XStack, YStack } from '@/ui/core/Stacks'
 import { Heading } from '@/ui/typo/Heading'
 import BottomSheet, { BottomSheetBackdrop } from '@gorhom/bottom-sheet'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { Text, View } from 'react-native'
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated'
 
@@ -37,6 +37,8 @@ export const AddRefSheet = ({
     }
   }, [])
 
+  const [addingTo, setAddingTo] = useState<'backlog' | 'grid' | null>(null)
+
   const disappearsOnIndex = -1
   const appearsOnIndex = 0
   const HANDLE_HEIGHT = s.$2
@@ -50,6 +52,9 @@ export const AddRefSheet = ({
       index={-1}
       animatedIndex={addRefSheetBackdropAnimatedIndex}
       backgroundStyle={{ backgroundColor: c.surface, borderRadius: s.$4, paddingTop: 0 }}
+      onChange={(i: number) => {
+        if (i === -1) setAddingTo(null)
+      }}
       backdropComponent={(p) => (
         <BottomSheetBackdrop
           {...p}
@@ -84,16 +89,36 @@ export const AddRefSheet = ({
       keyboardBehavior="interactive"
     >
       {/* firstly ask "add to backlog" or "add to grid" */}
-      <View style={{ display: 'flex', flexDirection: 'column', padding: s.$3, gap: s.$1 }}>
-        <Button
-          title="Add to backlog"
-          onPress={() => {}}
-          variant="basic"
-          style={{ backgroundColor: c.surface2 }}
-          textStyle={{ color: c.muted2 }}
-        />
-        <Button title="Add to grid" onPress={() => {}} variant="raised" />
-      </View>
+      {addingTo === null && (
+        <View style={{ display: 'flex', flexDirection: 'column', padding: s.$3, gap: s.$1 }}>
+          <Button
+            title="Add to backlog"
+            onPress={() => {
+              setAddingTo('backlog')
+            }}
+            variant="basic"
+            style={{ backgroundColor: c.surface2 }}
+            textStyle={{ color: c.muted2 }}
+          />
+          <Button
+            title="Add to grid"
+            onPress={() => {
+              setAddingTo('grid')
+            }}
+            variant="raised"
+          />
+        </View>
+      )}
+      {addingTo === 'backlog' && (
+        <View style={{ display: 'flex', flexDirection: 'column', padding: s.$3, gap: s.$1 }}>
+          <Text>Add to backlog</Text>
+        </View>
+      )}
+      {addingTo === 'grid' && (
+        <View style={{ display: 'flex', flexDirection: 'column', padding: s.$3, gap: s.$1 }}>
+          <Text>Add to grid</Text>
+        </View>
+      )}
     </BottomSheet>
   )
 }

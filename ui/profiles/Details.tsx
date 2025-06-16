@@ -183,11 +183,11 @@ export const Details = ({ profile, data }: { profile: ExpandedProfile; data: Ite
             bottom: s.$5,
             left: s.$0,
             right: s.$0,
-            borderRadius: s.$20,
           }}
         >
           <Button
             style={{ paddingTop: s.$1, paddingBottom: s.$4 }}
+            textStyle={{ fontSize: s.$1, fontWeight: 800 }}
             onPress={() => {
               // open a dialog for adding this ref to your profile
             }}

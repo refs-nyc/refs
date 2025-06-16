@@ -21,7 +21,6 @@ export const ExampleGrid = () => (
       </GridTileWrapper>
       <GridTileWrapper type="text">
         <GridItem item={{ expand: { ref: { title: 'chinatown dumpling tier list' } } }} i={0} />
-        {/* <GridTileList title="chinatown dumpling tier list" /> */}
       </GridTileWrapper>
       <GridTileWrapper type="image">
         <GridTileImage source={require('@/assets/6.png')} />

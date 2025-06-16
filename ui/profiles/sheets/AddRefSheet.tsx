@@ -8,24 +8,31 @@ import { useBackdropStore } from '@/features/pocketbase/stores/backdrop'
 import { ExpandedItem } from '@/features/pocketbase/stores/types'
 import { c, s } from '@/features/style'
 import { Button } from '@/ui/buttons/Button'
-import { XStack, YStack } from '@/ui/core/Stacks'
-import { Heading } from '@/ui/typo/Heading'
 import BottomSheet, { BottomSheetBackdrop } from '@gorhom/bottom-sheet'
 import { useEffect, useState } from 'react'
 import { Text, View } from 'react-native'
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated'
+import { getProfileItems, useItemStore } from '@/features/pocketbase/stores/items'
+import { addToProfile, removeFromProfile, useUserStore } from '@/features/pocketbase'
+import { GridWrapper } from '@/ui/grid/GridWrapper'
+import { GridTileWrapper } from '@/ui/grid/GridTileWrapper'
+import { GridItem } from '@/ui/grid/GridItem'
+import { GridTile } from '@/ui/grid/GridTile'
 
 export const AddRefSheet = ({
   itemToAdd,
   bottomSheetRef,
-  handleCreateNewRef,
 }: {
   itemToAdd: ExpandedItem | null
   bottomSheetRef: React.RefObject<BottomSheet>
-  handleCreateNewRef: (itm: ExpandedItem) => Promise<void>
 }) => {
   const { addRefSheetBackdropAnimatedIndex, registerBackdropPress, unregisterBackdropPress } =
     useBackdropStore()
+
+  const { user } = useUserStore()
+
+  const [gridItems, setGridItems] = useState<ExpandedItem[]>([])
+  const { moveToBacklog } = useItemStore()
 
   // close the new ref sheet when the user taps the navigation backdrop
   useEffect(() => {
@@ -37,7 +44,23 @@ export const AddRefSheet = ({
     }
   }, [])
 
-  const [addingTo, setAddingTo] = useState<'backlog' | 'grid' | null>(null)
+  useEffect(() => {
+    const fetchGridItems = async () => {
+      if (!user) {
+        setGridItems([])
+      } else {
+        const gridItems = await getProfileItems(user.userName)
+        setGridItems(gridItems)
+      }
+    }
+    fetchGridItems()
+  }, [user])
+
+  // const [addingTo, setAddingTo] = useState<'backlog' | 'grid' | null>(null)
+  const [step, setStep] = useState<'chooseTarget' | 'selectItemToReplace'>('chooseTarget')
+  const [itemToReplace, setItemToReplace] = useState<ExpandedItem | null>(null)
+
+  const sheetHeight = step === 'selectItemToReplace' ? '80%' : '30%'
 
   const disappearsOnIndex = -1
   const appearsOnIndex = 0
@@ -48,12 +71,12 @@ export const AddRefSheet = ({
       enableDynamicSizing={false}
       ref={bottomSheetRef}
       enablePanDownToClose={true}
-      snapPoints={['30%']}
+      snapPoints={[sheetHeight]}
       index={-1}
       animatedIndex={addRefSheetBackdropAnimatedIndex}
       backgroundStyle={{ backgroundColor: c.surface, borderRadius: s.$4, paddingTop: 0 }}
       onChange={(i: number) => {
-        if (i === -1) setAddingTo(null)
+        if (i === -1) setStep('chooseTarget')
       }}
       backdropComponent={(p) => (
         <BottomSheetBackdrop
@@ -89,12 +112,19 @@ export const AddRefSheet = ({
       keyboardBehavior="interactive"
     >
       {/* firstly ask "add to backlog" or "add to grid" */}
-      {addingTo === null && (
+      {step === 'chooseTarget' && (
         <View style={{ display: 'flex', flexDirection: 'column', padding: s.$3, gap: s.$1 }}>
           <Button
             title="Add to backlog"
-            onPress={() => {
-              setAddingTo('backlog')
+            onPress={async () => {
+              if (!itemToAdd?.expand.ref) return
+              // add the item to the backlog
+              await addToProfile(itemToAdd.expand.ref, true, {
+                backlog: true,
+                comment: itemToAdd.text,
+              })
+              bottomSheetRef.current?.close()
+              // TODO: post something that says we added the ref to the backlog
             }}
             variant="basic"
             style={{ backgroundColor: c.surface2 }}
@@ -103,22 +133,83 @@ export const AddRefSheet = ({
           <Button
             title="Add to grid"
             onPress={() => {
-              setAddingTo('grid')
+              // check if the grid is full
+              if (gridItems.length >= 12) {
+                // show a modal to the user that the grid is full
+                return
+              }
+              setStep('selectItemToReplace')
             }}
             variant="raised"
           />
         </View>
       )}
-      {addingTo === 'backlog' && (
-        <View style={{ display: 'flex', flexDirection: 'column', padding: s.$3, gap: s.$1 }}>
-          <Text>Add to backlog</Text>
-        </View>
-      )}
-      {addingTo === 'grid' && (
-        <View style={{ display: 'flex', flexDirection: 'column', padding: s.$3, gap: s.$1 }}>
-          <Text>Add to grid</Text>
-        </View>
-      )}
+      {step === 'selectItemToReplace' &&
+        (!itemToReplace ? (
+          <View style={{ display: 'flex', flexDirection: 'column', padding: s.$3, gap: s.$1 }}>
+            <Text>Choose a grid item to replace</Text>
+            {/* display the grid */}
+            {/* you should just be able to click on items in the grid */}
+
+            <GridWrapper cellGap={s.$05} columns={3} rows={4}>
+              {gridItems.map((item, i) => (
+                <GridTileWrapper
+                  key={item.id}
+                  id={item.id}
+                  onPress={() => {
+                    // select this item
+                    setItemToReplace(item)
+                  }}
+                  size={s.$8}
+                  type={
+                    item.list ? 'list' : item.expand.ref?.image || item.image ? 'image' : 'text'
+                  }
+                >
+                  <GridItem item={item} i={i} />
+                </GridTileWrapper>
+              ))}
+
+              {Array.from({ length: 12 - gridItems.length }).map((_, i) => (
+                <GridTileWrapper size={s.$8} key={`empty-${i}`} type="">
+                  <GridTile key={i} />
+                </GridTileWrapper>
+              ))}
+            </GridWrapper>
+          </View>
+        ) : (
+          <View style={{ display: 'flex', flexDirection: 'column', padding: s.$3, gap: s.$1 }}>
+            <Text>Do what with {itemToReplace.expand.ref?.title}?</Text>
+            <Button
+              title="Remove"
+              onPress={async () => {
+                if (!itemToAdd?.expand.ref) return
+                // remove the item
+                await removeFromProfile(itemToReplace.id)
+                await addToProfile(itemToAdd.expand.ref, true, {
+                  backlog: false,
+                  comment: itemToAdd.text,
+                })
+                bottomSheetRef.current?.close()
+                // TODO: post something that says we removed the old item and added the new one
+              }}
+            />
+            <Button
+              title="Send to backlog"
+              onPress={async () => {
+                if (!itemToAdd?.expand.ref) return
+                // send itemToReplace to the backlog
+                await moveToBacklog(itemToReplace.id)
+                // replace the item
+                await addToProfile(itemToAdd.expand.ref, true, {
+                  backlog: false,
+                  comment: itemToAdd.text,
+                })
+                bottomSheetRef.current?.close()
+                // TODO: post something that says we moved the old item to the backlog and added the new one
+              }}
+            />
+          </View>
+        ))}
     </BottomSheet>
   )
 }

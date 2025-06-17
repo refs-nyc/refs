@@ -32,10 +32,16 @@ export const SearchRef = ({
   const [urlState, setUrlState] = useState(url)
   const [imageState, setImageState] = useState(image)
   const [searchResults, setSearchResults] = useState<CompleteRef[]>([])
+  const [debouncedQuery, setDebouncedQuery] = useState('')
   const { hasShareIntent, shareIntent, resetShareIntent } = useShareIntentContext()
-  
+
   // Track the current query to prevent race conditions
   const currentQueryRef = useRef('')
+
+  useEffect(() => {
+    const timeout = setTimeout(() => setDebouncedQuery(searchQuery), 300)
+    return () => clearTimeout(timeout)
+  }, [searchQuery])
 
   // Search result item
   const renderItem = ({ item }: { item: CompleteRef }) => {
@@ -62,49 +68,51 @@ export const SearchRef = ({
     }
   }
 
-  // Update the search query
-  const updateQuery = async (q: string) => {
+  const onQueryChange = (q: string) => {
     // Update the current query ref immediately
     currentQueryRef.current = q
-    
-    const search = async (query: string) => {
+    setSearchQuery(q)
+  }
+
+  useEffect(() => {
+    const runSearch = async () => {
       let refsResults: RefsRecord[] = []
 
-      if (query === '') return []
+      if (debouncedQuery === '') {
+        setSearchResults([])
+        return
+      }
 
-      if (query.includes('http')) {
-        const data = await getLinkPreview(query)
+      if (debouncedQuery.includes('http')) {
+        const data = await getLinkPreview(debouncedQuery)
         // Only update state if this is still the current query
-        if (currentQueryRef.current === query) {
-          updateState(query, data)
+        if (currentQueryRef.current === debouncedQuery) {
+          updateState(debouncedQuery, data)
         }
       } else {
         // Search items and refs db
         refsResults = await pocketbase
           .collection<CompleteRef>('refs')
-          .getFullList({ filter: `title ~ "${query}"` })
+          .getFullList({ filter: `title ~ "${debouncedQuery}"` })
       }
-      return refsResults
-    }
 
-    setSearchQuery(q)
-    let result = await search(q)
-    
-    // Only update search results if this is still the current query
-    if (currentQueryRef.current === q) {
-      setSearchResults(result)
+      // Only update search results if this is still the current query
+      if (currentQueryRef.current === debouncedQuery) {
+        setSearchResults(refsResults)
+      }
     }
-  }
+    runSearch()
+  }, [debouncedQuery])
 
   useEffect(() => {
     const titles = searchResults.map((r) => r?.title?.toLowerCase())
 
-    if (titles?.includes(searchQuery?.toLowerCase())) {
+    if (titles?.includes(debouncedQuery.toLowerCase())) {
       setDisableNewRef(true)
     } else {
       setDisableNewRef(false)
     }
-  }, [searchQuery, searchResults])
+  }, [debouncedQuery, searchResults])
 
   // Handle incoming share intent
   useEffect(() => {
@@ -136,18 +144,20 @@ export const SearchRef = ({
   return (
     <>
       <KeyboardAvoidingView style={{ width: '100%' }}>
-        <View style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          backgroundColor: 'transparent',
-          marginVertical: s.$1,
-          height: 42,
-          paddingVertical: 0,
-          paddingHorizontal: 10,
-          borderRadius: 50,
-          borderWidth: 1,
-          borderColor: c.surface,
-        }}>
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            backgroundColor: 'transparent',
+            marginVertical: s.$1,
+            height: 42,
+            paddingVertical: 0,
+            paddingHorizontal: 10,
+            borderRadius: 50,
+            borderWidth: 1,
+            borderColor: c.surface,
+          }}
+        >
           <TextInput
             style={{
               flex: 1,
@@ -159,7 +169,7 @@ export const SearchRef = ({
             value={searchQuery}
             placeholder="Search anything or start typing"
             placeholderTextColor={c.surface}
-            onChangeText={updateQuery}
+            onChangeText={onQueryChange}
             autoFocus
           />
           {searchQuery.length > 0 && (

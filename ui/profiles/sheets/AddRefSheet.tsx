@@ -1,10 +1,6 @@
-// add ref sheet
-
-// this takes an existing item and the user can decide whether to add it to their profile or the backlog
-// if they add it to their profile, then if the profile is already full, they will have to remove an existing item
-
-// do we make a copy of the item in the database?
+import { addToProfile, removeFromProfile, useUserStore } from '@/features/pocketbase'
 import { useBackdropStore } from '@/features/pocketbase/stores/backdrop'
+import { getProfileItems, useItemStore } from '@/features/pocketbase/stores/items'
 import { ExpandedItem } from '@/features/pocketbase/stores/types'
 import { c, s } from '@/features/style'
 import { Button } from '@/ui/buttons/Button'
@@ -12,12 +8,7 @@ import BottomSheet, { BottomSheetBackdrop } from '@gorhom/bottom-sheet'
 import { useEffect, useState } from 'react'
 import { Text, View } from 'react-native'
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated'
-import { getProfileItems, useItemStore } from '@/features/pocketbase/stores/items'
-import { addToProfile, removeFromProfile, useUserStore } from '@/features/pocketbase'
-import { GridWrapper } from '@/ui/grid/GridWrapper'
-import { GridTileWrapper } from '@/ui/grid/GridTileWrapper'
-import { GridItem } from '@/ui/grid/GridItem'
-import { GridTile } from '@/ui/grid/GridTile'
+import { AddRefSheetGrid } from './AddRefSheetGrid'
 
 export const AddRefSheet = ({
   itemToAdd,
@@ -65,8 +56,6 @@ export const AddRefSheet = ({
   const disappearsOnIndex = -1
   const appearsOnIndex = 0
   const HANDLE_HEIGHT = s.$2
-
-  const tileSize = s.$8
 
   return (
     <BottomSheet
@@ -164,33 +153,7 @@ export const AddRefSheet = ({
             }}
           >
             <Text>Choose a grid item to replace</Text>
-
-            <View>
-              <GridWrapper cellGap={s.$05} columns={3} rows={4}>
-                {gridItems.map((item, i) => (
-                  <GridTileWrapper
-                    key={item.id}
-                    id={item.id}
-                    onPress={() => {
-                      // select this item
-                      setItemToReplace(item)
-                    }}
-                    size={tileSize}
-                    type={
-                      item.list ? 'list' : item.expand.ref?.image || item.image ? 'image' : 'text'
-                    }
-                  >
-                    <GridItem item={item} i={i} />
-                  </GridTileWrapper>
-                ))}
-
-                {Array.from({ length: 12 - gridItems.length }).map((_, i) => (
-                  <GridTileWrapper size={tileSize} key={`empty-${i}`} type="">
-                    <GridTile key={i} />
-                  </GridTileWrapper>
-                ))}
-              </GridWrapper>
-            </View>
+            <AddRefSheetGrid gridItems={gridItems} onSelectItem={setItemToReplace} />
           </View>
         ) : (
           <View style={{ display: 'flex', flexDirection: 'column', padding: s.$3, gap: s.$1 }}>

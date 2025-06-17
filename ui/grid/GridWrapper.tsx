@@ -19,7 +19,7 @@ export const GridWrapper = ({
   const childrenArray = Children.toArray(children)
 
   return (
-    <YStack gap={cellGap} style={{ width: '100%', minHeight: win.width / 3 }}>
+    <YStack gap={cellGap} style={{ width: '100%' }}>
       {Array.from({ length: rows }).map((_, rowIndex) => (
         <XStack key={rowIndex} gap={cellGap}>
           {childrenArray

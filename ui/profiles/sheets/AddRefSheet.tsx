@@ -134,13 +134,19 @@ export const AddRefSheet = ({
           />
           <Button
             title="Add to grid"
-            onPress={() => {
+            onPress={async () => {
+              if (!itemToAdd) return
               // check if the grid is full
               if (gridItems.length >= 12) {
                 // show a modal to the user that the grid is full
-                return
+                setStep('selectItemToReplace')
+              } else {
+                await addToProfile(itemToAdd.expand.ref, true, {
+                  backlog: false,
+                  comment: itemToAdd.text,
+                })
+                bottomSheetRef.current?.close()
               }
-              setStep('selectItemToReplace')
             }}
             variant="raised"
           />

@@ -200,19 +200,12 @@ export const Details = ({ profile, data }: { profile: ExpandedProfile; data: Ite
             }}
             variant="raised"
             title="Add Ref +"
-          ></Button>
+          />
         </View>
       )}
 
       {/* add ref sheet */}
-      <AddRefSheet
-        itemToAdd={itemToAdd}
-        bottomSheetRef={addRefSheetRef}
-        handleCreateNewRef={async (itm: ExpandedItem) => {
-          // add the item to the profile
-          // await addItemToList(itm.id, profile.id)
-        }}
-      />
+      <AddRefSheet itemToAdd={itemToAdd} bottomSheetRef={addRefSheetRef} />
     </>
   )
 }

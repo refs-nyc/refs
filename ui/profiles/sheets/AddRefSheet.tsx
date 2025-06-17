@@ -66,6 +66,8 @@ export const AddRefSheet = ({
   const appearsOnIndex = 0
   const HANDLE_HEIGHT = s.$2
 
+  const tileSize = s.$8
+
   return (
     <BottomSheet
       enableDynamicSizing={false}
@@ -160,7 +162,7 @@ export const AddRefSheet = ({
                     // select this item
                     setItemToReplace(item)
                   }}
-                  size={s.$8}
+                  size={tileSize}
                   type={
                     item.list ? 'list' : item.expand.ref?.image || item.image ? 'image' : 'text'
                   }
@@ -170,7 +172,7 @@ export const AddRefSheet = ({
               ))}
 
               {Array.from({ length: 12 - gridItems.length }).map((_, i) => (
-                <GridTileWrapper size={s.$8} key={`empty-${i}`} type="">
+                <GridTileWrapper size={tileSize} key={`empty-${i}`} type="">
                   <GridTile key={i} />
                 </GridTileWrapper>
               ))}

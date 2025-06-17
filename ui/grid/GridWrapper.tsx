@@ -1,9 +1,6 @@
 import React, { Children } from 'react'
 import { YStack, XStack } from '@/ui/core/Stacks'
-import { Dimensions } from 'react-native'
 import { s } from '@/features/style'
-
-const win = Dimensions.get('window')
 
 export const GridWrapper = ({
   children,

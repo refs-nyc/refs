@@ -5,7 +5,7 @@ import { c, s } from '@/features/style'
 import { XStack } from '@/ui/core/Stacks'
 import { useUIStore } from '@/ui/state'
 import { useRouter } from 'expo-router'
-import React, { useCallback, useContext, useRef } from 'react'
+import React, { useCallback, useContext, useRef, useState } from 'react'
 import { Pressable, Text, useWindowDimensions, View } from 'react-native'
 import Carousel, { ICarouselInstance } from 'react-native-reanimated-carousel'
 import { useStore } from 'zustand'
@@ -16,6 +16,10 @@ import { GridLines } from '../display/Gridlines'
 import { EditableList } from '../lists/EditableList'
 import { DetailsCarouselItem } from './DetailsCarouselItem'
 import { ProfileDetailsContext } from './profileDetailsStore'
+import { Button } from '../buttons/Button'
+import { useUserStore } from '@/features/pocketbase/stores/users'
+import { AddRefSheet } from './sheets/AddRefSheet'
+import BottomSheet from '@gorhom/bottom-sheet'
 
 // --- Helper Components for State Isolation ---
 
@@ -85,7 +89,10 @@ ProfileLabel.displayName = 'ProfileLabel'
 export const Details = ({ profile, data }: { profile: ExpandedProfile; data: ItemsRecord[] }) => {
   const router = useRouter()
   const ref = useRef<ICarouselInstance>(null)
+  const addRefSheetRef = useRef<BottomSheet>(null)
   const win = useWindowDimensions()
+
+  const [itemToAdd, setItemToAdd] = useState<ExpandedItem | null>(null)
 
   const profileDetailsStore = useContext(ProfileDetailsContext)
   const setShowContextMenu = useStore(profileDetailsStore, (state) => state.setShowContextMenu)
@@ -94,6 +101,10 @@ export const Details = ({ profile, data }: { profile: ExpandedProfile; data: Ite
   const openedFromFeed = useStore(profileDetailsStore, (state) => state.openedFromFeed)
 
   const editing = useItemStore((state) => state.editing)
+
+  const { user } = useUserStore()
+
+  const showAddRefButton = profile?.id !== user?.id && !editing
 
   const { addingToList, setAddingToList, addingItem } = useUIStore()
   const { stopEditing, update } = useItemStore()
@@ -169,6 +180,32 @@ export const Details = ({ profile, data }: { profile: ExpandedProfile; data: Ite
           <EditableList item={addingItem as ExpandedItem} onComplete={() => {}} />
         </Sheet>
       )}
+
+      {showAddRefButton && (
+        <View
+          style={{
+            position: 'absolute',
+            bottom: s.$5,
+            left: s.$0,
+            right: s.$0,
+          }}
+        >
+          <Button
+            style={{ paddingTop: s.$1, paddingBottom: s.$4 }}
+            textStyle={{ fontSize: s.$1, fontWeight: 800 }}
+            onPress={() => {
+              // open a dialog for adding this ref to your profile
+              setItemToAdd(data[currentIndex] as ExpandedItem)
+              addRefSheetRef.current?.expand()
+            }}
+            variant="raised"
+            title="Add Ref +"
+          />
+        </View>
+      )}
+
+      {/* add ref sheet */}
+      <AddRefSheet itemToAdd={itemToAdd} bottomSheetRef={addRefSheetRef} />
     </>
   )
 }

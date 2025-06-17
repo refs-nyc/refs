@@ -148,35 +148,43 @@ export const AddRefSheet = ({
       )}
       {step === 'selectItemToReplace' &&
         (!itemToReplace ? (
-          <View style={{ display: 'flex', flexDirection: 'column', padding: s.$3, gap: s.$1 }}>
+          <View
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              padding: s.$3,
+              gap: s.$1,
+              alignItems: 'center',
+            }}
+          >
             <Text>Choose a grid item to replace</Text>
-            {/* display the grid */}
-            {/* you should just be able to click on items in the grid */}
 
-            <GridWrapper cellGap={s.$05} columns={3} rows={4}>
-              {gridItems.map((item, i) => (
-                <GridTileWrapper
-                  key={item.id}
-                  id={item.id}
-                  onPress={() => {
-                    // select this item
-                    setItemToReplace(item)
-                  }}
-                  size={tileSize}
-                  type={
-                    item.list ? 'list' : item.expand.ref?.image || item.image ? 'image' : 'text'
-                  }
-                >
-                  <GridItem item={item} i={i} />
-                </GridTileWrapper>
-              ))}
+            <View>
+              <GridWrapper cellGap={s.$05} columns={3} rows={4}>
+                {gridItems.map((item, i) => (
+                  <GridTileWrapper
+                    key={item.id}
+                    id={item.id}
+                    onPress={() => {
+                      // select this item
+                      setItemToReplace(item)
+                    }}
+                    size={tileSize}
+                    type={
+                      item.list ? 'list' : item.expand.ref?.image || item.image ? 'image' : 'text'
+                    }
+                  >
+                    <GridItem item={item} i={i} />
+                  </GridTileWrapper>
+                ))}
 
-              {Array.from({ length: 12 - gridItems.length }).map((_, i) => (
-                <GridTileWrapper size={tileSize} key={`empty-${i}`} type="">
-                  <GridTile key={i} />
-                </GridTileWrapper>
-              ))}
-            </GridWrapper>
+                {Array.from({ length: 12 - gridItems.length }).map((_, i) => (
+                  <GridTileWrapper size={tileSize} key={`empty-${i}`} type="">
+                    <GridTile key={i} />
+                  </GridTileWrapper>
+                ))}
+              </GridWrapper>
+            </View>
           </View>
         ) : (
           <View style={{ display: 'flex', flexDirection: 'column', padding: s.$3, gap: s.$1 }}>

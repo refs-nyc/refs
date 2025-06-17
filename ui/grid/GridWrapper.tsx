@@ -9,23 +9,19 @@ export const GridWrapper = ({
   children,
   columns = 3,
   rows = 4,
+  cellGap = s.$075,
 }: {
   children: React.ReactNode
   columns?: number
   rows?: number
+  cellGap?: number
 }) => {
-  const count = Children.count(children)
   const childrenArray = Children.toArray(children)
 
-  // const add = push({ title: 'New' })
-
-  const size = rows * columns
-  const empty = Math.max(size - count, 0)
-
   return (
-    <YStack gap={s.$075} style={{ width: '100%', minHeight: win.width / 3 }}>
+    <YStack gap={cellGap} style={{ width: '100%', minHeight: win.width / 3 }}>
       {Array.from({ length: rows }).map((_, rowIndex) => (
-        <XStack key={rowIndex} gap={s.$075}>
+        <XStack key={rowIndex} gap={cellGap}>
           {childrenArray
             .slice(rowIndex * columns, (rowIndex + 1) * columns)
             .map((child, colIndex) => (

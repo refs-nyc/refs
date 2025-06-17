@@ -9,6 +9,7 @@ import { useEffect, useState } from 'react'
 import { Text, View } from 'react-native'
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated'
 import { AddRefSheetGrid } from './AddRefSheetGrid'
+import { Heading } from '@/ui/typo/Heading'
 
 export const AddRefSheet = ({
   itemToAdd,
@@ -48,7 +49,9 @@ export const AddRefSheet = ({
   }, [user])
 
   // const [addingTo, setAddingTo] = useState<'backlog' | 'grid' | null>(null)
-  const [step, setStep] = useState<'chooseTarget' | 'selectItemToReplace'>('chooseTarget')
+  const [step, setStep] = useState<
+    'chooseTarget' | 'selectItemToReplace' | 'addedToBacklog' | 'addedToGrid'
+  >('chooseTarget')
   const [itemToReplace, setItemToReplace] = useState<ExpandedItem | null>(null)
 
   const sheetHeight = step === 'selectItemToReplace' ? '80%' : '30%'
@@ -67,7 +70,10 @@ export const AddRefSheet = ({
       animatedIndex={addRefSheetBackdropAnimatedIndex}
       backgroundStyle={{ backgroundColor: c.surface, borderRadius: s.$4, paddingTop: 0 }}
       onChange={(i: number) => {
-        if (i === -1) setStep('chooseTarget')
+        if (i === -1) {
+          setItemToReplace(null)
+          setStep('chooseTarget')
+        }
       }}
       backdropComponent={(p) => (
         <BottomSheetBackdrop
@@ -114,8 +120,7 @@ export const AddRefSheet = ({
                 backlog: true,
                 comment: itemToAdd.text,
               })
-              bottomSheetRef.current?.close()
-              // TODO: post something that says we added the ref to the backlog
+              setStep('addedToBacklog')
             }}
             variant="basic"
             style={{ backgroundColor: c.surface2 }}
@@ -134,7 +139,7 @@ export const AddRefSheet = ({
                   backlog: false,
                   comment: itemToAdd.text,
                 })
-                bottomSheetRef.current?.close()
+                setStep('addedToGrid')
               }
             }}
             variant="raised"
@@ -154,6 +159,18 @@ export const AddRefSheet = ({
           >
             <Text>Choose a grid item to replace</Text>
             <AddRefSheetGrid gridItems={gridItems} onSelectItem={setItemToReplace} />
+            <Button
+              title="Add to backlog instead"
+              variant="smallMuted"
+              onPress={async () => {
+                if (!itemToAdd) return
+                await addToProfile(itemToAdd.expand.ref, true, {
+                  backlog: true,
+                  comment: itemToAdd.text,
+                })
+                setStep('addedToBacklog')
+              }}
+            />
           </View>
         ) : (
           <View style={{ display: 'flex', flexDirection: 'column', padding: s.$3, gap: s.$1 }}>
@@ -168,8 +185,7 @@ export const AddRefSheet = ({
                   backlog: false,
                   comment: itemToAdd.text,
                 })
-                bottomSheetRef.current?.close()
-                // TODO: post something that says we removed the old item and added the new one
+                setStep('addedToGrid')
               }}
             />
             <Button
@@ -183,12 +199,21 @@ export const AddRefSheet = ({
                   backlog: false,
                   comment: itemToAdd.text,
                 })
-                bottomSheetRef.current?.close()
-                // TODO: post something that says we moved the old item to the backlog and added the new one
+                setStep('addedToGrid')
               }}
             />
           </View>
         ))}
+      {step === 'addedToBacklog' && (
+        <View style={{ padding: s.$3 }}>
+          <Heading tag="h1">{itemToAdd?.expand.ref.title} was added to the backlog</Heading>
+        </View>
+      )}
+      {step === 'addedToGrid' && (
+        <View style={{ padding: s.$3 }}>
+          <Heading tag="h1">{itemToAdd?.expand.ref.title} was added to grid</Heading>
+        </View>
+      )}
     </BottomSheet>
   )
 }

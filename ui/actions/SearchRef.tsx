@@ -170,7 +170,9 @@ export const SearchRef = ({
             placeholder="Search anything or start typing"
             placeholderTextColor={c.surface}
             onChangeText={onQueryChange}
-            autoFocus
+            // disabling autofocusc because sometimes the keyboard
+            // opens before the sheet, so the sheet doesn't expand properly
+            autoFocus={false}
           />
           {searchQuery.length > 0 && (
             <Pressable onPress={() => setSearchQuery('')} hitSlop={10} style={{ marginLeft: 8 }}>

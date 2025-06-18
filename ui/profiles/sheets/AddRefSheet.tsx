@@ -69,7 +69,7 @@ export const AddRefSheet = ({
   const [itemToReplace, setItemToReplace] = useState<ExpandedItem | null>(null)
 
   const sheetHeight =
-    step === 'selectItemToReplace' ? '80%' : step === 'chooseReplaceItemMethod' ? '50%' : '30%'
+    step === 'selectItemToReplace' ? '90%' : step === 'chooseReplaceItemMethod' ? '50%' : '30%'
 
   const disappearsOnIndex = -1
   const appearsOnIndex = 0
@@ -133,6 +133,19 @@ export const AddRefSheet = ({
             alignItems: 'center',
           }}
         >
+          <Text>Adding {itemToAdd?.expand.ref.title} to your profile</Text>
+          {itemToAdd?.expand.ref?.image && (
+            <View style={{ alignItems: 'center' }}>
+              <SimplePinataImage
+                originalSource={itemToAdd.expand.ref?.image}
+                style={{ height: 100, width: 100 }}
+                imageOptions={{
+                  width: 100,
+                  height: 100,
+                }}
+              />
+            </View>
+          )}
           <Text>Choose a grid item to replace</Text>
           <AddRefSheetGrid
             gridItems={gridItems}

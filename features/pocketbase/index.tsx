@@ -6,7 +6,7 @@ import { StagedRef, CompleteRef, Item, ExpandedItem } from './stores/types'
 
 const addToProfile: (
   stagedRef: StagedRef | CompleteRef,
-  options: { text?: string; backlog?: boolean; list?: boolean }
+  options: { image?: string; text?: string; backlog?: boolean; list?: boolean }
 ) => Promise<ExpandedItem> = async (stagedRef, options = {}) => {
   console.log('WE GOT STAGED', 'list' in stagedRef ? stagedRef.list : null)
   console.log('WE GOT OPTIONS', options.list)
@@ -21,7 +21,7 @@ const addToProfile: (
     const existingRef = stagedRef
     newItem = await itemStore.push({
       ref: existingRef.id,
-      image: existingRef?.image,
+      image: options.image || existingRef?.image,
       creator: pocketbase.authStore?.record?.id,
       text: options.text,
       backlog: !!options.backlog,
@@ -31,7 +31,7 @@ const addToProfile: (
     const newRef = await refStore.push({ ...stagedRef, creator: pocketbase.authStore?.record?.id })
     newItem = await itemStore.push({
       ref: newRef.id,
-      image: newRef.image,
+      image: options.image || newRef.image,
       creator: pocketbase.authStore?.record?.id || '',
       text: options.text,
       backlog: !!options.backlog,

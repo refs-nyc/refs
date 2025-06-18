@@ -22,6 +22,7 @@ import { pocketbase } from '@/features/pocketbase/pocketbase'
 import * as Clipboard from 'expo-clipboard'
 import { Heading } from '../typo/Heading'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { addToProfile } from '@/features/pocketbase'
 
 export type NewRefStep = '' | 'add' | 'search' | 'editList' | 'addToList'
 
@@ -68,14 +69,6 @@ export const NewRef = ({
     console.log(newRef)
     setRefData(newRef)
     setStep('add')
-  }
-
-  const handleNewRefCreated = (item: ExpandedItem) => {
-    console.log('HANDLE NEW REF CREATED', item.expand.ref.title)
-    if (!item.expand?.ref)
-      throw new Error('unexpected: handleNewRefCreated should always be called with ExpandedItem')
-    setItemData(item)
-    setRefData(item.expand?.ref)
   }
 
   useEffect(() => {
@@ -176,8 +169,19 @@ export const NewRef = ({
         <RefForm
           r={refData}
           pickerOpen={pickerOpen}
-          onComplete={handleNewRefCreated}
-          onCancel={() => setRefData({})}
+          submitRef={async (fields) => {
+            const newItem = await addToProfile(refData, {
+              text: fields.text,
+              backlog,
+            })
+            console.log('HANDLE NEW REF CREATED', newItem.expand.ref.title)
+            if (!newItem.expand?.ref)
+              throw new Error(
+                'unexpected: handleNewRefCreated should always be called with ExpandedItem'
+              )
+            setItemData(newItem)
+            setRefData(newItem.expand?.ref)
+          }}
           backlog={backlog}
         />
       )}

@@ -153,11 +153,11 @@ export const RefForm = ({
         backlog,
       })
       onComplete(item)
-      setCreateInProgress(false)
       console.log('success')
     } catch (e) {
       console.error(e)
     } finally {
+      setCreateInProgress(false)
       console.log('Done')
     }
   }

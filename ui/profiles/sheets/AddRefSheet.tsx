@@ -51,7 +51,7 @@ export const AddRefSheet = ({
           } else {
             addToProfile(itemToAdd.expand.ref, true, {
               backlog: false,
-              comment: itemToAdd.text,
+              text: itemToAdd.text,
             }).then(() => {
               setStep('addedToGrid')
             })
@@ -163,7 +163,7 @@ export const AddRefSheet = ({
               if (!itemToAdd) return
               await addToProfile(itemToAdd.expand.ref, true, {
                 backlog: true,
-                comment: itemToAdd.text,
+                text: itemToAdd.text,
               })
               setStep('addedToBacklog')
             }}
@@ -205,7 +205,7 @@ export const AddRefSheet = ({
               await removeFromProfile(itemToReplace.id)
               await addToProfile(itemToAdd.expand.ref, true, {
                 backlog: false,
-                comment: itemToAdd.text,
+                text: itemToAdd.text,
               })
               setStep('addedToGrid')
             }}
@@ -219,7 +219,7 @@ export const AddRefSheet = ({
               // replace the item
               await addToProfile(itemToAdd.expand.ref, true, {
                 backlog: false,
-                comment: itemToAdd.text,
+                text: itemToAdd.text,
               })
               setStep('addedToGrid')
             }}

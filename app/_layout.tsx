@@ -33,6 +33,8 @@ import { useUserStore } from '@/features/pocketbase/stores/users'
 import { LogBox } from 'react-native'
 import BottomSheet from '@gorhom/bottom-sheet'
 import Saves from '@/features/saves/saves-sheet'
+import Referencers from '@/ui/profiles/sheets/ReferencersSheet'
+import { useUIStore } from '@/ui/state'
 
 install()
 polyfillEncoding()
@@ -124,6 +126,7 @@ const Providers = ({ children }: { children: React.ReactNode }) => {
 function RootLayoutNav() {
   const savesBottomSheetRef = useRef<BottomSheet>(null)
   const colorScheme = useColorScheme()
+  const { referencersBottomSheetRef } = useUIStore()
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
@@ -185,6 +188,7 @@ function RootLayoutNav() {
         />
       </Stack>
       <Saves savesBottomSheetRef={savesBottomSheetRef} />
+      <Referencers referencersBottomSheetRef={referencersBottomSheetRef} />
     </ThemeProvider>
   )
 }

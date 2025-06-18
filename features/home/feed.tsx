@@ -11,6 +11,7 @@ import { SimplePinataImage } from '@/ui/images/SimplePinataImage'
 import { Avatar } from '@/ui/atoms/Avatar'
 import { ProfileDetailsSheet } from '@/ui/profiles/ProfileDetailsSheet'
 import BottomSheet from '@gorhom/bottom-sheet'
+import { useUIStore } from '@/ui/state'
 
 const win = Dimensions.get('window')
 
@@ -52,7 +53,15 @@ const formatDate = (isoDateString: string): string => {
   return dtf.format(date)
 }
 
-const ListItem = ({ item, onPress }: { item: ExpandedItem; onPress: () => void }) => {
+const ListItem = ({
+  item,
+  onTitlePress,
+  onImagePress,
+}: {
+  item: ExpandedItem
+  onTitlePress: () => void
+  onImagePress: () => void
+}) => {
   const creator = item.expand!.creator
   const creatorProfileUrl = `/user/${creator.userName}/` as const
 
@@ -91,7 +100,7 @@ const ListItem = ({ item, onPress }: { item: ExpandedItem; onPress: () => void }
               <Heading tag="semistrong">{item.expand?.creator?.firstName || 'Anonymous'} </Heading>
             </Link>
             <Text style={{ color: c.muted2 }}>added </Text>
-            <Heading tag="semistrong" onPress={onPress}>
+            <Heading tag="semistrong" onPress={onTitlePress}>
               {item.expand?.ref?.title}
             </Heading>
           </Text>
@@ -101,7 +110,7 @@ const ListItem = ({ item, onPress }: { item: ExpandedItem; onPress: () => void }
         </View>
 
         {item?.image ? (
-          <Pressable onPress={onPress}>
+          <Pressable onPress={onImagePress}>
             <View
               style={{
                 minWidth: FEED_REF_IMAGE_SIZE,
@@ -141,6 +150,7 @@ export const Feed = () => {
   const feedRefreshTrigger = useItemStore((state) => state.feedRefreshTrigger)
   const [detailsItem, setDetailsItem] = useState<ExpandedItem | null>(null)
   const detailsSheetRef = useRef<BottomSheet>(null)
+  const { referencersBottomSheetRef, setCurrentRefId } = useUIStore()
 
   const fetchFeedItems = async () => {
     try {
@@ -185,11 +195,15 @@ export const Feed = () => {
                   <ListItem
                     key={item.id}
                     item={item}
-                    onPress={() => {
+                    onImagePress={() => {
                       // set the current item
                       setDetailsItem(item)
                       // open the details sheet
                       detailsSheetRef.current?.snapToIndex(0)
+                    }}
+                    onTitlePress={() => {
+                      setCurrentRefId(item.ref)
+                      referencersBottomSheetRef.current?.expand()
                     }}
                   />
                 ))}

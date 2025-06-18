@@ -83,7 +83,7 @@ export const AddRefSheet = ({
       snapPoints={[sheetHeight]}
       index={-1}
       animatedIndex={addRefSheetBackdropAnimatedIndex}
-      backgroundStyle={{ backgroundColor: c.surface, borderRadius: s.$4, paddingTop: 0 }}
+      backgroundStyle={{ backgroundColor: c.olive, borderRadius: s.$4, paddingTop: 0 }}
       onChange={(i: number) => {
         if (i === -1) {
           setItemToReplace(null)
@@ -133,20 +133,22 @@ export const AddRefSheet = ({
             alignItems: 'center',
           }}
         >
-          <Text>Adding {itemToAdd?.expand.ref.title} to your profile</Text>
+          <Text style={{ color: c.surface, fontSize: s.$1 }}>
+            Adding {itemToAdd?.expand.ref.title} to your profile
+          </Text>
           {itemToAdd?.expand.ref?.image && (
             <View style={{ alignItems: 'center' }}>
               <SimplePinataImage
                 originalSource={itemToAdd.expand.ref?.image}
-                style={{ height: 100, width: 100 }}
+                style={{ height: 80, width: 80 }}
                 imageOptions={{
-                  width: 100,
-                  height: 100,
+                  width: 80,
+                  height: 80,
                 }}
               />
             </View>
           )}
-          <Text>Choose a grid item to replace</Text>
+          <Text style={{ color: c.surface, fontSize: s.$1 }}>Choose a grid item to replace</Text>
           <AddRefSheetGrid
             gridItems={gridItems}
             onSelectItem={(item) => {
@@ -156,7 +158,7 @@ export const AddRefSheet = ({
           />
           <Button
             title="Add to backlog instead"
-            variant="smallMuted"
+            variant="small"
             onPress={async () => {
               if (!itemToAdd) return
               await addToProfile(itemToAdd.expand.ref, true, {
@@ -226,12 +228,16 @@ export const AddRefSheet = ({
       )}
       {step === 'addedToBacklog' && (
         <View style={{ padding: s.$3 }}>
-          <Heading tag="h1">{itemToAdd?.expand.ref.title} was added to the backlog</Heading>
+          <Heading tag="h1" style={{ color: c.surface }}>
+            {itemToAdd?.expand.ref.title} was added to the backlog
+          </Heading>
         </View>
       )}
       {step === 'addedToGrid' && (
         <View style={{ padding: s.$3 }}>
-          <Heading tag="h1">{itemToAdd?.expand.ref.title} was added to grid</Heading>
+          <Heading tag="h1" style={{ color: c.surface }}>
+            {itemToAdd?.expand.ref.title} was added to grid
+          </Heading>
         </View>
       )}
     </BottomSheet>

@@ -58,6 +58,9 @@ export const SearchRef = ({
         key={item.id}
         onPress={() => {
           onComplete(item)
+          if (imageState) {
+            onComplete({ ...item, image: imageState })
+          }
         }}
       >
         <ListItem r={item} backgroundColor={c.olive} />

@@ -28,7 +28,7 @@ export type NewRefStep = '' | 'add' | 'search' | 'editList' | 'addToList' | 'cat
 const win = Dimensions.get('window')
 
 export const NewRef = ({
-  initialStep = '',
+  initialStep = 'search',
   initialRefData = {},
   onNewRef,
   onStep = (s) => console.log(s),

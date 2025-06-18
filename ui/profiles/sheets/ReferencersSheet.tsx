@@ -61,7 +61,7 @@ export default function Referencers({
     >
       <View style={{ paddingHorizontal: s.$3, paddingVertical: s.$1 }}>
         <View style={{ paddingBottom: s.$1 }}>
-          <Heading tag="h1">{refData.title}</Heading>
+          <Heading tag="h1">{refData?.title}</Heading>
           <Text style={{ color: c.grey2 }}> Everyone who's added it. </Text>
         </View>
         <BottomSheetScrollView>

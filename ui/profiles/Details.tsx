@@ -205,7 +205,7 @@ export const Details = ({ profile, data }: { profile: ExpandedProfile; data: Ite
       )}
 
       {/* add ref sheet */}
-      <AddRefSheet itemToAdd={itemToAdd} bottomSheetRef={addRefSheetRef} />
+      {itemToAdd && <AddRefSheet itemToAdd={itemToAdd} bottomSheetRef={addRefSheetRef} />}
     </>
   )
 }

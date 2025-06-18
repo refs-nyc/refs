@@ -5,6 +5,7 @@ import { GridTileType } from '@/features/pocketbase/stores/types'
 import { useUIStore } from '../state'
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { c } from '@/features/style'
+import { DEFAULT_TILE_SIZE } from './GridTile'
 
 export const GridTileWrapper = ({
   type,
@@ -13,6 +14,7 @@ export const GridTileWrapper = ({
   onRemove,
   onPress,
   onLongPress,
+  size = DEFAULT_TILE_SIZE,
 }: {
   type: GridTileType
   children: React.ReactNode
@@ -20,6 +22,7 @@ export const GridTileWrapper = ({
   onRemove?: () => void
   onPress?: () => void
   onLongPress?: () => void
+  size?: number
 }) => {
   const { editingProfile, stopEditProfile } = useUIStore()
 
@@ -32,7 +35,7 @@ export const GridTileWrapper = ({
     <TouchableOpacity
       onPress={() => onPress && onPress()}
       onLongPress={onLongPress}
-      style={[base.gridTile, specificStyles]}
+      style={[base.gridTile, specificStyles, { width: size }]}
     >
       {editingProfile && type !== 'add' && id && (
         <YStack style={{ position: 'absolute', zIndex: 999, top: 0, right: 0 }}>

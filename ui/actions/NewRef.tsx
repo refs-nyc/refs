@@ -28,7 +28,7 @@ export type NewRefStep = '' | 'add' | 'search' | 'editList' | 'addToList' | 'cat
 const win = Dimensions.get('window')
 
 export const NewRef = ({
-  initialStep = '',
+  initialStep = 'search',
   initialRefData = {},
   onNewRef,
   onStep = (s) => console.log(s),
@@ -42,7 +42,7 @@ export const NewRef = ({
   onCancel: () => void
   backlog?: boolean
 }) => {
-  const [textOpen, setTextOpen] = useState(false)
+  const [textOpen, setTextOpen] = useState(true)
   const [urlOpen, setUrlOpen] = useState(false)
   const [hasUrl, setHasUrl] = useState(false)
   const [pickerOpen, setPickerOpen] = useState(false)
@@ -157,6 +157,7 @@ export const NewRef = ({
               iconColor={c.surface}
               style={{ width: '100%' }}
               onPress={() => {
+                setTextOpen(false)
                 setStep('search')
                 setUrlOpen(true)
               }}

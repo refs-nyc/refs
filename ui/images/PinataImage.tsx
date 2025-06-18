@@ -12,6 +12,7 @@ export const PinataImage = ({
   onSuccess,
   onReplace,
   onFail,
+  size = 200,
 }: {
   asset: ImagePickerAsset | string
   round?: boolean
@@ -19,6 +20,7 @@ export const PinataImage = ({
   onSuccess: (url: string) => void
   onReplace: () => void
   onFail: () => void
+  size?: number
 }) => {
   const [loading, setLoading] = useState(false)
   const [source, setSource] = useState(typeof asset === 'string' ? asset : asset?.uri)
@@ -98,8 +100,8 @@ export const PinataImage = ({
     <TouchableOpacity
       onLongPress={handleLongpress}
       style={{
-        width: 200,
-        height: 200,
+        width: size,
+        height: size,
         justifyContent: 'center',
         alignItems: 'center',
       }}
@@ -107,8 +109,8 @@ export const PinataImage = ({
       <View
         style={{
           ...style,
-          width: 200,
-          height: 200,
+          width: size,
+          height: size,
           overflow: 'hidden',
           justifyContent: 'center',
           alignItems: 'center',
@@ -128,8 +130,8 @@ export const PinataImage = ({
             key={`source-${source}`}
             contentFit="cover"
             style={{
-              width: 200,
-              height: 200,
+              width: size,
+              height: size,
             }}
             source={source}
           />

@@ -38,25 +38,34 @@ export const AddRefSheet = ({
   }, [])
 
   useEffect(() => {
-    const fetchGridItems = async () => {
-      if (!user) {
-        setGridItems([])
-      } else {
-        const gridItems = await getProfileItems(user.userName)
-        setGridItems(gridItems)
+    async function initialize() {
+      if (itemToAdd) {
+        if (user) {
+          const gridItems = await getProfileItems(user.userName)
+          setGridItems(gridItems)
+
+          // check if the grid is full
+          if (gridItems.length >= 12) {
+            // show a modal to the user that the grid is full
+            setStep('selectItemToReplace')
+          } else {
+            addToProfile(itemToAdd.expand.ref, true, {
+              backlog: false,
+              comment: itemToAdd.text,
+            }).then(() => {
+              setStep('addedToGrid')
+            })
+          }
+        }
       }
     }
-    fetchGridItems()
-  }, [user])
+    initialize()
+  }, [itemToAdd])
 
   // const [addingTo, setAddingTo] = useState<'backlog' | 'grid' | null>(null)
   const [step, setStep] = useState<
-    | 'chooseTarget'
-    | 'selectItemToReplace'
-    | 'addedToBacklog'
-    | 'addedToGrid'
-    | 'chooseReplaceItemMethod'
-  >('chooseTarget')
+    null | 'selectItemToReplace' | 'addedToBacklog' | 'addedToGrid' | 'chooseReplaceItemMethod'
+  >(null)
   const [itemToReplace, setItemToReplace] = useState<ExpandedItem | null>(null)
 
   const sheetHeight =
@@ -78,7 +87,7 @@ export const AddRefSheet = ({
       onChange={(i: number) => {
         if (i === -1) {
           setItemToReplace(null)
-          setStep('chooseTarget')
+          setStep(null)
         }
       }}
       backdropComponent={(p) => (
@@ -114,43 +123,6 @@ export const AddRefSheet = ({
       )}
       keyboardBehavior="interactive"
     >
-      {step === 'chooseTarget' && (
-        <View style={{ display: 'flex', flexDirection: 'column', padding: s.$3, gap: s.$1 }}>
-          <Button
-            title="Add to backlog"
-            onPress={async () => {
-              if (!itemToAdd?.expand.ref) return
-              // add the item to the backlog
-              await addToProfile(itemToAdd.expand.ref, true, {
-                backlog: true,
-                comment: itemToAdd.text,
-              })
-              setStep('addedToBacklog')
-            }}
-            variant="basic"
-            style={{ backgroundColor: c.surface2 }}
-            textStyle={{ color: c.muted2 }}
-          />
-          <Button
-            title="Add to grid"
-            onPress={async () => {
-              if (!itemToAdd) return
-              // check if the grid is full
-              if (gridItems.length >= 12) {
-                // show a modal to the user that the grid is full
-                setStep('selectItemToReplace')
-              } else {
-                await addToProfile(itemToAdd.expand.ref, true, {
-                  backlog: false,
-                  comment: itemToAdd.text,
-                })
-                setStep('addedToGrid')
-              }
-            }}
-            variant="raised"
-          />
-        </View>
-      )}
       {step === 'selectItemToReplace' && (
         <View
           style={{

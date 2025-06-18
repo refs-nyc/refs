@@ -23,7 +23,7 @@ import * as Clipboard from 'expo-clipboard'
 import { Heading } from '../typo/Heading'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
-export type NewRefStep = '' | 'add' | 'search' | 'editList' | 'addToList' | 'categorise'
+export type NewRefStep = '' | 'add' | 'search' | 'editList' | 'addToList'
 
 const win = Dimensions.get('window')
 

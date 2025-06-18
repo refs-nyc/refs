@@ -3,14 +3,15 @@ import { useBackdropStore } from '@/features/pocketbase/stores/backdrop'
 import { getProfileItems, useItemStore } from '@/features/pocketbase/stores/items'
 import { ExpandedItem } from '@/features/pocketbase/stores/types'
 import { c, s } from '@/features/style'
+import { RefForm } from '@/ui/actions/RefForm'
 import { Button } from '@/ui/buttons/Button'
+import { SimplePinataImage } from '@/ui/images/SimplePinataImage'
+import { Heading } from '@/ui/typo/Heading'
 import BottomSheet, { BottomSheetBackdrop } from '@gorhom/bottom-sheet'
 import { useEffect, useState } from 'react'
 import { Text, View } from 'react-native'
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated'
 import { AddRefSheetGrid } from './AddRefSheetGrid'
-import { Heading } from '@/ui/typo/Heading'
-import { SimplePinataImage } from '@/ui/images/SimplePinataImage'
 
 export const AddRefSheet = ({
   itemToAdd,
@@ -37,38 +38,24 @@ export const AddRefSheet = ({
     }
   }, [])
 
-  useEffect(() => {
-    async function initialize() {
-      if (itemToAdd) {
-        if (user) {
-          const gridItems = await getProfileItems(user.userName)
-          setGridItems(gridItems)
-
-          // check if the grid is full
-          if (gridItems.length >= 12) {
-            // show a modal to the user that the grid is full
-            setStep('selectItemToReplace')
-          } else {
-            await addToProfile(itemToAdd.expand.ref, {
-              backlog: false,
-              text: itemToAdd.text,
-            })
-            setStep('addedToGrid')
-          }
-        }
-      }
-    }
-    initialize()
-  }, [itemToAdd])
-
   // const [addingTo, setAddingTo] = useState<'backlog' | 'grid' | null>(null)
   const [step, setStep] = useState<
-    null | 'selectItemToReplace' | 'addedToBacklog' | 'addedToGrid' | 'chooseReplaceItemMethod'
-  >(null)
+    | 'editNewItem'
+    | 'selectItemToReplace'
+    | 'addedToBacklog'
+    | 'addedToGrid'
+    | 'chooseReplaceItemMethod'
+  >('editNewItem')
   const [itemToReplace, setItemToReplace] = useState<ExpandedItem | null>(null)
 
   const sheetHeight =
-    step === 'selectItemToReplace' ? '90%' : step === 'chooseReplaceItemMethod' ? '50%' : '30%'
+    step === 'selectItemToReplace'
+      ? '90%'
+      : step === 'chooseReplaceItemMethod'
+      ? '50%'
+      : step === 'editNewItem'
+      ? '90%'
+      : '30%'
 
   const disappearsOnIndex = -1
   const appearsOnIndex = 0
@@ -86,7 +73,7 @@ export const AddRefSheet = ({
       onChange={(i: number) => {
         if (i === -1) {
           setItemToReplace(null)
-          setStep(null)
+          setStep('editNewItem')
         }
       }}
       backdropComponent={(p) => (
@@ -122,6 +109,32 @@ export const AddRefSheet = ({
       )}
       keyboardBehavior="interactive"
     >
+      {step === 'editNewItem' && itemToAdd?.expand.ref && (
+        <View style={{ padding: s.$3 }}>
+          <RefForm
+            r={itemToAdd?.expand.ref}
+            submitRef={async (fields) => {
+              if (!user) return
+              const gridItems = await getProfileItems(user.userName)
+              setGridItems(gridItems)
+
+              // check if the grid is full
+              if (gridItems.length >= 12) {
+                // show a modal to the user that the grid is full
+                setStep('selectItemToReplace')
+              } else {
+                await addToProfile(itemToAdd.expand.ref, {
+                  backlog: false,
+                  image: fields.image,
+                  text: fields.text,
+                })
+                setStep('addedToGrid')
+              }
+            }}
+            backlog={false}
+          />
+        </View>
+      )}
       {step === 'selectItemToReplace' && (
         <View
           style={{

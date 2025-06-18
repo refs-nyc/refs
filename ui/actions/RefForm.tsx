@@ -118,19 +118,21 @@ export const RefForm = ({
     ]).start()
   }
 
-  const submit = async () => {
+  const validateFields = () => {
     // Check for missing fields
-    let missing = false
+    let isValid = true
     if (!title) {
       triggerShake(titleShake)
-      missing = true
+      isValid = false
     }
     if (!pinataSource) {
       triggerShake(imageShake)
-      missing = true
+      isValid = false
     }
-    if (missing) return
+    return isValid
+  }
 
+  const submit = async () => {
     // Only include meta if location or author is present
     let meta: string | undefined = undefined
     if (location || author) {
@@ -441,6 +443,9 @@ export const RefForm = ({
             style={{ width: '48%', minWidth: 0 }}
             disabled={!title || createInProgress}
             onPress={() => {
+              if (!validateFields()) {
+                return
+              }
               submit()
             }}
           />
@@ -469,7 +474,12 @@ export const RefForm = ({
               variant="whiteInverted"
               style={{ width: '48%', minWidth: 0 }}
               disabled={!(pinataSource && title) || createInProgress}
-              onPress={() => submit()}
+              onPress={() => {
+                if (!validateFields()) {
+                  return
+                }
+                submit()
+              }}
             />
           )}
         </View>

@@ -46,7 +46,7 @@ export const RefForm = ({
   // Separate state for each field to prevent unnecessary re-renders
   const [title, setTitle] = useState<string>(r?.title || '')
   const [url, setUrl] = useState<string>(r?.url || '')
-  const [comment, setComment] = useState<string>('')
+  const [text, setText] = useState<string>('')
   const [imageAsset, setImageAsset] = useState<ImagePickerAsset | null>(null)
   const [pinataSource, setPinataSource] = useState<string>('')
   const [picking, setPicking] = useState(pickerOpen)
@@ -160,7 +160,7 @@ export const RefForm = ({
       setCreateInProgress(true)
       const attach = !pathname.includes('onboarding') && !willAddToList
       const item = await addToProfile(data, attach, {
-        comment,
+        text,
         backlog,
         ...extraFields,
       })
@@ -428,7 +428,7 @@ export const RefForm = ({
           numberOfLines={4}
           placeholder="Add a caption for your profile"
           placeholderTextColor={c.muted}
-          onChangeText={setComment}
+          onChangeText={setText}
           style={{
             backgroundColor: c.white,
             borderRadius: s.$075,

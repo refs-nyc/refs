@@ -4,19 +4,15 @@ import { useRefStore } from './stores/refs'
 import { useItemStore } from './stores/items'
 import { StagedRef, CompleteRef, Item, ExpandedItem } from './stores/types'
 
-const addToProfile: ((
+const addToProfile: (
   stagedRef: StagedRef | CompleteRef,
   attach: boolean,
-  options: { comment?: string; backlog?: boolean; list?: boolean },
-) => Promise<ExpandedItem>) = async (
-  stagedRef,
-  attach = true,
-  options = {}
-) => {
+  options: { text?: string; backlog?: boolean; list?: boolean }
+) => Promise<ExpandedItem> = async (stagedRef, attach = true, options = {}) => {
   if ((!pocketbase.authStore?.isValid || !pocketbase.authStore?.record) && attach)
     throw new Error('Not enough permissions')
 
-  console.log('WE GOT STAGED', "list" in stagedRef ? stagedRef.list : null)
+  console.log('WE GOT STAGED', 'list' in stagedRef ? stagedRef.list : null)
   console.log('WE GOT OPTIONS', options.list)
 
   const refStore = useRefStore.getState()
@@ -32,7 +28,7 @@ const addToProfile: ((
       ref: existingRef.id,
       image: existingRef?.image,
       creator: pocketbase.authStore?.record?.id,
-      text: options.comment,
+      text: options.text,
       backlog: !!options.backlog,
     })
   } else {
@@ -42,7 +38,7 @@ const addToProfile: ((
       ref: newRef.id,
       image: newRef.image,
       creator: pocketbase.authStore?.record?.id || '',
-      text: options.comment,
+      text: options.text,
       backlog: !!options.backlog,
       list: !!options.list,
     })

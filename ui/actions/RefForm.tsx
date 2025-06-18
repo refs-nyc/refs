@@ -14,11 +14,10 @@ import { Picker } from '../inputs/Picker'
 import { PinataImage } from '../images/PinataImage'
 import { Image } from 'expo-image'
 import { EditableHeader } from '../atoms/EditableHeader'
-import { addToProfile } from '@/features/pocketbase'
 import { Button } from '../buttons/Button'
 import type { ImagePickerAsset } from 'expo-image-picker'
 import { c, s } from '@/features/style'
-import { StagedRef, ExpandedItem } from '@/features/pocketbase/stores/types'
+import { StagedRef } from '@/features/pocketbase/stores/types'
 // @ts-ignore
 import { KeyboardAvoidingView } from 'react-native-keyboard-controller'
 import { DismissKeyboard } from '../atoms/DismissKeyboard'
@@ -28,15 +27,18 @@ const win = Dimensions.get('window')
 export const RefForm = ({
   r,
   placeholder = 'Add a title',
-  onComplete,
-  onCancel,
-  backlog = false,
+  submitRef,
   pickerOpen = false,
 }: {
   r: StagedRef
   placeholder?: string
-  onComplete: (i: ExpandedItem) => void
-  onCancel: () => void
+  submitRef: (fields: {
+    title: string
+    text: string
+    url: string
+    image: string
+    meta?: string
+  }) => Promise<void>
   pickerOpen?: boolean
   backlog?: boolean
 }) => {
@@ -139,22 +141,9 @@ export const RefForm = ({
       meta = JSON.stringify({ location, author })
     }
 
-    const data = {
-      ...r,
-      title,
-      url,
-      image: pinataSource,
-      backlog,
-      meta,
-    }
-
     try {
       setCreateInProgress(true)
-      const item = await addToProfile(data, {
-        text,
-        backlog,
-      })
-      onComplete(item)
+      await submitRef({ title, text, url, image: pinataSource, meta })
       console.log('success')
     } catch (e) {
       console.error(e)

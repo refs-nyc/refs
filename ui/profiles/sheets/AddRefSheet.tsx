@@ -49,12 +49,11 @@ export const AddRefSheet = ({
             // show a modal to the user that the grid is full
             setStep('selectItemToReplace')
           } else {
-            addToProfile(itemToAdd.expand.ref, true, {
+            await addToProfile(itemToAdd.expand.ref, {
               backlog: false,
               text: itemToAdd.text,
-            }).then(() => {
-              setStep('addedToGrid')
             })
+            setStep('addedToGrid')
           }
         }
       }
@@ -161,7 +160,7 @@ export const AddRefSheet = ({
             variant="small"
             onPress={async () => {
               if (!itemToAdd) return
-              await addToProfile(itemToAdd.expand.ref, true, {
+              await addToProfile(itemToAdd.expand.ref, {
                 backlog: true,
                 text: itemToAdd.text,
               })
@@ -203,7 +202,7 @@ export const AddRefSheet = ({
               if (!itemToAdd?.expand.ref) return
               // remove the item
               await removeFromProfile(itemToReplace.id)
-              await addToProfile(itemToAdd.expand.ref, true, {
+              await addToProfile(itemToAdd.expand.ref, {
                 backlog: false,
                 text: itemToAdd.text,
               })
@@ -217,7 +216,7 @@ export const AddRefSheet = ({
               // send itemToReplace to the backlog
               await moveToBacklog(itemToReplace.id)
               // replace the item
-              await addToProfile(itemToAdd.expand.ref, true, {
+              await addToProfile(itemToAdd.expand.ref, {
                 backlog: false,
                 text: itemToAdd.text,
               })

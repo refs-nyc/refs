@@ -14,6 +14,7 @@ export const ListItem = ({
   withRemove = false,
   largeImage = false,
   onRemove,
+  onTitlePress,
 }: {
   r: CompleteRef | ExpandedItem
   backgroundColor?: string
@@ -21,6 +22,7 @@ export const ListItem = ({
   withRemove?: boolean
   largeImage?: boolean
   onRemove?: () => void
+  onTitlePress?: () => void
 }) => {
   let [count, setCount] = useState(-1)
 
@@ -63,25 +65,25 @@ export const ListItem = ({
               ]}
             ></View>
           )}
-          <Text style={{ color: c.muted, fontWeight: '700' }}>
-            {(r as any)?.title || (r as any)?.expand?.ref?.title}
-          </Text>
+          <Pressable onPress={onTitlePress}>
+            <Text style={{ color: c.muted, fontWeight: '700' }}>
+              {(r as any)?.title || (r as any)?.expand?.ref?.title}
+            </Text>
+          </Pressable>
         </XStack>
 
         {withRemove ? (
           <Pressable onPress={onRemove}>
             <Ionicons name="close" color={c.surface} />
           </Pressable>
-        ) : (
-          // showMeta && (
-          //   <XStack gap={s.$09} style={{ justifyContent: 'space-between', alignItems: 'center' }}>
-          //     <Text style={{ color: c.surface }}>
-          //       {count === 1 ? 'You are' : count} referencing
-          //     </Text>
-          //   </XStack>
-          // )
-          null
-        )}
+        ) : // showMeta && (
+        //   <XStack gap={s.$09} style={{ justifyContent: 'space-between', alignItems: 'center' }}>
+        //     <Text style={{ color: c.surface }}>
+        //       {count === 1 ? 'You are' : count} referencing
+        //     </Text>
+        //   </XStack>
+        // )
+        null}
       </XStack>
     </View>
   )

@@ -20,6 +20,7 @@ import { KeyboardAvoidingView } from 'react-native-keyboard-controller'
 import Animated, { useAnimatedStyle } from 'react-native-reanimated'
 import { useStore } from 'zustand'
 import { ProfileDetailsContext } from './profileDetailsStore'
+import { useUIStore } from '../state'
 
 const LocationMeta = ({ location }: { location: string }) => {
   return (
@@ -86,6 +87,7 @@ export const DetailsCarouselItem = ({ item, index }: { item: ExpandedItem; index
   const [url, setUrl] = useState(item?.url)
   const [listTitle, setListTitle] = useState(item.list ? item?.expand.ref.title : '')
 
+  const { referencersBottomSheetRef, setCurrentRefId } = useUIStore()
   const editingThisItem = editing === item.id
 
   const animatedStyle = useAnimatedStyle(() => {
@@ -232,7 +234,12 @@ export const DetailsCarouselItem = ({ item, index }: { item: ExpandedItem; index
                 ) : (
                   <Pressable
                     onPress={() => {
-                      if (!editingThisItem) return
+                      if (!editingThisItem)
+                      {
+                        setCurrentRefId(item.ref)
+                        referencersBottomSheetRef.current?.expand()
+                        return;
+                      }
                       Keyboard.dismiss()
                       setSearchingNewRef(item.id)
                     }}

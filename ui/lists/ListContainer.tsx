@@ -13,13 +13,22 @@ export const ListContainer = ({
   item: ExpandedItem
   editingRights: boolean
 }) => {
-  const { setAddingToList } = useUIStore()
+  const { setAddingToList, setCurrentRefId, referencersBottomSheetRef } = useUIStore()
 
   return (item?.expand?.items_via_parent ?? []).length > 0 ? (
     <ScrollView style={{ flex: 1, padding: s.$075 }}>
       <YStack gap={s.$075}>
         {item?.expand?.items_via_parent.map((itm) => (
-          <ListItem largeImage={true} key={itm.id} r={itm} showMeta={false} />
+          <ListItem
+            onTitlePress={() => {
+              setCurrentRefId(itm.ref || '')
+              referencersBottomSheetRef.current?.expand()
+            }}
+            largeImage={true}
+            key={itm.id}
+            r={itm}
+            showMeta={false}
+          />
         ))}
       </YStack>
 

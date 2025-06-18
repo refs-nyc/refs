@@ -93,6 +93,10 @@ export default function SearchBottomSheet() {
   }
 
   const search = () => {
+    // without this there is a shadow on the navigation bar
+    // when navigating to search results page
+    searchSheetRef.current?.collapse()
+
     router.push(`/search?refs=${refs.map((r) => r.id).join(',')}`)
   }
 

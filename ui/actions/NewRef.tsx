@@ -171,6 +171,7 @@ export const NewRef = ({
           pickerOpen={pickerOpen}
           submitRef={async (fields) => {
             const newItem = await addToProfile(refData, {
+              image: fields.image,
               text: fields.text,
               backlog,
             })

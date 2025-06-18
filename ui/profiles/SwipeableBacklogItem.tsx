@@ -47,6 +47,7 @@ export default function SwipeableBacklogItem({
           }}
         />
         <Pressable
+          style={{ flex: 1 }}
           onPress={() => {
             setCurrentRefId(item.ref)
             // sometimes the sheet shows the previous item for a second

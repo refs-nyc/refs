@@ -28,7 +28,7 @@ export default function SearchBottomSheet() {
   const [addingTo, setAddingTo] = useState('')
   const [step, setStep] = useState('')
   const [newRefTitle, setNewRefTitle] = useState('')
-  const [initialStep, setInitialStep] = useState<NewRefStep>('')
+  const [initialStep, setInitialStep] = useState<NewRefStep>('search')
   const [searching, setSearching] = useState(false)
 
   const [searchTerm, setSearchTerm] = useState('')
@@ -79,7 +79,7 @@ export default function SearchBottomSheet() {
   }
 
   const stopAdding = () => {
-    setInitialStep('')
+    setInitialStep('search')
     setNewRefTitle('')
     setAddingTo('')
   }
@@ -156,6 +156,7 @@ export default function SearchBottomSheet() {
             backlog={addingTo === 'backlog'}
             onStep={(step) => {
               setStep(step)
+              console.log('step is', step)
               if (step === 'add' && snapPoints.length > 2) searchSheetRef.current?.snapToIndex(2)
             }}
             onNewRef={async (itm: Item) => {

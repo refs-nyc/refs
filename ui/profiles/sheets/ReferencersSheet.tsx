@@ -24,7 +24,6 @@ export default function Referencers({
       const users: Profile[] = []
       const userIds: Set<string> = new Set()
 
-      console.log('currentRefId', currentRefId)
       const items = await pocketbase.collection('items').getFullList({
         filter: `ref = "${currentRefId}"`,
         expand: 'creator, ref',

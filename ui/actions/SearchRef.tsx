@@ -13,6 +13,10 @@ import * as Clipboard from 'expo-clipboard'
 import { RefsRecord } from '@/features/pocketbase/stores/pocketbase-types'
 import { KeyboardAvoidingView } from 'react-native-keyboard-controller'
 import { Ionicons } from '@expo/vector-icons'
+import { Button } from '../buttons/Button'
+import type { ImagePickerAsset } from 'expo-image-picker'
+import { Picker } from '../inputs/Picker'
+import { PinataImage } from '../images/PinataImage'
 
 export const SearchRef = ({
   noNewRef,
@@ -34,6 +38,10 @@ export const SearchRef = ({
   const [searchResults, setSearchResults] = useState<CompleteRef[]>([])
   const [debouncedQuery, setDebouncedQuery] = useState('')
   const { hasShareIntent, shareIntent, resetShareIntent } = useShareIntentContext()
+  const [picking, setPicking] = useState(false)
+  const [imageAsset, setImageAsset] = useState<ImagePickerAsset | null>(null)
+  const [uploadInProgress, setUploadInProgress] = useState(false)
+  const [uploadInitiated, setUploadInitiated] = useState(false)
 
   // Track the current query to prevent race conditions
   const currentQueryRef = useRef('')
@@ -179,7 +187,50 @@ export const SearchRef = ({
               <Ionicons name="close-circle" size={22} color={c.surface} />
             </Pressable>
           )}
+          {imageAsset && (
+            <PinataImage
+              asset={imageAsset}
+              size={s.$2}
+              onReplace={() => {
+                setPicking(true)
+                setImageAsset(null)
+              }}
+              onSuccess={(url: string) => {
+                console.log('uploaded')
+                setImageState(url)
+              }}
+              onFail={() => {
+                console.error('Upload failed')
+                setUploadInProgress(false)
+              }}
+            />
+          )}
         </View>
+        {searchQuery.length === 0 && imageAsset === null && (
+          <Button
+            variant="whiteOutline"
+            title="Add from camera roll"
+            onPress={() => {
+              console.log('Add from Camera Roll')
+              setPicking(true)
+            }}
+            style={{ width: 'auto', alignSelf: 'center', borderColor: 'transparent' }}
+          />
+        )}
+        {picking && (
+          <Picker
+            onSuccess={(a: ImagePickerAsset) => {
+              console.log('image asset', a)
+              setImageAsset(a)
+              setPicking(false)
+              setUploadInProgress(true)
+              setUploadInitiated(true)
+            }}
+            onCancel={() => {
+              setPicking(false)
+            }}
+          />
+        )}
 
         {searchQuery !== '' && !noNewRef && !disableNewRef && (
           <Pressable

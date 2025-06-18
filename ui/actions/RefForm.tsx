@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef } from 'react'
-import { usePathname } from 'expo-router'
 import {
   View,
   TouchableOpacity,
@@ -33,7 +32,6 @@ export const RefForm = ({
   onCancel,
   backlog = false,
   pickerOpen = false,
-  attach = true,
 }: {
   r: StagedRef
   placeholder?: string
@@ -41,7 +39,6 @@ export const RefForm = ({
   onCancel: () => void
   pickerOpen?: boolean
   backlog?: boolean
-  attach?: boolean
 }) => {
   // Separate state for each field to prevent unnecessary re-renders
   const [title, setTitle] = useState<string>(r?.title || '')
@@ -56,8 +53,6 @@ export const RefForm = ({
   const [location, setLocation] = useState<string>('')
   const [author, setAuthor] = useState<string>('')
   const [editingField, setEditingField] = useState<'location' | 'author' | null>(null)
-
-  const pathname = usePathname()
 
   // Animation refs
   const titleShake = useRef(new Animated.Value(0)).current
@@ -123,11 +118,7 @@ export const RefForm = ({
     ]).start()
   }
 
-  const submit = async (
-    willAddToList: boolean,
-    extraFields?: Partial<ExpandedItem>,
-    promptList = false
-  ) => {
+  const submit = async (extraFields?: Partial<ExpandedItem>, promptList = false) => {
     // Check for missing fields
     let missing = false
     if (!title) {
@@ -158,8 +149,7 @@ export const RefForm = ({
 
     try {
       setCreateInProgress(true)
-      const attach = !pathname.includes('onboarding') && !willAddToList
-      const item = await addToProfile(data, attach, {
+      const item = await addToProfile(data, {
         text,
         backlog,
         ...extraFields,
@@ -453,7 +443,7 @@ export const RefForm = ({
             style={{ width: '48%', minWidth: 0 }}
             disabled={!title || createInProgress}
             onPress={() => {
-              submit(true, {}, true)
+              submit({}, true)
             }}
           />
           {createInProgress || uploadInProgress || (uploadInitiated && !pinataSource) ? (
@@ -481,7 +471,7 @@ export const RefForm = ({
               variant="whiteInverted"
               style={{ width: '48%', minWidth: 0 }}
               disabled={!(pinataSource && title) || createInProgress}
-              onPress={() => submit(false)}
+              onPress={() => submit()}
             />
           )}
         </View>

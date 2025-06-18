@@ -6,18 +6,13 @@ import { StagedRef, CompleteRef, Item, ExpandedItem } from './stores/types'
 
 const addToProfile: (
   stagedRef: StagedRef | CompleteRef,
-  attach: boolean,
   options: { text?: string; backlog?: boolean; list?: boolean }
-) => Promise<ExpandedItem> = async (stagedRef, attach = true, options = {}) => {
-  if ((!pocketbase.authStore?.isValid || !pocketbase.authStore?.record) && attach)
-    throw new Error('Not enough permissions')
-
+) => Promise<ExpandedItem> = async (stagedRef, options = {}) => {
   console.log('WE GOT STAGED', 'list' in stagedRef ? stagedRef.list : null)
   console.log('WE GOT OPTIONS', options.list)
 
   const refStore = useRefStore.getState()
   const itemStore = useItemStore.getState()
-  const userStore = useUserStore.getState()
 
   let newItem: ExpandedItem
 
@@ -42,14 +37,6 @@ const addToProfile: (
       backlog: !!options.backlog,
       list: !!options.list,
     })
-  }
-
-  // If the userProfile is set, attach item ID to items
-  if (attach) {
-    await userStore.attachItem(newItem.id)
-  } else if (userStore.stagedUser) {
-    const items = userStore.stagedUser.items || []
-    await userStore.updateStagedUser({ items: [...items, newItem.id] })
   }
 
   return newItem

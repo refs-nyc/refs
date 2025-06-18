@@ -35,7 +35,7 @@ export const RefForm = ({
 }: {
   r: StagedRef
   placeholder?: string
-  onComplete: (i: ExpandedItem, p: boolean) => void
+  onComplete: (i: ExpandedItem) => void
   onCancel: () => void
   pickerOpen?: boolean
   backlog?: boolean
@@ -118,7 +118,7 @@ export const RefForm = ({
     ]).start()
   }
 
-  const submit = async (extraFields?: Partial<ExpandedItem>, promptList = false) => {
+  const submit = async () => {
     // Check for missing fields
     let missing = false
     if (!title) {
@@ -144,7 +144,6 @@ export const RefForm = ({
       image: pinataSource,
       backlog,
       meta,
-      ...extraFields,
     }
 
     try {
@@ -152,9 +151,8 @@ export const RefForm = ({
       const item = await addToProfile(data, {
         text,
         backlog,
-        ...extraFields,
       })
-      onComplete(item, promptList)
+      onComplete(item)
       setCreateInProgress(false)
       console.log('success')
     } catch (e) {
@@ -443,7 +441,7 @@ export const RefForm = ({
             style={{ width: '48%', minWidth: 0 }}
             disabled={!title || createInProgress}
             onPress={() => {
-              submit({}, true)
+              submit()
             }}
           />
           {createInProgress || uploadInProgress || (uploadInitiated && !pinataSource) ? (

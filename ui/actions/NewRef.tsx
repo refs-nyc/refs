@@ -70,28 +70,12 @@ export const NewRef = ({
     setStep('add')
   }
 
-  const handleNewRefCreated = (item: ExpandedItem, addToList: boolean = false) => {
+  const handleNewRefCreated = (item: ExpandedItem) => {
     console.log('HANDLE NEW REF CREATED', item.expand.ref.title)
     if (!item.expand?.ref)
       throw new Error('unexpected: handleNewRefCreated should always be called with ExpandedItem')
     setItemData(item)
     setRefData(item.expand?.ref)
-
-    if (addToList) {
-      console.log('edit list')
-      setStep('addToList')
-      console.log(itemData)
-    } else {
-      // Just complete the flow
-      if (!isProfile(user) || !user.userName) {
-        onCancel()
-      } else {
-        onNewRef(item)
-      }
-      setStep('')
-      setItemData(null)
-      setRefData({})
-    }
   }
 
   useEffect(() => {

@@ -4,7 +4,7 @@ import { c, s } from '@/features/style'
 import BacklogList from '@/ui/profiles/BacklogList'
 import { Heading } from '@/ui/typo/Heading'
 import BottomSheet, { BottomSheetBackdrop } from '@gorhom/bottom-sheet'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { Pressable } from 'react-native'
 
 export const OtherBacklogSheet = ({
@@ -29,6 +29,8 @@ export const OtherBacklogSheet = ({
     }
   }, [])
 
+  const [index, setIndex] = useState(-1)
+
   const disappearsOnIndex = -1
   const appearsOnIndex = 0
 
@@ -52,6 +54,9 @@ export const OtherBacklogSheet = ({
         />
       )}
       keyboardBehavior="interactive"
+      onChange={(i: number) => {
+        setIndex(i)
+      }}
     >
       <Pressable
         style={{
@@ -65,7 +70,7 @@ export const OtherBacklogSheet = ({
           {`${profile.firstName}'s Backlog`}
         </Heading>
       </Pressable>
-      <BacklogList items={backlogItems.toReversed()} ownProfile={false} />
+      {index >= 0 && <BacklogList items={backlogItems.toReversed()} ownProfile={false} />}
     </BottomSheet>
   )
 }

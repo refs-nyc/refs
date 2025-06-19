@@ -41,7 +41,7 @@ export const RefForm = ({
     image: string
     meta?: string
   }) => Promise<void>
-  onAddRefToList: (fields: {
+  onAddRefToList?: (fields: {
     title: string
     text: string
     url: string
@@ -434,6 +434,9 @@ export const RefForm = ({
             style={{ width: '48%', minWidth: 0 }}
             disabled={!title || createInProgress}
             onPress={async () => {
+              if (!onAddRefToList) {
+                return
+              }
               if (!validateFields()) {
                 return
               }
@@ -455,6 +458,7 @@ export const RefForm = ({
               }
             }}
           />
+
           {createInProgress || uploadInProgress || (uploadInitiated && !pinataSource) ? (
             <Pressable
               style={{

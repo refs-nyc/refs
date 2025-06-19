@@ -9,6 +9,9 @@ export const useUIStore = create<{
   addingItem: ItemsRecord | null
   referencersBottomSheetRef: React.RefObject<BottomSheet>
   currentRefId: string
+  addRefSheetRef: React.RefObject<BottomSheet>
+  addingRefId: string
+  setAddingRefId: (id: string) => void
   setCurrentRefId: (id: string) => void
   setAddingToList: (newState: string) => void
   stopEditProfile: () => void
@@ -18,6 +21,13 @@ export const useUIStore = create<{
   addingItem: null,
   referencersBottomSheetRef: React.createRef(),
   currentRefId: '',
+  addRefSheetRef: React.createRef(),
+  addingRefId: '',
+  setAddingRefId: (id: string) => {
+    set(() => ({
+      addingRefId: id,
+    }))
+  },
   setAddingToList: (newState: string) => {
     set(() => ({
       addingToList: newState,

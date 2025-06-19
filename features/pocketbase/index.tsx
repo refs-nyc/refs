@@ -4,24 +4,15 @@ import { useRefStore } from './stores/refs'
 import { useItemStore } from './stores/items'
 import { StagedRef, CompleteRef, Item, ExpandedItem } from './stores/types'
 
-const addToProfile: ((
+const addToProfile: (
   stagedRef: StagedRef | CompleteRef,
-  attach: boolean,
-  options: { comment?: string; backlog?: boolean; list?: boolean },
-) => Promise<ExpandedItem>) = async (
-  stagedRef,
-  attach = true,
-  options = {}
-) => {
-  if ((!pocketbase.authStore?.isValid || !pocketbase.authStore?.record) && attach)
-    throw new Error('Not enough permissions')
-
-  console.log('WE GOT STAGED', "list" in stagedRef ? stagedRef.list : null)
+  options: { image?: string; text?: string; backlog?: boolean; list?: boolean }
+) => Promise<ExpandedItem> = async (stagedRef, options = {}) => {
+  console.log('WE GOT STAGED', 'list' in stagedRef ? stagedRef.list : null)
   console.log('WE GOT OPTIONS', options.list)
 
   const refStore = useRefStore.getState()
   const itemStore = useItemStore.getState()
-  const userStore = useUserStore.getState()
 
   let newItem: ExpandedItem
 
@@ -30,9 +21,9 @@ const addToProfile: ((
     const existingRef = stagedRef
     newItem = await itemStore.push({
       ref: existingRef.id,
-      image: existingRef?.image,
+      image: options.image || existingRef?.image,
       creator: pocketbase.authStore?.record?.id,
-      text: options.comment,
+      text: options.text,
       backlog: !!options.backlog,
     })
   } else {
@@ -40,20 +31,12 @@ const addToProfile: ((
     const newRef = await refStore.push({ ...stagedRef, creator: pocketbase.authStore?.record?.id })
     newItem = await itemStore.push({
       ref: newRef.id,
-      image: newRef.image,
+      image: options.image || newRef.image,
       creator: pocketbase.authStore?.record?.id || '',
-      text: options.comment,
+      text: options.text,
       backlog: !!options.backlog,
       list: !!options.list,
     })
-  }
-
-  // If the userProfile is set, attach item ID to items
-  if (attach) {
-    await userStore.attachItem(newItem.id)
-  } else if (userStore.stagedUser) {
-    const items = userStore.stagedUser.items || []
-    await userStore.updateStagedUser({ items: [...items, newItem.id] })
   }
 
   return newItem

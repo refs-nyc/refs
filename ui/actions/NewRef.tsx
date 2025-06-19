@@ -22,8 +22,9 @@ import { pocketbase } from '@/features/pocketbase/pocketbase'
 import * as Clipboard from 'expo-clipboard'
 import { Heading } from '../typo/Heading'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { addToProfile } from '@/features/pocketbase'
 
-export type NewRefStep = '' | 'add' | 'search' | 'editList' | 'addToList' | 'categorise'
+export type NewRefStep = '' | 'add' | 'search' | 'editList' | 'addToList'
 
 const win = Dimensions.get('window')
 
@@ -68,30 +69,6 @@ export const NewRef = ({
     console.log(newRef)
     setRefData(newRef)
     setStep('add')
-  }
-
-  const handleNewRefCreated = (item: ExpandedItem, addToList: boolean = false) => {
-    console.log('HANDLE NEW REF CREATED', item.expand.ref.title)
-    if (!item.expand?.ref)
-      throw new Error('unexpected: handleNewRefCreated should always be called with ExpandedItem')
-    setItemData(item)
-    setRefData(item.expand?.ref)
-
-    if (addToList) {
-      console.log('edit list')
-      setStep('addToList')
-      console.log(itemData)
-    } else {
-      // Just complete the flow
-      if (!isProfile(user) || !user.userName) {
-        onCancel()
-      } else {
-        onNewRef(item)
-      }
-      setStep('')
-      setItemData(null)
-      setRefData({})
-    }
   }
 
   useEffect(() => {
@@ -193,8 +170,30 @@ export const NewRef = ({
         <RefForm
           r={refData}
           pickerOpen={pickerOpen}
-          onComplete={handleNewRefCreated}
-          onCancel={() => setRefData({})}
+          canEditRefData={true}
+          onAddRef={async (fields) => {
+            await addToProfile(refData, {
+              image: fields.image,
+              text: fields.text,
+              backlog,
+              list: false,
+            })
+            // finish the flow
+            setStep('')
+            setItemData(null)
+            setRefData({})
+          }}
+          onAddRefToList={async (fields) => {
+            const newItem = await addToProfile(refData, {
+              image: fields.image,
+              text: fields.text,
+              backlog,
+              list: true,
+            })
+            setItemData(newItem)
+            setRefData(newItem.expand?.ref)
+            setStep('addToList')
+          }}
           backlog={backlog}
         />
       )}

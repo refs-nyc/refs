@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef } from 'react'
-import { usePathname } from 'expo-router'
 import {
   View,
   TouchableOpacity,
@@ -15,11 +14,10 @@ import { Picker } from '../inputs/Picker'
 import { PinataImage } from '../images/PinataImage'
 import { Image } from 'expo-image'
 import { EditableHeader } from '../atoms/EditableHeader'
-import { addToProfile } from '@/features/pocketbase'
 import { Button } from '../buttons/Button'
 import type { ImagePickerAsset } from 'expo-image-picker'
 import { c, s } from '@/features/style'
-import { StagedRef, ExpandedItem } from '@/features/pocketbase/stores/types'
+import { StagedRef } from '@/features/pocketbase/stores/types'
 // @ts-ignore
 import { KeyboardAvoidingView } from 'react-native-keyboard-controller'
 import { DismissKeyboard } from '../atoms/DismissKeyboard'
@@ -29,24 +27,35 @@ const win = Dimensions.get('window')
 export const RefForm = ({
   r,
   placeholder = 'Add a title',
-  onComplete,
-  onCancel,
-  backlog = false,
+  onAddRef,
+  onAddRefToList,
   pickerOpen = false,
-  attach = true,
+  canEditRefData = true,
 }: {
   r: StagedRef
   placeholder?: string
-  onComplete: (i: ExpandedItem, p: boolean) => void
-  onCancel: () => void
+  onAddRef: (fields: {
+    title: string
+    text: string
+    url: string
+    image: string
+    meta?: string
+  }) => Promise<void>
+  onAddRefToList?: (fields: {
+    title: string
+    text: string
+    url: string
+    image: string
+    meta?: string
+  }) => Promise<void>
   pickerOpen?: boolean
   backlog?: boolean
-  attach?: boolean
+  canEditRefData?: boolean
 }) => {
   // Separate state for each field to prevent unnecessary re-renders
   const [title, setTitle] = useState<string>(r?.title || '')
   const [url, setUrl] = useState<string>(r?.url || '')
-  const [comment, setComment] = useState<string>('')
+  const [text, setText] = useState<string>('')
   const [imageAsset, setImageAsset] = useState<ImagePickerAsset | null>(null)
   const [pinataSource, setPinataSource] = useState<string>('')
   const [picking, setPicking] = useState(pickerOpen)
@@ -57,33 +66,27 @@ export const RefForm = ({
   const [author, setAuthor] = useState<string>('')
   const [editingField, setEditingField] = useState<'location' | 'author' | null>(null)
 
-  const pathname = usePathname()
-
   // Animation refs
   const titleShake = useRef(new Animated.Value(0)).current
   const imageShake = useRef(new Animated.Value(0)).current
 
   // Initialize state based on incoming ref
   useEffect(() => {
-    console.log(r)
-    if (r?.title) setTitle(r.title)
-    if (r?.url) setUrl(r.url)
+    setTitle(r.title || '')
+    setUrl(r.url || '')
 
     // Initialize image state
     if (r?.image) {
-      console.log('image found')
-      console.log(r.image)
       if (typeof r.image === 'string') {
         setPinataSource(r.image)
       } else {
         setImageAsset(r.image)
       }
+    } else {
+      setPinataSource('')
+      setImageAsset(null)
     }
   }, [r])
-
-  const handleTitleChange = (newTitle: string) => {
-    setTitle(newTitle)
-  }
 
   const handleImageSuccess = (imageUrl: string) => {
     setUploadInProgress(false)
@@ -104,14 +107,6 @@ export const RefForm = ({
     }
   }, [uploadInitiated, pinataSource, title])
 
-  const handleDataChange = (d: { title: string; url: string; image?: string | undefined }) => {
-    setTitle(d.title)
-    setUrl(d.url)
-    if (d.image) {
-      setPinataSource(d.image)
-    }
-  }
-
   // Shake animation function
   const triggerShake = (anim: Animated.Value) => {
     anim.setValue(0)
@@ -123,55 +118,18 @@ export const RefForm = ({
     ]).start()
   }
 
-  const submit = async (
-    willAddToList: boolean,
-    extraFields?: Partial<ExpandedItem>,
-    promptList = false
-  ) => {
+  const validateFields = () => {
     // Check for missing fields
-    let missing = false
+    let isValid = true
     if (!title) {
       triggerShake(titleShake)
-      missing = true
+      isValid = false
     }
     if (!pinataSource) {
       triggerShake(imageShake)
-      missing = true
+      isValid = false
     }
-    if (missing) return
-
-    // Only include meta if location or author is present
-    let meta: string | undefined = undefined
-    if (location || author) {
-      meta = JSON.stringify({ location, author })
-    }
-
-    const data = {
-      ...r,
-      title,
-      url,
-      image: pinataSource,
-      backlog,
-      meta,
-      ...extraFields,
-    }
-
-    try {
-      setCreateInProgress(true)
-      const attach = !pathname.includes('onboarding') && !willAddToList
-      const item = await addToProfile(data, attach, {
-        comment,
-        backlog,
-        ...extraFields,
-      })
-      onComplete(item, promptList)
-      setCreateInProgress(false)
-      console.log('success')
-    } catch (e) {
-      console.error(e)
-    } finally {
-      console.log('Done')
-    }
+    return isValid
   }
 
   return (
@@ -298,8 +256,10 @@ export const RefForm = ({
           }}
         >
           <EditableHeader
-            onTitleChange={handleTitleChange}
-            onDataChange={handleDataChange}
+            canEditRefData={canEditRefData}
+            setTitle={setTitle}
+            setUrl={setUrl}
+            setImage={setPinataSource}
             placeholder={placeholder}
             title={title}
             url={url || ''}
@@ -310,114 +270,124 @@ export const RefForm = ({
         {/* Inline subtitle row for location/author, now directly below title with minimal spacing */}
         <View style={{ width: '100%', alignItems: 'flex-start', marginTop: -17, marginBottom: 2 }}>
           {/* Only show one: location or author, never both */}
-          {editingField === 'location' ? (
-            <TextInput
-              value={location}
-              onChangeText={(t) => t.length <= 150 && setLocation(t)}
-              onBlur={() => setEditingField(null)}
-              autoFocus
-              placeholder="Add location"
-              style={{
-                minWidth: 80,
-                maxWidth: 250,
-                color: c.surface,
-                fontSize: 18,
-                fontWeight: '600',
-                opacity: 0.5,
-                backgroundColor: 'transparent',
-                padding: 0,
-                margin: 0,
-                textAlign: 'left',
-              }}
-              maxLength={150}
-              returnKeyType="done"
-            />
-          ) : editingField === 'author' ? (
-            <TextInput
-              value={author}
-              onChangeText={(t) => t.length <= 150 && setAuthor(t)}
-              onBlur={() => setEditingField(null)}
-              autoFocus
-              placeholder="Add author"
-              style={{
-                minWidth: 80,
-                maxWidth: 250,
-                color: c.surface,
-                fontSize: 18,
-                fontWeight: '600',
-                opacity: 0.5,
-                backgroundColor: 'transparent',
-                padding: 0,
-                margin: 0,
-                textAlign: 'left',
-              }}
-              maxLength={150}
-              returnKeyType="done"
-            />
-          ) : location ? (
-            <Pressable
-              onPress={() => {
-                setTimeout(() => setEditingField('location'), 0)
-              }}
-            >
-              <Text
+          {canEditRefData ? (
+            editingField === 'location' ? (
+              <TextInput
+                value={location}
+                onChangeText={(t) => t.length <= 150 && setLocation(t)}
+                onBlur={() => setEditingField(null)}
+                autoFocus
+                placeholder="Add location"
                 style={{
+                  minWidth: 80,
+                  maxWidth: 250,
                   color: c.surface,
                   fontSize: 18,
                   fontWeight: '600',
                   opacity: 0.5,
+                  backgroundColor: 'transparent',
+                  padding: 0,
+                  margin: 0,
                   textAlign: 'left',
                 }}
-              >
-                {location}
-              </Text>
-            </Pressable>
-          ) : author ? (
-            <Pressable
-              onPress={() => {
-                setTimeout(() => setEditingField('author'), 0)
-              }}
-            >
-              <Text
+                maxLength={150}
+                returnKeyType="done"
+              />
+            ) : editingField === 'author' ? (
+              <TextInput
+                value={author}
+                onChangeText={(t) => t.length <= 150 && setAuthor(t)}
+                onBlur={() => setEditingField(null)}
+                autoFocus
+                placeholder="Add author"
                 style={{
+                  minWidth: 80,
+                  maxWidth: 250,
                   color: c.surface,
                   fontSize: 18,
                   fontWeight: '600',
                   opacity: 0.5,
+                  backgroundColor: 'transparent',
+                  padding: 0,
+                  margin: 0,
                   textAlign: 'left',
                 }}
+                maxLength={150}
+                returnKeyType="done"
+              />
+            ) : location ? (
+              <Pressable
+                onPress={() => {
+                  setTimeout(() => setEditingField('location'), 0)
+                }}
               >
-                {author}
-              </Text>
-            </Pressable>
+                <Text
+                  style={{
+                    color: c.surface,
+                    fontSize: 18,
+                    fontWeight: '600',
+                    opacity: 0.5,
+                    textAlign: 'left',
+                  }}
+                >
+                  {location}
+                </Text>
+              </Pressable>
+            ) : author ? (
+              <Pressable
+                onPress={() => {
+                  setTimeout(() => setEditingField('author'), 0)
+                }}
+              >
+                <Text
+                  style={{
+                    color: c.surface,
+                    fontSize: 18,
+                    fontWeight: '600',
+                    opacity: 0.5,
+                    textAlign: 'left',
+                  }}
+                >
+                  {author}
+                </Text>
+              </Pressable>
+            ) : (
+              <View style={{ flexDirection: 'row', gap: 16 }}>
+                <Pressable onPress={() => setEditingField('location')}>
+                  <Text
+                    style={{
+                      color: c.surface,
+                      fontSize: 17.6,
+                      opacity: 0.7,
+                      textAlign: 'left',
+                      fontWeight: '600',
+                    }}
+                  >
+                    + location
+                  </Text>
+                </Pressable>
+                <Pressable onPress={() => setEditingField('author')}>
+                  <Text
+                    style={{
+                      color: c.surface,
+                      fontSize: 17.6,
+                      opacity: 0.7,
+                      textAlign: 'left',
+                      fontWeight: '600',
+                    }}
+                  >
+                    + author
+                  </Text>
+                </Pressable>
+              </View>
+            )
           ) : (
-            <View style={{ flexDirection: 'row', gap: 16 }}>
-              <Pressable onPress={() => setEditingField('location')}>
-                <Text
-                  style={{
-                    color: c.surface,
-                    fontSize: 17.6,
-                    opacity: 0.7,
-                    textAlign: 'left',
-                    fontWeight: '600',
-                  }}
-                >
-                  + location
-                </Text>
-              </Pressable>
-              <Pressable onPress={() => setEditingField('author')}>
-                <Text
-                  style={{
-                    color: c.surface,
-                    fontSize: 17.6,
-                    opacity: 0.7,
-                    textAlign: 'left',
-                    fontWeight: '600',
-                  }}
-                >
-                  + author
-                </Text>
-              </Pressable>
+            <View
+              style={{ width: '100%', alignItems: 'flex-start', marginTop: -17, marginBottom: 2 }}
+            >
+              <Heading tag="h2" style={{ color: c.surface }}>
+                {location || author}
+              </Heading>
             </View>
           )}
         </View>
@@ -428,7 +398,7 @@ export const RefForm = ({
           numberOfLines={4}
           placeholder="Add a caption for your profile"
           placeholderTextColor={c.muted}
-          onChangeText={setComment}
+          onChangeText={setText}
           style={{
             backgroundColor: c.white,
             borderRadius: s.$075,
@@ -452,10 +422,32 @@ export const RefForm = ({
             variant="whiteOutline"
             style={{ width: '48%', minWidth: 0 }}
             disabled={!title || createInProgress}
-            onPress={() => {
-              submit(true, {}, true)
+            onPress={async () => {
+              if (!onAddRefToList) {
+                return
+              }
+              if (!validateFields()) {
+                return
+              }
+              // Only include meta if location or author is present
+              let meta: string | undefined = undefined
+              if (location || author) {
+                meta = JSON.stringify({ location, author })
+              }
+
+              try {
+                setCreateInProgress(true)
+                await onAddRefToList({ title, text, url, image: pinataSource, meta })
+                console.log('success')
+              } catch (e) {
+                console.error(e)
+              } finally {
+                setCreateInProgress(false)
+                console.log('Done')
+              }
             }}
           />
+
           {createInProgress || uploadInProgress || (uploadInitiated && !pinataSource) ? (
             <Pressable
               style={{
@@ -481,7 +473,28 @@ export const RefForm = ({
               variant="whiteInverted"
               style={{ width: '48%', minWidth: 0 }}
               disabled={!(pinataSource && title) || createInProgress}
-              onPress={() => submit(false)}
+              onPress={async () => {
+                if (!validateFields()) {
+                  return
+                }
+
+                // Only include meta if location or author is present
+                let meta: string | undefined = undefined
+                if (location || author) {
+                  meta = JSON.stringify({ location, author })
+                }
+
+                try {
+                  setCreateInProgress(true)
+                  await onAddRef({ title, text, url, image: pinataSource, meta })
+                  console.log('success')
+                } catch (e) {
+                  console.error(e)
+                } finally {
+                  setCreateInProgress(false)
+                  console.log('Done')
+                }
+              }}
             />
           )}
         </View>

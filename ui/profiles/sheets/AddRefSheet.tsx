@@ -2,15 +2,17 @@ import { addToProfile, pocketbase, removeFromProfile, useUserStore } from '@/fea
 import { getProfileItems, useItemStore } from '@/features/pocketbase/stores/items'
 import { ExpandedItem } from '@/features/pocketbase/stores/types'
 import { c, s } from '@/features/style'
+import { RefForm } from '@/ui/actions/RefForm'
 import { Button } from '@/ui/buttons/Button'
+import { SimplePinataImage } from '@/ui/images/SimplePinataImage'
+import { Heading } from '@/ui/typo/Heading'
 import BottomSheet, { BottomSheetBackdrop } from '@gorhom/bottom-sheet'
 import { useEffect, useState } from 'react'
 import { Text, View } from 'react-native'
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated'
 import { AddRefSheetGrid } from './AddRefSheetGrid'
-import { Heading } from '@/ui/typo/Heading'
-import { SimplePinataImage } from '@/ui/images/SimplePinataImage'
 import { useUIStore } from '@/ui/state'
+import { FilteredItems } from '@/ui/actions/FilteredItems'
 
 export const AddRefSheet = ({
   bottomSheetRef,
@@ -46,16 +48,22 @@ export const AddRefSheet = ({
 
   // const [addingTo, setAddingTo] = useState<'backlog' | 'grid' | null>(null)
   const [step, setStep] = useState<
-    | 'chooseTarget'
+    | 'editNewItem'
     | 'selectItemToReplace'
     | 'addedToBacklog'
     | 'addedToGrid'
     | 'chooseReplaceItemMethod'
-  >('chooseTarget')
+  >('editNewItem')
   const [itemToReplace, setItemToReplace] = useState<ExpandedItem | null>(null)
 
   const sheetHeight =
-    step === 'selectItemToReplace' ? '80%' : step === 'chooseReplaceItemMethod' ? '50%' : '30%'
+    step === 'selectItemToReplace'
+      ? '90%'
+      : step === 'chooseReplaceItemMethod'
+      ? '50%'
+      : step === 'editNewItem'
+      ? '90%'
+      : '30%'
 
   const disappearsOnIndex = -1
   const appearsOnIndex = 0
@@ -68,11 +76,11 @@ export const AddRefSheet = ({
       enablePanDownToClose={true}
       snapPoints={[sheetHeight]}
       index={-1}
-      backgroundStyle={{ backgroundColor: c.surface, borderRadius: s.$4, paddingTop: 0 }}
+      backgroundStyle={{ backgroundColor: c.olive, borderRadius: s.$4, paddingTop: 0 }}
       onChange={(i: number) => {
         if (i === -1) {
           setItemToReplace(null)
-          setStep('chooseTarget')
+          setStep('editNewItem')
         }
       }}
       backdropComponent={(p) => (
@@ -108,38 +116,31 @@ export const AddRefSheet = ({
       )}
       keyboardBehavior="interactive"
     >
-      {step === 'chooseTarget' && (
-        <View style={{ display: 'flex', flexDirection: 'column', padding: s.$3, gap: s.$1 }}>
-          <Button
-            title="Add to backlog"
-            onPress={async () => {
-              // add the item to the backlog
-              await addToProfile(refData, true, {
-                backlog: true,
-                comment: '',
-              })
-              setStep('addedToBacklog')
-            }}
-            variant="basic"
-            style={{ backgroundColor: c.surface2 }}
-            textStyle={{ color: c.muted2 }}
-          />
-          <Button
-            title="Add to grid"
-            onPress={async () => {
+      {step === 'editNewItem' && refData && (
+        <View style={{ padding: s.$3 }}>
+          <RefForm
+            r={refData}
+            canEditRefData={false}
+            onAddRefToList={async (fields) => {}}
+            onAddRef={async (fields) => {
+              if (!user) return
+              const gridItems = await getProfileItems(user.userName)
+              setGridItems(gridItems)
+
               // check if the grid is full
               if (gridItems.length >= 12) {
                 // show a modal to the user that the grid is full
                 setStep('selectItemToReplace')
               } else {
-                await addToProfile(refData, true, {
+                await addToProfile(refData, {
                   backlog: false,
-                  comment: '',
+                  image: fields.image,
+                  text: fields.text,
                 })
                 setStep('addedToGrid')
               }
             }}
-            variant="raised"
+            backlog={false}
           />
         </View>
       )}
@@ -153,7 +154,22 @@ export const AddRefSheet = ({
             alignItems: 'center',
           }}
         >
-          <Text>Choose a grid item to replace</Text>
+          <Text style={{ color: c.surface, fontSize: s.$1 }}>
+            Adding {refData.title} to your profile
+          </Text>
+          {refData?.image && (
+            <View style={{ alignItems: 'center' }}>
+              <SimplePinataImage
+                originalSource={refData?.image}
+                style={{ height: 80, width: 80 }}
+                imageOptions={{
+                  width: 80,
+                  height: 80,
+                }}
+              />
+            </View>
+          )}
+          <Text style={{ color: c.surface, fontSize: s.$1 }}>Choose a grid item to replace</Text>
           <AddRefSheetGrid
             gridItems={gridItems}
             onSelectItem={(item) => {
@@ -163,11 +179,11 @@ export const AddRefSheet = ({
           />
           <Button
             title="Add to backlog instead"
-            variant="smallMuted"
+            variant="small"
             onPress={async () => {
-              await addToProfile(refData, true, {
+              await addToProfile(refData, {
                 backlog: true,
-                comment: '',
+                text: '',
               })
               setStep('addedToBacklog')
             }}
@@ -206,9 +222,9 @@ export const AddRefSheet = ({
             onPress={async () => {
               // remove the item
               await removeFromProfile(itemToReplace.id)
-              await addToProfile(refData, true, {
+              await addToProfile(refData, {
                 backlog: false,
-                comment: '',
+                text: '',
               })
               setStep('addedToGrid')
             }}
@@ -219,9 +235,9 @@ export const AddRefSheet = ({
               // send itemToReplace to the backlog
               await moveToBacklog(itemToReplace.id)
               // replace the item
-              await addToProfile(refData, true, {
+              await addToProfile(refData, {
                 backlog: false,
-                comment: '',
+                text: '',
               })
               setStep('addedToGrid')
             }}

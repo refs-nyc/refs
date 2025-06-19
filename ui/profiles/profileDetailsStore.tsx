@@ -1,4 +1,4 @@
-import { createContext, ReactNode } from 'react'
+import { createContext, ReactNode, useState } from 'react'
 import { createStore, StoreApi } from 'zustand'
 
 type ProfileDetailsState = {
@@ -29,16 +29,18 @@ export const ProfileDetailsProvider = ({
   openedFromFeed: boolean
   editingRights: boolean
 }) => {
-  const profileDetailsStore = createStore<ProfileDetailsState>((set) => ({
-    currentIndex: initialIndex,
-    setCurrentIndex: (newCurrentIndex) => set({ currentIndex: newCurrentIndex }),
-    showContextMenu: false,
-    setShowContextMenu: (newShowContextMenu) => set({ showContextMenu: newShowContextMenu }),
-    isEditing: false,
-    setIsEditing: (newIsEditing) => set({ isEditing: newIsEditing }),
-    openedFromFeed,
-    editingRights,
-  }))
+  const [profileDetailsStore] = useState(() =>
+    createStore<ProfileDetailsState>((set) => ({
+      currentIndex: initialIndex,
+      setCurrentIndex: (newCurrentIndex) => set({ currentIndex: newCurrentIndex }),
+      showContextMenu: false,
+      setShowContextMenu: (newShowContextMenu) => set({ showContextMenu: newShowContextMenu }),
+      isEditing: false,
+      setIsEditing: (newIsEditing) => set({ isEditing: newIsEditing }),
+      openedFromFeed,
+      editingRights,
+    }))
+  )
 
   return (
     <ProfileDetailsContext.Provider value={profileDetailsStore}>

@@ -30,6 +30,7 @@ export const RefForm = ({
   onAddRef,
   onAddRefToList,
   pickerOpen = false,
+  canEditRefData = true,
 }: {
   r: StagedRef
   placeholder?: string
@@ -49,6 +50,7 @@ export const RefForm = ({
   }) => Promise<void>
   pickerOpen?: boolean
   backlog?: boolean
+  canEditRefData?: boolean
 }) => {
   // Separate state for each field to prevent unnecessary re-renders
   const [title, setTitle] = useState<string>(r?.title || '')
@@ -70,8 +72,8 @@ export const RefForm = ({
 
   // Initialize state based on incoming ref
   useEffect(() => {
-    if (r?.title) setTitle(r.title)
-    if (r?.url) setUrl(r.url)
+    setTitle(r.title || '')
+    setUrl(r.url || '')
 
     // Initialize image state
     if (r?.image) {
@@ -80,6 +82,9 @@ export const RefForm = ({
       } else {
         setImageAsset(r.image)
       }
+    } else {
+      setPinataSource('')
+      setImageAsset(null)
     }
   }, [r])
 
@@ -101,14 +106,6 @@ export const RefForm = ({
       setUploadInitiated(false)
     }
   }, [uploadInitiated, pinataSource, title])
-
-  const handleDataChange = (d: { title: string; url: string; image?: string | undefined }) => {
-    setTitle(d.title)
-    setUrl(d.url)
-    if (d.image) {
-      setPinataSource(d.image)
-    }
-  }
 
   // Shake animation function
   const triggerShake = (anim: Animated.Value) => {
@@ -238,148 +235,170 @@ export const RefForm = ({
           />
         )}
 
-        <Animated.View
-          style={{
-            width: '100%',
-            marginBottom: 0,
-            transform: [
-              {
-                translateX: titleShake.interpolate({
-                  inputRange: [-1, 0, 1],
-                  outputRange: [-10, 0, 10],
-                }),
-              },
-              {
-                scale: titleShake.interpolate({
-                  inputRange: [-1, 0, 1],
-                  outputRange: [1.05, 1, 1.05],
-                }),
-              },
-            ],
-          }}
-        >
-          <EditableHeader
-            setTitle={setTitle}
-            setUrl={setUrl}
-            setImage={setPinataSource}
-            placeholder={placeholder}
-            title={title}
-            url={url || ''}
-            image={pinataSource}
-          />
-        </Animated.View>
+        {canEditRefData ? (
+          <Animated.View
+            style={{
+              width: '100%',
+              marginBottom: 0,
+              transform: [
+                {
+                  translateX: titleShake.interpolate({
+                    inputRange: [-1, 0, 1],
+                    outputRange: [-10, 0, 10],
+                  }),
+                },
+                {
+                  scale: titleShake.interpolate({
+                    inputRange: [-1, 0, 1],
+                    outputRange: [1.05, 1, 1.05],
+                  }),
+                },
+              ],
+            }}
+          >
+            <EditableHeader
+              setTitle={setTitle}
+              setUrl={setUrl}
+              setImage={setPinataSource}
+              placeholder={placeholder}
+              title={title}
+              url={url || ''}
+              image={pinataSource}
+            />
+          </Animated.View>
+        ) : (
+          <View style={{ width: '100%', marginBottom: 0 }}>
+            <Heading tag="h1" style={{ color: c.surface }}>
+              {title}
+            </Heading>
+            {/* TODO: figure out how to display the url here */}
+            {/* <Heading tag="h2" style={{ color: c.surface }}>
+              {url}
+            </Heading> */}
+          </View>
+        )}
 
         {/* Inline subtitle row for location/author, now directly below title with minimal spacing */}
         <View style={{ width: '100%', alignItems: 'flex-start', marginTop: -17, marginBottom: 2 }}>
           {/* Only show one: location or author, never both */}
-          {editingField === 'location' ? (
-            <TextInput
-              value={location}
-              onChangeText={(t) => t.length <= 150 && setLocation(t)}
-              onBlur={() => setEditingField(null)}
-              autoFocus
-              placeholder="Add location"
-              style={{
-                minWidth: 80,
-                maxWidth: 250,
-                color: c.surface,
-                fontSize: 18,
-                fontWeight: '600',
-                opacity: 0.5,
-                backgroundColor: 'transparent',
-                padding: 0,
-                margin: 0,
-                textAlign: 'left',
-              }}
-              maxLength={150}
-              returnKeyType="done"
-            />
-          ) : editingField === 'author' ? (
-            <TextInput
-              value={author}
-              onChangeText={(t) => t.length <= 150 && setAuthor(t)}
-              onBlur={() => setEditingField(null)}
-              autoFocus
-              placeholder="Add author"
-              style={{
-                minWidth: 80,
-                maxWidth: 250,
-                color: c.surface,
-                fontSize: 18,
-                fontWeight: '600',
-                opacity: 0.5,
-                backgroundColor: 'transparent',
-                padding: 0,
-                margin: 0,
-                textAlign: 'left',
-              }}
-              maxLength={150}
-              returnKeyType="done"
-            />
-          ) : location ? (
-            <Pressable
-              onPress={() => {
-                setTimeout(() => setEditingField('location'), 0)
-              }}
-            >
-              <Text
+          {canEditRefData ? (
+            editingField === 'location' ? (
+              <TextInput
+                value={location}
+                onChangeText={(t) => t.length <= 150 && setLocation(t)}
+                onBlur={() => setEditingField(null)}
+                autoFocus
+                placeholder="Add location"
                 style={{
+                  minWidth: 80,
+                  maxWidth: 250,
                   color: c.surface,
                   fontSize: 18,
                   fontWeight: '600',
                   opacity: 0.5,
+                  backgroundColor: 'transparent',
+                  padding: 0,
+                  margin: 0,
                   textAlign: 'left',
                 }}
-              >
-                {location}
-              </Text>
-            </Pressable>
-          ) : author ? (
-            <Pressable
-              onPress={() => {
-                setTimeout(() => setEditingField('author'), 0)
-              }}
-            >
-              <Text
+                maxLength={150}
+                returnKeyType="done"
+              />
+            ) : editingField === 'author' ? (
+              <TextInput
+                value={author}
+                onChangeText={(t) => t.length <= 150 && setAuthor(t)}
+                onBlur={() => setEditingField(null)}
+                autoFocus
+                placeholder="Add author"
                 style={{
+                  minWidth: 80,
+                  maxWidth: 250,
                   color: c.surface,
                   fontSize: 18,
                   fontWeight: '600',
                   opacity: 0.5,
+                  backgroundColor: 'transparent',
+                  padding: 0,
+                  margin: 0,
                   textAlign: 'left',
                 }}
+                maxLength={150}
+                returnKeyType="done"
+              />
+            ) : location ? (
+              <Pressable
+                onPress={() => {
+                  setTimeout(() => setEditingField('location'), 0)
+                }}
               >
-                {author}
-              </Text>
-            </Pressable>
+                <Text
+                  style={{
+                    color: c.surface,
+                    fontSize: 18,
+                    fontWeight: '600',
+                    opacity: 0.5,
+                    textAlign: 'left',
+                  }}
+                >
+                  {location}
+                </Text>
+              </Pressable>
+            ) : author ? (
+              <Pressable
+                onPress={() => {
+                  setTimeout(() => setEditingField('author'), 0)
+                }}
+              >
+                <Text
+                  style={{
+                    color: c.surface,
+                    fontSize: 18,
+                    fontWeight: '600',
+                    opacity: 0.5,
+                    textAlign: 'left',
+                  }}
+                >
+                  {author}
+                </Text>
+              </Pressable>
+            ) : (
+              <View style={{ flexDirection: 'row', gap: 16 }}>
+                <Pressable onPress={() => setEditingField('location')}>
+                  <Text
+                    style={{
+                      color: c.surface,
+                      fontSize: 17.6,
+                      opacity: 0.7,
+                      textAlign: 'left',
+                      fontWeight: '600',
+                    }}
+                  >
+                    + location
+                  </Text>
+                </Pressable>
+                <Pressable onPress={() => setEditingField('author')}>
+                  <Text
+                    style={{
+                      color: c.surface,
+                      fontSize: 17.6,
+                      opacity: 0.7,
+                      textAlign: 'left',
+                      fontWeight: '600',
+                    }}
+                  >
+                    + author
+                  </Text>
+                </Pressable>
+              </View>
+            )
           ) : (
-            <View style={{ flexDirection: 'row', gap: 16 }}>
-              <Pressable onPress={() => setEditingField('location')}>
-                <Text
-                  style={{
-                    color: c.surface,
-                    fontSize: 17.6,
-                    opacity: 0.7,
-                    textAlign: 'left',
-                    fontWeight: '600',
-                  }}
-                >
-                  + location
-                </Text>
-              </Pressable>
-              <Pressable onPress={() => setEditingField('author')}>
-                <Text
-                  style={{
-                    color: c.surface,
-                    fontSize: 17.6,
-                    opacity: 0.7,
-                    textAlign: 'left',
-                    fontWeight: '600',
-                  }}
-                >
-                  + author
-                </Text>
-              </Pressable>
+            <View
+              style={{ width: '100%', alignItems: 'flex-start', marginTop: -17, marginBottom: 2 }}
+            >
+              <Heading tag="h2" style={{ color: c.surface }}>
+                {location || author}
+              </Heading>
             </View>
           )}
         </View>

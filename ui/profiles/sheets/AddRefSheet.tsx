@@ -119,6 +119,7 @@ export const AddRefSheet = ({
         <View style={{ padding: s.$3 }}>
           <RefForm
             r={refData}
+            canEditRefData={false}
             onAddRefToList={async (fields) => {
               console.log('TODO: onAddRefToList')
             }}

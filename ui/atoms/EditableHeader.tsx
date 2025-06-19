@@ -36,20 +36,14 @@ export const EditableHeader = ({
   const analyseUrl = async (u: string) => {
     // pass the link directly
     getLinkPreview(u).then((data) => {
-      // @ts-ignore
-      if (data?.title && title === '') {
-        // @ts-ignore
+      if ('title' in data && data?.title && title === '') {
         console.log('SETTING TITLE: ', data.title)
-        // @ts-ignore
         setTitle(data.title)
       }
 
-      // @ts-ignore
-      if (data?.images?.length > 0 && !image) {
-        // @ts-ignore
+      if ('images' in data && data?.images?.length > 0 && !image) {
         console.log('IMAGE', data.images[0])
-        // @ts-ignore
-        setImageState(data.images[0])
+        setImage(data.images[0])
       }
     })
   }

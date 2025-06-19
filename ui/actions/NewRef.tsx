@@ -170,6 +170,7 @@ export const NewRef = ({
         <RefForm
           r={refData}
           pickerOpen={pickerOpen}
+          canEditRefData={true}
           onAddRef={async (fields) => {
             await addToProfile(refData, {
               image: fields.image,

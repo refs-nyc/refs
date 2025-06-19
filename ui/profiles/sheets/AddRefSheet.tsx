@@ -113,7 +113,10 @@ export const AddRefSheet = ({
         <View style={{ padding: s.$3 }}>
           <RefForm
             r={itemToAdd?.expand.ref}
-            submitRef={async (fields) => {
+            onAddRefToList={async (fields) => {
+              console.log('TODO: onAddRefToList')
+            }}
+            onAddRef={async (fields) => {
               if (!user) return
               const gridItems = await getProfileItems(user.userName)
               setGridItems(gridItems)

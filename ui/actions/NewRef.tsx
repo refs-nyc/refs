@@ -169,14 +169,28 @@ export const NewRef = ({
         <RefForm
           r={refData}
           pickerOpen={pickerOpen}
-          submitRef={async (fields) => {
+          onAddRef={async (fields) => {
+            await addToProfile(refData, {
+              image: fields.image,
+              text: fields.text,
+              backlog,
+              list: false,
+            })
+            // finish the flow
+            setStep('')
+            setItemData(null)
+            setRefData({})
+          }}
+          onAddRefToList={async (fields) => {
             const newItem = await addToProfile(refData, {
               image: fields.image,
               text: fields.text,
               backlog,
+              list: true,
             })
             setItemData(newItem)
             setRefData(newItem.expand?.ref)
+            setStep('addToList')
           }}
           backlog={backlog}
         />

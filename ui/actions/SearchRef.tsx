@@ -13,6 +13,10 @@ import * as Clipboard from 'expo-clipboard'
 import { RefsRecord } from '@/features/pocketbase/stores/pocketbase-types'
 import { KeyboardAvoidingView } from 'react-native-keyboard-controller'
 import { Ionicons } from '@expo/vector-icons'
+import { Button } from '../buttons/Button'
+import type { ImagePickerAsset } from 'expo-image-picker'
+import { Picker } from '../inputs/Picker'
+import { PinataImage } from '../images/PinataImage'
 
 export const SearchRef = ({
   noNewRef,
@@ -32,10 +36,20 @@ export const SearchRef = ({
   const [urlState, setUrlState] = useState(url)
   const [imageState, setImageState] = useState(image)
   const [searchResults, setSearchResults] = useState<CompleteRef[]>([])
+  const [debouncedQuery, setDebouncedQuery] = useState('')
   const { hasShareIntent, shareIntent, resetShareIntent } = useShareIntentContext()
-  
+  const [picking, setPicking] = useState(false)
+  const [imageAsset, setImageAsset] = useState<ImagePickerAsset | null>(null)
+  const [uploadInProgress, setUploadInProgress] = useState(false)
+  const [uploadInitiated, setUploadInitiated] = useState(false)
+
   // Track the current query to prevent race conditions
   const currentQueryRef = useRef('')
+
+  useEffect(() => {
+    const timeout = setTimeout(() => setDebouncedQuery(searchQuery), 300)
+    return () => clearTimeout(timeout)
+  }, [searchQuery])
 
   // Search result item
   const renderItem = ({ item }: { item: CompleteRef }) => {
@@ -44,6 +58,9 @@ export const SearchRef = ({
         key={item.id}
         onPress={() => {
           onComplete(item)
+          if (imageState) {
+            onComplete({ ...item, image: imageState })
+          }
         }}
       >
         <ListItem r={item} backgroundColor={c.olive} />
@@ -62,49 +79,51 @@ export const SearchRef = ({
     }
   }
 
-  // Update the search query
-  const updateQuery = async (q: string) => {
+  const onQueryChange = (q: string) => {
     // Update the current query ref immediately
     currentQueryRef.current = q
-    
-    const search = async (query: string) => {
+    setSearchQuery(q)
+  }
+
+  useEffect(() => {
+    const runSearch = async () => {
       let refsResults: RefsRecord[] = []
 
-      if (query === '') return []
+      if (debouncedQuery === '') {
+        setSearchResults([])
+        return
+      }
 
-      if (query.includes('http')) {
-        const data = await getLinkPreview(query)
+      if (debouncedQuery.includes('http')) {
+        const data = await getLinkPreview(debouncedQuery)
         // Only update state if this is still the current query
-        if (currentQueryRef.current === query) {
-          updateState(query, data)
+        if (currentQueryRef.current === debouncedQuery) {
+          updateState(debouncedQuery, data)
         }
       } else {
         // Search items and refs db
         refsResults = await pocketbase
           .collection<CompleteRef>('refs')
-          .getFullList({ filter: `title ~ "${query}"` })
+          .getFullList({ filter: `title ~ "${debouncedQuery}"` })
       }
-      return refsResults
-    }
 
-    setSearchQuery(q)
-    let result = await search(q)
-    
-    // Only update search results if this is still the current query
-    if (currentQueryRef.current === q) {
-      setSearchResults(result)
+      // Only update search results if this is still the current query
+      if (currentQueryRef.current === debouncedQuery) {
+        setSearchResults(refsResults)
+      }
     }
-  }
+    runSearch()
+  }, [debouncedQuery])
 
   useEffect(() => {
     const titles = searchResults.map((r) => r?.title?.toLowerCase())
 
-    if (titles?.includes(searchQuery?.toLowerCase())) {
+    if (titles?.includes(debouncedQuery.toLowerCase())) {
       setDisableNewRef(true)
     } else {
       setDisableNewRef(false)
     }
-  }, [searchQuery, searchResults])
+  }, [debouncedQuery, searchResults])
 
   // Handle incoming share intent
   useEffect(() => {
@@ -136,18 +155,20 @@ export const SearchRef = ({
   return (
     <>
       <KeyboardAvoidingView style={{ width: '100%' }}>
-        <View style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          backgroundColor: 'transparent',
-          marginVertical: s.$1,
-          height: 42,
-          paddingVertical: 0,
-          paddingHorizontal: 10,
-          borderRadius: 50,
-          borderWidth: 1,
-          borderColor: c.surface,
-        }}>
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            backgroundColor: 'transparent',
+            marginVertical: s.$1,
+            height: 42,
+            paddingVertical: 0,
+            paddingHorizontal: 10,
+            borderRadius: 50,
+            borderWidth: 1,
+            borderColor: c.surface,
+          }}
+        >
           <TextInput
             style={{
               flex: 1,
@@ -159,15 +180,60 @@ export const SearchRef = ({
             value={searchQuery}
             placeholder="Search anything or start typing"
             placeholderTextColor={c.surface}
-            onChangeText={updateQuery}
-            autoFocus
+            onChangeText={onQueryChange}
+            // disabling autofocusc because sometimes the keyboard
+            // opens before the sheet, so the sheet doesn't expand properly
+            autoFocus={false}
           />
           {searchQuery.length > 0 && (
             <Pressable onPress={() => setSearchQuery('')} hitSlop={10} style={{ marginLeft: 8 }}>
               <Ionicons name="close-circle" size={22} color={c.surface} />
             </Pressable>
           )}
+          {imageAsset && (
+            <PinataImage
+              asset={imageAsset}
+              size={s.$2}
+              onReplace={() => {
+                setPicking(true)
+                setImageAsset(null)
+              }}
+              onSuccess={(url: string) => {
+                console.log('uploaded')
+                setImageState(url)
+              }}
+              onFail={() => {
+                console.error('Upload failed')
+                setUploadInProgress(false)
+              }}
+            />
+          )}
         </View>
+        {searchQuery.length === 0 && imageAsset === null && (
+          <Button
+            variant="whiteOutline"
+            title="Add from camera roll"
+            onPress={() => {
+              console.log('Add from Camera Roll')
+              setPicking(true)
+            }}
+            style={{ width: 'auto', alignSelf: 'center', borderColor: 'transparent' }}
+          />
+        )}
+        {picking && (
+          <Picker
+            onSuccess={(a: ImagePickerAsset) => {
+              console.log('image asset', a)
+              setImageAsset(a)
+              setPicking(false)
+              setUploadInProgress(true)
+              setUploadInitiated(true)
+            }}
+            onCancel={() => {
+              setPicking(false)
+            }}
+          />
+        )}
 
         {searchQuery !== '' && !noNewRef && !disableNewRef && (
           <Pressable

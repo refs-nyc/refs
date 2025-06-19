@@ -10,26 +10,25 @@ import { getLinkPreview } from 'link-preview-js'
 
 export const EditableHeader = ({
   title,
+  setTitle,
   url,
+  setUrl,
   image,
+  setImage,
   placeholder = '',
   initialEditing = false,
   withUrl = true,
-  onTitleChange = () => {},
-  onDataChange = () => {},
 }: {
   title: string
+  setTitle: (str: string) => void
   url: string
+  setUrl: (str: string) => void
   image?: string
+  setImage: (str: string) => void
   placeholder: string
   initialEditing?: boolean
   withUrl?: boolean
-  onTitleChange: (str: string) => void
-  onDataChange: (d: { url: string; image?: string; title: string }) => void
 }) => {
-  const [titleState, setTitleState] = useState(title || '')
-  const [urlState, setUrlState] = useState(url)
-  const [imageState, setImageState] = useState(image)
   const [hasUrl, setHasUrl] = useState(false)
   const [editing, setEditing] = useState(initialEditing)
   const [addingUrl, setAddingUrl] = useState(false)
@@ -38,15 +37,15 @@ export const EditableHeader = ({
     // pass the link directly
     getLinkPreview(u).then((data) => {
       // @ts-ignore
-      if (data?.title && titleState === '') {
+      if (data?.title && title === '') {
         // @ts-ignore
         console.log('SETTING TITLE: ', data.title)
         // @ts-ignore
-        setTitleState(data.title)
+        setTitle(data.title)
       }
 
       // @ts-ignore
-      if (data?.images?.length > 0 && !imageState) {
+      if (data?.images?.length > 0 && !image) {
         // @ts-ignore
         console.log('IMAGE', data.images[0])
         // @ts-ignore
@@ -56,18 +55,8 @@ export const EditableHeader = ({
   }
 
   useEffect(() => {
-    // make sure that if an image was uploaded, EditableHeader knows about it
-    // and won't overwrite it with an image from the url
-    if (image) setImageState(image)
-  }, [image])
-
-  useEffect(() => {
-    onDataChange({ title: titleState, url: urlState, image: imageState })
-  }, [titleState, imageState, urlState])
-
-  useEffect(() => {
-    if (urlState && urlState !== '') analyseUrl(urlState)
-  }, [urlState])
+    if (url && url !== '') analyseUrl(url)
+  }, [url])
 
   useEffect(() => {
     const detectUrl = async () => {
@@ -106,10 +95,10 @@ export const EditableHeader = ({
                   textAlign: 'left',
                   color: c.surface,
                   fontSize: 24,
-                  opacity: titleState ? 1 : 0.7,
+                  opacity: title ? 1 : 0.7,
                 }}
               >
-                {titleState || placeholder}
+                {title || placeholder}
               </Heading>
             </Pressable>
           </XStack>
@@ -128,15 +117,14 @@ export const EditableHeader = ({
               },
             ]}
             autoFocus={true}
-            value={titleState == placeholder ? '' : titleState}
+            value={title == placeholder ? '' : title}
             placeholder={placeholder}
             onChangeText={(e) => {
-              setTitleState(e)
+              setTitle(e)
             }}
             multiline={true}
             onBlur={() => {
               setEditing(false)
-              onTitleChange(titleState)
             }}
           ></TextInput>
         )}
@@ -152,13 +140,13 @@ export const EditableHeader = ({
               borderRadius: s.$075,
               color: c.muted,
             }}
-            value={urlState}
+            value={url}
             autoFocus={true}
             autoCorrect={false}
             autoCapitalize="none"
             autoComplete="off"
             placeholder="Paste url"
-            onChangeText={setUrlState}
+            onChangeText={setUrl}
             clearButtonMode="while-editing"
           />
         )}
@@ -174,7 +162,6 @@ export const EditableHeader = ({
             <Pressable
               onPress={() => {
                 setEditing(false)
-                onTitleChange(titleState)
               }}
             >
               <Ionicons size={28} name="checkbox-outline" color={c.surface2} />
@@ -191,7 +178,7 @@ export const EditableHeader = ({
               >
                 <Ionicons
                   size={24}
-                  name={titleState === 'placeholder' || titleState === '' ? 'add' : 'pencil'}
+                  name={title === 'placeholder' || title === '' ? 'add' : 'pencil'}
                   color={c.white}
                 />
               </Pressable>
@@ -206,17 +193,13 @@ export const EditableHeader = ({
               }}
               onPress={() => setAddingUrl(true)}
             >
-              <Ionicons
-                name="link-outline"
-                size={28}
-                color={urlState === '' ? c.olive2 : c.white}
-              />
+              <Ionicons name="link-outline" size={28} color={url === '' ? c.olive2 : c.white} />
             </Pressable>
           )}
 
           {addingUrl && withUrl && (
             <>
-              {hasUrl && urlState === '' ? (
+              {hasUrl && url === '' ? (
                 <></>
               ) : (
                 <Pressable onPress={() => setAddingUrl(false)}>

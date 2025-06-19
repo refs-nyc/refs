@@ -27,12 +27,20 @@ const win = Dimensions.get('window')
 export const RefForm = ({
   r,
   placeholder = 'Add a title',
-  submitRef,
+  onAddRef,
+  onAddRefToList,
   pickerOpen = false,
 }: {
   r: StagedRef
   placeholder?: string
-  submitRef: (fields: {
+  onAddRef: (fields: {
+    title: string
+    text: string
+    url: string
+    image: string
+    meta?: string
+  }) => Promise<void>
+  onAddRefToList: (fields: {
     title: string
     text: string
     url: string
@@ -62,14 +70,11 @@ export const RefForm = ({
 
   // Initialize state based on incoming ref
   useEffect(() => {
-    console.log(r)
     if (r?.title) setTitle(r.title)
     if (r?.url) setUrl(r.url)
 
     // Initialize image state
     if (r?.image) {
-      console.log('image found')
-      console.log(r.image)
       if (typeof r.image === 'string') {
         setPinataSource(r.image)
       } else {
@@ -77,10 +82,6 @@ export const RefForm = ({
       }
     }
   }, [r])
-
-  const handleTitleChange = (newTitle: string) => {
-    setTitle(newTitle)
-  }
 
   const handleImageSuccess = (imageUrl: string) => {
     setUploadInProgress(false)
@@ -132,25 +133,6 @@ export const RefForm = ({
       isValid = false
     }
     return isValid
-  }
-
-  const submit = async () => {
-    // Only include meta if location or author is present
-    let meta: string | undefined = undefined
-    if (location || author) {
-      meta = JSON.stringify({ location, author })
-    }
-
-    try {
-      setCreateInProgress(true)
-      await submitRef({ title, text, url, image: pinataSource, meta })
-      console.log('success')
-    } catch (e) {
-      console.error(e)
-    } finally {
-      setCreateInProgress(false)
-      console.log('Done')
-    }
   }
 
   return (
@@ -277,8 +259,9 @@ export const RefForm = ({
           }}
         >
           <EditableHeader
-            onTitleChange={handleTitleChange}
-            onDataChange={handleDataChange}
+            setTitle={setTitle}
+            setUrl={setUrl}
+            setImage={setPinataSource}
             placeholder={placeholder}
             title={title}
             url={url || ''}
@@ -431,11 +414,26 @@ export const RefForm = ({
             variant="whiteOutline"
             style={{ width: '48%', minWidth: 0 }}
             disabled={!title || createInProgress}
-            onPress={() => {
+            onPress={async () => {
               if (!validateFields()) {
                 return
               }
-              submit()
+              // Only include meta if location or author is present
+              let meta: string | undefined = undefined
+              if (location || author) {
+                meta = JSON.stringify({ location, author })
+              }
+
+              try {
+                setCreateInProgress(true)
+                await onAddRefToList({ title, text, url, image: pinataSource, meta })
+                console.log('success')
+              } catch (e) {
+                console.error(e)
+              } finally {
+                setCreateInProgress(false)
+                console.log('Done')
+              }
             }}
           />
           {createInProgress || uploadInProgress || (uploadInitiated && !pinataSource) ? (
@@ -463,11 +461,27 @@ export const RefForm = ({
               variant="whiteInverted"
               style={{ width: '48%', minWidth: 0 }}
               disabled={!(pinataSource && title) || createInProgress}
-              onPress={() => {
+              onPress={async () => {
                 if (!validateFields()) {
                   return
                 }
-                submit()
+
+                // Only include meta if location or author is present
+                let meta: string | undefined = undefined
+                if (location || author) {
+                  meta = JSON.stringify({ location, author })
+                }
+
+                try {
+                  setCreateInProgress(true)
+                  await onAddRef({ title, text, url, image: pinataSource, meta })
+                  console.log('success')
+                } catch (e) {
+                  console.error(e)
+                } finally {
+                  setCreateInProgress(false)
+                  console.log('Done')
+                }
               }}
             />
           )}

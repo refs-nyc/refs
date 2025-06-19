@@ -1,4 +1,4 @@
-import { useItemStore } from '@/features/pocketbase'
+import { useItemStore, useUserStore } from '@/features/pocketbase'
 import { RefsRecord } from '@/features/pocketbase/stores/pocketbase-types'
 import { ExpandedItem } from '@/features/pocketbase/stores/types'
 import { base, c, s, t } from '@/features/style'
@@ -21,6 +21,7 @@ import Animated, { useAnimatedStyle } from 'react-native-reanimated'
 import { useStore } from 'zustand'
 import { ProfileDetailsContext } from './profileDetailsStore'
 import { useUIStore } from '../state'
+import { Button } from '../buttons/Button'
 
 const LocationMeta = ({ location }: { location: string }) => {
   return (
@@ -72,6 +73,7 @@ export const DetailsCarouselItem = ({ item, index }: { item: ExpandedItem; index
   const { currentIndex, showContextMenu, setShowContextMenu, openedFromFeed, editingRights } =
     useStore(profileDetailsStore)
   const [currentItem, setCurrentItem] = useState<ExpandedItem>(item)
+  const { addRefSheetRef, setAddingRefId } = useUIStore()
 
   const {
     editing,
@@ -89,6 +91,9 @@ export const DetailsCarouselItem = ({ item, index }: { item: ExpandedItem; index
 
   const { referencersBottomSheetRef, setCurrentRefId } = useUIStore()
   const editingThisItem = editing === item.id
+  const { user } = useUserStore()
+
+  const showAddRefButton = item.creator !== user?.id
 
   const animatedStyle = useAnimatedStyle(() => {
     return editingThisItem ? base.editableItem : base.nonEditableItem
@@ -98,7 +103,7 @@ export const DetailsCarouselItem = ({ item, index }: { item: ExpandedItem; index
     <View
       style={{
         width: win.width,
-        height: win.height,
+        height: openedFromFeed ? win.height * 0.8 : win.height * 0.8 - s.$7,
         gap: s.$1,
         justifyContent: 'flex-start',
       }}
@@ -234,11 +239,10 @@ export const DetailsCarouselItem = ({ item, index }: { item: ExpandedItem; index
                 ) : (
                   <Pressable
                     onPress={() => {
-                      if (!editingThisItem)
-                      {
+                      if (!editingThisItem) {
                         setCurrentRefId(item.ref)
                         referencersBottomSheetRef.current?.expand()
-                        return;
+                        return
                       }
                       Keyboard.dismiss()
                       setSearchingNewRef(item.id)
@@ -338,7 +342,28 @@ export const DetailsCarouselItem = ({ item, index }: { item: ExpandedItem; index
           </Pressable>
         </KeyboardAvoidingView>
       </BottomSheetScrollView>
-
+      {showAddRefButton && (
+        <View
+          style={{
+            width: '75%',
+            alignSelf: 'center',
+            position: 'absolute',
+            bottom: 0,
+          }}
+        >
+          <Button
+            style={{ paddingTop: s.$2, paddingBottom: s.$2, width: '100%' }}
+            textStyle={{ fontSize: s.$1, fontWeight: 800 }}
+            onPress={() => {
+              // open a dialog for adding this ref to your profile
+              setAddingRefId(item.ref)
+              addRefSheetRef.current?.expand()
+            }}
+            variant="raised"
+            title="Add Ref +"
+          />
+        </View>
+      )}
       {searchingNewRef && currentIndex == index && (
         <Sheet
           keyboardShouldPersistTaps="always"

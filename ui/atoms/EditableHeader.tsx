@@ -9,6 +9,7 @@ import * as Clipboard from 'expo-clipboard'
 import { getLinkPreview } from 'link-preview-js'
 
 export const EditableHeader = ({
+  canEditRefData,
   title,
   setTitle,
   url,
@@ -16,9 +17,9 @@ export const EditableHeader = ({
   image,
   setImage,
   placeholder = '',
-  initialEditing = false,
   withUrl = true,
 }: {
+  canEditRefData: boolean
   title: string
   setTitle: (str: string) => void
   url: string
@@ -26,11 +27,10 @@ export const EditableHeader = ({
   image?: string
   setImage: (str: string) => void
   placeholder: string
-  initialEditing?: boolean
   withUrl?: boolean
 }) => {
   const [hasUrl, setHasUrl] = useState(false)
-  const [editing, setEditing] = useState(initialEditing)
+  const [editing, setEditing] = useState(false)
   const [addingUrl, setAddingUrl] = useState(false)
 
   const analyseUrl = async (u: string) => {
@@ -82,7 +82,11 @@ export const EditableHeader = ({
               alignItems: 'flex-start',
             }}
           >
-            <Pressable onPress={() => setEditing(true)}>
+            <Pressable
+              onPress={() => {
+                if (canEditRefData) setEditing(true)
+              }}
+            >
               <Heading
                 tag="h2"
                 style={{
@@ -161,14 +165,17 @@ export const EditableHeader = ({
               <Ionicons size={28} name="checkbox-outline" color={c.surface2} />
             </Pressable>
           ) : (
-            !addingUrl && (
+            !addingUrl &&
+            canEditRefData && (
               <Pressable
                 style={{
                   width: 28,
                   // backgroundColor: 'red',
                   flexShrink: 0,
                 }}
-                onPress={() => setEditing(true)}
+                onPress={() => {
+                  if (canEditRefData) setEditing(true)
+                }}
               >
                 <Ionicons
                   size={24}

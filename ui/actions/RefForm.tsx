@@ -235,48 +235,37 @@ export const RefForm = ({
           />
         )}
 
-        {canEditRefData ? (
-          <Animated.View
-            style={{
-              width: '100%',
-              marginBottom: 0,
-              transform: [
-                {
-                  translateX: titleShake.interpolate({
-                    inputRange: [-1, 0, 1],
-                    outputRange: [-10, 0, 10],
-                  }),
-                },
-                {
-                  scale: titleShake.interpolate({
-                    inputRange: [-1, 0, 1],
-                    outputRange: [1.05, 1, 1.05],
-                  }),
-                },
-              ],
-            }}
-          >
-            <EditableHeader
-              setTitle={setTitle}
-              setUrl={setUrl}
-              setImage={setPinataSource}
-              placeholder={placeholder}
-              title={title}
-              url={url || ''}
-              image={pinataSource}
-            />
-          </Animated.View>
-        ) : (
-          <View style={{ width: '100%', marginBottom: 0 }}>
-            <Heading tag="h1" style={{ color: c.surface }}>
-              {title}
-            </Heading>
-            {/* TODO: figure out how to display the url here */}
-            {/* <Heading tag="h2" style={{ color: c.surface }}>
-              {url}
-            </Heading> */}
-          </View>
-        )}
+        <Animated.View
+          style={{
+            width: '100%',
+            marginBottom: 0,
+            transform: [
+              {
+                translateX: titleShake.interpolate({
+                  inputRange: [-1, 0, 1],
+                  outputRange: [-10, 0, 10],
+                }),
+              },
+              {
+                scale: titleShake.interpolate({
+                  inputRange: [-1, 0, 1],
+                  outputRange: [1.05, 1, 1.05],
+                }),
+              },
+            ],
+          }}
+        >
+          <EditableHeader
+            canEditRefData={canEditRefData}
+            setTitle={setTitle}
+            setUrl={setUrl}
+            setImage={setPinataSource}
+            placeholder={placeholder}
+            title={title}
+            url={url || ''}
+            image={pinataSource}
+          />
+        </Animated.View>
 
         {/* Inline subtitle row for location/author, now directly below title with minimal spacing */}
         <View style={{ width: '100%', alignItems: 'flex-start', marginTop: -17, marginBottom: 2 }}>

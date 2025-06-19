@@ -12,6 +12,7 @@ import { Text, View } from 'react-native'
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated'
 import { AddRefSheetGrid } from './AddRefSheetGrid'
 import { useUIStore } from '@/ui/state'
+import { FilteredItems } from '@/ui/actions/FilteredItems'
 
 export const AddRefSheet = ({
   bottomSheetRef,
@@ -120,9 +121,7 @@ export const AddRefSheet = ({
           <RefForm
             r={refData}
             canEditRefData={false}
-            onAddRefToList={async (fields) => {
-              console.log('TODO: onAddRefToList')
-            }}
+            onAddRefToList={async (fields) => {}}
             onAddRef={async (fields) => {
               if (!user) return
               const gridItems = await getProfileItems(user.userName)

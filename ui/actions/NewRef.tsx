@@ -175,11 +175,6 @@ export const NewRef = ({
               text: fields.text,
               backlog,
             })
-            console.log('HANDLE NEW REF CREATED', newItem.expand.ref.title)
-            if (!newItem.expand?.ref)
-              throw new Error(
-                'unexpected: handleNewRefCreated should always be called with ExpandedItem'
-              )
             setItemData(newItem)
             setRefData(newItem.expand?.ref)
           }}

@@ -13,7 +13,6 @@ export const NavigationBackdrop = () => {
     otherProfileBackdropAnimatedIndex,
     newRefSheetBackdropAnimatedIndex,
     removeRefSheetBackdropAnimatedIndex,
-    addRefSheetBackdropAnimatedIndex,
     backdropPressHandlers,
   } = useBackdropStore()
 
@@ -53,13 +52,6 @@ export const NavigationBackdrop = () => {
       Extrapolation.CLAMP
     )
 
-    const addRefSheetOpacityValue = interpolate(
-      addRefSheetBackdropAnimatedIndex!.value || 0,
-      [-1, 0],
-      [0, 0.5],
-      Extrapolation.CLAMP
-    )
-
     // mix together the opacity values
     const opacityValue =
       1 -
@@ -67,9 +59,7 @@ export const NavigationBackdrop = () => {
         (1 - detailsOpacityValue) *
         (1 - otherProfileOpacityValue) *
         (1 - newRefSheetOpacityValue) *
-        (1 - removeRefSheetOpacityValue) *
-        (1 - addRefSheetOpacityValue)
-
+        (1 - removeRefSheetOpacityValue)
     return {
       opacity: opacityValue,
       display: opacityValue < 0.001 ? 'none' : 'flex',
@@ -80,7 +70,6 @@ export const NavigationBackdrop = () => {
     otherProfileBackdropAnimatedIndex,
     newRefSheetBackdropAnimatedIndex,
     removeRefSheetBackdropAnimatedIndex,
-    addRefSheetBackdropAnimatedIndex,
   ])
 
   return (

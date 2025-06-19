@@ -1,5 +1,4 @@
-import { addToProfile, removeFromProfile, useUserStore } from '@/features/pocketbase'
-import { useBackdropStore } from '@/features/pocketbase/stores/backdrop'
+import { addToProfile, pocketbase, removeFromProfile, useUserStore } from '@/features/pocketbase'
 import { getProfileItems, useItemStore } from '@/features/pocketbase/stores/items'
 import { ExpandedItem } from '@/features/pocketbase/stores/types'
 import { c, s } from '@/features/style'
@@ -12,31 +11,39 @@ import { useEffect, useState } from 'react'
 import { Text, View } from 'react-native'
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated'
 import { AddRefSheetGrid } from './AddRefSheetGrid'
+import { useUIStore } from '@/ui/state'
 
 export const AddRefSheet = ({
-  itemToAdd,
   bottomSheetRef,
 }: {
-  itemToAdd: ExpandedItem | null
   bottomSheetRef: React.RefObject<BottomSheet>
 }) => {
-  const { addRefSheetBackdropAnimatedIndex, registerBackdropPress, unregisterBackdropPress } =
-    useBackdropStore()
-
   const { user } = useUserStore()
+  const { addingRefId } = useUIStore()
+  const [refData, setRefData] = useState<any>({})
 
   const [gridItems, setGridItems] = useState<ExpandedItem[]>([])
   const { moveToBacklog } = useItemStore()
 
-  // close the new ref sheet when the user taps the navigation backdrop
   useEffect(() => {
-    const key = registerBackdropPress(() => {
-      bottomSheetRef.current?.close()
-    })
-    return () => {
-      unregisterBackdropPress(key)
+    const fetchGridItems = async () => {
+      if (!user) {
+        setGridItems([])
+      } else {
+        const gridItems = await getProfileItems(user.userName)
+        setGridItems(gridItems)
+      }
     }
-  }, [])
+    fetchGridItems()
+  }, [user])
+
+  useEffect(() => {
+    const getRef = async () => {
+      const ref = await pocketbase.collection('refs').getOne(addingRefId)
+      setRefData(ref)
+    }
+    getRef()
+  }, [addingRefId])
 
   // const [addingTo, setAddingTo] = useState<'backlog' | 'grid' | null>(null)
   const [step, setStep] = useState<
@@ -68,7 +75,6 @@ export const AddRefSheet = ({
       enablePanDownToClose={true}
       snapPoints={[sheetHeight]}
       index={-1}
-      animatedIndex={addRefSheetBackdropAnimatedIndex}
       backgroundStyle={{ backgroundColor: c.olive, borderRadius: s.$4, paddingTop: 0 }}
       onChange={(i: number) => {
         if (i === -1) {
@@ -109,10 +115,10 @@ export const AddRefSheet = ({
       )}
       keyboardBehavior="interactive"
     >
-      {step === 'editNewItem' && itemToAdd?.expand.ref && (
+      {step === 'editNewItem' && refData && (
         <View style={{ padding: s.$3 }}>
           <RefForm
-            r={itemToAdd?.expand.ref}
+            r={refData}
             onAddRefToList={async (fields) => {
               console.log('TODO: onAddRefToList')
             }}
@@ -126,7 +132,7 @@ export const AddRefSheet = ({
                 // show a modal to the user that the grid is full
                 setStep('selectItemToReplace')
               } else {
-                await addToProfile(itemToAdd.expand.ref, {
+                await addToProfile(refData, {
                   backlog: false,
                   image: fields.image,
                   text: fields.text,
@@ -149,12 +155,12 @@ export const AddRefSheet = ({
           }}
         >
           <Text style={{ color: c.surface, fontSize: s.$1 }}>
-            Adding {itemToAdd?.expand.ref.title} to your profile
+            Adding {refData.title} to your profile
           </Text>
-          {itemToAdd?.expand.ref?.image && (
+          {refData?.image && (
             <View style={{ alignItems: 'center' }}>
               <SimplePinataImage
-                originalSource={itemToAdd.expand.ref?.image}
+                originalSource={refData?.image}
                 style={{ height: 80, width: 80 }}
                 imageOptions={{
                   width: 80,
@@ -175,10 +181,9 @@ export const AddRefSheet = ({
             title="Add to backlog instead"
             variant="small"
             onPress={async () => {
-              if (!itemToAdd) return
-              await addToProfile(itemToAdd.expand.ref, {
+              await addToProfile(refData, {
                 backlog: true,
-                text: itemToAdd.text,
+                text: '',
               })
               setStep('addedToBacklog')
             }}
@@ -215,12 +220,11 @@ export const AddRefSheet = ({
             title="Remove"
             variant="basic"
             onPress={async () => {
-              if (!itemToAdd?.expand.ref) return
               // remove the item
               await removeFromProfile(itemToReplace.id)
-              await addToProfile(itemToAdd.expand.ref, {
+              await addToProfile(refData, {
                 backlog: false,
-                text: itemToAdd.text,
+                text: '',
               })
               setStep('addedToGrid')
             }}
@@ -228,13 +232,12 @@ export const AddRefSheet = ({
           <Button
             title="Send to backlog"
             onPress={async () => {
-              if (!itemToAdd?.expand.ref) return
               // send itemToReplace to the backlog
               await moveToBacklog(itemToReplace.id)
               // replace the item
-              await addToProfile(itemToAdd.expand.ref, {
+              await addToProfile(refData, {
                 backlog: false,
-                text: itemToAdd.text,
+                text: '',
               })
               setStep('addedToGrid')
             }}
@@ -243,16 +246,12 @@ export const AddRefSheet = ({
       )}
       {step === 'addedToBacklog' && (
         <View style={{ padding: s.$3 }}>
-          <Heading tag="h1" style={{ color: c.surface }}>
-            {itemToAdd?.expand.ref.title} was added to the backlog
-          </Heading>
+          <Heading tag="h1">{refData.title} was added to the backlog</Heading>
         </View>
       )}
       {step === 'addedToGrid' && (
         <View style={{ padding: s.$3 }}>
-          <Heading tag="h1" style={{ color: c.surface }}>
-            {itemToAdd?.expand.ref.title} was added to grid
-          </Heading>
+          <Heading tag="h1">{refData.title} was added to grid</Heading>
         </View>
       )}
     </BottomSheet>

@@ -6,16 +6,19 @@ import { SimplePinataImage } from '../images/SimplePinataImage'
 import { ExpandedItem } from '@/features/pocketbase/stores/types'
 import Swipeable from 'react-native-gesture-handler/ReanimatedSwipeable'
 import Reanimated, { SharedValue, useAnimatedStyle } from 'react-native-reanimated'
+import { useUIStore } from '../state'
 
 export default function SwipeableBacklogItem({
   item,
   onActionPress,
-  enabled
+  enabled,
 }: {
   item: ExpandedItem
   onActionPress: () => void
   enabled: boolean
 }) {
+  const { referencersBottomSheetRef, setCurrentRefId } = useUIStore()
+
   return (
     <Swipeable
       enabled={enabled}
@@ -43,9 +46,21 @@ export default function SwipeableBacklogItem({
             backgroundColor: c.olive2,
           }}
         />
-        <Text style={{ color: c.white, fontSize: s.$1, flex: 1 }} numberOfLines={2}>
-          {item.expand?.ref?.title?.trim()}
-        </Text>
+        <Pressable
+          style={{ flex: 1 }}
+          onPress={() => {
+            setCurrentRefId(item.ref)
+            // sometimes the sheet shows the previous item for a second
+            // but this timeout seems to fix it
+            setTimeout(() => {
+              referencersBottomSheetRef.current?.expand()
+            }, 0)
+          }}
+        >
+          <Text style={{ color: c.white, fontSize: s.$1, flex: 1 }} numberOfLines={2}>
+            {item.expand?.ref?.title?.trim()}
+          </Text>
+        </Pressable>
         {item.expand?.ref?.url && (
           <Pressable onPress={() => Linking.openURL(item.expand.ref.url!)}>
             <Ionicons

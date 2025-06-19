@@ -16,9 +16,6 @@ import { GridLines } from '../display/Gridlines'
 import { EditableList } from '../lists/EditableList'
 import { DetailsCarouselItem } from './DetailsCarouselItem'
 import { ProfileDetailsContext } from './profileDetailsStore'
-import { Button } from '../buttons/Button'
-import { useUserStore } from '@/features/pocketbase/stores/users'
-import { AddRefSheet } from './sheets/AddRefSheet'
 import BottomSheet from '@gorhom/bottom-sheet'
 
 // --- Helper Components for State Isolation ---
@@ -102,10 +99,6 @@ export const Details = ({ profile, data }: { profile: ExpandedProfile; data: Ite
 
   const editing = useItemStore((state) => state.editing)
 
-  const { user } = useUserStore()
-
-  const showAddRefButton = profile?.id !== user?.id && !editing
-
   const { addingToList, setAddingToList, addingItem } = useUIStore()
   const { stopEditing, update } = useItemStore()
 
@@ -180,32 +173,6 @@ export const Details = ({ profile, data }: { profile: ExpandedProfile; data: Ite
           <EditableList item={addingItem as ExpandedItem} onComplete={() => {}} />
         </Sheet>
       )}
-
-      {showAddRefButton && (
-        <View
-          style={{
-            position: 'absolute',
-            bottom: s.$5,
-            left: s.$0,
-            right: s.$0,
-          }}
-        >
-          <Button
-            style={{ paddingTop: s.$1, paddingBottom: s.$4 }}
-            textStyle={{ fontSize: s.$1, fontWeight: 800 }}
-            onPress={() => {
-              // open a dialog for adding this ref to your profile
-              setItemToAdd(data[currentIndex] as ExpandedItem)
-              addRefSheetRef.current?.expand()
-            }}
-            variant="raised"
-            title="Add Ref +"
-          />
-        </View>
-      )}
-
-      {/* add ref sheet */}
-      <AddRefSheet itemToAdd={itemToAdd} bottomSheetRef={addRefSheetRef} />
     </>
   )
 }

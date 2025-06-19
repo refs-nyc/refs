@@ -1,5 +1,4 @@
-import { addToProfile, removeFromProfile, useUserStore } from '@/features/pocketbase'
-import { useBackdropStore } from '@/features/pocketbase/stores/backdrop'
+import { addToProfile, pocketbase, removeFromProfile, useUserStore } from '@/features/pocketbase'
 import { getProfileItems, useItemStore } from '@/features/pocketbase/stores/items'
 import { ExpandedItem } from '@/features/pocketbase/stores/types'
 import { c, s } from '@/features/style'
@@ -11,31 +10,19 @@ import Animated, { FadeIn, FadeOut } from 'react-native-reanimated'
 import { AddRefSheetGrid } from './AddRefSheetGrid'
 import { Heading } from '@/ui/typo/Heading'
 import { SimplePinataImage } from '@/ui/images/SimplePinataImage'
+import { useUIStore } from '@/ui/state'
 
 export const AddRefSheet = ({
-  itemToAdd,
   bottomSheetRef,
 }: {
-  itemToAdd: ExpandedItem | null
   bottomSheetRef: React.RefObject<BottomSheet>
 }) => {
-  const { addRefSheetBackdropAnimatedIndex, registerBackdropPress, unregisterBackdropPress } =
-    useBackdropStore()
-
   const { user } = useUserStore()
+  const { addingRefId } = useUIStore()
+  const [refData, setRefData] = useState<any>({})
 
   const [gridItems, setGridItems] = useState<ExpandedItem[]>([])
   const { moveToBacklog } = useItemStore()
-
-  // close the new ref sheet when the user taps the navigation backdrop
-  useEffect(() => {
-    const key = registerBackdropPress(() => {
-      bottomSheetRef.current?.close()
-    })
-    return () => {
-      unregisterBackdropPress(key)
-    }
-  }, [])
 
   useEffect(() => {
     const fetchGridItems = async () => {
@@ -48,6 +35,14 @@ export const AddRefSheet = ({
     }
     fetchGridItems()
   }, [user])
+
+  useEffect(() => {
+    const getRef = async () => {
+      const ref = await pocketbase.collection('refs').getOne(addingRefId)
+      setRefData(ref)
+    }
+    getRef()
+  }, [addingRefId])
 
   // const [addingTo, setAddingTo] = useState<'backlog' | 'grid' | null>(null)
   const [step, setStep] = useState<
@@ -73,7 +68,6 @@ export const AddRefSheet = ({
       enablePanDownToClose={true}
       snapPoints={[sheetHeight]}
       index={-1}
-      animatedIndex={addRefSheetBackdropAnimatedIndex}
       backgroundStyle={{ backgroundColor: c.surface, borderRadius: s.$4, paddingTop: 0 }}
       onChange={(i: number) => {
         if (i === -1) {
@@ -119,11 +113,10 @@ export const AddRefSheet = ({
           <Button
             title="Add to backlog"
             onPress={async () => {
-              if (!itemToAdd?.expand.ref) return
               // add the item to the backlog
-              await addToProfile(itemToAdd.expand.ref, true, {
+              await addToProfile(refData, true, {
                 backlog: true,
-                comment: itemToAdd.text,
+                comment: '',
               })
               setStep('addedToBacklog')
             }}
@@ -134,15 +127,14 @@ export const AddRefSheet = ({
           <Button
             title="Add to grid"
             onPress={async () => {
-              if (!itemToAdd) return
               // check if the grid is full
               if (gridItems.length >= 12) {
                 // show a modal to the user that the grid is full
                 setStep('selectItemToReplace')
               } else {
-                await addToProfile(itemToAdd.expand.ref, true, {
+                await addToProfile(refData, true, {
                   backlog: false,
-                  comment: itemToAdd.text,
+                  comment: '',
                 })
                 setStep('addedToGrid')
               }
@@ -173,10 +165,9 @@ export const AddRefSheet = ({
             title="Add to backlog instead"
             variant="smallMuted"
             onPress={async () => {
-              if (!itemToAdd) return
-              await addToProfile(itemToAdd.expand.ref, true, {
+              await addToProfile(refData, true, {
                 backlog: true,
-                comment: itemToAdd.text,
+                comment: '',
               })
               setStep('addedToBacklog')
             }}
@@ -213,12 +204,11 @@ export const AddRefSheet = ({
             title="Remove"
             variant="basic"
             onPress={async () => {
-              if (!itemToAdd?.expand.ref) return
               // remove the item
               await removeFromProfile(itemToReplace.id)
-              await addToProfile(itemToAdd.expand.ref, true, {
+              await addToProfile(refData, true, {
                 backlog: false,
-                comment: itemToAdd.text,
+                comment: '',
               })
               setStep('addedToGrid')
             }}
@@ -226,13 +216,12 @@ export const AddRefSheet = ({
           <Button
             title="Send to backlog"
             onPress={async () => {
-              if (!itemToAdd?.expand.ref) return
               // send itemToReplace to the backlog
               await moveToBacklog(itemToReplace.id)
               // replace the item
-              await addToProfile(itemToAdd.expand.ref, true, {
+              await addToProfile(refData, true, {
                 backlog: false,
-                comment: itemToAdd.text,
+                comment: '',
               })
               setStep('addedToGrid')
             }}
@@ -241,12 +230,12 @@ export const AddRefSheet = ({
       )}
       {step === 'addedToBacklog' && (
         <View style={{ padding: s.$3 }}>
-          <Heading tag="h1">{itemToAdd?.expand.ref.title} was added to the backlog</Heading>
+          <Heading tag="h1">{refData.title} was added to the backlog</Heading>
         </View>
       )}
       {step === 'addedToGrid' && (
         <View style={{ padding: s.$3 }}>
-          <Heading tag="h1">{itemToAdd?.expand.ref.title} was added to grid</Heading>
+          <Heading tag="h1">{refData.title} was added to grid</Heading>
         </View>
       )}
     </BottomSheet>

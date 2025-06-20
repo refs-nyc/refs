@@ -4,7 +4,7 @@ import { Pressable, View } from 'react-native'
 import { BottomSheetTextInput as TextInput } from '@gorhom/bottom-sheet'
 import { ListItem } from '@/ui/lists/ListItem'
 import { NewRefListItem } from '@/ui/atoms/NewRefListItem'
-import { YStack } from '@/ui/core/Stacks'
+import { XStack, YStack } from '@/ui/core/Stacks'
 import { s, c } from '@/features/style'
 import { CompleteRef } from '../../features/pocketbase/stores/types'
 import { getLinkPreview } from 'link-preview-js'
@@ -17,6 +17,7 @@ import { Button } from '../buttons/Button'
 import type { ImagePickerAsset } from 'expo-image-picker'
 import { Picker } from '../inputs/Picker'
 import { PinataImage } from '../images/PinataImage'
+import { Image } from 'expo-image'
 
 export const SearchRef = ({
   noNewRef,
@@ -42,6 +43,8 @@ export const SearchRef = ({
   const [imageAsset, setImageAsset] = useState<ImagePickerAsset | null>(null)
   const [uploadInProgress, setUploadInProgress] = useState(false)
   const [uploadInitiated, setUploadInitiated] = useState(false)
+  const [imageSearchResults, setImageSearchResults] = useState<string[]>([])
+  const [displayingImagesFor, setDisplayingImagesFor] = useState<string>('') //ref id OR search query
 
   // Track the current query to prevent race conditions
   const currentQueryRef = useRef('')
@@ -54,17 +57,45 @@ export const SearchRef = ({
   // Search result item
   const renderItem = ({ item }: { item: CompleteRef }) => {
     return (
-      <Pressable
-        key={item.id}
-        onPress={() => {
-          onComplete(item)
-          if (imageState) {
-            onComplete({ ...item, image: imageState })
-          }
-        }}
-      >
-        <ListItem r={item} backgroundColor={c.olive} />
-      </Pressable>
+      <View key={item.id}>
+        <Pressable onPress={() => onRefPress(item.id, item)}>
+          <ListItem
+            r={item}
+            backgroundColor={c.olive}
+            onTitlePress={() => onRefPress(item.id, item)}
+          />
+        </Pressable>
+        <XStack gap={s.$1}>
+          {imageSearchResults && displayingImagesFor === item.id && (
+            <>
+              {imageSearchResults.map((url) => (
+                <Pressable key={url} onPress={() => onComplete({ ...item, image: url })}>
+                  <Image
+                    style={{ borderRadius: s.$075, width: s.$6, height: s.$6 }}
+                    source={url}
+                    contentFit="cover"
+                  />
+                </Pressable>
+              ))}
+              <Pressable
+                onPress={() => setPicking(true)}
+                style={{
+                  borderColor: c.white,
+                  borderWidth: 2,
+                  borderRadius: s.$075,
+                  width: s.$7,
+                  height: s.$7,
+                  alignContent: 'center',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                }}
+              >
+                <Ionicons name="camera-outline" size={s.$3} color={c.white} />
+              </Pressable>
+            </>
+          )}
+        </XStack>
+      </View>
     )
   }
 
@@ -83,6 +114,8 @@ export const SearchRef = ({
     // Update the current query ref immediately
     currentQueryRef.current = q
     setSearchQuery(q)
+    setDisplayingImagesFor('')
+    setImageSearchResults([])
   }
 
   useEffect(() => {
@@ -152,6 +185,45 @@ export const SearchRef = ({
     }
   }, [paste])
 
+  const onRefPress = async (refId: string, ref?: CompleteRef) => {
+    // if we're already displaying images for this ref, don't do anything
+    if (displayingImagesFor === refId) return
+
+    // if the user already uploaded an image from camera roll, just add the ref
+    if (imageState) {
+      if (ref) {
+        onComplete({ ...ref, image: imageState })
+      } else {
+        // @ts-ignore
+        onComplete({ title: searchQuery, image: imageState, url: urlState })
+      }
+      return
+    }
+
+    // otherwise, search for images
+    try {
+      console.log('searching for images')
+      const params = new URLSearchParams({
+        key: process.env.EXPO_PUBLIC_GOOGLE_SEARCH_API_KEY!,
+        cx: process.env.EXPO_PUBLIC_GOOGLE_SEARCH_ENGINE_ID!,
+        q: ref?.title || searchQuery,
+        searchType: 'image',
+      })
+
+      const results = await fetch(`https://www.googleapis.com/customsearch/v1?${params}`).then(
+        (res) => res.json()
+      )
+
+      const resultUrls = results.items.map((item: any) => item.link).slice(0, 3)
+      setImageSearchResults(resultUrls)
+      setDisplayingImagesFor(refId)
+    } catch (error) {
+      console.error(error)
+      setImageSearchResults([])
+      setDisplayingImagesFor('')
+    }
+  }
+
   return (
     <>
       <KeyboardAvoidingView style={{ width: '100%' }}>
@@ -181,7 +253,7 @@ export const SearchRef = ({
             placeholder="Search anything or start typing"
             placeholderTextColor={c.surface}
             onChangeText={onQueryChange}
-            // disabling autofocusc because sometimes the keyboard
+            // disabling autofocus because sometimes the keyboard
             // opens before the sheet, so the sheet doesn't expand properly
             autoFocus={false}
           />
@@ -199,12 +271,14 @@ export const SearchRef = ({
                 setImageAsset(null)
               }}
               onSuccess={(url: string) => {
-                console.log('uploaded')
                 setImageState(url)
+                setImageSearchResults([])
+                setDisplayingImagesFor('')
               }}
               onFail={() => {
                 console.error('Upload failed')
                 setUploadInProgress(false)
+                setImageAsset(null)
               }}
             />
           )}
@@ -214,7 +288,6 @@ export const SearchRef = ({
             variant="whiteOutline"
             title="Add from camera roll"
             onPress={() => {
-              console.log('Add from Camera Roll')
               setPicking(true)
             }}
             style={{ width: 'auto', alignSelf: 'center', borderColor: 'transparent' }}
@@ -235,16 +308,47 @@ export const SearchRef = ({
           />
         )}
 
+        {/* Option to Create New Ref */}
         {searchQuery !== '' && !noNewRef && !disableNewRef && (
-          <Pressable
-            onPress={() => {
-              // @ts-ignore
-              return onComplete({ title: searchQuery, image: imageState, url: urlState })
-            }}
-          >
-            {/* @ts-ignore */}
-            <NewRefListItem title={searchQuery} image={image} />
-          </Pressable>
+          <>
+            <Pressable onPress={() => onRefPress(searchQuery)}>
+              <NewRefListItem title={searchQuery} image={image || ''} />
+            </Pressable>
+            <XStack gap={s.$075}>
+              {imageSearchResults && displayingImagesFor === searchQuery && (
+                <>
+                  {imageSearchResults.map((url) => (
+                    <Pressable
+                      key={url}
+                      // @ts-ignore
+                      onPress={() => onComplete({ title: searchQuery, image: url, url: urlState })}
+                    >
+                      <Image
+                        style={{ borderRadius: s.$075, width: s.$7, height: s.$7 }}
+                        source={url}
+                        contentFit="cover"
+                      />
+                    </Pressable>
+                  ))}
+                  <Pressable
+                    onPress={() => setPicking(true)}
+                    style={{
+                      borderColor: c.white,
+                      borderWidth: 2,
+                      borderRadius: s.$075,
+                      width: s.$7,
+                      height: s.$7,
+                      alignContent: 'center',
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                    }}
+                  >
+                    <Ionicons name="camera-outline" size={s.$3} color={c.white} />
+                  </Pressable>
+                </>
+              )}
+            </XStack>
+          </>
         )}
         <YStack
           style={{

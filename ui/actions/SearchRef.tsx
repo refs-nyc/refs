@@ -57,8 +57,8 @@ export const SearchRef = ({
   // Search result item
   const renderItem = ({ item }: { item: CompleteRef }) => {
     return (
-      <>
-        <Pressable key={item.id} onPress={() => onRefPress(item.id, item)}>
+      <View key={item.id}>
+        <Pressable onPress={() => onRefPress(item.id, item)}>
           <ListItem
             r={item}
             backgroundColor={c.olive}
@@ -78,7 +78,7 @@ export const SearchRef = ({
               </Pressable>
             ))}
         </XStack>
-      </>
+      </View>
     )
   }
 
@@ -253,12 +253,14 @@ export const SearchRef = ({
                 setImageAsset(null)
               }}
               onSuccess={(url: string) => {
-                console.log('uploaded')
                 setImageState(url)
+                setImageSearchResults([])
+                setDisplayingImagesFor('')
               }}
               onFail={() => {
                 console.error('Upload failed')
                 setUploadInProgress(false)
+                setImageAsset(null)
               }}
             />
           )}
@@ -268,7 +270,6 @@ export const SearchRef = ({
             variant="whiteOutline"
             title="Add from camera roll"
             onPress={() => {
-              console.log('Add from Camera Roll')
               setPicking(true)
             }}
             style={{ width: 'auto', alignSelf: 'center', borderColor: 'transparent' }}
@@ -295,21 +296,38 @@ export const SearchRef = ({
             <Pressable onPress={() => onRefPress(searchQuery)}>
               <NewRefListItem title={searchQuery} image={image || ''} />
             </Pressable>
-            <XStack gap={s.$1}>
-              {imageSearchResults &&
-                displayingImagesFor === searchQuery &&
-                imageSearchResults.map((url) => (
+            <XStack gap={s.$075}>
+              {imageSearchResults && displayingImagesFor === searchQuery && (
+                <>
+                  {imageSearchResults.map((url) => (
+                    <Pressable
+                      key={url}
+                      onPress={() => onComplete({ title: searchQuery, image: url, url: urlState })}
+                    >
+                      <Image
+                        style={{ borderRadius: s.$075, width: s.$7, height: s.$7 }}
+                        source={url}
+                        contentFit="cover"
+                      />
+                    </Pressable>
+                  ))}
                   <Pressable
-                    key={url}
-                    onPress={() => onComplete({ title: searchQuery, image: url, url: urlState })}
+                    onPress={() => setPicking(true)}
+                    style={{
+                      borderColor: c.white,
+                      borderWidth: 2,
+                      borderRadius: s.$075,
+                      width: s.$7,
+                      height: s.$7,
+                      alignContent: 'center',
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                    }}
                   >
-                    <Image
-                      style={{ borderRadius: s.$075, width: s.$6, height: s.$6 }}
-                      source={url}
-                      contentFit="cover"
-                    />
+                    <Ionicons name="camera-outline" size={s.$3} color={c.white} />
                   </Pressable>
-                ))}
+                </>
+              )}
             </XStack>
           </>
         )}

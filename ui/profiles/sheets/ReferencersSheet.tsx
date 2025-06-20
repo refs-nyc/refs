@@ -2,6 +2,7 @@ import { pocketbase } from '@/features/pocketbase'
 import { Profile } from '@/features/pocketbase/stores/types'
 import { c, s } from '@/features/style'
 import UserListItem from '@/ui/atoms/UserListItem'
+import { Button } from '@/ui/buttons/Button'
 import { YStack } from '@/ui/core/Stacks'
 import { useUIStore } from '@/ui/state'
 import { Heading } from '@/ui/typo/Heading'
@@ -18,6 +19,7 @@ export default function Referencers({
   const { currentRefId } = useUIStore()
   const [users, setUsers] = useState<any[]>([])
   const [refData, setRefData] = useState<any>({})
+  const { addRefSheetRef, setAddingRefId } = useUIStore()
 
   useEffect(() => {
     const getUsers = async () => {
@@ -58,7 +60,7 @@ export default function Referencers({
       backgroundStyle={{ backgroundColor: c.surface, borderRadius: s.$4 }}
       handleIndicatorStyle={{ backgroundColor: 'transparent' }}
     >
-      <View style={{ paddingHorizontal: s.$3, paddingVertical: s.$1 }}>
+      <View style={{ paddingHorizontal: s.$3, paddingVertical: s.$1, height: '100%' }}>
         <View style={{ paddingBottom: s.$1 }}>
           <Heading tag="h1">{refData?.title}</Heading>
           <Text style={{ color: c.grey2 }}> Everyone who's added it. </Text>
@@ -79,6 +81,26 @@ export default function Referencers({
             ))}
           </YStack>
         </BottomSheetScrollView>
+        <View
+          style={{
+            width: '75%',
+            alignSelf: 'center',
+            position: 'absolute',
+            bottom: 40,
+          }}
+        >
+          <Button
+            style={{ paddingTop: s.$2, paddingBottom: s.$2, width: '100%' }}
+            textStyle={{ fontSize: s.$1, fontWeight: 800 }}
+            onPress={() => {
+              // open a dialog for adding this ref to your profile
+              setAddingRefId(currentRefId)
+              addRefSheetRef.current?.expand()
+            }}
+            variant="raised"
+            title="Add Ref +"
+          />
+        </View>
       </View>
     </BottomSheet>
   )

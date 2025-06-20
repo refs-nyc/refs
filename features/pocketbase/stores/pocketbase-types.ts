@@ -197,6 +197,7 @@ export type RefsRecord = {
   type?: RefsTypeOptions
   updated?: IsoDateString
   url?: string
+  showInTicker?: boolean
 }
 
 export type SavesRecord = {

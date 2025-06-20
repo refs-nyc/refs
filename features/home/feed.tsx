@@ -1,17 +1,18 @@
-import { useState, useEffect, useRef } from 'react'
-import { View, ScrollView, Dimensions, Pressable } from 'react-native'
 import { Link } from 'expo-router'
+import { useEffect, useRef, useState } from 'react'
+import { Dimensions, Pressable, ScrollView, View } from 'react-native'
 
-import type { ExpandedItem } from '@/features/pocketbase/stores/types'
+import { Ticker } from '@/features/home/Ticker'
 import { pocketbase, useItemStore } from '@/features/pocketbase'
-import { s, c } from '@/features/style'
-import { DismissKeyboard, XStack, YStack, Heading, Text } from '@/ui'
+import type { ExpandedItem } from '@/features/pocketbase/stores/types'
+import { c, s } from '@/features/style'
+import { DismissKeyboard, Heading, Text, XStack, YStack } from '@/ui'
 import SearchBottomSheet from '@/ui/actions/SearchBottomSheet'
-import { SimplePinataImage } from '@/ui/images/SimplePinataImage'
 import { Avatar } from '@/ui/atoms/Avatar'
+import { SimplePinataImage } from '@/ui/images/SimplePinataImage'
 import { ProfileDetailsSheet } from '@/ui/profiles/ProfileDetailsSheet'
-import BottomSheet from '@gorhom/bottom-sheet'
 import { useUIStore } from '@/ui/state'
+import BottomSheet from '@gorhom/bottom-sheet'
 
 const win = Dimensions.get('window')
 
@@ -174,43 +175,46 @@ export const Feed = () => {
   return (
     <>
       <DismissKeyboard>
-        <ScrollView style={{ flex: 1 }}>
-          <View style={{ height: '100%' }}>
-            <View
-              style={{
-                gap: s.$09,
-                paddingTop: s.$1,
-                paddingHorizontal: s.$1half,
-                width: win.width,
-              }}
-            >
-              <YStack
-                gap={0}
+        <>
+          <ScrollView>
+            <View style={{ height: '100%' }}>
+              <View
                 style={{
-                  flex: 1,
-                  paddingBottom: s.$12,
+                  gap: s.$09,
+                  paddingTop: s.$1,
+                  paddingHorizontal: s.$1half,
+                  width: win.width,
                 }}
               >
-                {items.map((item) => (
-                  <ListItem
-                    key={item.id}
-                    item={item}
-                    onImagePress={() => {
-                      // set the current item
-                      setDetailsItem(item)
-                      // open the details sheet
-                      detailsSheetRef.current?.snapToIndex(0)
-                    }}
-                    onTitlePress={() => {
-                      setCurrentRefId(item.ref)
-                      referencersBottomSheetRef.current?.expand()
-                    }}
-                  />
-                ))}
-              </YStack>
+                <YStack
+                  gap={0}
+                  style={{
+                    flex: 1,
+                    paddingBottom: s.$12,
+                  }}
+                >
+                  {items.map((item) => (
+                    <ListItem
+                      key={item.id}
+                      item={item}
+                      onImagePress={() => {
+                        // set the current item
+                        setDetailsItem(item)
+                        // open the details sheet
+                        detailsSheetRef.current?.snapToIndex(0)
+                      }}
+                      onTitlePress={() => {
+                        setCurrentRefId(item.ref)
+                        referencersBottomSheetRef.current?.expand()
+                      }}
+                    />
+                  ))}
+                </YStack>
+              </View>
             </View>
-          </View>
-        </ScrollView>
+          </ScrollView>
+          <Ticker />
+        </>
       </DismissKeyboard>
       <SearchBottomSheet />
       {detailsItem && (

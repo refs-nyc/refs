@@ -46,6 +46,7 @@ export const Ticker = () => {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
+              height: s.$4,
             }}
           >
             <Text style={{ fontSize: s.$09, color: c.olive }}>{item.title}</Text>

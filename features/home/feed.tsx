@@ -186,22 +186,30 @@ export const Feed = () => {
                 gap: s.$0,
               }}
             >
-              {items.map((item) => (
-                <ListItem
-                  key={item.id}
-                  item={item}
-                  onImagePress={() => {
-                    // set the current item
-                    setDetailsItem(item)
-                    // open the details sheet
-                    detailsSheetRef.current?.snapToIndex(0)
-                  }}
-                  onTitlePress={() => {
-                    setCurrentRefId(item.ref)
-                    referencersBottomSheetRef.current?.expand()
-                  }}
-                />
-              ))}
+              <YStack
+                gap={0}
+                style={{
+                  flex: 1,
+                  paddingBottom: s.$12,
+                }}
+              >
+                {items.map((item) => (
+                  <ListItem
+                    key={item.id}
+                    item={item}
+                    onImagePress={() => {
+                      // set the current item
+                      setDetailsItem(item)
+                      // open the details sheet
+                      detailsSheetRef.current?.snapToIndex(0)
+                    }}
+                    onTitlePress={() => {
+                      setCurrentRefId(item.ref)
+                      referencersBottomSheetRef.current?.expand()
+                    }}
+                  />
+                ))}
+              </YStack>
             </View>
           </View>
         </ScrollView>

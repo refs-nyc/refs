@@ -66,17 +66,34 @@ export const SearchRef = ({
           />
         </Pressable>
         <XStack gap={s.$1}>
-          {imageSearchResults &&
-            displayingImagesFor === item.id &&
-            imageSearchResults.map((url) => (
-              <Pressable key={url} onPress={() => onComplete({ ...item, image: url })}>
-                <Image
-                  style={{ borderRadius: s.$075, width: s.$6, height: s.$6 }}
-                  source={url}
-                  contentFit="cover"
-                />
+          {imageSearchResults && displayingImagesFor === item.id && (
+            <>
+              {imageSearchResults.map((url) => (
+                <Pressable key={url} onPress={() => onComplete({ ...item, image: url })}>
+                  <Image
+                    style={{ borderRadius: s.$075, width: s.$6, height: s.$6 }}
+                    source={url}
+                    contentFit="cover"
+                  />
+                </Pressable>
+              ))}
+              <Pressable
+                onPress={() => setPicking(true)}
+                style={{
+                  borderColor: c.white,
+                  borderWidth: 2,
+                  borderRadius: s.$075,
+                  width: s.$7,
+                  height: s.$7,
+                  alignContent: 'center',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                }}
+              >
+                <Ionicons name="camera-outline" size={s.$3} color={c.white} />
               </Pressable>
-            ))}
+            </>
+          )}
         </XStack>
       </View>
     )

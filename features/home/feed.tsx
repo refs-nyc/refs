@@ -175,38 +175,36 @@ export const Feed = () => {
   return (
     <>
       <DismissKeyboard>
-        <>
-          <ScrollView>
-            <View style={{ height: '100%' }}>
-              <View
-                style={{
-                  paddingTop: s.$1,
-                  paddingHorizontal: s.$1half,
-                  width: win.width,
-                  display: 'flex',
-                  gap: s.$0,
-                }}
-              >
-                {items.map((item) => (
-                  <ListItem
-                    key={item.id}
-                    item={item}
-                    onImagePress={() => {
-                      // set the current item
-                      setDetailsItem(item)
-                      // open the details sheet
-                      detailsSheetRef.current?.snapToIndex(0)
-                    }}
-                    onTitlePress={() => {
-                      setCurrentRefId(item.ref)
-                      referencersBottomSheetRef.current?.expand()
-                    }}
-                  />
-                ))}
-              </View>
+        <ScrollView>
+          <View style={{ height: '100%' }}>
+            <View
+              style={{
+                paddingTop: s.$1,
+                paddingHorizontal: s.$1half,
+                width: win.width,
+                display: 'flex',
+                gap: s.$0,
+              }}
+            >
+              {items.map((item) => (
+                <ListItem
+                  key={item.id}
+                  item={item}
+                  onImagePress={() => {
+                    // set the current item
+                    setDetailsItem(item)
+                    // open the details sheet
+                    detailsSheetRef.current?.snapToIndex(0)
+                  }}
+                  onTitlePress={() => {
+                    setCurrentRefId(item.ref)
+                    referencersBottomSheetRef.current?.expand()
+                  }}
+                />
+              ))}
             </View>
-          </ScrollView>
-        </>
+          </View>
+        </ScrollView>
       </DismissKeyboard>
       {items.length > 0 && <Ticker />}
       <SearchBottomSheet />

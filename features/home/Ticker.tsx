@@ -2,26 +2,25 @@ import { s, c } from '@/features/style'
 import { useEffect, useState } from 'react'
 import { ScrollView, Text, TouchableOpacity, View } from 'react-native'
 import { pocketbase } from '../pocketbase'
-import { ExpandedItem } from '../pocketbase/stores/types'
 import { useUIStore } from '@/ui/state'
+import { RefsRecord } from '../pocketbase/stores/pocketbase-types'
+
+function truncate(text: string, maxLength: number) {
+  return text.length > maxLength ? text.slice(0, maxLength) + '...' : text
+}
 
 export const Ticker = () => {
-  const [tickerItems, setTickerItems] = useState<{ title: string; refId: string }[]>([])
+  const [tickerItems, setTickerItems] = useState<RefsRecord[]>([])
   const { addRefSheetRef, setAddingRefId, referencersBottomSheetRef, setCurrentRefId } =
     useUIStore()
 
   useEffect(() => {
     async function fetchTickerItems() {
-      const queryResponse = await pocketbase.collection('items').getFullList<ExpandedItem>({
+      const queryResponse = await pocketbase.collection('refs').getFullList<RefsRecord>({
         filter: 'showInTicker=true',
         sort: '-created',
-        expand: 'ref',
       })
-      const result = queryResponse.map((item) => ({
-        title: item.expand?.ref.title || '',
-        refId: item.expand?.ref.id,
-      }))
-      setTickerItems(result)
+      setTickerItems(queryResponse)
     }
     fetchTickerItems()
   }, [])
@@ -37,15 +36,15 @@ export const Ticker = () => {
       }}
     >
       <View style={{ display: 'flex', flexDirection: 'row', gap: s.$075, padding: s.$075 }}>
-        {tickerItems.map((item, index) => (
+        {tickerItems.map((ref, index) => (
           <TouchableOpacity
             onPress={() => {
               // open a dialog for adding this ref to your profile
-              setAddingRefId(item.refId)
+              setAddingRefId(ref.id)
               addRefSheetRef.current?.expand()
             }}
             onLongPress={() => {
-              setCurrentRefId(item.refId)
+              setCurrentRefId(ref.id)
               referencersBottomSheetRef.current?.expand()
             }}
             key={index}
@@ -61,7 +60,7 @@ export const Ticker = () => {
               height: s.$4,
             }}
           >
-            <Text style={{ fontSize: s.$09, color: c.olive }}>{item.title}</Text>
+            <Text style={{ fontSize: s.$09, color: c.olive }}>{truncate(ref.title || '', 35)}</Text>
           </TouchableOpacity>
         ))}
       </View>

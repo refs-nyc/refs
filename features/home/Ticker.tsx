@@ -7,7 +7,8 @@ import { useUIStore } from '@/ui/state'
 
 export const Ticker = () => {
   const [tickerItems, setTickerItems] = useState<{ title: string; refId: string }[]>([])
-  const { addRefSheetRef, setAddingRefId } = useUIStore()
+  const { addRefSheetRef, setAddingRefId, referencersBottomSheetRef, setCurrentRefId } =
+    useUIStore()
 
   useEffect(() => {
     async function fetchTickerItems() {
@@ -42,6 +43,10 @@ export const Ticker = () => {
               // open a dialog for adding this ref to your profile
               setAddingRefId(item.refId)
               addRefSheetRef.current?.expand()
+            }}
+            onLongPress={() => {
+              setCurrentRefId(item.refId)
+              referencersBottomSheetRef.current?.expand()
             }}
             key={index}
             style={{

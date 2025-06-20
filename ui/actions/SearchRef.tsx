@@ -30,7 +30,7 @@ export const SearchRef = ({
   url?: string
   image?: string
   paste?: boolean
-  onComplete: (r: Partial<CompleteRef>) => void
+  onComplete: (r: CompleteRef) => void
 }) => {
   const [searchQuery, setSearchQuery] = useState('')
   const [disableNewRef, setDisableNewRef] = useState(false)
@@ -177,6 +177,7 @@ export const SearchRef = ({
       if (ref) {
         onComplete({ ...ref, image: imageState })
       } else {
+        // @ts-ignore
         onComplete({ title: searchQuery, image: imageState, url: urlState })
       }
       return
@@ -302,6 +303,7 @@ export const SearchRef = ({
                   {imageSearchResults.map((url) => (
                     <Pressable
                       key={url}
+                      // @ts-ignore
                       onPress={() => onComplete({ title: searchQuery, image: url, url: urlState })}
                     >
                       <Image

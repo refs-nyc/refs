@@ -180,42 +180,35 @@ export const Feed = () => {
             <View style={{ height: '100%' }}>
               <View
                 style={{
-                  gap: s.$09,
                   paddingTop: s.$1,
                   paddingHorizontal: s.$1half,
                   width: win.width,
+                  display: 'flex',
+                  gap: s.$0,
                 }}
               >
-                <YStack
-                  gap={0}
-                  style={{
-                    flex: 1,
-                    paddingBottom: s.$12,
-                  }}
-                >
-                  {items.map((item) => (
-                    <ListItem
-                      key={item.id}
-                      item={item}
-                      onImagePress={() => {
-                        // set the current item
-                        setDetailsItem(item)
-                        // open the details sheet
-                        detailsSheetRef.current?.snapToIndex(0)
-                      }}
-                      onTitlePress={() => {
-                        setCurrentRefId(item.ref)
-                        referencersBottomSheetRef.current?.expand()
-                      }}
-                    />
-                  ))}
-                </YStack>
+                {items.map((item) => (
+                  <ListItem
+                    key={item.id}
+                    item={item}
+                    onImagePress={() => {
+                      // set the current item
+                      setDetailsItem(item)
+                      // open the details sheet
+                      detailsSheetRef.current?.snapToIndex(0)
+                    }}
+                    onTitlePress={() => {
+                      setCurrentRefId(item.ref)
+                      referencersBottomSheetRef.current?.expand()
+                    }}
+                  />
+                ))}
               </View>
             </View>
           </ScrollView>
-          <Ticker />
         </>
       </DismissKeyboard>
+      {items.length > 0 && <Ticker />}
       <SearchBottomSheet />
       {detailsItem && (
         <ProfileDetailsSheet

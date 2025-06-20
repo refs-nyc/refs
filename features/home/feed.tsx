@@ -1,17 +1,18 @@
-import { useState, useEffect, useRef } from 'react'
-import { View, ScrollView, Dimensions, Pressable } from 'react-native'
 import { Link } from 'expo-router'
+import { useEffect, useRef, useState } from 'react'
+import { Dimensions, Pressable, ScrollView, View } from 'react-native'
 
-import type { ExpandedItem } from '@/features/pocketbase/stores/types'
+import { Ticker } from '@/features/home/Ticker'
 import { pocketbase, useItemStore } from '@/features/pocketbase'
-import { s, c } from '@/features/style'
-import { DismissKeyboard, XStack, YStack, Heading, Text } from '@/ui'
+import type { ExpandedItem } from '@/features/pocketbase/stores/types'
+import { c, s } from '@/features/style'
+import { DismissKeyboard, Heading, Text, XStack, YStack } from '@/ui'
 import SearchBottomSheet from '@/ui/actions/SearchBottomSheet'
-import { SimplePinataImage } from '@/ui/images/SimplePinataImage'
 import { Avatar } from '@/ui/atoms/Avatar'
+import { SimplePinataImage } from '@/ui/images/SimplePinataImage'
 import { ProfileDetailsSheet } from '@/ui/profiles/ProfileDetailsSheet'
-import BottomSheet from '@gorhom/bottom-sheet'
 import { useUIStore } from '@/ui/state'
+import BottomSheet from '@gorhom/bottom-sheet'
 
 const win = Dimensions.get('window')
 
@@ -174,14 +175,15 @@ export const Feed = () => {
   return (
     <>
       <DismissKeyboard>
-        <ScrollView style={{ flex: 1 }}>
+        <ScrollView>
           <View style={{ height: '100%' }}>
             <View
               style={{
-                gap: s.$09,
                 paddingTop: s.$1,
                 paddingHorizontal: s.$1half,
                 width: win.width,
+                display: 'flex',
+                gap: s.$0,
               }}
             >
               <YStack
@@ -212,6 +214,7 @@ export const Feed = () => {
           </View>
         </ScrollView>
       </DismissKeyboard>
+      {items.length > 0 && <Ticker />}
       <SearchBottomSheet />
       {detailsItem && (
         <ProfileDetailsSheet

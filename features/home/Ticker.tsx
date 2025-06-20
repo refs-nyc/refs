@@ -1,11 +1,13 @@
 import { s, c } from '@/features/style'
 import { useEffect, useState } from 'react'
-import { ScrollView, Text, View } from 'react-native'
+import { ScrollView, Text, TouchableOpacity, View } from 'react-native'
 import { pocketbase } from '../pocketbase'
 import { ExpandedItem } from '../pocketbase/stores/types'
+import { useUIStore } from '@/ui/state'
 
 export const Ticker = () => {
-  const [tickerItems, setTickerItems] = useState<{ title: string; itemId: string }[]>([])
+  const [tickerItems, setTickerItems] = useState<{ title: string; refId: string }[]>([])
+  const { addRefSheetRef, setAddingRefId } = useUIStore()
 
   useEffect(() => {
     async function fetchTickerItems() {
@@ -16,7 +18,7 @@ export const Ticker = () => {
       })
       const result = queryResponse.map((item) => ({
         title: item.expand?.ref.title || '',
-        itemId: item.id,
+        refId: item.expand?.ref.id,
       }))
       setTickerItems(result)
     }
@@ -35,7 +37,12 @@ export const Ticker = () => {
     >
       <View style={{ display: 'flex', flexDirection: 'row', gap: s.$075, padding: s.$075 }}>
         {tickerItems.map((item, index) => (
-          <View
+          <TouchableOpacity
+            onPress={() => {
+              // open a dialog for adding this ref to your profile
+              setAddingRefId(item.refId)
+              addRefSheetRef.current?.expand()
+            }}
             key={index}
             style={{
               backgroundColor: c.surface,
@@ -50,7 +57,7 @@ export const Ticker = () => {
             }}
           >
             <Text style={{ fontSize: s.$09, color: c.olive }}>{item.title}</Text>
-          </View>
+          </TouchableOpacity>
         ))}
       </View>
     </ScrollView>

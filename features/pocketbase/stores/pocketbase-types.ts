@@ -136,7 +136,6 @@ export type ItemsRecord = {
   text?: string
   updated?: IsoDateString
   url?: string
-  showInTicker?: boolean
 }
 
 export type MembershipsRecord = {
@@ -198,6 +197,7 @@ export type RefsRecord = {
   type?: RefsTypeOptions
   updated?: IsoDateString
   url?: string
+  showInTicker?: boolean
 }
 
 export type SavesRecord = {

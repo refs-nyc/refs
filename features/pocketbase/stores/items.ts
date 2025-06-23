@@ -164,7 +164,7 @@ export const getProfileItems = async (userName: string) => {
         userName,
       }
     ),
-    expand: 'items_via_parent, ref, items_via_parent.ref',
+    expand: 'items_via_parent, ref, items_via_parent.ref, creator',
   })
   return gridSort(items)
 }

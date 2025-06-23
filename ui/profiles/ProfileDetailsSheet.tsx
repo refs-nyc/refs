@@ -90,7 +90,7 @@ export const ProfileDetailsSheet = ({
           initialIndex={initialIndex}
           openedFromFeed={openedFromFeed}
         >
-          <Details profile={profile} data={gridItems} />
+          <Details data={gridItems} />
         </ProfileDetailsProvider>
       )}
     </BottomSheet>

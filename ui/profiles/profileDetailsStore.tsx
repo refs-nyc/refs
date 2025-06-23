@@ -11,7 +11,6 @@ type ProfileDetailsState = {
   setIsEditing: (newValue: boolean) => void
   openedFromFeed: boolean
   editingRights: boolean
-  profile: ExpandedProfile
 }
 
 // define a "profile store"
@@ -25,13 +24,11 @@ export const ProfileDetailsProvider = ({
   initialIndex,
   openedFromFeed,
   editingRights,
-  profile,
 }: {
   children: ReactNode
   initialIndex: number
   openedFromFeed: boolean
   editingRights: boolean
-  profile: ExpandedProfile
 }) => {
   const [profileDetailsStore] = useState(() =>
     createStore<ProfileDetailsState>((set) => ({
@@ -41,7 +38,6 @@ export const ProfileDetailsProvider = ({
       setShowContextMenu: (newShowContextMenu) => set({ showContextMenu: newShowContextMenu }),
       isEditing: false,
       setIsEditing: (newIsEditing) => set({ isEditing: newIsEditing }),
-      profile,
       openedFromFeed,
       editingRights,
     }))

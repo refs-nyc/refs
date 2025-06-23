@@ -1,6 +1,6 @@
 import { useItemStore, useUserStore } from '@/features/pocketbase'
-import { RefsRecord } from '@/features/pocketbase/stores/pocketbase-types'
-import { ExpandedItem, ExpandedProfile } from '@/features/pocketbase/stores/types'
+import { RefsRecord, UsersRecord } from '@/features/pocketbase/stores/pocketbase-types'
+import { ExpandedItem } from '@/features/pocketbase/stores/types'
 import { base, c, s, t } from '@/features/style'
 import { SearchRef } from '@/ui/actions/SearchRef'
 import { Avatar } from '@/ui/atoms/Avatar'
@@ -85,7 +85,7 @@ const ApplyChangesButton = () => {
 }
 ApplyChangesButton.displayName = 'ApplyChangesButton'
 
-const ProfileLabel = ({ profile }: { profile: ExpandedProfile }) => {
+const ProfileLabel = ({ profile }: { profile: UsersRecord }) => {
   const router = useRouter()
   return (
     <Pressable
@@ -109,14 +109,8 @@ export const DetailsCarouselItem = ({ item, index }: { item: ExpandedItem; index
   const win = useWindowDimensions()
 
   const profileDetailsStore = useContext(ProfileDetailsContext)
-  const {
-    currentIndex,
-    showContextMenu,
-    setShowContextMenu,
-    openedFromFeed,
-    editingRights,
-    profile,
-  } = useStore(profileDetailsStore)
+  const { currentIndex, showContextMenu, setShowContextMenu, openedFromFeed, editingRights } =
+    useStore(profileDetailsStore)
   const [currentItem, setCurrentItem] = useState<ExpandedItem>(item)
   const { addRefSheetRef, setAddingRefId } = useUIStore()
 
@@ -165,7 +159,7 @@ export const DetailsCarouselItem = ({ item, index }: { item: ExpandedItem; index
           keyboardVerticalOffset={openedFromFeed ? 70 : 120}
         >
           <View style={{ paddingLeft: s.$3, paddingTop: s.$1, paddingBottom: s.$05 }}>
-            {openedFromFeed && <ProfileLabel profile={profile} />}
+            {openedFromFeed && <ProfileLabel profile={item.expand.creator} />}
           </View>
           <View style={{ position: 'absolute', right: s.$3, top: s.$2, zIndex: 99 }}>
             {editing && <ApplyChangesButton />}

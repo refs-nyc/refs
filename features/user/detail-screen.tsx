@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react'
 import { pocketbase } from '@/features/pocketbase'
-import { ExpandedProfile } from '@/features/pocketbase/stores/types'
+import { getProfileItems } from '@/features/pocketbase/stores/items'
+import { ExpandedItem } from '@/features/pocketbase/stores/types'
 import { Details } from '@/ui'
 import { ProfileDetailsProvider } from '@/ui/profiles/profileDetailsStore'
-import { ItemsRecord } from '@/features/pocketbase/stores/pocketbase-types'
-import { getProfileItems } from '@/features/pocketbase/stores/items'
+import { ActivityIndicator } from 'react-native'
 
 export function UserDetailsScreen({
   userName,
@@ -15,42 +15,35 @@ export function UserDetailsScreen({
   initialId: string
   openedFromFeed: boolean
 }) {
-  const [profile, setProfile] = useState<ExpandedProfile | null>(null)
-  const [items, setItems] = useState<ItemsRecord[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [items, setItems] = useState<ExpandedItem[]>([])
 
   useEffect(() => {
-    const getProfileAsync = async () => {
+    async function getProfileItemsAsync() {
+      setIsLoading(true)
       const items = await getProfileItems(userName)
       setItems(items)
-
-      const profile = await pocketbase
-        .collection('users')
-        .getFirstListItem<ExpandedProfile>(`userName = "${userName}"`)
-      setProfile(profile)
+      setIsLoading(false)
     }
-
-    getProfileAsync()
+    getProfileItemsAsync()
   }, [userName])
 
   const editingRights = pocketbase?.authStore?.record?.userName === userName
 
-  if (profile && 'id' in profile) {
-    const initialIndex = Math.max(
-      0,
-      items.findIndex((itm) => itm.id === initialId)
-    )
+  const initialIndex = Math.max(
+    0,
+    items.findIndex((itm) => itm.id === initialId)
+  )
 
-    return (
-      <ProfileDetailsProvider
-        editingRights={editingRights}
-        initialIndex={initialIndex}
-        openedFromFeed={openedFromFeed}
-        profile={profile}
-      >
-        <Details data={items} />
-      </ProfileDetailsProvider>
-    )
-  } else {
-    return null
-  }
+  return isLoading ? (
+    <ActivityIndicator />
+  ) : (
+    <ProfileDetailsProvider
+      editingRights={editingRights}
+      initialIndex={initialIndex}
+      openedFromFeed={openedFromFeed}
+    >
+      <Details data={items} />
+    </ProfileDetailsProvider>
+  )
 }

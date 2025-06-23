@@ -20,7 +20,7 @@ export const AddRefSheet = ({
   bottomSheetRef: React.RefObject<BottomSheet>
 }) => {
   const { user } = useUserStore()
-  const { addingRefId } = useUIStore()
+  const { addingRefId, setAddingRefId } = useUIStore()
   const [refData, setRefData] = useState<any>({})
 
   const [gridItems, setGridItems] = useState<ExpandedItem[]>([])
@@ -79,6 +79,8 @@ export const AddRefSheet = ({
       backgroundStyle={{ backgroundColor: c.olive, borderRadius: s.$4, paddingTop: 0 }}
       onChange={(i: number) => {
         if (i === -1) {
+          setRefData(null)
+          setAddingRefId('')
           setItemToReplace(null)
           setStep('editNewItem')
         }

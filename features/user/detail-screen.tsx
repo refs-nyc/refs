@@ -45,8 +45,9 @@ export function UserDetailsScreen({
         editingRights={editingRights}
         initialIndex={initialIndex}
         openedFromFeed={openedFromFeed}
+        profile={profile}
       >
-        <Details profile={profile} data={items} />
+        <Details data={items} />
       </ProfileDetailsProvider>
     )
   } else {

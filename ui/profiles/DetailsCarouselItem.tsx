@@ -148,7 +148,7 @@ export const DetailsCarouselItem = ({ item, index }: { item: ExpandedItem; index
     <View
       style={{
         width: win.width,
-        height: openedFromFeed ? win.height * 0.8 : win.height * 0.8 - s.$7,
+        height: win.height * 0.8,
         gap: s.$1,
         justifyContent: 'flex-start',
       }}

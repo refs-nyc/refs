@@ -1,27 +1,29 @@
 import { useItemStore, useUserStore } from '@/features/pocketbase'
 import { RefsRecord } from '@/features/pocketbase/stores/pocketbase-types'
-import { ExpandedItem } from '@/features/pocketbase/stores/types'
+import { ExpandedItem, ExpandedProfile } from '@/features/pocketbase/stores/types'
 import { base, c, s, t } from '@/features/style'
 import { SearchRef } from '@/ui/actions/SearchRef'
+import { Avatar } from '@/ui/atoms/Avatar'
 import { ContextMenu } from '@/ui/atoms/ContextMenu'
+import { Checkbox, MeatballMenu } from '@/ui/atoms/MeatballMenu'
+import { Button } from '@/ui/buttons/Button'
 import { Sheet } from '@/ui/core/Sheets'
 import { XStack, YStack } from '@/ui/core/Stacks'
 import { ListContainer } from '@/ui/lists/ListContainer'
+import { ProfileDetailsContext } from '@/ui/profiles/profileDetailsStore'
+import { useUIStore } from '@/ui/state'
 import { Heading } from '@/ui/typo/Heading'
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { BottomSheetScrollView, BottomSheetTextInput, BottomSheetView } from '@gorhom/bottom-sheet'
 import { Zoomable } from '@likashefqet/react-native-image-zoom'
 import { Image } from 'expo-image'
-import { Link } from 'expo-router'
+import { Link, useRouter } from 'expo-router'
 import { useContext, useState } from 'react'
 import { Keyboard, Pressable, Text, useWindowDimensions, View } from 'react-native'
 import { TextInput } from 'react-native-gesture-handler'
 import { KeyboardAvoidingView } from 'react-native-keyboard-controller'
 import Animated, { useAnimatedStyle } from 'react-native-reanimated'
 import { useStore } from 'zustand'
-import { ProfileDetailsContext } from './profileDetailsStore'
-import { useUIStore } from '../state'
-import { Button } from '../buttons/Button'
 
 const LocationMeta = ({ location }: { location: string }) => {
   return (
@@ -66,12 +68,55 @@ const Meta = ({ refRecord }: { refRecord: RefsRecord }) => {
   )
 }
 
+const ApplyChangesButton = () => {
+  const update = useItemStore((state) => state.update)
+  const stopEditing = useItemStore((state) => state.stopEditing)
+  const triggerProfileRefresh = useItemStore((state) => state.triggerProfileRefresh)
+
+  return (
+    <Checkbox
+      onPress={async () => {
+        await update()
+        stopEditing()
+        triggerProfileRefresh()
+      }}
+    />
+  )
+}
+ApplyChangesButton.displayName = 'ApplyChangesButton'
+
+const ProfileLabel = ({ profile }: { profile: ExpandedProfile }) => {
+  const router = useRouter()
+  return (
+    <Pressable
+      onPress={() => {
+        router.replace(`/user/${profile.userName}`)
+      }}
+    >
+      <XStack style={{ alignItems: 'center' }} gap={s.$075}>
+        {/* show user avatar and name */}
+        <Text style={{ fontSize: s.$1, fontWeight: 500, opacity: 0.6, color: c.muted }}>
+          {profile.firstName}
+        </Text>
+        <Avatar size={s.$1} source={profile.image} />
+      </XStack>
+    </Pressable>
+  )
+}
+ProfileLabel.displayName = 'ProfileLabel'
+
 export const DetailsCarouselItem = ({ item, index }: { item: ExpandedItem; index?: number }) => {
   const win = useWindowDimensions()
 
   const profileDetailsStore = useContext(ProfileDetailsContext)
-  const { currentIndex, showContextMenu, setShowContextMenu, openedFromFeed, editingRights } =
-    useStore(profileDetailsStore)
+  const {
+    currentIndex,
+    showContextMenu,
+    setShowContextMenu,
+    openedFromFeed,
+    editingRights,
+    profile,
+  } = useStore(profileDetailsStore)
   const [currentItem, setCurrentItem] = useState<ExpandedItem>(item)
   const { addRefSheetRef, setAddingRefId } = useUIStore()
 
@@ -119,6 +164,12 @@ export const DetailsCarouselItem = ({ item, index }: { item: ExpandedItem; index
           behavior={'position'}
           keyboardVerticalOffset={openedFromFeed ? 70 : 120}
         >
+          <View style={{ paddingLeft: s.$3, paddingTop: s.$1, paddingBottom: s.$05 }}>
+            {openedFromFeed && <ProfileLabel profile={profile} />}
+          </View>
+          <View style={{ position: 'absolute', right: s.$3, top: s.$2, zIndex: 99 }}>
+            {editing && <ApplyChangesButton />}
+          </View>
           <Pressable
             style={{
               gap: s.$09,
@@ -304,6 +355,11 @@ export const DetailsCarouselItem = ({ item, index }: { item: ExpandedItem; index
                     )}
                   </View>
                 )}
+                <MeatballMenu
+                  onPress={() => {
+                    setShowContextMenu(!showContextMenu)
+                  }}
+                />
               </BottomSheetView>
             </BottomSheetView>
 

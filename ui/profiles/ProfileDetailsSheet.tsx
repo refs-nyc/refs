@@ -89,8 +89,9 @@ export const ProfileDetailsSheet = ({
           editingRights={editingRights}
           initialIndex={initialIndex}
           openedFromFeed={openedFromFeed}
+          profile={profile}
         >
-          <Details profile={profile} data={gridItems} />
+          <Details data={gridItems} />
         </ProfileDetailsProvider>
       )}
     </BottomSheet>

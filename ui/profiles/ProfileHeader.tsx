@@ -30,6 +30,7 @@ export const ProfileHeader = ({ profile }: { profile: Profile }) => {
       </YStack>
 
       {/* share button */}
+      {/*
       <View style={{ right: s.$075 }}>
         <Pressable onPress={() => {}}>
           <Heading tag="psemi" style={{ color: '#B6B5B2' }}>
@@ -37,6 +38,7 @@ export const ProfileHeader = ({ profile }: { profile: Profile }) => {
           </Heading>
         </Pressable>
       </View>
+      */}
     </XStack>
   )
 }

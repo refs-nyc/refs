@@ -236,7 +236,17 @@ export default function SearchBottomSheet() {
                     </Text>
                   </Pressable>
                   <Pressable onPress={onSearchIconPress}>
-                    <Ionicons name="search" size={s.$2} color={c.white} />
+                    <View
+                      style={{
+                        backgroundColor: 'rgba(232,232,232,0.15)',
+                        borderRadius: 14,
+                        padding: 7,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      <Ionicons name="search" size={s.$2} color={c.white} />
+                    </View>
                   </Pressable>
                 </XStack>
               )}

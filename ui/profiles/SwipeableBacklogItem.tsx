@@ -34,6 +34,7 @@ export default function SwipeableBacklogItem({
         style={{
           paddingVertical: s.$05,
           alignItems: 'center',
+          marginBottom: 3,
         }}
       >
         <SimplePinataImage
@@ -47,7 +48,7 @@ export default function SwipeableBacklogItem({
           }}
         />
         <Pressable
-          style={{ flex: 1 }}
+          style={{ flex: 1, justifyContent: 'center' }}
           onPress={() => {
             setCurrentRefId(item.ref)
             // sometimes the sheet shows the previous item for a second
@@ -57,7 +58,7 @@ export default function SwipeableBacklogItem({
             }, 0)
           }}
         >
-          <Text style={{ color: c.white, fontSize: s.$1, flex: 1 }} numberOfLines={2}>
+          <Text style={{ color: c.white, fontSize: s.$1 }} numberOfLines={2}>
             {item.expand?.ref?.title?.trim()}
           </Text>
         </Pressable>

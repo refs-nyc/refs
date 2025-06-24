@@ -2,15 +2,14 @@ import { addToProfile, pocketbase, removeFromProfile, useUserStore } from '@/fea
 import { getProfileItems, useItemStore } from '@/features/pocketbase/stores/items'
 import { ExpandedItem } from '@/features/pocketbase/stores/types'
 import { c, s } from '@/features/style'
+import { ChooseReplaceItemMethod } from '@/ui/actions/ChooseReplaceItemMethod'
 import { RefForm } from '@/ui/actions/RefForm'
 import { SelectItemToReplace } from '@/ui/actions/SelectItemToReplace'
-import { Button } from '@/ui/buttons/Button'
-import { SimplePinataImage } from '@/ui/images/SimplePinataImage'
 import { useUIStore } from '@/ui/state'
 import { Heading } from '@/ui/typo/Heading'
 import BottomSheet, { BottomSheetBackdrop } from '@gorhom/bottom-sheet'
 import { useEffect, useState } from 'react'
-import { Text, View } from 'react-native'
+import { View } from 'react-native'
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated'
 
 export const AddRefSheet = ({
@@ -163,58 +162,27 @@ export const AddRefSheet = ({
         />
       )}
       {step === 'chooseReplaceItemMethod' && itemToReplace && (
-        <View
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-
-            padding: s.$3,
-            gap: s.$1,
+        <ChooseReplaceItemMethod
+          itemToReplace={itemToReplace}
+          removeFromProfile={async () => {
+            await removeFromProfile(itemToReplace.id)
+            await addToProfile(refData, {
+              backlog: false,
+              text: '',
+            })
+            setStep('addedToGrid')
           }}
-        >
-          <View style={{ alignItems: 'center' }}>
-            <Text style={{ color: c.muted }}>Do what with {itemToReplace.expand.ref?.title}?</Text>
-          </View>
-          {/* display the image of the item to be replaced */}
-          {itemToReplace.expand.ref?.image && (
-            <View style={{ alignItems: 'center' }}>
-              <SimplePinataImage
-                originalSource={itemToReplace.expand.ref?.image}
-                style={{ height: 100, width: 100 }}
-                imageOptions={{
-                  width: 100,
-                  height: 100,
-                }}
-              />
-            </View>
-          )}
-          <Button
-            title="Remove"
-            variant="basic"
-            onPress={async () => {
-              // remove the item
-              await removeFromProfile(itemToReplace.id)
-              await addToProfile(refData, {
-                backlog: false,
-                text: '',
-              })
-              setStep('addedToGrid')
-            }}
-          />
-          <Button
-            title="Send to backlog"
-            onPress={async () => {
-              // send itemToReplace to the backlog
-              await moveToBacklog(itemToReplace.id)
-              // replace the item
-              await addToProfile(refData, {
-                backlog: false,
-                text: '',
-              })
-              setStep('addedToGrid')
-            }}
-          />
-        </View>
+          moveToBacklog={async () => {
+            // send itemToReplace to the backlog
+            await moveToBacklog(itemToReplace.id)
+            // replace the item
+            await addToProfile(refData, {
+              backlog: false,
+              text: '',
+            })
+            setStep('addedToGrid')
+          }}
+        />
       )}
       {step === 'addedToBacklog' && (
         <View style={{ padding: s.$3 }}>

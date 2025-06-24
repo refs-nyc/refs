@@ -93,9 +93,6 @@ export const useUserStore = create<{
         .collection<UsersRecord>('users')
         .update(pocketbase.authStore.record.id, { ...fields })
 
-      console.log('Updated user', fields)
-      console.log(record)
-
       await canvasApp.actions.updateUser(pocketbase.authStore.record.id, fields)
 
       return record

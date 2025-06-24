@@ -217,11 +217,7 @@ export function MessagesScreen({ conversationId }: { conversationId: string }) {
             }}
             style={{ padding: s.$2 }}
           >
-            <AvatarPicker
-              source={''}
-              onComplete={(s) => setImageUrl(s)}
-              onReplace={() => console.log('replace')}
-            >
+            <AvatarPicker source={''} onComplete={(s) => setImageUrl(s)} onReplace={() => {}}>
               {null}
             </AvatarPicker>
           </Sheet>

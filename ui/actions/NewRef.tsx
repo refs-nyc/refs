@@ -32,7 +32,7 @@ export const NewRef = ({
   initialStep = 'search',
   initialRefData = {},
   onNewRef,
-  onStep = (s) => console.log(s),
+  onStep = () => {},
   onCancel,
   backlog = false,
 }: {
@@ -66,7 +66,6 @@ export const NewRef = ({
   }
 
   const addRefFromResults = (newRef: StagedRef) => {
-    console.log(newRef)
     setRefData(newRef)
     setStep('add')
   }

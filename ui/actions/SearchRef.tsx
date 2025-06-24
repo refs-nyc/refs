@@ -202,7 +202,6 @@ export const SearchRef = ({
 
     // otherwise, search for images
     try {
-      console.log('searching for images')
       const params = new URLSearchParams({
         key: process.env.EXPO_PUBLIC_GOOGLE_SEARCH_API_KEY!,
         cx: process.env.EXPO_PUBLIC_GOOGLE_SEARCH_ENGINE_ID!,
@@ -296,7 +295,6 @@ export const SearchRef = ({
         {picking && (
           <Picker
             onSuccess={(a: ImagePickerAsset) => {
-              console.log('image asset', a)
               setImageAsset(a)
               setPicking(false)
               setUploadInProgress(true)

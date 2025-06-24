@@ -93,7 +93,6 @@ export const RefForm = ({
     // Set pinataSource immediately to update UI
     setPinataSource(imageUrl)
 
-    console.log('image success')
     // Prefetch image in background as optimization, but don't block UI updates
     Image.prefetch(imageUrl).catch((err) => {
       console.error('Failed to prefetch image:', err)
@@ -438,12 +437,10 @@ export const RefForm = ({
               try {
                 setCreateInProgress(true)
                 await onAddRefToList({ title, text, url, image: pinataSource, meta })
-                console.log('success')
               } catch (e) {
                 console.error(e)
               } finally {
                 setCreateInProgress(false)
-                console.log('Done')
               }
             }}
           />
@@ -487,12 +484,10 @@ export const RefForm = ({
                 try {
                   setCreateInProgress(true)
                   await onAddRef({ title, text, url, image: pinataSource, meta })
-                  console.log('success')
                 } catch (e) {
                   console.error(e)
                 } finally {
                   setCreateInProgress(false)
-                  console.log('Done')
                 }
               }}
             />

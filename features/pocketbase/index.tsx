@@ -2,15 +2,12 @@ import { pocketbase } from './pocketbase'
 import { useUserStore } from './stores/users'
 import { useRefStore } from './stores/refs'
 import { useItemStore } from './stores/items'
-import { StagedRef, CompleteRef, Item, ExpandedItem } from './stores/types'
+import { StagedRef, CompleteRef, ExpandedItem } from './stores/types'
 
 const addToProfile: (
   stagedRef: StagedRef | CompleteRef,
   options: { image?: string; text?: string; backlog?: boolean; list?: boolean }
 ) => Promise<ExpandedItem> = async (stagedRef, options = {}) => {
-  console.log('WE GOT STAGED', 'list' in stagedRef ? stagedRef.list : null)
-  console.log('WE GOT OPTIONS', options.list)
-
   const refStore = useRefStore.getState()
   const itemStore = useItemStore.getState()
 

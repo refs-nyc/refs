@@ -76,7 +76,6 @@ export const useItemStore = create<{
   triggerProfileRefresh: () =>
     set((state) => ({ profileRefreshTrigger: state.profileRefreshTrigger + 1 })),
   push: async (newItem: StagedItem) => {
-    console.log('ITEMS PUSH')
     try {
       const record = await pocketbase
         .collection('items')
@@ -87,8 +86,6 @@ export const useItemStore = create<{
         const newItems = [...state.items, record]
         return { items: newItems, feedRefreshTrigger: state.feedRefreshTrigger + 1 }
       })
-
-      console.log('PUSHED ItEM', record)
 
       return record
     } catch (error) {

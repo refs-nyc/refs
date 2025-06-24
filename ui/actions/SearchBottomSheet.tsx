@@ -160,7 +160,6 @@ export default function SearchBottomSheet() {
             backlog={addingTo === 'backlog'}
             onStep={(step) => {
               setStep(step)
-              console.log('step is', step)
               if (step === 'add' && snapPoints.length > 2) searchSheetRef.current?.snapToIndex(2)
             }}
             onNewRef={async (itm: Item) => {

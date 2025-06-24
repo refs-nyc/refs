@@ -1,3 +1,8 @@
+import { connection } from "./connection"
+import { profile } from "./profile"
+import { ref } from "./ref"
+import { Contract, DeriveModelTypes, ModelSchema } from "@canvas-js/core"
+
 export const models = {
   connection,
   profile,

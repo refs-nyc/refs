@@ -1,12 +1,11 @@
 import { Heading, XStack, YStack } from '@/ui'
-import { c, s } from '../style'
+import { s } from '../style'
 import { useEffect, useState } from 'react'
 import { pocketbase, useUserStore } from '../pocketbase'
 import { ExpandedItem, Profile } from '../pocketbase/stores/types'
 import UserListItem from '@/ui/atoms/UserListItem'
-import { Ionicons } from '@expo/vector-icons'
 import { router } from 'expo-router'
-import { Pressable } from 'react-native'
+import { Text, View } from 'react-native'
 
 type SearchResult = Profile & { sharedRefCount: number }
 
@@ -85,15 +84,21 @@ export default function SearchResultsScreen({ refIds }: { refIds: string[] }) {
         <Heading tag="h2semi">Search</Heading>
       </XStack>
       <YStack gap={0} style={{ flex: 1 }}>
-        {results.map((result) => (
-          <UserListItem
-            key={result.id}
-            user={result}
-            small={false}
-            onPress={() => router.push(`/user/${result.userName}`)}
-            text={result.sharedRefCount + ' refs shared'}
-          />
-        ))}
+        {results.length ? (
+          results.map((result) => (
+            <UserListItem
+              key={result.id}
+              user={result}
+              small={false}
+              onPress={() => router.push(`/user/${result.userName}`)}
+              text={result.sharedRefCount + ' refs shared'}
+            />
+          ))
+        ) : (
+          <View style={{ justifyContent: 'center', alignItems: 'center' }}>
+            <Text>No results found</Text>
+          </View>
+        )}
       </YStack>
     </YStack>
   )

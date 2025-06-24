@@ -27,7 +27,6 @@ export default function SearchBottomSheet() {
 
   const [searchTerm, setSearchTerm] = useState('')
   const searchTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined)
-  const currentSearchRef = useRef<Promise<void> | undefined>(undefined)
 
   const [results, setResults] = useState<CompleteRef[]>([])
   const [refs, setRefs] = useState<CompleteRef[]>([])
@@ -51,7 +50,7 @@ export default function SearchBottomSheet() {
     }
 
     searchTimeoutRef.current = setTimeout(() => {
-      currentSearchRef.current = runSearch(searchTerm)
+      runSearch(searchTerm)
     }, 300)
   }, [searchTerm])
 

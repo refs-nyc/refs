@@ -188,7 +188,7 @@ export default function SearchBottomSheet() {
                   ) : (
                     <TextInput
                       autoFocus
-                      placeholder="Search anything"
+                      placeholder={refs.length ? "Add more filters" : "Search anything"}
                       placeholderTextColor={c.white}
                       style={{ fontSize: s.$1, color: c.white, minWidth: '50%' }}
                       onChangeText={setSearchTerm}

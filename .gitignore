@@ -50,3 +50,7 @@ android
 
 # Google config for push
 google-services.json
+
+# Vitepress
+docs/.vitepress/cache
+docs/.vitepress/dist

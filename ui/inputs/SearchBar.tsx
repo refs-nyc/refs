@@ -41,7 +41,6 @@ export const SearchBar = ({
   }))
 
   useEffect(() => {
-    console.log('search term updated, inner', searchTerm)
     setTextState(searchTerm)
   }, [searchTerm])
   useEffect(() => onChange(textState), [textState])
@@ -144,10 +143,6 @@ export const ControlledSearchBar = ({ searchTerm = '' }) => {
   const translateY = useAnimatedStyle(() => ({
     transform: [{ translateY: y.get() }],
   }))
-
-  useEffect(() => {
-    console.log('it changed from controlled')
-  }, [searchTerm])
 
   return (
     <View style={{ paddingHorizontal: s.$2, width: '100%' }}>

@@ -17,7 +17,6 @@ export const GridLines = ({
   animationDuration = 300, // Default duration for fade in/out
   staggerMs = 15, // Default delay between lines starting animation
 }: GridLinesProps) => {
-  console.log('render grid lines')
   const { width, height } = useWindowDimensions()
 
   const horizontalLines = []

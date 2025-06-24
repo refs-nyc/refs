@@ -93,7 +93,6 @@ export function MessagesInit() {
   useEffect(() => {
     if (!user) return
     try {
-      console.log(`subscribing to new messages, user: ${user?.userName}`)
       pocketbase.collection('messages').subscribe<Message>('*', (e) => {
         if (e.action === 'create') {
           addNewMessage(e.record.conversation!, e.record)
@@ -104,7 +103,6 @@ export function MessagesInit() {
     }
 
     return () => {
-      console.log('unsubscribe from messages')
       pocketbase.collection('messages').unsubscribe('*')
     }
   }, [user])
@@ -113,7 +111,6 @@ export function MessagesInit() {
   useEffect(() => {
     if (!user) return
     try {
-      console.log(`subscribing to new reactions, user: ${user?.userName}`)
       pocketbase.collection('reactions').subscribe<Reaction>('*', async (e) => {
         if (e.action === 'create') {
           const expandedReaction = await pocketbase
@@ -130,7 +127,6 @@ export function MessagesInit() {
     }
 
     return () => {
-      console.log('unsubscribe from reactions')
       pocketbase.collection('reactions').unsubscribe('*')
     }
   }, [user])
@@ -138,7 +134,6 @@ export function MessagesInit() {
   //subscribe to membership updates (to see new conversations)
   useEffect(() => {
     if (!user) return
-    console.log(`subscribing to memberships, user: ${user?.userName}`)
     try {
       pocketbase.collection('memberships').subscribe('*', async (e) => {
         if (e.action === 'update') {
@@ -170,7 +165,6 @@ export function MessagesInit() {
       console.error(error)
     }
     return () => {
-      console.log('unsubscribe from memberships')
       pocketbase.collection('memberships').unsubscribe('*')
     }
   }, [user])

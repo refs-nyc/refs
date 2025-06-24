@@ -36,8 +36,7 @@ export function PushNotificationsSetupDemo() {
 
   useEffect(() => {
     const logInformation = async () => {
-      const { data: pushTokenString } = await Notifications.getExpoPushTokenAsync({ projectId })
-      console.log(pushTokenString)
+      await Notifications.getExpoPushTokenAsync({ projectId })
     }
 
     registerForPushNotificationsAsync()
@@ -49,7 +48,7 @@ export function PushNotificationsSetupDemo() {
     })
 
     responseListener.current = Notifications.addNotificationResponseReceivedListener((response) => {
-      console.log(response)
+      // log the response if we want to
     })
 
     logInformation()

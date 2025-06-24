@@ -23,7 +23,6 @@ export const Sheet = (props: any = { full: false, noNotch: false, noPadding: fal
   }, [win.height, insets.top, keyboard.height])
 
   const snapPoints = useDerivedValue(() => {
-    console.log(maxSnapPoint)
     return [maxSnapPoint.value]
   }, [maxSnapPoint])
 

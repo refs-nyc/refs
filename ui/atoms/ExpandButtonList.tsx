@@ -82,9 +82,7 @@ export const ExpandButton = ({
     }
   }
 
-  const onItemPress = (o: ExpandOption, i: number) => {
-    console.log(o.label)
-  }
+  const onItemPress = (o: ExpandOption, i: number) => {}
 
   return (
     <View

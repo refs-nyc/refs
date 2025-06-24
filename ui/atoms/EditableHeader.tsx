@@ -37,12 +37,10 @@ export const EditableHeader = ({
     // pass the link directly
     getLinkPreview(u).then((data) => {
       if ('title' in data && data?.title && title === '') {
-        console.log('SETTING TITLE: ', data.title)
         setTitle(data.title)
       }
 
       if ('images' in data && data?.images?.length > 0 && !image) {
-        console.log('IMAGE', data.images[0])
         setImage(data.images[0])
       }
     })

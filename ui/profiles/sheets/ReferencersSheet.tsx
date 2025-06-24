@@ -40,7 +40,6 @@ export default function Referencers({
 
       setUsers(users)
       setRefData(items[0].expand?.ref)
-      console.log('ReferencersSheet refData:', items[0].expand?.ref)
     }
     getUsers()
   }, [currentRefId])

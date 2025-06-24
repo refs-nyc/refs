@@ -8,8 +8,6 @@ import { CompleteRef } from '@/features/pocketbase/stores/types'
 import { DraggableGrid as DraggableGridComponent } from 'react-native-draggable-grid'
 
 export const FlatListGrid = ({ items }: { items: CompleteRef[] }) => {
-  console.log(items.length)
-
   return (
     <FlatList
       style={{ width: '100%' }}
@@ -35,21 +33,16 @@ export const DraggableGridScrollView = ({
   children: React.ReactNode
   style?: any
 }) => {
-  console.log(style)
   const scrollViewRef = useRef<ScrollView>(null)
 
   const onDragStart = () => {
-    console.log('on drag start')
     if (scrollViewRef.current) {
-      console.log('disable scrolling')
       scrollViewRef.current.setNativeProps({ scrollEnabled: false })
     }
   }
 
   const onDragEnd = () => {
-    console.log('on drag end')
     if (scrollViewRef.current) {
-      console.log('enable scrolling')
       scrollViewRef.current.setNativeProps({ scrollEnabled: true })
     }
   }
@@ -57,8 +50,6 @@ export const DraggableGridScrollView = ({
   return (
     <ScrollView ref={scrollViewRef} style={style}>
       {React.Children.map(children, (child: any) => {
-        console.log(child?.type, child?.displayName, child?.type.name)
-        console.log(child?.type === DraggableGrid)
         if (
           React.isValidElement<{
             onDragStart: () => void
@@ -67,7 +58,6 @@ export const DraggableGridScrollView = ({
           typeof child.type !== 'string' &&
           child?.type.name === 'DraggableGrid'
         ) {
-          console.log('Attaching those things')
           return React.cloneElement(child, {
             onDragStart,
             onDragEnd,
@@ -126,9 +116,6 @@ export const DraggableGrid = ({
           onDragEnd() //This activates the above onDragEnd function when you stop dragging and just turns scrolling back on
         }}
         onDragStart={(e: { eventName: string }) => {
-          console.log('')
-          console.log('start')
-          console.log(e)
           onDragStart()
         }} //This activates the above onDragStart function when you start dragging and turns scrolling off
         numColumns={3}

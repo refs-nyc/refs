@@ -70,12 +70,10 @@ export const PinataImage = ({
 
   // Handle image upload
   useEffect(() => {
-    console.log('is connected from pinata ,', isConnected)
     const load = async () => {
       try {
         setLoading(true)
         const url = typeof asset === 'string' ? asset : await pinataUpload(asset)
-        console.log('got signed url')
         setPinataSource(url)
         onSuccess(url)
 

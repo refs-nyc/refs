@@ -93,13 +93,6 @@ export default function RootLayout() {
   useEffect(() => {
     // Initialize user store to sync with PocketBase auth
     init()
-
-    const unsubscribe = NetInfo.addEventListener((state) => {
-      console.log('Connection type', state.type)
-      console.log('Is connected?', state.isConnected)
-    })
-
-    return unsubscribe
   }, [init])
 
   return (

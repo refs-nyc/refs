@@ -12,11 +12,9 @@ export function Picker({
   disablePinata?: boolean
 }) {
   useEffect(() => {
-    console.log('PICKER')
     const pickImage = async () => {
       // No permissions request is necessary for launching the image library
       try {
-        console.log('coming up? ')
         let result = await ImagePicker.launchImageLibraryAsync({
           allowsEditing: true,
           aspect: [4, 3],
@@ -33,7 +31,6 @@ export function Picker({
           onSuccess(result.assets[0])
           // }
         } else {
-          console.log(result.canceled)
           onCancel()
         }
       } catch (e) {
@@ -44,7 +41,7 @@ export function Picker({
     pickImage()
 
     return () => {
-      console.log('picker is done')
+      // Cleanup
     }
   }, [])
 

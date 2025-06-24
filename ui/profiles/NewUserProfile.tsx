@@ -46,7 +46,7 @@ const EmailStep = ({ carouselRef }: { carouselRef: React.RefObject<ICarouselInst
             }
           }
         },
-        (errors) => console.log('Errors:', errors)
+        (errors) => console.error('Errors:', errors)
       )}
     >
       <Controller
@@ -96,7 +96,7 @@ const NameStep = ({ carouselRef }: { carouselRef: React.RefObject<ICarouselInsta
           updateStagedUser(values)
           carouselRef.current?.next()
         },
-        (errors) => console.log('Errors:', errors)
+        (errors) => console.error('Errors:', errors)
       )}
     >
       <Controller
@@ -163,7 +163,7 @@ const LocationStep = ({ carouselRef }: { carouselRef: React.RefObject<ICarouselI
         async (values) => {
           carouselRef.current?.next()
         },
-        (errors) => console.log('Errors:', errors)
+        (errors) => console.error('Errors:', errors)
       )}
     >
       <Controller
@@ -204,7 +204,7 @@ const PasswordStep = ({ carouselRef }: { carouselRef: React.RefObject<ICarouselI
           updateStagedUser(values)
           carouselRef.current?.next()
         },
-        (errors) => console.log('Errors:', errors)
+        (errors) => console.error('Errors:', errors)
       )}
     >
       <Controller
@@ -283,7 +283,7 @@ const ImageStep = ({ carouselRef }: { carouselRef: React.RefObject<ICarouselInst
             console.error('Nope', error)
           }
         },
-        (errors) => console.log('Errors:', errors)
+        (errors) => console.error('Errors:', errors)
       )}
     >
       <Controller
@@ -324,7 +324,7 @@ const DoneStep = ({ carouselRef }: { carouselRef: React.RefObject<ICarouselInsta
           // go back to /, clear the stack of the onboarding screens
           router.dismissAll()
         },
-        (errors) => console.log('Errors:', errors)
+        (errors) => console.error('Errors:', errors)
       )}
     >
       <FirstVisitScreen />

@@ -194,20 +194,7 @@ export const DetailsCarouselItem = ({ item, index }: { item: ExpandedItem; index
                 />
               )}
               {item.expand?.ref.image || item.image ? (
-                <Zoomable
-                  minScale={0.25}
-                  maxScale={3}
-                  isPanEnabled={true}
-                  onInteractionEnd={() => console.log('onInteractionEnd')}
-                  onPanStart={() => console.log('onPanStart')}
-                  onPanEnd={() => console.log('onPanEnd')}
-                  onPinchStart={() => console.log('onPinchStart')}
-                  onPinchEnd={() => console.log('onPinchEnd')}
-                  onSingleTap={() => console.log('onSingleTap')}
-                  onDoubleTap={(zoomType) => {
-                    console.log('onDoubleTap', zoomType)
-                  }}
-                >
+                <Zoomable minScale={0.25} maxScale={3} isPanEnabled={true}>
                   <Animated.View
                     style={[
                       animatedStyle,
@@ -418,7 +405,6 @@ export const DetailsCarouselItem = ({ item, index }: { item: ExpandedItem; index
         <Sheet
           keyboardShouldPersistTaps="always"
           onClose={() => {
-            console.log('close')
             setSearchingNewRef('')
             // Do not update the ref
           }}
@@ -427,7 +413,6 @@ export const DetailsCarouselItem = ({ item, index }: { item: ExpandedItem; index
             noNewRef
             onComplete={async (e) => {
               // Update the ref
-              console.log(e.id)
               await updateEditedState({
                 ref: e.id,
               })

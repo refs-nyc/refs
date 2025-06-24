@@ -46,7 +46,7 @@ export default function SearchBottomSheet() {
       }
       const refsResults = await pocketbase
         .collection<CompleteRef>('refs')
-        .getFullList({ filter: `title ~ "${debouncedTerm}"` })
+        .getFullList({ filter: `title:lower ~ "${debouncedTerm.toLowerCase()}"` })
       setResults(refsResults)
     }
     runSearch()

@@ -65,7 +65,7 @@ export default function Referencers({
           <Heading tag="h1">{refData?.title}</Heading>
           <Text style={{ color: c.grey2 }}> Everyone who's added it. </Text>
         </View>
-        <BottomSheetScrollView>
+        <BottomSheetScrollView alwaysBounceVertical={false}>
           <YStack>
             {users.map((user) => (
               <UserListItem

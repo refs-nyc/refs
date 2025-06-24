@@ -11,7 +11,7 @@ function truncate(text: string, maxLength: number) {
 
 export const Ticker = () => {
   const [tickerItems, setTickerItems] = useState<RefsRecord[]>([])
-  const { addRefSheetRef, setAddingRefId, referencersBottomSheetRef, setCurrentRefId } =
+  const { referencersBottomSheetRef, setCurrentRefId } =
     useUIStore()
 
   useEffect(() => {
@@ -39,9 +39,8 @@ export const Ticker = () => {
         {tickerItems.map((ref, index) => (
           <TouchableOpacity
             onPress={() => {
-              // open a dialog for adding this ref to your profile
-              setAddingRefId(ref.id)
-              addRefSheetRef.current?.expand()
+              setCurrentRefId(ref.id)
+              referencersBottomSheetRef.current?.expand()
             }}
             onLongPress={() => {
               setCurrentRefId(ref.id)

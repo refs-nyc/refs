@@ -56,12 +56,13 @@ export const ListItem = ({
               originalSource={(r as any).image || (r as any).expand?.ref?.image}
               imageOptions={{ width: largeImage ? s.$4 : s.$2, height: largeImage ? s.$4 : s.$2 }}
               style={largeImage ? base.largeSquare : base.smallSquare}
+              placeholderStyle={[largeImage ? base.largeSquare : base.smallSquare, {backgroundColor: c.olive2}]}
             />
           ) : (
             <View
               style={[
                 largeImage ? base.largeSquare : base.smallSquare,
-                { backgroundColor: c.accent },
+                { backgroundColor: c.olive2 },
               ]}
             ></View>
           )}

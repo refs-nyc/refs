@@ -18,6 +18,7 @@ import type { ImagePickerAsset } from 'expo-image-picker'
 import { Picker } from '../inputs/Picker'
 import { PinataImage } from '../images/PinataImage'
 import { Image } from 'expo-image'
+import Animated, { StretchInY, StretchOutY } from 'react-native-reanimated'
 
 const ImageSearchResults = ({
   imageSearchResults,
@@ -29,16 +30,27 @@ const ImageSearchResults = ({
   setPicking: (b: boolean) => void
 }) => {
   return (
-    <>
-      {imageSearchResults.map((url) => (
-        <Pressable key={url} onPress={() => onImagePress(url)}>
-          <Image
-            style={{ borderRadius: s.$075, width: s.$7, height: s.$7 }}
-            source={url}
-            contentFit="cover"
+    <Animated.View
+      entering={StretchInY.duration(200)}
+      exiting={StretchOutY.duration(200)}
+      style={{ flexDirection: 'row', gap: s.$075, width: '100%' }}
+    >
+      {imageSearchResults.map((url, index) =>
+        url ? (
+          <Pressable key={url} onPress={() => onImagePress(url)}>
+            <Image
+              style={{ borderRadius: s.$075, width: s.$7, height: s.$7, backgroundColor: c.olive2 }}
+              source={url}
+              contentFit="cover"
+            />
+          </Pressable>
+        ) : (
+          <View
+            key={index}
+            style={{ width: s.$7, height: s.$7, backgroundColor: c.olive2, borderRadius: s.$075 }}
           />
-        </Pressable>
-      ))}
+        )
+      )}
       <Pressable
         onPress={() => setPicking(true)}
         style={{
@@ -54,7 +66,7 @@ const ImageSearchResults = ({
       >
         <Ionicons name="camera-outline" size={s.$3} color={c.white} />
       </Pressable>
-    </>
+    </Animated.View>
   )
 }
 
@@ -108,7 +120,7 @@ export const SearchRef = ({
           {imageSearchResults && displayingImagesFor === item.id && (
             <ImageSearchResults
               imageSearchResults={imageSearchResults}
-              onImagePress={(url) => onComplete({ ...item, image: url })}
+              onImagePress={(imageUrl) => onComplete({ ...item, image: imageUrl })}
               setPicking={setPicking}
             />
           )}
@@ -219,8 +231,9 @@ export const SearchRef = ({
     }
 
     // otherwise, search for images
+    setDisplayingImagesFor(refId)
+    setImageSearchResults(['', '', ''])
     try {
-      console.log('searching for images')
       const params = new URLSearchParams({
         key: process.env.EXPO_PUBLIC_GOOGLE_SEARCH_API_KEY!,
         cx: process.env.EXPO_PUBLIC_GOOGLE_SEARCH_ENGINE_ID!,
@@ -234,7 +247,6 @@ export const SearchRef = ({
 
       const resultUrls = results.items.map((item: any) => item.link).slice(0, 3)
       setImageSearchResults(resultUrls)
-      setDisplayingImagesFor(refId)
     } catch (error) {
       console.error(error)
       setImageSearchResults([])
@@ -336,8 +348,10 @@ export const SearchRef = ({
               {imageSearchResults && displayingImagesFor === searchQuery && (
                 <ImageSearchResults
                   imageSearchResults={imageSearchResults}
-                  // @ts-ignore
-                  onImagePress={(url) => onComplete({ title: searchQuery, image: url, url: urlState })}
+                  onImagePress={(imageUrl) =>
+                    // @ts-ignore
+                    onComplete({ title: searchQuery, image: imageUrl, url: urlState })
+                  }
                   setPicking={setPicking}
                 />
               )}

@@ -26,7 +26,9 @@ export default function SearchBottomSheet() {
   const [searching, setSearching] = useState(false)
 
   const [searchTerm, setSearchTerm] = useState('')
-  const [debouncedTerm, setDebouncedTerm] = useState('')
+  const searchTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined)
+  const currentSearchRef = useRef<Promise<void> | undefined>(undefined)
+
   const [results, setResults] = useState<CompleteRef[]>([])
   const [refs, setRefs] = useState<CompleteRef[]>([])
 
@@ -34,23 +36,24 @@ export default function SearchBottomSheet() {
   const { moduleBackdropAnimatedIndex } = useBackdropStore()
 
   useEffect(() => {
-    const timeout = setTimeout(() => setDebouncedTerm(searchTerm), 300)
-    return () => clearTimeout(timeout)
-  }, [searchTerm])
-
-  useEffect(() => {
-    const runSearch = async () => {
-      if (debouncedTerm === '') {
-        setResults([])
-        return
-      }
+    const runSearch = async (query: string) => {
       const refsResults = await pocketbase
         .collection<CompleteRef>('refs')
-        .getFullList({ filter: `title:lower ~ "${debouncedTerm.toLowerCase()}"` })
+        .getFullList({ filter: `title ~ "${query}"` })
       setResults(refsResults)
     }
-    runSearch()
-  }, [debouncedTerm])
+
+    clearTimeout(searchTimeoutRef.current)
+
+    if (searchTerm === '') {
+      setResults([])
+      return
+    }
+
+    searchTimeoutRef.current = setTimeout(() => {
+      currentSearchRef.current = runSearch(searchTerm)
+    }, 300)
+  }, [searchTerm])
 
   const onSearchIconPress = () => {
     setSearching(true)

@@ -27,7 +27,7 @@ export const AddRefSheetGrid = ({
               onSelectItem(item)
             }}
             size={tileSize}
-            type={item.list ? 'list' : item.expand.ref?.image || item.image ? 'image' : 'text'}
+            type={item.list ? 'list' : item.image || item.expand.ref?.image ? 'image' : 'text'}
           >
             <GridItem item={item} i={i} />
           </GridTileWrapper>

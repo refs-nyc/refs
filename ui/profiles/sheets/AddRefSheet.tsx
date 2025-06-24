@@ -3,16 +3,15 @@ import { getProfileItems, useItemStore } from '@/features/pocketbase/stores/item
 import { ExpandedItem } from '@/features/pocketbase/stores/types'
 import { c, s } from '@/features/style'
 import { RefForm } from '@/ui/actions/RefForm'
+import { SelectItemToReplace } from '@/ui/actions/SelectItemToReplace'
 import { Button } from '@/ui/buttons/Button'
 import { SimplePinataImage } from '@/ui/images/SimplePinataImage'
+import { useUIStore } from '@/ui/state'
 import { Heading } from '@/ui/typo/Heading'
 import BottomSheet, { BottomSheetBackdrop } from '@gorhom/bottom-sheet'
 import { useEffect, useState } from 'react'
 import { Text, View } from 'react-native'
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated'
-import { AddRefSheetGrid } from './AddRefSheetGrid'
-import { useUIStore } from '@/ui/state'
-import { FilteredItems } from '@/ui/actions/FilteredItems'
 
 export const AddRefSheet = ({
   bottomSheetRef,
@@ -147,50 +146,21 @@ export const AddRefSheet = ({
         </View>
       )}
       {step === 'selectItemToReplace' && (
-        <View
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            padding: s.$3,
-            gap: s.$1,
-            alignItems: 'center',
+        <SelectItemToReplace
+          gridItems={gridItems}
+          refData={refData}
+          onSelectItemToReplace={(item) => {
+            setItemToReplace(item)
+            setStep('chooseReplaceItemMethod')
           }}
-        >
-          <Text style={{ color: c.surface, fontSize: s.$1 }}>
-            Adding {refData.title} to your profile
-          </Text>
-          {refData?.image && (
-            <View style={{ alignItems: 'center' }}>
-              <SimplePinataImage
-                originalSource={refData?.image}
-                style={{ height: 80, width: 80 }}
-                imageOptions={{
-                  width: 80,
-                  height: 80,
-                }}
-              />
-            </View>
-          )}
-          <Text style={{ color: c.surface, fontSize: s.$1 }}>Choose a grid item to replace</Text>
-          <AddRefSheetGrid
-            gridItems={gridItems}
-            onSelectItem={(item) => {
-              setItemToReplace(item)
-              setStep('chooseReplaceItemMethod')
-            }}
-          />
-          <Button
-            title="Add to backlog instead"
-            variant="small"
-            onPress={async () => {
-              await addToProfile(refData, {
-                backlog: true,
-                text: '',
-              })
-              setStep('addedToBacklog')
-            }}
-          />
-        </View>
+          onAddToBacklog={async () => {
+            await addToProfile(refData, {
+              backlog: true,
+              text: '',
+            })
+            setStep('addedToBacklog')
+          }}
+        />
       )}
       {step === 'chooseReplaceItemMethod' && itemToReplace && (
         <View

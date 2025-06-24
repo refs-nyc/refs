@@ -9,7 +9,7 @@ import { Heading } from '@/ui/typo/Heading'
 import BottomSheet, { BottomSheetBackdrop, BottomSheetScrollView } from '@gorhom/bottom-sheet'
 import { router } from 'expo-router'
 import { useCallback, useEffect, useState } from 'react'
-import { Text, View } from 'react-native'
+import { Text, View, Image } from 'react-native'
 
 export default function Referencers({
   referencersBottomSheetRef,
@@ -61,9 +61,21 @@ export default function Referencers({
       handleIndicatorStyle={{ backgroundColor: 'transparent' }}
     >
       <View style={{ paddingHorizontal: s.$3, paddingVertical: s.$1, height: '100%' }}>
-        <View style={{ paddingBottom: s.$1 }}>
-          <Heading tag="h1">{refData?.title}</Heading>
-          <Text style={{ color: c.grey2 }}> Everyone who's added it. </Text>
+        <View style={{ flexDirection: 'row', alignItems: 'flex-start', paddingBottom: s.$1 }}>
+          <View style={{ flex: 1, minWidth: 0, justifyContent: 'flex-start' }}>
+            <Heading tag="h1" style={{ lineHeight: 30 }}>{refData?.title}</Heading>
+            <View style={{ height: 8 }} />
+            <Text style={{ color: c.grey2 }}>{"Everyone who's added it."}</Text>
+          </View>
+          {refData?.image && (
+            <View style={{ marginLeft: 16 }}>
+              <Image
+                source={{ uri: refData.image }}
+                style={{ width: 60, height: 60, borderRadius: 10, backgroundColor: '#eee' }}
+                resizeMode="cover"
+              />
+            </View>
+          )}
         </View>
         <BottomSheetScrollView alwaysBounceVertical={false}>
           <YStack>
@@ -83,10 +95,10 @@ export default function Referencers({
         </BottomSheetScrollView>
         <View
           style={{
-            width: '75%',
-            alignSelf: 'center',
             position: 'absolute',
             bottom: 40,
+            left: 20,
+            right: 20,
           }}
         >
           <Button

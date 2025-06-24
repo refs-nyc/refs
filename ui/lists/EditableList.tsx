@@ -38,7 +38,7 @@ export const EditableList = ({
         title: e,
       })
     } catch (error) {
-      console.log(error)
+      console.error(error)
     }
   }
 

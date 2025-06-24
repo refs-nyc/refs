@@ -5,19 +5,27 @@ import Carousel, { CarouselRenderItem, ICarouselInstance } from 'react-native-re
 
 export const DetailsDemoCarousel = forwardRef(
   (
-    { data, height, width, defaultIndex, style, scrollOffsetValue, onSnapToItem, renderItem }: {
-      data: unknown[],
-      height: number,
-      width: number,
-      defaultIndex: number,
-      style: StyleProp<ViewStyle>,
-      scrollOffsetValue: SharedValue<number>,
-      onSnapToItem?: ((index: number) => void),
-      renderItem: CarouselRenderItem<unknown>,
+    {
+      data,
+      height,
+      width,
+      defaultIndex,
+      style,
+      scrollOffsetValue,
+      onSnapToItem,
+      renderItem,
+    }: {
+      data: unknown[]
+      height: number
+      width: number
+      defaultIndex: number
+      style: StyleProp<ViewStyle>
+      scrollOffsetValue: SharedValue<number>
+      onSnapToItem?: (index: number) => void
+      renderItem: CarouselRenderItem<unknown>
     },
     ref
   ) => {
-    console.log(style)
     return (
       <Carousel
         onConfigurePanGesture={(gesture) => {

@@ -34,7 +34,7 @@ const EmailStep = ({ carouselRef }: { carouselRef: React.RefObject<ICarouselInst
           // Valid?
           carouselRef.current?.next()
         },
-        (errors) => console.log('Errors:', errors)
+        (errors) => {}
       )}
       disabled={!isValid}
     >

@@ -132,7 +132,6 @@ export const SearchDemo = () => {
     setTermIndex((prevIndex) => {
       const newIndex = prevIndex + 1
       const newTerm = terms[newIndex % terms.length]
-      console.log('SET TERM', newTerm)
       setSearchTerm(newTerm)
       return newIndex
     })
@@ -145,10 +144,6 @@ export const SearchDemo = () => {
       setResults(shuffled.slice(0, 3))
     }, 1400)
   }
-
-  useEffect(() => {
-    console.log(searchTerm, 'updated')
-  }, [searchTerm])
 
   // Start the interval timers.
   useEffect(() => {

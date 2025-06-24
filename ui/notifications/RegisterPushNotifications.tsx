@@ -24,7 +24,6 @@ export function RegisterPushNotifications() {
 
     const logInformation = async () => {
       const { data: pushTokenString } = await Notifications.getExpoPushTokenAsync({ projectId })
-      console.log(pushTokenString)
     }
 
     registerForPushNotificationsAsync()
@@ -42,7 +41,7 @@ export function RegisterPushNotifications() {
     })
 
     responseListener.current = Notifications.addNotificationResponseReceivedListener((response) => {
-      console.log(response)
+      // log the response if we want to
     })
 
     process.env.NODE_ENV === 'development' && logInformation()

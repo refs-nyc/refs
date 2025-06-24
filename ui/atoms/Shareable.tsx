@@ -14,7 +14,6 @@ export const Shareable = ({
   onShare?: () => void
 }) => {
   const onShareFn = async () => {
-    console.log('share')
     message += ` ${url}`
     try {
       const result = await Share.share({ message, url })

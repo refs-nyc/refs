@@ -11,8 +11,6 @@ const store = new AsyncAuthStore({
   initial: AsyncStorage.getItem('pb_auth'),
 })
 
-console.log('creating new pocketbase at ', process.env.EXPO_PUBLIC_POCKETBASE_URL)
-
 const pocketbase = new PocketBase(process.env.EXPO_PUBLIC_POCKETBASE_URL, store)
 
 pocketbase.autoCancellation(false)

@@ -17,7 +17,6 @@ export const TypewriterText = ({
   const [displayedText, setDisplayedText] = useState(text)
 
   useEffect(() => {
-    console.log(text, 'from typewriter')
     let cancelled = false
 
     const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))

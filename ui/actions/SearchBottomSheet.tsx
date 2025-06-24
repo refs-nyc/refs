@@ -64,16 +64,6 @@ export default function SearchBottomSheet() {
     setSearchTerm('')
   }
 
-  const onAddFromSearch = async () => {
-    console.log('opening add ref sheet from search?')
-    // add from search - open add ref sheet
-    // if (!user?.userName) return
-    // setInitialStep('add')
-    // setNewRefTitle(searchTerm)
-    // const gridItems = await getProfileItems(user.userName)
-    // setAddingTo(gridItems.length < 12 ? 'grid' : 'backlog')
-  }
-
   const stumble = async () => {
     const randomProfile = await pocketbase.collection('users').getList<Profile>(1, 1, {
       filter: 'items:length > 5',
@@ -149,7 +139,7 @@ export default function SearchBottomSheet() {
                   ) : (
                     <TextInput
                       autoFocus
-                      placeholder="Search anything"
+                      placeholder={refs.length ? 'Add more filters' : 'Search anything'}
                       placeholderTextColor={c.white}
                       style={{ fontSize: s.$1, color: c.white, minWidth: '50%' }}
                       onChangeText={setSearchTerm}
@@ -199,40 +189,6 @@ export default function SearchBottomSheet() {
             {!isMinimised && searchTerm !== '' && (
               <BottomSheetScrollView style={{ maxHeight: 300 }} keyboardShouldPersistTaps="handled">
                 <YStack>
-                  <Pressable onPress={() => onAddFromSearch()}>
-                    <XStack
-                      gap={s.$025}
-                      style={{
-                        alignItems: 'center',
-                        paddingVertical: s.$075,
-                        paddingHorizontal: s.$5,
-                      }}
-                    >
-                      <BottomSheetView
-                        style={{
-                          width: s.$2,
-                          height: s.$2,
-                          borderWidth: 1,
-                          borderColor: c.white,
-                          borderRadius: s.$025,
-                        }}
-                      >
-                        <Text
-                          style={{
-                            color: c.white,
-                            margin: 'auto',
-                            fontSize: s.$09,
-                            backgroundColor: 'transparent',
-                          }}
-                        >
-                          +
-                        </Text>
-                      </BottomSheetView>
-                      <Heading tag="h2normal" style={{ color: c.white, paddingHorizontal: s.$2 }}>
-                        {`Add ${searchTerm}`}
-                      </Heading>
-                    </XStack>
-                  </Pressable>
                   {results.map((r) => (
                     <Pressable key={r.id} onPress={() => onAddRefToSearch(r)}>
                       <XStack

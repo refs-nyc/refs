@@ -153,6 +153,7 @@ export const DetailsCarouselItem = ({ item, index }: { item: ExpandedItem; index
         contentContainerStyle={{ gap: s.$1 }}
         keyboardShouldPersistTaps="handled"
         nestedScrollEnabled={true}
+        alwaysBounceVertical={false}
       >
         <KeyboardAvoidingView
           behavior={'position'}

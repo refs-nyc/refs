@@ -196,6 +196,7 @@ export const RefForm = ({
                   borderRadius: s.$09,
                   overflow: 'hidden',
                 }}
+                onPress={() => setPicking(true)}
                 onLongPress={() => setPicking(true)}
               >
                 <Image style={{ flex: 1 }} source={pinataSource} placeholder={pinataSource} />

@@ -1,4 +1,4 @@
-import { addToProfile, pocketbase, removeFromProfile, useUserStore } from '@/features/pocketbase'
+import { addToProfile, pocketbase, useUserStore } from '@/features/pocketbase'
 import { getProfileItems, useItemStore } from '@/features/pocketbase/stores/items'
 import { RefsRecord } from '@/features/pocketbase/stores/pocketbase-types'
 import { ExpandedItem, StagedItemFields } from '@/features/pocketbase/stores/types'
@@ -35,7 +35,7 @@ export const AddRefSheet = ({
   // the resulting item
   const [itemData, setItemData] = useState<ExpandedItem | null>(null)
 
-  const { moveToBacklog } = useItemStore()
+  const { moveToBacklog, remove } = useItemStore()
 
   useEffect(() => {
     const getRef = async () => {
@@ -163,7 +163,7 @@ export const AddRefSheet = ({
           itemToReplace={itemToReplace}
           removeFromProfile={async () => {
             // remove (delete) itemToReplace from the grid
-            await removeFromProfile(itemToReplace.id)
+            await remove(itemToReplace.id)
             // add the new item to the grid
             const newItem = await addToProfile(addingRefId, stagedItemFields, false)
             setItemData(newItem)

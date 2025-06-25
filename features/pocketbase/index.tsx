@@ -50,11 +50,4 @@ const addToProfile = async (
   return newItem
 }
 
-const removeFromProfile = async (itemId: string) => {
-  const userStore = useUserStore.getState()
-
-  await userStore.removeItem(itemId)
-  await pocketbase.collection('items').delete(itemId)
-}
-
-export { pocketbase, useUserStore, useRefStore, useItemStore, addToProfile, removeFromProfile }
+export { pocketbase, useUserStore, useRefStore, useItemStore, addToProfile }

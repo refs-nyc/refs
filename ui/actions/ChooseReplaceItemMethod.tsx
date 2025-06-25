@@ -14,12 +14,14 @@ export const ChooseReplaceItemMethod = ({
   moveToBacklog: () => Promise<void>
 }) => {
   const ref = itemToReplace.expand.ref!
+
+  const image = itemToReplace.image || ref.image
+
   return (
     <View
       style={{
         display: 'flex',
         flexDirection: 'column',
-
         padding: s.$3,
         gap: s.$1,
       }}

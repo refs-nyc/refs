@@ -3,12 +3,12 @@ import { getProfileItems, useItemStore } from '@/features/pocketbase/stores/item
 import { RefsRecord } from '@/features/pocketbase/stores/pocketbase-types'
 import { ExpandedItem, StagedItemFields } from '@/features/pocketbase/stores/types'
 import { c, s } from '@/features/style'
+import { AddedNewRefConfirmation } from '@/ui/actions/AddedNewRefConfirmation'
 import { ChooseReplaceItemMethod } from '@/ui/actions/ChooseReplaceItemMethod'
 import { RefForm } from '@/ui/actions/RefForm'
 import { NewRefFields } from '@/ui/actions/SearchRef'
 import { SelectItemToReplace } from '@/ui/actions/SelectItemToReplace'
 import { useUIStore } from '@/ui/state'
-import { Heading } from '@/ui/typo/Heading'
 import BottomSheet, { BottomSheetBackdrop } from '@gorhom/bottom-sheet'
 import { useEffect, useState } from 'react'
 import { View } from 'react-native'
@@ -177,14 +177,8 @@ export const AddRefSheet = ({
             setStep('addedToGrid')
           }}
         />
-      ) : step === 'addedToBacklog' && itemData ? (
-        <View style={{ padding: s.$3 }}>
-          <Heading tag="h1">{itemData.expand.ref.title} was added to the backlog</Heading>
-        </View>
-      ) : step === 'addedToGrid' && itemData ? (
-        <View style={{ padding: s.$3 }}>
-          <Heading tag="h1">{itemData.expand.ref.title} was added to grid</Heading>
-        </View>
+      ) : (step === 'addedToBacklog' || step === 'addedToGrid') && itemData ? (
+        <AddedNewRefConfirmation itemData={itemData} />
       ) : (
         <></>
       )}

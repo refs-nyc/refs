@@ -5,6 +5,7 @@ import { ExpandedItem, StagedItemFields } from '@/features/pocketbase/stores/typ
 import { c, s } from '@/features/style'
 import { ChooseReplaceItemMethod } from '@/ui/actions/ChooseReplaceItemMethod'
 import { RefForm } from '@/ui/actions/RefForm'
+import { NewRefFields } from '@/ui/actions/SearchRef'
 import { SelectItemToReplace } from '@/ui/actions/SelectItemToReplace'
 import { useUIStore } from '@/ui/state'
 import { Heading } from '@/ui/typo/Heading'
@@ -20,15 +21,30 @@ export const AddRefSheet = ({
 }) => {
   const { user } = useUserStore()
   const { addingRefId, setAddingRefId } = useUIStore()
-  const [refData, setRefData] = useState<RefsRecord | null>(null)
+
+  // fields from the ref that is being replaced, or a new ref that is going to be added
+
+  const [refFields, setRefFields] = useState<NewRefFields | null>(null)
+
+  // the item fields
   const [stagedItemFields, setStagedItemFields] = useState<StagedItemFields | null>(null)
+
+  // if applicable, the item that is being replaced
+  const [itemToReplace, setItemToReplace] = useState<ExpandedItem | null>(null)
+
+  // the resulting item
+  const [itemData, setItemData] = useState<ExpandedItem | null>(null)
 
   const { moveToBacklog } = useItemStore()
 
   useEffect(() => {
     const getRef = async () => {
       const ref = await pocketbase.collection<RefsRecord>('refs').getOne(addingRefId)
-      setRefData(ref)
+      setRefFields({
+        title: ref.title!,
+        image: ref.image,
+        url: ref.url,
+      })
     }
     getRef()
   }, [addingRefId])
@@ -40,7 +56,6 @@ export const AddRefSheet = ({
     | 'addedToGrid'
     | 'chooseReplaceItemMethod'
   >('editNewItem')
-  const [itemToReplace, setItemToReplace] = useState<ExpandedItem | null>(null)
 
   const sheetHeight =
     step === 'selectItemToReplace'
@@ -65,7 +80,7 @@ export const AddRefSheet = ({
       backgroundStyle={{ backgroundColor: c.olive, borderRadius: s.$4, paddingTop: 0 }}
       onChange={(i: number) => {
         if (i === -1) {
-          setRefData(null)
+          setRefFields(null)
           setAddingRefId('')
           setItemToReplace(null)
           setStagedItemFields(null)
@@ -105,12 +120,12 @@ export const AddRefSheet = ({
       )}
       keyboardBehavior="interactive"
     >
-      {!refData || !user ? (
+      {!refFields || !user ? (
         <></>
       ) : step === 'editNewItem' ? (
         <View style={{ padding: s.$3 }}>
           <RefForm
-            r={refData}
+            existingRefFields={refFields}
             canEditRefData={false}
             onAddRefToList={async (fields) => {}}
             onAddRef={async (fields) => {
@@ -121,7 +136,8 @@ export const AddRefSheet = ({
                 setStagedItemFields(fields)
                 setStep('selectItemToReplace')
               } else {
-                await addToProfile(refData, fields, false)
+                const newItem = await addToProfile(addingRefId, fields, false)
+                setItemData(newItem)
                 setStep('addedToGrid')
               }
             }}
@@ -136,7 +152,8 @@ export const AddRefSheet = ({
             setStep('chooseReplaceItemMethod')
           }}
           onAddToBacklog={async () => {
-            await addToProfile(refData, stagedItemFields, true)
+            const newItem = await addToProfile(addingRefId, stagedItemFields, true)
+            setItemData(newItem)
             setStep('addedToBacklog')
           }}
         />
@@ -147,24 +164,26 @@ export const AddRefSheet = ({
             // remove (delete) itemToReplace from the grid
             await removeFromProfile(itemToReplace.id)
             // add the new item to the grid
-            await addToProfile(refData, stagedItemFields, false)
+            const newItem = await addToProfile(addingRefId, stagedItemFields, false)
+            setItemData(newItem)
             setStep('addedToGrid')
           }}
           moveToBacklog={async () => {
             // send itemToReplace to the backlog
             await moveToBacklog(itemToReplace.id)
             // add the new item to the grid
-            await addToProfile(refData, stagedItemFields, false)
+            const newItem = await addToProfile(addingRefId, stagedItemFields, false)
+            setItemData(newItem)
             setStep('addedToGrid')
           }}
         />
-      ) : step === 'addedToBacklog' ? (
+      ) : step === 'addedToBacklog' && itemData ? (
         <View style={{ padding: s.$3 }}>
-          <Heading tag="h1">{refData.title} was added to the backlog</Heading>
+          <Heading tag="h1">{itemData.expand.ref.title} was added to the backlog</Heading>
         </View>
-      ) : step === 'addedToGrid' ? (
+      ) : step === 'addedToGrid' && itemData ? (
         <View style={{ padding: s.$3 }}>
-          <Heading tag="h1">{refData.title} was added to grid</Heading>
+          <Heading tag="h1">{itemData.expand.ref.title} was added to grid</Heading>
         </View>
       ) : (
         <></>

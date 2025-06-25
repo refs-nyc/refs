@@ -24,15 +24,22 @@ import { DismissKeyboard } from '../atoms/DismissKeyboard'
 
 const win = Dimensions.get('window')
 
+type ExistingRefFields = {
+  title?: string
+  url?: string
+  image?: string
+  meta?: string
+}
+
 export const RefForm = ({
-  r,
+  existingRefFields,
   placeholder = 'Add a title',
   onAddRef,
   onAddRefToList,
   pickerOpen = false,
   canEditRefData = true,
 }: {
-  r: StagedRef
+  existingRefFields: ExistingRefFields | null
   placeholder?: string
   onAddRef: (fields: StagedItemFields) => Promise<void>
   onAddRefToList?: (fields: StagedItemFields) => Promise<void>
@@ -41,8 +48,8 @@ export const RefForm = ({
   canEditRefData?: boolean
 }) => {
   // Separate state for each field to prevent unnecessary re-renders
-  const [title, setTitle] = useState<string>(r?.title || '')
-  const [url, setUrl] = useState<string>(r?.url || '')
+  const [title, setTitle] = useState<string>(existingRefFields?.title || '')
+  const [url, setUrl] = useState<string>(existingRefFields?.url || '')
   const [text, setText] = useState<string>('')
   const [imageAsset, setImageAsset] = useState<ImagePickerAsset | null>(null)
   const [pinataSource, setPinataSource] = useState<string>('')
@@ -60,21 +67,28 @@ export const RefForm = ({
 
   // Initialize state based on incoming ref
   useEffect(() => {
-    setTitle(r.title || '')
-    setUrl(r.url || '')
-
-    // Initialize image state
-    if (r?.image) {
-      if (typeof r.image === 'string') {
-        setPinataSource(r.image)
-      } else {
-        setImageAsset(r.image)
-      }
-    } else {
+    if (!existingRefFields) {
+      setTitle('')
+      setUrl('')
       setPinataSource('')
       setImageAsset(null)
+    } else {
+      setTitle(existingRefFields.title || '')
+      setUrl(existingRefFields.url || '')
+
+      // Initialize image state
+      if (existingRefFields?.image) {
+        if (typeof existingRefFields.image === 'string') {
+          setPinataSource(existingRefFields.image)
+        } else {
+          setImageAsset(existingRefFields.image)
+        }
+      } else {
+        setPinataSource('')
+        setImageAsset(null)
+      }
     }
-  }, [r])
+  }, [existingRefFields])
 
   const handleImageSuccess = (imageUrl: string) => {
     setUploadInProgress(false)

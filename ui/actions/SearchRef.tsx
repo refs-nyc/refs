@@ -70,18 +70,26 @@ const ImageSearchResults = ({
   )
 }
 
+export type NewRefFields = {
+  title: string
+  image?: string
+  url?: string
+}
+
 export const SearchRef = ({
   noNewRef,
   url,
   image,
   paste,
-  onComplete,
+  onChooseExistingRef,
+  onAddNewRef,
 }: {
   noNewRef?: boolean
   url?: string
   image?: string
   paste?: boolean
-  onComplete: (r: CompleteRef) => void
+  onChooseExistingRef: (r: CompleteRef, newImage?: string) => void
+  onAddNewRef: (fields: NewRefFields) => void
 }) => {
   const [searchQuery, setSearchQuery] = useState('')
   const [disableNewRef, setDisableNewRef] = useState(false)
@@ -120,7 +128,7 @@ export const SearchRef = ({
           {imageSearchResults && displayingImagesFor === item.id && (
             <ImageSearchResults
               imageSearchResults={imageSearchResults}
-              onImagePress={(imageUrl) => onComplete({ ...item, image: imageUrl })}
+              onImagePress={(imageUrl) => onChooseExistingRef(item, imageUrl)}
               setPicking={setPicking}
             />
           )}
@@ -222,10 +230,9 @@ export const SearchRef = ({
     // if the user already uploaded an image from camera roll, just add the ref
     if (imageState) {
       if (ref) {
-        onComplete({ ...ref, image: imageState })
+        onChooseExistingRef(ref, imageState)
       } else {
-        // @ts-ignore
-        onComplete({ title: searchQuery, image: imageState, url: urlState })
+        onAddNewRef({ title: searchQuery, image: imageState, url: urlState })
       }
       return
     }
@@ -348,8 +355,7 @@ export const SearchRef = ({
                 <ImageSearchResults
                   imageSearchResults={imageSearchResults}
                   onImagePress={(imageUrl) =>
-                    // @ts-ignore
-                    onComplete({ title: searchQuery, image: imageUrl, url: urlState })
+                    onAddNewRef({ title: searchQuery, image: imageUrl, url: urlState })
                   }
                   setPicking={setPicking}
                 />

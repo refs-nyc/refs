@@ -25,7 +25,7 @@ export const ListItem = ({
   largeImage?: boolean
   onRemove?: () => void
   onTitlePress?: () => void
-  showLink: boolean
+  showLink?: boolean
 }) => {
   let [count, setCount] = useState(-1)
 

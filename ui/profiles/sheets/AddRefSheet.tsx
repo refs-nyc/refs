@@ -1,6 +1,7 @@
 import { addToProfile, pocketbase, removeFromProfile, useUserStore } from '@/features/pocketbase'
 import { getProfileItems, useItemStore } from '@/features/pocketbase/stores/items'
-import { ExpandedItem } from '@/features/pocketbase/stores/types'
+import { RefsRecord } from '@/features/pocketbase/stores/pocketbase-types'
+import { ExpandedItem, StagedItemFields } from '@/features/pocketbase/stores/types'
 import { c, s } from '@/features/style'
 import { ChooseReplaceItemMethod } from '@/ui/actions/ChooseReplaceItemMethod'
 import { RefForm } from '@/ui/actions/RefForm'
@@ -19,32 +20,19 @@ export const AddRefSheet = ({
 }) => {
   const { user } = useUserStore()
   const { addingRefId, setAddingRefId } = useUIStore()
-  const [refData, setRefData] = useState<any>({})
+  const [refData, setRefData] = useState<RefsRecord | null>(null)
+  const [stagedItemFields, setStagedItemFields] = useState<StagedItemFields | null>(null)
 
-  const [gridItems, setGridItems] = useState<ExpandedItem[]>([])
   const { moveToBacklog } = useItemStore()
 
   useEffect(() => {
-    const fetchGridItems = async () => {
-      if (!user) {
-        setGridItems([])
-      } else {
-        const gridItems = await getProfileItems(user.userName)
-        setGridItems(gridItems)
-      }
-    }
-    fetchGridItems()
-  }, [user])
-
-  useEffect(() => {
     const getRef = async () => {
-      const ref = await pocketbase.collection('refs').getOne(addingRefId)
+      const ref = await pocketbase.collection<RefsRecord>('refs').getOne(addingRefId)
       setRefData(ref)
     }
     getRef()
   }, [addingRefId])
 
-  // const [addingTo, setAddingTo] = useState<'backlog' | 'grid' | null>(null)
   const [step, setStep] = useState<
     | 'editNewItem'
     | 'selectItemToReplace'
@@ -80,6 +68,7 @@ export const AddRefSheet = ({
           setRefData(null)
           setAddingRefId('')
           setItemToReplace(null)
+          setStagedItemFields(null)
           setStep('editNewItem')
         }
       }}
@@ -116,83 +105,69 @@ export const AddRefSheet = ({
       )}
       keyboardBehavior="interactive"
     >
-      {step === 'editNewItem' && refData && (
+      {!refData || !user ? (
+        <></>
+      ) : step === 'editNewItem' ? (
         <View style={{ padding: s.$3 }}>
           <RefForm
             r={refData}
             canEditRefData={false}
             onAddRefToList={async (fields) => {}}
             onAddRef={async (fields) => {
-              if (!user) return
-              const gridItems = await getProfileItems(user.userName)
-              setGridItems(gridItems)
-
               // check if the grid is full
-              if (gridItems.length >= 12) {
+              const gridItems = await getProfileItems(user.userName)
+              if (gridItems && gridItems.length >= 12) {
                 // show a modal to the user that the grid is full
+                setStagedItemFields(fields)
                 setStep('selectItemToReplace')
               } else {
-                await addToProfile(refData, {
-                  backlog: false,
-                  image: fields.image,
-                  text: fields.text,
-                })
+                await addToProfile(refData, fields, false)
                 setStep('addedToGrid')
               }
             }}
             backlog={false}
           />
         </View>
-      )}
-      {step === 'selectItemToReplace' && (
+      ) : step === 'selectItemToReplace' && stagedItemFields ? (
         <SelectItemToReplace
-          gridItems={gridItems}
-          refData={refData}
+          stagedItemFields={stagedItemFields}
           onSelectItemToReplace={(item) => {
             setItemToReplace(item)
             setStep('chooseReplaceItemMethod')
           }}
           onAddToBacklog={async () => {
-            await addToProfile(refData, {
-              backlog: true,
-              text: '',
-            })
+            await addToProfile(refData, stagedItemFields, true)
             setStep('addedToBacklog')
           }}
         />
-      )}
-      {step === 'chooseReplaceItemMethod' && itemToReplace && (
+      ) : step === 'chooseReplaceItemMethod' && itemToReplace && stagedItemFields ? (
         <ChooseReplaceItemMethod
           itemToReplace={itemToReplace}
           removeFromProfile={async () => {
+            // remove (delete) itemToReplace from the grid
             await removeFromProfile(itemToReplace.id)
-            await addToProfile(refData, {
-              backlog: false,
-              text: '',
-            })
+            // add the new item to the grid
+            await addToProfile(refData, stagedItemFields, false)
             setStep('addedToGrid')
           }}
           moveToBacklog={async () => {
             // send itemToReplace to the backlog
             await moveToBacklog(itemToReplace.id)
-            // replace the item
-            await addToProfile(refData, {
-              backlog: false,
-              text: '',
-            })
+            // add the new item to the grid
+            await addToProfile(refData, stagedItemFields, false)
             setStep('addedToGrid')
           }}
         />
-      )}
-      {step === 'addedToBacklog' && (
+      ) : step === 'addedToBacklog' ? (
         <View style={{ padding: s.$3 }}>
           <Heading tag="h1">{refData.title} was added to the backlog</Heading>
         </View>
-      )}
-      {step === 'addedToGrid' && (
+      ) : step === 'addedToGrid' ? (
         <View style={{ padding: s.$3 }}>
           <Heading tag="h1">{refData.title} was added to grid</Heading>
         </View>
+      ) : (
+        <></>
       )}
     </BottomSheet>
   )

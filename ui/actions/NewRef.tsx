@@ -8,11 +8,16 @@ import { RefForm } from '../actions/RefForm'
 import { SearchRef } from '../actions/SearchRef'
 import { FilteredItems } from '../actions/FilteredItems'
 import { c } from '@/features/style'
-import { StagedRef, CompleteRef, Item, ExpandedItem } from '@/features/pocketbase/stores/types'
+import {
+  StagedRef,
+  CompleteRef,
+  ExpandedItem,
+  StagedItemFields,
+} from '@/features/pocketbase/stores/types'
 import type { ImagePickerAsset } from 'expo-image-picker'
 import { EditableList } from '../lists/EditableList'
 import { ShareIntent as ShareIntentType, useShareIntentContext } from 'expo-share-intent'
-import { useItemStore } from '@/features/pocketbase/stores/items'
+import { getProfileItems, useItemStore } from '@/features/pocketbase/stores/items'
 import { BottomSheetView } from '@gorhom/bottom-sheet'
 import { s } from '@/features/style'
 import { useRefStore } from '@/features/pocketbase/stores/refs'
@@ -23,21 +28,28 @@ import * as Clipboard from 'expo-clipboard'
 import { Heading } from '../typo/Heading'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { addToProfile } from '@/features/pocketbase'
+import { SelectItemToReplace } from './SelectItemToReplace'
 
-export type NewRefStep = '' | 'add' | 'search' | 'editList' | 'addToList'
+export type NewRefStep =
+  | ''
+  | 'add'
+  | 'search'
+  | 'editList'
+  | 'addToList'
+  | 'selectItemToReplace'
+  | 'chooseReplaceItemMethod'
+  | 'addedToBacklog'
 
 const win = Dimensions.get('window')
 
 export const NewRef = ({
   initialStep = 'search',
-  initialRefData = {},
   onNewRef,
   onStep = () => {},
   onCancel,
   backlog = false,
 }: {
   initialStep?: NewRefStep
-  initialRefData?: StagedRef | CompleteRef
   onNewRef: (itm: ExpandedItem) => void
   onStep: (step: string) => void
   onCancel: () => void
@@ -50,7 +62,10 @@ export const NewRef = ({
   const [cameraOpen, setCameraOpen] = useState(false)
   const [step, setStep] = useState<NewRefStep>(initialStep)
   const [itemData, setItemData] = useState<ExpandedItem | null>(null)
-  const [refData, setRefData] = useState<StagedRef | CompleteRef>(initialRefData)
+  const [stagedItemFields, setStagedItemFields] = useState<StagedItemFields | null>(null)
+  const [refData, setRefData] = useState<CompleteRef | null>(null)
+  const [gridItems, setGridItems] = useState<ExpandedItem[]>([])
+  const [itemToReplace, setItemToReplace] = useState<ExpandedItem | null>(null)
   const { hasShareIntent } = useShareIntentContext()
   const { addItemToList } = useItemStore()
   const { push: pushRef } = useRefStore()
@@ -65,7 +80,7 @@ export const NewRef = ({
     setStep('add')
   }
 
-  const addRefFromResults = (newRef: StagedRef) => {
+  const addRefFromResults = (newRef: CompleteRef) => {
     setRefData(newRef)
     setStep('add')
   }
@@ -171,30 +186,57 @@ export const NewRef = ({
           pickerOpen={pickerOpen}
           canEditRefData={true}
           onAddRef={async (fields) => {
-            await addToProfile(refData, {
-              image: fields.image,
-              text: fields.text,
-              backlog,
-              list: false,
-            })
+            // if adding to grid, check if the grid is full
+            if (!backlog) {
+              // check if the grid is full
+              const gridItems = await getProfileItems(user?.userName!)
+              if (gridItems.length >= 12) {
+                setStagedItemFields(fields)
+                setStep('selectItemToReplace')
+                return
+              }
+            }
+
+            const newItem = await addToProfile(refData, fields, backlog)
             // finish the flow
-            setStep('')
             setItemData(null)
-            setRefData({})
+            setRefData(null)
+            onNewRef(newItem)
           }}
           onAddRefToList={async (fields) => {
-            const newItem = await addToProfile(refData, {
-              image: fields.image,
-              text: fields.text,
-              backlog,
-              list: true,
-            })
+            const newItem = await addToProfile(refData, fields, backlog)
             setItemData(newItem)
             setRefData(newItem.expand?.ref)
             setStep('addToList')
           }}
           backlog={backlog}
         />
+      )}
+
+      {step === 'selectItemToReplace' && stagedItemFields && (
+        <SelectItemToReplace
+          gridItems={gridItems}
+          stagedItemFields={stagedItemFields}
+          onSelectItemToReplace={(item) => {
+            setItemToReplace(item)
+            setStep('chooseReplaceItemMethod')
+          }}
+          onAddToBacklog={async () => {
+            await addToProfile(refData, stagedItemFields, true)
+            setStep('addedToBacklog')
+          }}
+        />
+      )}
+
+      {step === 'addedToBacklog' && (
+        <View style={{ paddingVertical: s.$1, width: '100%' }}>
+          <Heading
+            tag="h2normal"
+            style={{ color: c.white, marginBottom: s.$2, textAlign: 'center' }}
+          >
+            Added to backlog
+          </Heading>
+        </View>
       )}
 
       {step === 'addToList' && (
@@ -258,7 +300,7 @@ export const NewRef = ({
             }
             setStep('')
             setItemData(null)
-            setRefData({})
+            setRefData(null)
           }}
         />
       )}

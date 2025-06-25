@@ -94,6 +94,15 @@ export const useItemStore = create<{
     }
   },
   remove: async (id: string): Promise<void> => {
+    const item = await pocketbase.collection('items').getOne(id)
+    if (item.list)
+    {
+      const children = await pocketbase.collection('items').getFullList({filter: `parent = "${id}"`})
+      for (const child of children)
+      {
+        await pocketbase.collection('items').delete(child.id)
+      }
+    }
     await pocketbase.collection('items').delete(id)
     await canvasApp.actions.removeItem(id)
 

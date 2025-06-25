@@ -1,4 +1,4 @@
-import { pocketbase, removeFromProfile, useItemStore, useUserStore } from '@/features/pocketbase'
+import { pocketbase, useItemStore, useUserStore } from '@/features/pocketbase'
 import { getBacklogItems, getProfileItems } from '@/features/pocketbase/stores/items'
 import type { ExpandedProfile } from '@/features/pocketbase/stores/types'
 import { ExpandedItem } from '@/features/pocketbase/stores/types'
@@ -29,7 +29,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
   const [loading, setLoading] = useState<boolean>(true)
 
   const { user } = useUserStore()
-  const { moveToBacklog, profileRefreshTrigger } = useItemStore()
+  const { moveToBacklog, profileRefreshTrigger, remove } = useItemStore()
 
   const [addingTo, setAddingTo] = useState<'' | 'grid' | 'backlog'>('')
   const [removingItem, setRemovingItem] = useState<ExpandedItem | null>(null)
@@ -69,7 +69,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
   const handleRemoveFromProfile = async () => {
     if (!removingItem) return
     removeRefSheetRef.current?.close()
-    await removeFromProfile(removingItem.id)
+    await remove(removingItem.id)
     setRemovingItem(null)
     await refreshGrid(userName)
   }

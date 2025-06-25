@@ -15,11 +15,13 @@ import { SimplePinataImage } from '../images/SimplePinataImage'
 import { Ionicons } from '@expo/vector-icons'
 import { router } from 'expo-router'
 import { useBackdropStore } from '@/features/pocketbase/stores/backdrop'
+import { useUIStore } from '../state'
 
 const HEADER_HEIGHT = s.$8
 
 export default function SearchBottomSheet() {
   const [index, setIndex] = useState(0)
+  const { newRefSheetRef, setAddingNewRefTo } = useUIStore()
 
   const isMinimised = index === 0
   const searchSheetRef = useRef<BottomSheet>(null)
@@ -169,16 +171,12 @@ export default function SearchBottomSheet() {
                 >
                   <Pressable
                     onPress={async () => {
-                      console.log('opening add ref sheet for a new ref')
-                      // open add ref sheet
-                      // if (!user?.userName) return
-                      // const gridItems = await getProfileItems(user.userName)
-                      // setAddingTo(gridItems.length < 12 ? 'grid' : 'backlog')
-                      // setIndex(1)
+                      if (!user?.userName) return
+                      setAddingNewRefTo('grid')
+                      newRefSheetRef.current?.snapToIndex(0)
                     }}
                   >
                     <Text style={{ color: c.white, fontSize: 26, fontWeight: 'bold' }}>
-                      {' '}
                       Add Ref +
                     </Text>
                   </Pressable>

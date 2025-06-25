@@ -44,7 +44,5 @@ export async function registerForPushNotificationsAsync() {
     } catch (e: unknown) {
       handleRegistrationError(`${e}`)
     }
-  } else {
-    console.error('Must use physical device for push notifications')
   }
 }

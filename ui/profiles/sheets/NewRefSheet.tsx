@@ -1,42 +1,24 @@
-import { useBackdropStore } from '@/features/pocketbase/stores/backdrop'
-import { ExpandedItem } from '@/features/pocketbase/stores/types'
 import { c, s } from '@/features/style'
 import { NewRef } from '@/ui/actions/NewRef'
+import { useUIStore } from '@/ui/state'
+import { useItemStore } from '@/features/pocketbase/stores/items'
 import BottomSheet, { BottomSheetBackdrop } from '@gorhom/bottom-sheet'
-import { useEffect } from 'react'
 import { View } from 'react-native'
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated'
 
 export const NewRefSheet = ({
-  addingTo,
   bottomSheetRef,
-  handleCreateNewRef,
-  onClose,
 }: {
-  addingTo: '' | 'grid' | 'backlog'
   bottomSheetRef: React.RefObject<BottomSheet>
-  handleCreateNewRef: (itm: ExpandedItem) => Promise<void>
-  onClose: () => void
 }) => {
-  const { newRefSheetBackdropAnimatedIndex, registerBackdropPress, unregisterBackdropPress } =
-    useBackdropStore()
-
-  // close the new ref sheet when the user taps the navigation backdrop
-  useEffect(() => {
-    const key = registerBackdropPress(() => {
-      bottomSheetRef.current?.close()
-      onClose()
-    })
-    return () => {
-      unregisterBackdropPress(key)
-    }
-  }, [onClose])
+  const { triggerProfileRefresh } = useItemStore()
+  const { addingNewRefTo, setAddingNewRefTo } = useUIStore()
 
   const disappearsOnIndex = -1
   const appearsOnIndex = 0
   const HANDLE_HEIGHT = s.$2
 
-  const isOpen = addingTo !== ''
+  const isOpen = addingNewRefTo !== null
 
   return (
     <BottomSheet
@@ -45,10 +27,9 @@ export const NewRefSheet = ({
       enablePanDownToClose={true}
       snapPoints={['40%', '90%']}
       index={-1}
-      animatedIndex={newRefSheetBackdropAnimatedIndex}
       backgroundStyle={{ backgroundColor: c.olive, borderRadius: s.$4, paddingTop: 0 }}
       onChange={(i: number) => {
-        if (i === -1) onClose()
+        if (i === -1) setAddingNewRefTo(null)
       }}
       backdropComponent={(p) => (
         <BottomSheetBackdrop
@@ -85,11 +66,22 @@ export const NewRefSheet = ({
     >
       {isOpen && (
         <NewRef
-          backlog={addingTo === 'backlog'}
+          backlog={addingNewRefTo === 'backlog'}
           onStep={(step) => {
             if (step === 'add') bottomSheetRef.current?.snapToIndex(1)
           }}
-          onNewRef={handleCreateNewRef}
+          onNewRef={(newItem) => {
+            console.log('created new item', newItem)
+            triggerProfileRefresh()
+            setAddingNewRefTo(null)
+            bottomSheetRef.current?.close()
+
+            // if we are adding to the grid, we need to display the details modal for the new item
+            if (addingNewRefTo === 'grid') {
+              // TODO: implement this
+              // detailsSheetRef.current?.snapToIndex(0)
+            }
+          }}
           onCancel={() => {
             bottomSheetRef.current?.close()
           }}

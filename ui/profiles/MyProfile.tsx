@@ -183,8 +183,8 @@ export const MyProfile = ({ userName }: { userName: string }) => {
             profile={profile}
             user={user}
             openAddtoBacklog={() => {
-              newRefSheetRef.current?.snapToIndex(0)
               setAddingNewRefTo('backlog')
+              newRefSheetRef.current?.snapToIndex(0)
             }}
           />
           <RemoveRefSheet

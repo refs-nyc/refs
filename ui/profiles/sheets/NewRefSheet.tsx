@@ -155,7 +155,6 @@ export const NewRefSheet = ({
               pickerOpen={false}
               canEditRefData={true}
               onAddRef={async (itemFields) => {
-                // if adding to grid, check if the grid is full
                 if (!backlog) {
                   // check if the grid is full
                   const gridItems = await getProfileItems(user?.userName!)

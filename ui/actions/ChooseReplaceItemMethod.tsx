@@ -30,19 +30,18 @@ export const ChooseReplaceItemMethod = ({
         <Text style={{ color: c.muted }}>Do what with {ref.title}?</Text>
       </View>
       {/* display the image of the item to be replaced */}
-      {itemToReplace.image ||
-        (ref.image && (
-          <View style={{ alignItems: 'center' }}>
-            <SimplePinataImage
-              originalSource={itemToReplace.image || ref.image}
-              style={{ height: 100, width: 100 }}
-              imageOptions={{
-                width: 100,
-                height: 100,
-              }}
-            />
-          </View>
-        ))}
+      {image && (
+        <View style={{ alignItems: 'center' }}>
+          <SimplePinataImage
+            originalSource={image}
+            style={{ height: 100, width: 100 }}
+            imageOptions={{
+              width: 100,
+              height: 100,
+            }}
+          />
+        </View>
+      )}
       <Button title="Remove" variant="basic" onPress={removeFromProfile} />
       <Button title="Send to backlog" onPress={moveToBacklog} />
     </View>

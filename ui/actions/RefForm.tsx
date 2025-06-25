@@ -17,7 +17,7 @@ import { EditableHeader } from '../atoms/EditableHeader'
 import { Button } from '../buttons/Button'
 import type { ImagePickerAsset } from 'expo-image-picker'
 import { c, s } from '@/features/style'
-import { StagedRef } from '@/features/pocketbase/stores/types'
+import { StagedItemFields, StagedRef } from '@/features/pocketbase/stores/types'
 // @ts-ignore
 import { KeyboardAvoidingView } from 'react-native-keyboard-controller'
 import { DismissKeyboard } from '../atoms/DismissKeyboard'
@@ -34,20 +34,8 @@ export const RefForm = ({
 }: {
   r: StagedRef
   placeholder?: string
-  onAddRef: (fields: {
-    title: string
-    text: string
-    url: string
-    image: string
-    meta?: string
-  }) => Promise<void>
-  onAddRefToList?: (fields: {
-    title: string
-    text: string
-    url: string
-    image: string
-    meta?: string
-  }) => Promise<void>
+  onAddRef: (fields: StagedItemFields) => Promise<void>
+  onAddRefToList?: (fields: StagedItemFields) => Promise<void>
   pickerOpen?: boolean
   backlog?: boolean
   canEditRefData?: boolean

@@ -73,20 +73,9 @@ export const MyProfile = ({ userName }: { userName: string }) => {
     await refreshGrid(userName)
   }
 
-  const handleCreateNewRef = async (item: ExpandedItem) => {
-    await refreshGrid(userName)
-    newRefSheetRef.current?.close()
-    setAddingTo('')
-    await refreshGrid(userName)
-    if (addingTo !== 'backlog') {
-      setDetailsItem(item)
-      detailsSheetRef.current?.snapToIndex(0)
-    }
-  }
-
   useEffect(() => {
     if (hasShareIntent) {
-      setAddingTo(gridItems.length < 12 ? 'grid' : 'backlog')
+      setAddingNewRefTo(gridItems.length < 12 ? 'grid' : 'backlog')
       bottomSheetRef.current?.snapToIndex(1)
     }
   }, [hasShareIntent])

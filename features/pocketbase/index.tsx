@@ -2,37 +2,48 @@ import { pocketbase } from './pocketbase'
 import { useUserStore } from './stores/users'
 import { useRefStore } from './stores/refs'
 import { useItemStore } from './stores/items'
-import { StagedRef, CompleteRef, ExpandedItem } from './stores/types'
+import { CompleteRef, ExpandedItem, StagedItemFields } from './stores/types'
 
 const addToProfile: (
-  stagedRef: StagedRef | CompleteRef,
-  options: { image?: string; text?: string; backlog?: boolean; list?: boolean }
-) => Promise<ExpandedItem> = async (stagedRef, options = {}) => {
+  existingRef: CompleteRef | null,
+  stagedItemFields: StagedItemFields,
+  backlog: boolean
+) => Promise<ExpandedItem> = async (existingRef, stagedItemFields, backlog) => {
+  const userStore = useUserStore.getState()
   const refStore = useRefStore.getState()
   const itemStore = useItemStore.getState()
 
   let newItem: ExpandedItem
 
-  if (stagedRef.id) {
+  if (!userStore.user) {
+    throw new Error('User not found')
+  }
+
+  if (existingRef) {
     // create a new item from an existing ref
-    const existingRef = stagedRef
     newItem = await itemStore.push({
+      creator: userStore.user.id,
       ref: existingRef.id,
-      image: options.image || existingRef?.image,
-      creator: pocketbase.authStore?.record?.id,
-      text: options.text,
-      backlog: !!options.backlog,
+      image: stagedItemFields.image || existingRef?.image,
+      url: stagedItemFields.url,
+      text: stagedItemFields.text,
+      backlog,
     })
   } else {
     // create a new item, with a new ref
-    const newRef = await refStore.push({ ...stagedRef, creator: pocketbase.authStore?.record?.id })
+    const newRef = await refStore.push({
+      creator: userStore.user.id,
+      title: stagedItemFields.title,
+      meta: stagedItemFields.meta,
+      image: stagedItemFields.image,
+    })
     newItem = await itemStore.push({
+      creator: userStore.user.id,
       ref: newRef.id,
-      image: options.image || newRef.image,
-      creator: pocketbase.authStore?.record?.id || '',
-      text: options.text,
-      backlog: !!options.backlog,
-      list: !!options.list,
+      image: stagedItemFields.image,
+      url: stagedItemFields.url,
+      text: stagedItemFields.text,
+      backlog,
     })
   }
 

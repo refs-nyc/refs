@@ -67,9 +67,6 @@ export const NewRefSheet = ({
       {isOpen && (
         <NewRef
           backlog={addingNewRefTo === 'backlog'}
-          onStep={(step) => {
-            if (step === 'add') bottomSheetRef.current?.snapToIndex(1)
-          }}
           onNewRef={(newItem) => {
             console.log('created new item', newItem)
             triggerProfileRefresh()

@@ -9,30 +9,27 @@ import { Pressable, Text, TextInput, View } from 'react-native'
 import { Heading } from '../typo/Heading'
 import { XStack, YStack } from '../core/Stacks'
 import { Button } from '../buttons/Button'
-import { getProfileItems } from '@/features/pocketbase/stores/items'
-import { CompleteRef, Item, Profile } from '@/features/pocketbase/stores/types'
+import { CompleteRef, Profile } from '@/features/pocketbase/stores/types'
 import { pocketbase, useUserStore } from '@/features/pocketbase'
 import { SimplePinataImage } from '../images/SimplePinataImage'
 import { Ionicons } from '@expo/vector-icons'
 import { router } from 'expo-router'
-import { NewRef, NewRefStep } from './NewRef'
 import { useBackdropStore } from '@/features/pocketbase/stores/backdrop'
+import { useUIStore } from '../state'
 
 const HEADER_HEIGHT = s.$8
 
 export default function SearchBottomSheet() {
   const [index, setIndex] = useState(0)
+  const { newRefSheetRef, setAddingNewRefTo } = useUIStore()
 
   const isMinimised = index === 0
   const searchSheetRef = useRef<BottomSheet>(null)
-  const [addingTo, setAddingTo] = useState('')
-  const [step, setStep] = useState('')
-  const [newRefTitle, setNewRefTitle] = useState('')
-  const [initialStep, setInitialStep] = useState<NewRefStep>('search')
   const [searching, setSearching] = useState(false)
 
   const [searchTerm, setSearchTerm] = useState('')
-  const [debouncedTerm, setDebouncedTerm] = useState('')
+  const searchTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined)
+
   const [results, setResults] = useState<CompleteRef[]>([])
   const [refs, setRefs] = useState<CompleteRef[]>([])
 
@@ -40,23 +37,24 @@ export default function SearchBottomSheet() {
   const { moduleBackdropAnimatedIndex } = useBackdropStore()
 
   useEffect(() => {
-    const timeout = setTimeout(() => setDebouncedTerm(searchTerm), 300)
-    return () => clearTimeout(timeout)
-  }, [searchTerm])
-
-  useEffect(() => {
-    const runSearch = async () => {
-      if (debouncedTerm === '') {
-        setResults([])
-        return
-      }
+    const runSearch = async (query: string) => {
       const refsResults = await pocketbase
         .collection<CompleteRef>('refs')
-        .getFullList({ filter: `title ~ "${debouncedTerm}"` })
+        .getFullList({ filter: `title ~ "${query}"` })
       setResults(refsResults)
     }
-    runSearch()
-  }, [debouncedTerm])
+
+    clearTimeout(searchTimeoutRef.current)
+
+    if (searchTerm === '') {
+      setResults([])
+      return
+    }
+
+    searchTimeoutRef.current = setTimeout(() => {
+      runSearch(searchTerm)
+    }, 300)
+  }, [searchTerm])
 
   const onSearchIconPress = () => {
     setSearching(true)
@@ -68,12 +66,6 @@ export default function SearchBottomSheet() {
   const onAddRefToSearch = (r: CompleteRef) => {
     setRefs((prevState) => [...prevState.filter((ref) => ref.id !== r.id), r])
     setSearchTerm('')
-  }
-
-  const stopAdding = () => {
-    setInitialStep('search')
-    setNewRefTitle('')
-    setAddingTo('')
   }
 
   const stumble = async () => {
@@ -92,25 +84,8 @@ export default function SearchBottomSheet() {
     router.push(`/search?refs=${refs.map((r) => r.id).join(',')}`)
   }
 
-  const isAddingNewRef = addingTo === 'grid' || addingTo === 'backlog'
-
-  let snapPoints: (string | number)[] = []
-  if (isAddingNewRef) {
-    if (step === 'add' || step === 'categorise') {
-      snapPoints = ['1%', '80%']
-    } else if (step === 'addToList') {
-      snapPoints = ['1%', '70%']
-    } else if (step === 'editList') {
-      snapPoints = ['1%', '70%']
-    } else if (addingTo === 'grid' && step === '') {
-      snapPoints = ['1%', '35%']
-    } else {
-      snapPoints = ['1%', '35%']
-    }
-  } else {
-    const minSnapPoint = s.$1 + HEADER_HEIGHT
-    snapPoints = [minSnapPoint, '90%']
-  }
+  const minSnapPoint = s.$1 + HEADER_HEIGHT
+  const snapPoints: (string | number)[] = [minSnapPoint, '90%']
 
   return (
     <>
@@ -127,7 +102,6 @@ export default function SearchBottomSheet() {
             setResults([])
             setRefs([])
             setSearchTerm('')
-            stopAdding()
             setSearching(false)
           }
         }}
@@ -145,25 +119,7 @@ export default function SearchBottomSheet() {
         handleComponent={null}
         keyboardBehavior="interactive"
       >
-        {addingTo === 'grid' || addingTo === 'backlog' ? (
-          <NewRef
-            initialRefData={{ title: newRefTitle }}
-            initialStep={initialStep}
-            backlog={addingTo === 'backlog'}
-            onStep={(step) => {
-              setStep(step)
-              if (step === 'add' && snapPoints.length > 2) searchSheetRef.current?.snapToIndex(2)
-            }}
-            onNewRef={async (itm: Item) => {
-              stopAdding()
-              searchSheetRef.current?.collapse()
-            }}
-            onCancel={() => {
-              stopAdding()
-              searchSheetRef.current?.collapse()
-            }}
-          />
-        ) : (
+        {
           <BottomSheetView>
             <Pressable
               style={{
@@ -187,7 +143,7 @@ export default function SearchBottomSheet() {
                   ) : (
                     <TextInput
                       autoFocus
-                      placeholder={refs.length ? "Add more filters" : "Search anything"}
+                      placeholder={refs.length ? 'Add more filters' : 'Search anything'}
                       placeholderTextColor={c.white}
                       style={{ fontSize: s.$1, color: c.white, minWidth: '50%' }}
                       onChangeText={setSearchTerm}
@@ -216,13 +172,11 @@ export default function SearchBottomSheet() {
                   <Pressable
                     onPress={async () => {
                       if (!user?.userName) return
-                      const gridItems = await getProfileItems(user.userName)
-                      setAddingTo(gridItems.length < 12 ? 'grid' : 'backlog')
-                      setIndex(1)
+                      setAddingNewRefTo('grid')
+                      newRefSheetRef.current?.snapToIndex(0)
                     }}
                   >
                     <Text style={{ color: c.white, fontSize: 26, fontWeight: 'bold' }}>
-                      {' '}
                       Add Ref +
                     </Text>
                   </Pressable>
@@ -334,7 +288,7 @@ export default function SearchBottomSheet() {
               </BottomSheetScrollView>
             )}
           </BottomSheetView>
-        )}
+        }
       </BottomSheet>
     </>
   )

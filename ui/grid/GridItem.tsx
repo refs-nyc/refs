@@ -16,7 +16,7 @@ export const GridItem = ({
   i: number
   onPress?: () => {}
 }) => {
-  const image = item.expand.ref?.image || item.image
+  const image = item.image || item.expand.ref?.image
   return (
     <>
       {item && (

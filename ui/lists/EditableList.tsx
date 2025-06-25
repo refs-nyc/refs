@@ -99,7 +99,7 @@ export const EditableList = ({
         </BottomSheetView>
         <BottomSheetView style={{ flex: 1 }}>
           {addingToList ? (
-            <SearchRef onComplete={onRefFound} noNewRef={true} />
+            <SearchRef onChooseExistingRef={onRefFound} onAddNewRef={() => {}} noNewRef={true} />
           ) : (
             <BottomSheetView>
               <NewListItemButton onPress={() => setAddingToList(true)} />

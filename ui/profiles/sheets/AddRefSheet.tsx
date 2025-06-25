@@ -1,17 +1,18 @@
 import { addToProfile, pocketbase, useUserStore } from '@/features/pocketbase'
 import { getProfileItems, useItemStore } from '@/features/pocketbase/stores/items'
-import { ExpandedItem } from '@/features/pocketbase/stores/types'
+import { RefsRecord } from '@/features/pocketbase/stores/pocketbase-types'
+import { ExpandedItem, StagedItemFields } from '@/features/pocketbase/stores/types'
 import { c, s } from '@/features/style'
+import { AddedNewRefConfirmation } from '@/ui/actions/AddedNewRefConfirmation'
+import { ChooseReplaceItemMethod } from '@/ui/actions/ChooseReplaceItemMethod'
 import { RefForm } from '@/ui/actions/RefForm'
-import { Button } from '@/ui/buttons/Button'
-import { SimplePinataImage } from '@/ui/images/SimplePinataImage'
-import { Heading } from '@/ui/typo/Heading'
+import { NewRefFields } from '@/ui/actions/SearchRef'
+import { SelectItemToReplace } from '@/ui/actions/SelectItemToReplace'
+import { useUIStore } from '@/ui/state'
 import BottomSheet, { BottomSheetBackdrop } from '@gorhom/bottom-sheet'
 import { useEffect, useState } from 'react'
-import { Text, View } from 'react-native'
+import { View } from 'react-native'
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated'
-import { AddRefSheetGrid } from './AddRefSheetGrid'
-import { useUIStore } from '@/ui/state'
 
 export const AddRefSheet = ({
   bottomSheetRef,
@@ -20,32 +21,34 @@ export const AddRefSheet = ({
 }) => {
   const { user } = useUserStore()
   const { addingRefId, setAddingRefId } = useUIStore()
-  const [refData, setRefData] = useState<any>({})
 
-  const [gridItems, setGridItems] = useState<ExpandedItem[]>([])
+  // fields from the ref that is being replaced, or a new ref that is going to be added
+
+  const [refFields, setRefFields] = useState<NewRefFields | null>(null)
+
+  // the item fields
+  const [stagedItemFields, setStagedItemFields] = useState<StagedItemFields | null>(null)
+
+  // if applicable, the item that is being replaced
+  const [itemToReplace, setItemToReplace] = useState<ExpandedItem | null>(null)
+
+  // the resulting item
+  const [itemData, setItemData] = useState<ExpandedItem | null>(null)
+
   const { moveToBacklog, remove } = useItemStore()
 
   useEffect(() => {
-    const fetchGridItems = async () => {
-      if (!user) {
-        setGridItems([])
-      } else {
-        const gridItems = await getProfileItems(user.userName)
-        setGridItems(gridItems)
-      }
-    }
-    fetchGridItems()
-  }, [user])
-
-  useEffect(() => {
     const getRef = async () => {
-      const ref = await pocketbase.collection('refs').getOne(addingRefId)
-      setRefData(ref)
+      const ref = await pocketbase.collection<RefsRecord>('refs').getOne(addingRefId)
+      setRefFields({
+        title: ref.title!,
+        image: ref.image,
+        url: ref.url,
+      })
     }
     getRef()
   }, [addingRefId])
 
-  // const [addingTo, setAddingTo] = useState<'backlog' | 'grid' | null>(null)
   const [step, setStep] = useState<
     | 'editNewItem'
     | 'selectItemToReplace'
@@ -53,7 +56,6 @@ export const AddRefSheet = ({
     | 'addedToGrid'
     | 'chooseReplaceItemMethod'
   >('editNewItem')
-  const [itemToReplace, setItemToReplace] = useState<ExpandedItem | null>(null)
 
   const sheetHeight =
     step === 'selectItemToReplace'
@@ -78,9 +80,11 @@ export const AddRefSheet = ({
       backgroundStyle={{ backgroundColor: c.olive, borderRadius: s.$4, paddingTop: 0 }}
       onChange={(i: number) => {
         if (i === -1) {
-          setRefData(null)
+          setRefFields(null)
           setAddingRefId('')
           setItemToReplace(null)
+          setStagedItemFields(null)
+          setItemData(null)
           setStep('editNewItem')
         }
       }}
@@ -117,143 +121,67 @@ export const AddRefSheet = ({
       )}
       keyboardBehavior="interactive"
     >
-      {step === 'editNewItem' && refData && (
+      {!refFields || !user ? (
+        <></>
+      ) : step === 'editNewItem' ? (
         <View style={{ padding: s.$3 }}>
           <RefForm
-            r={refData}
+            existingRefFields={refFields}
             canEditRefData={false}
             onAddRefToList={async (fields) => {}}
             onAddRef={async (fields) => {
-              if (!user) return
-              const gridItems = await getProfileItems(user.userName)
-              setGridItems(gridItems)
-
               // check if the grid is full
-              if (gridItems.length >= 12) {
+              const gridItems = await getProfileItems(user.userName)
+              if (gridItems && gridItems.length >= 12) {
                 // show a modal to the user that the grid is full
+                setStagedItemFields(fields)
                 setStep('selectItemToReplace')
               } else {
-                await addToProfile(refData, {
-                  backlog: false,
-                  image: fields.image,
-                  text: fields.text,
-                })
+                const newItem = await addToProfile(addingRefId, fields, false)
+                setItemData(newItem)
                 setStep('addedToGrid')
               }
             }}
             backlog={false}
           />
         </View>
-      )}
-      {step === 'selectItemToReplace' && (
-        <View
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            padding: s.$3,
-            gap: s.$1,
-            alignItems: 'center',
+      ) : step === 'selectItemToReplace' && stagedItemFields ? (
+        <SelectItemToReplace
+          stagedItemFields={stagedItemFields}
+          onSelectItemToReplace={(item) => {
+            setItemToReplace(item)
+            setStep('chooseReplaceItemMethod')
           }}
-        >
-          <Text style={{ color: c.surface, fontSize: s.$1 }}>
-            Adding {refData.title} to your profile
-          </Text>
-          {refData?.image && (
-            <View style={{ alignItems: 'center' }}>
-              <SimplePinataImage
-                originalSource={refData?.image}
-                style={{ height: 80, width: 80 }}
-                imageOptions={{
-                  width: 80,
-                  height: 80,
-                }}
-              />
-            </View>
-          )}
-          <Text style={{ color: c.surface, fontSize: s.$1 }}>Choose a grid item to replace</Text>
-          <AddRefSheetGrid
-            gridItems={gridItems}
-            onSelectItem={(item) => {
-              setItemToReplace(item)
-              setStep('chooseReplaceItemMethod')
-            }}
-          />
-          <Button
-            title="Add to backlog instead"
-            variant="small"
-            onPress={async () => {
-              await addToProfile(refData, {
-                backlog: true,
-                text: '',
-              })
-              setStep('addedToBacklog')
-            }}
-          />
-        </View>
-      )}
-      {step === 'chooseReplaceItemMethod' && itemToReplace && (
-        <View
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-
-            padding: s.$3,
-            gap: s.$1,
+          onAddToBacklog={async () => {
+            const newItem = await addToProfile(addingRefId, stagedItemFields, true)
+            setItemData(newItem)
+            setStep('addedToBacklog')
           }}
-        >
-          <View style={{ alignItems: 'center' }}>
-            <Text style={{ color: c.muted }}>Do what with {itemToReplace.expand.ref?.title}?</Text>
-          </View>
-          {/* display the image of the item to be replaced */}
-          {itemToReplace.expand.ref?.image && (
-            <View style={{ alignItems: 'center' }}>
-              <SimplePinataImage
-                originalSource={itemToReplace.expand.ref?.image}
-                style={{ height: 100, width: 100 }}
-                imageOptions={{
-                  width: 100,
-                  height: 100,
-                }}
-              />
-            </View>
-          )}
-          <Button
-            title="Remove"
-            variant="basic"
-            onPress={async () => {
-              // remove the item
-              await remove(itemToReplace.id)
-              await addToProfile(refData, {
-                backlog: false,
-                text: '',
-              })
-              setStep('addedToGrid')
-            }}
-          />
-          <Button
-            title="Send to backlog"
-            onPress={async () => {
-              // send itemToReplace to the backlog
-              await moveToBacklog(itemToReplace.id)
-              // replace the item
-              await addToProfile(refData, {
-                backlog: false,
-                text: '',
-              })
-              setStep('addedToGrid')
-            }}
-          />
-        </View>
-      )}
-      {step === 'addedToBacklog' && (
-        <View style={{ padding: s.$3 }}>
-          <Heading tag="h1">{refData.title} was added to the backlog</Heading>
-        </View>
-      )}
-      {step === 'addedToGrid' && (
-        <View style={{ padding: s.$3 }}>
-          <Heading tag="h1">{refData.title} was added to grid</Heading>
-        </View>
+        />
+      ) : step === 'chooseReplaceItemMethod' && itemToReplace && stagedItemFields ? (
+        <ChooseReplaceItemMethod
+          itemToReplace={itemToReplace}
+          removeFromProfile={async () => {
+            // remove (delete) itemToReplace from the grid
+            await remove(itemToReplace.id)
+            // add the new item to the grid
+            const newItem = await addToProfile(addingRefId, stagedItemFields, false)
+            setItemData(newItem)
+            setStep('addedToGrid')
+          }}
+          moveToBacklog={async () => {
+            // send itemToReplace to the backlog
+            await moveToBacklog(itemToReplace.id)
+            // add the new item to the grid
+            const newItem = await addToProfile(addingRefId, stagedItemFields, false)
+            setItemData(newItem)
+            setStep('addedToGrid')
+          }}
+        />
+      ) : (step === 'addedToBacklog' || step === 'addedToGrid') && itemData ? (
+        <AddedNewRefConfirmation itemData={itemData} />
+      ) : (
+        <></>
       )}
     </BottomSheet>
   )

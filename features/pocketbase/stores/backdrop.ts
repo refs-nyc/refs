@@ -5,7 +5,6 @@ type BackdropState = {
   moduleBackdropAnimatedIndex?: SharedValue<number>
   detailsBackdropAnimatedIndex?: SharedValue<number>
   otherProfileBackdropAnimatedIndex?: SharedValue<number>
-  newRefSheetBackdropAnimatedIndex?: SharedValue<number>
   removeRefSheetBackdropAnimatedIndex?: SharedValue<number>
   // handle backdrop press, we need to close the sheets
   backdropPressHandlers: Record<string, () => void>
@@ -17,14 +16,12 @@ type BackdropState = {
 const moduleBackdropAnimatedIndex = makeMutable(0)
 const detailsBackdropAnimatedIndex = makeMutable(-1)
 const otherProfileBackdropAnimatedIndex = makeMutable(-1)
-const newRefSheetBackdropAnimatedIndex = makeMutable(-1)
 const removeRefSheetBackdropAnimatedIndex = makeMutable(-1)
 
 export const useBackdropStore = create<BackdropState>((set, get) => ({
   moduleBackdropAnimatedIndex,
   detailsBackdropAnimatedIndex,
   otherProfileBackdropAnimatedIndex,
-  newRefSheetBackdropAnimatedIndex,
   removeRefSheetBackdropAnimatedIndex,
   backdropPressHandlers: {},
   onBackdropPress: () => {},

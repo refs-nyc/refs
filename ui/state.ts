@@ -11,6 +11,9 @@ export const useUIStore = create<{
   currentRefId: string
   addRefSheetRef: React.RefObject<BottomSheet>
   addingRefId: string
+  newRefSheetRef: React.RefObject<BottomSheet>
+  addingNewRefTo: null | 'grid' | 'backlog'
+  setAddingNewRefTo: (newState: null | 'grid' | 'backlog') => void
   setAddingRefId: (id: string) => void
   setCurrentRefId: (id: string) => void
   setAddingToList: (newState: string) => void
@@ -23,6 +26,13 @@ export const useUIStore = create<{
   currentRefId: '',
   addRefSheetRef: React.createRef(),
   addingRefId: '',
+  newRefSheetRef: React.createRef(),
+  addingNewRefTo: null,
+  setAddingNewRefTo: (newState: null | 'grid' | 'backlog') => {
+    set(() => ({
+      addingNewRefTo: newState,
+    }))
+  },
   setAddingRefId: (id: string) => {
     set(() => ({
       addingRefId: id,

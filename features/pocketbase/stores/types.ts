@@ -30,3 +30,12 @@ export type ConversationWithMemberships = PBTypes.ConversationsResponse<{
 export type ExpandedMembership = PBTypes.MembershipsResponse<{ user: PBTypes.UsersRecord }>
 export type ExpandedReaction = PBTypes.ReactionsResponse<{ user: PBTypes.UsersRecord }>
 export type ExpandedSave = PBTypes.SavesResponse<{ user: PBTypes.UsersRecord }>
+
+// these are the fields that are provided by the user in the new/update ref form
+export type StagedItemFields = {
+  title?: string // only used when creating a new ref
+  meta?: string // only used when creating a new ref
+  text: string
+  url: string
+  image: string
+}

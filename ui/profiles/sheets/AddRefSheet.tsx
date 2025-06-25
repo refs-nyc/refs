@@ -1,4 +1,4 @@
-import { addToProfile, pocketbase, removeFromProfile, useUserStore } from '@/features/pocketbase'
+import { addToProfile, pocketbase, useUserStore } from '@/features/pocketbase'
 import { getProfileItems, useItemStore } from '@/features/pocketbase/stores/items'
 import { ExpandedItem } from '@/features/pocketbase/stores/types'
 import { c, s } from '@/features/style'
@@ -12,7 +12,6 @@ import { Text, View } from 'react-native'
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated'
 import { AddRefSheetGrid } from './AddRefSheetGrid'
 import { useUIStore } from '@/ui/state'
-import { FilteredItems } from '@/ui/actions/FilteredItems'
 
 export const AddRefSheet = ({
   bottomSheetRef,
@@ -24,7 +23,7 @@ export const AddRefSheet = ({
   const [refData, setRefData] = useState<any>({})
 
   const [gridItems, setGridItems] = useState<ExpandedItem[]>([])
-  const { moveToBacklog } = useItemStore()
+  const { moveToBacklog, remove } = useItemStore()
 
   useEffect(() => {
     const fetchGridItems = async () => {
@@ -223,7 +222,7 @@ export const AddRefSheet = ({
             variant="basic"
             onPress={async () => {
               // remove the item
-              await removeFromProfile(itemToReplace.id)
+              await remove(itemToReplace.id)
               await addToProfile(refData, {
                 backlog: false,
                 text: '',

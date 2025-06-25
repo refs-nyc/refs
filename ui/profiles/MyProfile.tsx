@@ -15,12 +15,12 @@ import { Heading } from '../typo/Heading'
 import { ProfileDetailsSheet } from './ProfileDetailsSheet'
 import { ProfileHeader } from './ProfileHeader'
 import { MyBacklogSheet } from './sheets/MyBacklogSheet'
-import { NewRefSheet } from './sheets/NewRefSheet'
 import { RemoveRefSheet } from './sheets/RemoveRefSheet'
 
 export const MyProfile = ({ userName }: { userName: string }) => {
   const { hasShareIntent } = useShareIntentContext()
-  const { startEditProfile, stopEditProfile } = useUIStore()
+  const { startEditProfile, stopEditProfile, setAddingNewRefTo, addingNewRefTo, newRefSheetRef } =
+    useUIStore()
 
   const [profile, setProfile] = useState<ExpandedProfile>()
   const [gridItems, setGridItems] = useState<ExpandedItem[]>([])
@@ -31,7 +31,6 @@ export const MyProfile = ({ userName }: { userName: string }) => {
   const { user } = useUserStore()
   const { moveToBacklog, profileRefreshTrigger } = useItemStore()
 
-  const [addingTo, setAddingTo] = useState<'' | 'grid' | 'backlog'>('')
   const [removingItem, setRemovingItem] = useState<ExpandedItem | null>(null)
 
   const refreshGrid = async (userName: string) => {
@@ -117,8 +116,6 @@ export const MyProfile = ({ userName }: { userName: string }) => {
   // timeout used to stop editing the profile after 10 seconds
   let timeout: ReturnType<typeof setTimeout>
 
-  const newRefSheetRef = useRef<BottomSheet>(null)
-
   return (
     <>
       <ScrollView
@@ -167,7 +164,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
                     removeRefSheetRef.current?.expand()
                   }}
                   onAddItem={() => {
-                    setAddingTo('grid')
+                    setAddingNewRefTo('grid')
                     newRefSheetRef.current?.snapToIndex(0)
                   }}
                   columns={3}
@@ -197,8 +194,8 @@ export const MyProfile = ({ userName }: { userName: string }) => {
             profile={profile}
             user={user}
             openAddtoBacklog={() => {
-              setAddingTo('backlog')
               newRefSheetRef.current?.snapToIndex(0)
+              setAddingNewRefTo('backlog')
             }}
           />
           <RemoveRefSheet
@@ -206,14 +203,6 @@ export const MyProfile = ({ userName }: { userName: string }) => {
             handleMoveToBacklog={handleMoveToBacklog}
             handleRemoveFromProfile={handleRemoveFromProfile}
             item={removingItem}
-          />
-          <NewRefSheet
-            addingTo={addingTo}
-            bottomSheetRef={newRefSheetRef}
-            handleCreateNewRef={handleCreateNewRef}
-            onClose={() => {
-              setAddingTo('')
-            }}
           />
           {detailsItem && (
             <ProfileDetailsSheet

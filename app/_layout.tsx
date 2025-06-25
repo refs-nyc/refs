@@ -36,6 +36,7 @@ import Saves from '@/features/saves/saves-sheet'
 import Referencers from '@/ui/profiles/sheets/ReferencersSheet'
 import { useUIStore } from '@/ui/state'
 import { AddRefSheet } from '@/ui/profiles/sheets/AddRefSheet'
+import { NewRefSheet } from '@/ui/profiles/sheets/NewRefSheet'
 
 install()
 polyfillEncoding()
@@ -120,7 +121,7 @@ const Providers = ({ children }: { children: React.ReactNode }) => {
 function RootLayoutNav() {
   const savesBottomSheetRef = useRef<BottomSheet>(null)
   const colorScheme = useColorScheme()
-  const { referencersBottomSheetRef, addRefSheetRef } = useUIStore()
+  const { referencersBottomSheetRef, addRefSheetRef, newRefSheetRef } = useUIStore()
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
@@ -186,6 +187,8 @@ function RootLayoutNav() {
       <Referencers referencersBottomSheetRef={referencersBottomSheetRef} />
       {/* add ref sheet */}
       <AddRefSheet bottomSheetRef={addRefSheetRef} />
+      {/* new ref sheet */}
+      <NewRefSheet bottomSheetRef={newRefSheetRef} />
     </ThemeProvider>
   )
 }

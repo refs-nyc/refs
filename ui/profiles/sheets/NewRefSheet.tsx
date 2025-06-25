@@ -273,8 +273,7 @@ export const NewRefSheet = ({
             <EditableList
               item={itemData}
               onComplete={() => {
-                // TODO: what do we do when the list is edited? what does this mean?
-                // setStep('addedToList')
+                bottomSheetRef.current?.close()
               }}
             />
           )}

@@ -1,6 +1,6 @@
 import { useUserStore, isProfile } from '@/features/pocketbase/stores/users'
 import { Dimensions, View } from 'react-native'
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { RefForm } from '../actions/RefForm'
 import { NewRefFields, SearchRef } from '../actions/SearchRef'
 import { FilteredItems } from '../actions/FilteredItems'
@@ -31,12 +31,10 @@ const win = Dimensions.get('window')
 
 export const NewRef = ({
   onNewRef,
-  onStep = () => {},
   onCancel,
   backlog = false,
 }: {
   onNewRef: (itm: ExpandedItem) => void
-  onStep: (step: string) => void
   onCancel: () => void
   backlog?: boolean
 }) => {
@@ -59,10 +57,6 @@ export const NewRef = ({
 
   // the resulting item
   const [itemData, setItemData] = useState<ExpandedItem | null>(null)
-
-  useEffect(() => {
-    onStep(step)
-  }, [step])
 
   return (
     <BottomSheetView

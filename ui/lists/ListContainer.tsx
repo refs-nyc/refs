@@ -28,6 +28,7 @@ export const ListContainer = ({
             key={itm.id}
             r={itm}
             showMeta={false}
+            showLink={true}
           />
         ))}
       </YStack>

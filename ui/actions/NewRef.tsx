@@ -1,21 +1,21 @@
-import { useUserStore, isProfile } from '@/features/pocketbase/stores/users'
-import { Dimensions, View } from 'react-native'
+import { addToProfile, removeFromProfile } from '@/features/pocketbase'
+import { pocketbase } from '@/features/pocketbase/pocketbase'
+import { getProfileItems, useItemStore } from '@/features/pocketbase/stores/items'
+import { RefsTypeOptions } from '@/features/pocketbase/stores/pocketbase-types'
+import { useRefStore } from '@/features/pocketbase/stores/refs'
+import { ExpandedItem, StagedItemFields } from '@/features/pocketbase/stores/types'
+import { isProfile, useUserStore } from '@/features/pocketbase/stores/users'
+import { s } from '@/features/style'
+import { AddedNewRefConfirmation } from '@/ui/actions/AddedNewRefConfirmation'
+import { ChooseReplaceItemMethod } from '@/ui/actions/ChooseReplaceItemMethod'
+import { SelectItemToReplace } from '@/ui/actions/SelectItemToReplace'
+import { BottomSheetView } from '@gorhom/bottom-sheet'
 import { useState } from 'react'
+import { Dimensions, View } from 'react-native'
+import { FilteredItems } from '../actions/FilteredItems'
 import { RefForm } from '../actions/RefForm'
 import { NewRefFields, SearchRef } from '../actions/SearchRef'
-import { FilteredItems } from '../actions/FilteredItems'
-import { ExpandedItem, StagedItemFields } from '@/features/pocketbase/stores/types'
 import { EditableList } from '../lists/EditableList'
-import { getProfileItems, useItemStore } from '@/features/pocketbase/stores/items'
-import { BottomSheetView } from '@gorhom/bottom-sheet'
-import { s } from '@/features/style'
-import { useRefStore } from '@/features/pocketbase/stores/refs'
-import { RefsTypeOptions } from '@/features/pocketbase/stores/pocketbase-types'
-import { pocketbase } from '@/features/pocketbase/pocketbase'
-import { Heading } from '../typo/Heading'
-import { addToProfile, removeFromProfile } from '@/features/pocketbase'
-import { SelectItemToReplace } from './SelectItemToReplace'
-import { ChooseReplaceItemMethod } from './ChooseReplaceItemMethod'
 
 export type NewRefStep =
   | 'add'
@@ -214,11 +214,7 @@ export const NewRef = ({
       )}
 
       {(step === 'addedToBacklog' || step === 'addedToGrid') && itemData && (
-        <View style={{ padding: s.$3 }}>
-          <Heading tag="h1">
-            {itemData.expand.ref.title} was added to {itemData.backlog ? 'backlog' : 'grid'}
-          </Heading>
-        </View>
+        <AddedNewRefConfirmation itemData={itemData} />
       )}
     </BottomSheetView>
   )

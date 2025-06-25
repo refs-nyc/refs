@@ -68,7 +68,6 @@ export const NewRefSheet = ({
         <NewRef
           backlog={addingNewRefTo === 'backlog'}
           onNewRef={(newItem) => {
-            console.log('created new item', newItem)
             triggerProfileRefresh()
             setAddingNewRefTo(null)
             bottomSheetRef.current?.close()

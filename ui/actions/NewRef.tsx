@@ -97,7 +97,8 @@ export const NewRef = ({
               }
             }
 
-            await addToProfile(existingRefId, itemFields, backlog)
+            const newItem = await addToProfile(existingRefId, itemFields, backlog)
+            setItemData(newItem)
             // finish the flow
             setStep('addedToGrid')
           }}

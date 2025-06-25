@@ -408,13 +408,17 @@ export const DetailsCarouselItem = ({ item, index }: { item: ExpandedItem; index
             setSearchingNewRef('')
             // Do not update the ref
           }}
+          backgroundStyle={{ backgroundColor: c.olive }}
         >
           <SearchRef
             noNewRef
-            onComplete={async (e) => {
+            onAddNewRef={(newRefFields) => {
+              // never called
+            }}
+            onChooseExistingRef={async (r) => {
               // Update the ref
-              await updateEditedState({
-                ref: e.id,
+              updateEditedState({
+                ref: r.id,
               })
               const newRecord = await update()
               setCurrentItem(newRecord as ExpandedItem)

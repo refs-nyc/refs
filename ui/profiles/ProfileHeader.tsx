@@ -28,15 +28,6 @@ export const ProfileHeader = ({ profile }: { profile: Profile }) => {
         <Heading tag="h2">{profile.firstName}</Heading>
         <Heading tag="small">{profile?.location || profile.userName}</Heading>
       </YStack>
-
-      {/* share button */}
-      <View style={{ right: s.$075 }}>
-        <Pressable onPress={() => {}}>
-          <Heading tag="psemi" style={{ color: '#B6B5B2' }}>
-            Share
-          </Heading>
-        </Pressable>
-      </View>
     </XStack>
   )
 }

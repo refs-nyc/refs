@@ -322,12 +322,19 @@ export const SearchRef = ({
         </View>
         {searchQuery.length === 0 && imageAsset === null && (
           <Button
-            variant="whiteOutline"
-            title="Add from camera roll"
+            title="Add from Camera Roll"
             onPress={() => {
               setPicking(true)
             }}
-            style={{ width: 'auto', alignSelf: 'center', borderColor: 'transparent' }}
+            style={{
+              backgroundColor: 'rgba(232,232,232,0.15)',
+              borderRadius: 20,
+              paddingHorizontal: 10,
+              paddingVertical: 7,
+              borderColor: 'transparent',
+              alignSelf: 'center',
+              minWidth: 180,
+            }}
           />
         )}
         {picking && (

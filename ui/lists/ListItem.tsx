@@ -4,6 +4,7 @@ import Ionicons from '@expo/vector-icons/Ionicons'
 import { s, c, base } from '@/features/style'
 import { SimplePinataImage } from '@/ui/images/SimplePinataImage'
 import type { CompleteRef, ExpandedItem } from '@/features/pocketbase/stores/types'
+import { Link } from 'expo-router'
 
 export const ListItem = ({
   r,
@@ -13,6 +14,7 @@ export const ListItem = ({
   largeImage = false,
   onRemove,
   onTitlePress,
+  showLink = false,
 }: {
   r: CompleteRef | ExpandedItem
   backgroundColor?: string
@@ -21,6 +23,7 @@ export const ListItem = ({
   largeImage?: boolean
   onRemove?: () => void
   onTitlePress?: () => void
+  showLink?: boolean
 }) => {
   return (
     <View
@@ -38,12 +41,16 @@ export const ListItem = ({
               originalSource={(r as any).image || (r as any).expand?.ref?.image}
               imageOptions={{ width: largeImage ? s.$4 : s.$2, height: largeImage ? s.$4 : s.$2 }}
               style={largeImage ? base.largeSquare : base.smallSquare}
+              placeholderStyle={[
+                largeImage ? base.largeSquare : base.smallSquare,
+                { backgroundColor: c.olive2 },
+              ]}
             />
           ) : (
             <View
               style={[
                 largeImage ? base.largeSquare : base.smallSquare,
-                { backgroundColor: c.accent },
+                { backgroundColor: c.olive2 },
               ]}
             ></View>
           )}
@@ -53,6 +60,12 @@ export const ListItem = ({
             </Text>
           </Pressable>
         </XStack>
+
+        {showLink && r.url && (
+          <Link href={r.url as any} style={{ transform: [{ rotate: '-45deg' }] }}>
+            <Ionicons name={'arrow-forward-outline'} size={s.$2} color={c.muted} />
+          </Link>
+        )}
 
         {withRemove && (
           <Pressable onPress={onRemove}>

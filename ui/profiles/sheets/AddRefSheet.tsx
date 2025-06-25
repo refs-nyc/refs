@@ -84,6 +84,7 @@ export const AddRefSheet = ({
           setAddingRefId('')
           setItemToReplace(null)
           setStagedItemFields(null)
+          setItemData(null)
           setStep('editNewItem')
         }
       }}

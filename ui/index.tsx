@@ -13,7 +13,6 @@ export * from './grid/GridTile'
 export * from './grid/GridTileActionAdd'
 export * from './grid/GridTileImage'
 export * from './buttons/Button'
-export * from './actions/NewRef'
 export * from './atoms/ScreenWrapper'
 export * from './atoms/Shareable'
 export * from './atoms/DismissKeyboard'
@@ -27,4 +26,3 @@ export * from './SwipeToGoBack'
 
 export const Spinner = () => <Text>Loading</Text>
 export const Paragraph = ({ children }: { children: React.ReactNode }) => <Text>{children}</Text>
-

@@ -2,13 +2,13 @@ import { pocketbase } from './pocketbase'
 import { useUserStore } from './stores/users'
 import { useRefStore } from './stores/refs'
 import { useItemStore } from './stores/items'
-import { CompleteRef, ExpandedItem, StagedItemFields } from './stores/types'
+import { ExpandedItem, StagedItemFields } from './stores/types'
 
-const addToProfile: (
-  existingRef: CompleteRef | null,
+const addToProfile = async (
+  existingRefId: string | null,
   stagedItemFields: StagedItemFields,
   backlog: boolean
-) => Promise<ExpandedItem> = async (existingRef, stagedItemFields, backlog) => {
+): Promise<ExpandedItem> => {
   const userStore = useUserStore.getState()
   const refStore = useRefStore.getState()
   const itemStore = useItemStore.getState()
@@ -19,12 +19,12 @@ const addToProfile: (
     throw new Error('User not found')
   }
 
-  if (existingRef) {
+  if (existingRefId) {
     // create a new item from an existing ref
     newItem = await itemStore.push({
       creator: userStore.user.id,
-      ref: existingRef.id,
-      image: stagedItemFields.image || existingRef?.image,
+      ref: existingRefId,
+      image: stagedItemFields.image,
       url: stagedItemFields.url,
       text: stagedItemFields.text,
       backlog,

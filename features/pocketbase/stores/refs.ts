@@ -18,9 +18,6 @@ export const useRefStore = create<{
 
     return record
   },
-  // Reference an existing Ref, and create an ref off it
-  reference: () => {},
-
   updateOne: async (id: string, fields: Partial<StagedRef>) => {
     try {
       const record = await pocketbase.collection('refs').update(id, { ...fields })
@@ -29,9 +26,5 @@ export const useRefStore = create<{
       console.error(error)
       throw error
     }
-  },
-  remove: async (id: string) => {
-    await pocketbase.collection('refs').delete(id)
-    await canvasApp.actions.removeRef(id)
   },
 }))

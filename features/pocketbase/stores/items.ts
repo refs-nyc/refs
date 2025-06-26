@@ -1,7 +1,7 @@
 import { pocketbase } from '../pocketbase'
 import { RecordModel } from 'pocketbase'
 import { create } from 'zustand'
-import { StagedItem, Item, ExpandedItem, CompleteRef } from './types'
+import { StagedItem, ExpandedItem, CompleteRef, StagedRef } from './types'
 import { ItemsRecord } from './pocketbase-types'
 import { canvasApp } from './canvas'
 import { createdSort } from '@/ui/profiles/sorts'
@@ -49,6 +49,8 @@ export const useItemStore = create<{
   moveToBacklog: (id: string) => Promise<ItemsRecord>
   triggerFeedRefresh: () => void
   triggerProfileRefresh: () => void
+  pushRef: (stagedRef: StagedRef) => Promise<RecordModel>
+  updateOneRef: (id: string, fields: Partial<StagedRef>) => Promise<RecordModel>
 }>((set, get) => ({
   addingToList: false,
   editing: '',
@@ -148,6 +150,21 @@ export const useItemStore = create<{
       // Trigger feed refresh since backlog items don't appear in the feed
       get().triggerFeedRefresh()
 
+      return record
+    } catch (error) {
+      console.error(error)
+      throw error
+    }
+  },
+  pushRef: async (stagedRef: StagedRef) => {
+    const record = await pocketbase.collection('refs').create(stagedRef)
+    await canvasApp.actions.pushRef({ ...stagedRef, id: record.id })
+
+    return record
+  },
+  updateOneRef: async (id: string, fields: Partial<StagedRef>) => {
+    try {
+      const record = await pocketbase.collection('refs').update(id, { ...fields })
       return record
     } catch (error) {
       console.error(error)

@@ -1,7 +1,7 @@
 import { pocketbase } from '../pocketbase'
 import { create } from 'zustand'
-import { Profile, EmptyProfile, ExpandedProfile, Item } from './types'
-import { UsersRecord, UsersResponse, ItemsResponse } from './pocketbase-types'
+import { Profile, EmptyProfile, ExpandedProfile } from './types'
+import { UsersRecord } from './pocketbase-types'
 import { canvasApp } from './canvas'
 import { ClientResponseError } from 'pocketbase'
 
@@ -20,7 +20,6 @@ export const useUserStore = create<{
   getUserByEmail: (email: string) => Promise<Profile>
   login: (userName: string) => Promise<Profile>
   logout: () => void
-  removeItem: (itemId: string) => Promise<ExpandedProfile>
   init: () => Promise<void>
 }>((set, get) => ({
   stagedUser: {},
@@ -227,30 +226,5 @@ export const useUserStore = create<{
     }))
     pocketbase.realtime.unsubscribe()
     pocketbase.authStore.clear()
-  },
-  //
-  //
-  //
-  removeItem: async (itemId: string) => {
-    if (!pocketbase.authStore.isValid || !pocketbase.authStore.record) throw Error('Not logged in')
-
-    try {
-      const updatedRecord = await pocketbase
-        .collection('users')
-        .update<ExpandedProfile>(
-          pocketbase.authStore.record.id,
-          { 'items-': itemId },
-          { expand: 'items,items.ref' }
-        )
-      await canvasApp.actions.removeUserItemAssociation(pocketbase.authStore.record.id, itemId)
-
-      set(() => ({
-        user: updatedRecord,
-      }))
-
-      return updatedRecord
-    } catch (error) {
-      throw error
-    }
   },
 }))

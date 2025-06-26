@@ -1,13 +1,9 @@
 import { pocketbase } from '../pocketbase'
 import { create } from 'zustand'
-import { Profile, EmptyProfile, ExpandedProfile } from './types'
+import { Profile, ExpandedProfile } from './types'
 import { UsersRecord } from './pocketbase-types'
 import { canvasApp } from './canvas'
 import { ClientResponseError } from 'pocketbase'
-
-export const isProfile = (profile: Profile | EmptyProfile | null): profile is Profile => {
-  return profile !== null && Object.keys(profile).length > 0
-}
 
 export const useUserStore = create<{
   stagedUser: Partial<Profile>

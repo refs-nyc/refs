@@ -3,9 +3,8 @@ import { BottomSheetView, BottomSheetScrollView, BottomSheetTextInput } from '@g
 import { Button } from '../buttons/Button'
 import { t, c, s } from '@/features/style'
 import { useRef, useState } from 'react'
-import { Dimensions, Pressable, View } from 'react-native'
+import { Pressable, View } from 'react-native'
 import { SearchRef } from '../actions/SearchRef'
-import { useRefStore } from '@/features/pocketbase/stores/refs'
 import { useItemStore } from '@/features/pocketbase/stores/items'
 import { ListItem } from './ListItem'
 import { NewListItemButton } from './NewListItemButton'
@@ -22,8 +21,7 @@ export const EditableList = ({
   onComplete: () => void
 }) => {
   const { addingToList, remove, setAddingToList } = useItemStore()
-  const { updateOne } = useRefStore()
-  const { push } = useItemStore()
+  const { push, updateOneRef } = useItemStore()
   const [itemState, setItemState] = useState<ExpandedItem>(item)
   const [title, setTitle] = useState<string>(item.expand.ref.title || '')
   const [editingTitle, setEditingTitle] = useState<boolean>(!item.expand.ref.title)
@@ -34,7 +32,7 @@ export const EditableList = ({
     titleRef.current?.blur()
     setEditingTitle(false)
     try {
-      await updateOne(item.ref, {
+      await updateOneRef(item.ref, {
         title: e,
       })
     } catch (error) {

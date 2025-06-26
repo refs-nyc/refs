@@ -16,7 +16,6 @@ export const useUserStore = create<{
   register: () => Promise<ExpandedProfile>
   updateUser: (fields: Partial<Profile>) => Promise<Profile>
   updateStagedUser: (formFields: Partial<Profile>) => void
-  attachItem: (itemId: string) => void
   loginWithPassword: (email: string, password: string) => Promise<any>
   getUserByEmail: (email: string) => Promise<Profile>
   login: (userName: string) => Promise<Profile>
@@ -228,27 +227,6 @@ export const useUserStore = create<{
     }))
     pocketbase.realtime.unsubscribe()
     pocketbase.authStore.clear()
-  },
-  //
-  //
-  //
-  attachItem: async (itemId: string) => {
-    if (!pocketbase.authStore.isValid || !pocketbase.authStore.record) throw Error('Not logged in')
-
-    try {
-      const updatedRecord = await pocketbase
-        .collection<Profile>('users')
-        .update(pocketbase.authStore.record.id, { '+items': itemId }, { expand: 'items,items.ref' })
-      await canvasApp.actions.attachItem(pocketbase.authStore.record.id, itemId)
-
-      set(() => ({
-        user: updatedRecord,
-      }))
-
-      return updatedRecord
-    } catch (error) {
-      throw error
-    }
   },
   //
   //

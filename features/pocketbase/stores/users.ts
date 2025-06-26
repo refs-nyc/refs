@@ -27,7 +27,6 @@ export const useUserStore = create<{
   stagedUser: {},
   user: null, // user is ALWAYS the user of the app, this is only set if the user is logged in
   isInitialized: false,
-  users: [],
   //
   //
   //

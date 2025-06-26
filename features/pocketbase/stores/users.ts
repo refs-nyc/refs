@@ -1,13 +1,9 @@
 import { pocketbase } from '../pocketbase'
 import { create } from 'zustand'
-import { Profile, EmptyProfile, ExpandedProfile, Item } from './types'
-import { UsersRecord, UsersResponse, ItemsResponse } from './pocketbase-types'
+import { Profile, ExpandedProfile } from './types'
+import { UsersRecord } from './pocketbase-types'
 import { canvasApp } from './canvas'
 import { ClientResponseError } from 'pocketbase'
-
-export const isProfile = (profile: Profile | EmptyProfile | null): profile is Profile => {
-  return profile !== null && Object.keys(profile).length > 0
-}
 
 export const useUserStore = create<{
   stagedUser: Partial<Profile>
@@ -16,18 +12,15 @@ export const useUserStore = create<{
   register: () => Promise<ExpandedProfile>
   updateUser: (fields: Partial<Profile>) => Promise<Profile>
   updateStagedUser: (formFields: Partial<Profile>) => void
-  attachItem: (itemId: string) => void
   loginWithPassword: (email: string, password: string) => Promise<any>
   getUserByEmail: (email: string) => Promise<Profile>
   login: (userName: string) => Promise<Profile>
   logout: () => void
-  removeItem: (itemId: string) => Promise<ExpandedProfile>
   init: () => Promise<void>
 }>((set, get) => ({
   stagedUser: {},
   user: null, // user is ALWAYS the user of the app, this is only set if the user is logged in
   isInitialized: false,
-  users: [],
   //
   //
   //
@@ -229,51 +222,5 @@ export const useUserStore = create<{
     }))
     pocketbase.realtime.unsubscribe()
     pocketbase.authStore.clear()
-  },
-  //
-  //
-  //
-  attachItem: async (itemId: string) => {
-    if (!pocketbase.authStore.isValid || !pocketbase.authStore.record) throw Error('Not logged in')
-
-    try {
-      const updatedRecord = await pocketbase
-        .collection<Profile>('users')
-        .update(pocketbase.authStore.record.id, { '+items': itemId }, { expand: 'items,items.ref' })
-      await canvasApp.actions.attachItem(pocketbase.authStore.record.id, itemId)
-
-      set(() => ({
-        user: updatedRecord,
-      }))
-
-      return updatedRecord
-    } catch (error) {
-      throw error
-    }
-  },
-  //
-  //
-  //
-  removeItem: async (itemId: string) => {
-    if (!pocketbase.authStore.isValid || !pocketbase.authStore.record) throw Error('Not logged in')
-
-    try {
-      const updatedRecord = await pocketbase
-        .collection('users')
-        .update<ExpandedProfile>(
-          pocketbase.authStore.record.id,
-          { 'items-': itemId },
-          { expand: 'items,items.ref' }
-        )
-      await canvasApp.actions.removeUserItemAssociation(pocketbase.authStore.record.id, itemId)
-
-      set(() => ({
-        user: updatedRecord,
-      }))
-
-      return updatedRecord
-    } catch (error) {
-      throw error
-    }
   },
 }))

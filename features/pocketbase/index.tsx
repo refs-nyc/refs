@@ -1,6 +1,5 @@
 import { pocketbase } from './pocketbase'
 import { useUserStore } from './stores/users'
-import { useRefStore } from './stores/refs'
 import { useItemStore } from './stores/items'
 import { ExpandedItem, StagedItemFields } from './stores/types'
 
@@ -10,7 +9,6 @@ const addToProfile = async (
   backlog: boolean
 ): Promise<ExpandedItem> => {
   const userStore = useUserStore.getState()
-  const refStore = useRefStore.getState()
   const itemStore = useItemStore.getState()
 
   let newItem: ExpandedItem
@@ -31,7 +29,7 @@ const addToProfile = async (
     })
   } else {
     // create a new item, with a new ref
-    const newRef = await refStore.push({
+    const newRef = await itemStore.pushRef({
       creator: userStore.user.id,
       title: stagedItemFields.title,
       meta: stagedItemFields.meta,
@@ -50,4 +48,4 @@ const addToProfile = async (
   return newItem
 }
 
-export { pocketbase, useUserStore, useRefStore, useItemStore, addToProfile }
+export { pocketbase, useUserStore, useItemStore, addToProfile }

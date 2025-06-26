@@ -29,7 +29,6 @@ function gridSort(items: ExpandedItem[]): ExpandedItem[] {
 //
 //
 export const useItemStore = create<{
-  items: Item[]
   editing: string
   addingToList: boolean
   searchingNewRef: string
@@ -51,7 +50,6 @@ export const useItemStore = create<{
   triggerFeedRefresh: () => void
   triggerProfileRefresh: () => void
 }>((set, get) => ({
-  items: [],
   addingToList: false,
   editing: '',
   searchingNewRef: '', // the id to replace the ref for
@@ -82,10 +80,7 @@ export const useItemStore = create<{
         .create<ExpandedItem>(newItem, { expand: 'ref' })
       await canvasApp.actions.pushItem({ ...newItem, id: record.id })
 
-      set((state) => {
-        const newItems = [...state.items, record]
-        return { items: newItems, feedRefreshTrigger: state.feedRefreshTrigger + 1 }
-      })
+      set((state) => ({ feedRefreshTrigger: state.feedRefreshTrigger + 1 }))
 
       return record
     } catch (error) {
@@ -107,7 +102,6 @@ export const useItemStore = create<{
     await canvasApp.actions.removeItem(id)
 
     set((state) => ({
-      items: [...state.items?.filter((i) => i.id !== id)],
       feedRefreshTrigger: state.feedRefreshTrigger + 1,
     }))
   },

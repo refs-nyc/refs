@@ -1,8 +1,5 @@
 import * as PBTypes from './pocketbase-types'
 
-// Logged out user
-export type EmptyProfile = {}
-
 export type StagedRef = Partial<PBTypes.RefsRecord>
 export type StagedItem = Partial<PBTypes.ItemsRecord>
 

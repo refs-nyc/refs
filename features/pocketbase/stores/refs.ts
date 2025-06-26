@@ -11,10 +11,6 @@ import { canvasApp } from './canvas'
 export const useRefStore = create<{
   push: (stagedRef: StagedRef) => Promise<RecordModel>
   updateOne: (id: string, fields: Partial<StagedRef>) => Promise<RecordModel>
-  addMetaData: (
-    id: string,
-    { location, author }: { location?: string; author?: string }
-  ) => Promise<RecordModel | void>
 }>((set) => ({
   push: async (stagedRef: StagedRef) => {
     const record = await pocketbase.collection('refs').create(stagedRef)
@@ -24,17 +20,7 @@ export const useRefStore = create<{
   },
   // Reference an existing Ref, and create an ref off it
   reference: () => {},
-  addMetaData: async (id: string, meta: { location?: string; author?: string }) => {
-    try {
-      const updatedRecord = await pocketbase
-        .collection('refs')
-        .update(id, { meta: JSON.stringify(meta) })
-      await canvasApp.actions.addRefMetadata(id, { meta })
-      return updatedRecord
-    } catch (error) {
-      console.error(error)
-    }
-  },
+
   updateOne: async (id: string, fields: Partial<StagedRef>) => {
     try {
       const record = await pocketbase.collection('refs').update(id, { ...fields })

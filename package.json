@@ -15,10 +15,7 @@
     "web": "expo start --web",
     "test": "jest --watchAll",
     "lint": "expo lint",
-    "server": "node --experimental-strip-types server/index.ts",
-    "docs:dev": "vitepress dev docs",
-    "docs:build": "vitepress build docs",
-    "docs:preview": "vitepress preview docs"
+    "server": "node --experimental-strip-types server/index.ts"
   },
   "jest": {
     "preset": "jest-expo"
@@ -26,10 +23,10 @@
   "dependencies": {
     "@babel/preset-env": "^7.26.0",
     "@babel/runtime": "^7.26.0",
-    "@canvas-js/core": "0.16.0-next.5",
-    "@canvas-js/gossiplog": "0.16.0-next.5",
-    "@canvas-js/hooks": "0.16.0-next.5",
-    "@canvas-js/signer-ethereum": "0.16.0-next.5",
+    "@canvas-js/core": "0.15.0",
+    "@canvas-js/gossiplog": "0.15.0",
+    "@canvas-js/hooks": "0.15.0",
+    "@canvas-js/signer-ethereum": "0.15.0",
     "@ethersproject/providers": "^5.7.2",
     "@expo/vector-icons": "^14.0.2",
     "@gorhom/bottom-sheet": "^5",
@@ -122,9 +119,7 @@
     "jest": "^29.2.1",
     "jest-expo": "~52.0.2",
     "react-test-renderer": "18.3.1",
-    "typescript": "^5.3.3",
-    "vitepress": "^1.6.3",
-    "vue": "^3.5.17"
+    "typescript": "^5.3.3"
   },
   "private": true,
   "pnpm": {

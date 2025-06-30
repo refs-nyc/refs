@@ -29,6 +29,7 @@ export function MessagesScreen({ conversationId }: { conversationId: string }) {
     setOldestLoadedMessageDate,
     addOlderMessages,
     firstMessageDate,
+    updateLastRead,
   } = useMessageStore()
   const flatListRef = useRef<FlatList>(null)
   const [message, setMessage] = useState<string>('')
@@ -41,8 +42,6 @@ export function MessagesScreen({ conversationId }: { conversationId: string }) {
 
   const conversation = conversations[conversationId]
   const members = memberships[conversationId].filter((m) => m.expand?.user.id !== user?.id)
-  const ownMembership = memberships[conversationId].filter((m) => m.expand?.user.id === user?.id)[0]
-  const router = useRouter()
 
   const conversationMessages = messagesPerConversation[conversationId]
   const highlightedMessage = conversationMessages.find((m) => m.id === highlightedMessageId)
@@ -59,13 +58,8 @@ export function MessagesScreen({ conversationId }: { conversationId: string }) {
   }, [members.length])
 
   useEffect(() => {
-    async function setLastRead() {
-      const lastReadDate = conversationMessages[0].created
-      await pocketbase
-        .collection('memberships')
-        .update(ownMembership.id, { last_read: lastReadDate })
-    }
-    setLastRead()
+    if (!user) return
+    updateLastRead(conversationId, user.id)
   }, [])
 
   if (!user) return null

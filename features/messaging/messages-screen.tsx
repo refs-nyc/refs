@@ -3,12 +3,10 @@ import { View, DimensionValue, FlatList, Text, useWindowDimensions } from 'react
 
 import { c, s } from '../style'
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { pocketbase, useUserStore } from '../pocketbase'
-import { PAGE_SIZE, useMessageStore } from '../pocketbase/stores/messages'
-import { Pressable } from 'react-native'
-import { Link, useRouter } from 'expo-router'
+import { useUserStore } from '../pocketbase'
+import { useMessageStore } from '../pocketbase/stores/messages'
+import { Link } from 'expo-router'
 import { Avatar, AvatarStack } from '@/ui/atoms/Avatar'
-import { Ionicons } from '@expo/vector-icons'
 import MessageBubble from '@/ui/messaging/MessageBubble'
 import EmojiPicker from 'rn-emoji-keyboard'
 import MessageInput from '@/ui/messaging/MessageInput'
@@ -30,6 +28,7 @@ export function MessagesScreen({ conversationId }: { conversationId: string }) {
     addOlderMessages,
     firstMessageDate,
     updateLastRead,
+    getNewMessages,
   } = useMessageStore()
   const flatListRef = useRef<FlatList>(null)
   const [message, setMessage] = useState<string>('')
@@ -98,13 +97,13 @@ export function MessagesScreen({ conversationId }: { conversationId: string }) {
     if (!user) return
     if (oldestLoadedMessageDate[conversationId] === firstMessageDate[conversationId]) return
 
-    const newMessages = await pocketbase.collection('messages').getList<Message>(0, PAGE_SIZE, {
-      filter: `conversation = "${conversationId}" && created < "${oldestLoadedMessageDate[conversationId]}"`,
-      sort: '-created',
-    })
-    const oldestMessage = newMessages.items[newMessages.items.length - 1]
+    const newMessages = await getNewMessages(
+      conversationId,
+      oldestLoadedMessageDate[conversationId]
+    )
+    const oldestMessage = newMessages[newMessages.length - 1]
     setOldestLoadedMessageDate(conversationId, oldestMessage.created!)
-    addOlderMessages(conversationId, newMessages.items)
+    addOlderMessages(conversationId, newMessages)
   }
 
   function renderMessage({ item }: { item: Message }) {

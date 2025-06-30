@@ -46,6 +46,7 @@ type MessageStore = {
   firstMessageDate: Record<string, string>
   setFirstMessageDate: (conversationId: string, dateString: string) => void
   updateLastRead: (conversationId: string, userId: string) => Promise<void>
+  getNewMessages: (conversationId: string, oldestLoadedMessageDate: string) => Promise<Message[]>
 
   reactions: Record<string, ExpandedReaction[]>
   setReactions: (reactions: ExpandedReaction[]) => void
@@ -251,6 +252,14 @@ export const useMessageStore = create<MessageStore>((set, get) => ({
     const memberships = get().memberships
     const ownMembership = memberships[conversationId].filter((m) => m.expand?.user.id === userId)[0]
     await pocketbase.collection('memberships').update(ownMembership.id, { last_read: lastReadDate })
+  },
+
+  getNewMessages: async (conversationId: string, oldestLoadedMessageDate: string) => {
+    const newMessages = await pocketbase.collection('messages').getList<Message>(0, PAGE_SIZE, {
+      filter: `conversation = "${conversationId}" && created < "${oldestLoadedMessageDate}"`,
+      sort: '-created',
+    })
+    return newMessages.items
   },
 
   reactions: {},

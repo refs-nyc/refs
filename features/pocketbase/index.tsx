@@ -1,6 +1,7 @@
 import { pocketbase } from './pocketbase'
 import { useItemStore } from './stores/items'
 import { ExpandedItem, StagedItemFields } from './stores/types'
+import { useUserStore } from './stores/users'
 
 const addToProfile = async (
   existingRefId: string | null,
@@ -22,4 +23,4 @@ const addToProfile = async (
   return newItem
 }
 
-export { pocketbase, useItemStore, addToProfile }
+export { pocketbase, useItemStore, useUserStore, addToProfile }

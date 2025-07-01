@@ -1,4 +1,4 @@
-import { addToProfile, pocketbase } from '@/features/pocketbase'
+import { pocketbase } from '@/features/pocketbase'
 import { getProfileItems, useItemStore } from '@/features/pocketbase/stores/items'
 import { ExpandedItem, StagedItemFields } from '@/features/pocketbase/stores/types'
 import { useUserStore } from '@/features/pocketbase/stores/users'
@@ -35,7 +35,7 @@ export const NewRefSheet = ({
   const { addingNewRefTo, setAddingNewRefTo } = useUIStore()
 
   // functions for adding the new item to a list or the grid or the backlog
-  const { addItemToList, moveToBacklog, removeItem, createItem, createItemAndRef } = useItemStore()
+  const { addItemToList, moveToBacklog, removeItem, addToProfile } = useItemStore()
   const { user } = useUserStore()
 
   const [step, setStep] = useState<NewRefStep>('search')

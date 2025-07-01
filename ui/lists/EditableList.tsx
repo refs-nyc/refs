@@ -11,7 +11,6 @@ import { NewListItemButton } from './NewListItemButton'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { XStack } from '../core/Stacks'
 import { Ionicons } from '@expo/vector-icons'
-import { addToProfile } from '@/features/pocketbase'
 
 export const EditableList = ({
   item,
@@ -20,7 +19,7 @@ export const EditableList = ({
   item: ExpandedItem
   onComplete: () => void
 }) => {
-  const { addingToList, removeItem, setAddingToList } = useItemStore()
+  const { addingToList, removeItem, setAddingToList, addToProfile } = useItemStore()
   const { updateOneRef } = useItemStore()
   const [itemState, setItemState] = useState<ExpandedItem>(item)
   const [title, setTitle] = useState<string>(item.expand.ref.title || '')

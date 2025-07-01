@@ -1,4 +1,4 @@
-import { addToProfile, pocketbase, useUserStore } from '@/features/pocketbase'
+import { pocketbase, useUserStore } from '@/features/pocketbase'
 import { getProfileItems, useItemStore } from '@/features/pocketbase/stores/items'
 import { RefsRecord } from '@/features/pocketbase/stores/pocketbase-types'
 import { ExpandedItem, StagedItemFields } from '@/features/pocketbase/stores/types'
@@ -35,7 +35,7 @@ export const AddRefSheet = ({
   // the resulting item
   const [itemData, setItemData] = useState<ExpandedItem | null>(null)
 
-  const { moveToBacklog, removeItem } = useItemStore()
+  const { moveToBacklog, removeItem, addToProfile } = useItemStore()
 
   useEffect(() => {
     const getRef = async () => {

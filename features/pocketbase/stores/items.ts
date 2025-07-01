@@ -1,5 +1,4 @@
 import { pocketbase } from '../pocketbase'
-import { RecordModel } from 'pocketbase'
 import { create } from 'zustand'
 import { ExpandedItem, CompleteRef, StagedItemFields, StagedRefFields } from './types'
 import { ItemsRecord } from './pocketbase-types'
@@ -32,7 +31,12 @@ export const useItemStore = create<{
   editing: string
   addingToList: boolean
   searchingNewRef: string
-  editedState: Partial<ExpandedItem & { listTitle: string }>
+  editedState: {
+    text?: string
+    image?: string
+    url?: string
+    listTitle?: string
+  }
   editingLink: boolean
   feedRefreshTrigger: number
   profileRefreshTrigger: number
@@ -53,14 +57,14 @@ export const useItemStore = create<{
     backlog: boolean
   ) => Promise<ExpandedItem>
   addItemToList: (listId: string, itemId: string) => Promise<void>
-  update: (id?: string) => Promise<RecordModel>
+  update: (id?: string) => Promise<ExpandedItem>
   updateEditedState: (e: Partial<ExpandedItem & { listTitle: string }>) => void
   removeItem: (id: string) => Promise<void>
   moveToBacklog: (id: string) => Promise<ItemsRecord>
   triggerFeedRefresh: () => void
   triggerProfileRefresh: () => void
 
-  updateOneRef: (id: string, fields: { title: string }) => Promise<RecordModel>
+  updateRefTitle: (id: string, title: string) => Promise<CompleteRef>
 }>((set, get) => ({
   addingToList: false,
   editing: '',
@@ -77,7 +81,12 @@ export const useItemStore = create<{
     set(() => {
       return { editing: '', editedState: {}, searchingNewRef: '', editingLink: false }
     }),
-  updateEditedState: (editedState: Partial<CompleteRef>) =>
+  updateEditedState: (editedState: {
+    text?: string
+    image?: string
+    url?: string
+    listTitle?: string
+  }) =>
     set(() => ({
       ...get().editedState,
       editedState,
@@ -176,26 +185,26 @@ export const useItemStore = create<{
   update: async (id?: string) => {
     try {
       const editedState = get().editedState
-      const record = await pocketbase
-        .collection('items')
+      const updatedItem = await pocketbase
+        .collection<ExpandedItem>('items')
         .update(id || get().editing, editedState, { expand: 'children,ref' })
 
-      if (editedState.listTitle && record.list) {
+      if (editedState.listTitle && updatedItem.list) {
         const ref = await pocketbase
           .collection('refs')
-          .update(record.ref, { title: editedState.listTitle })
-        if (record.expand?.ref) record.expand.ref = ref
+          .update(updatedItem.ref, { title: editedState.listTitle })
+        if (updatedItem.expand?.ref) updatedItem.expand.ref = ref
       }
-      await canvasApp.actions.updateItem(id, editedState)
+      await canvasApp.actions.updateItem(id, editedState.text, editedState.image, editedState.url)
 
-      if (editedState.listTitle && record.list) {
-        await canvasApp.actions.updateRef(record.ref, { title: editedState.listTitle })
+      if (editedState.listTitle && updatedItem.list) {
+        await canvasApp.actions.updateRefTitle(updatedItem.ref, editedState.listTitle)
       }
 
       // Trigger feed refresh since updates might affect feed visibility
       get().triggerFeedRefresh()
 
-      return record
+      return updatedItem
     } catch (e) {
       console.error(e)
       throw e
@@ -215,10 +224,10 @@ export const useItemStore = create<{
       throw error
     }
   },
-  updateOneRef: async (id: string, fields: { title: string }) => {
+  updateRefTitle: async (id: string, title: string) => {
     try {
-      const record = await pocketbase.collection('refs').update(id, { ...fields })
-      await canvasApp.actions.updateRef(id, fields)
+      const record = await pocketbase.collection('refs').update(id, { title })
+      await canvasApp.actions.updateRefTitle(id, title)
       return record
     } catch (error) {
       console.error(error)

@@ -66,11 +66,21 @@ class RefsContract extends Contract<typeof RefsContract.models> {
     } satisfies ModelSchema
   }
 
-  async createRef(refId: string, title: string, meta: string, image: string) {}
+  async createRef(refId: string, title: string, meta: string, image: string) {
+    // this creates a new ref with the given fields
+  }
 
-  async createItem(refId: string, image: string, text: string) {}
+  async createItem(refId: string, image: string, text: string, list: boolean) {
+    // this creates a new item with the given fields
+  }
 
-  async createList(title: string) {}
+  async updateRefTitle(refId: string, title: string ) {
+    // this updates the ref with the given fields
+  }
+
+  async updateItem(itemId: string, text: string; image: string; url: string ) {
+    // this updates the item with the given fields
+  }
 
   async addItemToList(listItemId: string, itemId: string) {}
 

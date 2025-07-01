@@ -20,20 +20,18 @@ export const EditableList = ({
   onComplete: () => void
 }) => {
   const { addingToList, removeItem, setAddingToList, addToProfile } = useItemStore()
-  const { updateOneRef } = useItemStore()
+  const { updateRefTitle } = useItemStore()
   const [itemState, setItemState] = useState<ExpandedItem>(item)
   const [title, setTitle] = useState<string>(item.expand.ref.title || '')
   const [editingTitle, setEditingTitle] = useState<boolean>(!item.expand.ref.title)
   const titleRef = useRef<any>(null)
   const insets = useSafeAreaInsets()
 
-  const onTitleChange = async (e: string) => {
+  const onTitleChange = async (newTitle: string) => {
     titleRef.current?.blur()
     setEditingTitle(false)
     try {
-      await updateOneRef(item.ref, {
-        title: e,
-      })
+      await updateRefTitle(item.ref, newTitle)
     } catch (error) {
       console.error(error)
     }

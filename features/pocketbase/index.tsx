@@ -25,6 +25,7 @@ const addToProfile = async (
       image: stagedItemFields.image,
       url: stagedItemFields.url,
       text: stagedItemFields.text,
+      list: stagedItemFields.list || false,
       backlog,
     })
   } else {
@@ -41,6 +42,7 @@ const addToProfile = async (
       image: stagedItemFields.image,
       url: stagedItemFields.url,
       text: stagedItemFields.text,
+      list: stagedItemFields.list || false,
       backlog,
     })
   }

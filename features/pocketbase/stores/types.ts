@@ -35,4 +35,5 @@ export type StagedItemFields = {
   text: string
   url: string
   image: string
+  list?: boolean
 }

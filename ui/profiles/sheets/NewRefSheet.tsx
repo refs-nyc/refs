@@ -35,7 +35,7 @@ export const NewRefSheet = ({
   const { addingNewRefTo, setAddingNewRefTo } = useUIStore()
 
   // functions for adding the new item to a list or the grid or the backlog
-  const { addItemToList, push: pushItem, pushRef, moveToBacklog, removeItem } = useItemStore()
+  const { addItemToList, moveToBacklog, removeItem } = useItemStore()
   const { user } = useUserStore()
 
   const [step, setStep] = useState<NewRefStep>('search')
@@ -236,19 +236,18 @@ export const NewRefSheet = ({
                   setStep('editList')
                 }}
                 onCreateList={async () => {
-                  // Create new ref for the list
-                  const listRef = await pushRef({
-                    title: '',
-                    type: RefsTypeOptions.other,
-                    creator: user?.id,
-                  })
-
-                  // Create new item with the ref
-                  const list = await pushItem({
-                    ref: listRef.id,
-                    creator: user?.id,
-                    list: true,
-                  })
+                  // we should just have one function to create a list, which creates a ref and an item
+                  const list = await addToProfile(
+                    null,
+                    {
+                      title: '',
+                      text: '',
+                      url: '',
+                      image: '',
+                      list: true,
+                    },
+                    backlog
+                  )
 
                   // Add current item to the new list
                   await addItemToList(list.id, itemData?.id!)

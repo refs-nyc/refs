@@ -26,14 +26,15 @@ const addToProfile = async (
       url: stagedItemFields.url,
       text: stagedItemFields.text,
       list: stagedItemFields.list || false,
+      parent: stagedItemFields.parent,
       backlog,
     })
   } else {
     // create a new item, with a new ref
     const newRef = await itemStore.pushRef({
       creator: userStore.user.id,
-      title: stagedItemFields.title,
-      meta: stagedItemFields.meta,
+      title: stagedItemFields.title || '',
+      meta: stagedItemFields.meta || '{}',
       image: stagedItemFields.image,
     })
     newItem = await itemStore.push({
@@ -43,6 +44,7 @@ const addToProfile = async (
       url: stagedItemFields.url,
       text: stagedItemFields.text,
       list: stagedItemFields.list || false,
+      parent: stagedItemFields.parent,
       backlog,
     })
   }

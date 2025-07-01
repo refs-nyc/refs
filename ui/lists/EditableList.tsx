@@ -11,7 +11,7 @@ import { NewListItemButton } from './NewListItemButton'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { XStack } from '../core/Stacks'
 import { Ionicons } from '@expo/vector-icons'
-import { pocketbase } from '@/features/pocketbase'
+import { addToProfile } from '@/features/pocketbase'
 
 export const EditableList = ({
   item,
@@ -21,7 +21,7 @@ export const EditableList = ({
   onComplete: () => void
 }) => {
   const { addingToList, removeItem, setAddingToList } = useItemStore()
-  const { push, updateOneRef } = useItemStore()
+  const { updateOneRef } = useItemStore()
   const [itemState, setItemState] = useState<ExpandedItem>(item)
   const [title, setTitle] = useState<string>(item.expand.ref.title || '')
   const [editingTitle, setEditingTitle] = useState<boolean>(!item.expand.ref.title)
@@ -42,12 +42,17 @@ export const EditableList = ({
 
   const onRefFound = async (ref: CompleteRef) => {
     try {
-      const newItem = await push({
-        ref: ref.id,
-        image: ref?.image,
-        creator: pocketbase.authStore?.record?.id,
-        parent: item.id,
-      })
+      // use addToProfile instead
+      const newItem = await addToProfile(
+        ref.id,
+        {
+          parent: item.id,
+          text: '',
+          url: ref.url || '',
+          image: ref.image || '',
+        },
+        false
+      )
       setItemState((prev) => ({
         ...prev,
         expand: {

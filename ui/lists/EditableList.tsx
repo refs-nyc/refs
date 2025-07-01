@@ -20,7 +20,7 @@ export const EditableList = ({
   item: ExpandedItem
   onComplete: () => void
 }) => {
-  const { addingToList, remove, setAddingToList } = useItemStore()
+  const { addingToList, removeItem, setAddingToList } = useItemStore()
   const { push, updateOneRef } = useItemStore()
   const [itemState, setItemState] = useState<ExpandedItem>(item)
   const [title, setTitle] = useState<string>(item.expand.ref.title || '')
@@ -112,7 +112,7 @@ export const EditableList = ({
                     backgroundColor={c.olive}
                     onRemove={async () => {
                       try {
-                        await remove(kid.id)
+                        await removeItem(kid.id)
                         setItemState((prev) => ({
                           ...prev,
                           expand: {

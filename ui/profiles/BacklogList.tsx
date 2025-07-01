@@ -10,18 +10,24 @@ import { DateTime } from 'luxon'
 import SwipeableBacklogItem from './SwipeableBacklogItem'
 import { useItemStore } from '@/features/pocketbase'
 
-export default function BacklogList({ items: itemsInit, ownProfile }: { items: ExpandedItem[], ownProfile: boolean }) {
+export default function BacklogList({
+  items: itemsInit,
+  ownProfile,
+}: {
+  items: ExpandedItem[]
+  ownProfile: boolean
+}) {
   const [showSearch, setShowSearch] = useState(false)
   const [hasScrolled, setHasScrolled] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const [items, setItems] = useState<ExpandedItem[]>(itemsInit)
-  const { remove } = useItemStore()
+  const { removeItem } = useItemStore()
   const calendars = useCalendars()
   const timeZone = calendars[0].timeZone || 'America/New_York'
 
   useEffect(() => {
-    if (itemsInit.length) setItems(itemsInit);
-  }, [itemsInit]);
+    if (itemsInit.length) setItems(itemsInit)
+  }, [itemsInit])
 
   const groupnames = ['Today', 'Yesterday']
 
@@ -88,10 +94,9 @@ export default function BacklogList({ items: itemsInit, ownProfile }: { items: E
 
   async function onRemoveFromBacklog(i: ExpandedItem): Promise<void> {
     try {
-      await remove(i.id)
+      await removeItem(i.id)
       setItems(items.filter((item) => item.id !== i.id))
-    }
-    catch (error) {
+    } catch (error) {
       console.error(error)
     }
   }

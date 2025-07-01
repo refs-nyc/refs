@@ -29,7 +29,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
   const [loading, setLoading] = useState<boolean>(true)
 
   const { user } = useUserStore()
-  const { moveToBacklog, profileRefreshTrigger, remove } = useItemStore()
+  const { moveToBacklog, profileRefreshTrigger, removeItem } = useItemStore()
 
   const [removingItem, setRemovingItem] = useState<ExpandedItem | null>(null)
 
@@ -68,7 +68,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
   const handleRemoveFromProfile = async () => {
     if (!removingItem) return
     removeRefSheetRef.current?.close()
-    await remove(removingItem.id)
+    await removeItem(removingItem.id)
     setRemovingItem(null)
     await refreshGrid(userName)
   }

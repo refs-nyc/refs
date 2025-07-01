@@ -45,7 +45,7 @@ export const useItemStore = create<{
   addItemToList: (listId: string, itemId: string) => Promise<void>
   update: (id?: string) => Promise<RecordModel>
   updateEditedState: (e: Partial<ExpandedItem & { listTitle: string }>) => void
-  remove: (id: string) => Promise<void>
+  removeItem: (id: string) => Promise<void>
   moveToBacklog: (id: string) => Promise<ItemsRecord>
   triggerFeedRefresh: () => void
   triggerProfileRefresh: () => void
@@ -90,7 +90,7 @@ export const useItemStore = create<{
       throw error
     }
   },
-  remove: async (id: string): Promise<void> => {
+  removeItem: async (id: string): Promise<void> => {
     const item = await pocketbase.collection('items').getOne(id)
     if (item.list) {
       const children = await pocketbase

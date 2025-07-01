@@ -35,7 +35,7 @@ export const AddRefSheet = ({
   // the resulting item
   const [itemData, setItemData] = useState<ExpandedItem | null>(null)
 
-  const { moveToBacklog, remove } = useItemStore()
+  const { moveToBacklog, removeItem } = useItemStore()
 
   useEffect(() => {
     const getRef = async () => {
@@ -163,7 +163,7 @@ export const AddRefSheet = ({
           itemToReplace={itemToReplace}
           removeFromProfile={async () => {
             // remove (delete) itemToReplace from the grid
-            await remove(itemToReplace.id)
+            await removeItem(itemToReplace.id)
             // add the new item to the grid
             const newItem = await addToProfile(addingRefId, stagedItemFields, false)
             setItemData(newItem)

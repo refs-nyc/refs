@@ -35,7 +35,7 @@ export const NewRefSheet = ({
   const { addingNewRefTo, setAddingNewRefTo } = useUIStore()
 
   // functions for adding the new item to a list or the grid or the backlog
-  const { addItemToList, push: pushItem, pushRef, moveToBacklog, remove } = useItemStore()
+  const { addItemToList, push: pushItem, pushRef, moveToBacklog, removeItem } = useItemStore()
   const { user } = useUserStore()
 
   const [step, setStep] = useState<NewRefStep>('search')
@@ -199,7 +199,7 @@ export const NewRefSheet = ({
               itemToReplace={itemToReplace}
               removeFromProfile={async () => {
                 // remove (delete) itemToReplace from the grid
-                await remove(itemToReplace.id)
+                await removeItem(itemToReplace.id)
                 // add the new item to the grid
                 const newItem = await addToProfile(existingRefId, stagedItemFields, false)
                 setItemData(newItem)

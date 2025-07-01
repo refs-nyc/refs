@@ -35,7 +35,7 @@ export const NewRefSheet = ({
   const { addingNewRefTo, setAddingNewRefTo } = useUIStore()
 
   // functions for adding the new item to a list or the grid or the backlog
-  const { addItemToList, moveToBacklog, removeItem } = useItemStore()
+  const { addItemToList, moveToBacklog, removeItem, createItem, createItemAndRef } = useItemStore()
   const { user } = useUserStore()
 
   const [step, setStep] = useState<NewRefStep>('search')

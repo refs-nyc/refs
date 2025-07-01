@@ -66,13 +66,7 @@ class RefsContract extends Contract<typeof RefsContract.models> {
     } satisfies ModelSchema
   }
 
-  async createItemAndRef(
-    title: string,
-    image: string,
-    text: string,
-    meta: { location?: string; author?: string },
-    backlog: boolean
-  ) {}
+  async createRef(refId: string, title: string, meta: string, image: string) {}
 
   async createItem(refId: string, image: string, text: string) {}
 

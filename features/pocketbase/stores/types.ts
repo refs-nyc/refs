@@ -1,8 +1,5 @@
 import * as PBTypes from './pocketbase-types'
 
-export type StagedRef = Partial<PBTypes.RefsRecord>
-export type StagedItem = Partial<PBTypes.ItemsRecord>
-
 export type CompleteRef = PBTypes.RefsRecord
 export type Profile = PBTypes.UsersRecord
 export type Item = PBTypes.ItemsRecord
@@ -37,4 +34,10 @@ export type StagedItemFields = {
   image: string
   list?: boolean
   parent?: string
+}
+
+export type StagedRefFields = {
+  title?: string
+  meta?: string
+  image?: string
 }

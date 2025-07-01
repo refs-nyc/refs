@@ -9,18 +9,7 @@ const addToProfile = async (
   backlog: boolean
 ): Promise<ExpandedItem> => {
   const itemStore = useItemStore.getState()
-
-  let newItem: ExpandedItem
-
-  if (existingRefId) {
-    // create a new item from an existing ref
-    newItem = await itemStore.createItem(existingRefId, stagedItemFields, backlog)
-  } else {
-    // create a new item, with a new ref
-    newItem = await itemStore.createItemAndRef(stagedItemFields, backlog)
-  }
-
-  return newItem
+  return await itemStore.addToProfile(existingRefId, stagedItemFields, backlog)
 }
 
 export { pocketbase, useItemStore, useUserStore, addToProfile }

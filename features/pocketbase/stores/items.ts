@@ -163,6 +163,7 @@ export const useItemStore = create<{
   addItemToList: async (listId: string, itemId: string) => {
     try {
       await pocketbase.collection('items').update(itemId, { parent: listId })
+      await canvasApp.actions.addItemToList(listId, itemId)
       // newly created item might appear in feed before it is added to a list
       // so we should refresh after choosing a list
       // (because currently we are filtering out list children from feed)
@@ -174,17 +175,22 @@ export const useItemStore = create<{
   },
   update: async (id?: string) => {
     try {
+      const editedState = get().editedState
       const record = await pocketbase
         .collection('items')
-        .update(id || get().editing, get().editedState, { expand: 'children,ref' })
+        .update(id || get().editing, editedState, { expand: 'children,ref' })
 
-      if (get().editedState.listTitle && record.list) {
+      if (editedState.listTitle && record.list) {
         const ref = await pocketbase
           .collection('refs')
-          .update(record.ref, { title: get().editedState.listTitle })
+          .update(record.ref, { title: editedState.listTitle })
         if (record.expand?.ref) record.expand.ref = ref
       }
-      // Canvas stuff
+      await canvasApp.actions.updateItem(id, editedState)
+
+      if (editedState.listTitle && record.list) {
+        await canvasApp.actions.updateRef(record.ref, { title: editedState.listTitle })
+      }
 
       // Trigger feed refresh since updates might affect feed visibility
       get().triggerFeedRefresh()
@@ -198,7 +204,7 @@ export const useItemStore = create<{
   moveToBacklog: async (id: string) => {
     try {
       const record = await pocketbase.collection<ItemsRecord>('items').update(id, { backlog: true })
-      //await canvasApp.actions.moveItemToBacklog(id)
+      await canvasApp.actions.moveItemToBacklog(id)
 
       // Trigger feed refresh since backlog items don't appear in the feed
       get().triggerFeedRefresh()
@@ -209,15 +215,10 @@ export const useItemStore = create<{
       throw error
     }
   },
-  pushRef: async (stagedRef: StagedRef) => {
-    const record = await pocketbase.collection('refs').create(stagedRef)
-    await canvasApp.actions.pushRef({ ...stagedRef, id: record.id })
-
-    return record
-  },
   updateOneRef: async (id: string, fields: Partial<StagedRef>) => {
     try {
       const record = await pocketbase.collection('refs').update(id, { ...fields })
+      await canvasApp.actions.updateRef(id, fields)
       return record
     } catch (error) {
       console.error(error)

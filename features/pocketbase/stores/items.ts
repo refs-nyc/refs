@@ -1,7 +1,7 @@
 import { pocketbase } from '../pocketbase'
 import { RecordModel } from 'pocketbase'
 import { create } from 'zustand'
-import { StagedItem, ExpandedItem, CompleteRef, StagedRef } from './types'
+import { StagedItem, ExpandedItem, CompleteRef, StagedRef, StagedItemFields } from './types'
 import { ItemsRecord } from './pocketbase-types'
 import { canvasApp } from './canvas'
 import { createdSort } from '@/ui/profiles/sorts'
@@ -41,7 +41,12 @@ export const useItemStore = create<{
   setAddingToList: (newValue: boolean) => void
   setSearchingNewRef: (id: string) => void
   stopEditing: () => void
-  push: (newItem: StagedItem) => Promise<ExpandedItem>
+  createItemAndRef: (itemFields: StagedItemFields, backlog: boolean) => Promise<ExpandedItem>
+  createItem: (
+    refId: string,
+    itemFields: StagedItemFields,
+    backlog: boolean
+  ) => Promise<ExpandedItem>
   addItemToList: (listId: string, itemId: string) => Promise<void>
   update: (id?: string) => Promise<RecordModel>
   updateEditedState: (e: Partial<ExpandedItem & { listTitle: string }>) => void
@@ -49,7 +54,7 @@ export const useItemStore = create<{
   moveToBacklog: (id: string) => Promise<ItemsRecord>
   triggerFeedRefresh: () => void
   triggerProfileRefresh: () => void
-  pushRef: (stagedRef: StagedRef) => Promise<RecordModel>
+
   updateOneRef: (id: string, fields: Partial<StagedRef>) => Promise<RecordModel>
 }>((set, get) => ({
   addingToList: false,
@@ -75,6 +80,80 @@ export const useItemStore = create<{
   triggerFeedRefresh: () => set((state) => ({ feedRefreshTrigger: state.feedRefreshTrigger + 1 })),
   triggerProfileRefresh: () =>
     set((state) => ({ profileRefreshTrigger: state.profileRefreshTrigger + 1 })),
+  createItemAndRef: async (itemFields: StagedItemFields, backlog: boolean) => {
+    // get user id
+    const userId = pocketbase.authStore.record?.id
+    if (!userId) {
+      throw new Error('User not found')
+    }
+    // create a new item, with a new ref
+    const newRef = await pocketbase.collection('refs').create({
+      creator: userId,
+      title: itemFields.title || '',
+      meta: itemFields.meta || '{}',
+      image: itemFields.image,
+    })
+
+    const newItem = await pocketbase.collection('items').create<ExpandedItem>(
+      {
+        creator: userId,
+        ref: newRef.id,
+        image: itemFields.image,
+        url: itemFields.url,
+        text: itemFields.text,
+        list: itemFields.list || false,
+        parent: itemFields.parent,
+        backlog,
+      },
+      { expand: 'ref' }
+    )
+
+    // call canvas action
+    await canvasApp.actions.createItemAndRef({
+      refId: newRef.id,
+      itemFields: {
+        ...itemFields,
+        id: newItem.id,
+      },
+    })
+
+    set((state) => ({ feedRefreshTrigger: state.feedRefreshTrigger + 1 }))
+
+    return newItem
+  },
+  createItem: async (refId: string, itemFields: Partial<StagedItem>, backlog: boolean) => {
+    // get user id
+    const userId = pocketbase.authStore.record?.id
+    if (!userId) {
+      throw new Error('User not found')
+    }
+
+    const newItem = await pocketbase.collection('items').create<ExpandedItem>(
+      {
+        creator: userId,
+        ref: refId,
+        image: itemFields.image,
+        url: itemFields.url,
+        text: itemFields.text,
+        list: itemFields.list || false,
+        parent: itemFields.parent,
+        backlog,
+      },
+      { expand: 'ref' }
+    )
+
+    // call canvas action
+    await canvasApp.actions.createItem({
+      refId,
+      itemFields: {
+        ...itemFields,
+        id: newItem.id,
+      },
+    })
+
+    set((state) => ({ feedRefreshTrigger: state.feedRefreshTrigger + 1 }))
+    return newItem
+  },
   push: async (newItem: StagedItem) => {
     try {
       const record = await pocketbase

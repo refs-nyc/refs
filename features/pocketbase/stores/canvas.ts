@@ -74,11 +74,11 @@ class RefsContract extends Contract<typeof RefsContract.models> {
     // this creates a new item with the given fields
   }
 
-  async updateRefTitle(refId: string, title: string ) {
+  async updateRefTitle(refId: string, title: string) {
     // this updates the ref with the given fields
   }
 
-  async updateItem(itemId: string, text: string; image: string; url: string ) {
+  async updateItem(itemId: string, text: string, image: string, url: string) {
     // this updates the item with the given fields
   }
 

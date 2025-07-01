@@ -1,7 +1,7 @@
 import { pocketbase } from '../pocketbase'
 import { RecordModel } from 'pocketbase'
 import { create } from 'zustand'
-import { ExpandedItem, CompleteRef, StagedRef, StagedItemFields, StagedRefFields } from './types'
+import { ExpandedItem, CompleteRef, StagedItemFields, StagedRefFields } from './types'
 import { ItemsRecord } from './pocketbase-types'
 import { canvasApp } from './canvas'
 import { createdSort } from '@/ui/profiles/sorts'
@@ -60,7 +60,7 @@ export const useItemStore = create<{
   triggerFeedRefresh: () => void
   triggerProfileRefresh: () => void
 
-  updateOneRef: (id: string, fields: Partial<StagedRef>) => Promise<RecordModel>
+  updateOneRef: (id: string, fields: { title: string }) => Promise<RecordModel>
 }>((set, get) => ({
   addingToList: false,
   editing: '',
@@ -215,7 +215,7 @@ export const useItemStore = create<{
       throw error
     }
   },
-  updateOneRef: async (id: string, fields: Partial<StagedRef>) => {
+  updateOneRef: async (id: string, fields: { title: string }) => {
     try {
       const record = await pocketbase.collection('refs').update(id, { ...fields })
       await canvasApp.actions.updateRef(id, fields)

@@ -40,12 +40,17 @@ export const EditableList = ({
 
   const onRefFound = async (ref: CompleteRef) => {
     try {
-      const newItem = await push({
-        ref: ref.id,
-        image: ref?.image,
-        creator: pocketbase.authStore?.record?.id,
-        parent: item.id,
-      })
+      const newItem = await push(
+        ref.id,
+        {
+          image: ref?.image || '',
+
+          parent: item.id,
+          text: '',
+          url: '',
+        },
+        false
+      )
       setItemState((prev) => ({
         ...prev,
         expand: {

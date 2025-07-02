@@ -120,7 +120,6 @@ export type ConversationsRecord = {
 
 export type ItemsRecord = {
   backlog?: boolean
-  children?: RecordIdString[]
   created?: IsoDateString
   creator?: RecordIdString
   deleted?: IsoDateString

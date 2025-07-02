@@ -19,7 +19,6 @@ export enum Collections {
   Reactions = 'reactions',
   Refs = 'refs',
   Saves = 'saves',
-  Test = 'test',
   Users = 'users',
 }
 
@@ -195,12 +194,6 @@ export type SavesRecord = {
   user: RecordIdString
 }
 
-export type TestRecord = {
-  created?: IsoDateString
-  id: string
-  updated?: IsoDateString
-}
-
 export type UsersRecord = {
   created?: IsoDateString
   email: string
@@ -242,7 +235,6 @@ export type ReactionsResponse<Texpand = unknown> = Required<ReactionsRecord> &
   BaseSystemFields<Texpand>
 export type RefsResponse<Texpand = unknown> = Required<RefsRecord> & BaseSystemFields<Texpand>
 export type SavesResponse<Texpand = unknown> = Required<SavesRecord> & BaseSystemFields<Texpand>
-export type TestResponse<Texpand = unknown> = Required<TestRecord> & BaseSystemFields<Texpand>
 export type UsersResponse<Texpand = unknown> = Required<UsersRecord> & AuthSystemFields<Texpand>
 
 // Types containing all Records and Responses, useful for creating typing helper functions
@@ -261,7 +253,6 @@ export type CollectionRecords = {
   reactions: ReactionsRecord
   refs: RefsRecord
   saves: SavesRecord
-  test: TestRecord
   users: UsersRecord
 }
 
@@ -279,7 +270,6 @@ export type CollectionResponses = {
   reactions: ReactionsResponse
   refs: RefsResponse
   saves: SavesResponse
-  test: TestResponse
   users: UsersResponse
 }
 
@@ -300,6 +290,5 @@ export type TypedPocketBase = PocketBase & {
   collection(idOrName: 'reactions'): RecordService<ReactionsResponse>
   collection(idOrName: 'refs'): RecordService<RefsResponse>
   collection(idOrName: 'saves'): RecordService<SavesResponse>
-  collection(idOrName: 'test'): RecordService<TestResponse>
   collection(idOrName: 'users'): RecordService<UsersResponse>
 }

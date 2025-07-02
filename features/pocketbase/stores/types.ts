@@ -1,6 +1,5 @@
 import * as PBTypes from './pocketbase-types'
 
-export type StagedRef = Partial<PBTypes.RefsRecord>
 export type StagedItem = Partial<PBTypes.ItemsRecord>
 
 export type CompleteRef = PBTypes.RefsRecord

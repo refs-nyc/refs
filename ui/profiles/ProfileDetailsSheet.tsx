@@ -73,6 +73,7 @@ export const ProfileDetailsSheet = ({
       ref={detailsSheetRef}
       backgroundStyle={{
         backgroundColor: c.surface,
+        borderRadius: 50,
         padding: 0,
       }}
       animatedIndex={detailsBackdropAnimatedIndex}

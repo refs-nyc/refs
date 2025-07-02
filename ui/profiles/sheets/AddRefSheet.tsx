@@ -13,6 +13,7 @@ import BottomSheet, { BottomSheetBackdrop } from '@gorhom/bottom-sheet'
 import { useEffect, useState } from 'react'
 import { View } from 'react-native'
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated'
+import { SheetHandle } from '@/ui/core/SheetHandle'
 
 export const AddRefSheet = ({
   bottomSheetRef,
@@ -77,7 +78,7 @@ export const AddRefSheet = ({
       enablePanDownToClose={true}
       snapPoints={[sheetHeight]}
       index={-1}
-      backgroundStyle={{ backgroundColor: c.olive, borderRadius: s.$4, paddingTop: 0 }}
+      backgroundStyle={{ backgroundColor: c.olive, borderRadius: 50, paddingTop: 0 }}
       onChange={(i: number) => {
         if (i === -1) {
           setRefFields(null)
@@ -96,35 +97,13 @@ export const AddRefSheet = ({
           pressBehavior={'close'}
         />
       )}
-      handleComponent={() => (
-        <View
-          style={{
-            width: '100%',
-            position: 'absolute',
-            alignItems: 'center',
-            justifyContent: 'center',
-            display: 'flex',
-            height: HANDLE_HEIGHT,
-          }}
-        >
-          <Animated.View
-            entering={FadeIn.duration(200)}
-            exiting={FadeOut.duration(200)}
-            style={{
-              backgroundColor: c.white,
-              width: s.$5,
-              height: s.$05,
-              borderRadius: s.$10,
-            }}
-          />
-        </View>
-      )}
+      handleComponent={null}
       keyboardBehavior="interactive"
     >
       {!refFields || !user ? (
         <></>
       ) : step === 'editNewItem' ? (
-        <View style={{ padding: s.$3 }}>
+        <View style={{ padding: s.$3, paddingTop: s.$3 + 8 }}>
           <RefForm
             existingRefFields={refFields}
             canEditRefData={false}

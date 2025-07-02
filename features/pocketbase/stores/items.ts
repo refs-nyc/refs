@@ -63,7 +63,6 @@ export const useItemStore = create<{
   moveToBacklog: (id: string) => Promise<ItemsRecord>
   triggerFeedRefresh: () => void
   triggerProfileRefresh: () => void
-
   updateRefTitle: (id: string, title: string) => Promise<CompleteRef>
 }>((set, get) => ({
   addingToList: false,

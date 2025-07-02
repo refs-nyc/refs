@@ -19,8 +19,7 @@ export const EditableList = ({
   item: ExpandedItem
   onComplete: () => void
 }) => {
-  const { addingToList, removeItem, setAddingToList, addToProfile } = useItemStore()
-  const { updateRefTitle } = useItemStore()
+  const { addingToList, removeItem, setAddingToList, addToProfile, updateRefTitle } = useItemStore()
   const [itemState, setItemState] = useState<ExpandedItem>(item)
   const [title, setTitle] = useState<string>(item.expand.ref.title || '')
   const [editingTitle, setEditingTitle] = useState<boolean>(!item.expand.ref.title)

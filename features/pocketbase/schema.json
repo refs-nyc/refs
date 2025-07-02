@@ -125,9 +125,7 @@
     },
     "passwordAuth": {
       "enabled": true,
-      "identityFields": [
-        "email"
-      ]
+      "identityFields": ["email"]
     },
     "mfa": {
       "enabled": false,
@@ -419,9 +417,7 @@
     },
     "passwordAuth": {
       "enabled": true,
-      "identityFields": [
-        "email"
-      ]
+      "identityFields": ["email"]
     },
     "mfa": {
       "enabled": false,
@@ -509,10 +505,7 @@
         "required": false,
         "system": false,
         "type": "select",
-        "values": [
-          "android",
-          "ios"
-        ]
+        "values": ["android", "ios"]
       },
       {
         "autogeneratePattern": "",
@@ -1159,6 +1152,33 @@
         "type": "bool"
       },
       {
+        "cascadeDelete": false,
+        "collectionId": "pbc_3952703650",
+        "hidden": false,
+        "id": "relation1032740943",
+        "maxSelect": 1,
+        "minSelect": 0,
+        "name": "parent",
+        "presentable": false,
+        "required": false,
+        "system": false,
+        "type": "relation"
+      },
+      {
+        "autogeneratePattern": "",
+        "hidden": false,
+        "id": "text4075943792",
+        "max": 0,
+        "min": 0,
+        "name": "promptContext",
+        "pattern": "",
+        "presentable": false,
+        "primaryKey": false,
+        "required": false,
+        "system": false,
+        "type": "text"
+      },
+      {
         "hidden": false,
         "id": "autodate2990389176",
         "name": "created",
@@ -1623,9 +1643,7 @@
         "type": "autodate"
       }
     ],
-    "indexes": [
-      "CREATE UNIQUE INDEX `idx_qJqiGB3uHs` ON `reactions` (\n  `message`,\n  `user`\n)"
-    ],
+    "indexes": ["CREATE UNIQUE INDEX `idx_qJqiGB3uHs` ON `reactions` (\n  `message`,\n  `user`\n)"],
     "system": false
   },
   {
@@ -1716,11 +1734,7 @@
         "required": false,
         "system": false,
         "type": "select",
-        "values": [
-          "place",
-          "artwork",
-          "other"
-        ]
+        "values": ["place", "artwork", "other"]
       },
       {
         "autogeneratePattern": "",
@@ -1746,6 +1760,15 @@
         "required": false,
         "system": false,
         "type": "url"
+      },
+      {
+        "hidden": false,
+        "id": "bool1406030218",
+        "name": "showInTicker",
+        "presentable": false,
+        "required": false,
+        "system": false,
+        "type": "bool"
       },
       {
         "hidden": false,
@@ -1852,9 +1875,7 @@
         "type": "autodate"
       }
     ],
-    "indexes": [
-      "CREATE UNIQUE INDEX `idx_nzWX7Pv51V` ON `saves` (\n  `saved_by`,\n  `user`\n)"
-    ],
+    "indexes": ["CREATE UNIQUE INDEX `idx_nzWX7Pv51V` ON `saves` (\n  `saved_by`,\n  `user`\n)"],
     "system": false
   },
   {

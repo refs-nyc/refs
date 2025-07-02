@@ -50,7 +50,7 @@ export const useItemStore = create<{
   triggerFeedRefresh: () => void
   triggerProfileRefresh: () => void
   pushRef: (stagedRef: StagedRef) => Promise<RecordModel>
-  updateOneRef: (id: string, fields: Partial<StagedRef>) => Promise<RecordModel>
+  updateRefTitle: (id: string, title: string) => Promise<RecordModel>
 }>((set, get) => ({
   addingToList: false,
   editing: '',
@@ -162,9 +162,9 @@ export const useItemStore = create<{
 
     return record
   },
-  updateOneRef: async (id: string, fields: Partial<StagedRef>) => {
+  updateRefTitle: async (id: string, title: string) => {
     try {
-      const record = await pocketbase.collection('refs').update(id, { ...fields })
+      const record = await pocketbase.collection('refs').update(id, { title })
       return record
     } catch (error) {
       console.error(error)

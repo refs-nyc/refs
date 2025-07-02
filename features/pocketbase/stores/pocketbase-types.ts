@@ -127,7 +127,6 @@ export type ItemsRecord = {
   id: string
   image?: string
   list?: boolean
-  location?: string
   order?: number
   parent?: RecordIdString
   ref?: RecordIdString
@@ -177,7 +176,6 @@ export type RefsRecord = {
   deleted?: IsoDateString
   id: string
   image?: string
-  location?: string
   meta?: string
   title?: string
   type?: RefsTypeOptions

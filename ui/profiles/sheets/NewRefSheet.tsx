@@ -240,7 +240,6 @@ export const NewRefSheet = ({
                   const listRef = await pushRef({
                     title: '',
                     type: RefsTypeOptions.other,
-                    creator: user?.id!,
                   })
 
                   // Create new item with the ref

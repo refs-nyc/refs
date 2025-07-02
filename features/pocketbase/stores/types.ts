@@ -35,3 +35,10 @@ export type StagedItemFields = {
   list?: boolean
   parent?: string
 }
+
+export type StagedRefFields = {
+  title?: string
+  meta?: string
+  image?: string
+  type?: string
+}

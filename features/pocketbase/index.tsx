@@ -8,14 +8,9 @@ const addToProfile = async (
   stagedItemFields: StagedItemFields,
   backlog: boolean
 ): Promise<ExpandedItem> => {
-  const userStore = useUserStore.getState()
   const itemStore = useItemStore.getState()
 
   let newItem: ExpandedItem
-
-  if (!userStore.user) {
-    throw new Error('User not found')
-  }
 
   if (existingRefId) {
     // create a new item from an existing ref
@@ -31,7 +26,6 @@ const addToProfile = async (
   } else {
     // create a new item, with a new ref
     const newRef = await itemStore.pushRef({
-      creator: userStore.user.id,
       title: stagedItemFields.title,
       meta: stagedItemFields.meta,
       image: stagedItemFields.image,

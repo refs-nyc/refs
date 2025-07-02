@@ -173,7 +173,7 @@ export default function SearchBottomSheet() {
                     onPress={async () => {
                       if (!user?.userName) return
                       setAddingNewRefTo('grid')
-                      newRefSheetRef.current?.snapToIndex(0)
+                      newRefSheetRef.current?.snapToIndex(1)
                     }}
                   >
                     <Text style={{ color: c.white, fontSize: 26, fontWeight: 'bold' }}>

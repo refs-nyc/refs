@@ -33,10 +33,10 @@ export default function UserListItem({
     >
       <View>
         <XStack style={{ justifyContent: 'space-between', width: '100%' }}>
-          <XStack gap={s.$1} style={{ flex: 1 }}>
+          <XStack gap={s.$1} style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
             <Avatar source={user.image} size={small ? s.$4 : s.$5} />
             <YStack>
-              <Text style={{ fontSize: small ? 18 : 20, color: whiteText ? c.white : c.black }}>
+              <Text style={{ fontSize: 14, color: whiteText ? c.surface : c.muted, fontWeight: '700' }}>
                 {user.firstName} {user.lastName}
               </Text>
               <Text style={{ color: whiteText ? c.surface : c.muted }}>{user.location}</Text>

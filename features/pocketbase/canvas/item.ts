@@ -1,15 +1,15 @@
 import type { ModelInit } from '@canvas-js/core'
 
-export const connection = {
+export const item = {
   id: 'primary',
   creator: '@profile',
   ref: '@ref',
+  parent: '@item?',
 
   image: 'string?',
   location: 'string?',
   url: 'string?',
   text: 'string?',
-  children: '@connection[]',
 
   list: 'boolean?',
   backlog: 'boolean?',

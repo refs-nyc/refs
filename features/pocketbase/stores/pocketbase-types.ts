@@ -136,6 +136,7 @@ export type ItemsRecord = {
   text?: string
   updated?: IsoDateString
   url?: string
+  promptContext?: string
 }
 
 export type MembershipsRecord = {

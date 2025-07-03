@@ -37,7 +37,7 @@ export default class RefsClassContract extends Contract<typeof RefsClassContract
     id: string
     creator: string
     ref: string
-    parent: string
+    parent: string | null
     image: string
     url: string
     text: string
@@ -84,12 +84,20 @@ export default class RefsClassContract extends Contract<typeof RefsClassContract
       throw new Error('Item creator does not match')
     }
 
+    if (listItemId.split('/')[0] !== this.did) {
+      throw new Error('List item creator does not match')
+    }
+
     this.db.update('item', { id: itemId, parent: listItemId })
   }
 
   async removeItemFromList(listItemId: string, itemId: string) {
     if (itemId.split('/')[0] !== this.did) {
       throw new Error('Item creator does not match')
+    }
+
+    if (listItemId.split('/')[0] !== this.did) {
+      throw new Error('List item creator does not match')
     }
 
     this.db.update('item', { id: itemId, parent: null })

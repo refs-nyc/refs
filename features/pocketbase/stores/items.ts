@@ -129,8 +129,8 @@ export const useItemStore = create<{
     const newRef = await pocketbase.collection<CompleteRef>('refs').create(createRefArgs)
 
     // create the ref in canvas
-    await canvasApp.create('ref', {
-      id: newRef.id,
+    await canvasApp.actions.createRef({
+      id: `${userId}/${newRef.id}`,
       created: newRef.created || null,
       updated: newRef.updated || null,
       deleted: newRef.deleted || null,
@@ -151,7 +151,7 @@ export const useItemStore = create<{
       url: itemFields.url,
       text: itemFields.text,
       list: itemFields.list || false,
-      parent: itemFields.parent,
+      parent: itemFields.parent || null,
       backlog,
     }
 
@@ -161,8 +161,8 @@ export const useItemStore = create<{
     })
 
     // create the item in canvas
-    await canvasApp.create('item', {
-      id: `${userId}/${refId}`,
+    await canvasApp.actions.createItem({
+      id: `${userId}/${newItem.id}`,
       created: newItem.created || null,
       updated: newItem.updated || null,
       deleted: newItem.deleted || null,
@@ -173,17 +173,22 @@ export const useItemStore = create<{
   },
 
   removeItem: async (id: string): Promise<void> => {
+    const userId = pocketbase.authStore.record?.id
+    if (!userId) {
+      throw new Error('User not found')
+    }
+
     const item = await pocketbase.collection('items').getOne(id)
     if (item.list) {
       const children = await pocketbase
         .collection('items')
         .getFullList({ filter: `parent = "${id}"` })
       for (const child of children) {
-        await canvasApp.delete('item', child.id)
+        await canvasApp.actions.removeItem(`${userId}/${child.id}`)
         await pocketbase.collection('items').delete(child.id)
       }
     }
-    await canvasApp.delete('item', id)
+    await canvasApp.actions.removeItem(`${userId}/${id}`)
     await pocketbase.collection('items').delete(id)
 
     get().triggerFeedRefresh()
@@ -199,7 +204,7 @@ export const useItemStore = create<{
       await pocketbase.collection('items').update(itemId, { parent: listId })
 
       // update the item in canvas
-      await canvasApp.update('item', { id: `${userId}/${itemId}`, parent: listId })
+      await canvasApp.actions.addItemToList(`${userId}/${itemId}`, `${userId}/${listId}`)
 
       // newly created item might appear in feed before it is added to a list
       // so we should refresh after choosing a list
@@ -230,8 +235,7 @@ export const useItemStore = create<{
       }
 
       // update the item in canvas
-      await canvasApp.update('item', {
-        id: `${userId}/${id}`,
+      await canvasApp.actions.updateItem(`${userId}/${id}`, {
         ...editedState,
         updated: updatedItem.updated,
       })
@@ -258,7 +262,7 @@ export const useItemStore = create<{
 
       const record = await pocketbase.collection<ItemsRecord>('items').update(id, { backlog: true })
       // update the item in canvas
-      await canvasApp.update('item', { id: `${userId}/${id}`, backlog: true })
+      await canvasApp.actions.updateItem(`${userId}/${id}`, { backlog: true })
 
       // Trigger feed refresh since backlog items don't appear in the feed
       get().triggerFeedRefresh()
@@ -270,9 +274,13 @@ export const useItemStore = create<{
     }
   },
   updateRefTitle: async (id: string, title: string) => {
+    const userId = pocketbase.authStore.record?.id
+    if (!userId) {
+      throw new Error('User not found')
+    }
     try {
       const record = await pocketbase.collection('refs').update(id, { title })
-      await canvasApp.update('ref', { id, title })
+      await canvasApp.actions.updateRefTitle(`${userId}/${id}`, title)
       return record
     } catch (error) {
       console.error(error)

@@ -73,10 +73,8 @@ export const MyBacklogSheet = ({
           if (bottomSheetRef.current && isMinimised) bottomSheetRef.current.snapToIndex(1)
         }}
         style={{
-          // handle is hidden while minimised, so this is needed to make sure
-          // the "My backlog" heading doesn't shift around when opening/closing the sheet
-          paddingTop: HANDLE_HEIGHT + 8,
-          paddingBottom: s.$2 + s.$05,
+          paddingTop: HANDLE_HEIGHT,
+          paddingBottom: s.$2 - 8,
         }}
       >
         <XStack

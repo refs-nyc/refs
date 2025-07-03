@@ -90,7 +90,7 @@ export const GridTileWrapper = ({
           </YStack>
         )}
         {type === 'placeholder' ? (
-          <Text style={{ color: c.muted, fontSize: 16, textAlign: 'center', paddingHorizontal: 12 }}>{children}</Text>
+          <Text style={{ color: c.muted, fontSize: 16, textAlign: 'center', paddingHorizontal: 10 }}>{children}</Text>
         ) : (
           type === 'add'
             ? React.cloneElement(children as React.ReactElement, { isPlaceholder: true })

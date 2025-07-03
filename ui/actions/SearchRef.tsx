@@ -290,7 +290,7 @@ export const SearchRef = ({
               textAlignVertical: 'center',
             }}
             value={searchQuery}
-            placeholder={prompt || ''}
+            placeholder={prompt || 'search anything or paste a link'}
             placeholderTextColor={'rgba(243,242,237,0.5)'}
             onChangeText={onQueryChange}
             autoFocus={true}

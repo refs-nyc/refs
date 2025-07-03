@@ -28,6 +28,19 @@ export default class RefsClassContract extends Contract<typeof RefsClassContract
     })
   }
 
+  async updateProfile(updateProfileArgs: {
+    id: string
+    firstName: string
+    lastName: string
+    location: string
+    image: string
+    updated: string
+  }) {
+    this.db.update('profile', {
+      ...updateProfileArgs,
+    })
+  }
+
   async createRef(createRefArgs: {
     id: string
     creator: string

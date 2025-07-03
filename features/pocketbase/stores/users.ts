@@ -86,12 +86,13 @@ export const useUserStore = create<{
         .collection<UsersRecord>('users')
         .update(pocketbase.authStore.record.id, { ...fields })
 
-      await canvasApp.update('profile', {
+      await canvasApp.actions.updateProfile({
         id: pocketbase.authStore.record.id,
         firstName: fields.firstName,
         lastName: fields.lastName,
         location: fields.location,
         image: fields.image,
+        updated: record.updated,
       })
 
       return record

@@ -1,7 +1,7 @@
-import { addToProfile, pocketbase, useUserStore } from '@/features/pocketbase'
+import { pocketbase } from '@/features/pocketbase'
 import { getProfileItems, useItemStore } from '@/features/pocketbase/stores/items'
-import { RefsTypeOptions } from '@/features/pocketbase/stores/pocketbase-types'
 import { ExpandedItem, StagedItemFields } from '@/features/pocketbase/stores/types'
+import { useUserStore } from '@/features/pocketbase/stores/users'
 import { c, s } from '@/features/style'
 import { AddedNewRefConfirmation } from '@/ui/actions/AddedNewRefConfirmation'
 import { ChooseReplaceItemMethod } from '@/ui/actions/ChooseReplaceItemMethod'
@@ -35,7 +35,7 @@ export const NewRefSheet = ({
   const { addingNewRefTo, setAddingNewRefTo } = useUIStore()
 
   // functions for adding the new item to a list or the grid or the backlog
-  const { addItemToList, push: pushItem, pushRef, moveToBacklog, remove } = useItemStore()
+  const { addItemToList, moveToBacklog, removeItem, addToProfile } = useItemStore()
   const { user } = useUserStore()
 
   const [step, setStep] = useState<NewRefStep>('search')
@@ -199,7 +199,7 @@ export const NewRefSheet = ({
               itemToReplace={itemToReplace}
               removeFromProfile={async () => {
                 // remove (delete) itemToReplace from the grid
-                await remove(itemToReplace.id)
+                await removeItem(itemToReplace.id)
                 // add the new item to the grid
                 const newItem = await addToProfile(existingRefId, stagedItemFields, false)
                 setItemData(newItem)
@@ -236,22 +236,17 @@ export const NewRefSheet = ({
                   setStep('editList')
                 }}
                 onCreateList={async () => {
-                  // Create new ref for the list
-                  const listRef = await pushRef({
-                    title: '',
-                    type: RefsTypeOptions.other,
-                  })
-
-                  // Create new item with the ref
-                  const list = await pushItem(
-                    listRef.id,
+                  // we should just have one function to create a list, which creates a ref and an item
+                  const list = await addToProfile(
+                    null,
                     {
-                      list: true,
+                      title: '',
                       text: '',
                       url: '',
                       image: '',
+                      list: true,
                     },
-                    false
+                    backlog
                   )
 
                   // Add current item to the new list

@@ -1,10 +1,9 @@
 import { pocketbase } from '../pocketbase'
-import { RecordModel } from 'pocketbase'
 import { create } from 'zustand'
 import { ExpandedItem, CompleteRef, StagedItemFields, StagedRefFields } from './types'
 import { ItemsRecord } from './pocketbase-types'
-import { canvasApp } from './canvas'
 import { createdSort } from '@/ui/profiles/sorts'
+import { canvasApp } from '@/features/canvas'
 
 function gridSort(items: ExpandedItem[]): ExpandedItem[] {
   const itemsWithOrder: ExpandedItem[] = []
@@ -32,7 +31,12 @@ export const useItemStore = create<{
   editing: string
   addingToList: boolean
   searchingNewRef: string
-  editedState: Partial<ExpandedItem & { listTitle: string }>
+  editedState: {
+    text?: string
+    image?: string
+    url?: string
+    listTitle?: string
+  }
   editingLink: boolean
   feedRefreshTrigger: number
   profileRefreshTrigger: number
@@ -41,20 +45,25 @@ export const useItemStore = create<{
   setAddingToList: (newValue: boolean) => void
   setSearchingNewRef: (id: string) => void
   stopEditing: () => void
-  push: (
+  addToProfile: (
+    refId: string | null,
+    itemFields: StagedItemFields,
+    backlog: boolean
+  ) => Promise<ExpandedItem>
+  createRef: (refFields: StagedRefFields) => Promise<CompleteRef>
+  createItem: (
     refId: string,
-    stagedItemFields: StagedItemFields,
+    itemFields: StagedItemFields,
     backlog: boolean
   ) => Promise<ExpandedItem>
   addItemToList: (listId: string, itemId: string) => Promise<void>
-  update: (id?: string) => Promise<RecordModel>
+  update: (id?: string) => Promise<ExpandedItem>
   updateEditedState: (e: Partial<ExpandedItem & { listTitle: string }>) => void
-  remove: (id: string) => Promise<void>
+  removeItem: (id: string) => Promise<void>
   moveToBacklog: (id: string) => Promise<ItemsRecord>
   triggerFeedRefresh: () => void
   triggerProfileRefresh: () => void
-  pushRef: (stagedRef: StagedRefFields) => Promise<RecordModel>
-  updateRefTitle: (id: string, title: string) => Promise<RecordModel>
+  updateRefTitle: (id: string, title: string) => Promise<CompleteRef>
 }>((set, get) => ({
   addingToList: false,
   editing: '',
@@ -71,7 +80,12 @@ export const useItemStore = create<{
     set(() => {
       return { editing: '', editedState: {}, searchingNewRef: '', editingLink: false }
     }),
-  updateEditedState: (editedState: Partial<CompleteRef>) =>
+  updateEditedState: (editedState: {
+    text?: string
+    image?: string
+    url?: string
+    listTitle?: string
+  }) =>
     set(() => ({
       ...get().editedState,
       editedState,
@@ -79,7 +93,53 @@ export const useItemStore = create<{
   triggerFeedRefresh: () => set((state) => ({ feedRefreshTrigger: state.feedRefreshTrigger + 1 })),
   triggerProfileRefresh: () =>
     set((state) => ({ profileRefreshTrigger: state.profileRefreshTrigger + 1 })),
-  push: async (refId: string, itemFields: StagedItemFields, backlog: boolean) => {
+  addToProfile: async (refId: string | null, itemFields: StagedItemFields, backlog: boolean) => {
+    // get user id
+
+    let linkedRefId = refId
+    if (linkedRefId === null) {
+      const newRef = await get().createRef({
+        title: itemFields.title || '',
+        meta: itemFields.meta || '{}',
+        image: itemFields.image,
+      })
+      linkedRefId = newRef.id
+    }
+    const newItem = await get().createItem(linkedRefId, itemFields, backlog)
+
+    get().triggerFeedRefresh()
+
+    return newItem
+  },
+  createRef: async (refFields: StagedRefFields) => {
+    const userId = pocketbase.authStore.record?.id
+    if (!userId) {
+      throw new Error('User not found')
+    }
+
+    const createRefArgs = {
+      creator: userId,
+      title: refFields.title || '',
+      url: refFields.url || '',
+      meta: refFields.meta || '{}',
+      image: refFields.image || '',
+    }
+
+    // create the ref in pocketbase
+    const newRef = await pocketbase.collection<CompleteRef>('refs').create(createRefArgs)
+
+    // create the ref in canvas
+    await canvasApp.actions.createRef({
+      id: `${userId}/${newRef.id}`,
+      created: newRef.created || null,
+      updated: newRef.updated || null,
+      deleted: newRef.deleted || null,
+      ...createRefArgs,
+    })
+
+    return newRef
+  },
+  createItem: async (refId: string, itemFields: StagedItemFields, backlog: boolean) => {
     const userId = pocketbase.authStore.record?.id
     if (!userId) {
       throw new Error('User not found')
@@ -91,39 +151,61 @@ export const useItemStore = create<{
       url: itemFields.url,
       text: itemFields.text,
       list: itemFields.list || false,
-      parent: itemFields.parent,
+      parent: itemFields.parent || null,
       backlog,
     }
 
-    const record = await pocketbase
-      .collection('items')
-      .create<ExpandedItem>(createItemArgs, { expand: 'ref' })
-    // await canvasApp.actions.pushItem({ ...newItem, id: record.id })
+    // create the item in pocketbase
+    const newItem = await pocketbase.collection('items').create<ExpandedItem>(createItemArgs, {
+      expand: 'ref',
+    })
 
-    set((state) => ({ feedRefreshTrigger: state.feedRefreshTrigger + 1 }))
+    // create the item in canvas
+    await canvasApp.actions.createItem({
+      id: `${userId}/${newItem.id}`,
+      created: newItem.created || null,
+      updated: newItem.updated || null,
+      deleted: newItem.deleted || null,
+      ...createItemArgs,
+    })
 
-    return record
+    return newItem
   },
-  remove: async (id: string): Promise<void> => {
+
+  removeItem: async (id: string): Promise<void> => {
+    const userId = pocketbase.authStore.record?.id
+    if (!userId) {
+      throw new Error('User not found')
+    }
+
     const item = await pocketbase.collection('items').getOne(id)
     if (item.list) {
       const children = await pocketbase
         .collection('items')
         .getFullList({ filter: `parent = "${id}"` })
       for (const child of children) {
+        await canvasApp.actions.removeItem(`${userId}/${child.id}`)
         await pocketbase.collection('items').delete(child.id)
       }
     }
+    await canvasApp.actions.removeItem(`${userId}/${id}`)
     await pocketbase.collection('items').delete(id)
-    await canvasApp.actions.removeItem(id)
 
-    set((state) => ({
-      feedRefreshTrigger: state.feedRefreshTrigger + 1,
-    }))
+    get().triggerFeedRefresh()
   },
   addItemToList: async (listId: string, itemId: string) => {
     try {
+      const userId = pocketbase.authStore.record?.id
+      if (!userId) {
+        throw new Error('User not found')
+      }
+
+      // update the item in pocketbase
       await pocketbase.collection('items').update(itemId, { parent: listId })
+
+      // update the item in canvas
+      await canvasApp.actions.addItemToList(`${userId}/${itemId}`, `${userId}/${listId}`)
+
       // newly created item might appear in feed before it is added to a list
       // so we should refresh after choosing a list
       // (because currently we are filtering out list children from feed)
@@ -135,22 +217,37 @@ export const useItemStore = create<{
   },
   update: async (id?: string) => {
     try {
-      const record = await pocketbase
-        .collection('items')
-        .update(id || get().editing, get().editedState, { expand: 'ref' })
+      const userId = pocketbase.authStore.record?.id
+      if (!userId) {
+        throw new Error('User not found')
+      }
 
-      if (get().editedState.listTitle && record.list) {
+      const editedState = get().editedState
+      const updatedItem = await pocketbase
+        .collection<ExpandedItem>('items')
+        .update(id || get().editing, editedState, { expand: 'ref' })
+
+      if (editedState.listTitle && updatedItem.list) {
         const ref = await pocketbase
           .collection('refs')
-          .update(record.ref, { title: get().editedState.listTitle })
-        if (record.expand?.ref) record.expand.ref = ref
+          .update(updatedItem.ref, { title: editedState.listTitle })
+        if (updatedItem.expand?.ref) updatedItem.expand.ref = ref
       }
-      // Canvas stuff
+
+      // update the item in canvas
+      await canvasApp.actions.updateItem(`${userId}/${id}`, {
+        ...editedState,
+        updated: updatedItem.updated,
+      })
+
+      if (editedState.listTitle && updatedItem.list) {
+        await get().updateRefTitle(updatedItem.ref, editedState.listTitle)
+      }
 
       // Trigger feed refresh since updates might affect feed visibility
       get().triggerFeedRefresh()
 
-      return record
+      return updatedItem
     } catch (e) {
       console.error(e)
       throw e
@@ -158,8 +255,14 @@ export const useItemStore = create<{
   },
   moveToBacklog: async (id: string) => {
     try {
+      const userId = pocketbase.authStore.record?.id
+      if (!userId) {
+        throw new Error('User not found')
+      }
+
       const record = await pocketbase.collection<ItemsRecord>('items').update(id, { backlog: true })
-      //await canvasApp.actions.moveItemToBacklog(id)
+      // update the item in canvas
+      await canvasApp.actions.updateItem(`${userId}/${id}`, { backlog: true })
 
       // Trigger feed refresh since backlog items don't appear in the feed
       get().triggerFeedRefresh()
@@ -170,27 +273,14 @@ export const useItemStore = create<{
       throw error
     }
   },
-  pushRef: async (refFields) => {
+  updateRefTitle: async (id: string, title: string) => {
     const userId = pocketbase.authStore.record?.id
     if (!userId) {
       throw new Error('User not found')
     }
-
-    const createRefArgs = {
-      creator: userId,
-      title: refFields.title || '',
-      meta: refFields.meta || '{}',
-      image: refFields.image,
-    }
-
-    const record = await pocketbase.collection('refs').create(createRefArgs)
-    await canvasApp.actions.pushRef({ ...createRefArgs, id: record.id })
-
-    return record
-  },
-  updateRefTitle: async (id: string, title: string) => {
     try {
       const record = await pocketbase.collection('refs').update(id, { title })
+      await canvasApp.actions.updateRefTitle(`${userId}/${id}`, title)
       return record
     } catch (error) {
       console.error(error)

@@ -12,14 +12,19 @@ import Animated, { useSharedValue, useAnimatedStyle, withTiming } from 'react-na
 import { Conversation } from '../pocketbase/stores/types'
 import SwipeableUser from '@/ui/atoms/SwipeableUser'
 import { t } from '@/features/style'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 type Step = 'select' | 'add'
+
+const HEADER_TOP_PADDING = 24; // px, adjust as needed
+const BUTTON_BOTTOM_PADDING = 20; // px, adjust as needed
 
 export default function SavesList() {
   const { saves, createMemberships, removeSave } = useMessageStore()
   const { width } = useWindowDimensions()
   const buttonGap = s.$1
-  const buttonWidth = (width - 20 - buttonGap) / 2
+  const contentWidth = width - 2 * s.$3
+  const buttonWidth = (contentWidth - buttonGap) / 2
 
   const [selected, setSelected] = useState<Record<string, boolean>>({})
   const [step, setStep] = useState<Step>('select')
@@ -29,6 +34,8 @@ export default function SavesList() {
   const [filteredChats, setFilteredChats] = useState<Conversation[]>([
     ...Object.values(conversations).filter((c) => !c.is_direct),
   ])
+
+  const insets = useSafeAreaInsets()
 
   const onSearchTermChange = (searchTerm: string) => {
     setSearchTerm(searchTerm)
@@ -81,8 +88,8 @@ export default function SavesList() {
     <Animated.View style={{ flex: 1, overflow: 'hidden' }}>
       <Animated.View style={[{ flexDirection: 'row', width: width * 2 }, animatedStyle]}>
         {/* Select Step */}
-        <View style={{ width, paddingVertical: s.$1, paddingHorizontal: s.$3 }}>
-          <YStack gap={s.$075} style={{ paddingBottom: s.$1, marginTop: 8 }}>
+        <View style={{ flex: 1, width, paddingHorizontal: s.$3, paddingVertical: s.$1 }}>
+          <YStack gap={s.$075} style={{ paddingBottom: s.$1, marginTop: HEADER_TOP_PADDING }}>
             <XStack style={{ justifyContent: 'space-between', alignItems: 'center' }}>
               <Heading tag="h1normal" style={{ color: c.white }}>Saved</Heading>
               <Button
@@ -94,19 +101,21 @@ export default function SavesList() {
             </XStack>
             <Text style={{ color: c.white, marginTop: 2, marginBottom: 12 }}>Select anyone to DM or start a group chat</Text>
           </YStack>
-          <BottomSheetScrollView style={{ height: '55%' }}>
-            <YStack gap={2} style={{ paddingBottom: s.$10 }}>
-              {saves.map((save) => (
-                <SwipeableUser
-                  key={save.expand.user.id}
-                  onActionPress={()=>removeSave(save.id)}
-                  user={save.expand.user}
-                  onPress={() => toggleSelect(save.user)}
-                  backgroundColor={selected[save.user] ? c.olive2 : c.olive}
-                />
-              ))}
-            </YStack>
-          </BottomSheetScrollView>
+          <View style={{ flex: 1 }}>
+            <BottomSheetScrollView contentContainerStyle={{ flexGrow: 1 }}>
+              <YStack gap={2}>
+                {saves.map((save) => (
+                  <SwipeableUser
+                    key={save.expand.user.id}
+                    onActionPress={()=>removeSave(save.id)}
+                    user={save.expand.user}
+                    onPress={() => toggleSelect(save.user)}
+                    backgroundColor={selected[save.user] ? c.olive2 : c.olive}
+                  />
+                ))}
+              </YStack>
+            </BottomSheetScrollView>
+          </View>
           <XStack
             gap={s.$1}
             style={{
@@ -114,8 +123,8 @@ export default function SavesList() {
               paddingVertical: s.$1half,
               justifyContent: 'center',
               alignItems: 'center',
-              paddingHorizontal: 10,
-              paddingBottom: 42,
+              paddingHorizontal: s.$3,
+              marginBottom: insets.bottom + BUTTON_BOTTOM_PADDING - 100,
             }}
           >
             <DMButton

@@ -28,33 +28,32 @@ export default function UserListItem({
         paddingHorizontal: s.$075,
         borderRadius: s.$1,
         width: '100%',
+        alignItems: 'flex-start',
         ...style,
       }}
     >
-      <View>
-        <XStack style={{ justifyContent: 'space-between', width: '100%' }}>
-          <XStack gap={s.$1} style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-            <Avatar source={user.image} size={small ? s.$4 : s.$5} />
-            <YStack>
-              <Text style={{ fontSize: 14, color: whiteText ? c.surface : c.muted, fontWeight: '700' }}>
-                {user.firstName} {user.lastName}
-              </Text>
-              <Text style={{ color: whiteText ? c.surface : c.muted }}>{user.location}</Text>
-            </YStack>
-          </XStack>
-          {text && (
-            <Text
-              style={{
-                flex: 1,
-                color: whiteText ? c.surface : c.muted,
-                alignSelf: 'flex-end',
-                textAlign: 'right',
-              }}
-            >
-              {text}
+      <View style={{ width: '100%' }}>
+        <XStack style={{ justifyContent: 'flex-start', alignItems: 'center', width: '100%' }}>
+          <Avatar source={user.image} size={small ? s.$4 : s.$5} />
+          <YStack style={{ marginLeft: s.$1, alignItems: 'flex-start' }}>
+            <Text style={{ fontSize: 14, color: whiteText ? c.surface : c.muted, fontWeight: '700', textAlign: 'left' }}>
+              {user.firstName} {user.lastName}
             </Text>
-          )}
+            <Text style={{ color: whiteText ? c.surface : c.muted, textAlign: 'left' }}>{user.location}</Text>
+          </YStack>
         </XStack>
+        {text && (
+          <Text
+            style={{
+              flex: 1,
+              color: whiteText ? c.surface : c.muted,
+              alignSelf: 'flex-end',
+              textAlign: 'right',
+            }}
+          >
+            {text}
+          </Text>
+        )}
       </View>
     </Pressable>
   )

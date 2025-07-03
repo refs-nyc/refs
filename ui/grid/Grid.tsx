@@ -5,20 +5,22 @@ import { GridTileWrapper } from './GridTileWrapper'
 import { GridTileActionAdd } from './GridTileActionAdd'
 import { ExpandedItem } from '@/features/pocketbase/stores/types'
 import { useState } from 'react'
+import { Text } from 'react-native'
 
 const PROMPTS = [
-  'hobby I want to pick up',
-  'favorite book',
-  'place I want to visit',
-  'song on repeat',
-  'hidden talent',
-  'dream job',
-  'go-to comfort food',
-  'movie I recommend',
-  'weekend ritual',
-  'recent inspiration',
-  'childhood hero',
-  'goal for this year',
+  'All-time comfort game',
+  'Link you shared recently',
+  'Song that always hits',
+  'Free space',
+  'Place you feel like yourself',
+  'Example of perfect design',
+  'Hobby you want to get into',
+  'Favorite piece from a museum',
+  'Most rewatched movie',
+  'Tradition you love',
+  'Meme slot',
+  'Neighborhood spot',
+  'Art that moved you',
 ]
 
 export const Grid = ({
@@ -70,7 +72,7 @@ export const Grid = ({
             type="placeholder"
             onPress={() => onAddItemWithPrompt && onAddItemWithPrompt(prompt)}
           >
-            {prompt}
+            <Text style={{ fontSize: 14 }}>{prompt}</Text>
           </GridTileWrapper>
         )
       })}

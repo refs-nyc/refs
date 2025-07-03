@@ -50,7 +50,7 @@ export const OtherButtonsSheet = ({
       )}
       keyboardBehavior="interactive"
     >
-      <XStack style={{ paddingTop: s.$2 + 8, justifyContent: 'center' }} gap={12}>
+      <XStack style={{ paddingTop: s.$2, justifyContent: 'center' }} gap={12}>
         <View style={{ height: s.$4, width: s.$10 }}>
           <DMButton profile={profile} style={{ paddingHorizontal: s.$0 }} />
         </View>

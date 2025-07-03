@@ -213,7 +213,7 @@ export const useItemStore = create<{
       const editedState = get().editedState
       const updatedItem = await pocketbase
         .collection<ExpandedItem>('items')
-        .update(id || get().editing, editedState, { expand: 'children,ref' })
+        .update(id || get().editing, editedState, { expand: 'ref' })
 
       if (editedState.listTitle && updatedItem.list) {
         const ref = await pocketbase
@@ -288,7 +288,7 @@ export const getBacklogItems = async (userName: string) => {
     filter: pocketbase.filter('creator.userName = {:userName} && backlog = true && parent = null', {
       userName,
     }),
-    expand: 'children, ref',
+    expand: 'ref',
   })
   return items.sort(createdSort)
 }

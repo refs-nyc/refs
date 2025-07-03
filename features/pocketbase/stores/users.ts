@@ -142,13 +142,14 @@ export const useUserStore = create<{
       await get().loginWithPassword(finalUser.email, userPassword)
 
       if (pocketbase?.authStore?.record?.id) {
-        await canvasApp.create('profile', {
+        await canvasApp.actions.createProfile({
           id: pocketbase.authStore.record.id,
           firstName: finalUser.firstName,
           lastName: finalUser.lastName,
           location: finalUser.location,
           image: finalUser.image,
           userName: record.userName,
+          created: record.created,
         })
       }
 

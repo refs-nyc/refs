@@ -19,9 +19,10 @@ export const item = {
   updated: 'string?',
 
   $indexes: ['id'],
-  $rules: {
-    create: "id === creator + '/' + ref && creator === this.did",
-    update: "id === creator + '/' + ref && creator === this.did",
-    delete: 'creator === this.did',
-  },
 } as const satisfies ModelInit
+
+export const itemRules = {
+  create: "id === creator + '/' + ref && creator === this.did",
+  update: "id === creator + '/' + ref && creator === this.did",
+  delete: 'creator === this.did',
+}

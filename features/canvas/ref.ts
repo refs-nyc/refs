@@ -12,10 +12,10 @@ export const ref = {
   created: 'string?',
   updated: 'string?',
   deleted: 'string?',
-
-  $rules: {
-    create: "creator === this.did && ['place', 'artwork', 'other'].includes(type)",
-    update: "creator === this.did && ['place', 'artwork', 'other'].includes(type)",
-    delete: false,
-  },
 } as const satisfies ModelInit
+
+export const refRules = {
+  create: 'creator === this.did',
+  update: 'creator === this.did',
+  delete: false,
+}

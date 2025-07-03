@@ -12,11 +12,10 @@ export const profile = {
 
   created: 'string?',
   updated: 'string?',
-  deleted: 'string?',
-
-  $rules: {
-    create: 'id === this.did',
-    update: 'id === this.did',
-    delete: false,
-  },
 } as const satisfies ModelInit
+
+export const profileRules = {
+  create: 'id === this.did',
+  update: 'id === this.did',
+  delete: false,
+}

@@ -23,6 +23,11 @@ export default function Referencers({
 
   useEffect(() => {
     const getUsers = async () => {
+      if (!currentRefId) {
+        setUsers([])
+        setRefData({})
+        return
+      }
       const users: Profile[] = []
       const userIds: Set<string> = new Set()
 

@@ -24,6 +24,11 @@ export default class RefsClassContract extends Contract<typeof RefsClassContract
     updated: string | null
     deleted: string | null
   }) {
+    const idCreator = createRefArgs.id.split('/')[0]
+    if (idCreator !== createRefArgs.creator && idCreator !== this.did) {
+      throw new Error('Ref creator does not match')
+    }
+
     // this creates a new ref with the given fields
     this.db.set('ref', createRefArgs)
   }
@@ -43,6 +48,11 @@ export default class RefsClassContract extends Contract<typeof RefsClassContract
     updated: string | null
     deleted: string | null
   }) {
+    const idCreator = createItemArgs.id.split('/')[0]
+    if (idCreator !== createItemArgs.creator && idCreator !== this.did) {
+      throw new Error('Item creator does not match')
+    }
+
     // this creates a new item with the given fields
     this.db.set('item', createItemArgs)
   }
@@ -61,23 +71,43 @@ export default class RefsClassContract extends Contract<typeof RefsClassContract
       updated: string | null
     }
   ) {
+    if (itemId.split('/')[0] !== this.did) {
+      throw new Error('Item creator does not match')
+    }
+
     // this updates the item with the given fields
     this.db.update('item', { id: itemId, ...updateItemFields })
   }
 
   async addItemToList(listItemId: string, itemId: string) {
+    if (itemId.split('/')[0] !== this.did) {
+      throw new Error('Item creator does not match')
+    }
+
     this.db.update('item', { id: itemId, parent: listItemId })
   }
 
   async removeItemFromList(listItemId: string, itemId: string) {
+    if (itemId.split('/')[0] !== this.did) {
+      throw new Error('Item creator does not match')
+    }
+
     this.db.update('item', { id: itemId, parent: null })
   }
 
   async moveItemToBacklog(itemId: string) {
+    if (itemId.split('/')[0] !== this.did) {
+      throw new Error('Item creator does not match')
+    }
+
     this.db.update('item', { id: itemId, backlog: true })
   }
 
   async removeItem(itemId: string) {
+    if (itemId.split('/')[0] !== this.did) {
+      throw new Error('Item creator does not match')
+    }
+
     this.db.delete('item', itemId)
   }
 }

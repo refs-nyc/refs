@@ -1,6 +1,9 @@
 import type { ModelInit } from '@canvas-js/core'
 
 export const item = {
+  // the id format is creator/<unique string>
+  // this is so that we can enforce the create/update rules
+  // i.e. an item can only be updated by its creator
   id: 'primary',
   creator: '@profile',
   ref: '@ref',
@@ -22,7 +25,7 @@ export const item = {
 } as const satisfies ModelInit
 
 export const itemRules = {
-  create: "id === creator + '/' + ref && creator === this.did",
-  update: "id === creator + '/' + ref && creator === this.did",
+  create: "id.split('/')[0] == creator && creator === this.did",
+  update: "id.split('/')[0] == creator && creator === this.did",
   delete: 'creator === this.did',
 }

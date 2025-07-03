@@ -1,6 +1,7 @@
 import type { ModelInit } from '@canvas-js/core'
 
 export const ref = {
+  // id has the format creator/<unique string>
   id: 'primary',
   creator: '@profile?',
 
@@ -15,7 +16,7 @@ export const ref = {
 } as const satisfies ModelInit
 
 export const refRules = {
-  create: 'creator === this.did',
-  update: 'creator === this.did',
+  create: 'id.split("/")[0] == creator && creator === this.did',
+  update: 'id.split("/")[0] == creator && creator === this.did',
   delete: false,
 }

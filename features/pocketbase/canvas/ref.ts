@@ -3,11 +3,9 @@ import type { ModelInit } from '@canvas-js/core'
 export const ref = {
   id: 'primary',
   creator: '@profile?',
-  type: 'string?',
 
   title: 'string?',
   image: 'string?',
-  location: 'string?',
   url: 'string?',
   meta: 'string?',
 

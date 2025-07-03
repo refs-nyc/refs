@@ -120,8 +120,9 @@ export const useItemStore = create<{
     const createRefArgs = {
       creator: userId,
       title: refFields.title || '',
+      url: refFields.url || '',
       meta: refFields.meta || '{}',
-      image: refFields.image,
+      image: refFields.image || '',
     }
 
     // create the ref in pocketbase
@@ -130,6 +131,9 @@ export const useItemStore = create<{
     // create the ref in canvas
     await canvasApp.create('ref', {
       id: newRef.id,
+      created: newRef.created || null,
+      updated: newRef.updated || null,
+      deleted: newRef.deleted || null,
       ...createRefArgs,
     })
 
@@ -159,6 +163,9 @@ export const useItemStore = create<{
     // create the item in canvas
     await canvasApp.create('item', {
       id: `${userId}/${refId}`,
+      created: newItem.created || null,
+      updated: newItem.updated || null,
+      deleted: newItem.deleted || null,
       ...createItemArgs,
     })
 
@@ -223,10 +230,14 @@ export const useItemStore = create<{
       }
 
       // update the item in canvas
-      await canvasApp.update('item', { id: `${userId}/${id}`, ...editedState })
+      await canvasApp.update('item', {
+        id: `${userId}/${id}`,
+        ...editedState,
+        updated: updatedItem.updated,
+      })
 
       if (editedState.listTitle && updatedItem.list) {
-        await canvasApp.update('ref', { id: updatedItem.ref, title: editedState.listTitle })
+        await get().updateRefTitle(updatedItem.ref, editedState.listTitle)
       }
 
       // Trigger feed refresh since updates might affect feed visibility

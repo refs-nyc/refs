@@ -7,7 +7,6 @@ export const item = {
   parent: '@item?',
 
   image: 'string?',
-  location: 'string?',
   url: 'string?',
   text: 'string?',
 

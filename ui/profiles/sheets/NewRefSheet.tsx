@@ -234,15 +234,19 @@ export const NewRefSheet = ({
                   const listRef = await pushRef({
                     title: '',
                     type: RefsTypeOptions.other,
-                    creator: user?.id,
                   })
 
                   // Create new item with the ref
-                  const list = await pushItem({
-                    ref: listRef.id,
-                    creator: user?.id,
-                    list: true,
-                  })
+                  const list = await pushItem(
+                    listRef.id,
+                    {
+                      list: true,
+                      text: '',
+                      url: '',
+                      image: '',
+                    },
+                    false
+                  )
 
                   // Add current item to the new list
                   await addItemToList(list.id, itemData?.id!)

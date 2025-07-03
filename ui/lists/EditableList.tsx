@@ -21,20 +21,18 @@ export const EditableList = ({
   onComplete: () => void
 }) => {
   const { addingToList, remove, setAddingToList } = useItemStore()
-  const { push, updateOneRef } = useItemStore()
+  const { push, updateRefTitle } = useItemStore()
   const [itemState, setItemState] = useState<ExpandedItem>(item)
   const [title, setTitle] = useState<string>(item.expand.ref.title || '')
   const [editingTitle, setEditingTitle] = useState<boolean>(!item.expand.ref.title)
   const titleRef = useRef<any>(null)
   const insets = useSafeAreaInsets()
 
-  const onTitleChange = async (e: string) => {
+  const onTitleChange = async (newTitle: string) => {
     titleRef.current?.blur()
     setEditingTitle(false)
     try {
-      await updateOneRef(item.ref, {
-        title: e,
-      })
+      await updateRefTitle(item.ref, newTitle)
     } catch (error) {
       console.error(error)
     }
@@ -42,12 +40,17 @@ export const EditableList = ({
 
   const onRefFound = async (ref: CompleteRef) => {
     try {
-      const newItem = await push({
-        ref: ref.id,
-        image: ref?.image,
-        creator: pocketbase.authStore?.record?.id,
-        parent: item.id,
-      })
+      const newItem = await push(
+        ref.id,
+        {
+          image: ref?.image || '',
+
+          parent: item.id,
+          text: '',
+          url: '',
+        },
+        false
+      )
       setItemState((prev) => ({
         ...prev,
         expand: {

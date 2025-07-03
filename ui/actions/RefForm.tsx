@@ -17,7 +17,7 @@ import { EditableHeader } from '../atoms/EditableHeader'
 import { Button } from '../buttons/Button'
 import type { ImagePickerAsset } from 'expo-image-picker'
 import { c, s } from '@/features/style'
-import { StagedItemFields, StagedRef } from '@/features/pocketbase/stores/types'
+import { StagedItemFields } from '@/features/pocketbase/stores/types'
 // @ts-ignore
 import { KeyboardAvoidingView } from 'react-native-keyboard-controller'
 import { DismissKeyboard } from '../atoms/DismissKeyboard'

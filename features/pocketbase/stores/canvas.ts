@@ -137,7 +137,10 @@ class RefsContract extends Contract<typeof RefsContract.models> {
     this.db.delete('ref', refId)
   }
 
-  async updateUser(userId: string, fields: Partial<Profile>) {
+  async updateUser(
+    userId: string,
+    fields: { location?: string; lon?: number; lat?: number; pushToken?: string }
+  ) {
     const user = await this.db.get('user', userId)
     if (user === null) throw new Error('invalid userId')
     this.db.set('user', { ...user, ...fields })

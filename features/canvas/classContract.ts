@@ -13,6 +13,21 @@ export default class RefsClassContract extends Contract<typeof RefsClassContract
     } satisfies ModelSchema
   }
 
+  async createProfile(createProfileArgs: {
+    id: string
+    firstName: string
+    lastName: string
+    userName: string
+    location: string
+    image: string
+    created: string
+  }) {
+    this.db.set('profile', {
+      ...createProfileArgs,
+      updated: null,
+    })
+  }
+
   async createRef(createRefArgs: {
     id: string
     creator: string

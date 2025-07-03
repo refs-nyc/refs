@@ -6,7 +6,6 @@ export const profile = {
 
   firstName: 'string',
   lastName: 'string',
-  geolocation: 'string?',
   location: 'string?',
   image: 'string?',
 

@@ -3,7 +3,7 @@ import { create } from 'zustand'
 import { ExpandedItem, CompleteRef, StagedItemFields, StagedRefFields } from './types'
 import { ItemsRecord } from './pocketbase-types'
 import { createdSort } from '@/ui/profiles/sorts'
-import { canvasApp } from '@/features/pocketbase/canvas'
+import { canvasApp } from '@/features/canvas'
 
 function gridSort(items: ExpandedItem[]): ExpandedItem[] {
   const itemsWithOrder: ExpandedItem[] = []

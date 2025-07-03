@@ -2,7 +2,7 @@ import { pocketbase } from '../pocketbase'
 import { create } from 'zustand'
 import { Profile, ExpandedProfile } from './types'
 import { UsersRecord } from './pocketbase-types'
-import { canvasApp } from '@/features/pocketbase/canvas'
+import { canvasApp } from '@/features/canvas'
 import { ClientResponseError } from 'pocketbase'
 
 export const useUserStore = create<{

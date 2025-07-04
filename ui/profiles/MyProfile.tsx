@@ -127,7 +127,12 @@ export const MyProfile = ({ userName }: { userName: string }) => {
               marginHorizontal: s.$1half,
             }}
           >
-            <View style={{ paddingBottom: s.$2, alignItems: 'center' }}>
+            <View style={{ 
+              paddingVertical: s.$3, 
+              alignItems: 'center', 
+              justifyContent: 'center',
+              minHeight: s.$8 
+            }}>
               <Heading 
                 tag="h2semi" 
                 style={{ 
@@ -135,10 +140,12 @@ export const MyProfile = ({ userName }: { userName: string }) => {
                   fontSize: 17, 
                   letterSpacing: -0.34, // -2% of 17px
                   textAlign: 'center',
-                  paddingHorizontal: s.$2 
+                  paddingHorizontal: s.$4,
+                  lineHeight: 22,
+                  width: '90%'
                 }}
               >
-                these prompts will disappear after you add{'\n'}...no one will ever know
+                these prompts will disappear after you add ...no one will ever know
               </Heading>
             </View>
 

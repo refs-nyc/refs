@@ -146,7 +146,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
                   maxWidth: 500
                 }}
               >
-                these prompts will disappear after you add ...no one will ever know
+                these prompts will disappear after you add{'\n'}...no one will ever know
               </Heading>
             </View>
 

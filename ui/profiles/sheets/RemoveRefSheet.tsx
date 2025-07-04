@@ -8,6 +8,7 @@ import BottomSheet, { BottomSheetBackdrop } from '@gorhom/bottom-sheet'
 import { useEffect } from 'react'
 import { View } from 'react-native'
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated'
+import { SheetHandle } from '@/ui/core/SheetHandle'
 
 export const RemoveRefSheet = ({
   bottomSheetRef,
@@ -45,7 +46,7 @@ export const RemoveRefSheet = ({
       snapPoints={['35%']}
       index={-1}
       animatedIndex={removeRefSheetBackdropAnimatedIndex}
-      backgroundStyle={{ backgroundColor: c.surface, borderRadius: s.$4, paddingTop: 0 }}
+      backgroundStyle={{ backgroundColor: c.surface, borderRadius: 50, paddingTop: 0 }}
       backdropComponent={(p) => (
         <BottomSheetBackdrop
           {...p}
@@ -54,32 +55,10 @@ export const RemoveRefSheet = ({
           pressBehavior={'close'}
         />
       )}
-      handleComponent={() => (
-        <View
-          style={{
-            width: '100%',
-            position: 'absolute',
-            alignItems: 'center',
-            justifyContent: 'center',
-            display: 'flex',
-            height: HANDLE_HEIGHT,
-          }}
-        >
-          <Animated.View
-            entering={FadeIn.duration(200)}
-            exiting={FadeOut.duration(200)}
-            style={{
-              backgroundColor: c.black,
-              width: s.$5,
-              height: s.$05,
-              borderRadius: s.$10,
-            }}
-          />
-        </View>
-      )}
+      handleComponent={null}
       keyboardBehavior="interactive"
     >
-      <YStack gap={s.$2} style={{ paddingHorizontal: s.$2, paddingVertical: s.$3 }}>
+      <YStack gap={s.$2} style={{ paddingHorizontal: s.$2, paddingVertical: s.$3, paddingTop: s.$3 + 8 }}>
         <XStack style={{ justifyContent: 'center' }}>
           <Heading tag="h2light" style={{ color: c.muted }}>
             Do what with {item?.expand.ref?.title}?

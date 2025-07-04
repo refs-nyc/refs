@@ -21,8 +21,9 @@ export default function Saves({
       enablePanDownToClose={true}
       enableDynamicSizing={false}
       snapPoints={['80%']}
-      backgroundStyle={{ backgroundColor: c.olive, borderRadius: s.$4 }}
-      handleIndicatorStyle={{ width: s.$13, height: s.$075, backgroundColor: c.white }}
+      backgroundStyle={{ backgroundColor: c.olive, borderRadius: 50 }}
+      handleComponent={null}
+      // handleIndicatorStyle={{ width: s.$13, height: s.$075, backgroundColor: c.white }}
     >
       <SavesList />
     </BottomSheet>

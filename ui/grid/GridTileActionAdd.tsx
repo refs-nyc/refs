@@ -1,12 +1,7 @@
-import { Pressable } from 'react-native'
-import { Heading } from '@/ui/typo/Heading'
+import { Text } from 'react-native'
 
-export const GridTileActionAdd = ({ onPress }: { onPress: () => void }) => {
+export const GridTileActionAdd = ({ text }: { text: string }) => {
   return (
-    <Pressable style={{ flex: 1, aspectRatio: 1, justifyContent: 'center' }} onPress={onPress}>
-      <Heading tag="h1light" style={{ textAlign: 'center' }}>
-        +
-      </Heading>
-    </Pressable>
+    <Text style={{ fontSize: 14, color: 'rgba(0,0,0,0.5)', textAlign: 'center', paddingHorizontal: 12 }}>{text}</Text>
   )
 }

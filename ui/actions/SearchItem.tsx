@@ -59,7 +59,7 @@ export const SearchItem = ({ onComplete }: { onComplete: (r: ExpandedItem) => vo
         }}
         clearButtonMode="while-editing"
         value={searchQuery}
-        placeholder="Search anything or start typing"
+                    placeholder="Search anything or paste a link"
         onChangeText={updateQuery}
         autoFocus={true}
       />

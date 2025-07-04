@@ -11,27 +11,35 @@ export const GridTile = ({
   backgroundColor,
   flex,
   size = DEFAULT_TILE_SIZE,
+  isPlaceholder = false,
 }: {
   children?: React.ReactNode
   borderColor?: string
   backgroundColor?: string
   flex?: boolean
   size?: number
+  isPlaceholder?: boolean
 }) => {
   const { stopEditProfile } = useUIStore()
+
+  const placeholderStyle = isPlaceholder
+    ? {
+        backgroundColor: backgroundColor || c.surface2,
+        width: size,
+        alignItems: 'center' as const,
+        justifyContent: 'center' as const,
+      }
+    : {
+        borderWidth: 2,
+        borderColor: borderColor || c.surface2,
+        backgroundColor: backgroundColor || c.surface2,
+        width: size,
+      }
 
   return (
     <TouchableOpacity
       onPress={stopEditProfile}
-      style={[
-        base.gridTile,
-        {
-          borderWidth: 2,
-          borderColor: borderColor || c.surface2,
-          backgroundColor: backgroundColor || c.surface2,
-          width: flex ? size : '100%',
-        },
-      ]}
+      style={[base.gridTile, placeholderStyle]}
     >
       {children}
     </TouchableOpacity>

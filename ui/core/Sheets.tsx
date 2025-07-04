@@ -30,13 +30,15 @@ export const Sheet = (props: any = { full: false, noNotch: false, noPadding: fal
     <BottomSheet
       backgroundStyle={{
         backgroundColor: c.surface,
+        borderRadius: 50,
       }}
       style={{ paddingHorizontal: props.noPadding ? 0 : s.$2 }}
       backdropComponent={renderBackdrop}
       enableDynamicSizing={!props.full}
       maxDynamicContentSize={maxSnapPoint.value}
       snapPoints={snapPoints}
-      handleIndicatorStyle={{ width: s.$10, backgroundColor: c.muted }}
+      // handleIndicatorStyle={{ width: s.$10, backgroundColor: c.muted }}
+      handleComponent={null}
       enablePanDownToClose={true}
       keyboardBehavior="interactive"
       onChange={props?.onChange}

@@ -4,11 +4,30 @@ import { GridItem } from './GridItem'
 import { GridTileWrapper } from './GridTileWrapper'
 import { GridTileActionAdd } from './GridTileActionAdd'
 import { ExpandedItem } from '@/features/pocketbase/stores/types'
+import { useState } from 'react'
+import { Text } from 'react-native'
+
+const PROMPTS = [
+  'All-time comfort game',
+  'Link you shared recently',
+  'Song that always hits',
+  'Free space',
+  'Place you feel like yourself',
+  'Example of perfect design',
+  'Hobby you want to get into',
+  'Favorite piece from a museum',
+  'Most rewatched movie',
+  'Tradition you love',
+  'Meme slot',
+  'Neighborhood spot',
+  'Art that moved you',
+]
 
 export const Grid = ({
   onPressItem,
   onLongPressItem,
   onAddItem,
+  onAddItemWithPrompt,
   onRemoveItem,
   columns = 3,
   rows = 3,
@@ -18,6 +37,7 @@ export const Grid = ({
   onPressItem?: (item?: ExpandedItem) => void
   onLongPressItem?: () => void
   onAddItem?: () => void
+  onAddItemWithPrompt?: (prompt: string) => void
   onRemoveItem?: (item: ExpandedItem) => void
   columns: number
   rows: number
@@ -43,21 +63,19 @@ export const Grid = ({
         </GridTileWrapper>
       ))}
 
-      {editingRights && (
-        <>
-          {items.length < gridSize && (
-            <GridTileWrapper key="add" type="add">
-              <GridTileActionAdd onPress={onAddItem ?? (() => {})}></GridTileActionAdd>
-            </GridTileWrapper>
-          )}
-        </>
-      )}
-
-      {Array.from({ length: gridSize - items.length - (editingRights ? 1 : 0) }).map((_, i) => (
-        <GridTileWrapper key={`empty-${i}`} type="">
-          <GridTile key={i} />
-        </GridTileWrapper>
-      ))}
+      {/* Prompt placeholders for empty slots */}
+      {Array.from({ length: gridSize - items.length }).map((_, i) => {
+        const prompt = PROMPTS[i % PROMPTS.length]
+        return (
+          <GridTileWrapper
+            key={`placeholder-${i}`}
+            type="placeholder"
+            onPress={() => onAddItemWithPrompt && onAddItemWithPrompt(prompt)}
+          >
+            <Text style={{ fontSize: 14 }}>{prompt}</Text>
+          </GridTileWrapper>
+        )
+      })}
     </GridWrapper>
   )
 }

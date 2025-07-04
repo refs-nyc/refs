@@ -9,6 +9,7 @@ import { DMButton } from '@/ui/profiles/DMButton'
 import { Heading } from '@/ui/typo/Heading'
 import BottomSheet, { BottomSheetBackdrop } from '@gorhom/bottom-sheet'
 import { Pressable, StyleSheet, Text, View } from 'react-native'
+import { SheetHandle } from '@/ui/core/SheetHandle'
 
 export const OtherButtonsSheet = ({
   bottomSheetRef,
@@ -37,8 +38,8 @@ export const OtherButtonsSheet = ({
       snapPoints={['15%']}
       index={0}
       animatedIndex={moduleBackdropAnimatedIndex}
-      backgroundStyle={{ backgroundColor: c.olive, borderRadius: s.$4, paddingTop: 0 }}
-      handleComponent={() => null}
+      backgroundStyle={{ backgroundColor: c.olive, borderRadius: 50, paddingTop: 0 }}
+      handleComponent={null}
       backdropComponent={(p) => (
         <BottomSheetBackdrop
           {...p}

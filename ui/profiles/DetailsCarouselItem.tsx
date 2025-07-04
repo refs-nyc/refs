@@ -25,23 +25,23 @@ import { KeyboardAvoidingView } from 'react-native-keyboard-controller'
 import Animated, { useAnimatedStyle } from 'react-native-reanimated'
 import { useStore } from 'zustand'
 
-const LocationMeta = ({ location }: { location: string }) => {
+const LocationMeta = ({ location, numberOfLines }: { location: string; numberOfLines?: number }) => {
   return (
     <XStack style={{ alignItems: 'center' }} gap={s.$05}>
-      <Heading tag="smallmuted">{location}</Heading>
+      <Heading tag="smallmuted" numberOfLines={numberOfLines}>{location}</Heading>
     </XStack>
   )
 }
 
-const AuthorMeta = ({ author }: { author: string }) => {
+const AuthorMeta = ({ author, numberOfLines }: { author: string; numberOfLines?: number }) => {
   return (
     <XStack style={{ alignItems: 'center' }} gap={s.$05}>
-      <Heading tag="smallmuted">{author}</Heading>
+      <Heading tag="smallmuted" numberOfLines={numberOfLines}>{author}</Heading>
     </XStack>
   )
 }
 
-const Meta = ({ refRecord }: { refRecord: RefsRecord }) => {
+const Meta = ({ refRecord, numberOfLines }: { refRecord: RefsRecord; numberOfLines?: number }) => {
   if (!refRecord) return
 
   let refMeta: { location?: string; author?: string } = {}
@@ -61,9 +61,9 @@ const Meta = ({ refRecord }: { refRecord: RefsRecord }) => {
   }
 
   return (
-    <YStack gap={s.$05} style={{ paddingVertical: s.$05 }}>
-      {location && <LocationMeta location={location} />}
-      {author && <AuthorMeta author={author} />}
+    <YStack gap={s.$05}>
+      {location && <LocationMeta location={location} numberOfLines={numberOfLines} />}
+      {author && <AuthorMeta author={author} numberOfLines={numberOfLines} />}
     </YStack>
   )
 }
@@ -134,6 +134,15 @@ export const DetailsCarouselItem = ({ item, index }: { item: ExpandedItem; index
 
   const showAddRefButton = item.creator !== user?.id
 
+  // Calculate title width based on whether there's a link icon
+  const hasLinkIcon = !item.list && item.url
+  const meatballWidth = s.$4 // 44px - smaller for better proportion
+  const linkIconWidth = hasLinkIcon ? s.$4 : 0 // 44px or 0
+  const iconSpacing = 8 // 8px between link and meatball icons
+  const titleMargin = 12 // 12px spacing after title
+  const totalIconsWidth = meatballWidth + (hasLinkIcon ? linkIconWidth + iconSpacing : 0) + titleMargin
+  const titleWidth = win.width - totalIconsWidth - (s.$2 * 2) // subtract horizontal padding
+
   const animatedStyle = useAnimatedStyle(() => {
     return editingThisItem ? base.editableItem : base.nonEditableItem
   }, [editingThisItem])
@@ -150,10 +159,11 @@ export const DetailsCarouselItem = ({ item, index }: { item: ExpandedItem; index
     >
       <BottomSheetScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ gap: s.$1 }}
+        contentContainerStyle={{ gap: s.$1, paddingTop: 15 }}
         keyboardShouldPersistTaps="handled"
         nestedScrollEnabled={true}
         alwaysBounceVertical={false}
+        style={{ overflow: 'hidden' }}
       >
         <KeyboardAvoidingView
           behavior={'position'}
@@ -235,113 +245,138 @@ export const DetailsCarouselItem = ({ item, index }: { item: ExpandedItem; index
               <BottomSheetView
                 style={{
                   marginBottom: 0,
+                  marginTop: -10,
                   flexDirection: 'row',
+                  alignItems: 'center',
                   justifyContent: 'space-between',
-                  gap: s.$09,
+                  minHeight: s.$7,
                 }}
               >
                 {/* Title OR textinput for editing link*/}
-                {editingThisItem && editingLink ? (
-                  <TextInput
-                    style={[{ flex: 1, paddingHorizontal: s.$1 }, base.editableItem]}
-                    value={url}
-                    placeholder="abc.xyz"
-                    onChangeText={async (e) => {
-                      setUrl(e)
-                      updateEditedState({
-                        url: e,
-                      })
-                    }}
-                  />
-                ) : editingThisItem && item.list ? (
-                  <TextInput
-                    style={[
-                      { flex: 1, paddingHorizontal: s.$1, paddingVertical: s.$1 },
-                      base.editableItem,
-                    ]}
-                    defaultValue={item.expand.ref.title}
-                    value={listTitle}
-                    placeholder="Add a list title"
-                    onChangeText={async (e) => {
-                      setListTitle(e),
+                <View style={{ width: titleWidth, marginRight: titleMargin }}>
+                  {editingThisItem && editingLink ? (
+                    <TextInput
+                      style={[
+                        { 
+                          width: '100%',
+                          paddingHorizontal: s.$1, 
+                          height: s.$7
+                        }, 
+                        base.editableItem
+                      ]}
+                      value={url}
+                      placeholder="abc.xyz"
+                      onChangeText={async (e) => {
+                        setUrl(e)
                         updateEditedState({
-                          listTitle: e,
+                          url: e,
                         })
-                    }}
-                  />
-                ) : (
-                  <Pressable
-                    onPress={() => {
-                      if (!editingThisItem) {
-                        setCurrentRefId(item.ref)
-                        referencersBottomSheetRef.current?.expand()
-                        return
-                      }
-                      Keyboard.dismiss()
-                      setSearchingNewRef(item.id)
-                    }}
-                    style={[
-                      {
-                        gap: s.$05,
-                        flex: 1,
-                        paddingHorizontal: s.$1,
-                      },
-                      editingThisItem ? base.editableItem : base.nonEditableItem,
-                    ]}
-                  >
-                    <BottomSheetView
-                      style={{
-                        paddingVertical: s.$08,
                       }}
+                    />
+                  ) : editingThisItem && item.list ? (
+                    <TextInput
+                      style={[
+                        { 
+                          width: '100%',
+                          paddingHorizontal: s.$1, 
+                          height: s.$7
+                        },
+                        base.editableItem,
+                      ]}
+                      defaultValue={item.expand.ref.title}
+                      value={listTitle}
+                      placeholder="Add a list title"
+                      onChangeText={async (e) => {
+                        setListTitle(e),
+                          updateEditedState({
+                            listTitle: e,
+                          })
+                      }}
+                    />
+                  ) : (
+                    <Pressable
+                      onPress={() => {
+                        if (!editingThisItem) {
+                          setCurrentRefId(item.ref)
+                          referencersBottomSheetRef.current?.expand()
+                          return
+                        }
+                        Keyboard.dismiss()
+                        setSearchingNewRef(item.id)
+                      }}
+                      style={[
+                        {
+                          gap: s.$05,
+                          width: '100%',
+                          paddingHorizontal: s.$1,
+                          justifyContent: 'center',
+                          height: s.$7,
+                        },
+                        editingThisItem ? base.editableItem : base.nonEditableItem,
+                      ]}
                     >
-                      <Heading tag="h2">{item.expand?.ref?.title}</Heading>
-                      {item.expand?.ref ? <Meta refRecord={item.expand?.ref} /> : null}
-                    </BottomSheetView>
-                  </Pressable>
-                )}
-                {/* Button for editing link */}
-                {!item.list && (
-                  <View
-                    style={[
-                      {
+                      <BottomSheetView style={{ justifyContent: 'center', height: '100%' }}>
+                        <Heading tag="h2" numberOfLines={2} style={{ flexShrink: 0 }}>
+                          {item.expand?.ref?.title}
+                        </Heading>
+                        {item.expand?.ref ? <Meta refRecord={item.expand?.ref} numberOfLines={1} /> : null}
+                      </BottomSheetView>
+                    </Pressable>
+                  )}
+                </View>
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  {/* Button for editing link */}
+                  {!item.list && (
+                    <View
+                      style={{
                         width: s.$4,
                         height: s.$4,
                         justifyContent: 'center',
                         alignItems: 'center',
-                      },
-                      editingThisItem ? base.editableItem : base.nonEditableItem,
-                    ]}
+                        marginRight: iconSpacing,
+                      }}
+                    >
+                      {!editingThisItem && item.url && (
+                        <Link
+                          style={{ transformOrigin: 'center', transform: 'rotate(-45deg)' }}
+                          href={item.url as any}
+                        >
+                          <Ionicons
+                            color={c.muted}
+                            size={s.$2half}
+                            fillColor="red"
+                            name="arrow-forward-outline"
+                          />
+                        </Link>
+                      )}
+                      {editingThisItem && (
+                        <Pressable onPress={() => setEditingLink(!editingLink)}>
+                          <Ionicons
+                            name={editingLink ? 'checkmark' : 'arrow-forward-outline'}
+                            style={editingLink ? {} : { transform: [{ rotate: '-45deg' }] }}
+                            size={s.$2half}
+                            color={c.muted}
+                          />
+                        </Pressable>
+                      )}
+                    </View>
+                  )}
+                  {/* Meatball Menu */}
+                  <View
+                    style={{
+                      width: s.$4,
+                      height: s.$4,
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                    }}
                   >
-                    {!editingThisItem && item.url && (
-                      <Link
-                        style={{ transformOrigin: 'center', transform: 'rotate(-45deg)' }}
-                        href={item.url as any}
-                      >
-                        <Ionicons
-                          color={c.muted}
-                          size={s.$2}
-                          fillColor="red"
-                          name="arrow-forward-outline"
-                        />
-                      </Link>
-                    )}
-                    {editingThisItem && (
-                      <Pressable onPress={() => setEditingLink(!editingLink)}>
-                        <Ionicons
-                          name={editingLink ? 'checkmark' : 'arrow-forward-outline'}
-                          style={editingLink ? {} : { transform: [{ rotate: '-45deg' }] }}
-                          size={s.$2}
-                          color={c.muted}
-                        />
-                      </Pressable>
-                    )}
+                    <MeatballMenu
+                      onPress={() => {
+                        setShowContextMenu(!showContextMenu)
+                      }}
+                    />
                   </View>
-                )}
-                <MeatballMenu
-                  onPress={() => {
-                    setShowContextMenu(!showContextMenu)
-                  }}
-                />
+                </View>
               </BottomSheetView>
             </BottomSheetView>
 
@@ -386,7 +421,7 @@ export const DetailsCarouselItem = ({ item, index }: { item: ExpandedItem; index
             width: '75%',
             alignSelf: 'center',
             position: 'absolute',
-            bottom: 0,
+            bottom: -25,
           }}
         >
           <Button

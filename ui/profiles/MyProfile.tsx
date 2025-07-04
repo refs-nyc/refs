@@ -140,9 +140,10 @@ export const MyProfile = ({ userName }: { userName: string }) => {
                   fontSize: 17, 
                   letterSpacing: -0.34, // -2% of 17px
                   textAlign: 'center',
-                  paddingHorizontal: s.$4,
+                  paddingHorizontal: s.$2,
                   lineHeight: 22,
-                  width: '90%'
+                  width: '100%',
+                  maxWidth: 320
                 }}
               >
                 these prompts will disappear after you add ...no one will ever know

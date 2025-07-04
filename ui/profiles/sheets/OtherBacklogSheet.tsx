@@ -6,7 +6,6 @@ import { Heading } from '@/ui/typo/Heading'
 import BottomSheet, { BottomSheetBackdrop } from '@gorhom/bottom-sheet'
 import { useEffect, useState } from 'react'
 import { Pressable } from 'react-native'
-import { SheetHandle } from '@/ui/core/SheetHandle'
 
 export const OtherBacklogSheet = ({
   bottomSheetRef,

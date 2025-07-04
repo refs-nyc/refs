@@ -15,7 +15,6 @@ import BottomSheet, { BottomSheetBackdrop, BottomSheetView } from '@gorhom/botto
 import { useState, useEffect, useRef } from 'react'
 import { View, Platform, Keyboard } from 'react-native'
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated'
-import { SheetHandle } from '@/ui/core/SheetHandle'
 
 export type NewRefStep =
   | 'search'

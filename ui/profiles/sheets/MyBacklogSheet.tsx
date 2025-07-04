@@ -10,7 +10,6 @@ import BottomSheet, { BottomSheetBackdrop } from '@gorhom/bottom-sheet'
 import { useEffect, useRef, useState } from 'react'
 import { Pressable, View } from 'react-native'
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated'
-import { SheetHandle } from '@/ui/core/SheetHandle'
 
 export const MyBacklogSheet = ({
   backlogItems,

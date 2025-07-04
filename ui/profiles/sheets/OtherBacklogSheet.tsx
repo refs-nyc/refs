@@ -6,7 +6,6 @@ import { Heading } from '@/ui/typo/Heading'
 import BottomSheet, { BottomSheetBackdrop } from '@gorhom/bottom-sheet'
 import { useEffect, useState } from 'react'
 import { Pressable } from 'react-native'
-import { SheetHandle } from '@/ui/core/SheetHandle'
 
 export const OtherBacklogSheet = ({
   bottomSheetRef,
@@ -45,7 +44,7 @@ export const OtherBacklogSheet = ({
       snapPoints={['50%', '90%']}
       index={-1}
       animatedIndex={otherProfileBackdropAnimatedIndex}
-      backgroundStyle={{ backgroundColor: c.olive, borderRadius: 50, paddingTop: 0 }}
+      backgroundStyle={{ backgroundColor: c.olive, borderRadius: s.$5, paddingTop: 0 }}
       backdropComponent={(p) => (
         <BottomSheetBackdrop
           {...p}

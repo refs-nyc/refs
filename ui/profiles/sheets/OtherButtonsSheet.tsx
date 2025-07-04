@@ -9,7 +9,6 @@ import { DMButton } from '@/ui/profiles/DMButton'
 import { Heading } from '@/ui/typo/Heading'
 import BottomSheet, { BottomSheetBackdrop } from '@gorhom/bottom-sheet'
 import { Pressable, StyleSheet, Text, View } from 'react-native'
-import { SheetHandle } from '@/ui/core/SheetHandle'
 
 export const OtherButtonsSheet = ({
   bottomSheetRef,

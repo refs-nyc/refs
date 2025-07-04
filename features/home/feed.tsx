@@ -69,7 +69,7 @@ const ListItem = ({
   return (
     <View
       style={{
-        backgroundColor: c.accent + '26', // 15% opacity main accent color
+        backgroundColor: c.surface2,
         borderRadius: 10,
         paddingHorizontal: 10,
         paddingVertical: 10,

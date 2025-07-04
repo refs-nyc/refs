@@ -19,6 +19,7 @@ export const c = {
   grey2: '#787676',
   muted: '#787676',
   muted2: '#414040',
+  inactive: '#B6B5B2',
   // Rare
   none: 'transparent',
   red: '#f00',

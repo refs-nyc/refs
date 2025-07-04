@@ -2,7 +2,7 @@ import { pocketbase, useItemStore, useUserStore } from '@/features/pocketbase'
 import { getBacklogItems, getProfileItems } from '@/features/pocketbase/stores/items'
 import type { ExpandedProfile } from '@/features/pocketbase/stores/types'
 import { ExpandedItem } from '@/features/pocketbase/stores/types'
-import { s } from '@/features/style'
+import { c, s } from '@/features/style'
 import BottomSheet from '@gorhom/bottom-sheet'
 import { useShareIntentContext } from 'expo-share-intent'
 import { useEffect, useRef, useState } from 'react'
@@ -127,7 +127,20 @@ export const MyProfile = ({ userName }: { userName: string }) => {
               marginHorizontal: s.$1half,
             }}
           >
-            <ProfileHeader profile={profile} />
+            <View style={{ paddingBottom: s.$2, alignItems: 'center' }}>
+              <Heading 
+                tag="h2semi" 
+                style={{ 
+                  color: c.inactive, 
+                  fontSize: 17, 
+                  letterSpacing: -0.34, // -2% of 17px
+                  textAlign: 'center',
+                  paddingHorizontal: s.$2 
+                }}
+              >
+                these prompts will disappear after you add{'\n'}...no one will ever know
+              </Heading>
+            </View>
 
             <View style={{ gap: s.$2 }}>
               {loading ? (

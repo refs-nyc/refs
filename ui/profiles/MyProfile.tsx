@@ -143,10 +143,10 @@ export const MyProfile = ({ userName }: { userName: string }) => {
                   paddingHorizontal: s.$2,
                   lineHeight: 22,
                   width: '100%',
-                  maxWidth: 400
+                  maxWidth: 500
                 }}
               >
-                these prompts will disappear after you add{'\n'}...no one will ever know
+                these prompts will disappear after you add ...no one will ever know
               </Heading>
             </View>
 

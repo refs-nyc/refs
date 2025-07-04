@@ -145,7 +145,7 @@ export const Navigation = ({
         </View>
         <View style={{ display: 'flex', flexDirection: 'row', paddingRight: 6 }}>
           <Pressable onPress={() => router.push('/messages')}>
-            <View style={{ top: -3 }}>
+            <View style={{ top: -3, opacity: 0.5 }}>
               <MessageIcon width={30} />
             </View>
             <View

@@ -7,8 +7,8 @@ import {
   Text,
   Pressable,
   ActivityIndicator,
-  TextInput
 } from 'react-native'
+import { BottomSheetScrollView, BottomSheetTextInput as TextInput } from '@gorhom/bottom-sheet'
 import { Heading } from '@/ui/typo/Heading'
 import { Picker } from '../inputs/Picker'
 import { PinataImage } from '../images/PinataImage'
@@ -133,14 +133,13 @@ export const RefForm = ({
 
   return (
     <DismissKeyboard>
-      <View
-        style={{
-          justifyContent: 'flex-start',
-          alignItems: 'center',
+      <BottomSheetScrollView
+        contentContainerStyle={{
           gap: s.$1,
           marginTop: s.$2,
           marginBottom: s.$2 + 10,
-          width: '100%',
+          justifyContent: 'flex-start',
+          alignItems: 'center',
         }}
       >
         <View
@@ -492,7 +491,7 @@ export const RefForm = ({
             />
           )}
         </View>
-      </View>
+      </BottomSheetScrollView>
     </DismissKeyboard>
   )
 }

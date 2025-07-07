@@ -62,7 +62,7 @@ export const NewRefSheet = ({
   const backlog = addingNewRefTo === 'backlog'
 
   // Two snap points: collapsed and expanded
-  const snapPoints = ['50%', '90%']
+  const snapPoints = ['70%', '90%']
   // Track if the sheet is open
   const [isSheetOpen, setIsSheetOpen] = useState(false)
 
@@ -112,7 +112,7 @@ export const NewRefSheet = ({
           pressBehavior={'close'}
         />
       )}
-      keyboardBehavior="interactive"
+      // keyboardBehavior="interactive"
     >
       {isOpen && (
         <BottomSheetView

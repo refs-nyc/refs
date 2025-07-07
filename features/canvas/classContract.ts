@@ -5,6 +5,7 @@ import { ref } from './ref'
 import { profile } from './profile'
 
 export default class RefsClassContract extends Contract<typeof RefsClassContract.models> {
+  static topic = 'alpha.refs.nyc'
   static get models() {
     return {
       item,

@@ -37,6 +37,7 @@ import Referencers from '@/ui/profiles/sheets/ReferencersSheet'
 import { useUIStore } from '@/ui/state'
 import { AddRefSheet } from '@/ui/profiles/sheets/AddRefSheet'
 import { NewRefSheet } from '@/ui/profiles/sheets/NewRefSheet'
+import { useCanvasStore } from '@/features/pocketbase/stores/canvas'
 
 install()
 polyfillEncoding()
@@ -90,10 +91,12 @@ function FontProvider({ children }: { children: React.ReactNode }) {
 
 export default function RootLayout() {
   const { init } = useUserStore()
+  const { initialize: initializeCanvas } = useCanvasStore()
 
   useEffect(() => {
     // Initialize user store to sync with PocketBase auth
     init()
+    initializeCanvas()
   }, [init])
 
   return (

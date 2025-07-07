@@ -68,7 +68,9 @@ export default function Referencers({
       <View style={{ paddingHorizontal: s.$3, paddingVertical: s.$1, height: '100%' }}>
         <View style={{ flexDirection: 'row', alignItems: 'flex-start', paddingBottom: s.$1 }}>
           <View style={{ flex: 1, minWidth: 0, justifyContent: 'flex-start' }}>
-            <Heading tag="h1" style={{ lineHeight: 30 }}>{refData?.title}</Heading>
+            <Heading tag="h1" style={{ lineHeight: 30 }}>
+              {refData?.title}
+            </Heading>
             <View style={{ height: 8 }} />
             <Text style={{ color: c.grey2 }}>{"Everyone who's added it."}</Text>
           </View>

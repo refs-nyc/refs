@@ -2,8 +2,8 @@ import { pocketbase } from '../pocketbase'
 import { create } from 'zustand'
 import { Profile, ExpandedProfile } from './types'
 import { UsersRecord } from './pocketbase-types'
-import { canvasApp } from '@/features/canvas'
 import { ClientResponseError } from 'pocketbase'
+import { useCanvasStore } from '@/features/pocketbase/stores/canvas'
 
 export const useUserStore = create<{
   stagedUser: Partial<Profile>
@@ -81,6 +81,10 @@ export const useUserStore = create<{
       if (!pocketbase.authStore.record) {
         throw new Error('not logged in')
       }
+      const canvasApp = useCanvasStore.getState().app
+      if (!canvasApp) {
+        throw new Error('Canvas app not found')
+      }
 
       const record = await pocketbase
         .collection<UsersRecord>('users')
@@ -88,11 +92,11 @@ export const useUserStore = create<{
 
       await canvasApp.actions.updateProfile({
         id: pocketbase.authStore.record.id,
-        firstName: fields.firstName,
-        lastName: fields.lastName,
-        location: fields.location,
-        image: fields.image,
-        updated: record.updated,
+        firstName: fields.firstName || '',
+        lastName: fields.lastName || '',
+        location: fields.location || '',
+        image: fields.image || '',
+        updated: record.updated || '',
       })
 
       return record
@@ -127,6 +131,11 @@ export const useUserStore = create<{
     const userPassword = get().stagedUser.password
     if (!userPassword) throw Error('User must have password')
 
+    const canvasApp = useCanvasStore.getState().app
+    if (!canvasApp) {
+      throw new Error('Canvas app not found')
+    }
+
     // Generate a username
     if (!finalUser.userName) {
       const firstNamePart = finalUser.firstName ? finalUser.firstName.toLowerCase() : 'user'
@@ -144,10 +153,10 @@ export const useUserStore = create<{
       if (pocketbase?.authStore?.record?.id) {
         await canvasApp.actions.createProfile({
           id: pocketbase.authStore.record.id,
-          firstName: finalUser.firstName,
-          lastName: finalUser.lastName,
-          location: finalUser.location,
-          image: finalUser.image,
+          firstName: finalUser.firstName || '',
+          lastName: finalUser.lastName || '',
+          location: finalUser.location || '',
+          image: finalUser.image || '',
           userName: record.userName,
           created: record.created,
         })

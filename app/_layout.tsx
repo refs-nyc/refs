@@ -11,11 +11,10 @@ import 'fast-text-encoding'
 import { configureReanimatedLogger } from 'react-native-reanimated'
 import { ShareIntentProvider } from 'expo-share-intent'
 
-import NetInfo from '@react-native-community/netinfo'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
-import { useEffect, useRef, useState } from 'react'
-import { StatusBar, useColorScheme, useWindowDimensions, View } from 'react-native'
+import { useEffect, useRef } from 'react'
+import { StatusBar, useColorScheme } from 'react-native'
 import { Navigation } from '@/ui/navigation/Navigation'
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native'
 import { useFonts } from 'expo-font'
@@ -37,7 +36,6 @@ import Referencers from '@/ui/profiles/sheets/ReferencersSheet'
 import { useUIStore } from '@/ui/state'
 import { AddRefSheet } from '@/ui/profiles/sheets/AddRefSheet'
 import { NewRefSheet } from '@/ui/profiles/sheets/NewRefSheet'
-import { useCanvasStore } from '@/features/pocketbase/stores/canvas'
 
 install()
 polyfillEncoding()
@@ -91,12 +89,10 @@ function FontProvider({ children }: { children: React.ReactNode }) {
 
 export default function RootLayout() {
   const { init } = useUserStore()
-  const { initialize: initializeCanvas } = useCanvasStore()
 
   useEffect(() => {
     // Initialize user store to sync with PocketBase auth
     init()
-    initializeCanvas()
   }, [init])
 
   return (

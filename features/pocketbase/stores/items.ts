@@ -3,7 +3,7 @@ import { create } from 'zustand'
 import { ExpandedItem, CompleteRef, StagedItemFields, StagedRefFields } from './types'
 import { ItemsRecord } from './pocketbase-types'
 import { createdSort } from '@/ui/profiles/sorts'
-import { useCanvasStore } from '@/features/pocketbase/stores/canvas'
+import { canvasApp } from '@/features/canvas'
 
 function gridSort(items: ExpandedItem[]): ExpandedItem[] {
   const itemsWithOrder: ExpandedItem[] = []
@@ -115,7 +115,7 @@ export const useItemStore = create<{
     if (!userId) {
       throw new Error('User not found')
     }
-    const canvasApp = useCanvasStore.getState().app
+
     if (!canvasApp) {
       throw new Error('Canvas app not found')
     }
@@ -146,10 +146,6 @@ export const useItemStore = create<{
     const userId = pocketbase.authStore.record?.id
     if (!userId) {
       throw new Error('User not found')
-    }
-    const canvasApp = useCanvasStore.getState().app
-    if (!canvasApp) {
-      throw new Error('Canvas app not found')
     }
 
     const createItemArgs = {
@@ -186,10 +182,6 @@ export const useItemStore = create<{
     if (!userId) {
       throw new Error('User not found')
     }
-    const canvasApp = useCanvasStore.getState().app
-    if (!canvasApp) {
-      throw new Error('Canvas app not found')
-    }
 
     const item = await pocketbase.collection('items').getOne(id)
 
@@ -213,10 +205,6 @@ export const useItemStore = create<{
       if (!userId) {
         throw new Error('User not found')
       }
-      const canvasApp = useCanvasStore.getState().app
-      if (!canvasApp) {
-        throw new Error('Canvas app not found')
-      }
 
       // update the item in pocketbase
       await pocketbase.collection('items').update(itemId, { parent: listId })
@@ -238,10 +226,6 @@ export const useItemStore = create<{
       const userId = pocketbase.authStore.record?.id
       if (!userId) {
         throw new Error('User not found')
-      }
-      const canvasApp = useCanvasStore.getState().app
-      if (!canvasApp) {
-        throw new Error('Canvas app not found')
       }
 
       const editedState = get().editedState
@@ -284,10 +268,6 @@ export const useItemStore = create<{
       if (!userId) {
         throw new Error('User not found')
       }
-      const canvasApp = useCanvasStore.getState().app
-      if (!canvasApp) {
-        throw new Error('Canvas app not found')
-      }
 
       const record = await pocketbase.collection<ItemsRecord>('items').update(id, { backlog: true })
       // update the item in canvas
@@ -306,10 +286,6 @@ export const useItemStore = create<{
     const userId = pocketbase.authStore.record?.id
     if (!userId) {
       throw new Error('User not found')
-    }
-    const canvasApp = useCanvasStore.getState().app
-    if (!canvasApp) {
-      throw new Error('Canvas app not found')
     }
     try {
       const record = await pocketbase.collection('refs').update(id, { title })

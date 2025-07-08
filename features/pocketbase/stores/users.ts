@@ -3,7 +3,7 @@ import { create } from 'zustand'
 import { Profile, ExpandedProfile } from './types'
 import { UsersRecord } from './pocketbase-types'
 import { ClientResponseError } from 'pocketbase'
-import { useCanvasStore } from '@/features/pocketbase/stores/canvas'
+import { canvasApp } from '@/features/canvas'
 
 export const useUserStore = create<{
   stagedUser: Partial<Profile>
@@ -81,10 +81,6 @@ export const useUserStore = create<{
       if (!pocketbase.authStore.record) {
         throw new Error('not logged in')
       }
-      const canvasApp = useCanvasStore.getState().app
-      if (!canvasApp) {
-        throw new Error('Canvas app not found')
-      }
 
       const record = await pocketbase
         .collection<UsersRecord>('users')
@@ -130,11 +126,6 @@ export const useUserStore = create<{
 
     const userPassword = get().stagedUser.password
     if (!userPassword) throw Error('User must have password')
-
-    const canvasApp = useCanvasStore.getState().app
-    if (!canvasApp) {
-      throw new Error('Canvas app not found')
-    }
 
     // Generate a username
     if (!finalUser.userName) {

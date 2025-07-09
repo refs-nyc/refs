@@ -7,6 +7,15 @@ import '@/features/polyfill/custom-event-polyfill'
 import 'react-native-get-random-values'
 import 'fast-text-encoding'
 
+// polyfill AbortSignal
+if (!AbortSignal.prototype.throwIfAborted) {
+  AbortSignal.prototype.throwIfAborted = function () {
+    if (this.aborted) {
+      throw new Error('Aborted')
+    }
+  }
+}
+
 // Disable strict mode warnings caused by carousel
 import { configureReanimatedLogger } from 'react-native-reanimated'
 import { ShareIntentProvider } from 'expo-share-intent'

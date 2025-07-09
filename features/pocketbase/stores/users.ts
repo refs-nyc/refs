@@ -2,8 +2,8 @@ import { pocketbase } from '../pocketbase'
 import { create } from 'zustand'
 import { Profile, ExpandedProfile } from './types'
 import { UsersRecord } from './pocketbase-types'
-import { canvasApp } from './canvas'
 import { ClientResponseError } from 'pocketbase'
+import { canvasApp } from '@/features/canvas'
 
 export const useUserStore = create<{
   stagedUser: Partial<Profile>
@@ -86,7 +86,14 @@ export const useUserStore = create<{
         .collection<UsersRecord>('users')
         .update(pocketbase.authStore.record.id, { ...fields })
 
-      await canvasApp.actions.updateUser(pocketbase.authStore.record.id, fields)
+      await canvasApp.actions.updateProfile({
+        id: pocketbase.authStore.record.id,
+        firstName: fields.firstName || '',
+        lastName: fields.lastName || '',
+        location: fields.location || '',
+        image: fields.image || '',
+        updated: record.updated || '',
+      })
 
       return record
     } catch (err) {
@@ -135,13 +142,14 @@ export const useUserStore = create<{
       await get().loginWithPassword(finalUser.email, userPassword)
 
       if (pocketbase?.authStore?.record?.id) {
-        await canvasApp.actions.registerUser({
+        await canvasApp.actions.createProfile({
           id: pocketbase.authStore.record.id,
-          ...finalUser,
-          email: '',
-          password: '',
-          tokenKey: '',
+          firstName: finalUser.firstName || '',
+          lastName: finalUser.lastName || '',
+          location: finalUser.location || '',
+          image: finalUser.image || '',
           userName: record.userName,
+          created: record.created,
         })
       }
 

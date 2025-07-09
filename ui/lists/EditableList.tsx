@@ -11,7 +11,6 @@ import { NewListItemButton } from './NewListItemButton'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { XStack } from '../core/Stacks'
 import { Ionicons } from '@expo/vector-icons'
-import { pocketbase } from '@/features/pocketbase'
 
 export const EditableList = ({
   item,
@@ -20,8 +19,7 @@ export const EditableList = ({
   item: ExpandedItem
   onComplete: () => void
 }) => {
-  const { addingToList, remove, setAddingToList } = useItemStore()
-  const { push, updateRefTitle } = useItemStore()
+  const { addingToList, removeItem, setAddingToList, addToProfile, updateRefTitle } = useItemStore()
   const [itemState, setItemState] = useState<ExpandedItem>(item)
   const [title, setTitle] = useState<string>(item.expand.ref.title || '')
   const [editingTitle, setEditingTitle] = useState<boolean>(!item.expand.ref.title)
@@ -40,14 +38,14 @@ export const EditableList = ({
 
   const onRefFound = async (ref: CompleteRef) => {
     try {
-      const newItem = await push(
+      // use addToProfile instead
+      const newItem = await addToProfile(
         ref.id,
         {
-          image: ref?.image || '',
-
           parent: item.id,
           text: '',
-          url: '',
+          url: ref.url || '',
+          image: ref.image || '',
         },
         false
       )
@@ -115,7 +113,7 @@ export const EditableList = ({
                     backgroundColor={c.olive}
                     onRemove={async () => {
                       try {
-                        await remove(kid.id)
+                        await removeItem(kid.id)
                         setItemState((prev) => ({
                           ...prev,
                           expand: {

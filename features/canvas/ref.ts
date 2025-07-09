@@ -1,23 +1,22 @@
 import type { ModelInit } from '@canvas-js/core'
 
 export const ref = {
+  // id has the format creator/<unique string>
   id: 'primary',
   creator: '@profile?',
-  type: 'string?',
 
   title: 'string?',
   image: 'string?',
-  location: 'string?',
   url: 'string?',
   meta: 'string?',
 
   created: 'string?',
   updated: 'string?',
   deleted: 'string?',
-
-  $rules: {
-    create: "creator === this.did && ['place', 'artwork', 'other'].includes(type)",
-    update: "creator === this.did && ['place', 'artwork', 'other'].includes(type)",
-    delete: false,
-  },
 } as const satisfies ModelInit
+
+export const refRules = {
+  create: 'id.split("/")[0] == creator && creator === this.did',
+  update: 'id.split("/")[0] == creator && creator === this.did',
+  delete: false,
+}

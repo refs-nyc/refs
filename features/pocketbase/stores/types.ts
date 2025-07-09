@@ -39,7 +39,7 @@ export type StagedItemFields = {
 
 export type StagedRefFields = {
   title?: string
+  url?: string
   meta?: string
   image?: string
-  type?: string
 }

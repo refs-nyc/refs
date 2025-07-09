@@ -55,7 +55,7 @@ On the user profile page, clicking the button in the top right with a magnifying
 
 This screen consists of:
 
-- a text box with the label "Search anything or start typing"
+- a text box with the label "Search anything or paste a link"
 - an "X" button
 - a list component
 

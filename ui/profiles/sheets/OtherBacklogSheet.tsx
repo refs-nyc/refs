@@ -44,7 +44,7 @@ export const OtherBacklogSheet = ({
       snapPoints={['50%', '90%']}
       index={-1}
       animatedIndex={otherProfileBackdropAnimatedIndex}
-      backgroundStyle={{ backgroundColor: c.olive, borderRadius: s.$4, paddingTop: 0 }}
+      backgroundStyle={{ backgroundColor: c.olive, borderRadius: s.$5, paddingTop: 0 }}
       backdropComponent={(p) => (
         <BottomSheetBackdrop
           {...p}
@@ -57,12 +57,13 @@ export const OtherBacklogSheet = ({
       onChange={(i: number) => {
         setIndex(i)
       }}
+      handleComponent={null}
     >
       <Pressable
         style={{
           // handle is hidden while minimised, so this is needed to make sure
           // the "My backlog" heading doesn't shift around when opening/closing the sheet
-          paddingTop: HANDLE_HEIGHT,
+          paddingTop: HANDLE_HEIGHT + 8,
           paddingBottom: s.$2 + s.$05,
         }}
       >

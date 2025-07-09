@@ -11,7 +11,7 @@ export type ExpandedItem = PBTypes.ItemsResponse<{
   items_via_parent: PBTypes.ItemsRecord[] // list children
 }>
 
-export type GridTileType = 'add' | 'image' | 'text' | 'list' | ''
+export type GridTileType = 'add' | 'image' | 'text' | 'list' | 'placeholder' | ''
 
 export type Conversation = PBTypes.ConversationsRecord
 export type Message = PBTypes.MessagesRecord
@@ -32,6 +32,7 @@ export type StagedItemFields = {
   text: string
   url: string
   image: string
+  promptContext?: string // NEW: the prompt the user replied to
   list?: boolean
   parent?: string
 }

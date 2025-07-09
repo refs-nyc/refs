@@ -128,6 +128,13 @@ export default function SearchBottomSheet() {
                 height: HEADER_HEIGHT,
                 justifyContent: 'center',
               }}
+              onPress={async () => {
+                if (!searching && user?.userName) {
+                  setAddingNewRefTo('grid')
+                  useUIStore.getState().setAddRefPrompt('')
+                  newRefSheetRef.current?.snapToIndex(1)
+                }
+              }}
             >
               {searching ? (
                 <XStack
@@ -169,18 +176,15 @@ export default function SearchBottomSheet() {
                     paddingHorizontal: s.$2,
                   }}
                 >
-                  <Pressable
-                    onPress={async () => {
-                      if (!user?.userName) return
-                      setAddingNewRefTo('grid')
-                      newRefSheetRef.current?.snapToIndex(0)
+                  <Text style={{ color: c.white, fontSize: 26, fontWeight: 'bold' }}>
+                    Add Ref +
+                  </Text>
+                  <Pressable 
+                    onPress={(e) => {
+                      e.stopPropagation()
+                      onSearchIconPress()
                     }}
                   >
-                    <Text style={{ color: c.white, fontSize: 26, fontWeight: 'bold' }}>
-                      Add Ref +
-                    </Text>
-                  </Pressable>
-                  <Pressable onPress={onSearchIconPress}>
                     <View
                       style={{
                         backgroundColor: 'rgba(232,232,232,0.15)',

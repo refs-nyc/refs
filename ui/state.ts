@@ -13,10 +13,12 @@ export const useUIStore = create<{
   addingRefId: string
   newRefSheetRef: React.RefObject<BottomSheet>
   addingNewRefTo: null | 'grid' | 'backlog'
+  addRefPrompt: string
   setAddingNewRefTo: (newState: null | 'grid' | 'backlog') => void
   setAddingRefId: (id: string) => void
   setCurrentRefId: (id: string) => void
   setAddingToList: (newState: string) => void
+  setAddRefPrompt: (prompt: string) => void
   stopEditProfile: () => void
   startEditProfile: () => void
 }>((set) => ({
@@ -28,6 +30,7 @@ export const useUIStore = create<{
   addingRefId: '',
   newRefSheetRef: React.createRef(),
   addingNewRefTo: null,
+  addRefPrompt: '',
   setAddingNewRefTo: (newState: null | 'grid' | 'backlog') => {
     set(() => ({
       addingNewRefTo: newState,
@@ -46,6 +49,11 @@ export const useUIStore = create<{
   setCurrentRefId: (id: string) => {
     set(() => ({
       currentRefId: id,
+    }))
+  },
+  setAddRefPrompt: (prompt: string) => {
+    set(() => ({
+      addRefPrompt: prompt,
     }))
   },
   editingProfile: false,

@@ -37,8 +37,8 @@ export const OtherButtonsSheet = ({
       snapPoints={['15%']}
       index={0}
       animatedIndex={moduleBackdropAnimatedIndex}
-      backgroundStyle={{ backgroundColor: c.olive, borderRadius: s.$4, paddingTop: 0 }}
-      handleComponent={() => null}
+      backgroundStyle={{ backgroundColor: c.olive, borderRadius: 50, paddingTop: 0 }}
+      handleComponent={null}
       backdropComponent={(p) => (
         <BottomSheetBackdrop
           {...p}

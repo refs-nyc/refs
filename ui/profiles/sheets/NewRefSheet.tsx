@@ -12,8 +12,8 @@ import { SelectItemToReplace } from '@/ui/actions/SelectItemToReplace'
 import { EditableList } from '@/ui/lists/EditableList'
 import { useUIStore } from '@/ui/state'
 import BottomSheet, { BottomSheetBackdrop, BottomSheetView } from '@gorhom/bottom-sheet'
-import { useState } from 'react'
-import { View } from 'react-native'
+import { useState, useEffect, useRef } from 'react'
+import { View, Platform, Keyboard } from 'react-native'
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated'
 
 export type NewRefStep =
@@ -32,7 +32,7 @@ export const NewRefSheet = ({
   bottomSheetRef: React.RefObject<BottomSheet>
 }) => {
   const { triggerProfileRefresh } = useItemStore()
-  const { addingNewRefTo, setAddingNewRefTo } = useUIStore()
+  const { addingNewRefTo, setAddingNewRefTo, addRefPrompt } = useUIStore()
 
   // functions for adding the new item to a list or the grid or the backlog
   const { addItemToList, moveToBacklog, removeItem, addToProfile } = useItemStore()
@@ -61,29 +61,39 @@ export const NewRefSheet = ({
 
   const backlog = addingNewRefTo === 'backlog'
 
-  const sheetHeight =
-    step === 'search'
-      ? '50%'
-      : step === 'add'
-      ? '90%'
-      : step === 'addToList'
-      ? '50%'
-      : step === 'editList'
-      ? '90%'
-      : step === 'addedToBacklog' || step === 'addedToGrid'
-      ? '30%'
-      : '30%'
+  // Two snap points: collapsed and expanded
+  const snapPoints = ['50%', '90%']
+  // Track if the sheet is open
+  const [isSheetOpen, setIsSheetOpen] = useState(false)
+
+  // Track keyboard state
+  useEffect(() => {
+    const keyboardDidShow = () => {
+      if (isSheetOpen) bottomSheetRef.current?.snapToIndex(1)
+    }
+    const keyboardDidHide = () => {
+      if (isSheetOpen) bottomSheetRef.current?.snapToIndex(0)
+    }
+    const showSub = Keyboard.addListener('keyboardDidShow', keyboardDidShow)
+    const hideSub = Keyboard.addListener('keyboardDidHide', keyboardDidHide)
+    return () => {
+      showSub.remove()
+      hideSub.remove()
+    }
+  }, [bottomSheetRef, isSheetOpen])
 
   return (
     <BottomSheet
       enableDynamicSizing={false}
       ref={bottomSheetRef}
       enablePanDownToClose={true}
-      snapPoints={[sheetHeight]}
+      snapPoints={snapPoints}
       index={-1}
-      backgroundStyle={{ backgroundColor: c.olive, borderRadius: s.$4, paddingTop: 0 }}
+      backgroundStyle={{ backgroundColor: c.olive, borderRadius: 50, paddingTop: 0 }}
       onChange={(i: number) => {
+        setIsSheetOpen(i !== -1)
         if (i === -1) {
+          Keyboard.dismiss()
           setAddingNewRefTo(null)
           setStep('search')
           setItemData(null)
@@ -93,6 +103,7 @@ export const NewRefSheet = ({
           setRefFields(null)
         }
       }}
+      handleComponent={null}
       backdropComponent={(p) => (
         <BottomSheetBackdrop
           {...p}
@@ -101,41 +112,20 @@ export const NewRefSheet = ({
           pressBehavior={'close'}
         />
       )}
-      handleComponent={() => (
-        <View
-          style={{
-            width: '100%',
-            position: 'absolute',
-            alignItems: 'center',
-            justifyContent: 'center',
-            display: 'flex',
-            height: HANDLE_HEIGHT,
-          }}
-        >
-          <Animated.View
-            entering={FadeIn.duration(200)}
-            exiting={FadeOut.duration(200)}
-            style={{
-              backgroundColor: c.white,
-              width: s.$5,
-              height: s.$05,
-              borderRadius: s.$10,
-            }}
-          />
-        </View>
-      )}
       keyboardBehavior="interactive"
     >
       {isOpen && (
         <BottomSheetView
           style={{
             paddingHorizontal: s.$2,
+            paddingTop: 8,
             alignItems: 'center',
             justifyContent: 'center',
           }}
         >
           {step === 'search' && (
             <SearchRef
+              prompt={addRefPrompt}
               onAddNewRef={(fields) => {
                 setRefFields(fields)
                 setStep('add')
@@ -154,24 +144,27 @@ export const NewRefSheet = ({
               pickerOpen={false}
               canEditRefData={true}
               onAddRef={async (itemFields) => {
+                // Merge promptContext from refFields if present
+                const mergedFields = { ...itemFields, promptContext: refFields?.promptContext }
                 if (!backlog) {
                   // check if the grid is full
                   const gridItems = await getProfileItems(user?.userName!)
                   if (gridItems.length >= 12) {
-                    setStagedItemFields(itemFields)
+                    setStagedItemFields(mergedFields)
                     setStep('selectItemToReplace')
                     return
                   }
                 }
 
-                const newItem = await addToProfile(existingRefId, itemFields, backlog)
+                const newItem = await addToProfile(existingRefId, mergedFields, backlog)
                 setItemData(newItem)
                 // finish the flow
                 triggerProfileRefresh()
                 setStep('addedToGrid')
               }}
               onAddRefToList={async (itemFields) => {
-                const newItem = await addToProfile(existingRefId, itemFields, backlog)
+                const mergedFields = { ...itemFields, promptContext: refFields?.promptContext }
+                const newItem = await addToProfile(existingRefId, mergedFields, backlog)
                 setItemData(newItem)
                 setStep('addToList')
               }}

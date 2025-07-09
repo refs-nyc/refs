@@ -55,7 +55,7 @@ export const MyBacklogSheet = ({
       onChange={(i: number) => {
         setIndex(i)
       }}
-      backgroundStyle={{ backgroundColor: c.olive, borderRadius: s.$4, paddingTop: 0 }}
+      backgroundStyle={{ backgroundColor: c.olive, borderRadius: 50, paddingTop: 0 }}
       backdropComponent={(p) => (
         <BottomSheetBackdrop
           {...p}
@@ -64,29 +64,7 @@ export const MyBacklogSheet = ({
           pressBehavior={'collapse'}
         />
       )}
-      handleComponent={() => (
-        <View
-          style={{
-            width: '100%',
-            position: 'absolute',
-            alignItems: 'center',
-            justifyContent: 'center',
-            display: isMinimised ? 'none' : 'flex',
-            height: HANDLE_HEIGHT,
-          }}
-        >
-          <Animated.View
-            entering={FadeIn.duration(200)}
-            exiting={FadeOut.duration(200)}
-            style={{
-              backgroundColor: c.white,
-              width: s.$5,
-              height: s.$05,
-              borderRadius: s.$10,
-            }}
-          />
-        </View>
-      )}
+      handleComponent={null}
       keyboardBehavior="interactive"
     >
       <Pressable
@@ -94,10 +72,8 @@ export const MyBacklogSheet = ({
           if (bottomSheetRef.current && isMinimised) bottomSheetRef.current.snapToIndex(1)
         }}
         style={{
-          // handle is hidden while minimised, so this is needed to make sure
-          // the "My backlog" heading doesn't shift around when opening/closing the sheet
           paddingTop: HANDLE_HEIGHT,
-          paddingBottom: s.$2 + s.$05,
+          paddingBottom: s.$2 - 8,
         }}
       >
         <XStack

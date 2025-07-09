@@ -152,9 +152,15 @@ export const MyProfile = ({ userName }: { userName: string }) => {
                     setRemovingItem(item)
                     removeRefSheetRef.current?.expand()
                   }}
-                  onAddItem={() => {
+                  onAddItem={(prompt?: string) => {
                     setAddingNewRefTo('grid')
-                    newRefSheetRef.current?.snapToIndex(0)
+                    if (prompt) useUIStore.getState().setAddRefPrompt(prompt)
+                    newRefSheetRef.current?.snapToIndex(1)
+                  }}
+                  onAddItemWithPrompt={(prompt: string) => {
+                    setAddingNewRefTo('grid')
+                    useUIStore.getState().setAddRefPrompt(prompt)
+                    newRefSheetRef.current?.snapToIndex(1)
                   }}
                   columns={3}
                   items={gridItems}
@@ -184,7 +190,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
             user={user}
             openAddtoBacklog={() => {
               setAddingNewRefTo('backlog')
-              newRefSheetRef.current?.snapToIndex(0)
+              newRefSheetRef.current?.snapToIndex(1)
             }}
           />
           <RemoveRefSheet

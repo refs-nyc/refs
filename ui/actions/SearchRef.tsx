@@ -74,6 +74,7 @@ export type NewRefFields = {
   title: string
   image?: string
   url?: string
+  promptContext?: string
 }
 
 export const SearchRef = ({
@@ -83,6 +84,7 @@ export const SearchRef = ({
   paste,
   onChooseExistingRef,
   onAddNewRef,
+  prompt,
 }: {
   noNewRef?: boolean
   url?: string
@@ -90,6 +92,7 @@ export const SearchRef = ({
   paste?: boolean
   onChooseExistingRef: (r: CompleteRef, newImage?: string) => void
   onAddNewRef: (fields: NewRefFields) => void
+  prompt?: string
 }) => {
   const [searchQuery, setSearchQuery] = useState('')
   const [disableNewRef, setDisableNewRef] = useState(false)
@@ -232,7 +235,7 @@ export const SearchRef = ({
       if (ref) {
         onChooseExistingRef(ref, imageState)
       } else {
-        onAddNewRef({ title: searchQuery, image: imageState, url: urlState })
+        onAddNewRef({ title: searchQuery, image: imageState, url: urlState, promptContext: prompt })
       }
       return
     }
@@ -287,12 +290,10 @@ export const SearchRef = ({
               textAlignVertical: 'center',
             }}
             value={searchQuery}
-            placeholder="Search anything or start typing"
-            placeholderTextColor={c.surface}
+            placeholder={prompt || 'search anything or paste a link'}
+            placeholderTextColor={'rgba(243,242,237,0.5)'}
             onChangeText={onQueryChange}
-            // disabling autofocus because sometimes the keyboard
-            // opens before the sheet, so the sheet doesn't expand properly
-            autoFocus={false}
+            autoFocus={true}
           />
           {searchQuery.length > 0 && (
             <Pressable onPress={() => setSearchQuery('')} hitSlop={10} style={{ marginLeft: 8 }}>
@@ -362,7 +363,7 @@ export const SearchRef = ({
                 <ImageSearchResults
                   imageSearchResults={imageSearchResults}
                   onImagePress={(imageUrl) =>
-                    onAddNewRef({ title: searchQuery, image: imageUrl, url: urlState })
+                    onAddNewRef({ title: searchQuery, image: imageUrl, url: urlState, promptContext: prompt })
                   }
                   setPicking={setPicking}
                 />

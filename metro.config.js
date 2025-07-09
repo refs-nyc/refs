@@ -8,14 +8,6 @@ const config = getDefaultConfig(__dirname)
 
 const { transformer, resolver } = config
 
-// Enable stack traces
-config.transformer.minifierConfig = {
-  keep_fnames: true,
-  mangle: {
-    keep_fnames: true,
-  },
-}
-
 // SVG Support
 config.transformer = {
   ...transformer,

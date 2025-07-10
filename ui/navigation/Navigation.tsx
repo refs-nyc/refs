@@ -121,6 +121,13 @@ export const Navigation = ({
             <Avatar source={user.image} size={30} />
           </Link>
         </View>
+        <View style={{ display: 'flex', flexDirection: 'row', paddingRight: 6 }}>
+          <Pressable onPress={() => router.push('/onboarding/magic')}>
+            <View style={{ top: -3 }}>
+              <Ionicons name="person-circle" size={30} color={c.grey2} />
+            </View>
+          </Pressable>
+        </View>
         <View style={{ display: 'flex', flexDirection: 'row', paddingRight: 18 }}>
           <Pressable onPress={() => savesBottomSheetRef.current?.expand()}>
             <View style={{ top: -2 }}>

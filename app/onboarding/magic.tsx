@@ -5,18 +5,8 @@ import { ethers } from 'ethers'
 import { SIWESigner } from '@canvas-js/signer-ethereum'
 import { useCallback, useState } from 'react'
 import { TextInput, View } from 'react-native'
-import { SafeAreaProvider } from 'react-native-safe-area-context'
 
 export default function Screen() {
-  return (
-    <SafeAreaProvider>
-      <MagicLogin />
-      <magic.Relayer />
-    </SafeAreaProvider>
-  )
-}
-
-const MagicLogin = () => {
   const [phoneNumber, setPhoneNumber] = useState<string>('')
 
   const handleLogin = useCallback(async () => {
@@ -45,13 +35,16 @@ const MagicLogin = () => {
   }, [phoneNumber])
 
   return (
-    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-      <TextInput
-        value={phoneNumber}
-        onChangeText={setPhoneNumber}
-        placeholder="Enter phone number"
-      />
-      <Button title="Login" onPress={handleLogin} />
-    </View>
+    <>
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <TextInput
+          value={phoneNumber}
+          onChangeText={setPhoneNumber}
+          placeholder="Enter phone number"
+        />
+        <Button title="Login" onPress={handleLogin} />
+      </View>
+      <magic.Relayer />
+    </>
   )
 }

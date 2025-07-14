@@ -219,7 +219,7 @@ export const NewRefSheet = ({
           {step === 'addToList' && (
             <View style={{ paddingVertical: s.$1, width: '100%' }}>
               <UserLists
-                creatorId={user?.id}
+                creatorId={user?.id!}
                 onComplete={async (list: ExpandedItem) => {
                   // Add the item to the list
                   await addItemToList(list.id, itemData?.id!)

@@ -38,7 +38,7 @@ export type ItemSlice = {
   profileRefreshTrigger: number
   setEditingLink: (newValue: boolean) => void
   startEditing: (id: string) => void
-  setAddingToList: (newValue: boolean) => void
+  setIsAddingToList: (newValue: boolean) => void
   setSearchingNewRef: (id: string) => void
   stopEditing: () => void
   addToProfile: (
@@ -85,7 +85,7 @@ export const createItemSlice: StateCreator<StoreSlices, [], [], ItemSlice> = (se
   profileRefreshTrigger: 0,
   setEditingLink: (newValue: boolean) => set(() => ({ editingLink: newValue })),
   startEditing: (id: string) => set(() => ({ editing: id })),
-  setAddingToList: (newValue: boolean) => set(() => ({ isAddingToList: newValue })),
+  setIsAddingToList: (newValue: boolean) => set(() => ({ isAddingToList: newValue })),
   setSearchingNewRef: (id: string) => set(() => ({ searchingNewRef: id })),
   stopEditing: () =>
     set(() => {

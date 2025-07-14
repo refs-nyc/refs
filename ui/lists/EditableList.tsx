@@ -57,10 +57,10 @@ export const EditableList = ({
           items_via_parent: [...(prev.expand?.items_via_parent || []), newItem],
         },
       }))
-      setAddingToList(false)
+      setIsAddingToList(false)
     } catch (error) {
     } finally {
-      setAddingToList(false)
+      setIsAddingToList(false)
     }
   }
 

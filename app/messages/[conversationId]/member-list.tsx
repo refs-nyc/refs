@@ -1,5 +1,5 @@
-import { useMessageStore } from '@/features/pocketbase/stores/messages'
-import { Profile } from '@/features/pocketbase/stores/types'
+import { useAppStore } from '@/features/stores'
+import { Profile } from '@/features/types'
 import { c, s } from '@/features/style'
 import { Heading, XStack, YStack } from '@/ui'
 import { Avatar } from '@/ui/atoms/Avatar'
@@ -9,7 +9,7 @@ import { View, Text, Pressable, ScrollView } from 'react-native'
 
 export default function MemberListScreen() {
   const { conversationId } = useLocalSearchParams()
-  const { memberships, conversations } = useMessageStore()
+  const { memberships, conversations } = useAppStore()
 
   const conversation = conversations[conversationId as string]
   const members = memberships[conversationId as string].map((m) => m.expand?.user) as Profile[]

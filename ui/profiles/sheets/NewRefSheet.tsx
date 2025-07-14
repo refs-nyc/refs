@@ -1,16 +1,15 @@
-import { addToProfile, pocketbase, useUserStore } from '@/features/pocketbase'
-import { getProfileItems, useItemStore } from '@/features/pocketbase/stores/items'
-import { RefsTypeOptions } from '@/features/pocketbase/stores/pocketbase-types'
-import { ExpandedItem, StagedItemFields } from '@/features/pocketbase/stores/types'
+import { getProfileItems } from '@/features/stores/items'
+import { ExpandedItem, StagedItemFields } from '@/features/types'
+import { useAppStore } from '@/features/stores'
 import { c, s } from '@/features/style'
 import { AddedNewRefConfirmation } from '@/ui/actions/AddedNewRefConfirmation'
 import { ChooseReplaceItemMethod } from '@/ui/actions/ChooseReplaceItemMethod'
-import { FilteredItems } from '@/ui/actions/FilteredItems'
+import { UserLists } from '@/ui/actions/UserLists'
 import { RefForm } from '@/ui/actions/RefForm'
 import { NewRefFields, SearchRef } from '@/ui/actions/SearchRef'
 import { SelectItemToReplace } from '@/ui/actions/SelectItemToReplace'
 import { EditableList } from '@/ui/lists/EditableList'
-import { useUIStore } from '@/ui/state'
+
 import BottomSheet, { BottomSheetBackdrop, BottomSheetView } from '@gorhom/bottom-sheet'
 import { useState, useEffect, useRef } from 'react'
 import { View, Platform, Keyboard } from 'react-native'
@@ -31,12 +30,19 @@ export const NewRefSheet = ({
 }: {
   bottomSheetRef: React.RefObject<BottomSheet>
 }) => {
-  const { triggerProfileRefresh } = useItemStore()
-  const { addingNewRefTo, setAddingNewRefTo, addRefPrompt } = useUIStore()
-
   // functions for adding the new item to a list or the grid or the backlog
-  const { addItemToList, push: pushItem, pushRef, moveToBacklog, remove } = useItemStore()
-  const { user } = useUserStore()
+  const {
+    triggerProfileRefresh,
+    addItemToList,
+    moveToBacklog,
+    removeItem,
+    addToProfile,
+    user,
+    getItemById,
+    addingNewRefTo,
+    setAddingNewRefTo,
+    addRefPrompt,
+  } = useAppStore()
 
   const [step, setStep] = useState<NewRefStep>('search')
 
@@ -192,7 +198,7 @@ export const NewRefSheet = ({
               itemToReplace={itemToReplace}
               removeFromProfile={async () => {
                 // remove (delete) itemToReplace from the grid
-                await remove(itemToReplace.id)
+                await removeItem(itemToReplace.id)
                 // add the new item to the grid
                 const newItem = await addToProfile(existingRefId, stagedItemFields, false)
                 setItemData(newItem)
@@ -213,49 +219,36 @@ export const NewRefSheet = ({
 
           {step === 'addToList' && (
             <View style={{ paddingVertical: s.$1, width: '100%' }}>
-              <FilteredItems
-                filter={`list = true && creator = "${user?.id}"`}
-                onComplete={async (list) => {
+              <UserLists
+                creatorId={user?.id!}
+                onComplete={async (list: ExpandedItem) => {
                   // Add the item to the list
                   await addItemToList(list.id, itemData?.id!)
 
                   // Fetch fresh data after adding
-                  const updatedItem = await pocketbase
-                    .collection('items')
-                    .getOne<ExpandedItem>(list.id, {
-                      expand: 'ref,items_via_parent,items_via_parent.ref',
-                    })
+                  const updatedItem = await getItemById(list.id)
                   setItemData(updatedItem)
                   setStep('editList')
                 }}
                 onCreateList={async () => {
-                  // Create new ref for the list
-                  const listRef = await pushRef({
-                    title: '',
-                    type: RefsTypeOptions.other,
-                  })
-
-                  // Create new item with the ref
-                  const list = await pushItem(
-                    listRef.id,
+                  // we should just have one function to create a list, which creates a ref and an item
+                  const list = await addToProfile(
+                    null,
                     {
-                      list: true,
+                      title: '',
                       text: '',
                       url: '',
                       image: '',
+                      list: true,
                     },
-                    false
+                    backlog
                   )
 
                   // Add current item to the new list
                   await addItemToList(list.id, itemData?.id!)
 
                   // Fetch the expanded list data
-                  const expandedList = await pocketbase
-                    .collection('items')
-                    .getOne<ExpandedItem>(list.id, {
-                      expand: 'ref,items_via_parent,items_via_parent.ref',
-                    })
+                  const expandedList = await getItemById(list.id)
 
                   // Set the expanded item as current and show edit list
                   setItemData(expandedList)

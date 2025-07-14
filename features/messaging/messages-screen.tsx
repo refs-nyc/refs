@@ -1,25 +1,21 @@
+import { useAppStore } from '@/features/stores'
+import { Message } from '@/features/types'
+import { c, s } from '@/features/style'
 import { Heading, Sheet, XStack } from '@/ui'
-import { View, DimensionValue, FlatList, Text, useWindowDimensions } from 'react-native'
-
-import { c, s } from '../style'
-import { useEffect, useMemo, useRef, useState } from 'react'
-import { pocketbase, useUserStore } from '../pocketbase'
-import { PAGE_SIZE, useMessageStore } from '../pocketbase/stores/messages'
-import { Pressable } from 'react-native'
-import { Link, useRouter } from 'expo-router'
 import { Avatar, AvatarStack } from '@/ui/atoms/Avatar'
-import { Ionicons } from '@expo/vector-icons'
-import MessageBubble from '@/ui/messaging/MessageBubble'
-import EmojiPicker from 'rn-emoji-keyboard'
-import MessageInput from '@/ui/messaging/MessageInput'
-import { randomColors } from './utils'
-import { Message } from '../pocketbase/stores/types'
 import { AvatarPicker } from '@/ui/inputs/AvatarPicker'
+import MessageBubble from '@/ui/messaging/MessageBubble'
+import MessageInput from '@/ui/messaging/MessageInput'
+import { Link } from 'expo-router'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { FlatList, useWindowDimensions, View } from 'react-native'
 import { KeyboardAvoidingView } from 'react-native-keyboard-controller'
+import EmojiPicker from 'rn-emoji-keyboard'
+import { randomColors } from './utils'
 
 export function MessagesScreen({ conversationId }: { conversationId: string }) {
-  const { user } = useUserStore()
   const {
+    user,
     conversations,
     memberships,
     messagesPerConversation,
@@ -29,7 +25,9 @@ export function MessagesScreen({ conversationId }: { conversationId: string }) {
     setOldestLoadedMessageDate,
     addOlderMessages,
     firstMessageDate,
-  } = useMessageStore()
+    updateLastRead,
+    getNewMessages,
+  } = useAppStore()
   const flatListRef = useRef<FlatList>(null)
   const [message, setMessage] = useState<string>('')
   const [highlightedMessageId, setHighlightedMessageId] = useState<string>('')
@@ -41,8 +39,6 @@ export function MessagesScreen({ conversationId }: { conversationId: string }) {
 
   const conversation = conversations[conversationId]
   const members = memberships[conversationId].filter((m) => m.expand?.user.id !== user?.id)
-  const ownMembership = memberships[conversationId].filter((m) => m.expand?.user.id === user?.id)[0]
-  const router = useRouter()
 
   const conversationMessages = messagesPerConversation[conversationId]
   const highlightedMessage = conversationMessages.find((m) => m.id === highlightedMessageId)
@@ -59,13 +55,8 @@ export function MessagesScreen({ conversationId }: { conversationId: string }) {
   }, [members.length])
 
   useEffect(() => {
-    async function setLastRead() {
-      const lastReadDate = conversationMessages[0].created
-      await pocketbase
-        .collection('memberships')
-        .update(ownMembership.id, { last_read: lastReadDate })
-    }
-    setLastRead()
+    if (!user) return
+    updateLastRead(conversationId, user.id)
   }, [])
 
   if (!user) return null
@@ -104,13 +95,13 @@ export function MessagesScreen({ conversationId }: { conversationId: string }) {
     if (!user) return
     if (oldestLoadedMessageDate[conversationId] === firstMessageDate[conversationId]) return
 
-    const newMessages = await pocketbase.collection('messages').getList<Message>(0, PAGE_SIZE, {
-      filter: `conversation = "${conversationId}" && created < "${oldestLoadedMessageDate[conversationId]}"`,
-      sort: '-created',
-    })
-    const oldestMessage = newMessages.items[newMessages.items.length - 1]
+    const newMessages = await getNewMessages(
+      conversationId,
+      oldestLoadedMessageDate[conversationId]
+    )
+    const oldestMessage = newMessages[newMessages.length - 1]
     setOldestLoadedMessageDate(conversationId, oldestMessage.created!)
-    addOlderMessages(conversationId, newMessages.items)
+    addOlderMessages(conversationId, newMessages)
   }
 
   function renderMessage({ item }: { item: Message }) {

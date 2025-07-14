@@ -1,30 +1,30 @@
-import type { ExpandedItem } from '@/features/pocketbase/stores/types'
+import type { ExpandedItem } from '@/features/types'
 
 import { useState, useEffect } from 'react'
-import { pocketbase } from '@/features/pocketbase'
 import { Pressable } from 'react-native'
 import { ListItem } from '@/ui/lists/ListItem'
 import { YStack } from '@/ui/core/Stacks'
 import { s, c } from '@/features/style'
 import { NewListItemButton } from '@/ui/lists/NewListItemButton'
+import { useAppStore } from '@/features/stores'
 
-export const FilteredItems = ({
-  filter,
+export const UserLists = ({
+  creatorId,
   onComplete,
   onCreateList,
 }: {
-  filter: string
+  creatorId: string
   onComplete: (r: ExpandedItem) => void
   onCreateList: () => void
 }) => {
   const [items, setItems] = useState<ExpandedItem[]>([])
+  const { getListsByCreator } = useAppStore()
 
   // Load items based on filter
   const loadItems = async () => {
     try {
-      const results = await pocketbase
-        .collection<ExpandedItem>('items')
-        .getFullList({ filter, expand: 'ref' })
+      const results = await getListsByCreator(creatorId)
+
       setItems(results)
     } catch (error) {
       console.error('Error loading items:', error)
@@ -33,7 +33,7 @@ export const FilteredItems = ({
 
   useEffect(() => {
     loadItems()
-  }, [filter])
+  }, [creatorId])
 
   // Render individual item
   const renderItem = ({ item }: { item: ExpandedItem }) => {

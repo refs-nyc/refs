@@ -1,7 +1,8 @@
 import { makeMutable, SharedValue } from 'react-native-reanimated'
-import { create } from 'zustand'
+import { StateCreator } from 'zustand'
+import type { StoreSlices } from './types'
 
-type BackdropState = {
+export type BackdropSlice = {
   moduleBackdropAnimatedIndex?: SharedValue<number>
   detailsBackdropAnimatedIndex?: SharedValue<number>
   otherProfileBackdropAnimatedIndex?: SharedValue<number>
@@ -18,7 +19,10 @@ const detailsBackdropAnimatedIndex = makeMutable(-1)
 const otherProfileBackdropAnimatedIndex = makeMutable(-1)
 const removeRefSheetBackdropAnimatedIndex = makeMutable(-1)
 
-export const useBackdropStore = create<BackdropState>((set, get) => ({
+export const createBackdropSlice: StateCreator<StoreSlices, [], [], BackdropSlice> = (
+  set,
+  get
+) => ({
   moduleBackdropAnimatedIndex,
   detailsBackdropAnimatedIndex,
   otherProfileBackdropAnimatedIndex,
@@ -36,4 +40,4 @@ export const useBackdropStore = create<BackdropState>((set, get) => ({
     delete existingHandlers[key]
     set({ backdropPressHandlers: existingHandlers })
   },
-}))
+})

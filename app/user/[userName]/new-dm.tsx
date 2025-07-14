@@ -1,6 +1,6 @@
-import { pocketbase, useUserStore } from '@/features/pocketbase'
-import { useMessageStore } from '@/features/pocketbase/stores/messages'
+import { useAppStore } from '@/features/stores'
 import { c, s } from '@/features/style'
+import { Profile } from '@/features/types'
 import { Heading, XStack, YStack } from '@/ui'
 import { Avatar } from '@/ui/atoms/Avatar'
 import MessageInput from '@/ui/messaging/MessageInput'
@@ -10,18 +10,18 @@ import { useEffect, useState } from 'react'
 import { DimensionValue, Pressable, View } from 'react-native'
 
 export default function NewDMScreen() {
-  const { user } = useUserStore()
+  const { user } = useAppStore()
   const { userName } = useGlobalSearchParams()
   const [message, setMessage] = useState<string>('')
-  const { createConversation, sendMessage } = useMessageStore()
-  const [profile, setProfile] = useState<any>()
+  const { createConversation, sendMessage, getUserByUserName } = useAppStore()
+  const [profile, setProfile] = useState<Profile>()
 
   useEffect(() => {
     async function getProfile() {
-      const results = await pocketbase.collection('users').getFullList({
-        filter: `userName = "${userName}"`,
-      })
-      setProfile(results[0])
+      if (typeof userName === 'string') {
+        const profile = await getUserByUserName(userName)
+        setProfile(profile)
+      }
     }
     getProfile()
   }, [userName])

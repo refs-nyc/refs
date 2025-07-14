@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react'
-import { pocketbase } from '@/features/pocketbase'
-import { getProfileItems } from '@/features/pocketbase/stores/items'
-import { ExpandedItem } from '@/features/pocketbase/stores/types'
+import { getProfileItems } from '@/features/stores/items'
+import { ExpandedItem } from '@/features/types'
 import { Details } from '@/ui'
 import { ProfileDetailsProvider } from '@/ui/profiles/profileDetailsStore'
 import { ActivityIndicator } from 'react-native'
+import { useAppStore } from '../stores'
 
 export function UserDetailsScreen({
   userName,
@@ -15,6 +15,7 @@ export function UserDetailsScreen({
   initialId: string
   openedFromFeed: boolean
 }) {
+  const { user } = useAppStore()
   const [isLoading, setIsLoading] = useState(true)
   const [items, setItems] = useState<ExpandedItem[]>([])
 
@@ -28,7 +29,7 @@ export function UserDetailsScreen({
     getProfileItemsAsync()
   }, [userName])
 
-  const editingRights = pocketbase?.authStore?.record?.userName === userName
+  const editingRights = user?.userName === userName
 
   const initialIndex = Math.max(
     0,

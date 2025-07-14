@@ -1,9 +1,9 @@
 import { router } from 'expo-router'
 import { Button } from '../buttons/Button'
 import { c } from '@/features/style'
-import { pocketbase, useUserStore } from '@/features/pocketbase'
+import { useAppStore } from '@/features/stores'
 import { useEffect, useState } from 'react'
-import { ConversationWithMemberships, Profile } from '@/features/pocketbase/stores/types'
+import { Profile } from '@/features/types'
 
 export const DMButton = ({
   profile,
@@ -16,7 +16,7 @@ export const DMButton = ({
   disabled?: boolean
   style?: any
 }) => {
-  const { user } = useUserStore()
+  const { user, getDirectConversations } = useAppStore()
 
   const [target, setTarget] = useState<string>('')
 
@@ -29,12 +29,7 @@ export const DMButton = ({
       try {
         let existingConversationId = ''
 
-        const directConversations = await pocketbase
-          .collection<ConversationWithMemberships>('conversations')
-          .getFullList({
-            filter: `is_direct = true`,
-            expand: 'memberships_via_conversation.user',
-          })
+        const directConversations = await getDirectConversations()
         for (const conversation of directConversations) {
           const otherUserId = conversation.expand?.memberships_via_conversation
             .map((m) => m.expand?.user.id)

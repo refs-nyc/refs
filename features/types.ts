@@ -1,4 +1,4 @@
-import * as PBTypes from './pocketbase-types'
+import * as PBTypes from '@/features/pocketbase/pocketbase-types'
 
 export type CompleteRef = PBTypes.RefsRecord
 export type Profile = PBTypes.UsersRecord
@@ -39,7 +39,7 @@ export type StagedItemFields = {
 
 export type StagedRefFields = {
   title?: string
+  url?: string
   meta?: string
   image?: string
-  type?: string
 }

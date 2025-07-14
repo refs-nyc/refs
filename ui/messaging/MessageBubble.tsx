@@ -1,7 +1,6 @@
 import { formatTimestamp } from '@/features/messaging/utils'
-import { useUserStore } from '@/features/pocketbase'
-import { useMessageStore } from '@/features/pocketbase/stores/messages'
-import { Message, Profile } from '@/features/pocketbase/stores/types'
+import { useAppStore } from '@/features/stores'
+import { Message, Profile } from '@/features/types'
 import { c, s } from '@/features/style'
 import { useCalendars } from 'expo-localization'
 import { View, Text } from 'react-native'
@@ -33,9 +32,8 @@ export default function MessageBubble({
   onReplyPress: (messageId: string) => void
   onExpandReactionsPress: (messageId: string) => void
 }) {
-  const { user } = useUserStore()
   const calendars = useCalendars()
-  const { reactions, deleteReaction } = useMessageStore()
+  const { user, reactions, deleteReaction } = useAppStore()
 
   const messageReactions = reactions[message.id]
 

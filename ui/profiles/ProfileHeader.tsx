@@ -1,7 +1,7 @@
 import { YStack, XStack } from '@/ui/core/Stacks'
 import { Heading } from '@/ui/typo/Heading'
 import { c, s } from '@/features/style'
-import { Profile } from '@/features/pocketbase/stores/types'
+import { Profile } from '@/features/types'
 import { Avatar } from '../atoms/Avatar'
 import { Pressable, View } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'

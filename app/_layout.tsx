@@ -20,11 +20,10 @@ if (!AbortSignal.prototype.throwIfAborted) {
 import { configureReanimatedLogger } from 'react-native-reanimated'
 import { ShareIntentProvider } from 'expo-share-intent'
 
-import NetInfo from '@react-native-community/netinfo'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
-import { useEffect, useRef, useState } from 'react'
-import { StatusBar, useColorScheme, useWindowDimensions, View } from 'react-native'
+import { useEffect, useRef } from 'react'
+import { StatusBar, useColorScheme } from 'react-native'
 import { Navigation } from '@/ui/navigation/Navigation'
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native'
 import { useFonts } from 'expo-font'
@@ -37,13 +36,12 @@ import { KeyboardProvider } from 'react-native-keyboard-controller'
 
 import { RegisterPushNotifications } from '@/ui/notifications/RegisterPushNotifications'
 import { MessagesInit } from '@/features/messaging/message-loader'
-import { useUserStore } from '@/features/pocketbase/stores/users'
+import { useAppStore } from '@/features/stores'
 
 import { LogBox } from 'react-native'
 import BottomSheet from '@gorhom/bottom-sheet'
 import Saves from '@/features/saves/saves-sheet'
 import Referencers from '@/ui/profiles/sheets/ReferencersSheet'
-import { useUIStore } from '@/ui/state'
 import { AddRefSheet } from '@/ui/profiles/sheets/AddRefSheet'
 import { NewRefSheet } from '@/ui/profiles/sheets/NewRefSheet'
 
@@ -98,7 +96,7 @@ function FontProvider({ children }: { children: React.ReactNode }) {
 }
 
 export default function RootLayout() {
-  const { init } = useUserStore()
+  const { init } = useAppStore()
 
   useEffect(() => {
     // Initialize user store to sync with PocketBase auth
@@ -130,7 +128,7 @@ const Providers = ({ children }: { children: React.ReactNode }) => {
 function RootLayoutNav() {
   const savesBottomSheetRef = useRef<BottomSheet>(null)
   const colorScheme = useColorScheme()
-  const { referencersBottomSheetRef, addRefSheetRef, newRefSheetRef } = useUIStore()
+  const { referencersBottomSheetRef, addRefSheetRef, newRefSheetRef } = useAppStore()
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>

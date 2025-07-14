@@ -1,7 +1,7 @@
-import { pocketbase, useItemStore, useUserStore } from '@/features/pocketbase'
-import { getBacklogItems, getProfileItems } from '@/features/pocketbase/stores/items'
-import type { ExpandedProfile } from '@/features/pocketbase/stores/types'
-import { ExpandedItem } from '@/features/pocketbase/stores/types'
+import { useAppStore } from '@/features/stores'
+import { getBacklogItems, getProfileItems } from '@/features/stores/items'
+import type { Profile } from '@/features/types'
+import { ExpandedItem } from '@/features/types'
 import { s } from '@/features/style'
 import BottomSheet from '@gorhom/bottom-sheet'
 import { useShareIntentContext } from 'expo-share-intent'
@@ -10,7 +10,7 @@ import { ScrollView, View } from 'react-native'
 import { Button } from '../buttons/Button'
 import { Grid } from '../grid/Grid'
 import { PlaceholderGrid } from '../grid/PlaceholderGrid'
-import { useUIStore } from '../state'
+
 import { Heading } from '../typo/Heading'
 import { ProfileDetailsSheet } from './ProfileDetailsSheet'
 import { ProfileHeader } from './ProfileHeader'
@@ -19,26 +19,30 @@ import { RemoveRefSheet } from './sheets/RemoveRefSheet'
 
 export const MyProfile = ({ userName }: { userName: string }) => {
   const { hasShareIntent } = useShareIntentContext()
-  const { startEditProfile, stopEditProfile, setAddingNewRefTo, addingNewRefTo, newRefSheetRef } =
-    useUIStore()
 
-  const [profile, setProfile] = useState<ExpandedProfile>()
+  const [profile, setProfile] = useState<Profile>()
   const [gridItems, setGridItems] = useState<ExpandedItem[]>([])
   const [backlogItems, setBacklogItems] = useState<ExpandedItem[]>([])
-  const [editingRights, seteditingRights] = useState<boolean>(false)
   const [loading, setLoading] = useState<boolean>(true)
 
-  const { user } = useUserStore()
-  const { moveToBacklog, profileRefreshTrigger, remove } = useItemStore()
+  const {
+    user,
+    getUserByUserName,
+    moveToBacklog,
+    profileRefreshTrigger,
+    removeItem,
+    startEditProfile,
+    stopEditProfile,
+    setAddingNewRefTo,
+    newRefSheetRef,
+  } = useAppStore()
 
   const [removingItem, setRemovingItem] = useState<ExpandedItem | null>(null)
 
   const refreshGrid = async (userName: string) => {
     setLoading(true)
     try {
-      const profile = await pocketbase
-        .collection('users')
-        .getFirstListItem<ExpandedProfile>(`userName = "${userName}"`)
+      const profile = await getUserByUserName(userName)
       setProfile(profile)
 
       const gridItems = await getProfileItems(userName)
@@ -68,7 +72,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
   const handleRemoveFromProfile = async () => {
     if (!removingItem) return
     removeRefSheetRef.current?.close()
-    await remove(removingItem.id)
+    await removeItem(removingItem.id)
     setRemovingItem(null)
     await refreshGrid(userName)
   }
@@ -84,7 +88,6 @@ export const MyProfile = ({ userName }: { userName: string }) => {
     const init = async () => {
       try {
         await refreshGrid(userName)
-        seteditingRights(pocketbase?.authStore?.record?.userName === userName)
       } catch (error) {
         console.error(error)
       }
@@ -92,13 +95,11 @@ export const MyProfile = ({ userName }: { userName: string }) => {
     init()
   }, [userName, profileRefreshTrigger])
 
-  const { logout } = useUserStore()
+  const { logout, stopEditing } = useAppStore()
 
   const bottomSheetRef = useRef<BottomSheet>(null)
   const detailsSheetRef = useRef<BottomSheet>(null)
   const removeRefSheetRef = useRef<BottomSheet>(null)
-
-  const stopEditing = useItemStore((state) => state.stopEditing)
 
   const [detailsItem, setDetailsItem] = useState<ExpandedItem | null>(null)
 
@@ -134,19 +135,17 @@ export const MyProfile = ({ userName }: { userName: string }) => {
                 <PlaceholderGrid columns={3} rows={4} />
               ) : (
                 <Grid
-                  editingRights={editingRights}
+                  editingRights={true}
                   onPressItem={(item) => {
                     setDetailsItem(item!)
                     detailsSheetRef.current?.snapToIndex(0)
                   }}
                   onLongPressItem={() => {
-                    if (editingRights) {
-                      clearTimeout(timeout)
-                      timeout = setTimeout(() => {
-                        stopEditProfile()
-                      }, 10000)
-                      startEditProfile()
-                    }
+                    clearTimeout(timeout)
+                    timeout = setTimeout(() => {
+                      stopEditProfile()
+                    }, 10000)
+                    startEditProfile()
                   }}
                   onRemoveItem={(item) => {
                     setRemovingItem(item)
@@ -154,12 +153,12 @@ export const MyProfile = ({ userName }: { userName: string }) => {
                   }}
                   onAddItem={(prompt?: string) => {
                     setAddingNewRefTo('grid')
-                    if (prompt) useUIStore.getState().setAddRefPrompt(prompt)
+                    if (prompt) useAppStore.getState().setAddRefPrompt(prompt)
                     newRefSheetRef.current?.snapToIndex(1)
                   }}
                   onAddItemWithPrompt={(prompt: string) => {
                     setAddingNewRefTo('grid')
-                    useUIStore.getState().setAddRefPrompt(prompt)
+                    useAppStore.getState().setAddRefPrompt(prompt)
                     newRefSheetRef.current?.snapToIndex(1)
                   }}
                   columns={3}

@@ -1,35 +1,36 @@
-import { pocketbase } from '@/features/pocketbase'
-import { Profile } from '@/features/pocketbase/stores/types'
+import { Profile } from '@/features/types'
 import { c, s } from '@/features/style'
 import UserListItem from '@/ui/atoms/UserListItem'
 import { Button } from '@/ui/buttons/Button'
 import { YStack } from '@/ui/core/Stacks'
-import { useUIStore } from '@/ui/state'
+
 import { Heading } from '@/ui/typo/Heading'
 import BottomSheet, { BottomSheetBackdrop, BottomSheetScrollView } from '@gorhom/bottom-sheet'
 import { router } from 'expo-router'
 import { useCallback, useEffect, useState } from 'react'
 import { Text, View, Image } from 'react-native'
+import { useAppStore } from '@/features/stores'
 
 export default function Referencers({
   referencersBottomSheetRef,
 }: {
   referencersBottomSheetRef: React.RefObject<BottomSheet>
 }) {
-  const { currentRefId } = useUIStore()
   const [users, setUsers] = useState<any[]>([])
   const [refData, setRefData] = useState<any>({})
-  const { addRefSheetRef, setAddingRefId } = useUIStore()
+  const { getItemsByRefIds, addRefSheetRef, setAddingRefId, currentRefId } = useAppStore()
 
   useEffect(() => {
     const getUsers = async () => {
+      if (!currentRefId) {
+        setUsers([])
+        setRefData({})
+        return
+      }
       const users: Profile[] = []
       const userIds: Set<string> = new Set()
 
-      const items = await pocketbase.collection('items').getFullList({
-        filter: `ref = "${currentRefId}"`,
-        expand: 'creator, ref',
-      })
+      const items = await getItemsByRefIds([currentRefId])
 
       for (const item of items) {
         const user = item.expand?.creator
@@ -63,7 +64,9 @@ export default function Referencers({
       <View style={{ paddingHorizontal: s.$3, paddingVertical: s.$1, height: '100%' }}>
         <View style={{ flexDirection: 'row', alignItems: 'flex-start', paddingBottom: s.$1 }}>
           <View style={{ flex: 1, minWidth: 0, justifyContent: 'flex-start' }}>
-            <Heading tag="h1" style={{ lineHeight: 30 }}>{refData?.title}</Heading>
+            <Heading tag="h1" style={{ lineHeight: 30 }}>
+              {refData?.title}
+            </Heading>
             <View style={{ height: 8 }} />
             <Text style={{ color: c.grey2 }}>{"Everyone who's added it."}</Text>
           </View>

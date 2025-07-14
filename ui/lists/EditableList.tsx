@@ -1,17 +1,16 @@
-import type { ExpandedItem, CompleteRef } from '@/features/pocketbase/stores/types'
+import type { ExpandedItem, CompleteRef } from '@/features/types'
 import { BottomSheetView, BottomSheetScrollView, BottomSheetTextInput } from '@gorhom/bottom-sheet'
 import { Button } from '../buttons/Button'
 import { t, c, s } from '@/features/style'
 import { useRef, useState } from 'react'
 import { Pressable, View } from 'react-native'
 import { SearchRef } from '../actions/SearchRef'
-import { useItemStore } from '@/features/pocketbase/stores/items'
+import { useAppStore } from '@/features/stores'
 import { ListItem } from './ListItem'
 import { NewListItemButton } from './NewListItemButton'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { XStack } from '../core/Stacks'
 import { Ionicons } from '@expo/vector-icons'
-import { pocketbase } from '@/features/pocketbase'
 
 export const EditableList = ({
   item,
@@ -20,8 +19,8 @@ export const EditableList = ({
   item: ExpandedItem
   onComplete: () => void
 }) => {
-  const { addingToList, remove, setAddingToList } = useItemStore()
-  const { push, updateRefTitle } = useItemStore()
+  const { isAddingToList, removeItem, setIsAddingToList, addToProfile, updateRefTitle } =
+    useAppStore()
   const [itemState, setItemState] = useState<ExpandedItem>(item)
   const [title, setTitle] = useState<string>(item.expand.ref.title || '')
   const [editingTitle, setEditingTitle] = useState<boolean>(!item.expand.ref.title)
@@ -40,14 +39,14 @@ export const EditableList = ({
 
   const onRefFound = async (ref: CompleteRef) => {
     try {
-      const newItem = await push(
+      // use addToProfile instead
+      const newItem = await addToProfile(
         ref.id,
         {
-          image: ref?.image || '',
-
           parent: item.id,
           text: '',
-          url: '',
+          url: ref.url || '',
+          image: ref.image || '',
         },
         false
       )
@@ -58,10 +57,10 @@ export const EditableList = ({
           items_via_parent: [...(prev.expand?.items_via_parent || []), newItem],
         },
       }))
-      setAddingToList(false)
+      setIsAddingToList(false)
     } catch (error) {
     } finally {
-      setAddingToList(false)
+      setIsAddingToList(false)
     }
   }
 
@@ -99,11 +98,11 @@ export const EditableList = ({
           </XStack>
         </BottomSheetView>
         <BottomSheetView style={{ flex: 1 }}>
-          {addingToList ? (
+          {isAddingToList ? (
             <SearchRef onChooseExistingRef={onRefFound} onAddNewRef={() => {}} noNewRef={true} />
           ) : (
             <BottomSheetView>
-              <NewListItemButton onPress={() => setAddingToList(true)} />
+              <NewListItemButton onPress={() => setIsAddingToList(true)} />
 
               {itemState?.expand?.items_via_parent?.map((kid) => {
                 return (
@@ -115,7 +114,7 @@ export const EditableList = ({
                     backgroundColor={c.olive}
                     onRemove={async () => {
                       try {
-                        await remove(kid.id)
+                        await removeItem(kid.id)
                         setItemState((prev) => ({
                           ...prev,
                           expand: {

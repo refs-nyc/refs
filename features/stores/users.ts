@@ -1,11 +1,11 @@
 import { pocketbase } from '../pocketbase'
-import { create } from 'zustand'
-import { Profile, ExpandedProfile } from './types'
-import { UsersRecord } from './pocketbase-types'
-import { canvasApp } from './canvas'
+import { StateCreator } from 'zustand'
+import { Profile, ExpandedProfile } from '../types'
+import { UsersRecord } from '../pocketbase/pocketbase-types'
 import { ClientResponseError } from 'pocketbase'
+import type { StoreSlices } from './types'
 
-export const useUserStore = create<{
+export type UserSlice = {
   stagedUser: Partial<Profile>
   user: Profile | null
   isInitialized: boolean
@@ -14,10 +14,15 @@ export const useUserStore = create<{
   updateStagedUser: (formFields: Partial<Profile>) => void
   loginWithPassword: (email: string, password: string) => Promise<any>
   getUserByEmail: (email: string) => Promise<Profile>
+  getUserByUserName: (userName: string) => Promise<Profile>
+  getUsersByIds: (ids: string[]) => Promise<Profile[]>
+  getRandomUser: () => Promise<Profile>
   login: (userName: string) => Promise<Profile>
   logout: () => void
   init: () => Promise<void>
-}>((set, get) => ({
+}
+
+export const createUserSlice: StateCreator<StoreSlices, [], [], UserSlice> = (set, get) => ({
   stagedUser: {},
   user: null, // user is ALWAYS the user of the app, this is only set if the user is logged in
   isInitialized: false,
@@ -86,8 +91,6 @@ export const useUserStore = create<{
         .collection<UsersRecord>('users')
         .update(pocketbase.authStore.record.id, { ...fields })
 
-      await canvasApp.actions.updateUser(pocketbase.authStore.record.id, fields)
-
       return record
     } catch (err) {
       console.error(err)
@@ -106,6 +109,25 @@ export const useUserStore = create<{
     }))
 
     return userRecord
+  },
+  getUserByUserName: async (userName: string) => {
+    const userRecord = await pocketbase
+      .collection<Profile>('users')
+      .getFirstListItem(`userName = "${userName}"`)
+    return userRecord
+  },
+  getUsersByIds: async (ids: string[]) => {
+    const filter = ids.map((id) => `id="${id}"`).join(' || ')
+    return await pocketbase.collection('users').getFullList<Profile>({
+      filter: filter,
+    })
+  },
+  getRandomUser: async () => {
+    const result = await pocketbase.collection('users').getList<Profile>(1, 1, {
+      filter: 'items:length > 5',
+      sort: '@random',
+    })
+    return result.items[0]
   },
   //
   // Requirement: staged user
@@ -133,17 +155,6 @@ export const useUserStore = create<{
         .create<ExpandedProfile>(finalUser, { expand: 'items,items.ref' })
 
       await get().loginWithPassword(finalUser.email, userPassword)
-
-      if (pocketbase?.authStore?.record?.id) {
-        await canvasApp.actions.registerUser({
-          id: pocketbase.authStore.record.id,
-          ...finalUser,
-          email: '',
-          password: '',
-          tokenKey: '',
-          userName: record.userName,
-        })
-      }
 
       set(() => ({
         user: record,
@@ -223,4 +234,4 @@ export const useUserStore = create<{
     pocketbase.realtime.unsubscribe()
     pocketbase.authStore.clear()
   },
-}))
+})

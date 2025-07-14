@@ -1,13 +1,13 @@
-import React, { useState } from 'react'
+import React from 'react'
 import { YStack } from '../core/Stacks'
 import { TouchableOpacity, Pressable, Text } from 'react-native'
 import { base } from '@/features/style'
-import { GridTileType } from '@/features/pocketbase/stores/types'
-import { useUIStore } from '../state'
+import { GridTileType } from '@/features/types'
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { c } from '@/features/style'
 import { DEFAULT_TILE_SIZE } from './GridTile'
 import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated'
+import { useAppStore } from '@/features/stores'
 
 export const GridTileWrapper = ({
   type,
@@ -26,20 +26,23 @@ export const GridTileWrapper = ({
   onLongPress?: () => void
   size?: number
 }) => {
-  const { editingProfile, stopEditProfile } = useUIStore()
+  const { editingProfile, stopEditProfile } = useAppStore()
 
   const specificStyles = {
     borderWidth: type !== 'image' && type !== '' && type !== 'placeholder' ? 1.5 : 0,
     borderColor: '#333',
   }
 
-  const placeholderStyles = type === 'placeholder' ? {
-    borderWidth: 2,
-    borderColor: 'rgba(0,0,0,0.5)',
-    borderStyle: 'dashed',
-    borderDashArray: [4, 4],
-    borderMiterLimit: 29,
-  } : {}
+  const placeholderStyles =
+    type === 'placeholder'
+      ? {
+          borderWidth: 2,
+          borderColor: 'rgba(0,0,0,0.5)',
+          borderStyle: 'dashed',
+          borderDashArray: [4, 4],
+          borderMiterLimit: 29,
+        }
+      : {}
 
   const scale = useSharedValue(1)
   const animatedStyle = useAnimatedStyle(() => ({
@@ -69,7 +72,12 @@ export const GridTileWrapper = ({
         style={[
           base.gridTile,
           type === 'placeholder' ? placeholderStyles : specificStyles,
-          { width: size, justifyContent: 'center', alignItems: 'center', backgroundColor: c.surface },
+          {
+            width: size,
+            justifyContent: 'center',
+            alignItems: 'center',
+            backgroundColor: c.surface,
+          },
         ]}
       >
         {editingProfile && type !== 'add' && id && (
@@ -90,11 +98,15 @@ export const GridTileWrapper = ({
           </YStack>
         )}
         {type === 'placeholder' ? (
-          <Text style={{ color: c.muted, fontSize: 16, textAlign: 'center', paddingHorizontal: 10 }}>{children}</Text>
+          <Text
+            style={{ color: c.muted, fontSize: 16, textAlign: 'center', paddingHorizontal: 10 }}
+          >
+            {children}
+          </Text>
+        ) : type === 'add' ? (
+          React.cloneElement(children as React.ReactElement, { isPlaceholder: true })
         ) : (
-          type === 'add'
-            ? React.cloneElement(children as React.ReactElement, { isPlaceholder: true })
-            : children
+          children
         )}
       </TouchableOpacity>
     </Animated.View>

@@ -1,5 +1,5 @@
-import { useBackdropStore } from '@/features/pocketbase/stores/backdrop'
-import { ExpandedItem } from '@/features/pocketbase/stores/types'
+import { useAppStore } from '@/features/stores'
+import { ExpandedItem } from '@/features/types'
 import { c, s } from '@/features/style'
 import { Button } from '@/ui/buttons/Button'
 import { XStack, YStack } from '@/ui/core/Stacks'
@@ -21,7 +21,7 @@ export const RemoveRefSheet = ({
   item: ExpandedItem | null
 }) => {
   const { removeRefSheetBackdropAnimatedIndex, registerBackdropPress, unregisterBackdropPress } =
-    useBackdropStore()
+    useAppStore()
 
   // close the new ref sheet when the user taps the navigation backdrop
   useEffect(() => {
@@ -57,7 +57,10 @@ export const RemoveRefSheet = ({
       handleComponent={null}
       keyboardBehavior="interactive"
     >
-      <YStack gap={s.$2} style={{ paddingHorizontal: s.$2, paddingVertical: s.$3, paddingTop: s.$3 + 8 }}>
+      <YStack
+        gap={s.$2}
+        style={{ paddingHorizontal: s.$2, paddingVertical: s.$3, paddingTop: s.$3 + 8 }}
+      >
         <XStack style={{ justifyContent: 'center' }}>
           <Heading tag="h2light" style={{ color: c.muted }}>
             Do what with {item?.expand.ref?.title}?

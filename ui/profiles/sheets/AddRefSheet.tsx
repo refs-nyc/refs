@@ -1,14 +1,13 @@
-import { addToProfile, pocketbase, useUserStore } from '@/features/pocketbase'
-import { getProfileItems, useItemStore } from '@/features/pocketbase/stores/items'
-import { RefsRecord } from '@/features/pocketbase/stores/pocketbase-types'
-import { ExpandedItem, StagedItemFields } from '@/features/pocketbase/stores/types'
+import { useAppStore } from '@/features/stores'
+import { getProfileItems } from '@/features/stores/items'
+import { ExpandedItem, StagedItemFields } from '@/features/types'
 import { c, s } from '@/features/style'
 import { AddedNewRefConfirmation } from '@/ui/actions/AddedNewRefConfirmation'
 import { ChooseReplaceItemMethod } from '@/ui/actions/ChooseReplaceItemMethod'
 import { RefForm } from '@/ui/actions/RefForm'
 import { NewRefFields } from '@/ui/actions/SearchRef'
 import { SelectItemToReplace } from '@/ui/actions/SelectItemToReplace'
-import { useUIStore } from '@/ui/state'
+
 import BottomSheet, { BottomSheetBackdrop } from '@gorhom/bottom-sheet'
 import { useEffect, useState } from 'react'
 import { View } from 'react-native'
@@ -19,9 +18,6 @@ export const AddRefSheet = ({
 }: {
   bottomSheetRef: React.RefObject<BottomSheet>
 }) => {
-  const { user } = useUserStore()
-  const { addingRefId, setAddingRefId } = useUIStore()
-
   // fields from the ref that is being replaced, or a new ref that is going to be added
 
   const [refFields, setRefFields] = useState<NewRefFields | null>(null)
@@ -35,11 +31,12 @@ export const AddRefSheet = ({
   // the resulting item
   const [itemData, setItemData] = useState<ExpandedItem | null>(null)
 
-  const { moveToBacklog, remove } = useItemStore()
+  const { user, moveToBacklog, removeItem, addToProfile, getRefById, addingRefId, setAddingRefId } =
+    useAppStore()
 
   useEffect(() => {
     const getRef = async () => {
-      const ref = await pocketbase.collection<RefsRecord>('refs').getOne(addingRefId)
+      const ref = await getRefById(addingRefId)
       setRefFields({
         title: ref.title!,
         image: ref.image,
@@ -141,7 +138,7 @@ export const AddRefSheet = ({
           itemToReplace={itemToReplace}
           removeFromProfile={async () => {
             // remove (delete) itemToReplace from the grid
-            await remove(itemToReplace.id)
+            await removeItem(itemToReplace.id)
             // add the new item to the grid
             const newItem = await addToProfile(addingRefId, stagedItemFields, false)
             setItemData(newItem)

@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import * as Notifications from 'expo-notifications'
 import Constants from 'expo-constants'
 import { registerForPushNotificationsAsync } from './utils'
-import { useUserStore } from '@/features/pocketbase/stores/users'
+import { useAppStore } from '@/features/stores'
 
 export function RegisterPushNotifications() {
   const [expoPushToken, setExpoPushToken] = useState('')
@@ -12,7 +12,7 @@ export function RegisterPushNotifications() {
   const notificationListener = useRef<Notifications.EventSubscription>()
   const responseListener = useRef<Notifications.EventSubscription>()
 
-  const { updateUser, user, isInitialized } = useUserStore()
+  const { updateUser, user, isInitialized } = useAppStore()
 
   const projectId = Constants?.expoConfig?.extra?.eas?.projectId ?? Constants?.easConfig?.projectId
 

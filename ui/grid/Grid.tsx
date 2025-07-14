@@ -3,7 +3,7 @@ import { GridTile } from './GridTile'
 import { GridItem } from './GridItem'
 import { GridTileWrapper } from './GridTileWrapper'
 import { GridTileActionAdd } from './GridTileActionAdd'
-import { ExpandedItem } from '@/features/pocketbase/stores/types'
+import { ExpandedItem } from '@/features/types'
 import { useState } from 'react'
 import { Text } from 'react-native'
 

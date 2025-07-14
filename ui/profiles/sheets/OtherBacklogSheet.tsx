@@ -1,5 +1,5 @@
-import { useBackdropStore } from '@/features/pocketbase/stores/backdrop'
-import type { ExpandedItem, ExpandedProfile } from '@/features/pocketbase/stores/types'
+import { useAppStore } from '@/features/stores'
+import type { ExpandedItem, Profile } from '@/features/types'
 import { c, s } from '@/features/style'
 import BacklogList from '@/ui/profiles/BacklogList'
 import { Heading } from '@/ui/typo/Heading'
@@ -14,10 +14,10 @@ export const OtherBacklogSheet = ({
 }: {
   bottomSheetRef: React.RefObject<BottomSheet>
   backlogItems: ExpandedItem[]
-  profile: ExpandedProfile
+  profile: Profile
 }) => {
   const { otherProfileBackdropAnimatedIndex, registerBackdropPress, unregisterBackdropPress } =
-    useBackdropStore()
+    useAppStore()
 
   // close the new ref sheet when the user taps the navigation backdrop
   useEffect(() => {

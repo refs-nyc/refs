@@ -2,8 +2,7 @@ import { Link, router, usePathname } from 'expo-router'
 import { Text, View, Pressable, Animated } from 'react-native'
 import { Avatar } from '../atoms/Avatar'
 import { c, s } from '@/features/style'
-import { useUserStore } from '@/features/pocketbase/stores/users'
-import { useMessageStore } from '@/features/pocketbase/stores/messages'
+import { useAppStore } from '@/features/stores'
 import { NavigationBackdrop } from '@/ui/navigation/NavigationBackdrop'
 import { Badge } from '../atoms/Badge'
 import { useMemo, useRef, useEffect } from 'react'
@@ -17,10 +16,9 @@ export const Navigation = ({
 }: {
   savesBottomSheetRef: React.RefObject<BottomSheet>
 }) => {
-  const { user } = useUserStore()
   const pathname = usePathname()
 
-  const { saves, messagesPerConversation, conversations, memberships } = useMessageStore()
+  const { user, saves, messagesPerConversation, conversations, memberships } = useAppStore()
 
   const isHomePage = pathname === '/' || pathname === '/index'
 

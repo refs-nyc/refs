@@ -1,6 +1,6 @@
 import { TouchableOpacity, Dimensions } from 'react-native'
 import { base, c, s } from '@/features/style'
-import { useUIStore } from '@/ui/state'
+import { useAppStore } from '@/features/stores'
 
 const dimensions = Dimensions.get('window')
 export const DEFAULT_TILE_SIZE = (dimensions.width - s.$09 * 2 - s.$075) / 3
@@ -20,7 +20,7 @@ export const GridTile = ({
   size?: number
   isPlaceholder?: boolean
 }) => {
-  const { stopEditProfile } = useUIStore()
+  const { stopEditProfile } = useAppStore()
 
   const placeholderStyle = isPlaceholder
     ? {
@@ -37,10 +37,7 @@ export const GridTile = ({
       }
 
   return (
-    <TouchableOpacity
-      onPress={stopEditProfile}
-      style={[base.gridTile, placeholderStyle]}
-    >
+    <TouchableOpacity onPress={stopEditProfile} style={[base.gridTile, placeholderStyle]}>
       {children}
     </TouchableOpacity>
   )

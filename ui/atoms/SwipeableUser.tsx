@@ -4,7 +4,7 @@ import Reanimated, { SharedValue, useAnimatedStyle } from 'react-native-reanimat
 import { c, s } from '@/features/style'
 import { Pressable } from 'react-native-gesture-handler'
 import { YStack } from '../core/Stacks'
-import { Profile } from '@/features/pocketbase/stores/types'
+import { Profile } from '@/features/types'
 import UserListItem from './UserListItem'
 import { useState } from 'react'
 import { Ionicons } from '@expo/vector-icons'
@@ -13,18 +13,18 @@ export default function SwipeableConversation({
   onActionPress,
   user,
   onPress,
-  backgroundColor
+  backgroundColor,
 }: {
   onActionPress: () => Promise<void>
-  user: Profile,
+  user: Profile
   onPress: () => void
   backgroundColor: string
 }) {
   const [disablePress, setDisablePress] = useState(false)
   return (
     <Swipeable
-      onSwipeableOpenStartDrag={()=>setDisablePress(true)}
-      onSwipeableWillClose={()=>setDisablePress(false)}
+      onSwipeableOpenStartDrag={() => setDisablePress(true)}
+      onSwipeableWillClose={() => setDisablePress(false)}
       friction={2}
       enableTrackpadTwoFingerGesture
       rightThreshold={40}
@@ -34,7 +34,7 @@ export default function SwipeableConversation({
     >
       <UserListItem
         user={user}
-        onPress={disablePress ? ()=>{} : onPress}
+        onPress={disablePress ? () => {} : onPress}
         style={{ backgroundColor: backgroundColor }}
         small={true}
         whiteText={true}
@@ -59,7 +59,7 @@ function RightAction({
 
   return (
     <Reanimated.View style={styleAnimation}>
-      <View style={{  minWidth: 100, height: '100%' }}>
+      <View style={{ minWidth: 100, height: '100%' }}>
         <Pressable
           style={{
             backgroundColor: c.olive2,
@@ -71,7 +71,7 @@ function RightAction({
           onPress={onActionPress}
         >
           <YStack style={{ alignItems: 'center', justifyContent: 'center', height: '100%' }}>
-            <Ionicons name='close-outline' size={s.$2} color={c.white} />
+            <Ionicons name="close-outline" size={s.$2} color={c.white} />
           </YStack>
         </Pressable>
       </View>

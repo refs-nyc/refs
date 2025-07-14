@@ -1,10 +1,11 @@
-import type { ExpandedItem } from '@/features/pocketbase/stores/types'
-import { useUIStore } from '@/ui/state'
+import type { ExpandedItem } from '@/features/types'
+
 import { ScrollView, View, Pressable } from 'react-native'
 import { Button } from '../buttons/Button'
 import { ListItem } from './ListItem'
 import { s } from '@/features/style'
 import { YStack } from '../core/Stacks'
+import { useAppStore } from '@/features/stores'
 
 export const ListContainer = ({
   item,
@@ -13,7 +14,7 @@ export const ListContainer = ({
   item: ExpandedItem
   editingRights: boolean
 }) => {
-  const { setAddingToList, setCurrentRefId, referencersBottomSheetRef } = useUIStore()
+  const { setAddingToList, setCurrentRefId, referencersBottomSheetRef } = useAppStore()
 
   return (item?.expand?.items_via_parent ?? []).length > 0 ? (
     <ScrollView style={{ flex: 1, padding: s.$075 }}>

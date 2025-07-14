@@ -1,47 +1,18 @@
-import { pocketbase } from './pocketbase'
-import { useUserStore } from './stores/users'
-import { useItemStore } from './stores/items'
-import { ExpandedItem, StagedItemFields } from './stores/types'
+import AsyncStorage from '@react-native-async-storage/async-storage'
+import PocketBase, { AsyncAuthStore } from 'pocketbase'
+import eventsource from 'react-native-sse'
 
-const addToProfile = async (
-  existingRefId: string | null,
-  stagedItemFields: StagedItemFields,
-  backlog: boolean
-): Promise<ExpandedItem> => {
-  const itemStore = useItemStore.getState()
+// For pocketbase
+// @ts-ignore
+global.EventSource = eventsource
 
-  let newItem: ExpandedItem
+const store = new AsyncAuthStore({
+  save: async (serialized) => AsyncStorage.setItem('pb_auth', serialized),
+  initial: AsyncStorage.getItem('pb_auth'),
+})
 
-  if (existingRefId) {
-    // create a new item from an existing ref
-    newItem = await itemStore.push(
-      existingRefId,
-      {
-        image: stagedItemFields.image,
-        url: stagedItemFields.url,
-        text: stagedItemFields.text,
-      },
-      backlog
-    )
-  } else {
-    // create a new item, with a new ref
-    const newRef = await itemStore.pushRef({
-      title: stagedItemFields.title,
-      meta: stagedItemFields.meta,
-      image: stagedItemFields.image,
-    })
-    newItem = await itemStore.push(
-      newRef.id,
-      {
-        image: stagedItemFields.image,
-        url: stagedItemFields.url,
-        text: stagedItemFields.text,
-      },
-      backlog
-    )
-  }
+const pocketbase = new PocketBase(process.env.EXPO_PUBLIC_POCKETBASE_URL, store)
 
-  return newItem
-}
+pocketbase.autoCancellation(false)
 
-export { pocketbase, useUserStore, useItemStore, addToProfile }
+export { pocketbase }

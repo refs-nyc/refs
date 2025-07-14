@@ -1,6 +1,5 @@
-import { useBackdropStore } from '@/features/pocketbase/stores/backdrop'
-import { UsersRecord } from '@/features/pocketbase/stores/pocketbase-types'
-import type { ExpandedItem, ExpandedProfile } from '@/features/pocketbase/stores/types'
+import { useAppStore } from '@/features/stores'
+import type { ExpandedItem, Profile } from '@/features/types'
 import { c, s } from '@/features/style'
 import { XStack } from '@/ui/core/Stacks'
 import BacklogList from '@/ui/profiles/BacklogList'
@@ -18,14 +17,14 @@ export const MyBacklogSheet = ({
   openAddtoBacklog,
 }: {
   backlogItems: ExpandedItem[]
-  profile: ExpandedProfile
-  user: UsersRecord | null
+  profile: Profile
+  user: Profile | null
   openAddtoBacklog: () => void
 }) => {
   const bottomSheetRef = useRef<BottomSheet>(null)
 
   const { moduleBackdropAnimatedIndex, registerBackdropPress, unregisterBackdropPress } =
-    useBackdropStore()
+    useAppStore()
 
   // close the new ref sheet when the user taps the navigation backdrop
   useEffect(() => {

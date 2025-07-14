@@ -1,8 +1,8 @@
 import { Heading, XStack, YStack } from '@/ui'
 import { s } from '../style'
 import { useEffect, useState } from 'react'
-import { pocketbase, useUserStore } from '../pocketbase'
-import { ExpandedItem, Profile } from '../pocketbase/stores/types'
+import { useAppStore } from '@/features/stores'
+import { Profile } from '@/features/types'
 import UserListItem from '@/ui/atoms/UserListItem'
 import { router } from 'expo-router'
 import { Text, View } from 'react-native'
@@ -11,18 +11,12 @@ type SearchResult = Profile & { sharedRefCount: number }
 
 export default function SearchResultsScreen({ refIds }: { refIds: string[] }) {
   const [results, setResults] = useState<SearchResult[]>([])
-  const currentUser = useUserStore().user
+  const { user: currentUser, getItemsByRefIds, getAllItemsByCreator } = useAppStore()
 
   useEffect(() => {
     const getSearchResults = async () => {
       try {
-        const filter = refIds.map((id) => `ref="${id}"`).join(' || ')
-
-        const items = await pocketbase.collection('items').getFullList<ExpandedItem>({
-          filter,
-          expand: 'ref,creator',
-          sort: '-creator',
-        })
+        const items = await getItemsByRefIds(refIds)
 
         const userItems = new Map<string, { user: Profile; refs: Set<string> }>()
 
@@ -43,18 +37,12 @@ export default function SearchResultsScreen({ refIds }: { refIds: string[] }) {
             return { ...value.user, sharedRefCount: 0 }
           })
 
-        const currentUserRefs = await pocketbase.collection('items').getFullList<ExpandedItem>({
-          filter: `creator = "${currentUser?.id}"`,
-          expand: 'ref',
-        })
+        const currentUserRefs = await getAllItemsByCreator(currentUser?.id!)
+
         const currentUserRefIds = [...new Set(currentUserRefs.map((itm) => itm.expand.ref.id))]
 
         for (const user of results) {
-          const userAllRefs = await pocketbase.collection('items').getFullList<ExpandedItem>({
-            filter: `creator = "${user.id}"`,
-            expand: 'ref',
-            sort: '-created',
-          })
+          const userAllRefs = await getAllItemsByCreator(user.id)
           const userRefIds = [...new Set(userAllRefs.map((itm) => itm.expand.ref.id))]
 
           user.sharedRefCount = currentUserRefIds.filter((id) => userRefIds.includes(id)).length

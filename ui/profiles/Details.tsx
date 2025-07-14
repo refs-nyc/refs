@@ -1,8 +1,7 @@
-import { useItemStore } from '@/features/pocketbase/stores/items'
-import { ItemsRecord } from '@/features/pocketbase/stores/pocketbase-types'
-import { ExpandedItem } from '@/features/pocketbase/stores/types'
+import { useAppStore } from '@/features/stores'
+import { ExpandedItem, Item } from '@/features/types'
 import { c } from '@/features/style'
-import { useUIStore } from '@/ui/state'
+
 import React, { useCallback, useContext, useRef } from 'react'
 import { useWindowDimensions } from 'react-native'
 import Carousel, { ICarouselInstance } from 'react-native-reanimated-carousel'
@@ -16,7 +15,7 @@ import { ProfileDetailsContext } from './profileDetailsStore'
 // --- Helper Components for State Isolation ---
 
 const ConditionalGridLines = React.memo(() => {
-  const editing = useItemStore((state) => state.editing)
+  const editing = useAppStore((state) => state.editing)
   if (editing === '') {
     return null
   }
@@ -26,7 +25,7 @@ ConditionalGridLines.displayName = 'ConditionalGridLines'
 
 // --- Main Components ---
 
-export const Details = ({ data }: { data: ItemsRecord[] }) => {
+export const Details = ({ data }: { data: Item[] }) => {
   const ref = useRef<ICarouselInstance>(null)
   const win = useWindowDimensions()
 
@@ -35,8 +34,7 @@ export const Details = ({ data }: { data: ItemsRecord[] }) => {
   const setCurrentIndex = useStore(profileDetailsStore, (state) => state.setCurrentIndex)
   const currentIndex = useStore(profileDetailsStore, (state) => state.currentIndex)
 
-  const { addingToList, setAddingToList, addingItem } = useUIStore()
-  const { stopEditing, update } = useItemStore()
+  const { stopEditing, update, addingToList, setAddingToList, addingItem } = useAppStore()
 
   const handleConfigurePanGesture = useCallback((gesture: any) => {
     'worklet'

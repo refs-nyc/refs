@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react'
-import { useUserStore } from '@/features/pocketbase'
+import { useAppStore } from '@/features/stores'
 import { s, c } from '@/features/style'
 import { router } from 'expo-router'
 import { ProfileStep } from '@/ui/profiles/ProfileStep'
@@ -22,7 +22,7 @@ const EmailStep = ({ carouselRef }: { carouselRef: React.RefObject<ICarouselInst
     mode: 'onChange',
   })
 
-  const { updateStagedUser } = useUserStore()
+  const { updateStagedUser } = useAppStore()
 
   return (
     <ProfileStep
@@ -82,7 +82,7 @@ const LoginStep = () => {
     },
   })
 
-  const { stagedUser, loginWithPassword } = useUserStore()
+  const { stagedUser, loginWithPassword } = useAppStore()
   const [loginInProgress, setLoginInProgress] = useState(false)
 
   return (

@@ -1,7 +1,7 @@
-import { pocketbase, useItemStore, useUserStore } from '@/features/pocketbase'
-import { getBacklogItems, getProfileItems } from '@/features/pocketbase/stores/items'
-import type { ExpandedProfile } from '@/features/pocketbase/stores/types'
-import { ExpandedItem } from '@/features/pocketbase/stores/types'
+import { useAppStore } from '@/features/stores'
+import { getBacklogItems, getProfileItems } from '@/features/stores/items'
+import type { Profile } from '@/features/types'
+import { ExpandedItem } from '@/features/types'
 import { s } from '@/features/style'
 import BottomSheet from '@gorhom/bottom-sheet'
 import { useEffect, useRef, useState } from 'react'
@@ -15,20 +15,17 @@ import { OtherBacklogSheet } from './sheets/OtherBacklogSheet'
 import { OtherButtonsSheet } from './sheets/OtherButtonsSheet'
 
 export const OtherProfile = ({ userName }: { userName: string }) => {
-  const [profile, setProfile] = useState<ExpandedProfile>()
+  const [profile, setProfile] = useState<Profile>()
   const [gridItems, setGridItems] = useState<ExpandedItem[]>([])
   const [backlogItems, setBacklogItems] = useState<ExpandedItem[]>([])
   const [loading, setLoading] = useState<boolean>(true)
 
-  const { profileRefreshTrigger } = useItemStore()
-  const { user } = useUserStore()
+  const { profileRefreshTrigger, user, stopEditing, getUserByUserName } = useAppStore()
 
   const refreshGrid = async (userName: string) => {
     setLoading(true)
     try {
-      const profile = await pocketbase
-        .collection('users')
-        .getFirstListItem<ExpandedProfile>(`userName = "${userName}"`)
+      const profile = await getUserByUserName(userName)
       setProfile(profile)
 
       const gridItems = await getProfileItems(userName)
@@ -57,8 +54,6 @@ export const OtherProfile = ({ userName }: { userName: string }) => {
   const bottomSheetRef = useRef<BottomSheet>(null)
   const detailsSheetRef = useRef<BottomSheet>(null)
   const backlogSheetRef = useRef<BottomSheet>(null)
-
-  const stopEditing = useItemStore((state) => state.stopEditing)
 
   const [detailsItem, setDetailsItem] = useState<ExpandedItem | null>(null)
 

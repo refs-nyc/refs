@@ -1,10 +1,9 @@
-import { useUserStore } from '@/features/pocketbase'
-import { Conversation } from '@/features/pocketbase/stores/types'
+import { useAppStore } from '@/features/stores'
+import { Conversation } from '@/features/types'
 import { s, c } from '@/features/style'
 import { View, Text } from 'react-native'
 import { XStack, YStack } from '../core/Stacks'
 import { Avatar } from '../atoms/Avatar'
-import { useMessageStore } from '@/features/pocketbase/stores/messages'
 import { formatTimestamp } from '@/features/messaging/utils'
 import { useCalendars } from 'expo-localization'
 import { Pressable } from 'react-native-gesture-handler'
@@ -15,8 +14,7 @@ export default function ConversationListItem({
 }: {
   conversation: Conversation
 }): JSX.Element | null {
-  const { user } = useUserStore()
-  const { memberships, messagesPerConversation } = useMessageStore()
+  const { user, memberships, messagesPerConversation } = useAppStore()
 
   const messages = messagesPerConversation[conversation.id]
 

@@ -1,6 +1,5 @@
-import { pocketbase, useUserStore } from '@/features/pocketbase'
-import { useMessageStore } from '@/features/pocketbase/stores/messages'
-import { Profile } from '@/features/pocketbase/stores/types'
+import { useAppStore } from '@/features/stores'
+import { Profile } from '@/features/types'
 import { c, s } from '@/features/style'
 import { XStack, YStack } from '@/ui'
 import { Avatar } from '@/ui/atoms/Avatar'
@@ -14,8 +13,7 @@ export default function NewGCScreen() {
   const [users, setUsers] = useState<Profile[]>([])
   const [message, setMessage] = useState<string>('')
   const [title, setTitle] = useState<string>('')
-  const { createConversation, sendMessage } = useMessageStore()
-  const { user } = useUserStore()
+  const { user, createConversation, sendMessage, getUsersByIds } = useAppStore()
 
   useEffect(() => {
     const getUsers = async () => {
@@ -24,11 +22,8 @@ export default function NewGCScreen() {
           ? queryParams.members.split(',')
           : queryParams.members
 
-      const filter = ids.map((id) => `id="${id}"`).join(' || ')
-      const result = await pocketbase.collection('users').getFullList<Profile>({
-        filter: filter,
-      })
-      setUsers(result)
+      const users = await getUsersByIds(ids)
+      setUsers(users)
     }
     getUsers()
   }, [])
@@ -71,11 +66,11 @@ export default function NewGCScreen() {
     >
       <YStack
         gap={s.$2}
-        style={{ 
-          flex: 1, 
-          alignItems: 'flex-start', 
-          width: '80%', 
-          paddingTop: s.$5, 
+        style={{
+          flex: 1,
+          alignItems: 'flex-start',
+          width: '80%',
+          paddingTop: s.$5,
           margin: 'auto',
         }}
       >
@@ -91,7 +86,7 @@ export default function NewGCScreen() {
         />
 
         <Text>{getUserListString(users)}</Text>
-        <XStack gap={s.$05} style={{flexWrap: 'wrap'}}>
+        <XStack gap={s.$05} style={{ flexWrap: 'wrap' }}>
           {users.map((u) => (
             <Link key={u.id} href={`/user/${u.userName}`}>
               <Avatar source={u.image} size={s.$3} />

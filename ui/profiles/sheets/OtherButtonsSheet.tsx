@@ -1,7 +1,5 @@
-import { useBackdropStore } from '@/features/pocketbase/stores/backdrop'
-import { useMessageStore } from '@/features/pocketbase/stores/messages'
-import { UsersRecord } from '@/features/pocketbase/stores/pocketbase-types'
-import type { ExpandedProfile } from '@/features/pocketbase/stores/types'
+import { useAppStore } from '@/features/stores'
+import type { Profile } from '@/features/types'
 import { c, s } from '@/features/style'
 import { Button } from '@/ui/buttons/Button'
 import { XStack } from '@/ui/core/Stacks'
@@ -17,13 +15,11 @@ export const OtherButtonsSheet = ({
   openBacklogSheet,
 }: {
   bottomSheetRef: React.RefObject<BottomSheet>
-  profile: ExpandedProfile
-  user: UsersRecord | null
+  profile: Profile
+  user: Profile | null
   openBacklogSheet: () => void
 }) => {
-  const { moduleBackdropAnimatedIndex } = useBackdropStore()
-
-  const { saves, addSave, removeSave } = useMessageStore()
+  const { moduleBackdropAnimatedIndex, saves, addSave, removeSave } = useAppStore()
 
   const saveId = saves.find((s) => s.expand.user.id === profile?.id)?.id
   const disappearsOnIndex = 0

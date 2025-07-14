@@ -1,18 +1,17 @@
 import { Heading, XStack } from '@/ui'
 import { View, DimensionValue, Pressable, Text } from 'react-native'
 import { c, s } from '../style'
-import { pocketbase, useUserStore } from '../pocketbase'
-import { useMessageStore } from '../pocketbase/stores/messages'
+import { useAppStore } from '@/features/stores'
 import SwipeableConversation from '@/ui/messaging/SwipeableConversation'
 import { router } from 'expo-router'
-import { Conversation } from '../pocketbase/stores/types'
+import { Conversation } from '@/features/types'
 import ConversationList from '@/ui/messaging/ConversationList'
 import { Ionicons } from '@expo/vector-icons'
 import { Link } from 'expo-router'
 
 export function ConversationsScreen() {
-  const { user } = useUserStore()
-  const { conversations, memberships, messagesPerConversation } = useMessageStore()
+  const { conversations, memberships, messagesPerConversation, user, archiveConversation } =
+    useAppStore()
 
   const activeConversations = []
   for (const conversationId in conversations) {
@@ -29,9 +28,8 @@ export function ConversationsScreen() {
   activeConversations.sort((a, b) => getLastMessageDate(b) - getLastMessageDate(a))
 
   const onArchive = async (conversation: Conversation) => {
-    const membership = memberships[conversation.id].find((m) => m.expand?.user.id === user?.id)
-    if (membership) {
-      await pocketbase.collection('memberships').update(membership.id, { archived: true })
+    if (user) {
+      await archiveConversation(user.id, conversation.id)
     }
   }
 

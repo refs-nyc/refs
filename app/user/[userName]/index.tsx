@@ -1,9 +1,9 @@
-import { useUserStore } from '@/features/pocketbase/stores/users'
+import { useAppStore } from '@/features/stores'
 import { UserProfileScreen } from '@/features/user/profile-screen'
 import { useGlobalSearchParams, useRouter } from 'expo-router'
 
 export default function Screen() {
-  const { user } = useUserStore()
+  const { user } = useAppStore()
 
   const { userName } = useGlobalSearchParams()
 

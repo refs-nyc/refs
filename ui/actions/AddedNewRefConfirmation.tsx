@@ -1,7 +1,7 @@
 import { View } from 'react-native'
 import { Heading } from '../typo/Heading'
 import { c, s } from '@/features/style'
-import { ExpandedItem } from '@/features/pocketbase/stores/types'
+import { ExpandedItem } from '@/features/types'
 
 export const AddedNewRefConfirmation = ({ itemData }: { itemData: ExpandedItem }) => {
   return (

@@ -1,7 +1,6 @@
-import { pocketbase } from '@/features/pocketbase'
 import { useAppStore } from '@/features/stores'
 import { getBacklogItems, getProfileItems } from '@/features/stores/items'
-import type { ExpandedProfile } from '@/features/types'
+import type { Profile } from '@/features/types'
 import { ExpandedItem } from '@/features/types'
 import { s } from '@/features/style'
 import BottomSheet from '@gorhom/bottom-sheet'
@@ -16,19 +15,17 @@ import { OtherBacklogSheet } from './sheets/OtherBacklogSheet'
 import { OtherButtonsSheet } from './sheets/OtherButtonsSheet'
 
 export const OtherProfile = ({ userName }: { userName: string }) => {
-  const [profile, setProfile] = useState<ExpandedProfile>()
+  const [profile, setProfile] = useState<Profile>()
   const [gridItems, setGridItems] = useState<ExpandedItem[]>([])
   const [backlogItems, setBacklogItems] = useState<ExpandedItem[]>([])
   const [loading, setLoading] = useState<boolean>(true)
 
-  const { profileRefreshTrigger, user, stopEditing } = useAppStore()
+  const { profileRefreshTrigger, user, stopEditing, getUserByUserName } = useAppStore()
 
   const refreshGrid = async (userName: string) => {
     setLoading(true)
     try {
-      const profile = await pocketbase
-        .collection('users')
-        .getFirstListItem<ExpandedProfile>(`userName = "${userName}"`)
+      const profile = await getUserByUserName(userName)
       setProfile(profile)
 
       const gridItems = await getProfileItems(userName)

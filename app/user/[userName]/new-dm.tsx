@@ -1,6 +1,6 @@
-import { pocketbase } from '@/features/pocketbase'
 import { useAppStore } from '@/features/stores'
 import { c, s } from '@/features/style'
+import { Profile } from '@/features/types'
 import { Heading, XStack, YStack } from '@/ui'
 import { Avatar } from '@/ui/atoms/Avatar'
 import MessageInput from '@/ui/messaging/MessageInput'
@@ -13,15 +13,15 @@ export default function NewDMScreen() {
   const { user } = useAppStore()
   const { userName } = useGlobalSearchParams()
   const [message, setMessage] = useState<string>('')
-  const { createConversation, sendMessage } = useAppStore()
-  const [profile, setProfile] = useState<any>()
+  const { createConversation, sendMessage, getUserByUserName } = useAppStore()
+  const [profile, setProfile] = useState<Profile>()
 
   useEffect(() => {
     async function getProfile() {
-      const results = await pocketbase.collection('users').getFullList({
-        filter: `userName = "${userName}"`,
-      })
-      setProfile(results[0])
+      if (typeof userName === 'string') {
+        const profile = await getUserByUserName(userName)
+        setProfile(profile)
+      }
     }
     getProfile()
   }, [userName])

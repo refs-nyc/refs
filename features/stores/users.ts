@@ -15,6 +15,9 @@ export type UserSlice = {
   updateStagedUser: (formFields: Partial<Profile>) => void
   loginWithPassword: (email: string, password: string) => Promise<any>
   getUserByEmail: (email: string) => Promise<Profile>
+  getUserByUserName: (userName: string) => Promise<Profile>
+  getUsersByIds: (ids: string[]) => Promise<Profile[]>
+  getRandomUser: () => Promise<Profile>
   login: (userName: string) => Promise<Profile>
   logout: () => void
   init: () => Promise<void>
@@ -116,6 +119,25 @@ export const createUserSlice: StateCreator<StoreSlices, [], [], UserSlice> = (se
     }))
 
     return userRecord
+  },
+  getUserByUserName: async (userName: string) => {
+    const userRecord = await pocketbase
+      .collection<Profile>('users')
+      .getFirstListItem(`userName = "${userName}"`)
+    return userRecord
+  },
+  getUsersByIds: async (ids: string[]) => {
+    const filter = ids.map((id) => `id="${id}"`).join(' || ')
+    return await pocketbase.collection('users').getFullList<Profile>({
+      filter: filter,
+    })
+  },
+  getRandomUser: async () => {
+    const result = await pocketbase.collection('users').getList<Profile>(1, 1, {
+      filter: 'items:length > 5',
+      sort: '@random',
+    })
+    return result.items[0]
   },
   //
   // Requirement: staged user

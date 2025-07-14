@@ -10,7 +10,6 @@ import { Heading } from '../typo/Heading'
 import { XStack, YStack } from '../core/Stacks'
 import { Button } from '../buttons/Button'
 import { CompleteRef, Profile } from '@/features/types'
-import { pocketbase } from '@/features/pocketbase'
 import { useAppStore } from '@/features/stores'
 import { SimplePinataImage } from '../images/SimplePinataImage'
 import { Ionicons } from '@expo/vector-icons'
@@ -33,13 +32,11 @@ export default function SearchBottomSheet() {
   const [results, setResults] = useState<CompleteRef[]>([])
   const [refs, setRefs] = useState<CompleteRef[]>([])
 
-  const { user, moduleBackdropAnimatedIndex } = useAppStore()
+  const { user, moduleBackdropAnimatedIndex, getRefsByTitle, getRandomUser } = useAppStore()
 
   useEffect(() => {
     const runSearch = async (query: string) => {
-      const refsResults = await pocketbase
-        .collection<CompleteRef>('refs')
-        .getFullList({ filter: `title ~ "${query}"` })
+      const refsResults = await getRefsByTitle(query)
       setResults(refsResults)
     }
 
@@ -68,11 +65,8 @@ export default function SearchBottomSheet() {
   }
 
   const stumble = async () => {
-    const randomProfile = await pocketbase.collection('users').getList<Profile>(1, 1, {
-      filter: 'items:length > 5',
-      sort: '@random',
-    })
-    router.push(`/user/${randomProfile.items[0].userName}`)
+    const randomProfile = await getRandomUser()
+    router.push(`/user/${randomProfile.userName}`)
   }
 
   const search = () => {

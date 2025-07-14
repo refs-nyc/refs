@@ -1,4 +1,3 @@
-import { pocketbase } from '@/features/pocketbase'
 import { Profile } from '@/features/types'
 import { c, s } from '@/features/style'
 import UserListItem from '@/ui/atoms/UserListItem'
@@ -10,6 +9,7 @@ import BottomSheet, { BottomSheetBackdrop, BottomSheetScrollView } from '@gorhom
 import { router } from 'expo-router'
 import { useCallback, useEffect, useState } from 'react'
 import { Text, View, Image } from 'react-native'
+import { useAppStore } from '@/features/stores'
 
 export default function Referencers({
   referencersBottomSheetRef,
@@ -20,6 +20,7 @@ export default function Referencers({
   const [users, setUsers] = useState<any[]>([])
   const [refData, setRefData] = useState<any>({})
   const { addRefSheetRef, setAddingRefId } = useUIStore()
+  const { getItemsByRefIds } = useAppStore()
 
   useEffect(() => {
     const getUsers = async () => {
@@ -31,10 +32,7 @@ export default function Referencers({
       const users: Profile[] = []
       const userIds: Set<string> = new Set()
 
-      const items = await pocketbase.collection('items').getFullList({
-        filter: `ref = "${currentRefId}"`,
-        expand: 'creator, ref',
-      })
+      const items = await getItemsByRefIds([currentRefId])
 
       for (const item of items) {
         const user = item.expand?.creator

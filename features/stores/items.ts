@@ -1,7 +1,7 @@
 import { pocketbase } from '../pocketbase'
 import { StateCreator } from 'zustand'
 import { ExpandedItem, CompleteRef, StagedItemFields, StagedRefFields } from '../types'
-import { ItemsRecord } from '../pocketbase/pocketbase-types'
+import { ItemsRecord, RefsRecord } from '../pocketbase/pocketbase-types'
 import { createdSort } from '@/ui/profiles/sorts'
 import { canvasApp } from '@/features/canvas'
 import type { StoreSlices } from './types'
@@ -61,6 +61,15 @@ export type ItemSlice = {
   triggerFeedRefresh: () => void
   triggerProfileRefresh: () => void
   updateRefTitle: (id: string, title: string) => Promise<CompleteRef>
+  getFeedItems: () => Promise<ExpandedItem[]>
+  getTickerItems: () => Promise<RefsRecord[]>
+  getRefById: (id: string) => Promise<CompleteRef>
+  getRefsByTitle: (title: string) => Promise<CompleteRef[]>
+  getItemById: (id: string) => Promise<ExpandedItem>
+  getItemsByRefTitle: (title: string) => Promise<ExpandedItem[]>
+  getItemsByRefIds: (refIds: string[]) => Promise<ExpandedItem[]>
+  getAllItemsByCreator: (creatorId: string) => Promise<ExpandedItem[]>
+  getListsByCreator: (creatorId: string) => Promise<ExpandedItem[]>
 }
 
 // ***
@@ -298,6 +307,59 @@ export const createItemSlice: StateCreator<StoreSlices, [], [], ItemSlice> = (se
       console.error(error)
       throw error
     }
+  },
+  getFeedItems: async () => {
+    const result = await pocketbase.collection('items').getList<ExpandedItem>(1, 30, {
+      // TODO: remove list = false once we have a way to display lists in the feed
+      // also consider showing backlog items in the feed, when we have a way to link to them
+      filter: `creator != null && backlog = false && list = false && parent = null`,
+      sort: '-created',
+      expand: 'ref,creator',
+    })
+    return result.items
+  },
+  getTickerItems: async () => {
+    return await pocketbase.collection('refs').getFullList<RefsRecord>({
+      filter: 'showInTicker=true',
+      sort: '-created',
+    })
+  },
+  getRefById: async (id: string) => {
+    return await pocketbase.collection<CompleteRef>('refs').getOne(id)
+  },
+  getRefsByTitle: async (title: string) => {
+    return await pocketbase
+      .collection<CompleteRef>('refs')
+      .getFullList({ filter: `title ~ "${title}"` })
+  },
+  getItemById: async (id: string) => {
+    return await pocketbase.collection('items').getOne<ExpandedItem>(id, {
+      expand: 'ref,items_via_parent,items_via_parent.ref',
+    })
+  },
+  getItemsByRefTitle: async (title: string) => {
+    return await pocketbase
+      .collection<ExpandedItem>('items')
+      .getFullList({ filter: `ref.title ~ "${title}"`, expand: 'ref' })
+  },
+  getItemsByRefIds: async (refIds: string[]) => {
+    const filter = refIds.map((id) => `ref="${id}"`).join(' || ')
+
+    return await pocketbase.collection('items').getFullList({
+      filter,
+      expand: 'creator, ref',
+    })
+  },
+  getAllItemsByCreator: async (creatorId: string) => {
+    return await pocketbase.collection('items').getFullList<ExpandedItem>({
+      filter: `creator = "${creatorId}"`,
+      expand: 'ref',
+    })
+  },
+  getListsByCreator: async (creatorId: string) => {
+    return await pocketbase
+      .collection<ExpandedItem>('items')
+      .getFullList({ filter: `list = true && creator = "${creatorId}"`, expand: 'ref' })
   },
 })
 

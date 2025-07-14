@@ -1,4 +1,3 @@
-import { pocketbase } from '@/features/pocketbase'
 import { useAppStore } from '@/features/stores'
 import { Profile } from '@/features/types'
 import { c, s } from '@/features/style'
@@ -14,8 +13,7 @@ export default function NewGCScreen() {
   const [users, setUsers] = useState<Profile[]>([])
   const [message, setMessage] = useState<string>('')
   const [title, setTitle] = useState<string>('')
-  const { createConversation, sendMessage } = useAppStore()
-  const { user } = useAppStore()
+  const { user, createConversation, sendMessage, getUsersByIds } = useAppStore()
 
   useEffect(() => {
     const getUsers = async () => {
@@ -24,11 +22,8 @@ export default function NewGCScreen() {
           ? queryParams.members.split(',')
           : queryParams.members
 
-      const filter = ids.map((id) => `id="${id}"`).join(' || ')
-      const result = await pocketbase.collection('users').getFullList<Profile>({
-        filter: filter,
-      })
-      setUsers(result)
+      const users = await getUsersByIds(ids)
+      setUsers(users)
     }
     getUsers()
   }, [])

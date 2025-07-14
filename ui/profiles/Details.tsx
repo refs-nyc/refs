@@ -1,6 +1,5 @@
 import { useAppStore } from '@/features/stores'
-import { ItemsRecord } from '@/features/pocketbase/pocketbase-types'
-import { ExpandedItem } from '@/features/types'
+import { ExpandedItem, Item } from '@/features/types'
 import { c } from '@/features/style'
 import { useUIStore } from '@/ui/state'
 import React, { useCallback, useContext, useRef } from 'react'
@@ -26,7 +25,7 @@ ConditionalGridLines.displayName = 'ConditionalGridLines'
 
 // --- Main Components ---
 
-export const Details = ({ data }: { data: ItemsRecord[] }) => {
+export const Details = ({ data }: { data: Item[] }) => {
   const ref = useRef<ICarouselInstance>(null)
   const win = useWindowDimensions()
 

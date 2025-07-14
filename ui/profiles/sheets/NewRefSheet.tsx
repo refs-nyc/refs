@@ -1,4 +1,3 @@
-import { pocketbase } from '@/features/pocketbase'
 import { getProfileItems } from '@/features/stores/items'
 import { ExpandedItem, StagedItemFields } from '@/features/types'
 import { useAppStore } from '@/features/stores'
@@ -34,8 +33,15 @@ export const NewRefSheet = ({
   const { addingNewRefTo, setAddingNewRefTo, addRefPrompt } = useUIStore()
 
   // functions for adding the new item to a list or the grid or the backlog
-  const { triggerProfileRefresh, addItemToList, moveToBacklog, removeItem, addToProfile, user } =
-    useAppStore()
+  const {
+    triggerProfileRefresh,
+    addItemToList,
+    moveToBacklog,
+    removeItem,
+    addToProfile,
+    user,
+    getItemById,
+  } = useAppStore()
 
   const [step, setStep] = useState<NewRefStep>('search')
 
@@ -213,17 +219,13 @@ export const NewRefSheet = ({
           {step === 'addToList' && (
             <View style={{ paddingVertical: s.$1, width: '100%' }}>
               <FilteredItems
-                filter={`list = true && creator = "${user?.id}"`}
-                onComplete={async (list) => {
+                creatorId={user?.id}
+                onComplete={async (list: ExpandedItem) => {
                   // Add the item to the list
                   await addItemToList(list.id, itemData?.id!)
 
                   // Fetch fresh data after adding
-                  const updatedItem = await pocketbase
-                    .collection('items')
-                    .getOne<ExpandedItem>(list.id, {
-                      expand: 'ref,items_via_parent,items_via_parent.ref',
-                    })
+                  const updatedItem = await getItemById(list.id)
                   setItemData(updatedItem)
                   setStep('editList')
                 }}
@@ -245,11 +247,7 @@ export const NewRefSheet = ({
                   await addItemToList(list.id, itemData?.id!)
 
                   // Fetch the expanded list data
-                  const expandedList = await pocketbase
-                    .collection('items')
-                    .getOne<ExpandedItem>(list.id, {
-                      expand: 'ref,items_via_parent,items_via_parent.ref',
-                    })
+                  const expandedList = await getItemById(list.id)
 
                   // Set the expanded item as current and show edit list
                   setItemData(expandedList)

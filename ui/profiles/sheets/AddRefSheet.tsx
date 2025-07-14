@@ -1,7 +1,5 @@
-import { pocketbase } from '@/features/pocketbase'
 import { useAppStore } from '@/features/stores'
 import { getProfileItems } from '@/features/stores/items'
-import { RefsRecord } from '@/features/pocketbase/pocketbase-types'
 import { ExpandedItem, StagedItemFields } from '@/features/types'
 import { c, s } from '@/features/style'
 import { AddedNewRefConfirmation } from '@/ui/actions/AddedNewRefConfirmation'
@@ -35,11 +33,11 @@ export const AddRefSheet = ({
   // the resulting item
   const [itemData, setItemData] = useState<ExpandedItem | null>(null)
 
-  const { user, moveToBacklog, removeItem, addToProfile } = useAppStore()
+  const { user, moveToBacklog, removeItem, addToProfile, getRefById } = useAppStore()
 
   useEffect(() => {
     const getRef = async () => {
-      const ref = await pocketbase.collection<RefsRecord>('refs').getOne(addingRefId)
+      const ref = await getRefById(addingRefId)
       setRefFields({
         title: ref.title!,
         image: ref.image,

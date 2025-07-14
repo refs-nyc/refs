@@ -1,5 +1,5 @@
 import { useAppStore } from '@/features/stores'
-import type { ExpandedItem, ExpandedProfile } from '@/features/types'
+import type { ExpandedItem, Profile } from '@/features/types'
 import { c, s } from '@/features/style'
 import BacklogList from '@/ui/profiles/BacklogList'
 import { Heading } from '@/ui/typo/Heading'
@@ -14,7 +14,7 @@ export const OtherBacklogSheet = ({
 }: {
   bottomSheetRef: React.RefObject<BottomSheet>
   backlogItems: ExpandedItem[]
-  profile: ExpandedProfile
+  profile: Profile
 }) => {
   const { otherProfileBackdropAnimatedIndex, registerBackdropPress, unregisterBackdropPress } =
     useAppStore()

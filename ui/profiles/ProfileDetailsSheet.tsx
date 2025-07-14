@@ -1,7 +1,6 @@
-import { pocketbase } from '@/features/pocketbase'
 import { useAppStore } from '@/features/stores'
 import { getProfileItems } from '@/features/stores/items'
-import { ExpandedItem, ExpandedProfile } from '@/features/types'
+import { ExpandedItem, Profile } from '@/features/types'
 import { c } from '@/features/style'
 import BottomSheet, { BottomSheetBackdrop } from '@gorhom/bottom-sheet'
 import { useCallback, useEffect, useState } from 'react'
@@ -21,7 +20,7 @@ export const ProfileDetailsSheet = ({
   detailsSheetRef: React.RefObject<BottomSheet>
   openedFromFeed: boolean
 }) => {
-  const [profile, setProfile] = useState<ExpandedProfile | null>(null)
+  const [profile, setProfile] = useState<Profile | null>(null)
   const [gridItems, setGridItems] = useState<ExpandedItem[]>([])
   const {
     profileRefreshTrigger,
@@ -29,13 +28,12 @@ export const ProfileDetailsSheet = ({
     detailsBackdropAnimatedIndex,
     registerBackdropPress,
     unregisterBackdropPress,
+    getUserByUserName,
   } = useAppStore()
 
   useEffect(() => {
     const fetchProfile = async () => {
-      const profile = await pocketbase
-        .collection('users')
-        .getFirstListItem<ExpandedProfile>(`userName = "${profileUsername}"`)
+      const profile = await getUserByUserName(profileUsername)
       const gridItems = await getProfileItems(profile.userName)
 
       setProfile(profile)

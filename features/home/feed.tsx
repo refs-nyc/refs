@@ -3,7 +3,6 @@ import { useEffect, useRef, useState } from 'react'
 import { Dimensions, Pressable, ScrollView, View } from 'react-native'
 
 import { Ticker } from '@/features/home/Ticker'
-import { pocketbase } from '@/features/pocketbase'
 import { useAppStore } from '@/features/stores'
 import type { ExpandedItem } from '@/features/types'
 import { c, s } from '@/features/style'
@@ -153,17 +152,12 @@ export const Feed = () => {
   const [detailsItem, setDetailsItem] = useState<ExpandedItem | null>(null)
   const detailsSheetRef = useRef<BottomSheet>(null)
   const { referencersBottomSheetRef, setCurrentRefId } = useUIStore()
+  const { getFeedItems } = useAppStore()
 
   const fetchFeedItems = async () => {
     try {
-      const records = await pocketbase.collection('items').getList<ExpandedItem>(1, 30, {
-        // TODO: remove list = false once we have a way to display lists in the feed
-        // also consider showing backlog items in the feed, when we have a way to link to them
-        filter: `creator != null && backlog = false && list = false && parent = null`,
-        sort: '-created',
-        expand: 'ref,creator',
-      })
-      setItems(records.items)
+      const items = await getFeedItems()
+      setItems(items)
     } catch (error) {
       console.error('Error fetching feed items:', error)
     }

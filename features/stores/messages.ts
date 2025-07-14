@@ -1,6 +1,7 @@
 import { StateCreator } from 'zustand'
 import {
   Conversation,
+  ConversationWithMemberships,
   ExpandedMembership,
   ExpandedReaction,
   ExpandedSave,
@@ -24,6 +25,7 @@ export type MessageSlice = {
     title?: string
   ) => Promise<string>
   addConversation(conversation: Conversation): void
+  getDirectConversations: () => Promise<ConversationWithMemberships[]>
 
   memberships: Record<string, ExpandedMembership[]>
   setMemberships: (memberships: ExpandedMembership[]) => void
@@ -60,6 +62,9 @@ export type MessageSlice = {
   setSaves: (saves: ExpandedSave[]) => void
   addSave: (userId: string, savedBy: string) => Promise<void>
   removeSave: (id: string) => Promise<void>
+
+  archiveConversation: (userId: string, conversationId: string) => Promise<void>
+  unarchiveConversation: (userId: string, conversationId: string) => Promise<void>
 }
 
 export const createMessageSlice: StateCreator<StoreSlices, [], [], MessageSlice> = (set, get) => ({
@@ -120,6 +125,12 @@ export const createMessageSlice: StateCreator<StoreSlices, [], [], MessageSlice>
     set((state) => ({
       conversations: { ...state.conversations, [conversation.id]: conversation },
     }))
+  },
+  getDirectConversations: async () => {
+    return await pocketbase.collection<ConversationWithMemberships>('conversations').getFullList({
+      filter: `is_direct = true`,
+      expand: 'memberships_via_conversation.user',
+    })
   },
   memberships: {},
   addMembership: (membership) => {
@@ -362,6 +373,18 @@ export const createMessageSlice: StateCreator<StoreSlices, [], [], MessageSlice>
       })
     } catch (error) {
       console.error(error)
+    }
+  },
+  archiveConversation: async (userId: string, conversationId: string) => {
+    const membership = get().memberships[conversationId].find((m) => m.expand?.user.id === userId)
+    if (membership) {
+      await pocketbase.collection('memberships').update(membership.id, { archived: true })
+    }
+  },
+  unarchiveConversation: async (userId: string, conversationId: string) => {
+    const membership = get().memberships[conversationId].find((m) => m.expand?.user.id === userId)
+    if (membership) {
+      await pocketbase.collection('memberships').update(membership.id, { archived: false })
     }
   },
 })

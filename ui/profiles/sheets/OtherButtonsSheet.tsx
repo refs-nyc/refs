@@ -1,6 +1,5 @@
 import { useAppStore } from '@/features/stores'
-import { UsersRecord } from '@/features/pocketbase/pocketbase-types'
-import type { ExpandedProfile } from '@/features/types'
+import type { Profile } from '@/features/types'
 import { c, s } from '@/features/style'
 import { Button } from '@/ui/buttons/Button'
 import { XStack } from '@/ui/core/Stacks'
@@ -16,8 +15,8 @@ export const OtherButtonsSheet = ({
   openBacklogSheet,
 }: {
   bottomSheetRef: React.RefObject<BottomSheet>
-  profile: ExpandedProfile
-  user: UsersRecord | null
+  profile: Profile
+  user: Profile | null
   openBacklogSheet: () => void
 }) => {
   const { moduleBackdropAnimatedIndex, saves, addSave, removeSave } = useAppStore()

@@ -1,4 +1,3 @@
-import { pocketbase } from '@/features/pocketbase'
 import { useState } from 'react'
 import { YStack } from '@/ui/core/Stacks'
 import { Heading } from '@/ui/typo/Heading'
@@ -9,7 +8,7 @@ import { s, c } from '@/features/style'
 import { useAppStore } from '@/features/stores'
 
 export const FirstVisitScreen = () => {
-  const { updateUser } = useAppStore()
+  const { user, updateUser } = useAppStore()
 
   const [isEnabled, setIsEnabled] = useState(false)
   const toggleSwitch = async () => {
@@ -23,11 +22,7 @@ export const FirstVisitScreen = () => {
         console.error(err)
       })
       .finally(() => {
-        router.push(
-          pocketbase.authStore?.record?.userName
-            ? `/user/${pocketbase.authStore?.record?.userName}`
-            : '/'
-        )
+        router.push(user ? `/user/${user.userName}` : '/')
       })
   }
 

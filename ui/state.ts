@@ -1,4 +1,4 @@
-import { ItemsRecord } from '@/features/pocketbase/pocketbase-types'
+import { Item } from '@/features/types'
 import BottomSheet from '@gorhom/bottom-sheet'
 import React from 'react'
 import { create } from 'zustand'
@@ -6,7 +6,7 @@ import { create } from 'zustand'
 export const useUIStore = create<{
   editingProfile: boolean
   addingToList: string
-  addingItem: ItemsRecord | null
+  addingItem: Item | null
   referencersBottomSheetRef: React.RefObject<BottomSheet>
   currentRefId: string
   addRefSheetRef: React.RefObject<BottomSheet>

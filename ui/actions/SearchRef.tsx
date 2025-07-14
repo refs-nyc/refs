@@ -1,16 +1,14 @@
 import { useState, useEffect, useRef } from 'react'
-import { pocketbase } from '@/features/pocketbase'
 import { Pressable, View } from 'react-native'
 import { BottomSheetTextInput as TextInput } from '@gorhom/bottom-sheet'
 import { ListItem } from '@/ui/lists/ListItem'
 import { NewRefListItem } from '@/ui/atoms/NewRefListItem'
 import { XStack, YStack } from '@/ui/core/Stacks'
 import { s, c } from '@/features/style'
-import { CompleteRef } from '../../features/pocketbase/stores/types'
+import { CompleteRef } from '@/features/types'
 import { getLinkPreview } from 'link-preview-js'
 import { ShareIntent as ShareIntentType, useShareIntentContext } from 'expo-share-intent'
 import * as Clipboard from 'expo-clipboard'
-import { RefsRecord } from '@/features/pocketbase/pocketbase-types'
 import { KeyboardAvoidingView } from 'react-native-keyboard-controller'
 import { Ionicons } from '@expo/vector-icons'
 import { Button } from '../buttons/Button'
@@ -19,6 +17,7 @@ import { Picker } from '../inputs/Picker'
 import { PinataImage } from '../images/PinataImage'
 import { Image } from 'expo-image'
 import Animated, { StretchInY, StretchOutY } from 'react-native-reanimated'
+import { useAppStore } from '@/features/stores'
 
 const ImageSearchResults = ({
   imageSearchResults,
@@ -108,6 +107,8 @@ export const SearchRef = ({
   const [imageSearchResults, setImageSearchResults] = useState<string[]>([])
   const [displayingImagesFor, setDisplayingImagesFor] = useState<string>('') //ref id OR search query
 
+  const { getRefsByTitle } = useAppStore()
+
   // Track the current query to prevent race conditions
   const currentQueryRef = useRef('')
 
@@ -161,7 +162,7 @@ export const SearchRef = ({
 
   useEffect(() => {
     const runSearch = async () => {
-      let refsResults: RefsRecord[] = []
+      let refsResults: CompleteRef[] = []
 
       if (debouncedQuery === '') {
         setSearchResults([])
@@ -176,9 +177,7 @@ export const SearchRef = ({
         }
       } else {
         // Search items and refs db
-        refsResults = await pocketbase
-          .collection<CompleteRef>('refs')
-          .getFullList({ filter: `title ~ "${debouncedQuery}"` })
+        refsResults = await getRefsByTitle(debouncedQuery)
       }
 
       // Only update search results if this is still the current query

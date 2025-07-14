@@ -1,18 +1,19 @@
 import type { ExpandedItem } from '@/features/types'
-import { ItemsRecord } from '@/features/pocketbase/pocketbase-types'
 
 import { useState } from 'react'
-import { pocketbase } from '@/features/pocketbase'
 import { Pressable } from 'react-native'
 import { BottomSheetTextInput as TextInput } from '@gorhom/bottom-sheet'
 import { ListItem } from '@/ui/lists/ListItem'
 import { NewRefListItem } from '@/ui/atoms/NewRefListItem'
 import { YStack } from '@/ui/core/Stacks'
 import { s, c } from '@/features/style'
+import { useAppStore } from '@/features/stores'
 
 export const SearchItem = ({ onComplete }: { onComplete: (r: ExpandedItem) => void }) => {
   const [searchQuery, setSearchQuery] = useState('')
   const [searchResults, setSearchResults] = useState<ExpandedItem[]>([])
+
+  const { getItemsByRefTitle } = useAppStore()
 
   // Search result item
   const renderItem = ({ item }: { item: ExpandedItem }) => {
@@ -31,19 +32,14 @@ export const SearchItem = ({ onComplete }: { onComplete: (r: ExpandedItem) => vo
   // Update the search query
   const updateQuery = async (q: string) => {
     const search = async () => {
-      let itemResults: ItemsRecord[] = []
-
       if (q === '') return []
 
-      itemResults = await pocketbase
-        .collection<ExpandedItem>('items')
-        .getFullList({ filter: `ref.title ~ "${q}"`, expand: 'ref' })
-      return itemResults
+      return await getItemsByRefTitle(q)
     }
 
     setSearchQuery(q)
     let result = await search()
-    setSearchResults(result as ExpandedItem[])
+    setSearchResults(result)
   }
 
   return (

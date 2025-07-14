@@ -1,6 +1,5 @@
 import { useAppStore } from '@/features/stores'
-import { RefsRecord, UsersRecord } from '@/features/pocketbase/pocketbase-types'
-import { ExpandedItem } from '@/features/types'
+import { ExpandedItem, CompleteRef, Profile } from '@/features/types'
 import { base, c, s, t } from '@/features/style'
 import { SearchRef } from '@/ui/actions/SearchRef'
 import { Avatar } from '@/ui/atoms/Avatar'
@@ -51,7 +50,7 @@ const AuthorMeta = ({ author, numberOfLines }: { author: string; numberOfLines?:
   )
 }
 
-const Meta = ({ refRecord, numberOfLines }: { refRecord: RefsRecord; numberOfLines?: number }) => {
+const Meta = ({ refRecord, numberOfLines }: { refRecord: CompleteRef; numberOfLines?: number }) => {
   if (!refRecord) return
 
   let refMeta: { location?: string; author?: string } = {}
@@ -93,7 +92,7 @@ const ApplyChangesButton = () => {
 }
 ApplyChangesButton.displayName = 'ApplyChangesButton'
 
-const ProfileLabel = ({ profile }: { profile: UsersRecord }) => {
+const ProfileLabel = ({ profile }: { profile: Profile }) => {
   const router = useRouter()
   return (
     <Pressable

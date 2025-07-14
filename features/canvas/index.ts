@@ -8,7 +8,6 @@ if (!canvasUrl) {
 }
 
 const signer = new SIWESigner({ burner: true })
-console.log('creating app')
 export const canvasApp = new Canvas({
   topicOverride: 'alpha.refs.nyc.RefsClassContract:cf44acebbfaf69a67c5633d90cd45318',
   reset: true,
@@ -16,8 +15,6 @@ export const canvasApp = new Canvas({
   contract: RefsClassContract,
 })
 
-console.log('waiting 1000ms...')
 setTimeout(async () => {
-  console.log('connecting to canvas')
   await canvasApp.connect(canvasUrl)
 }, 100)

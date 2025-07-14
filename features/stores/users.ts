@@ -3,7 +3,6 @@ import { StateCreator } from 'zustand'
 import { Profile, ExpandedProfile } from '../types'
 import { UsersRecord } from '../pocketbase/pocketbase-types'
 import { ClientResponseError } from 'pocketbase'
-import { canvasApp } from '@/features/canvas'
 import type { StoreSlices } from './types'
 
 export type UserSlice = {
@@ -92,15 +91,6 @@ export const createUserSlice: StateCreator<StoreSlices, [], [], UserSlice> = (se
         .collection<UsersRecord>('users')
         .update(pocketbase.authStore.record.id, { ...fields })
 
-      await canvasApp.actions.updateProfile({
-        id: pocketbase.authStore.record.id,
-        firstName: fields.firstName || '',
-        lastName: fields.lastName || '',
-        location: fields.location || '',
-        image: fields.image || '',
-        updated: record.updated || '',
-      })
-
       return record
     } catch (err) {
       console.error(err)
@@ -165,18 +155,6 @@ export const createUserSlice: StateCreator<StoreSlices, [], [], UserSlice> = (se
         .create<ExpandedProfile>(finalUser, { expand: 'items,items.ref' })
 
       await get().loginWithPassword(finalUser.email, userPassword)
-
-      if (pocketbase?.authStore?.record?.id) {
-        await canvasApp.actions.createProfile({
-          id: pocketbase.authStore.record.id,
-          firstName: finalUser.firstName || '',
-          lastName: finalUser.lastName || '',
-          location: finalUser.location || '',
-          image: finalUser.image || '',
-          userName: record.userName,
-          created: record.created,
-        })
-      }
 
       set(() => ({
         user: record,

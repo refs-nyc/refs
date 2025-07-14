@@ -3,7 +3,6 @@ import { StateCreator } from 'zustand'
 import { ExpandedItem, CompleteRef, StagedItemFields, StagedRefFields } from '../types'
 import { ItemsRecord, RefsRecord } from '../pocketbase/pocketbase-types'
 import { createdSort } from '@/ui/profiles/sorts'
-import { canvasApp } from '@/features/canvas'
 import type { StoreSlices } from './types'
 
 function gridSort(items: ExpandedItem[]): ExpandedItem[] {
@@ -128,10 +127,6 @@ export const createItemSlice: StateCreator<StoreSlices, [], [], ItemSlice> = (se
       throw new Error('User not found')
     }
 
-    if (!canvasApp) {
-      throw new Error('Canvas app not found')
-    }
-
     const createRefArgs = {
       creator: userId,
       title: refFields.title || '',
@@ -142,15 +137,6 @@ export const createItemSlice: StateCreator<StoreSlices, [], [], ItemSlice> = (se
 
     // create the ref in pocketbase
     const newRef = await pocketbase.collection<CompleteRef>('refs').create(createRefArgs)
-
-    // create the ref in canvas
-    await canvasApp.actions.createRef({
-      id: `${userId}/${newRef.id}`,
-      created: newRef.created || null,
-      updated: newRef.updated || null,
-      deleted: newRef.deleted || null,
-      ...createRefArgs,
-    })
 
     return newRef
   },
@@ -176,16 +162,6 @@ export const createItemSlice: StateCreator<StoreSlices, [], [], ItemSlice> = (se
       expand: 'ref',
     })
 
-    // create the item in canvas
-    await canvasApp.actions.createItem({
-      id: `${userId}/${newItem.id}`,
-      created: newItem.created || null,
-      updated: newItem.updated || null,
-      deleted: newItem.deleted || null,
-      order: newItem.order || 0,
-      ...createItemArgs,
-    })
-
     return newItem
   },
 
@@ -202,11 +178,9 @@ export const createItemSlice: StateCreator<StoreSlices, [], [], ItemSlice> = (se
         .collection('items')
         .getFullList({ filter: `parent = "${id}"` })
       for (const child of children) {
-        await canvasApp.actions.removeItem(`${userId}/${child.id}`)
         await pocketbase.collection('items').delete(child.id)
       }
     }
-    await canvasApp.actions.removeItem(`${userId}/${id}`)
     await pocketbase.collection('items').delete(id)
 
     get().triggerFeedRefresh()
@@ -220,9 +194,6 @@ export const createItemSlice: StateCreator<StoreSlices, [], [], ItemSlice> = (se
 
       // update the item in pocketbase
       await pocketbase.collection('items').update(itemId, { parent: listId })
-
-      // update the item in canvas
-      await canvasApp.actions.addItemToList(`${userId}/${itemId}`, `${userId}/${listId}`)
 
       // newly created item might appear in feed before it is added to a list
       // so we should refresh after choosing a list
@@ -252,15 +223,6 @@ export const createItemSlice: StateCreator<StoreSlices, [], [], ItemSlice> = (se
         if (updatedItem.expand?.ref) updatedItem.expand.ref = ref
       }
 
-      // update the item in canvas
-      await canvasApp.actions.updateItem(`${userId}/${id}`, {
-        ...editedState,
-        text: editedState.text || '',
-        image: editedState.image || '',
-        url: editedState.url || '',
-        updated: updatedItem.updated,
-      })
-
       if (editedState.listTitle && updatedItem.list) {
         await get().updateRefTitle(updatedItem.ref, editedState.listTitle)
       }
@@ -282,8 +244,6 @@ export const createItemSlice: StateCreator<StoreSlices, [], [], ItemSlice> = (se
       }
 
       const record = await pocketbase.collection<ItemsRecord>('items').update(id, { backlog: true })
-      // update the item in canvas
-      await canvasApp.actions.moveItemToBacklog(`${userId}/${id}`)
 
       // Trigger feed refresh since backlog items don't appear in the feed
       get().triggerFeedRefresh()
@@ -301,7 +261,6 @@ export const createItemSlice: StateCreator<StoreSlices, [], [], ItemSlice> = (se
     }
     try {
       const record = await pocketbase.collection('refs').update(id, { title })
-      await canvasApp.actions.updateRefTitle(`${userId}/${id}`, title)
       return record
     } catch (error) {
       console.error(error)

@@ -1,4 +1,4 @@
-import type { ExpandedItem } from '@/features/pocketbase/types'
+import type { ExpandedItem } from '@/features/types'
 
 import { useState, useEffect } from 'react'
 import { pocketbase } from '@/features/pocketbase'

@@ -1,4 +1,4 @@
-import { ExpandedItem } from '@/features/pocketbase/types'
+import { ExpandedItem } from '@/features/types'
 import { s } from '@/features/style'
 import { GridItem } from '@/ui/grid/GridItem'
 import { GridTile } from '@/ui/grid/GridTile'

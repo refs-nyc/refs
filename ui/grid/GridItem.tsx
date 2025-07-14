@@ -1,7 +1,7 @@
 import { Text } from 'react-native'
 import { Pressable } from 'react-native'
 import { GridTileImage } from './GridTileImage'
-import { GridTileType } from '@/features/pocketbase/types'
+import { GridTileType } from '@/features/types'
 import { Heading } from '../typo/Heading'
 import { s } from '@/features/style'
 

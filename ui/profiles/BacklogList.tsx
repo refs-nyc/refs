@@ -1,4 +1,4 @@
-import { ExpandedItem } from '@/features/pocketbase/types'
+import { ExpandedItem } from '@/features/types'
 import { NativeScrollEvent, NativeSyntheticEvent, Text, TextInput, View } from 'react-native'
 import { c, s } from '@/features/style'
 import Animated, { FadeIn } from 'react-native-reanimated'

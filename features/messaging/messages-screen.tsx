@@ -1,5 +1,5 @@
 import { useAppStore } from '@/features/stores'
-import { Message } from '@/features/pocketbase/types'
+import { Message } from '@/features/types'
 import { c, s } from '@/features/style'
 import { Heading, Sheet, XStack } from '@/ui'
 import { Avatar, AvatarStack } from '@/ui/atoms/Avatar'

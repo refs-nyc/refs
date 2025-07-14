@@ -1,4 +1,4 @@
-import { ExpandedProfile } from '@/features/pocketbase/types'
+import { ExpandedProfile } from '@/features/types'
 import { createContext, ReactNode, useState } from 'react'
 import { createStore, StoreApi } from 'zustand'
 

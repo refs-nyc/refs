@@ -10,7 +10,7 @@ import {
   Message,
   Reaction,
   Save,
-} from '@/features/pocketbase/types'
+} from '@/features/types'
 import { ConversationsRecord } from '@/features/pocketbase/pocketbase-types'
 
 export function MessagesInit() {

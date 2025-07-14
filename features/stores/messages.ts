@@ -7,7 +7,7 @@ import {
   Message,
   Reaction,
   Save,
-} from '../pocketbase/types'
+} from '../types'
 import { pocketbase } from '../pocketbase'
 import type { StoreSlices } from './types'
 

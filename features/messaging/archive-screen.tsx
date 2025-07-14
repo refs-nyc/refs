@@ -6,7 +6,7 @@ import { useAppStore } from '@/features/stores'
 import SwipeableConversation from '@/ui/messaging/SwipeableConversation'
 import { Ionicons } from '@expo/vector-icons'
 import { router } from 'expo-router'
-import { Conversation } from '@/features/pocketbase/types'
+import { Conversation } from '@/features/types'
 import ConversationList from '@/ui/messaging/ConversationList'
 
 export function ArchiveScreen() {

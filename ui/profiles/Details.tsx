@@ -1,6 +1,6 @@
 import { useAppStore } from '@/features/stores'
 import { ItemsRecord } from '@/features/pocketbase/pocketbase-types'
-import { ExpandedItem } from '@/features/pocketbase/types'
+import { ExpandedItem } from '@/features/types'
 import { c } from '@/features/style'
 import { useUIStore } from '@/ui/state'
 import React, { useCallback, useContext, useRef } from 'react'

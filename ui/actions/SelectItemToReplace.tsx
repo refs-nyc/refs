@@ -1,4 +1,4 @@
-import { ExpandedItem, StagedItemFields } from '@/features/pocketbase/types'
+import { ExpandedItem, StagedItemFields } from '@/features/types'
 import { c, s } from '@/features/style'
 import { Button } from '@/ui/buttons/Button'
 import { SimplePinataImage } from '@/ui/images/SimplePinataImage'

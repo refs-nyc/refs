@@ -1,4 +1,4 @@
-import type { ExpandedItem, CompleteRef } from '@/features/pocketbase/types'
+import type { ExpandedItem, CompleteRef } from '@/features/types'
 import { BottomSheetView, BottomSheetScrollView, BottomSheetTextInput } from '@gorhom/bottom-sheet'
 import { Button } from '../buttons/Button'
 import { t, c, s } from '@/features/style'

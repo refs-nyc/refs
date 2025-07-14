@@ -1,7 +1,7 @@
 import { pocketbase } from '@/features/pocketbase'
 import { useAppStore } from '@/features/stores'
 import { getProfileItems } from '@/features/stores/items'
-import { ExpandedItem, ExpandedProfile } from '@/features/pocketbase/types'
+import { ExpandedItem, ExpandedProfile } from '@/features/types'
 import { c } from '@/features/style'
 import BottomSheet, { BottomSheetBackdrop } from '@gorhom/bottom-sheet'
 import { useCallback, useEffect, useState } from 'react'

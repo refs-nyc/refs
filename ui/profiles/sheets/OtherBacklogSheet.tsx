@@ -1,5 +1,5 @@
 import { useAppStore } from '@/features/stores'
-import type { ExpandedItem, ExpandedProfile } from '@/features/pocketbase/types'
+import type { ExpandedItem, ExpandedProfile } from '@/features/types'
 import { c, s } from '@/features/style'
 import BacklogList from '@/ui/profiles/BacklogList'
 import { Heading } from '@/ui/typo/Heading'

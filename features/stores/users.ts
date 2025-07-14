@@ -1,6 +1,6 @@
 import { pocketbase } from '../pocketbase'
 import { StateCreator } from 'zustand'
-import { Profile, ExpandedProfile } from '../pocketbase/types'
+import { Profile, ExpandedProfile } from '../types'
 import { UsersRecord } from '../pocketbase/pocketbase-types'
 import { ClientResponseError } from 'pocketbase'
 import { canvasApp } from '@/features/canvas'

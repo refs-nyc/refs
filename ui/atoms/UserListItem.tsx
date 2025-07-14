@@ -1,4 +1,4 @@
-import { Profile } from '@/features/pocketbase/types'
+import { Profile } from '@/features/types'
 import { s, c } from '@/features/style'
 import { View, Text } from 'react-native'
 import { Pressable } from 'react-native-gesture-handler'

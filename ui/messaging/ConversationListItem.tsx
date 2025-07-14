@@ -1,5 +1,5 @@
 import { useAppStore } from '@/features/stores'
-import { Conversation } from '@/features/pocketbase/types'
+import { Conversation } from '@/features/types'
 import { s, c } from '@/features/style'
 import { View, Text } from 'react-native'
 import { XStack, YStack } from '../core/Stacks'

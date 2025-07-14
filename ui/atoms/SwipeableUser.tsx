@@ -4,7 +4,7 @@ import Reanimated, { SharedValue, useAnimatedStyle } from 'react-native-reanimat
 import { c, s } from '@/features/style'
 import { Pressable } from 'react-native-gesture-handler'
 import { YStack } from '../core/Stacks'
-import { Profile } from '@/features/pocketbase/types'
+import { Profile } from '@/features/types'
 import UserListItem from './UserListItem'
 import { useState } from 'react'
 import { Ionicons } from '@expo/vector-icons'

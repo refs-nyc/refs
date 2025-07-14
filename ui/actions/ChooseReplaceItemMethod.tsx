@@ -1,4 +1,4 @@
-import { ExpandedItem } from '@/features/pocketbase/types'
+import { ExpandedItem } from '@/features/types'
 import { c, s } from '@/features/style'
 import { Button } from '@/ui/buttons/Button'
 import { Text, View } from 'react-native'

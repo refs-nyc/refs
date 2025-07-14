@@ -1,4 +1,4 @@
-import type { ExpandedItem } from '@/features/pocketbase/types'
+import type { ExpandedItem } from '@/features/types'
 import { ItemsRecord } from '@/features/pocketbase/pocketbase-types'
 
 import { useState } from 'react'

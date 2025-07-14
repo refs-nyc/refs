@@ -17,7 +17,7 @@ import { EditableHeader } from '../atoms/EditableHeader'
 import { Button } from '../buttons/Button'
 import type { ImagePickerAsset } from 'expo-image-picker'
 import { c, s } from '@/features/style'
-import { StagedItemFields } from '@/features/pocketbase/types'
+import { StagedItemFields } from '@/features/types'
 import { DismissKeyboard } from '../atoms/DismissKeyboard'
 
 const win = Dimensions.get('window')

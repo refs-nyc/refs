@@ -1,6 +1,6 @@
 import { pocketbase } from '@/features/pocketbase'
 import { getProfileItems } from '@/features/stores/items'
-import { ExpandedItem, StagedItemFields } from '@/features/pocketbase/types'
+import { ExpandedItem, StagedItemFields } from '@/features/types'
 import { useAppStore } from '@/features/stores'
 import { c, s } from '@/features/style'
 import { AddedNewRefConfirmation } from '@/ui/actions/AddedNewRefConfirmation'

@@ -1,6 +1,6 @@
 import Swipeable from 'react-native-gesture-handler/ReanimatedSwipeable'
 import ConversationListItem from './ConversationListItem'
-import { Conversation } from '@/features/pocketbase/types'
+import { Conversation } from '@/features/types'
 import { Text, View } from 'react-native'
 import Reanimated, { SharedValue, useAnimatedStyle } from 'react-native-reanimated'
 import { c, s } from '@/features/style'

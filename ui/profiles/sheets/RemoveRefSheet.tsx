@@ -1,5 +1,5 @@
 import { useAppStore } from '@/features/stores'
-import { ExpandedItem } from '@/features/pocketbase/types'
+import { ExpandedItem } from '@/features/types'
 import { c, s } from '@/features/style'
 import { Button } from '@/ui/buttons/Button'
 import { XStack, YStack } from '@/ui/core/Stacks'

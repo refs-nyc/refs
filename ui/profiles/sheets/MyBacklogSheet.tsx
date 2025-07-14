@@ -1,6 +1,6 @@
 import { useAppStore } from '@/features/stores'
 import { UsersRecord } from '@/features/pocketbase/pocketbase-types'
-import type { ExpandedItem, ExpandedProfile } from '@/features/pocketbase/types'
+import type { ExpandedItem, ExpandedProfile } from '@/features/types'
 import { c, s } from '@/features/style'
 import { XStack } from '@/ui/core/Stacks'
 import BacklogList from '@/ui/profiles/BacklogList'

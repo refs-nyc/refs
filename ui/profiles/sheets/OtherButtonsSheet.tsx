@@ -1,6 +1,6 @@
 import { useAppStore } from '@/features/stores'
 import { UsersRecord } from '@/features/pocketbase/pocketbase-types'
-import type { ExpandedProfile } from '@/features/pocketbase/types'
+import type { ExpandedProfile } from '@/features/types'
 import { c, s } from '@/features/style'
 import { Button } from '@/ui/buttons/Button'
 import { XStack } from '@/ui/core/Stacks'

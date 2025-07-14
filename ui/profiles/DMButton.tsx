@@ -4,7 +4,7 @@ import { c } from '@/features/style'
 import { pocketbase } from '@/features/pocketbase'
 import { useAppStore } from '@/features/stores'
 import { useEffect, useState } from 'react'
-import { ConversationWithMemberships, Profile } from '@/features/pocketbase/types'
+import { ConversationWithMemberships, Profile } from '@/features/types'
 
 export const DMButton = ({
   profile,

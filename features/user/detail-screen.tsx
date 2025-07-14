@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { pocketbase } from '@/features/pocketbase'
 import { getProfileItems } from '@/features/stores/items'
-import { ExpandedItem } from '@/features/pocketbase/types'
+import { ExpandedItem } from '@/features/types'
 import { Details } from '@/ui'
 import { ProfileDetailsProvider } from '@/ui/profiles/profileDetailsStore'
 import { ActivityIndicator } from 'react-native'

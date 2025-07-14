@@ -1,6 +1,6 @@
 import { pocketbase } from '../pocketbase'
 import { StateCreator } from 'zustand'
-import { ExpandedItem, CompleteRef, StagedItemFields, StagedRefFields } from '../pocketbase/types'
+import { ExpandedItem, CompleteRef, StagedItemFields, StagedRefFields } from '../types'
 import { ItemsRecord } from '../pocketbase/pocketbase-types'
 import { createdSort } from '@/ui/profiles/sorts'
 import { canvasApp } from '@/features/canvas'

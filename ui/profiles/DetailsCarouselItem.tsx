@@ -1,6 +1,6 @@
 import { useAppStore } from '@/features/stores'
 import { RefsRecord, UsersRecord } from '@/features/pocketbase/pocketbase-types'
-import { ExpandedItem } from '@/features/pocketbase/types'
+import { ExpandedItem } from '@/features/types'
 import { base, c, s, t } from '@/features/style'
 import { SearchRef } from '@/ui/actions/SearchRef'
 import { Avatar } from '@/ui/atoms/Avatar'

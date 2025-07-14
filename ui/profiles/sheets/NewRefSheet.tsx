@@ -4,7 +4,7 @@ import { useAppStore } from '@/features/stores'
 import { c, s } from '@/features/style'
 import { AddedNewRefConfirmation } from '@/ui/actions/AddedNewRefConfirmation'
 import { ChooseReplaceItemMethod } from '@/ui/actions/ChooseReplaceItemMethod'
-import { FilteredItems } from '@/ui/actions/FilteredItems'
+import { UserLists } from '@/ui/actions/UserLists'
 import { RefForm } from '@/ui/actions/RefForm'
 import { NewRefFields, SearchRef } from '@/ui/actions/SearchRef'
 import { SelectItemToReplace } from '@/ui/actions/SelectItemToReplace'
@@ -218,7 +218,7 @@ export const NewRefSheet = ({
 
           {step === 'addToList' && (
             <View style={{ paddingVertical: s.$1, width: '100%' }}>
-              <FilteredItems
+              <UserLists
                 creatorId={user?.id}
                 onComplete={async (list: ExpandedItem) => {
                   // Add the item to the list

@@ -6,7 +6,7 @@ import { SimplePinataImage } from '../images/SimplePinataImage'
 import { ExpandedItem } from '@/features/types'
 import Swipeable from 'react-native-gesture-handler/ReanimatedSwipeable'
 import Reanimated, { SharedValue, useAnimatedStyle } from 'react-native-reanimated'
-import { useUIStore } from '../state'
+import { useAppStore } from '@/features/stores'
 
 export default function SwipeableBacklogItem({
   item,
@@ -17,7 +17,7 @@ export default function SwipeableBacklogItem({
   onActionPress: () => void
   enabled: boolean
 }) {
-  const { referencersBottomSheetRef, setCurrentRefId } = useUIStore()
+  const { referencersBottomSheetRef, setCurrentRefId } = useAppStore()
 
   return (
     <Swipeable

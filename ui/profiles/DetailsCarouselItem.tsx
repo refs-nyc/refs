@@ -10,7 +10,7 @@ import { Sheet } from '@/ui/core/Sheets'
 import { XStack, YStack } from '@/ui/core/Stacks'
 import { ListContainer } from '@/ui/lists/ListContainer'
 import { ProfileDetailsContext } from '@/ui/profiles/profileDetailsStore'
-import { useUIStore } from '@/ui/state'
+
 import { Heading } from '@/ui/typo/Heading'
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { BottomSheetScrollView, BottomSheetTextInput, BottomSheetView } from '@gorhom/bottom-sheet'
@@ -119,7 +119,6 @@ export const DetailsCarouselItem = ({ item, index }: { item: ExpandedItem; index
   const { currentIndex, showContextMenu, setShowContextMenu, openedFromFeed, editingRights } =
     useStore(profileDetailsStore)
   const [currentItem, setCurrentItem] = useState<ExpandedItem>(item)
-  const { addRefSheetRef, setAddingRefId } = useUIStore()
 
   const {
     user,
@@ -131,12 +130,15 @@ export const DetailsCarouselItem = ({ item, index }: { item: ExpandedItem; index
     setEditingLink,
     update,
     searchingNewRef,
+    addRefSheetRef,
+    setAddingRefId,
+    referencersBottomSheetRef,
+    setCurrentRefId,
   } = useAppStore()
   const [text, setText] = useState(item?.text)
   const [url, setUrl] = useState(item?.url)
   const [listTitle, setListTitle] = useState(item.list ? item?.expand.ref.title : '')
 
-  const { referencersBottomSheetRef, setCurrentRefId } = useUIStore()
   const editingThisItem = editing === item.id
 
   const showAddRefButton = item.creator !== user?.id

@@ -11,7 +11,6 @@ import SearchBottomSheet from '@/ui/actions/SearchBottomSheet'
 import { Avatar } from '@/ui/atoms/Avatar'
 import { SimplePinataImage } from '@/ui/images/SimplePinataImage'
 import { ProfileDetailsSheet } from '@/ui/profiles/ProfileDetailsSheet'
-import { useUIStore } from '@/ui/state'
 import BottomSheet from '@gorhom/bottom-sheet'
 
 const win = Dimensions.get('window')
@@ -151,8 +150,7 @@ export const Feed = () => {
   const feedRefreshTrigger = useAppStore((state) => state.feedRefreshTrigger)
   const [detailsItem, setDetailsItem] = useState<ExpandedItem | null>(null)
   const detailsSheetRef = useRef<BottomSheet>(null)
-  const { referencersBottomSheetRef, setCurrentRefId } = useUIStore()
-  const { getFeedItems } = useAppStore()
+  const { getFeedItems, referencersBottomSheetRef, setCurrentRefId } = useAppStore()
 
   const fetchFeedItems = async () => {
     try {

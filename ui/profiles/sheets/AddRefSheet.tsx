@@ -7,7 +7,7 @@ import { ChooseReplaceItemMethod } from '@/ui/actions/ChooseReplaceItemMethod'
 import { RefForm } from '@/ui/actions/RefForm'
 import { NewRefFields } from '@/ui/actions/SearchRef'
 import { SelectItemToReplace } from '@/ui/actions/SelectItemToReplace'
-import { useUIStore } from '@/ui/state'
+
 import BottomSheet, { BottomSheetBackdrop } from '@gorhom/bottom-sheet'
 import { useEffect, useState } from 'react'
 import { View } from 'react-native'
@@ -18,8 +18,6 @@ export const AddRefSheet = ({
 }: {
   bottomSheetRef: React.RefObject<BottomSheet>
 }) => {
-  const { addingRefId, setAddingRefId } = useUIStore()
-
   // fields from the ref that is being replaced, or a new ref that is going to be added
 
   const [refFields, setRefFields] = useState<NewRefFields | null>(null)
@@ -33,7 +31,8 @@ export const AddRefSheet = ({
   // the resulting item
   const [itemData, setItemData] = useState<ExpandedItem | null>(null)
 
-  const { user, moveToBacklog, removeItem, addToProfile, getRefById } = useAppStore()
+  const { user, moveToBacklog, removeItem, addToProfile, getRefById, addingRefId, setAddingRefId } =
+    useAppStore()
 
   useEffect(() => {
     const getRef = async () => {

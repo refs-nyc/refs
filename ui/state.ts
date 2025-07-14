@@ -1,9 +1,10 @@
+import type { StoreSlices } from '@/features/stores/types'
 import { Item } from '@/features/types'
 import BottomSheet from '@gorhom/bottom-sheet'
 import React from 'react'
-import { create } from 'zustand'
+import type { StateCreator } from 'zustand'
 
-export const useUIStore = create<{
+export type UISlice = {
   editingProfile: boolean
   addingToList: string
   addingItem: Item | null
@@ -21,7 +22,9 @@ export const useUIStore = create<{
   setAddRefPrompt: (prompt: string) => void
   stopEditProfile: () => void
   startEditProfile: () => void
-}>((set) => ({
+}
+
+export const createUISlice: StateCreator<StoreSlices, [], [], UISlice> = (set) => ({
   addingToList: '',
   addingItem: null,
   referencersBottomSheetRef: React.createRef(),
@@ -67,4 +70,4 @@ export const useUIStore = create<{
       editingProfile: true,
     }))
   },
-}))
+})

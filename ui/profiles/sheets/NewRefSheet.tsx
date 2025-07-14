@@ -9,7 +9,7 @@ import { RefForm } from '@/ui/actions/RefForm'
 import { NewRefFields, SearchRef } from '@/ui/actions/SearchRef'
 import { SelectItemToReplace } from '@/ui/actions/SelectItemToReplace'
 import { EditableList } from '@/ui/lists/EditableList'
-import { useUIStore } from '@/ui/state'
+
 import BottomSheet, { BottomSheetBackdrop, BottomSheetView } from '@gorhom/bottom-sheet'
 import { useState, useEffect, useRef } from 'react'
 import { View, Platform, Keyboard } from 'react-native'
@@ -30,8 +30,6 @@ export const NewRefSheet = ({
 }: {
   bottomSheetRef: React.RefObject<BottomSheet>
 }) => {
-  const { addingNewRefTo, setAddingNewRefTo, addRefPrompt } = useUIStore()
-
   // functions for adding the new item to a list or the grid or the backlog
   const {
     triggerProfileRefresh,
@@ -41,6 +39,9 @@ export const NewRefSheet = ({
     addToProfile,
     user,
     getItemById,
+    addingNewRefTo,
+    setAddingNewRefTo,
+    addRefPrompt,
   } = useAppStore()
 
   const [step, setStep] = useState<NewRefStep>('search')

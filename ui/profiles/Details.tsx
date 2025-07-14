@@ -1,7 +1,7 @@
 import { useAppStore } from '@/features/stores'
 import { ExpandedItem, Item } from '@/features/types'
 import { c } from '@/features/style'
-import { useUIStore } from '@/ui/state'
+
 import React, { useCallback, useContext, useRef } from 'react'
 import { useWindowDimensions } from 'react-native'
 import Carousel, { ICarouselInstance } from 'react-native-reanimated-carousel'
@@ -34,8 +34,7 @@ export const Details = ({ data }: { data: Item[] }) => {
   const setCurrentIndex = useStore(profileDetailsStore, (state) => state.setCurrentIndex)
   const currentIndex = useStore(profileDetailsStore, (state) => state.currentIndex)
 
-  const { addingToList, setAddingToList, addingItem } = useUIStore()
-  const { stopEditing, update } = useAppStore()
+  const { stopEditing, update, addingToList, setAddingToList, addingItem } = useAppStore()
 
   const handleConfigurePanGesture = useCallback((gesture: any) => {
     'worklet'

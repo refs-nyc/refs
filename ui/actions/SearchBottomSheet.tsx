@@ -14,13 +14,11 @@ import { useAppStore } from '@/features/stores'
 import { SimplePinataImage } from '../images/SimplePinataImage'
 import { Ionicons } from '@expo/vector-icons'
 import { router } from 'expo-router'
-import { useUIStore } from '../state'
 
 const HEADER_HEIGHT = s.$8
 
 export default function SearchBottomSheet() {
   const [index, setIndex] = useState(0)
-  const { newRefSheetRef, setAddingNewRefTo } = useUIStore()
 
   const isMinimised = index === 0
   const searchSheetRef = useRef<BottomSheet>(null)
@@ -32,7 +30,14 @@ export default function SearchBottomSheet() {
   const [results, setResults] = useState<CompleteRef[]>([])
   const [refs, setRefs] = useState<CompleteRef[]>([])
 
-  const { user, moduleBackdropAnimatedIndex, getRefsByTitle, getRandomUser } = useAppStore()
+  const {
+    user,
+    moduleBackdropAnimatedIndex,
+    getRefsByTitle,
+    getRandomUser,
+    newRefSheetRef,
+    setAddingNewRefTo,
+  } = useAppStore()
 
   useEffect(() => {
     const runSearch = async (query: string) => {
@@ -124,7 +129,7 @@ export default function SearchBottomSheet() {
               onPress={async () => {
                 if (!searching && user?.userName) {
                   setAddingNewRefTo('grid')
-                  useUIStore.getState().setAddRefPrompt('')
+                  useAppStore.getState().setAddRefPrompt('')
                   newRefSheetRef.current?.snapToIndex(1)
                 }
               }}

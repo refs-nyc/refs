@@ -1,13 +1,13 @@
-import React, { useState } from 'react'
+import React from 'react'
 import { YStack } from '../core/Stacks'
 import { TouchableOpacity, Pressable, Text } from 'react-native'
 import { base } from '@/features/style'
 import { GridTileType } from '@/features/types'
-import { useUIStore } from '../state'
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { c } from '@/features/style'
 import { DEFAULT_TILE_SIZE } from './GridTile'
 import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated'
+import { useAppStore } from '@/features/stores'
 
 export const GridTileWrapper = ({
   type,
@@ -26,7 +26,7 @@ export const GridTileWrapper = ({
   onLongPress?: () => void
   size?: number
 }) => {
-  const { editingProfile, stopEditProfile } = useUIStore()
+  const { editingProfile, stopEditProfile } = useAppStore()
 
   const specificStyles = {
     borderWidth: type !== 'image' && type !== '' && type !== 'placeholder' ? 1.5 : 0,

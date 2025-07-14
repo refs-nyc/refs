@@ -42,7 +42,6 @@ import { LogBox } from 'react-native'
 import BottomSheet from '@gorhom/bottom-sheet'
 import Saves from '@/features/saves/saves-sheet'
 import Referencers from '@/ui/profiles/sheets/ReferencersSheet'
-import { useUIStore } from '@/ui/state'
 import { AddRefSheet } from '@/ui/profiles/sheets/AddRefSheet'
 import { NewRefSheet } from '@/ui/profiles/sheets/NewRefSheet'
 
@@ -129,7 +128,7 @@ const Providers = ({ children }: { children: React.ReactNode }) => {
 function RootLayoutNav() {
   const savesBottomSheetRef = useRef<BottomSheet>(null)
   const colorScheme = useColorScheme()
-  const { referencersBottomSheetRef, addRefSheetRef, newRefSheetRef } = useUIStore()
+  const { referencersBottomSheetRef, addRefSheetRef, newRefSheetRef } = useAppStore()
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>

@@ -19,7 +19,8 @@ export const EditableList = ({
   item: ExpandedItem
   onComplete: () => void
 }) => {
-  const { addingToList, removeItem, setAddingToList, addToProfile, updateRefTitle } = useAppStore()
+  const { isAddingToList, removeItem, setIsAddingToList, addToProfile, updateRefTitle } =
+    useAppStore()
   const [itemState, setItemState] = useState<ExpandedItem>(item)
   const [title, setTitle] = useState<string>(item.expand.ref.title || '')
   const [editingTitle, setEditingTitle] = useState<boolean>(!item.expand.ref.title)
@@ -97,11 +98,11 @@ export const EditableList = ({
           </XStack>
         </BottomSheetView>
         <BottomSheetView style={{ flex: 1 }}>
-          {addingToList ? (
+          {isAddingToList ? (
             <SearchRef onChooseExistingRef={onRefFound} onAddNewRef={() => {}} noNewRef={true} />
           ) : (
             <BottomSheetView>
-              <NewListItemButton onPress={() => setAddingToList(true)} />
+              <NewListItemButton onPress={() => setIsAddingToList(true)} />
 
               {itemState?.expand?.items_via_parent?.map((kid) => {
                 return (

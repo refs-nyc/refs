@@ -3,7 +3,7 @@ import { c, s } from '@/features/style'
 import UserListItem from '@/ui/atoms/UserListItem'
 import { Button } from '@/ui/buttons/Button'
 import { YStack } from '@/ui/core/Stacks'
-import { useUIStore } from '@/ui/state'
+
 import { Heading } from '@/ui/typo/Heading'
 import BottomSheet, { BottomSheetBackdrop, BottomSheetScrollView } from '@gorhom/bottom-sheet'
 import { router } from 'expo-router'
@@ -16,11 +16,9 @@ export default function Referencers({
 }: {
   referencersBottomSheetRef: React.RefObject<BottomSheet>
 }) {
-  const { currentRefId } = useUIStore()
   const [users, setUsers] = useState<any[]>([])
   const [refData, setRefData] = useState<any>({})
-  const { addRefSheetRef, setAddingRefId } = useUIStore()
-  const { getItemsByRefIds } = useAppStore()
+  const { getItemsByRefIds, addRefSheetRef, setAddingRefId, currentRefId } = useAppStore()
 
   useEffect(() => {
     const getUsers = async () => {

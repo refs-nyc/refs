@@ -10,7 +10,7 @@ import { ScrollView, View } from 'react-native'
 import { Button } from '../buttons/Button'
 import { Grid } from '../grid/Grid'
 import { PlaceholderGrid } from '../grid/PlaceholderGrid'
-import { useUIStore } from '../state'
+
 import { Heading } from '../typo/Heading'
 import { ProfileDetailsSheet } from './ProfileDetailsSheet'
 import { ProfileHeader } from './ProfileHeader'
@@ -19,16 +19,23 @@ import { RemoveRefSheet } from './sheets/RemoveRefSheet'
 
 export const MyProfile = ({ userName }: { userName: string }) => {
   const { hasShareIntent } = useShareIntentContext()
-  const { startEditProfile, stopEditProfile, setAddingNewRefTo, addingNewRefTo, newRefSheetRef } =
-    useUIStore()
 
   const [profile, setProfile] = useState<Profile>()
   const [gridItems, setGridItems] = useState<ExpandedItem[]>([])
   const [backlogItems, setBacklogItems] = useState<ExpandedItem[]>([])
   const [loading, setLoading] = useState<boolean>(true)
 
-  const { user, getUserByUserName, moveToBacklog, profileRefreshTrigger, removeItem } =
-    useAppStore()
+  const {
+    user,
+    getUserByUserName,
+    moveToBacklog,
+    profileRefreshTrigger,
+    removeItem,
+    startEditProfile,
+    stopEditProfile,
+    setAddingNewRefTo,
+    newRefSheetRef,
+  } = useAppStore()
 
   const [removingItem, setRemovingItem] = useState<ExpandedItem | null>(null)
 
@@ -146,12 +153,12 @@ export const MyProfile = ({ userName }: { userName: string }) => {
                   }}
                   onAddItem={(prompt?: string) => {
                     setAddingNewRefTo('grid')
-                    if (prompt) useUIStore.getState().setAddRefPrompt(prompt)
+                    if (prompt) useAppStore.getState().setAddRefPrompt(prompt)
                     newRefSheetRef.current?.snapToIndex(1)
                   }}
                   onAddItemWithPrompt={(prompt: string) => {
                     setAddingNewRefTo('grid')
-                    useUIStore.getState().setAddRefPrompt(prompt)
+                    useAppStore.getState().setAddRefPrompt(prompt)
                     newRefSheetRef.current?.snapToIndex(1)
                   }}
                   columns={3}

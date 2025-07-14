@@ -1,7 +1,6 @@
 import { s, c } from '@/features/style'
 import { useEffect, useState } from 'react'
 import { ScrollView, Text, TouchableOpacity, View } from 'react-native'
-import { useUIStore } from '@/ui/state'
 import { CompleteRef } from '@/features/types'
 import { useAppStore } from '@/features/stores'
 
@@ -11,8 +10,7 @@ function truncate(text: string, maxLength: number) {
 
 export const Ticker = () => {
   const [tickerItems, setTickerItems] = useState<CompleteRef[]>([])
-  const { referencersBottomSheetRef, setCurrentRefId } = useUIStore()
-  const { getTickerItems } = useAppStore()
+  const { getTickerItems, referencersBottomSheetRef, setCurrentRefId } = useAppStore()
 
   useEffect(() => {
     async function fetchTickerItems() {

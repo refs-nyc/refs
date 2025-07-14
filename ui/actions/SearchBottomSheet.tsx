@@ -10,11 +10,10 @@ import { Heading } from '../typo/Heading'
 import { XStack, YStack } from '../core/Stacks'
 import { Button } from '../buttons/Button'
 import { CompleteRef, Profile } from '@/features/pocketbase/stores/types'
-import { pocketbase, useUserStore } from '@/features/pocketbase'
+import { pocketbase, useAppStore } from '@/features/pocketbase'
 import { SimplePinataImage } from '../images/SimplePinataImage'
 import { Ionicons } from '@expo/vector-icons'
 import { router } from 'expo-router'
-import { useBackdropStore } from '@/features/pocketbase/stores/backdrop'
 import { useUIStore } from '../state'
 
 const HEADER_HEIGHT = s.$8
@@ -33,8 +32,7 @@ export default function SearchBottomSheet() {
   const [results, setResults] = useState<CompleteRef[]>([])
   const [refs, setRefs] = useState<CompleteRef[]>([])
 
-  const { user } = useUserStore()
-  const { moduleBackdropAnimatedIndex } = useBackdropStore()
+  const { user, moduleBackdropAnimatedIndex } = useAppStore()
 
   useEffect(() => {
     const runSearch = async (query: string) => {
@@ -179,7 +177,7 @@ export default function SearchBottomSheet() {
                   <Text style={{ color: c.white, fontSize: 26, fontWeight: 'bold' }}>
                     Add Ref +
                   </Text>
-                  <Pressable 
+                  <Pressable
                     onPress={(e) => {
                       e.stopPropagation()
                       onSearchIconPress()

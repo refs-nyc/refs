@@ -5,7 +5,7 @@ import { t, c, s } from '@/features/style'
 import { useRef, useState } from 'react'
 import { Pressable, View } from 'react-native'
 import { SearchRef } from '../actions/SearchRef'
-import { useItemStore } from '@/features/pocketbase/stores/items'
+import { useAppStore } from '@/features/pocketbase'
 import { ListItem } from './ListItem'
 import { NewListItemButton } from './NewListItemButton'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -19,7 +19,7 @@ export const EditableList = ({
   item: ExpandedItem
   onComplete: () => void
 }) => {
-  const { addingToList, removeItem, setAddingToList, addToProfile, updateRefTitle } = useItemStore()
+  const { addingToList, removeItem, setAddingToList, addToProfile, updateRefTitle } = useAppStore()
   const [itemState, setItemState] = useState<ExpandedItem>(item)
   const [title, setTitle] = useState<string>(item.expand.ref.title || '')
   const [editingTitle, setEditingTitle] = useState<boolean>(!item.expand.ref.title)

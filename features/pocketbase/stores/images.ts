@@ -1,6 +1,7 @@
 import { pinataSignedUrl, SignedUrlEntry } from '@/features/pinata'
 import { createRef, MutableRefObject } from 'react'
-import { create } from 'zustand'
+import { StateCreator } from 'zustand'
+import { type StoreSlices } from '.'
 
 export type OptimizeImageOptions = {
   width: number
@@ -17,12 +18,14 @@ type PromisePool = MutableRefObject<Record<string, Promise<SignedUrlEntry>>>
 const promisePool = createRef<Record<string, Promise<SignedUrlEntry>>>() as PromisePool
 promisePool.current = {}
 
-export const useImageStore = create<{
+export type ImageSlice = {
   promisePool: PromisePool
   signedUrls: SignedUrls
   pendingSignedUrlRequests: Record<string, Promise<SignedUrlEntry>>
   getSignedUrl: (url: string) => Promise<string>
-}>((set, get) => ({
+}
+
+export const createImageSlice: StateCreator<StoreSlices, [], [], ImageSlice> = (set, get) => ({
   promisePool,
   signedUrls: {},
   pendingSignedUrlRequests: {},
@@ -62,4 +65,4 @@ export const useImageStore = create<{
 
     return signedUrlEntry.signedUrl
   },
-}))
+})

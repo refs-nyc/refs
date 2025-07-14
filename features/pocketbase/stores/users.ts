@@ -1,11 +1,12 @@
 import { pocketbase } from '../pocketbase'
-import { create } from 'zustand'
+import { StateCreator } from 'zustand'
 import { Profile, ExpandedProfile } from './types'
 import { UsersRecord } from './pocketbase-types'
 import { ClientResponseError } from 'pocketbase'
 import { canvasApp } from '@/features/canvas'
+import { type StoreSlices } from '.'
 
-export const useUserStore = create<{
+export type UserSlice = {
   stagedUser: Partial<Profile>
   user: Profile | null
   isInitialized: boolean
@@ -17,7 +18,9 @@ export const useUserStore = create<{
   login: (userName: string) => Promise<Profile>
   logout: () => void
   init: () => Promise<void>
-}>((set, get) => ({
+}
+
+export const createUserSlice: StateCreator<StoreSlices, [], [], UserSlice> = (set, get) => ({
   stagedUser: {},
   user: null, // user is ALWAYS the user of the app, this is only set if the user is logged in
   isInitialized: false,
@@ -231,4 +234,4 @@ export const useUserStore = create<{
     pocketbase.realtime.unsubscribe()
     pocketbase.authStore.clear()
   },
-}))
+})

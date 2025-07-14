@@ -1,4 +1,4 @@
-import { useBackdropStore } from '@/features/pocketbase/stores/backdrop'
+import { useAppStore } from '@/features/pocketbase'
 import { UsersRecord } from '@/features/pocketbase/stores/pocketbase-types'
 import type { ExpandedItem, ExpandedProfile } from '@/features/pocketbase/stores/types'
 import { c, s } from '@/features/style'
@@ -25,7 +25,7 @@ export const MyBacklogSheet = ({
   const bottomSheetRef = useRef<BottomSheet>(null)
 
   const { moduleBackdropAnimatedIndex, registerBackdropPress, unregisterBackdropPress } =
-    useBackdropStore()
+    useAppStore()
 
   // close the new ref sheet when the user taps the navigation backdrop
   useEffect(() => {

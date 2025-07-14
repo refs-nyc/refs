@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Dimensions, Pressable, ScrollView, View } from 'react-native'
 
 import { Ticker } from '@/features/home/Ticker'
-import { pocketbase, useItemStore } from '@/features/pocketbase'
+import { pocketbase, useAppStore } from '@/features/pocketbase'
 import type { ExpandedItem } from '@/features/pocketbase/stores/types'
 import { c, s } from '@/features/style'
 import { DismissKeyboard, Heading, Text, XStack, YStack } from '@/ui'
@@ -148,7 +148,7 @@ const ListItem = ({
 
 export const Feed = () => {
   const [items, setItems] = useState<ExpandedItem[]>([])
-  const feedRefreshTrigger = useItemStore((state) => state.feedRefreshTrigger)
+  const feedRefreshTrigger = useAppStore((state) => state.feedRefreshTrigger)
   const [detailsItem, setDetailsItem] = useState<ExpandedItem | null>(null)
   const detailsSheetRef = useRef<BottomSheet>(null)
   const { referencersBottomSheetRef, setCurrentRefId } = useUIStore()

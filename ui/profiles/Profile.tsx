@@ -1,9 +1,9 @@
-import { useUserStore } from '@/features/pocketbase'
+import { useAppStore } from '@/features/pocketbase'
 import { MyProfile } from './MyProfile'
 import { OtherProfile } from './OtherProfile'
 
 export const Profile = ({ userName }: { userName: string }) => {
-  const { user } = useUserStore()
+  const { user } = useAppStore()
 
   const ownProfile = user?.userName === userName
 

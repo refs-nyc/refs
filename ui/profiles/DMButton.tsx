@@ -1,7 +1,7 @@
 import { router } from 'expo-router'
 import { Button } from '../buttons/Button'
 import { c } from '@/features/style'
-import { pocketbase, useUserStore } from '@/features/pocketbase'
+import { pocketbase, useAppStore } from '@/features/pocketbase'
 import { useEffect, useState } from 'react'
 import { ConversationWithMemberships, Profile } from '@/features/pocketbase/stores/types'
 
@@ -16,7 +16,7 @@ export const DMButton = ({
   disabled?: boolean
   style?: any
 }) => {
-  const { user } = useUserStore()
+  const { user } = useAppStore()
 
   const [target, setTarget] = useState<string>('')
 

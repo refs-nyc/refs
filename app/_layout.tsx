@@ -36,7 +36,7 @@ import { KeyboardProvider } from 'react-native-keyboard-controller'
 
 import { RegisterPushNotifications } from '@/ui/notifications/RegisterPushNotifications'
 import { MessagesInit } from '@/features/messaging/message-loader'
-import { useUserStore } from '@/features/pocketbase/stores/users'
+import { useAppStore } from '@/features/pocketbase'
 
 import { LogBox } from 'react-native'
 import BottomSheet from '@gorhom/bottom-sheet'
@@ -97,7 +97,7 @@ function FontProvider({ children }: { children: React.ReactNode }) {
 }
 
 export default function RootLayout() {
-  const { init } = useUserStore()
+  const { init } = useAppStore()
 
   useEffect(() => {
     // Initialize user store to sync with PocketBase auth

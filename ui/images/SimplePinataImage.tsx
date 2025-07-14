@@ -1,13 +1,13 @@
 import { useState, useEffect, useMemo } from 'react'
 import { Image, type ImageProps } from 'expo-image'
 import { constructPinataUrl, type OptimizeImageOptions } from '@/features/pinata'
-import { useImageStore } from '@/features/pocketbase/stores/images'
+import { useAppStore } from '@/features/pocketbase'
 import { StyleProp, useWindowDimensions, View, ViewStyle } from 'react-native'
 
 function useSignedImageUrl(originalSource: string, imageOptions: OptimizeImageOptions) {
   const [loading, setLoading] = useState(true)
   const [source, setSource] = useState<string | null>(null)
-  const { getSignedUrl, signedUrls } = useImageStore()
+  const { getSignedUrl, signedUrls } = useAppStore()
 
   const url = useMemo(
     () => constructPinataUrl(originalSource, imageOptions),
@@ -38,19 +38,15 @@ export const SimplePinataImage = ({
   placeholderStyle?: StyleProp<ViewStyle>
   imageOptions: OptimizeImageOptions
 } & Omit<ImageProps, 'source'>) => {
-  const scale =  useWindowDimensions().scale
+  const scale = useWindowDimensions().scale
   const imageOptionsWithScale = {
     height: imageOptions.height * scale,
     width: imageOptions.width * scale,
   }
   const { source, loading } = useSignedImageUrl(originalSource, imageOptionsWithScale)
   return loading ? (
-    <View style={placeholderStyle}/>
+    <View style={placeholderStyle} />
   ) : (
-    <Image
-      {...props}
-      contentFit={'cover'}
-      source={source || originalSource}
-    />
+    <Image {...props} contentFit={'cover'} source={source || originalSource} />
   )
 }

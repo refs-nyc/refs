@@ -1,7 +1,7 @@
 import { useRef } from 'react'
 import { View } from 'react-native'
 import { Dimensions } from 'react-native'
-import { useUserStore } from '@/features/pocketbase'
+import { useAppStore } from '@/features/pocketbase'
 import { s, c } from '@/features/style'
 import { router } from 'expo-router'
 import Carousel, { ICarouselInstance } from 'react-native-reanimated-carousel'
@@ -20,7 +20,7 @@ const EmailStep = ({ carouselRef }: { carouselRef: React.RefObject<ICarouselInst
     handleSubmit,
     formState: { errors, isValid },
   } = useForm({ mode: 'onChange' })
-  const { getUserByEmail, updateStagedUser } = useUserStore()
+  const { getUserByEmail, updateStagedUser } = useAppStore()
 
   return (
     <ProfileStep
@@ -84,7 +84,7 @@ const NameStep = ({ carouselRef }: { carouselRef: React.RefObject<ICarouselInsta
     handleSubmit,
     formState: { errors, isValid },
   } = useForm({ mode: 'onChange' })
-  const { updateStagedUser } = useUserStore()
+  const { updateStagedUser } = useAppStore()
 
   return (
     <ProfileStep
@@ -152,7 +152,7 @@ const LocationStep = ({ carouselRef }: { carouselRef: React.RefObject<ICarouselI
   } = useForm<{ location?: string; lon?: number; lat?: number }>({
     mode: 'onChange',
   })
-  const { updateStagedUser } = useUserStore()
+  const { updateStagedUser } = useAppStore()
 
   return (
     <ProfileStep
@@ -192,7 +192,7 @@ const PasswordStep = ({ carouselRef }: { carouselRef: React.RefObject<ICarouselI
     handleSubmit,
     formState: { errors, isValid },
   } = useForm({ mode: 'onChange' })
-  const { updateStagedUser } = useUserStore()
+  const { updateStagedUser } = useAppStore()
 
   return (
     <ProfileStep
@@ -263,7 +263,7 @@ const ImageStep = ({ carouselRef }: { carouselRef: React.RefObject<ICarouselInst
     handleSubmit,
     formState: { errors, isValid },
   } = useForm({ mode: 'onChange' })
-  const { register, updateStagedUser } = useUserStore()
+  const { register, updateStagedUser } = useAppStore()
 
   return (
     <ProfileStep
@@ -307,7 +307,7 @@ const ImageStep = ({ carouselRef }: { carouselRef: React.RefObject<ICarouselInst
 
 const DoneStep = ({ carouselRef }: { carouselRef: React.RefObject<ICarouselInstance> }) => {
   const { handleSubmit } = useForm({ mode: 'onChange' })
-  const { user } = useUserStore()
+  const { user } = useAppStore()
 
   return (
     <ProfileStep

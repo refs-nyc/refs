@@ -1,4 +1,4 @@
-import { useItemStore, useUserStore } from '@/features/pocketbase'
+import { useAppStore } from '@/features/pocketbase'
 import { RefsRecord, UsersRecord } from '@/features/pocketbase/stores/pocketbase-types'
 import { ExpandedItem } from '@/features/pocketbase/stores/types'
 import { base, c, s, t } from '@/features/style'
@@ -25,10 +25,18 @@ import { KeyboardAvoidingView } from 'react-native-keyboard-controller'
 import Animated, { useAnimatedStyle } from 'react-native-reanimated'
 import { useStore } from 'zustand'
 
-const LocationMeta = ({ location, numberOfLines }: { location: string; numberOfLines?: number }) => {
+const LocationMeta = ({
+  location,
+  numberOfLines,
+}: {
+  location: string
+  numberOfLines?: number
+}) => {
   return (
     <XStack style={{ alignItems: 'center' }} gap={s.$05}>
-      <Heading tag="smallmuted" numberOfLines={numberOfLines}>{location}</Heading>
+      <Heading tag="smallmuted" numberOfLines={numberOfLines}>
+        {location}
+      </Heading>
     </XStack>
   )
 }
@@ -36,7 +44,9 @@ const LocationMeta = ({ location, numberOfLines }: { location: string; numberOfL
 const AuthorMeta = ({ author, numberOfLines }: { author: string; numberOfLines?: number }) => {
   return (
     <XStack style={{ alignItems: 'center' }} gap={s.$05}>
-      <Heading tag="smallmuted" numberOfLines={numberOfLines}>{author}</Heading>
+      <Heading tag="smallmuted" numberOfLines={numberOfLines}>
+        {author}
+      </Heading>
     </XStack>
   )
 }
@@ -69,9 +79,7 @@ const Meta = ({ refRecord, numberOfLines }: { refRecord: RefsRecord; numberOfLin
 }
 
 const ApplyChangesButton = () => {
-  const update = useItemStore((state) => state.update)
-  const stopEditing = useItemStore((state) => state.stopEditing)
-  const triggerProfileRefresh = useItemStore((state) => state.triggerProfileRefresh)
+  const { update, stopEditing, triggerProfileRefresh } = useAppStore()
 
   return (
     <Checkbox
@@ -115,6 +123,7 @@ export const DetailsCarouselItem = ({ item, index }: { item: ExpandedItem; index
   const { addRefSheetRef, setAddingRefId } = useUIStore()
 
   const {
+    user,
     editing,
     startEditing,
     updateEditedState,
@@ -123,14 +132,13 @@ export const DetailsCarouselItem = ({ item, index }: { item: ExpandedItem; index
     setEditingLink,
     update,
     searchingNewRef,
-  } = useItemStore()
+  } = useAppStore()
   const [text, setText] = useState(item?.text)
   const [url, setUrl] = useState(item?.url)
   const [listTitle, setListTitle] = useState(item.list ? item?.expand.ref.title : '')
 
   const { referencersBottomSheetRef, setCurrentRefId } = useUIStore()
   const editingThisItem = editing === item.id
-  const { user } = useUserStore()
 
   const showAddRefButton = item.creator !== user?.id
 
@@ -140,8 +148,9 @@ export const DetailsCarouselItem = ({ item, index }: { item: ExpandedItem; index
   const linkIconWidth = hasLinkIcon ? s.$4 : 0 // 44px or 0
   const iconSpacing = 8 // 8px between link and meatball icons
   const titleMargin = 12 // 12px spacing after title
-  const totalIconsWidth = meatballWidth + (hasLinkIcon ? linkIconWidth + iconSpacing : 0) + titleMargin
-  const titleWidth = win.width - totalIconsWidth - (s.$2 * 2) // subtract horizontal padding
+  const totalIconsWidth =
+    meatballWidth + (hasLinkIcon ? linkIconWidth + iconSpacing : 0) + titleMargin
+  const titleWidth = win.width - totalIconsWidth - s.$2 * 2 // subtract horizontal padding
 
   const animatedStyle = useAnimatedStyle(() => {
     return editingThisItem ? base.editableItem : base.nonEditableItem
@@ -257,12 +266,12 @@ export const DetailsCarouselItem = ({ item, index }: { item: ExpandedItem; index
                   {editingThisItem && editingLink ? (
                     <TextInput
                       style={[
-                        { 
+                        {
                           width: '100%',
-                          paddingHorizontal: s.$1, 
-                          height: s.$7
-                        }, 
-                        base.editableItem
+                          paddingHorizontal: s.$1,
+                          height: s.$7,
+                        },
+                        base.editableItem,
                       ]}
                       value={url}
                       placeholder="abc.xyz"
@@ -276,10 +285,10 @@ export const DetailsCarouselItem = ({ item, index }: { item: ExpandedItem; index
                   ) : editingThisItem && item.list ? (
                     <TextInput
                       style={[
-                        { 
+                        {
                           width: '100%',
-                          paddingHorizontal: s.$1, 
-                          height: s.$7
+                          paddingHorizontal: s.$1,
+                          height: s.$7,
                         },
                         base.editableItem,
                       ]}
@@ -319,7 +328,9 @@ export const DetailsCarouselItem = ({ item, index }: { item: ExpandedItem; index
                         <Heading tag="h2" numberOfLines={2} style={{ flexShrink: 0 }}>
                           {item.expand?.ref?.title}
                         </Heading>
-                        {item.expand?.ref ? <Meta refRecord={item.expand?.ref} numberOfLines={1} /> : null}
+                        {item.expand?.ref ? (
+                          <Meta refRecord={item.expand?.ref} numberOfLines={1} />
+                        ) : null}
                       </BottomSheetView>
                     </Pressable>
                   )}

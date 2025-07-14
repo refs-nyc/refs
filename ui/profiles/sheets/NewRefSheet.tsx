@@ -1,7 +1,7 @@
 import { pocketbase } from '@/features/pocketbase'
-import { getProfileItems, useItemStore } from '@/features/pocketbase/stores/items'
+import { getProfileItems } from '@/features/pocketbase/stores/items'
 import { ExpandedItem, StagedItemFields } from '@/features/pocketbase/stores/types'
-import { useUserStore } from '@/features/pocketbase/stores/users'
+import { useAppStore } from '@/features/pocketbase'
 import { c, s } from '@/features/style'
 import { AddedNewRefConfirmation } from '@/ui/actions/AddedNewRefConfirmation'
 import { ChooseReplaceItemMethod } from '@/ui/actions/ChooseReplaceItemMethod'
@@ -31,12 +31,11 @@ export const NewRefSheet = ({
 }: {
   bottomSheetRef: React.RefObject<BottomSheet>
 }) => {
-  const { triggerProfileRefresh } = useItemStore()
   const { addingNewRefTo, setAddingNewRefTo, addRefPrompt } = useUIStore()
 
   // functions for adding the new item to a list or the grid or the backlog
-  const { addItemToList, moveToBacklog, removeItem, addToProfile } = useItemStore()
-  const { user } = useUserStore()
+  const { triggerProfileRefresh, addItemToList, moveToBacklog, removeItem, addToProfile, user } =
+    useAppStore()
 
   const [step, setStep] = useState<NewRefStep>('search')
 

@@ -1,5 +1,4 @@
-import { pocketbase, useUserStore } from '@/features/pocketbase'
-import { useMessageStore } from '@/features/pocketbase/stores/messages'
+import { pocketbase, useAppStore } from '@/features/pocketbase'
 import { c, s } from '@/features/style'
 import { Heading, XStack, YStack } from '@/ui'
 import { Avatar } from '@/ui/atoms/Avatar'
@@ -10,10 +9,10 @@ import { useEffect, useState } from 'react'
 import { DimensionValue, Pressable, View } from 'react-native'
 
 export default function NewDMScreen() {
-  const { user } = useUserStore()
+  const { user } = useAppStore()
   const { userName } = useGlobalSearchParams()
   const [message, setMessage] = useState<string>('')
-  const { createConversation, sendMessage } = useMessageStore()
+  const { createConversation, sendMessage } = useAppStore()
   const [profile, setProfile] = useState<any>()
 
   useEffect(() => {

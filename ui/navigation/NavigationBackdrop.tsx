@@ -1,5 +1,5 @@
 import Animated from 'react-native-reanimated'
-import { useBackdropStore } from '@/features/pocketbase/stores/backdrop'
+import { useAppStore } from '@/features/pocketbase'
 import { Extrapolation, interpolate, useAnimatedStyle } from 'react-native-reanimated'
 
 import { Pressable } from 'react-native'
@@ -13,7 +13,7 @@ export const NavigationBackdrop = () => {
     otherProfileBackdropAnimatedIndex,
     removeRefSheetBackdropAnimatedIndex,
     backdropPressHandlers,
-  } = useBackdropStore()
+  } = useAppStore()
 
   const animatedStyle = useAnimatedStyle(() => {
     const moduleOpacityValue = interpolate(

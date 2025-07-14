@@ -1,8 +1,8 @@
 import { Heading, XStack, YStack } from '@/ui'
 import { s } from '../style'
 import { useEffect, useState } from 'react'
-import { pocketbase, useUserStore } from '../pocketbase'
-import { ExpandedItem, Profile } from '../pocketbase/stores/types'
+import { pocketbase, useAppStore } from '@/features/pocketbase'
+import { ExpandedItem, Profile } from '@/features/pocketbase/stores/types'
 import UserListItem from '@/ui/atoms/UserListItem'
 import { router } from 'expo-router'
 import { Text, View } from 'react-native'
@@ -11,7 +11,7 @@ type SearchResult = Profile & { sharedRefCount: number }
 
 export default function SearchResultsScreen({ refIds }: { refIds: string[] }) {
   const [results, setResults] = useState<SearchResult[]>([])
-  const currentUser = useUserStore().user
+  const currentUser = useAppStore().user
 
   useEffect(() => {
     const getSearchResults = async () => {

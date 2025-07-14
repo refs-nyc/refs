@@ -1,4 +1,4 @@
-import { useItemStore } from '@/features/pocketbase/stores/items'
+import { useAppStore } from '@/features/pocketbase/stores'
 import { ItemsRecord } from '@/features/pocketbase/stores/pocketbase-types'
 import { ExpandedItem } from '@/features/pocketbase/stores/types'
 import { c } from '@/features/style'
@@ -16,7 +16,7 @@ import { ProfileDetailsContext } from './profileDetailsStore'
 // --- Helper Components for State Isolation ---
 
 const ConditionalGridLines = React.memo(() => {
-  const editing = useItemStore((state) => state.editing)
+  const editing = useAppStore((state) => state.editing)
   if (editing === '') {
     return null
   }
@@ -36,7 +36,7 @@ export const Details = ({ data }: { data: ItemsRecord[] }) => {
   const currentIndex = useStore(profileDetailsStore, (state) => state.currentIndex)
 
   const { addingToList, setAddingToList, addingItem } = useUIStore()
-  const { stopEditing, update } = useItemStore()
+  const { stopEditing, update } = useAppStore()
 
   const handleConfigurePanGesture = useCallback((gesture: any) => {
     'worklet'

@@ -1,4 +1,4 @@
-import { pocketbase, useItemStore, useUserStore } from '@/features/pocketbase'
+import { pocketbase, useAppStore } from '@/features/pocketbase'
 import { getBacklogItems, getProfileItems } from '@/features/pocketbase/stores/items'
 import type { ExpandedProfile } from '@/features/pocketbase/stores/types'
 import { ExpandedItem } from '@/features/pocketbase/stores/types'
@@ -20,8 +20,7 @@ export const OtherProfile = ({ userName }: { userName: string }) => {
   const [backlogItems, setBacklogItems] = useState<ExpandedItem[]>([])
   const [loading, setLoading] = useState<boolean>(true)
 
-  const { profileRefreshTrigger } = useItemStore()
-  const { user } = useUserStore()
+  const { profileRefreshTrigger, user, stopEditing } = useAppStore()
 
   const refreshGrid = async (userName: string) => {
     setLoading(true)
@@ -57,8 +56,6 @@ export const OtherProfile = ({ userName }: { userName: string }) => {
   const bottomSheetRef = useRef<BottomSheet>(null)
   const detailsSheetRef = useRef<BottomSheet>(null)
   const backlogSheetRef = useRef<BottomSheet>(null)
-
-  const stopEditing = useItemStore((state) => state.stopEditing)
 
   const [detailsItem, setDetailsItem] = useState<ExpandedItem | null>(null)
 

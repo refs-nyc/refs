@@ -1,5 +1,4 @@
 import { pocketbase } from './pocketbase'
-import { useItemStore } from './stores/items'
-import { useUserStore } from './stores/users'
+import { useAppStore } from './stores'
 
-export { pocketbase, useItemStore, useUserStore }
+export { pocketbase, useAppStore }

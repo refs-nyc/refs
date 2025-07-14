@@ -1,4 +1,4 @@
-import { create } from 'zustand'
+import { StateCreator } from 'zustand'
 import {
   Conversation,
   ExpandedMembership,
@@ -9,10 +9,11 @@ import {
   Save,
 } from './types'
 import { pocketbase } from '../pocketbase'
+import { type StoreSlices } from '.'
 
 export const PAGE_SIZE = 10
 
-type MessageStore = {
+export type MessageSlice = {
   conversations: Record<string, Conversation>
   setConversations: (conversations: Conversation[]) => void
   updateConversation: (conversation: Conversation) => void
@@ -61,7 +62,7 @@ type MessageStore = {
   removeSave: (id: string) => Promise<void>
 }
 
-export const useMessageStore = create<MessageStore>((set, get) => ({
+export const createMessageSlice: StateCreator<StoreSlices, [], [], MessageSlice> = (set, get) => ({
   conversations: {},
   setConversations: (items: Conversation[]) => {
     const newItems: Record<string, Conversation> = {}
@@ -234,7 +235,10 @@ export const useMessageStore = create<MessageStore>((set, get) => ({
   setOldestLoadedMessageDate: (conversationId: string, dateString: string) => {
     set((state) => {
       return {
-        oldestLoadedMessageDate: { ...state.oldestLoadedMessageDate, [conversationId]: dateString },
+        oldestLoadedMessageDate: {
+          ...state.oldestLoadedMessageDate,
+          [conversationId]: dateString,
+        },
       }
     })
   },
@@ -360,4 +364,4 @@ export const useMessageStore = create<MessageStore>((set, get) => ({
       console.error(error)
     }
   },
-}))
+})

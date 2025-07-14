@@ -1,9 +1,10 @@
 import { pocketbase } from '../pocketbase'
-import { create } from 'zustand'
+import { StateCreator } from 'zustand'
 import { ExpandedItem, CompleteRef, StagedItemFields, StagedRefFields } from './types'
 import { ItemsRecord } from './pocketbase-types'
 import { createdSort } from '@/ui/profiles/sorts'
 import { canvasApp } from '@/features/canvas'
+import { type StoreSlices } from '.'
 
 function gridSort(items: ExpandedItem[]): ExpandedItem[] {
   const itemsWithOrder: ExpandedItem[] = []
@@ -23,11 +24,7 @@ function gridSort(items: ExpandedItem[]): ExpandedItem[] {
   return [...itemsWithOrder, ...itemsWithoutOrder]
 }
 
-// ***
-// Items
-//
-//
-export const useItemStore = create<{
+export type ItemSlice = {
   editing: string
   addingToList: boolean
   searchingNewRef: string
@@ -64,7 +61,13 @@ export const useItemStore = create<{
   triggerFeedRefresh: () => void
   triggerProfileRefresh: () => void
   updateRefTitle: (id: string, title: string) => Promise<CompleteRef>
-}>((set, get) => ({
+}
+
+// ***
+// Items
+//
+//
+export const createItemSlice: StateCreator<StoreSlices, [], [], ItemSlice> = (set, get) => ({
   addingToList: false,
   editing: '',
   searchingNewRef: '', // the id to replace the ref for
@@ -296,7 +299,7 @@ export const useItemStore = create<{
       throw error
     }
   },
-}))
+})
 
 export const getProfileItems = async (userName: string) => {
   const items = await pocketbase.collection<ExpandedItem>('items').getFullList({

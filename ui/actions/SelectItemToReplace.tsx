@@ -6,7 +6,7 @@ import { AddRefSheetGrid } from '@/ui/profiles/sheets/AddRefSheetGrid'
 import { Text, View } from 'react-native'
 import { useEffect, useState } from 'react'
 import { getProfileItems } from '@/features/pocketbase/stores/items'
-import { useUserStore } from '@/features/pocketbase/stores/users'
+import { useAppStore } from '@/features/pocketbase'
 
 export const SelectItemToReplace = ({
   stagedItemFields,
@@ -18,7 +18,7 @@ export const SelectItemToReplace = ({
   onAddToBacklog: () => Promise<void>
 }) => {
   const [gridItems, setGridItems] = useState<ExpandedItem[]>([])
-  const user = useUserStore((state) => state.user)
+  const user = useAppStore((state) => state.user)
 
   useEffect(() => {
     const fetchGridItems = async () => {

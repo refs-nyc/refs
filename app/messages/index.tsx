@@ -1,9 +1,9 @@
 import { ConversationsScreen } from '@/features/messaging/conversations-screen'
-import { useUserStore } from '@/features/pocketbase/stores/users'
+import { useAppStore } from '@/features/pocketbase'
 import { useRouter } from 'expo-router'
 
 export default function Screen() {
-  const { user } = useUserStore()
+  const { user } = useAppStore()
   const router = useRouter()
 
   if (!user) {

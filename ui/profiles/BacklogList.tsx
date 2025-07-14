@@ -8,7 +8,7 @@ import { useEffect, useState } from 'react'
 import { useCalendars } from 'expo-localization'
 import { DateTime } from 'luxon'
 import SwipeableBacklogItem from './SwipeableBacklogItem'
-import { useItemStore } from '@/features/pocketbase'
+import { useAppStore } from '@/features/pocketbase'
 
 export default function BacklogList({
   items: itemsInit,
@@ -21,7 +21,7 @@ export default function BacklogList({
   const [hasScrolled, setHasScrolled] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const [items, setItems] = useState<ExpandedItem[]>(itemsInit)
-  const { removeItem } = useItemStore()
+  const { removeItem } = useAppStore()
   const calendars = useCalendars()
   const timeZone = calendars[0].timeZone || 'America/New_York'
 

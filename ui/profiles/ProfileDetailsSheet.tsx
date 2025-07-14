@@ -1,6 +1,5 @@
-import { pocketbase, useUserStore } from '@/features/pocketbase'
-import { useBackdropStore } from '@/features/pocketbase/stores/backdrop'
-import { getProfileItems, useItemStore } from '@/features/pocketbase/stores/items'
+import { pocketbase, useAppStore } from '@/features/pocketbase'
+import { getProfileItems } from '@/features/pocketbase/stores/items'
 import { ExpandedItem, ExpandedProfile } from '@/features/pocketbase/stores/types'
 import { c } from '@/features/style'
 import BottomSheet, { BottomSheetBackdrop } from '@gorhom/bottom-sheet'
@@ -23,7 +22,13 @@ export const ProfileDetailsSheet = ({
 }) => {
   const [profile, setProfile] = useState<ExpandedProfile | null>(null)
   const [gridItems, setGridItems] = useState<ExpandedItem[]>([])
-  const { profileRefreshTrigger } = useItemStore()
+  const {
+    profileRefreshTrigger,
+    user,
+    detailsBackdropAnimatedIndex,
+    registerBackdropPress,
+    unregisterBackdropPress,
+  } = useAppStore()
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -38,15 +43,10 @@ export const ProfileDetailsSheet = ({
     fetchProfile()
   }, [profileUsername, profileRefreshTrigger])
 
-  // get current user
-  const { user } = useUserStore()
   // if the current user is the item creator, then they have editing rights
   const editingRights = profile?.id === user?.id
 
   const snapPoints = ['100%']
-
-  const { detailsBackdropAnimatedIndex, registerBackdropPress, unregisterBackdropPress } =
-    useBackdropStore()
 
   useEffect(() => {
     const key = registerBackdropPress(() => {

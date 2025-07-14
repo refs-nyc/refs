@@ -1,5 +1,4 @@
-import { useUserStore } from '@/features/pocketbase'
-import { useMessageStore } from '@/features/pocketbase/stores/messages'
+import { useAppStore } from '@/features/pocketbase'
 import { Message } from '@/features/pocketbase/stores/types'
 import { c, s } from '@/features/style'
 import { Heading, Sheet, XStack } from '@/ui'
@@ -15,8 +14,8 @@ import EmojiPicker from 'rn-emoji-keyboard'
 import { randomColors } from './utils'
 
 export function MessagesScreen({ conversationId }: { conversationId: string }) {
-  const { user } = useUserStore()
   const {
+    user,
     conversations,
     memberships,
     messagesPerConversation,
@@ -28,7 +27,7 @@ export function MessagesScreen({ conversationId }: { conversationId: string }) {
     firstMessageDate,
     updateLastRead,
     getNewMessages,
-  } = useMessageStore()
+  } = useAppStore()
   const flatListRef = useRef<FlatList>(null)
   const [message, setMessage] = useState<string>('')
   const [highlightedMessageId, setHighlightedMessageId] = useState<string>('')

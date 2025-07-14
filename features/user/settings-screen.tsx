@@ -2,11 +2,11 @@ import { router } from 'expo-router'
 import { DeviceLocation } from '@/ui/inputs/DeviceLocation'
 import { FirstVisitScreen } from '@/ui/profiles/FirstVisitScreen'
 import { Button, ScreenWrapper } from '@/ui'
-import { useUserStore } from '@/features/pocketbase/stores/users'
+import { useAppStore } from '@/features/pocketbase'
 import { s } from '@/features/style'
 
 export function SettingsScreen() {
-  const { logout, updateUser } = useUserStore()
+  const { logout, updateUser } = useAppStore()
 
   const handleLogout = async () => {
     await logout()

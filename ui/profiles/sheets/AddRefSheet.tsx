@@ -1,5 +1,5 @@
-import { pocketbase, useUserStore } from '@/features/pocketbase'
-import { getProfileItems, useItemStore } from '@/features/pocketbase/stores/items'
+import { pocketbase, useAppStore } from '@/features/pocketbase'
+import { getProfileItems } from '@/features/pocketbase/stores/items'
 import { RefsRecord } from '@/features/pocketbase/stores/pocketbase-types'
 import { ExpandedItem, StagedItemFields } from '@/features/pocketbase/stores/types'
 import { c, s } from '@/features/style'
@@ -19,7 +19,6 @@ export const AddRefSheet = ({
 }: {
   bottomSheetRef: React.RefObject<BottomSheet>
 }) => {
-  const { user } = useUserStore()
   const { addingRefId, setAddingRefId } = useUIStore()
 
   // fields from the ref that is being replaced, or a new ref that is going to be added
@@ -35,7 +34,7 @@ export const AddRefSheet = ({
   // the resulting item
   const [itemData, setItemData] = useState<ExpandedItem | null>(null)
 
-  const { moveToBacklog, removeItem, addToProfile } = useItemStore()
+  const { user, moveToBacklog, removeItem, addToProfile } = useAppStore()
 
   useEffect(() => {
     const getRef = async () => {

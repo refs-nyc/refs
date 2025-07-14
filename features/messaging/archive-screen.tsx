@@ -1,8 +1,7 @@
 import { Heading, XStack } from '@/ui'
 import { View, DimensionValue, Pressable } from 'react-native'
 import { c, s } from '../style'
-import { pocketbase, useUserStore } from '../pocketbase'
-import { useMessageStore } from '../pocketbase/stores/messages'
+import { pocketbase, useAppStore } from '@/features/pocketbase'
 import SwipeableConversation from '@/ui/messaging/SwipeableConversation'
 import { Ionicons } from '@expo/vector-icons'
 import { router } from 'expo-router'
@@ -10,8 +9,8 @@ import { Conversation } from '../pocketbase/stores/types'
 import ConversationList from '@/ui/messaging/ConversationList'
 
 export function ArchiveScreen() {
-  const { user } = useUserStore()
-  const { conversations, memberships, messagesPerConversation } = useMessageStore()
+  const { user } = useAppStore()
+  const { conversations, memberships, messagesPerConversation } = useAppStore()
 
   const archivedConversations = []
   for (const conversationId in conversations) {

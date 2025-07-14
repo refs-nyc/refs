@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
-import { pocketbase, useUserStore } from '../pocketbase'
-import { PAGE_SIZE, useMessageStore } from '../pocketbase/stores/messages'
+import { pocketbase, useAppStore } from '@/features/pocketbase'
+import { PAGE_SIZE } from '@/features/pocketbase/stores/messages'
 import {
   Conversation,
   ExpandedMembership,
@@ -9,20 +9,26 @@ import {
   Message,
   Reaction,
   Save,
-} from '../pocketbase/stores/types'
-import { ConversationsRecord } from '../pocketbase/stores/pocketbase-types'
+} from '@/features/pocketbase/stores/types'
+import { ConversationsRecord } from '@/features/pocketbase/stores/pocketbase-types'
 
 export function MessagesInit() {
-  const { user } = useUserStore()
   const {
+    user,
     setMessagesForConversation,
     setOldestLoadedMessageDate,
     addNewMessage,
     setFirstMessageDate,
-  } = useMessageStore()
-  const { setConversations, setReactions } = useMessageStore()
-  const { addConversation, addMembership, addReaction, removeReaction } = useMessageStore()
-  const { setMemberships, updateMembership, setSaves } = useMessageStore()
+    setConversations,
+    setReactions,
+    addConversation,
+    addMembership,
+    addReaction,
+    removeReaction,
+    setMemberships,
+    updateMembership,
+    setSaves,
+  } = useAppStore()
 
   // load conversations
   useEffect(() => {

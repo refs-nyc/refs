@@ -1,4 +1,4 @@
-import { useMessageStore } from '@/features/pocketbase/stores/messages'
+import { useAppStore } from '@/features/pocketbase'
 import { c, s } from '@/features/style'
 import { Button, XStack, YStack } from '@/ui'
 import { Heading } from '@/ui/typo/Heading'
@@ -16,11 +16,11 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 type Step = 'select' | 'add'
 
-const HEADER_TOP_PADDING = 24; // px, adjust as needed
-const BUTTON_BOTTOM_PADDING = 20; // px, adjust as needed
+const HEADER_TOP_PADDING = 24 // px, adjust as needed
+const BUTTON_BOTTOM_PADDING = 20 // px, adjust as needed
 
 export default function SavesList() {
-  const { saves, createMemberships, removeSave } = useMessageStore()
+  const { saves, createMemberships, removeSave, conversations, memberships } = useAppStore()
   const { width } = useWindowDimensions()
   const buttonGap = s.$1
   const contentWidth = width - 2 * s.$3
@@ -30,7 +30,6 @@ export default function SavesList() {
   const [step, setStep] = useState<Step>('select')
   const [searchTerm, setSearchTerm] = useState('')
 
-  const { conversations, memberships } = useMessageStore()
   const [filteredChats, setFilteredChats] = useState<Conversation[]>([
     ...Object.values(conversations).filter((c) => !c.is_direct),
   ])
@@ -91,7 +90,9 @@ export default function SavesList() {
         <View style={{ flex: 1, width, paddingHorizontal: s.$3, paddingVertical: s.$1 }}>
           <YStack gap={s.$075} style={{ paddingBottom: s.$1, marginTop: HEADER_TOP_PADDING }}>
             <XStack style={{ justifyContent: 'space-between', alignItems: 'center' }}>
-              <Heading tag="h1normal" style={{ color: c.white }}>Saved</Heading>
+              <Heading tag="h1normal" style={{ color: c.white }}>
+                Saved
+              </Heading>
               <Button
                 variant="smallWhiteOutline"
                 onPress={handleSelectAll}
@@ -99,7 +100,9 @@ export default function SavesList() {
                 style={{ width: s.$10 }}
               />
             </XStack>
-            <Text style={{ color: c.white, marginTop: 2, marginBottom: 12 }}>Select anyone to DM or start a group chat</Text>
+            <Text style={{ color: c.white, marginTop: 2, marginBottom: 12 }}>
+              Select anyone to DM or start a group chat
+            </Text>
           </YStack>
           <View style={{ flex: 1 }}>
             <BottomSheetScrollView contentContainerStyle={{ flexGrow: 1 }}>
@@ -107,7 +110,7 @@ export default function SavesList() {
                 {saves.map((save) => (
                   <SwipeableUser
                     key={save.expand.user.id}
-                    onActionPress={()=>removeSave(save.id)}
+                    onActionPress={() => removeSave(save.id)}
                     user={save.expand.user}
                     onPress={() => toggleSelect(save.user)}
                     backgroundColor={selected[save.user] ? c.olive2 : c.olive}

@@ -1,4 +1,4 @@
-import { pocketbase, useItemStore, useUserStore } from '@/features/pocketbase'
+import { pocketbase, useAppStore } from '@/features/pocketbase'
 import { getBacklogItems, getProfileItems } from '@/features/pocketbase/stores/items'
 import type { ExpandedProfile } from '@/features/pocketbase/stores/types'
 import { ExpandedItem } from '@/features/pocketbase/stores/types'
@@ -28,8 +28,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
   const [editingRights, seteditingRights] = useState<boolean>(false)
   const [loading, setLoading] = useState<boolean>(true)
 
-  const { user } = useUserStore()
-  const { moveToBacklog, profileRefreshTrigger, removeItem } = useItemStore()
+  const { user, moveToBacklog, profileRefreshTrigger, removeItem } = useAppStore()
 
   const [removingItem, setRemovingItem] = useState<ExpandedItem | null>(null)
 
@@ -92,13 +91,11 @@ export const MyProfile = ({ userName }: { userName: string }) => {
     init()
   }, [userName, profileRefreshTrigger])
 
-  const { logout } = useUserStore()
+  const { logout, stopEditing } = useAppStore()
 
   const bottomSheetRef = useRef<BottomSheet>(null)
   const detailsSheetRef = useRef<BottomSheet>(null)
   const removeRefSheetRef = useRef<BottomSheet>(null)
-
-  const stopEditing = useItemStore((state) => state.stopEditing)
 
   const [detailsItem, setDetailsItem] = useState<ExpandedItem | null>(null)
 

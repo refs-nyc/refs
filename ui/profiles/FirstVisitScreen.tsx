@@ -6,10 +6,10 @@ import { Switch, View } from 'react-native'
 import { router } from 'expo-router'
 import { registerForPushNotificationsAsync } from '@/ui/notifications/utils'
 import { s, c } from '@/features/style'
-import { useUserStore } from '@/features/pocketbase/stores/users'
+import { useAppStore } from '@/features/pocketbase'
 
 export const FirstVisitScreen = () => {
-  const { updateUser } = useUserStore()
+  const { updateUser } = useAppStore()
 
   const [isEnabled, setIsEnabled] = useState(false)
   const toggleSwitch = async () => {

@@ -82,17 +82,29 @@ export const SearchRef = ({
   url,
   image,
   paste,
+<<<<<<< Updated upstream
   onChooseExistingRef,
   onAddNewRef,
   prompt,
+=======
+  onComplete,
+  initialPrompt,
+  autoFocus = false,
+>>>>>>> Stashed changes
 }: {
   noNewRef?: boolean
   url?: string
   image?: string
   paste?: boolean
+<<<<<<< Updated upstream
   onChooseExistingRef: (r: CompleteRef, newImage?: string) => void
   onAddNewRef: (fields: NewRefFields) => void
   prompt?: string
+=======
+  onComplete: (r: CompleteRef) => void
+  initialPrompt?: string
+  autoFocus?: boolean
+>>>>>>> Stashed changes
 }) => {
   const [searchQuery, setSearchQuery] = useState('')
   const [disableNewRef, setDisableNewRef] = useState(false)
@@ -110,6 +122,37 @@ export const SearchRef = ({
 
   // Track the current query to prevent race conditions
   const currentQueryRef = useRef('')
+  const textInputRef = useRef<any>(null)
+
+  // Handle auto-focus with a delay for BottomSheet compatibility
+  useEffect(() => {
+    if (autoFocus && textInputRef.current) {
+      console.log('SearchRef: Attempting to focus input with autoFocus')
+      requestAnimationFrame(() => {
+        setTimeout(() => {
+          if (textInputRef.current) {
+            console.log('SearchRef: Calling focus on input')
+            textInputRef.current.focus()
+          }
+        }, 300)
+      })
+    }
+  }, [autoFocus])
+
+  // Also try to focus when component mounts if autoFocus is true
+  useEffect(() => {
+    if (autoFocus && textInputRef.current) {
+      console.log('SearchRef: Mount effect - attempting to focus input')
+      requestAnimationFrame(() => {
+        setTimeout(() => {
+          if (textInputRef.current) {
+            console.log('SearchRef: Mount effect - calling focus on input')
+            textInputRef.current.focus()
+          }
+        }, 500)
+      })
+    }
+  }, [])
 
   useEffect(() => {
     const timeout = setTimeout(() => setDebouncedQuery(searchQuery), 300)
@@ -282,6 +325,7 @@ export const SearchRef = ({
           }}
         >
           <TextInput
+            ref={textInputRef}
             style={{
               flex: 1,
               color: c.surface,
@@ -290,10 +334,16 @@ export const SearchRef = ({
               textAlignVertical: 'center',
             }}
             value={searchQuery}
+<<<<<<< Updated upstream
             placeholder={prompt || 'search anything or paste a link'}
             placeholderTextColor={'rgba(243,242,237,0.5)'}
             onChangeText={onQueryChange}
             autoFocus={true}
+=======
+            placeholder={initialPrompt || "Search anything or start typing"}
+            placeholderTextColor={c.surface50}
+            onChangeText={onQueryChange}
+>>>>>>> Stashed changes
           />
           {searchQuery.length > 0 && (
             <Pressable onPress={() => setSearchQuery('')} hitSlop={10} style={{ marginLeft: 8 }}>

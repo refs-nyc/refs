@@ -5,6 +5,7 @@ export const c = {
   // The originals
   white: '#fff',
   black: '#000',
+  black50: 'rgba(0,0,0,0.5)',
   // Accent colors
   accent: '#A5B89F',
   accent2: '#e7efe4',
@@ -13,6 +14,7 @@ export const c = {
   olive2: '#8D9C89',
   // Surface colors
   surface: '#F3F2ED',
+  surface50: 'rgba(243,242,237,0.5)',
   surface2: '#EFEDE3',
   // Greys
   grey1: '#D9D9D9',
@@ -195,7 +197,7 @@ export const t = typo
 export const base = StyleSheet.create({
   gridTile: {
     aspectRatio: 1,
-    backgroundColor: c.surface2,
+    backgroundColor: c.surface,
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: s.$075,

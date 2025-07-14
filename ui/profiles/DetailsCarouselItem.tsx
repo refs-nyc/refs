@@ -447,6 +447,7 @@ export const DetailsCarouselItem = ({ item, index }: { item: ExpandedItem; index
           backgroundStyle={{ backgroundColor: c.olive }}
         >
           <SearchRef
+            autoFocus={true}
             noNewRef
             onAddNewRef={(newRefFields) => {
               // never called

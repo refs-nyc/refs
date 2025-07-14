@@ -59,8 +59,8 @@ export default function SwipeableBacklogItem({
           }}
         >
           <Text style={{ color: c.white, fontSize: s.$1 }} numberOfLines={2}>
-            {item.expand?.ref?.title?.trim()}
-          </Text>
+          {item.expand?.ref?.title?.trim()}
+        </Text>
         </Pressable>
         {item.expand?.ref?.url && (
           <Pressable onPress={() => Linking.openURL(item.expand.ref.url!)}>

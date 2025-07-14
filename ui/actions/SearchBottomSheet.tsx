@@ -194,7 +194,7 @@ export default function SearchBottomSheet() {
                         justifyContent: 'center',
                       }}
                     >
-                      <Ionicons name="search" size={s.$2} color={c.white} />
+                    <Ionicons name="search" size={s.$2} color={c.white} />
                     </View>
                   </Pressable>
                 </XStack>

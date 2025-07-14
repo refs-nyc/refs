@@ -10,7 +10,7 @@ import { CompleteRef } from '../../features/pocketbase/stores/types'
 import { getLinkPreview } from 'link-preview-js'
 import { ShareIntent as ShareIntentType, useShareIntentContext } from 'expo-share-intent'
 import * as Clipboard from 'expo-clipboard'
-import { RefsRecord } from '@/features/pocketbase/stores/pocketbase-types'
+import { RefsRecord } from '@/features/pocketbase/pocketbase-types'
 import { KeyboardAvoidingView } from 'react-native-keyboard-controller'
 import { Ionicons } from '@expo/vector-icons'
 import { Button } from '../buttons/Button'
@@ -363,7 +363,12 @@ export const SearchRef = ({
                 <ImageSearchResults
                   imageSearchResults={imageSearchResults}
                   onImagePress={(imageUrl) =>
-                    onAddNewRef({ title: searchQuery, image: imageUrl, url: urlState, promptContext: prompt })
+                    onAddNewRef({
+                      title: searchQuery,
+                      image: imageUrl,
+                      url: urlState,
+                      promptContext: prompt,
+                    })
                   }
                   setPicking={setPicking}
                 />

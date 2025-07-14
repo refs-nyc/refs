@@ -1,4 +1,4 @@
-import type { ExpandedItem } from '@/features/pocketbase/stores/types'
+import type { ExpandedItem } from '@/features/pocketbase/types'
 import { useUIStore } from '@/ui/state'
 import { ScrollView, View, Pressable } from 'react-native'
 import { Button } from '../buttons/Button'

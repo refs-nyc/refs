@@ -3,7 +3,7 @@ import { View, Text, Pressable } from 'react-native'
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { s, c, base } from '@/features/style'
 import { SimplePinataImage } from '@/ui/images/SimplePinataImage'
-import type { CompleteRef, ExpandedItem } from '@/features/pocketbase/stores/types'
+import type { CompleteRef, ExpandedItem } from '@/features/pocketbase/types'
 import { Link } from 'expo-router'
 
 export const ListItem = ({

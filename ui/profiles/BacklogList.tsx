@@ -1,4 +1,4 @@
-import { ExpandedItem } from '@/features/pocketbase/stores/types'
+import { ExpandedItem } from '@/features/pocketbase/types'
 import { NativeScrollEvent, NativeSyntheticEvent, Text, TextInput, View } from 'react-native'
 import { c, s } from '@/features/style'
 import Animated, { FadeIn } from 'react-native-reanimated'
@@ -8,7 +8,7 @@ import { useEffect, useState } from 'react'
 import { useCalendars } from 'expo-localization'
 import { DateTime } from 'luxon'
 import SwipeableBacklogItem from './SwipeableBacklogItem'
-import { useAppStore } from '@/features/pocketbase'
+import { useAppStore } from '@/features/stores'
 
 export default function BacklogList({
   items: itemsInit,

@@ -1,5 +1,5 @@
 import { pocketbase } from '@/features/pocketbase'
-import { Profile } from '@/features/pocketbase/stores/types'
+import { Profile } from '@/features/pocketbase/types'
 import { c, s } from '@/features/style'
 import UserListItem from '@/ui/atoms/UserListItem'
 import { Button } from '@/ui/buttons/Button'

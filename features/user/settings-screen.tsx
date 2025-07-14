@@ -2,7 +2,7 @@ import { router } from 'expo-router'
 import { DeviceLocation } from '@/ui/inputs/DeviceLocation'
 import { FirstVisitScreen } from '@/ui/profiles/FirstVisitScreen'
 import { Button, ScreenWrapper } from '@/ui'
-import { useAppStore } from '@/features/pocketbase'
+import { useAppStore } from '@/features/stores'
 import { s } from '@/features/style'
 
 export function SettingsScreen() {

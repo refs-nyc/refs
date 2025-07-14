@@ -1,4 +1,4 @@
-import { ItemsRecord } from '@/features/pocketbase/stores/pocketbase-types'
+import { ItemsRecord } from '@/features/pocketbase/pocketbase-types'
 import BottomSheet from '@gorhom/bottom-sheet'
 import React from 'react'
 import { create } from 'zustand'

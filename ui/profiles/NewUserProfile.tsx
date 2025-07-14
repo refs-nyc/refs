@@ -1,7 +1,7 @@
 import { useRef } from 'react'
 import { View } from 'react-native'
 import { Dimensions } from 'react-native'
-import { useAppStore } from '@/features/pocketbase'
+import { useAppStore } from '@/features/stores'
 import { s, c } from '@/features/style'
 import { router } from 'expo-router'
 import Carousel, { ICarouselInstance } from 'react-native-reanimated-carousel'

@@ -1,4 +1,5 @@
-import type { ExpandedItem } from '@/features/pocketbase/stores/types'
+import type { ExpandedItem } from '@/features/pocketbase/types'
+import { ItemsRecord } from '@/features/pocketbase/pocketbase-types'
 
 import { useState } from 'react'
 import { pocketbase } from '@/features/pocketbase'
@@ -8,7 +9,6 @@ import { ListItem } from '@/ui/lists/ListItem'
 import { NewRefListItem } from '@/ui/atoms/NewRefListItem'
 import { YStack } from '@/ui/core/Stacks'
 import { s, c } from '@/features/style'
-import { ItemsRecord } from '@/features/pocketbase/stores/pocketbase-types'
 
 export const SearchItem = ({ onComplete }: { onComplete: (r: ExpandedItem) => void }) => {
   const [searchQuery, setSearchQuery] = useState('')
@@ -59,7 +59,7 @@ export const SearchItem = ({ onComplete }: { onComplete: (r: ExpandedItem) => vo
         }}
         clearButtonMode="while-editing"
         value={searchQuery}
-                    placeholder="Search anything or paste a link"
+        placeholder="Search anything or paste a link"
         onChangeText={updateQuery}
         autoFocus={true}
       />

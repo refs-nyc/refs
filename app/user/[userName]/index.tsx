@@ -1,4 +1,4 @@
-import { useAppStore } from '@/features/pocketbase'
+import { useAppStore } from '@/features/stores'
 import { UserProfileScreen } from '@/features/user/profile-screen'
 import { useGlobalSearchParams, useRouter } from 'expo-router'
 

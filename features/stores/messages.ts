@@ -7,9 +7,9 @@ import {
   Message,
   Reaction,
   Save,
-} from './types'
+} from '../pocketbase/types'
 import { pocketbase } from '../pocketbase'
-import { type StoreSlices } from '.'
+import type { StoreSlices } from './types'
 
 export const PAGE_SIZE = 10
 

@@ -1,5 +1,5 @@
 import { MessagesScreen } from '@/features/messaging/messages-screen'
-import { useAppStore } from '@/features/pocketbase'
+import { useAppStore } from '@/features/stores'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 
 export default function Page() {

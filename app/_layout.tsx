@@ -36,7 +36,7 @@ import { KeyboardProvider } from 'react-native-keyboard-controller'
 
 import { RegisterPushNotifications } from '@/ui/notifications/RegisterPushNotifications'
 import { MessagesInit } from '@/features/messaging/message-loader'
-import { useAppStore } from '@/features/pocketbase'
+import { useAppStore } from '@/features/stores'
 
 import { LogBox } from 'react-native'
 import BottomSheet from '@gorhom/bottom-sheet'

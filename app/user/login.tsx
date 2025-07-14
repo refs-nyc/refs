@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react'
-import { useAppStore } from '@/features/pocketbase'
+import { useAppStore } from '@/features/stores'
 import { s, c } from '@/features/style'
 import { router } from 'expo-router'
 import { ProfileStep } from '@/ui/profiles/ProfileStep'

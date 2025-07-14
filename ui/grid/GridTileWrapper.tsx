@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { YStack } from '../core/Stacks'
 import { TouchableOpacity, Pressable, Text } from 'react-native'
 import { base } from '@/features/style'
-import { GridTileType } from '@/features/pocketbase/stores/types'
+import { GridTileType } from '@/features/pocketbase/types'
 import { useUIStore } from '../state'
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { c } from '@/features/style'
@@ -33,13 +33,16 @@ export const GridTileWrapper = ({
     borderColor: '#333',
   }
 
-  const placeholderStyles = type === 'placeholder' ? {
-    borderWidth: 2,
-    borderColor: 'rgba(0,0,0,0.5)',
-    borderStyle: 'dashed',
-    borderDashArray: [4, 4],
-    borderMiterLimit: 29,
-  } : {}
+  const placeholderStyles =
+    type === 'placeholder'
+      ? {
+          borderWidth: 2,
+          borderColor: 'rgba(0,0,0,0.5)',
+          borderStyle: 'dashed',
+          borderDashArray: [4, 4],
+          borderMiterLimit: 29,
+        }
+      : {}
 
   const scale = useSharedValue(1)
   const animatedStyle = useAnimatedStyle(() => ({
@@ -69,7 +72,12 @@ export const GridTileWrapper = ({
         style={[
           base.gridTile,
           type === 'placeholder' ? placeholderStyles : specificStyles,
-          { width: size, justifyContent: 'center', alignItems: 'center', backgroundColor: c.surface },
+          {
+            width: size,
+            justifyContent: 'center',
+            alignItems: 'center',
+            backgroundColor: c.surface,
+          },
         ]}
       >
         {editingProfile && type !== 'add' && id && (
@@ -90,11 +98,15 @@ export const GridTileWrapper = ({
           </YStack>
         )}
         {type === 'placeholder' ? (
-          <Text style={{ color: c.muted, fontSize: 16, textAlign: 'center', paddingHorizontal: 10 }}>{children}</Text>
+          <Text
+            style={{ color: c.muted, fontSize: 16, textAlign: 'center', paddingHorizontal: 10 }}
+          >
+            {children}
+          </Text>
+        ) : type === 'add' ? (
+          React.cloneElement(children as React.ReactElement, { isPlaceholder: true })
         ) : (
-          type === 'add'
-            ? React.cloneElement(children as React.ReactElement, { isPlaceholder: true })
-            : children
+          children
         )}
       </TouchableOpacity>
     </Animated.View>

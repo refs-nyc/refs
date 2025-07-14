@@ -6,7 +6,7 @@ import { Switch, View } from 'react-native'
 import { router } from 'expo-router'
 import { registerForPushNotificationsAsync } from '@/ui/notifications/utils'
 import { s, c } from '@/features/style'
-import { useAppStore } from '@/features/pocketbase'
+import { useAppStore } from '@/features/stores'
 
 export const FirstVisitScreen = () => {
   const { updateUser } = useAppStore()

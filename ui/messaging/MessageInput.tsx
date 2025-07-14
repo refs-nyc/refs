@@ -2,7 +2,7 @@ import { Pressable, TextInput, View, Text } from 'react-native'
 import { XStack, YStack } from '../core/Stacks'
 import { c, s } from '@/features/style'
 import { Ionicons } from '@expo/vector-icons'
-import { Message, Profile } from '@/features/pocketbase/stores/types'
+import { Message, Profile } from '@/features/pocketbase/types'
 
 export default function MessageInput({
   onMessageSubmit,

@@ -1,4 +1,4 @@
-import { Profile } from '@/features/pocketbase/stores/types'
+import { Profile } from '@/features/pocketbase/types'
 import { s, c } from '@/features/style'
 import { View, Text } from 'react-native'
 import { Pressable } from 'react-native-gesture-handler'
@@ -36,10 +36,19 @@ export default function UserListItem({
         <XStack style={{ justifyContent: 'flex-start', alignItems: 'center', width: '100%' }}>
           <Avatar source={user.image} size={small ? s.$4 : s.$5} />
           <YStack style={{ marginLeft: s.$1, alignItems: 'flex-start' }}>
-            <Text style={{ fontSize: 14, color: whiteText ? c.surface : c.muted, fontWeight: '700', textAlign: 'left' }}>
+            <Text
+              style={{
+                fontSize: 14,
+                color: whiteText ? c.surface : c.muted,
+                fontWeight: '700',
+                textAlign: 'left',
+              }}
+            >
               {user.firstName} {user.lastName}
             </Text>
-            <Text style={{ color: whiteText ? c.surface : c.muted, textAlign: 'left' }}>{user.location}</Text>
+            <Text style={{ color: whiteText ? c.surface : c.muted, textAlign: 'left' }}>
+              {user.location}
+            </Text>
           </YStack>
         </XStack>
         {text && (

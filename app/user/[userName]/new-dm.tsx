@@ -1,4 +1,5 @@
-import { pocketbase, useAppStore } from '@/features/pocketbase'
+import { pocketbase } from '@/features/pocketbase'
+import { useAppStore } from '@/features/stores'
 import { c, s } from '@/features/style'
 import { Heading, XStack, YStack } from '@/ui'
 import { Avatar } from '@/ui/atoms/Avatar'

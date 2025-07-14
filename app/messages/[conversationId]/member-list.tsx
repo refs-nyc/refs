@@ -1,5 +1,5 @@
-import { useAppStore } from '@/features/pocketbase'
-import { Profile } from '@/features/pocketbase/stores/types'
+import { useAppStore } from '@/features/stores'
+import { Profile } from '@/features/pocketbase/types'
 import { c, s } from '@/features/style'
 import { Heading, XStack, YStack } from '@/ui'
 import { Avatar } from '@/ui/atoms/Avatar'

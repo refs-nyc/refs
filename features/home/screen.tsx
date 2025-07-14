@@ -1,7 +1,7 @@
 import { View, Dimensions, DimensionValue } from 'react-native'
 import { useEffect } from 'react'
 import { Button, YStack, Heading } from '../../ui/index'
-import { useAppStore } from '@/features/pocketbase'
+import { useAppStore } from '@/features/stores'
 import Animated, {
   useAnimatedStyle,
   Easing,

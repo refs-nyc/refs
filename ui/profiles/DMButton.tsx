@@ -1,9 +1,10 @@
 import { router } from 'expo-router'
 import { Button } from '../buttons/Button'
 import { c } from '@/features/style'
-import { pocketbase, useAppStore } from '@/features/pocketbase'
+import { pocketbase } from '@/features/pocketbase'
+import { useAppStore } from '@/features/stores'
 import { useEffect, useState } from 'react'
-import { ConversationWithMemberships, Profile } from '@/features/pocketbase/stores/types'
+import { ConversationWithMemberships, Profile } from '@/features/pocketbase/types'
 
 export const DMButton = ({
   profile,

@@ -1,6 +1,6 @@
 import { formatTimestamp } from '@/features/messaging/utils'
-import { useAppStore } from '@/features/pocketbase'
-import { Message, Profile } from '@/features/pocketbase/stores/types'
+import { useAppStore } from '@/features/stores'
+import { Message, Profile } from '@/features/pocketbase/types'
 import { c, s } from '@/features/style'
 import { useCalendars } from 'expo-localization'
 import { View, Text } from 'react-native'

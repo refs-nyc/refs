@@ -4,7 +4,7 @@ import { c, s } from '@/features/style'
 import { useAnimatedKeyboard, useDerivedValue } from 'react-native-reanimated'
 import { Dimensions, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { useAppStore } from '@/features/pocketbase'
+import { useAppStore } from '@/features/stores'
 
 const win = Dimensions.get('window')
 

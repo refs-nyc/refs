@@ -1,6 +1,6 @@
 import { makeMutable, SharedValue } from 'react-native-reanimated'
 import { StateCreator } from 'zustand'
-import { type StoreSlices } from '.'
+import type { StoreSlices } from './types'
 
 export type BackdropSlice = {
   moduleBackdropAnimatedIndex?: SharedValue<number>

@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { Image, type ImageProps } from 'expo-image'
 import { constructPinataUrl, type OptimizeImageOptions } from '@/features/pinata'
-import { useAppStore } from '@/features/pocketbase'
+import { useAppStore } from '@/features/stores'
 import { StyleProp, useWindowDimensions, View, ViewStyle } from 'react-native'
 
 function useSignedImageUrl(originalSource: string, imageOptions: OptimizeImageOptions) {

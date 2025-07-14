@@ -1,4 +1,4 @@
-import { useAppStore } from '@/features/pocketbase'
+import { useAppStore } from '@/features/stores'
 import { SettingsScreen } from '@/features/settings/screen'
 import { useRouter } from 'expo-router'
 

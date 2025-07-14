@@ -1,4 +1,4 @@
-import { useAppStore } from '@/features/pocketbase'
+import { useAppStore } from '@/features/stores'
 import { MyProfile } from './MyProfile'
 import { OtherProfile } from './OtherProfile'
 

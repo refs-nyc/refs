@@ -10,7 +10,7 @@ if (!canvasUrl) {
 const signer = new SIWESigner({ burner: true })
 console.log('creating app')
 export const canvasApp = new Canvas({
-  topicOverride: 'alpha.refs.nyc.RefsClassContract:263ccd2ec45ca8082e90435c0b18445d',
+  topicOverride: 'alpha.refs.nyc.RefsClassContract:cf44acebbfaf69a67c5633d90cd45318',
   reset: true,
   signers: [signer],
   contract: RefsClassContract,

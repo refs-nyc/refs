@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
-import { pocketbase, useAppStore } from '@/features/pocketbase'
-import { PAGE_SIZE } from '@/features/pocketbase/stores/messages'
+import { pocketbase } from '@/features/pocketbase'
+import { useAppStore } from '@/features/stores'
+import { PAGE_SIZE } from '@/features/stores/messages'
 import {
   Conversation,
   ExpandedMembership,
@@ -9,8 +10,8 @@ import {
   Message,
   Reaction,
   Save,
-} from '@/features/pocketbase/stores/types'
-import { ConversationsRecord } from '@/features/pocketbase/stores/pocketbase-types'
+} from '@/features/pocketbase/types'
+import { ConversationsRecord } from '@/features/pocketbase/pocketbase-types'
 
 export function MessagesInit() {
   const {

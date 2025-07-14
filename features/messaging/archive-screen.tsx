@@ -1,11 +1,12 @@
 import { Heading, XStack } from '@/ui'
 import { View, DimensionValue, Pressable } from 'react-native'
 import { c, s } from '../style'
-import { pocketbase, useAppStore } from '@/features/pocketbase'
+import { pocketbase } from '@/features/pocketbase'
+import { useAppStore } from '@/features/stores'
 import SwipeableConversation from '@/ui/messaging/SwipeableConversation'
 import { Ionicons } from '@expo/vector-icons'
 import { router } from 'expo-router'
-import { Conversation } from '../pocketbase/stores/types'
+import { Conversation } from '@/features/pocketbase/types'
 import ConversationList from '@/ui/messaging/ConversationList'
 
 export function ArchiveScreen() {

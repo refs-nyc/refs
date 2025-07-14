@@ -1,7 +1,7 @@
 import { pinataSignedUrl, SignedUrlEntry } from '@/features/pinata'
 import { createRef, MutableRefObject } from 'react'
 import { StateCreator } from 'zustand'
-import { type StoreSlices } from '.'
+import type { StoreSlices } from './types'
 
 export type OptimizeImageOptions = {
   width: number

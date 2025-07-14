@@ -1,12 +1,12 @@
-import { ExpandedItem, StagedItemFields } from '@/features/pocketbase/stores/types'
+import { ExpandedItem, StagedItemFields } from '@/features/pocketbase/types'
 import { c, s } from '@/features/style'
 import { Button } from '@/ui/buttons/Button'
 import { SimplePinataImage } from '@/ui/images/SimplePinataImage'
 import { AddRefSheetGrid } from '@/ui/profiles/sheets/AddRefSheetGrid'
 import { Text, View } from 'react-native'
 import { useEffect, useState } from 'react'
-import { getProfileItems } from '@/features/pocketbase/stores/items'
-import { useAppStore } from '@/features/pocketbase'
+import { getProfileItems } from '@/features/stores/items'
+import { useAppStore } from '@/features/stores'
 
 export const SelectItemToReplace = ({
   stagedItemFields,

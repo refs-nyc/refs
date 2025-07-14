@@ -1,5 +1,5 @@
 import Animated from 'react-native-reanimated'
-import { useAppStore } from '@/features/pocketbase'
+import { useAppStore } from '@/features/stores'
 import { Extrapolation, interpolate, useAnimatedStyle } from 'react-native-reanimated'
 
 import { Pressable } from 'react-native'

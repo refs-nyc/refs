@@ -1,5 +1,5 @@
 import { HomeScreen } from '@/features/home/screen'
-import { useAppStore } from '@/features/pocketbase'
+import { useAppStore } from '@/features/stores'
 import { LoadingScreen } from '@/ui/display/LoadingScreen'
 
 export default function Screen() {

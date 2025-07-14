@@ -266,7 +266,7 @@ export const SearchRef = ({
 
   return (
     <>
-      <KeyboardAvoidingView style={{ width: '100%' }}>
+      <View style={{ width: '100%' }}>
         <View
           style={{
             flexDirection: 'row',
@@ -380,7 +380,7 @@ export const SearchRef = ({
         >
           {searchResults.map((r) => renderItem({ item: r }))}
         </YStack>
-      </KeyboardAvoidingView>
+      </View>
     </>
   )
 }

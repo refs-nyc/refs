@@ -8,7 +8,7 @@ import {
   Pressable,
   ActivityIndicator,
 } from 'react-native'
-import { BottomSheetTextInput as TextInput } from '@gorhom/bottom-sheet'
+import { BottomSheetScrollView, BottomSheetTextInput as TextInput } from '@gorhom/bottom-sheet'
 import { Heading } from '@/ui/typo/Heading'
 import { Picker } from '../inputs/Picker'
 import { PinataImage } from '../images/PinataImage'
@@ -18,8 +18,6 @@ import { Button } from '../buttons/Button'
 import type { ImagePickerAsset } from 'expo-image-picker'
 import { c, s } from '@/features/style'
 import { StagedItemFields } from '@/features/pocketbase/stores/types'
-// @ts-ignore
-import { KeyboardAvoidingView } from 'react-native-keyboard-controller'
 import { DismissKeyboard } from '../atoms/DismissKeyboard'
 
 const win = Dimensions.get('window')
@@ -135,17 +133,14 @@ export const RefForm = ({
 
   return (
     <DismissKeyboard>
-      <KeyboardAvoidingView
-        style={{
-          justifyContent: 'flex-start',
-          alignItems: 'center',
+      <BottomSheetScrollView
+        contentContainerStyle={{
           gap: s.$1,
           marginTop: s.$2,
           marginBottom: s.$2 + 10,
-          width: '100%',
+          justifyContent: 'flex-start',
+          alignItems: 'center',
         }}
-        behavior="padding"
-        keyboardVerticalOffset={Dimensions.get('window').height * 0.25}
       >
         <View
           style={{
@@ -496,7 +491,7 @@ export const RefForm = ({
             />
           )}
         </View>
-      </KeyboardAvoidingView>
+      </BottomSheetScrollView>
     </DismissKeyboard>
   )
 }

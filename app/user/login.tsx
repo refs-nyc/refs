@@ -38,7 +38,6 @@ const LoginStep = () => {
         // check if the profile already exists
         const userDid = await sessionSigner.getDid()
         const existingProfile = await canvasApp.db.get('profile', userDid)
-
         if (existingProfile) {
           // if so, then log the user in
           await login(sessionSigner)

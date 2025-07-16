@@ -1,17 +1,18 @@
 import { pocketbase } from '../pocketbase'
 import { StateCreator } from 'zustand'
-import { Profile, ExpandedProfile, StagedProfileFields } from '../types'
+import { Profile, StagedProfileFields } from '../types'
 import { UsersRecord } from '../pocketbase/pocketbase-types'
 import type { StoreSlices } from './types'
 import type { SessionSigner } from '@canvas-js/interfaces'
 import { canvasApp, canvasTopic } from '../canvas/state'
 import RefsContract from '../canvas/contract'
+import { getCurrentSessionSignerFromMagic } from '../magic'
 
 export type UserSlice = {
   stagedProfileFields: StagedProfileFields
   user: Profile | null
   isInitialized: boolean
-  register: () => Promise<ExpandedProfile>
+  register: () => Promise<Profile>
   updateUser: (fields: Partial<Profile>) => Promise<Profile>
   updateStagedProfileFields: (formFields: StagedProfileFields) => void
   getUserByUserName: (userName: string) => Promise<Profile>
@@ -33,41 +34,10 @@ export const createUserSlice: StateCreator<StoreSlices, [], [], UserSlice> = (se
   //
   //
   init: async () => {
-    try {
-      // If PocketBase has a valid auth store, sync it with our store
-      if (pocketbase.authStore.isValid && pocketbase.authStore.record) {
-        try {
-          const record = await pocketbase
-            .collection<Profile>('users')
-            .getOne(pocketbase.authStore.record.id, { expand: 'items,items.ref' })
-
-          set(() => ({
-            user: record,
-            isInitialized: true,
-          }))
-        } catch (error) {
-          console.error('Failed to sync user state:', error)
-          // If we can't get the user record, clear the auth store
-          pocketbase.authStore.clear()
-          set(() => ({
-            user: null,
-            isInitialized: true,
-          }))
-        }
-      } else {
-        // No valid auth, mark as initialized with no user
-        set(() => ({
-          user: null,
-          isInitialized: true,
-        }))
-      }
-    } catch (error) {
-      console.error('Init error:', error)
-      set(() => ({
-        user: null,
-        isInitialized: true,
-      }))
-    }
+    const sessionSigner = await getCurrentSessionSignerFromMagic()
+    const userDid = await sessionSigner.getDid()
+    const profile = (await canvasApp.db.get('profile', userDid)) as Profile | null
+    set({ user: profile, isInitialized: true })
   },
   //
   //
@@ -119,35 +89,31 @@ export const createUserSlice: StateCreator<StoreSlices, [], [], UserSlice> = (se
   // Requirement: staged user
   //
   register: async () => {
-    // const app = await appPromise
-    const finalUser = { ...get().stagedUser, emailVisibility: true }
+    const { stagedProfileFields } = get()
 
-    if (!finalUser) throw Error('No user data')
-    if (!finalUser.email) throw Error('User must have email')
+    const { firstName, lastName, location, image, sessionSigner } = stagedProfileFields
 
-    const userPassword = get().stagedUser.password
-    if (!userPassword) throw Error('User must have password')
+    if (!sessionSigner) throw new Error('Session signer is required')
 
-    // Generate a username
-    if (!finalUser.userName) {
-      const firstNamePart = finalUser.firstName ? finalUser.firstName.toLowerCase() : 'user'
-      const shortUuid = Math.random().toString(36).substring(2, 6)
-      finalUser.userName = `${firstNamePart}-${shortUuid}`
-    }
+    const userDid = await sessionSigner.getDid()
 
     try {
-      await canvasApp.actions.createProfile({
-        id: finalUser.id,
-        firstName: finalUser.firstName,
-        lastName: finalUser.lastName,
-        location: finalUser.location,
-        image: finalUser.image,
-      })
+      const profile = {
+        did: userDid,
+        firstName: firstName!,
+        lastName: lastName!,
+        location: location!,
+        image: image!,
+        created: new Date().toISOString(),
+        updated: new Date().toISOString(),
+      }
+
+      await canvasApp.as(sessionSigner).createProfile(profile)
 
       set(() => ({
-        user: record,
+        user: profile,
       }))
-      return record
+      return profile
     } catch (error) {
       console.error(error)
       throw error

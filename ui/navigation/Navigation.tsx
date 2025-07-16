@@ -115,7 +115,7 @@ export const Navigation = ({
           </View>
         </View>
         <View style={{ top: 1.5, paddingRight: 17 }}>
-          <Link href={`/user/${user.userName}`}>
+          <Link href={`/user/${user.did}`}>
             <Avatar source={user.image} size={30} />
           </Link>
         </View>

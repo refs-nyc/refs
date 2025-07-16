@@ -7,6 +7,13 @@ if (!process.env.EXPO_PUBLIC_MAGIC_KEY) {
   throw new Error('EXPO_PUBLIC_MAGIC_KEY is not set')
 }
 
+export const getCurrentSessionSignerFromMagic = async () => {
+  const provider = new Web3Provider(magic.rpcProvider as any)
+  const signer = provider.getSigner()
+
+  return new SIWESigner({ signer })
+}
+
 export const magic = new Magic(process.env.EXPO_PUBLIC_MAGIC_KEY)
 
 export const getSessionSignerFromSMS = async (phoneNumber: string) => {
@@ -17,10 +24,5 @@ export const getSessionSignerFromSMS = async (phoneNumber: string) => {
   if (!userInfo.publicAddress) throw new Error('internal error: magic did not assign an address')
 
   if (!magic) throw new Error('Could not instantiate Magic')
-
-  const provider = new Web3Provider(magic.rpcProvider as any)
-  const signer = provider.getSigner()
-  const checksumAddress = ethers.getAddress(userInfo.publicAddress) // checksum-capitalized eth address
-
-  return new SIWESigner({ signer })
+  return getCurrentSessionSignerFromMagic()
 }

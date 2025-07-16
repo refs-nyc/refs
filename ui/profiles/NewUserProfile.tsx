@@ -23,6 +23,7 @@ const PhoneNumberStep = ({ carouselRef }: { carouselRef: React.RefObject<ICarous
     handleSubmit,
     formState: { errors, isValid },
   } = useForm({ mode: 'onChange' })
+  const { login, updateStagedProfileFields } = useAppStore()
 
   return (
     <ProfileStep
@@ -35,14 +36,17 @@ const PhoneNumberStep = ({ carouselRef }: { carouselRef: React.RefObject<ICarous
 
           // check if the profile already exists
           const userDid = await sessionSigner.getDid()
-          const existingProfile = await canvasApp.db.get('profiles', userDid)
+          const existingProfile = await canvasApp.db.get('profile', userDid)
 
           if (existingProfile) {
             // if so, then log the user in
-            // log in with signer
+            await login(sessionSigner)
+            router.dismissAll()
           } else {
             // otherwise update the staged user and move to the next step
-
+            updateStagedProfileFields({
+              sessionSigner,
+            })
             carouselRef.current?.next()
           }
         },
@@ -197,15 +201,10 @@ const ImageStep = ({ carouselRef }: { carouselRef: React.RefObject<ICarouselInst
       onSubmit={handleSubmit(
         async (values) => {
           updateStagedProfileFields(values)
-          try {
-            const record = await register()
 
-            if (record.userName) {
-              carouselRef.current?.next()
-            }
-          } catch (error) {
-            console.error('Nope', error)
-          }
+          await register()
+
+          carouselRef.current?.next()
         },
         (errors) => console.error('Errors:', errors)
       )}
@@ -239,12 +238,6 @@ const DoneStep = ({ carouselRef }: { carouselRef: React.RefObject<ICarouselInsta
       showFullHeightStack={false}
       onSubmit={handleSubmit(
         async (values) => {
-          const userName = user && 'userName' in user && user.userName
-          if (!userName) {
-            // user is not logged in
-            // throw an error, redirect to home page?
-            return
-          }
           // go back to /, clear the stack of the onboarding screens
           router.dismissAll()
         },

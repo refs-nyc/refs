@@ -63,10 +63,10 @@ export default class RefsContract extends Contract<typeof RefsContract.models> {
     did: string
     firstName: string
     lastName: string
-    userName: string
     location: string
     image: string
     created: string
+    updated: string
   }) {
     this.db.set('profile', {
       ...createProfileArgs,

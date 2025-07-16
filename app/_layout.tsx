@@ -97,12 +97,11 @@ function FontProvider({ children }: { children: React.ReactNode }) {
 }
 
 export default function RootLayout() {
-  const { init } = useAppStore()
+  const { init, connectCanvas } = useAppStore()
 
   useEffect(() => {
-    // Initialize user store to sync with PocketBase auth
-    init()
-  }, [init])
+    connectCanvas().then(init)
+  }, [init, connectCanvas])
 
   return (
     <Providers>

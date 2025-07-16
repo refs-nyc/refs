@@ -135,7 +135,7 @@ function RootLayoutNav() {
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <StatusBar barStyle={colorScheme === 'dark' ? 'light-content' : 'dark-content'} />
       <RegisterPushNotifications />
-      <MessagesInit />
+      {/* <MessagesInit /> */}
       <Navigation savesBottomSheetRef={savesBottomSheetRef} />
 
       <Stack

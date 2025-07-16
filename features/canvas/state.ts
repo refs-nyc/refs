@@ -1,8 +1,8 @@
-import { Canvas } from '@canvas-js/core'
+import { Canvas } from '@canvas-js/core/sync'
 import { StateCreator } from 'zustand'
 import type { StoreSlices } from '../stores/types'
-import type { SessionSigner } from '@canvas-js/interfaces'
 import RefsContract from './contract'
+import type { SessionSigner } from '@canvas-js/interfaces'
 
 const canvasUrl = process.env.EXPO_PUBLIC_CANVAS_URL
 if (!canvasUrl) {
@@ -14,30 +14,26 @@ if (!topicOverride) {
   throw new Error('EXPO_PUBLIC_CANVAS_TOPIC_OVERRIDE is not set')
 }
 
+const canvasApp = new Canvas({
+  contract: RefsContract,
+  topicOverride,
+})
+
 export type CanvasSlice = {
-  canvasApp: Canvas | null
-  initializeCanvas: (signer: SessionSigner) => Promise<void>
-  stop: () => void
+  connectCanvas: () => Promise<void>
+  canvasIsConnected: boolean
+  sessionSigner: SessionSigner | null
+  setSessionSigner: (signer: SessionSigner) => void
 }
 
-export const createCanvasSlice: StateCreator<StoreSlices, [], [], CanvasSlice> = (set, get) => ({
-  canvasApp: null,
-  initializeCanvas: async (signer: SessionSigner) => {
-    const canvasApp = await Canvas.initialize({
-      contract: RefsContract,
-      signers: [signer],
-      topicOverride,
-    })
-
+export const createCanvasSlice: StateCreator<StoreSlices, [], [], CanvasSlice> = (set) => ({
+  connectCanvas: async () => {
     await canvasApp.connect(canvasUrl)
-
-    set({ canvasApp })
+    set({ canvasIsConnected: true })
   },
-  stop: () => {
-    const canvasApp = get().canvasApp
-    if (canvasApp) {
-      canvasApp.stop()
-      set({ canvasApp: null })
-    }
+  canvasIsConnected: false,
+  sessionSigner: null,
+  setSessionSigner: (signer: SessionSigner) => {
+    set({ sessionSigner: signer })
   },
 })

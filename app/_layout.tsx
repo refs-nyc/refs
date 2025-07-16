@@ -168,6 +168,15 @@ function RootLayoutNav() {
           }}
         />
         <Stack.Screen
+          name="onboarding/magic"
+          options={{
+            title: 'Magic',
+            animation: 'slide_from_right',
+            gestureEnabled: true,
+            gestureDirection: 'horizontal',
+          }}
+        />
+        <Stack.Screen
           name="user/[userName]/index"
           options={{
             title: 'User',

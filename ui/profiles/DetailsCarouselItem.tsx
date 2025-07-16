@@ -97,7 +97,7 @@ const ProfileLabel = ({ profile }: { profile: Profile }) => {
   return (
     <Pressable
       onPress={() => {
-        router.replace(`/user/${profile.userName}`)
+        router.replace(`/user/${profile.did}`)
       }}
     >
       <XStack style={{ alignItems: 'center' }} gap={s.$075}>
@@ -141,7 +141,7 @@ export const DetailsCarouselItem = ({ item, index }: { item: ExpandedItem; index
 
   const editingThisItem = editing === item.id
 
-  const showAddRefButton = item.creator !== user?.id
+  const showAddRefButton = item.creator !== user?.did
 
   // Calculate title width based on whether there's a link icon
   const hasLinkIcon = !item.list && item.url

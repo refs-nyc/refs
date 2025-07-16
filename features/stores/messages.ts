@@ -6,6 +6,7 @@ import {
   ExpandedReaction,
   ExpandedSave,
   Message,
+  Profile,
   Reaction,
   Save,
 } from '../types'
@@ -20,8 +21,8 @@ export type MessageSlice = {
   updateConversation: (conversation: Conversation) => void
   createConversation: (
     is_direct: boolean,
-    creatorId: string,
-    otherMemberIds: string[],
+    creator: Profile,
+    otherMembers: Profile[],
     title?: string
   ) => Promise<string>
   addConversation(conversation: Conversation): void
@@ -31,10 +32,10 @@ export type MessageSlice = {
   setMemberships: (memberships: ExpandedMembership[]) => void
   addMembership: (membership: ExpandedMembership) => void
   updateMembership: (membership: ExpandedMembership) => void
-  createMemberships: (userIds: string[], conversationId: string) => Promise<void>
+  createMemberships: (users: Profile[], conversationId: string) => Promise<void>
 
   sendMessage: (
-    senderId: string,
+    sender: Profile,
     conversationId: string,
     text: string,
     parentMessageId?: string,
@@ -48,23 +49,23 @@ export type MessageSlice = {
   addNewMessage: (conversationId: string, message: Message) => void
   firstMessageDate: Record<string, string>
   setFirstMessageDate: (conversationId: string, dateString: string) => void
-  updateLastRead: (conversationId: string, userId: string) => Promise<void>
+  updateLastRead: (conversationId: string, user: Profile) => Promise<void>
   getNewMessages: (conversationId: string, oldestLoadedMessageDate: string) => Promise<Message[]>
 
   reactions: Record<string, ExpandedReaction[]>
   setReactions: (reactions: ExpandedReaction[]) => void
   addReaction: (reaction: ExpandedReaction) => void
-  sendReaction: (senderId: string, messageId: string, emoji: string) => Promise<void>
+  sendReaction: (sender: Profile, messageId: string, emoji: string) => Promise<void>
   deleteReaction: (id: string) => Promise<void>
   removeReaction: (reaction: Reaction) => void
 
   saves: ExpandedSave[]
   setSaves: (saves: ExpandedSave[]) => void
-  addSave: (userId: string, savedBy: string) => Promise<void>
+  addSave: (user: Profile, savedBy: Profile) => Promise<void>
   removeSave: (id: string) => Promise<void>
 
-  archiveConversation: (userId: string, conversationId: string) => Promise<void>
-  unarchiveConversation: (userId: string, conversationId: string) => Promise<void>
+  archiveConversation: (user: Profile, conversationId: string) => Promise<void>
+  unarchiveConversation: (user: Profile, conversationId: string) => Promise<void>
 }
 
 export const createMessageSlice: StateCreator<StoreSlices, [], [], MessageSlice> = (set, get) => ({
@@ -84,8 +85,8 @@ export const createMessageSlice: StateCreator<StoreSlices, [], [], MessageSlice>
   },
   createConversation: async (
     is_direct: boolean,
-    creatorId: string,
-    otherMemberIds: string[],
+    creator: Profile,
+    otherMembers: Profile[],
     title?: string
   ): Promise<string> => {
     try {
@@ -96,12 +97,12 @@ export const createMessageSlice: StateCreator<StoreSlices, [], [], MessageSlice>
 
       await pocketbase
         .collection('memberships')
-        .create({ conversation: newConversation.id, user: creatorId })
+        .create({ conversation: newConversation.id, user: creator.did })
 
-      for (const userId of otherMemberIds) {
+      for (const member of otherMembers) {
         await pocketbase
           .collection('memberships')
-          .create({ conversation: newConversation.id, user: userId })
+          .create({ conversation: newConversation.id, user: member.did })
       }
 
       const newMemberships = await pocketbase
@@ -155,12 +156,12 @@ export const createMessageSlice: StateCreator<StoreSlices, [], [], MessageSlice>
       }
     })
   },
-  async createMemberships(userIds, conversationId): Promise<void> {
+  async createMemberships(users, conversationId): Promise<void> {
     try {
-      for (const userId of userIds) {
+      for (const user of users) {
         await pocketbase
           .collection('memberships')
-          .create({ conversation: conversationId, user: userId })
+          .create({ conversation: conversationId, user: user.did })
       }
 
       const newMemberships = await pocketbase
@@ -189,18 +190,18 @@ export const createMessageSlice: StateCreator<StoreSlices, [], [], MessageSlice>
 
     set({ memberships: newItems })
   },
-  sendMessage: async (senderId, conversationId, text, parentMessageId, imageUrl) => {
+  sendMessage: async (sender, conversationId, text, parentMessageId, imageUrl) => {
     try {
       const message = await pocketbase.collection('messages').create<Message>({
         conversation: conversationId,
         text,
-        sender: senderId,
+        sender: sender.did,
         replying_to: parentMessageId,
         image: imageUrl,
       })
       const membership = await pocketbase
         .collection('memberships')
-        .getFirstListItem(`conversation = "${conversationId}" && user = "${senderId}"`)
+        .getFirstListItem(`conversation = "${conversationId}" && user = "${sender.did}"`)
       await pocketbase
         .collection('memberships')
         .update(membership.id, { last_read: message.created })
@@ -260,12 +261,14 @@ export const createMessageSlice: StateCreator<StoreSlices, [], [], MessageSlice>
     })
   },
 
-  updateLastRead: async (conversationId: string, userId: string) => {
+  updateLastRead: async (conversationId: string, user: Profile) => {
     const lastMessage = get().messagesPerConversation[conversationId]
     const lastReadDate = lastMessage[0].created
 
     const memberships = get().memberships
-    const ownMembership = memberships[conversationId].filter((m) => m.expand?.user.id === userId)[0]
+    const ownMembership = memberships[conversationId].filter(
+      (m) => m.expand?.user.did === user.did
+    )[0]
     await pocketbase.collection('memberships').update(ownMembership.id, { last_read: lastReadDate })
   },
 
@@ -307,12 +310,12 @@ export const createMessageSlice: StateCreator<StoreSlices, [], [], MessageSlice>
       }
     })
   },
-  sendReaction: async (senderId, messageId, emoji) => {
+  sendReaction: async (sender, messageId, emoji) => {
     try {
       await pocketbase.collection('reactions').create({
         message: messageId,
         emoji,
-        user: senderId,
+        user: sender.did,
       })
     } catch (error) {
       console.error(error)
@@ -345,10 +348,10 @@ export const createMessageSlice: StateCreator<StoreSlices, [], [], MessageSlice>
       saves: saves,
     }))
   },
-  addSave: async (userId: string, savedBy: string) => {
+  addSave: async (user: Profile, savedBy: Profile) => {
     try {
       const id = (
-        await pocketbase.collection('saves').create<Save>({ user: userId, saved_by: savedBy })
+        await pocketbase.collection('saves').create<Save>({ user: user.did, saved_by: savedBy.did })
       ).id
       const save = await pocketbase.collection('saves').getOne<ExpandedSave>(id, { expand: 'user' })
       set((state) => {
@@ -375,14 +378,18 @@ export const createMessageSlice: StateCreator<StoreSlices, [], [], MessageSlice>
       console.error(error)
     }
   },
-  archiveConversation: async (userId: string, conversationId: string) => {
-    const membership = get().memberships[conversationId].find((m) => m.expand?.user.id === userId)
+  archiveConversation: async (user: Profile, conversationId: string) => {
+    const membership = get().memberships[conversationId].find(
+      (m) => m.expand?.user.did === user.did
+    )
     if (membership) {
       await pocketbase.collection('memberships').update(membership.id, { archived: true })
     }
   },
-  unarchiveConversation: async (userId: string, conversationId: string) => {
-    const membership = get().memberships[conversationId].find((m) => m.expand?.user.id === userId)
+  unarchiveConversation: async (user: Profile, conversationId: string) => {
+    const membership = get().memberships[conversationId].find(
+      (m) => m.expand?.user.did === user.did
+    )
     if (membership) {
       await pocketbase.collection('memberships').update(membership.id, { archived: false })
     }

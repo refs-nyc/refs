@@ -103,7 +103,7 @@ export const MyBacklogSheet = ({
       </Pressable>
 
       {!isMinimised && (
-        <BacklogList items={backlogItems.toReversed()} ownProfile={profile.id === user?.id} />
+        <BacklogList items={backlogItems.toReversed()} ownProfile={profile.did === user?.did} />
       )}
     </BottomSheet>
   )

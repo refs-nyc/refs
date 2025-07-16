@@ -192,23 +192,13 @@ export type SavesRecord = {
 }
 
 export type UsersRecord = {
-  created?: IsoDateString
-  email: string
-  emailVisibility?: boolean
-  firstName?: string
-  id: string
-  image?: string
-  items?: RecordIdString[]
-  lastName?: string
-  lat?: number
-  location?: string
-  lon?: number
-  password: string
-  pushToken?: string
-  tokenKey: string
-  updated?: IsoDateString
-  userName: string
-  verified?: boolean
+  did: string
+  firstName: string
+  lastName: string
+  location: string
+  image: string
+  created: IsoDateString
+  updated: IsoDateString
 }
 
 // Response types include system fields and match responses from the PocketBase API

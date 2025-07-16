@@ -39,7 +39,7 @@ export default function MessageBubble({
 
   const timeZone = calendars[0].timeZone || 'America/New_York'
 
-  const isMe = message.sender === user?.id
+  const isMe = message.sender === user?.did
   const date = message.created ? message.created.slice(0, message.created.length - 1) : ''
   const formattedDate = formatTimestamp(date, timeZone)
 
@@ -47,7 +47,7 @@ export default function MessageBubble({
     <XStack style={{ alignSelf: isMe ? 'flex-end' : 'flex-start', maxWidth: '75%' }}>
       {sender && showSender && !isMe && (
         <View style={{ alignSelf: 'flex-end' }}>
-          <Link href={`/user/${sender.userName}`}>
+          <Link href={`/user/${sender.did}`}>
             <Avatar source={sender.image} size={s.$3} />
           </Link>
         </View>
@@ -100,7 +100,7 @@ export default function MessageBubble({
           {messageReactions && (
             <XStack>
               {messageReactions.map((r) => {
-                const isMine = r.user === user?.id
+                const isMine = r.user === user?.did
                 return (
                   <Pressable key={r.id} onPress={isMine ? () => deleteReaction(r.id) : null}>
                     <XStack

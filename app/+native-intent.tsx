@@ -10,7 +10,7 @@ export function redirectSystemPath({ path, initial }: { path: string; initial: s
 
       if (!pocketbase.authStore.isValid) returnValue = '/login'
 
-      returnValue = `/user/${pocketbase?.authStore?.record?.userName}`
+      returnValue = `/user/${pocketbase?.authStore?.record?.did}`
     } else {
       returnValue = path
     }

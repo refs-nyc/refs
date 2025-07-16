@@ -71,7 +71,7 @@ export default function SearchBottomSheet() {
 
   const stumble = async () => {
     const randomProfile = await getRandomUser()
-    router.push(`/user/${randomProfile.userName}`)
+    router.push(`/user/${randomProfile.did}`)
   }
 
   const search = () => {
@@ -127,7 +127,7 @@ export default function SearchBottomSheet() {
                 justifyContent: 'center',
               }}
               onPress={async () => {
-                if (!searching && user?.userName) {
+                if (!searching && user?.did) {
                   setAddingNewRefTo('grid')
                   useAppStore.getState().setAddRefPrompt('')
                   newRefSheetRef.current?.snapToIndex(1)

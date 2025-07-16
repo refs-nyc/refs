@@ -51,8 +51,8 @@ export default function MemberListScreen() {
             }}
           >
             {members.map((m) => (
-              <View key={m.id}>
-                <Link href={`/user/${m.userName}`}>
+              <View key={m.did}>
+                <Link href={`/user/${m.did}`}>
                   <XStack gap={s.$1}>
                     <Avatar source={m.image} size={s.$5} />
                     <YStack>

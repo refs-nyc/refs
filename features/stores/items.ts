@@ -1,6 +1,6 @@
 import { pocketbase } from '../pocketbase'
 import { StateCreator } from 'zustand'
-import { ExpandedItem, CompleteRef, StagedItemFields, StagedRefFields } from '../types'
+import { ExpandedItem, CompleteRef, StagedItemFields, StagedRefFields, Profile } from '../types'
 import { ItemsRecord, RefsRecord } from '../pocketbase/pocketbase-types'
 import { createdSort } from '@/ui/profiles/sorts'
 import type { StoreSlices } from './types'
@@ -67,8 +67,8 @@ export type ItemSlice = {
   getItemById: (id: string) => Promise<ExpandedItem>
   getItemsByRefTitle: (title: string) => Promise<ExpandedItem[]>
   getItemsByRefIds: (refIds: string[]) => Promise<ExpandedItem[]>
-  getAllItemsByCreator: (creatorId: string) => Promise<ExpandedItem[]>
-  getListsByCreator: (creatorId: string) => Promise<ExpandedItem[]>
+  getAllItemsByCreator: (creator: Profile) => Promise<ExpandedItem[]>
+  getListsByCreator: (creator: Profile) => Promise<ExpandedItem[]>
 }
 
 // ***
@@ -309,36 +309,33 @@ export const createItemSlice: StateCreator<StoreSlices, [], [], ItemSlice> = (se
       expand: 'creator, ref',
     })
   },
-  getAllItemsByCreator: async (creatorId: string) => {
+  getAllItemsByCreator: async (creator: Profile) => {
     return await pocketbase.collection('items').getFullList<ExpandedItem>({
-      filter: `creator = "${creatorId}"`,
+      filter: `creator = "${creator.did}"`,
       expand: 'ref',
     })
   },
-  getListsByCreator: async (creatorId: string) => {
+  getListsByCreator: async (creator: Profile) => {
     return await pocketbase
       .collection<ExpandedItem>('items')
-      .getFullList({ filter: `list = true && creator = "${creatorId}"`, expand: 'ref' })
+      .getFullList({ filter: `list = true && creator = "${creator.did}"`, expand: 'ref' })
   },
 })
 
-export const getProfileItems = async (userName: string) => {
+export const getProfileItems = async (user: Profile) => {
   const items = await pocketbase.collection<ExpandedItem>('items').getFullList({
-    filter: pocketbase.filter(
-      'creator.userName = {:userName} && backlog = false && parent = null',
-      {
-        userName,
-      }
-    ),
+    filter: pocketbase.filter('creator.did = {:did} && backlog = false && parent = null', {
+      did: user.did,
+    }),
     expand: 'items_via_parent, ref, items_via_parent.ref, creator',
   })
   return gridSort(items)
 }
 
-export const getBacklogItems = async (userName: string) => {
+export const getBacklogItems = async (user: Profile) => {
   const items = await pocketbase.collection('items').getFullList({
-    filter: pocketbase.filter('creator.userName = {:userName} && backlog = true && parent = null', {
-      userName,
+    filter: pocketbase.filter('creator.did = {:did} && backlog = true && parent = null', {
+      did: user.did,
     }),
     expand: 'ref',
   })

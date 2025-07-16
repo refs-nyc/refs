@@ -15,7 +15,7 @@ export type UserSlice = {
   register: () => Promise<Profile>
   updateUserLocation: (location: string) => Promise<void>
   updateStagedProfileFields: (formFields: StagedProfileFields) => void
-  getUserByUserName: (userName: string) => Promise<Profile>
+  getUserByDid: (did: string) => Promise<Profile>
   getUsersByIds: (ids: string[]) => Promise<Profile[]>
   getRandomUser: () => Promise<Profile>
   login: (sessionSigner: SessionSigner) => Promise<void>
@@ -61,10 +61,10 @@ export const createUserSlice: StateCreator<StoreSlices, [], [], UserSlice> = (se
       throw err
     }
   },
-  getUserByUserName: async (userName: string) => {
+  getUserByDid: async (did: string) => {
     const userRecord = await pocketbase
       .collection<Profile>('users')
-      .getFirstListItem(`userName = "${userName}"`)
+      .getFirstListItem(`did = "${did}"`)
     return userRecord
   },
   getUsersByIds: async (ids: string[]) => {

@@ -43,13 +43,8 @@ export default function NewGCScreen() {
   }
 
   const onMessageSubmit = async () => {
-    const conversationId = await createConversation(
-      false,
-      user!.id,
-      users.map((u) => u.id),
-      title
-    )
-    await sendMessage(user!.id, conversationId, message)
+    const conversationId = await createConversation(false, user!, users, title)
+    await sendMessage(user!, conversationId, message)
     router.replace(`/messages/${conversationId}`)
   }
 
@@ -88,7 +83,7 @@ export default function NewGCScreen() {
         <Text>{getUserListString(users)}</Text>
         <XStack gap={s.$05} style={{ flexWrap: 'wrap' }}>
           {users.map((u) => (
-            <Link key={u.id} href={`/user/${u.userName}`}>
+            <Link key={u.did} href={`/user/${u.did}`}>
               <Avatar source={u.image} size={s.$3} />
             </Link>
           ))}

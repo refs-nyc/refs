@@ -23,7 +23,7 @@ export const SelectItemToReplace = ({
   useEffect(() => {
     const fetchGridItems = async () => {
       if (!user) return
-      const gridItems = await getProfileItems(user.userName)
+      const gridItems = await getProfileItems(user)
       setGridItems(gridItems)
     }
     fetchGridItems()

@@ -17,7 +17,7 @@ import { ProfileHeader } from './ProfileHeader'
 import { MyBacklogSheet } from './sheets/MyBacklogSheet'
 import { RemoveRefSheet } from './sheets/RemoveRefSheet'
 
-export const MyProfile = ({ userName }: { userName: string }) => {
+export const MyProfile = ({ did }: { did: string }) => {
   const { hasShareIntent } = useShareIntentContext()
 
   const [profile, setProfile] = useState<Profile>()
@@ -27,7 +27,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
 
   const {
     user,
-    getUserByUserName,
+    getUserByDid,
     moveToBacklog,
     profileRefreshTrigger,
     removeItem,
@@ -39,16 +39,16 @@ export const MyProfile = ({ userName }: { userName: string }) => {
 
   const [removingItem, setRemovingItem] = useState<ExpandedItem | null>(null)
 
-  const refreshGrid = async (userName: string) => {
+  const refreshGrid = async (did: string) => {
     setLoading(true)
     try {
-      const profile = await getUserByUserName(userName)
+      const profile = await getUserByDid(did)
       setProfile(profile)
 
-      const gridItems = await getProfileItems(userName)
+      const gridItems = await getProfileItems(profile)
       setGridItems(gridItems)
 
-      const backlogItems = await getBacklogItems(userName)
+      const backlogItems = await getBacklogItems(profile)
       setBacklogItems(backlogItems as ExpandedItem[])
     } catch (error) {
       console.error(error)
@@ -63,7 +63,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
       removeRefSheetRef.current?.close()
       const updatedRecord = await moveToBacklog(removingItem?.id)
       setRemovingItem(null)
-      await refreshGrid(userName)
+      await refreshGrid(did)
     } catch (error) {
       console.error(error)
     }
@@ -74,7 +74,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
     removeRefSheetRef.current?.close()
     await removeItem(removingItem.id)
     setRemovingItem(null)
-    await refreshGrid(userName)
+    await refreshGrid(did)
   }
 
   useEffect(() => {
@@ -87,13 +87,13 @@ export const MyProfile = ({ userName }: { userName: string }) => {
   useEffect(() => {
     const init = async () => {
       try {
-        await refreshGrid(userName)
+        await refreshGrid(did)
       } catch (error) {
         console.error(error)
       }
     }
     init()
-  }, [userName, profileRefreshTrigger])
+  }, [did, profileRefreshTrigger])
 
   const { logout, stopEditing } = useAppStore()
 
@@ -179,7 +179,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
           </View>
         )}
 
-        {!user && <Heading tag="h1">Profile for {userName} not found</Heading>}
+        {!user && <Heading tag="h1">Profile for {did} not found</Heading>}
       </ScrollView>
       {profile && (
         <>
@@ -200,7 +200,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
           />
           {detailsItem && (
             <ProfileDetailsSheet
-              profileUsername={profile.userName}
+              profile={profile}
               detailsItemId={detailsItem.id}
               onChange={(index: number) => {
                 if (index === -1) {

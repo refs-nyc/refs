@@ -159,7 +159,7 @@ export function MessagesInit() {
             console.error('error adding membership')
             console.error(error)
           }
-          if (e.record.user === user?.id) {
+          if (e.record.user === user?.did) {
             const conversation = await pocketbase
               .collection('conversations')
               .getOne(e.record.conversation)

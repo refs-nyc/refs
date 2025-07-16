@@ -2,14 +2,14 @@ import { useAppStore } from '@/features/stores'
 import { MyProfile } from './MyProfile'
 import { OtherProfile } from './OtherProfile'
 
-export const Profile = ({ userName }: { userName: string }) => {
+export const Profile = ({ did }: { did: string }) => {
   const { user } = useAppStore()
 
-  const ownProfile = user?.userName === userName
+  const ownProfile = user?.did === did
 
   if (ownProfile) {
-    return <MyProfile userName={userName} />
+    return <MyProfile did={did} />
   } else {
-    return <OtherProfile userName={userName} />
+    return <OtherProfile did={did} />
   }
 }

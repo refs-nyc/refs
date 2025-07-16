@@ -53,7 +53,7 @@ export const Navigation = ({
     if (Object.keys(memberships).length === 0) return 0
     let newMessages = 0
     for (const conversationId in conversations) {
-      const membership = memberships[conversationId].find((m) => m.expand?.user.id === user?.id)
+      const membership = memberships[conversationId].find((m) => m.expand?.user.did === user?.did)
       if (!membership) continue
       if (membership?.archived) continue
       const lastRead = membership?.last_read
@@ -63,7 +63,7 @@ export const Navigation = ({
       let unreadMessages
       if (lastRead) {
         const msgs = conversationMessages.filter(
-          (m) => new Date(m.created!) > lastReadDate && m.sender !== user?.id
+          (m) => new Date(m.created!) > lastReadDate && m.sender !== user?.did
         )
         unreadMessages = msgs.length
       } else unreadMessages = conversationMessages.length

@@ -38,7 +38,7 @@ export function MessagesScreen({ conversationId }: { conversationId: string }) {
   const windowHeight = useWindowDimensions().height
 
   const conversation = conversations[conversationId]
-  const members = memberships[conversationId].filter((m) => m.expand?.user.id !== user?.id)
+  const members = memberships[conversationId].filter((m) => m.expand?.user.did !== user?.did)
 
   const conversationMessages = messagesPerConversation[conversationId]
   const highlightedMessage = conversationMessages.find((m) => m.id === highlightedMessageId)
@@ -47,7 +47,7 @@ export function MessagesScreen({ conversationId }: { conversationId: string }) {
     const colors = randomColors(members.length)
 
     const map = members.reduce((acc, member, index) => {
-      if (member.expand?.user.id) acc[member.expand?.user.id] = colors[index]
+      if (member.expand?.user.did) acc[member.expand?.user.did] = colors[index]
       return acc
     }, {} as Record<string, any>)
 
@@ -56,14 +56,14 @@ export function MessagesScreen({ conversationId }: { conversationId: string }) {
 
   useEffect(() => {
     if (!user) return
-    updateLastRead(conversationId, user.id)
+    updateLastRead(conversationId, user)
   }, [])
 
   if (!user) return null
 
   const onMessageSubmit = () => {
     sendMessage(
-      user.id,
+      user,
       conversationId,
       message,
       replying ? highlightedMessageId : undefined,
@@ -109,7 +109,7 @@ export function MessagesScreen({ conversationId }: { conversationId: string }) {
     const parentMessage = item.replying_to ? conversationMessages[parentMessageIndex] : undefined
     const parentMessageSender = parentMessage
       ? memberships[conversationId].find(
-          (member) => member.expand?.user.id === parentMessage.sender
+          (member) => member.expand?.user.did === parentMessage.sender
         )?.expand?.user
       : undefined
     return (
@@ -117,7 +117,7 @@ export function MessagesScreen({ conversationId }: { conversationId: string }) {
         key={item.id}
         message={item}
         sender={
-          memberships[conversationId].find((member) => member.expand?.user.id === item.sender)
+          memberships[conversationId].find((member) => member.expand?.user.did === item.sender)
             ?.expand?.user || user!
         }
         showSender={!conversation.is_direct}
@@ -167,7 +167,7 @@ export function MessagesScreen({ conversationId }: { conversationId: string }) {
             : conversation.title}
         </Heading>
         {conversation.is_direct ? (
-          <Link href={`/user/${members[0].expand?.user.userName}`}>
+          <Link href={`/user/${members[0].expand?.user.did}`}>
             <Avatar source={members[0].expand?.user.image} size={s.$4} />
           </Link>
         ) : (
@@ -220,7 +220,7 @@ export function MessagesScreen({ conversationId }: { conversationId: string }) {
           parentMessage={replying ? highlightedMessage : undefined}
           parentMessageSender={
             replying
-              ? members.find((m) => m.expand?.user.id === highlightedMessage?.sender)?.expand
+              ? members.find((m) => m.expand?.user.did === highlightedMessage?.sender)?.expand
                   ?.user || user
               : undefined
           }
@@ -240,7 +240,7 @@ export function MessagesScreen({ conversationId }: { conversationId: string }) {
               setReplying(false)
             }}
             onEmojiSelected={(e: any) => {
-              sendReaction(user.id, highlightedMessageId, e.emoji)
+              sendReaction(user, highlightedMessageId, e.emoji)
               setHighlightedMessageId('')
               setShowEmojiPicker(false)
             }}

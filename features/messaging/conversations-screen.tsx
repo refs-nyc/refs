@@ -16,7 +16,7 @@ export function ConversationsScreen() {
   const activeConversations = []
   for (const conversationId in conversations) {
     const conversation = conversations[conversationId]
-    const membership = memberships[conversationId].find((m) => m.expand?.user.id === user?.id)
+    const membership = memberships[conversationId].find((m) => m.expand?.user.did === user?.did)
     if (membership && !membership.archived) activeConversations.push(conversation)
   }
 
@@ -29,7 +29,7 @@ export function ConversationsScreen() {
 
   const onArchive = async (conversation: Conversation) => {
     if (user) {
-      await archiveConversation(user.id, conversation.id)
+      await archiveConversation(user, conversation.id)
     }
   }
 

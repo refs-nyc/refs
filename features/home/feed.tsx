@@ -63,7 +63,7 @@ const ListItem = ({
   onImagePress: () => void
 }) => {
   const creator = item.expand!.creator
-  const creatorProfileUrl = `/user/${creator.userName}/` as const
+  const creatorProfileUrl = `/user/${creator.did}/` as const
 
   return (
     <View
@@ -212,7 +212,7 @@ export const Feed = () => {
       {detailsItem && (
         <ProfileDetailsSheet
           detailsSheetRef={detailsSheetRef}
-          profileUsername={detailsItem.expand!.creator.userName}
+          profile={detailsItem.expand!.creator}
           detailsItemId={detailsItem.id}
           onChange={(index) => {
             // if the index is -1, then the user has closed the sheet

@@ -106,7 +106,7 @@ export const AddRefSheet = ({
             onAddRefToList={async (fields) => {}}
             onAddRef={async (fields) => {
               // check if the grid is full
-              const gridItems = await getProfileItems(user.userName)
+              const gridItems = await getProfileItems(user)
               if (gridItems && gridItems.length >= 12) {
                 // show a modal to the user that the grid is full
                 setStagedItemFields(fields)

@@ -154,7 +154,7 @@ export const NewRefSheet = ({
                 const mergedFields = { ...itemFields, promptContext: refFields?.promptContext }
                 if (!backlog) {
                   // check if the grid is full
-                  const gridItems = await getProfileItems(user?.userName!)
+                  const gridItems = await getProfileItems(user!)
                   if (gridItems.length >= 12) {
                     setStagedItemFields(mergedFields)
                     setStep('selectItemToReplace')
@@ -220,7 +220,7 @@ export const NewRefSheet = ({
           {step === 'addToList' && (
             <View style={{ paddingVertical: s.$1, width: '100%' }}>
               <UserLists
-                creatorId={user?.id!}
+                creator={user!}
                 onComplete={async (list: ExpandedItem) => {
                   // Add the item to the list
                   await addItemToList(list.id, itemData?.id!)

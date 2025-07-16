@@ -16,7 +16,7 @@ export type UserSlice = {
   updateUserLocation: (location: string) => Promise<void>
   updateStagedProfileFields: (formFields: StagedProfileFields) => void
   getUserByDid: (did: string) => Promise<Profile>
-  getUsersByIds: (ids: string[]) => Promise<Profile[]>
+  getUsersByDids: (dids: string[]) => Promise<Profile[]>
   getRandomUser: () => Promise<Profile>
   login: (sessionSigner: SessionSigner) => Promise<void>
   sessionSigner: SessionSigner | null
@@ -67,8 +67,8 @@ export const createUserSlice: StateCreator<StoreSlices, [], [], UserSlice> = (se
       .getFirstListItem(`did = "${did}"`)
     return userRecord
   },
-  getUsersByIds: async (ids: string[]) => {
-    const filter = ids.map((id) => `id="${id}"`).join(' || ')
+  getUsersByDids: async (dids: string[]) => {
+    const filter = dids.map((did) => `did="${did}"`).join(' || ')
     return await pocketbase.collection('users').getFullList<Profile>({
       filter: filter,
     })

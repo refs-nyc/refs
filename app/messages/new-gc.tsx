@@ -13,7 +13,7 @@ export default function NewGCScreen() {
   const [users, setUsers] = useState<Profile[]>([])
   const [message, setMessage] = useState<string>('')
   const [title, setTitle] = useState<string>('')
-  const { user, createConversation, sendMessage, getUsersByIds } = useAppStore()
+  const { user, createConversation, sendMessage, getUsersByDids } = useAppStore()
 
   useEffect(() => {
     const getUsers = async () => {
@@ -22,7 +22,7 @@ export default function NewGCScreen() {
           ? queryParams.members.split(',')
           : queryParams.members
 
-      const users = await getUsersByIds(ids)
+      const users = await getUsersByDids(ids)
       setUsers(users)
     }
     getUsers()

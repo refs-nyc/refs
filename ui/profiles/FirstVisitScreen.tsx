@@ -8,7 +8,7 @@ import { s, c } from '@/features/style'
 import { useAppStore } from '@/features/stores'
 
 export const FirstVisitScreen = () => {
-  const { user, updateUser } = useAppStore()
+  const { user } = useAppStore()
 
   const [isEnabled, setIsEnabled] = useState(false)
   const toggleSwitch = async () => {
@@ -16,13 +16,14 @@ export const FirstVisitScreen = () => {
 
     await registerForPushNotificationsAsync()
       .then(async (token) => {
-        await updateUser({ pushToken: token ?? '' })
+        // TODO: how do we handle push notification tokens in canvas?
+        // await updateUser({ pushToken: token ?? '' })
       })
       .catch((err) => {
         console.error(err)
       })
       .finally(() => {
-        router.push(user ? `/user/${user.userName}` : '/')
+        router.push(user ? `/user/${user.did}` : '/')
       })
   }
 

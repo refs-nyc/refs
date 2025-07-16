@@ -13,7 +13,7 @@ export type UserSlice = {
   user: Profile | null
   isInitialized: boolean
   register: () => Promise<Profile>
-  updateUser: (fields: Partial<Profile>) => Promise<Profile>
+  updateUserLocation: (location: string) => Promise<void>
   updateStagedProfileFields: (formFields: StagedProfileFields) => void
   getUserByUserName: (userName: string) => Promise<Profile>
   getUsersByIds: (ids: string[]) => Promise<Profile[]>
@@ -50,17 +50,12 @@ export const createUserSlice: StateCreator<StoreSlices, [], [], UserSlice> = (se
   //
   //
   //
-  updateUser: async (fields: Partial<Profile>) => {
+  updateUserLocation: async (location: string) => {
     try {
-      if (!pocketbase.authStore.record) {
-        throw new Error('not logged in')
-      }
+      const { sessionSigner } = get()
+      if (!sessionSigner) throw new Error('not logged in')
 
-      const record = await pocketbase
-        .collection<UsersRecord>('users')
-        .update(pocketbase.authStore.record.id, { ...fields })
-
-      return record
+      await canvasApp.as(sessionSigner).updateProfileLocation(location)
     } catch (err) {
       console.error(err)
       throw err

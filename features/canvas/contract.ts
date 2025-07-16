@@ -74,17 +74,8 @@ export default class RefsContract extends Contract<typeof RefsContract.models> {
     })
   }
 
-  async updateProfile(updateProfileArgs: {
-    id: string
-    firstName: string
-    lastName: string
-    location: string
-    image: string
-    updated: string
-  }) {
-    this.db.update('profile', {
-      ...updateProfileArgs,
-    })
+  async updateProfileLocation(location: string) {
+    this.db.update('profile', { did: this.did, location })
   }
 
   async createRef(createRefArgs: {

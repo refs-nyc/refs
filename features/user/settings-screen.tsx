@@ -6,7 +6,7 @@ import { useAppStore } from '@/features/stores'
 import { s } from '@/features/style'
 
 export function SettingsScreen() {
-  const { logout, updateUser } = useAppStore()
+  const { logout, updateUserLocation } = useAppStore()
 
   const handleLogout = async () => {
     await logout()
@@ -17,7 +17,7 @@ export function SettingsScreen() {
     <ScreenWrapper>
       <DeviceLocation
         onChange={async ({ location, lon, lat }) => {
-          await updateUser({ location, lon, lat })
+          await updateUserLocation(location)
         }}
       />
 

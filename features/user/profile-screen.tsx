@@ -1,9 +1,9 @@
 import { Profile } from '@/ui'
 
-export function UserProfileScreen({ userName }: { userName: string }) {
-  if (!userName) {
+export function UserProfileScreen({ did }: { did: string }) {
+  if (!did) {
     return null
   }
 
-  return <Profile userName={userName} />
+  return <Profile did={did} />
 }

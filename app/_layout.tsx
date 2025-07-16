@@ -169,7 +169,7 @@ function RootLayoutNav() {
           }}
         />
         <Stack.Screen
-          name="user/[userName]/index"
+          name="user/[did]/index"
           options={{
             title: 'User',
             // presentation: 'modal',

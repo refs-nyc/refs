@@ -1,7 +1,6 @@
 import { pocketbase } from '../pocketbase'
 import { StateCreator } from 'zustand'
 import { Profile, StagedProfileFields } from '../types'
-import { UsersRecord } from '../pocketbase/pocketbase-types'
 import type { StoreSlices } from './types'
 import type { SessionSigner } from '@canvas-js/interfaces'
 import { canvasApp, canvasTopic } from '../canvas/state'
@@ -62,23 +61,22 @@ export const createUserSlice: StateCreator<StoreSlices, [], [], UserSlice> = (se
     }
   },
   getUserByDid: async (did: string) => {
-    const userRecord = await pocketbase
-      .collection<Profile>('users')
-      .getFirstListItem(`did = "${did}"`)
-    return userRecord
+    const user = (await canvasApp.db.get('profile', did)) as Profile | null
+    if (!user) throw new Error('Profile not found')
+    return user
   },
   getUsersByDids: async (dids: string[]) => {
-    const filter = dids.map((did) => `did="${did}"`).join(' || ')
-    return await pocketbase.collection('users').getFullList<Profile>({
-      filter: filter,
-    })
+    const users: Profile[] = []
+    for (const did of dids) {
+      const user = (await canvasApp.db.get('profile', did)) as Profile | null
+      if (user) users.push(user)
+    }
+    return users
   },
   getRandomUser: async () => {
-    const result = await pocketbase.collection('users').getList<Profile>(1, 1, {
-      filter: 'items:length > 5',
-      sort: '@random',
-    })
-    return result.items[0]
+    const allUsers = await canvasApp.db.query('profile', {})
+    const randomIndex = Math.floor(Math.random() * allUsers.length)
+    return allUsers[randomIndex] as Profile
   },
   //
   // Requirement: staged user

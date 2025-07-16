@@ -1,5 +1,6 @@
 import { Link, router, usePathname } from 'expo-router'
 import { Text, View, Pressable, Animated } from 'react-native'
+import { Button } from '@/ui/buttons/Button'
 import { Avatar } from '../atoms/Avatar'
 import { c, s } from '@/features/style'
 import { useAppStore } from '@/features/stores'
@@ -18,7 +19,7 @@ export const Navigation = ({
 }) => {
   const pathname = usePathname()
 
-  const { user, saves, messagesPerConversation, conversations, memberships } = useAppStore()
+  const { user, saves, messagesPerConversation, conversations, memberships, logout } = useAppStore()
 
   const isHomePage = pathname === '/' || pathname === '/index'
 
@@ -114,6 +115,7 @@ export const Navigation = ({
             </Link>
           </View>
         </View>
+        <Button style={{ width: 20 }} variant="inlineSmallMuted" title="Log out" onPress={logout} />
         <View style={{ top: 1.5, paddingRight: 17 }}>
           <Link href={`/user/${user.did}`}>
             <Avatar source={user.image} size={30} />

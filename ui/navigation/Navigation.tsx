@@ -76,7 +76,7 @@ export const Navigation = ({
     [messagesPerConversation, memberships, user]
   )
 
-  if (!user) return null
+  if (!user || pathname === '/onboarding') return null
 
   return (
     <View style={{ display: 'flex', flexDirection: 'row', paddingLeft: 2 }}>

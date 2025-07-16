@@ -1,29 +1,32 @@
 import { pocketbase } from '../pocketbase'
 import { StateCreator } from 'zustand'
-import { Profile, ExpandedProfile } from '../types'
+import { Profile, ExpandedProfile, StagedProfileFields } from '../types'
 import { UsersRecord } from '../pocketbase/pocketbase-types'
-import { ClientResponseError } from 'pocketbase'
 import type { StoreSlices } from './types'
+import type { SessionSigner } from '@canvas-js/interfaces'
+import { canvasApp, canvasTopic } from '../canvas/state'
+import RefsContract from '../canvas/contract'
 
 export type UserSlice = {
-  stagedUser: Partial<Profile>
+  stagedProfileFields: StagedProfileFields
   user: Profile | null
   isInitialized: boolean
   register: () => Promise<ExpandedProfile>
   updateUser: (fields: Partial<Profile>) => Promise<Profile>
-  updateStagedUser: (formFields: Partial<Profile>) => void
-  loginWithPassword: (email: string, password: string) => Promise<any>
-  getUserByEmail: (email: string) => Promise<Profile>
+  updateStagedProfileFields: (formFields: StagedProfileFields) => void
   getUserByUserName: (userName: string) => Promise<Profile>
   getUsersByIds: (ids: string[]) => Promise<Profile[]>
   getRandomUser: () => Promise<Profile>
-  login: (userName: string) => Promise<Profile>
+  login: (sessionSigner: SessionSigner) => Promise<void>
+  sessionSigner: SessionSigner | null
+  setSessionSigner: (signer: SessionSigner) => void
+
   logout: () => void
   init: () => Promise<void>
 }
 
 export const createUserSlice: StateCreator<StoreSlices, [], [], UserSlice> = (set, get) => ({
-  stagedUser: {},
+  stagedProfileFields: {},
   user: null, // user is ALWAYS the user of the app, this is only set if the user is logged in
   isInitialized: false,
   //
@@ -69,14 +72,10 @@ export const createUserSlice: StateCreator<StoreSlices, [], [], UserSlice> = (se
   //
   //
   //
-  updateStagedUser: (formFields: Partial<Profile>) => {
+  updateStagedProfileFields: (formFields: StagedProfileFields) => {
     set((state) => ({
-      stagedUser: { ...state.stagedUser, ...formFields },
+      stagedProfileFields: { ...state.stagedProfileFields, ...formFields },
     }))
-
-    const updatedState = get().stagedUser
-
-    return updatedState
   },
   //
   //
@@ -96,19 +95,6 @@ export const createUserSlice: StateCreator<StoreSlices, [], [], UserSlice> = (se
       console.error(err)
       throw err
     }
-  },
-  //
-  //
-  //
-  getUserByEmail: async (email: string) => {
-    const userRecord = await pocketbase
-      .collection<Profile>('users')
-      .getFirstListItem(`email = "${email}"`)
-    set(() => ({
-      stagedUser: userRecord,
-    }))
-
-    return userRecord
   },
   getUserByUserName: async (userName: string) => {
     const userRecord = await pocketbase
@@ -150,11 +136,13 @@ export const createUserSlice: StateCreator<StoreSlices, [], [], UserSlice> = (se
     }
 
     try {
-      const record = await pocketbase
-        .collection('users')
-        .create<ExpandedProfile>(finalUser, { expand: 'items,items.ref' })
-
-      await get().loginWithPassword(finalUser.email, userPassword)
+      await canvasApp.actions.createProfile({
+        id: finalUser.id,
+        firstName: finalUser.firstName,
+        lastName: finalUser.lastName,
+        location: finalUser.location,
+        image: finalUser.image,
+      })
 
       set(() => ({
         user: record,
@@ -168,59 +156,29 @@ export const createUserSlice: StateCreator<StoreSlices, [], [], UserSlice> = (se
   //
   //
   //
-  loginWithPassword: async (email: string, password: string) => {
-    const response = await pocketbase
-      .collection<UsersRecord>('users')
-      .authWithPassword(email, password)
-    set(() => ({
-      user: response.record,
-    }))
-    return response.record
-  },
-  //
-  //
-  //
-  login: async (userName: string) => {
-    try {
-      const record = await pocketbase
-        .collection<Profile>('users')
-        .getFirstListItem(`userName = "${userName}"`, { expand: 'items,items.ref' })
+  login: async (sessionSigner: SessionSigner) => {
+    // request a session
+    await sessionSigner.newSession(canvasTopic)
 
-      // Get the user's email from the record
-      if (!record.email) {
-        throw new Error('User has no email')
-      }
+    // get the profile from modeldb
+    const userDid = await sessionSigner.getDid()
+    const profile = (await canvasApp.db.get(
+      'profile',
+      userDid
+    )) as typeof RefsContract.models.profile
 
-      // Get the password from staged user
-      const password = get().stagedUser.password
-      if (!password) {
-        throw new Error('No password provided')
-      }
-
-      // Authenticate with PocketBase
-      await pocketbase.collection('users').authWithPassword(record.email, password)
-
-      set(() => ({
-        user: record,
-      }))
-      return record
-    } catch (error) {
-      if ((error as ClientResponseError).status === 404) {
-        try {
-          const record = await get().register()
-
-          set(() => ({
-            user: record,
-          }))
-
-          return record
-        } catch (err) {
-          console.error(err)
-        }
-      }
-      console.error(error)
-      throw error
+    if (!profile) {
+      throw new Error('Profile not found')
     }
+
+    set({
+      user: profile,
+      sessionSigner,
+    })
+  },
+  sessionSigner: null,
+  setSessionSigner: (signer: SessionSigner) => {
+    set({ sessionSigner: signer })
   },
   //
   //
@@ -228,9 +186,11 @@ export const createUserSlice: StateCreator<StoreSlices, [], [], UserSlice> = (se
   logout: () => {
     set(() => ({
       user: null,
+      sessionSigner: null,
       stagedUser: {},
       isInitialized: true,
     }))
+
     pocketbase.realtime.unsubscribe()
     pocketbase.authStore.clear()
   },

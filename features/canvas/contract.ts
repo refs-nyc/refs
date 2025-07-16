@@ -32,8 +32,7 @@ export default class RefsContract extends Contract<typeof RefsContract.models> {
         $indexes: ['id'],
       },
       profile: {
-        id: 'primary',
-        userName: 'string',
+        did: 'primary',
 
         firstName: 'string',
         lastName: 'string',
@@ -61,7 +60,7 @@ export default class RefsContract extends Contract<typeof RefsContract.models> {
   }
 
   async createProfile(createProfileArgs: {
-    id: string
+    did: string
     firstName: string
     lastName: string
     userName: string

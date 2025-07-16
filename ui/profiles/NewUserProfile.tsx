@@ -12,15 +12,17 @@ import { DeviceLocation } from '../inputs/DeviceLocation'
 import { AvatarPicker } from '../inputs/AvatarPicker'
 import { FirstVisitScreen } from './FirstVisitScreen'
 import { SizableText } from '../typo/SizableText'
+import { getSessionSignerFromSMS } from '@/features/magic'
+import { canvasApp } from '@/features/canvas/state'
+
 const win = Dimensions.get('window')
 
-const EmailStep = ({ carouselRef }: { carouselRef: React.RefObject<ICarouselInstance> }) => {
+const PhoneNumberStep = ({ carouselRef }: { carouselRef: React.RefObject<ICarouselInstance> }) => {
   const {
     control,
     handleSubmit,
     formState: { errors, isValid },
   } = useForm({ mode: 'onChange' })
-  const { getUserByEmail, updateStagedUser } = useAppStore()
 
   return (
     <ProfileStep
@@ -29,51 +31,44 @@ const EmailStep = ({ carouselRef }: { carouselRef: React.RefObject<ICarouselInst
       disabled={!isValid}
       onSubmit={handleSubmit(
         async (values) => {
-          // check if a user already exists with the given email address
-          try {
-            const user = await getUserByEmail(values.email)
-            if (user) {
-              // if so, then redirect to login view
-              router.push(`/user/login`)
-            }
-          } catch (error: any) {
-            if (error.status === 404) {
-              // otherwise update the staged user and move to the next step
-              updateStagedUser(values)
-              carouselRef.current?.next()
-            } else {
-              console.error(error)
-            }
+          const sessionSigner = await getSessionSignerFromSMS(values.phoneNumber)
+
+          // check if the profile already exists
+          const userDid = await sessionSigner.getDid()
+          const existingProfile = await canvasApp.db.get('profiles', userDid)
+
+          if (existingProfile) {
+            // if so, then log the user in
+            // log in with signer
+          } else {
+            // otherwise update the staged user and move to the next step
+
+            carouselRef.current?.next()
           }
         },
         (errors) => console.error('Errors:', errors)
       )}
     >
       <Controller
-        name="email"
+        name="phoneNumber"
         control={control}
         rules={{
-          required: 'Email address is required',
-          pattern: {
-            value:
-              /(?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*|"(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\[(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?|[a-z0-9-]*[a-z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\])/,
-            message: 'Email address is invalid',
-          },
+          required: 'Phone number is required',
         }}
         render={({ field: { onChange, value, onBlur } }) => (
           <FormFieldWithIcon
             onChange={onChange}
             onBlur={onBlur}
-            type="email"
-            id="email"
-            placeholder={'Sign up with email'}
+            type="phone"
+            id="phoneNumber"
+            placeholder={'Sign up with phone number'}
             value={value}
             autoFocus={false}
             autoCorrect={false}
           />
         )}
       />
-      <ErrorView error={errors?.email} />
+      <ErrorView error={errors?.phoneNumber} />
     </ProfileStep>
   )
 }
@@ -84,7 +79,7 @@ const NameStep = ({ carouselRef }: { carouselRef: React.RefObject<ICarouselInsta
     handleSubmit,
     formState: { errors, isValid },
   } = useForm({ mode: 'onChange' })
-  const { updateStagedUser } = useAppStore()
+  const { updateStagedProfileFields } = useAppStore()
 
   return (
     <ProfileStep
@@ -93,7 +88,7 @@ const NameStep = ({ carouselRef }: { carouselRef: React.RefObject<ICarouselInsta
       disabled={!isValid}
       onSubmit={handleSubmit(
         async (values) => {
-          updateStagedUser(values)
+          updateStagedProfileFields(values)
           carouselRef.current?.next()
         },
         (errors) => console.error('Errors:', errors)
@@ -152,7 +147,7 @@ const LocationStep = ({ carouselRef }: { carouselRef: React.RefObject<ICarouselI
   } = useForm<{ location?: string; lon?: number; lat?: number }>({
     mode: 'onChange',
   })
-  const { updateStagedUser } = useAppStore()
+  const { updateStagedProfileFields } = useAppStore()
 
   return (
     <ProfileStep
@@ -175,7 +170,7 @@ const LocationStep = ({ carouselRef }: { carouselRef: React.RefObject<ICarouselI
         render={({ field: { onChange } }) => (
           <DeviceLocation
             onChange={(values) => {
-              updateStagedUser(values)
+              updateStagedProfileFields(values)
               onChange(values)
             }}
           />
@@ -186,84 +181,13 @@ const LocationStep = ({ carouselRef }: { carouselRef: React.RefObject<ICarouselI
   )
 }
 
-const PasswordStep = ({ carouselRef }: { carouselRef: React.RefObject<ICarouselInstance> }) => {
-  const {
-    control,
-    handleSubmit,
-    formState: { errors, isValid },
-  } = useForm({ mode: 'onChange' })
-  const { updateStagedUser } = useAppStore()
-
-  return (
-    <ProfileStep
-      buttonTitle="Next"
-      showFullHeightStack={false}
-      disabled={!isValid}
-      onSubmit={handleSubmit(
-        async (values) => {
-          updateStagedUser(values)
-          carouselRef.current?.next()
-        },
-        (errors) => console.error('Errors:', errors)
-      )}
-    >
-      <Controller
-        name="password"
-        control={control}
-        rules={{
-          required: 'Password is required',
-          pattern: {
-            value: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/,
-            message:
-              'Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one number, and one special character',
-          },
-        }}
-        render={({ field: { onChange, value, onBlur } }) => (
-          <FormFieldWithIcon
-            onChange={onChange}
-            type="password"
-            id="password"
-            placeholder={'Password'}
-            value={value}
-            autoFocus={false}
-            onBlur={onBlur}
-            autoCorrect={false}
-          />
-        )}
-      />
-      <ErrorView error={errors?.password} />
-      <Controller
-        name="passwordConfirm"
-        control={control}
-        rules={{
-          required: true,
-          validate: (value, formValues) => value === formValues.password,
-        }}
-        render={({ field: { onChange, value, onBlur } }) => (
-          <FormFieldWithIcon
-            onChange={onChange}
-            type="password"
-            id="passwordConfirm"
-            placeholder={'Confirm Password'}
-            value={value}
-            autoFocus={false}
-            onBlur={onBlur}
-            autoCorrect={false}
-          />
-        )}
-      />
-      <ErrorView error={errors?.passwordConfirm} />
-    </ProfileStep>
-  )
-}
-
 const ImageStep = ({ carouselRef }: { carouselRef: React.RefObject<ICarouselInstance> }) => {
   const {
     control,
     handleSubmit,
     formState: { errors, isValid },
   } = useForm({ mode: 'onChange' })
-  const { register, updateStagedUser } = useAppStore()
+  const { register, updateStagedProfileFields } = useAppStore()
 
   return (
     <ProfileStep
@@ -272,7 +196,7 @@ const ImageStep = ({ carouselRef }: { carouselRef: React.RefObject<ICarouselInst
       disabled={!isValid}
       onSubmit={handleSubmit(
         async (values) => {
-          updateStagedUser(values)
+          updateStagedProfileFields(values)
           try {
             const record = await register()
 
@@ -340,7 +264,7 @@ export const NewUserProfile = () => {
       <Carousel
         loop={false}
         ref={carouselRef}
-        data={[EmailStep, NameStep, LocationStep, PasswordStep, ImageStep, DoneStep]}
+        data={[PhoneNumberStep, NameStep, LocationStep, ImageStep, DoneStep]}
         width={win.width}
         height={win.height}
         enabled={false}

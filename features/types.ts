@@ -1,7 +1,14 @@
 import * as PBTypes from '@/features/pocketbase/pocketbase-types'
+import type { SessionSigner } from '@canvas-js/interfaces'
 
 export type CompleteRef = PBTypes.RefsRecord
-export type Profile = PBTypes.UsersRecord
+export type Profile = {
+  did: string
+  firstName: string
+  lastName: string
+  location: string
+  image: string
+}
 export type Item = PBTypes.ItemsRecord
 
 export type ExpandedProfile = PBTypes.UsersResponse<{ items: PBTypes.ItemsRecord[] }>
@@ -41,5 +48,13 @@ export type StagedRefFields = {
   title?: string
   url?: string
   meta?: string
+  image?: string
+}
+
+export type StagedProfileFields = {
+  sessionSigner?: SessionSigner
+  firstName?: string
+  lastName?: string
+  location?: string
   image?: string
 }

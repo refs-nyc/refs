@@ -44,6 +44,7 @@ import Saves from '@/features/saves/saves-sheet'
 import Referencers from '@/ui/profiles/sheets/ReferencersSheet'
 import { AddRefSheet } from '@/ui/profiles/sheets/AddRefSheet'
 import { NewRefSheet } from '@/ui/profiles/sheets/NewRefSheet'
+import { magic } from '@/features/magic'
 
 install()
 polyfillEncoding()
@@ -105,6 +106,7 @@ export default function RootLayout() {
 
   return (
     <Providers>
+      <magic.Relayer />
       <RootLayoutNav />
       <DeferredFonts />
     </Providers>

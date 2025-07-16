@@ -17,9 +17,10 @@ if (!topicOverride) {
 export type CanvasSlice = {
   canvasApp: Canvas | null
   initializeCanvas: (signer: SessionSigner) => Promise<void>
+  stop: () => void
 }
 
-export const createCanvasSlice: StateCreator<StoreSlices, [], [], CanvasSlice> = (set) => ({
+export const createCanvasSlice: StateCreator<StoreSlices, [], [], CanvasSlice> = (set, get) => ({
   canvasApp: null,
   initializeCanvas: async (signer: SessionSigner) => {
     const canvasApp = await Canvas.initialize({
@@ -31,5 +32,12 @@ export const createCanvasSlice: StateCreator<StoreSlices, [], [], CanvasSlice> =
     await canvasApp.connect(canvasUrl)
 
     set({ canvasApp })
+  },
+  stop: () => {
+    const canvasApp = get().canvasApp
+    if (canvasApp) {
+      canvasApp.stop()
+      set({ canvasApp: null })
+    }
   },
 })

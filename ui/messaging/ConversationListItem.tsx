@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 import { useAppStore } from '@/features/stores'
 import { Conversation } from '@/features/types'
 import { s, c } from '@/features/style'
@@ -28,13 +30,15 @@ export default function ConversationListItem({
     ? lastMessage.created.slice(0, lastMessage.created.length - 1)
     : ''
   const members = memberships[conversation.id]
-    .filter((m) => m.expand?.user && m.expand.user.id !== user.id)
+    .filter((m) => m.expand?.user && m.expand.user.did !== user.did)
     .map((m) => m.expand!.user)
-  const ownMembership = memberships[conversation.id].filter((m) => m.expand?.user.id === user.id)[0]
+  const ownMembership = memberships[conversation.id].filter(
+    (m) => m.expand?.user.did === user.did
+  )[0]
 
   const lastMessageDate = new Date(lastMessage?.created ? lastMessage.created : '')
   const lastReadDate = new Date(ownMembership.last_read)
-  const newMessages = lastMessageDate > lastReadDate && lastMessage?.sender !== user?.id
+  const newMessages = lastMessageDate > lastReadDate && lastMessage?.sender !== user?.did
 
   let image
   for (const member of members) {

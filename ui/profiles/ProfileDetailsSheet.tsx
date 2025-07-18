@@ -10,17 +10,16 @@ import { ProfileDetailsProvider } from './profileDetailsStore'
 export const ProfileDetailsSheet = ({
   onChange,
   detailsSheetRef,
-  profileUsername,
+  profile,
   detailsItemId,
   openedFromFeed,
 }: {
-  profileUsername: string
+  profile: Profile
   detailsItemId: string
   onChange: (index: number) => void
   detailsSheetRef: React.RefObject<BottomSheet>
   openedFromFeed: boolean
 }) => {
-  const [profile, setProfile] = useState<Profile | null>(null)
   const [gridItems, setGridItems] = useState<ExpandedItem[]>([])
   const {
     profileRefreshTrigger,
@@ -28,22 +27,19 @@ export const ProfileDetailsSheet = ({
     detailsBackdropAnimatedIndex,
     registerBackdropPress,
     unregisterBackdropPress,
-    getUserByUserName,
   } = useAppStore()
 
   useEffect(() => {
     const fetchProfile = async () => {
-      const profile = await getUserByUserName(profileUsername)
-      const gridItems = await getProfileItems(profile.userName)
+      const gridItems = await getProfileItems(profile)
 
-      setProfile(profile)
       setGridItems(gridItems)
     }
     fetchProfile()
-  }, [profileUsername, profileRefreshTrigger])
+  }, [profile, profileRefreshTrigger])
 
   // if the current user is the item creator, then they have editing rights
-  const editingRights = profile?.id === user?.id
+  const editingRights = profile?.did === user?.did
 
   const snapPoints = ['100%']
 

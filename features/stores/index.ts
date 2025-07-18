@@ -6,6 +6,7 @@ import { createMessageSlice } from './messages'
 import { createUserSlice } from './users'
 import type { StoreSlices } from './types'
 import { createUISlice } from '@/ui/state'
+import { createCanvasSlice } from '../canvas/state'
 
 export const useAppStore = create<StoreSlices>((...a) => ({
   ...createBackdropSlice(...a),
@@ -14,4 +15,5 @@ export const useAppStore = create<StoreSlices>((...a) => ({
   ...createMessageSlice(...a),
   ...createUserSlice(...a),
   ...createUISlice(...a),
+  ...createCanvasSlice(...a),
 }))

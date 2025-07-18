@@ -12,7 +12,7 @@ export function RegisterPushNotifications() {
   const notificationListener = useRef<Notifications.EventSubscription>()
   const responseListener = useRef<Notifications.EventSubscription>()
 
-  const { updateUser, user, isInitialized } = useAppStore()
+  const { user, isInitialized } = useAppStore()
 
   const projectId = Constants?.expoConfig?.extra?.eas?.projectId ?? Constants?.easConfig?.projectId
 
@@ -31,7 +31,8 @@ export function RegisterPushNotifications() {
         setExpoPushToken(token ?? '')
         // Only update user if we still have a logged in user
         if (user && token) {
-          await updateUser({ pushToken: token })
+          // TODO: how do we handle push notification tokens in canvas?
+          // await updateUser({ pushToken: token })
         }
       })
       .catch((error: any) => setExpoPushToken(`${error}`))

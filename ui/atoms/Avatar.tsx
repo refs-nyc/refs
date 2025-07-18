@@ -4,12 +4,26 @@ import { c, s } from '@/features/style'
 import { Ionicons } from '@expo/vector-icons'
 import { YStack, XStack } from '../core/Stacks'
 
-export const Avatar = ({ source, size = s.$3 }: { source: string | undefined; size: number }) => {
+export const Avatar = ({
+  source,
+  size = s.$3,
+}: {
+  source: string | undefined | null
+  size: number
+}) => {
   if (!source)
     return (
-      <View style={{ width: size, height: size, backgroundColor: "#A6B89F", borderRadius: size / 2, alignItems: "center" }}>
+      <View
+        style={{
+          width: size,
+          height: size,
+          backgroundColor: '#A6B89F',
+          borderRadius: size / 2,
+          alignItems: 'center',
+        }}
+      >
         <View style={{ top: size * 0.16 }}>
-          <Ionicons name="person" size={size * 0.65} color='#fff' />
+          <Ionicons name="person" size={size * 0.65} color="#fff" />
         </View>
       </View>
     )

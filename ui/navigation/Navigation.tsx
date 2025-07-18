@@ -1,5 +1,6 @@
 import { Link, router, usePathname } from 'expo-router'
 import { Text, View, Pressable, Animated } from 'react-native'
+import { Button } from '@/ui/buttons/Button'
 import { Avatar } from '../atoms/Avatar'
 import { c, s } from '@/features/style'
 import { useAppStore } from '@/features/stores'
@@ -18,7 +19,7 @@ export const Navigation = ({
 }) => {
   const pathname = usePathname()
 
-  const { user, saves, messagesPerConversation, conversations, memberships } = useAppStore()
+  const { user, saves, messagesPerConversation, conversations, memberships, logout } = useAppStore()
 
   const isHomePage = pathname === '/' || pathname === '/index'
 
@@ -52,7 +53,7 @@ export const Navigation = ({
     if (Object.keys(memberships).length === 0) return 0
     let newMessages = 0
     for (const conversationId in conversations) {
-      const membership = memberships[conversationId].find((m) => m.expand?.user.id === user?.id)
+      const membership = memberships[conversationId].find((m) => m.expand?.user.did === user?.did)
       if (!membership) continue
       if (membership?.archived) continue
       const lastRead = membership?.last_read
@@ -62,7 +63,7 @@ export const Navigation = ({
       let unreadMessages
       if (lastRead) {
         const msgs = conversationMessages.filter(
-          (m) => new Date(m.created!) > lastReadDate && m.sender !== user?.id
+          (m) => new Date(m.created!) > lastReadDate && m.sender !== user?.did
         )
         unreadMessages = msgs.length
       } else unreadMessages = conversationMessages.length
@@ -75,7 +76,7 @@ export const Navigation = ({
     [messagesPerConversation, memberships, user]
   )
 
-  if (!user) return null
+  if (!user || pathname === '/onboarding' || pathname === '/user/register') return null
 
   return (
     <View style={{ display: 'flex', flexDirection: 'row', paddingLeft: 2 }}>
@@ -114,8 +115,9 @@ export const Navigation = ({
             </Link>
           </View>
         </View>
+
         <View style={{ top: 1.5, paddingRight: 17 }}>
-          <Link href={`/user/${user.userName}`}>
+          <Link href={`/user/${user.did}`}>
             <Avatar source={user.image} size={30} />
           </Link>
         </View>

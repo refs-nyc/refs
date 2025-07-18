@@ -65,6 +65,7 @@ export default function BacklogList({
         const dayOfWeek = DateTime.fromFormat(utcString, 'yyyy-MM-dd HH:mm:ss.SSS', {
           zone: 'utc',
         }).setZone(timeZone).weekdayLong
+
         if (dayOfWeek == now.weekdayLong) {
           groups[0].push(item)
         } else if (dayOfWeek == now.minus({ days: 1 }).weekdayLong) {

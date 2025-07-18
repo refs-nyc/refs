@@ -3,7 +3,7 @@ import { View, Text, Pressable } from 'react-native'
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { s, c, base } from '@/features/style'
 import { SimplePinataImage } from '@/ui/images/SimplePinataImage'
-import type { CompleteRef, ExpandedItem } from '@/features/types'
+import type { Item, Ref } from '@/features/types'
 import { Link } from 'expo-router'
 
 export const ListItem = ({
@@ -16,7 +16,7 @@ export const ListItem = ({
   onTitlePress,
   showLink = false,
 }: {
-  r: CompleteRef | ExpandedItem
+  r: Item | Ref
   backgroundColor?: string
   showMeta?: boolean
   withRemove?: boolean

@@ -37,10 +37,13 @@ export const AddRefSheet = ({
   useEffect(() => {
     const getRef = async () => {
       const ref = await getRefById(addingRefId)
+      if (!ref) {
+        return setRefFields(null)
+      }
       setRefFields({
-        title: ref.title!,
-        image: ref.image,
-        url: ref.url,
+        title: ref.title || '',
+        image: ref.image || '',
+        url: ref.url || '',
       })
     }
     getRef()
@@ -106,7 +109,7 @@ export const AddRefSheet = ({
             onAddRefToList={async (fields) => {}}
             onAddRef={async (fields) => {
               // check if the grid is full
-              const gridItems = await getProfileItems(user.userName)
+              const gridItems = await getProfileItems(user)
               if (gridItems && gridItems.length >= 12) {
                 // show a modal to the user that the grid is full
                 setStagedItemFields(fields)

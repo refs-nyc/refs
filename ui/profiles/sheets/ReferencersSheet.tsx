@@ -18,7 +18,8 @@ export default function Referencers({
 }) {
   const [users, setUsers] = useState<any[]>([])
   const [refData, setRefData] = useState<any>({})
-  const { getItemsByRefIds, addRefSheetRef, setAddingRefId, currentRefId } = useAppStore()
+  const { getItemsByRefIds, addRefSheetRef, setAddingRefId, currentRefId, getRefById } =
+    useAppStore()
 
   useEffect(() => {
     const getUsers = async () => {
@@ -28,19 +29,20 @@ export default function Referencers({
         return
       }
       const users: Profile[] = []
-      const userIds: Set<string> = new Set()
+      const userDids: Set<string> = new Set()
 
       const items = await getItemsByRefIds([currentRefId])
 
       for (const item of items) {
         const user = item.expand?.creator
-        if (!user || userIds.has(user.id)) continue
-        userIds.add(user.id)
+        if (!user || userDids.has(user.did)) continue
+        userDids.add(user.did)
         users.push(user)
       }
 
       setUsers(users)
-      setRefData(items[0].expand?.ref)
+      const ref = await getRefById(currentRefId)
+      setRefData(ref)
     }
     getUsers()
   }, [currentRefId])
@@ -84,12 +86,12 @@ export default function Referencers({
           <YStack>
             {users.map((user) => (
               <UserListItem
-                key={user.id}
+                key={user.did}
                 user={user}
                 small={false}
                 onPress={() => {
                   referencersBottomSheetRef.current?.close()
-                  router.push(`/user/${user.userName}`)
+                  router.push(`/user/${user.did}`)
                 }}
                 style={{ paddingHorizontal: 0 }}
               />

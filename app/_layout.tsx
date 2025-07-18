@@ -23,7 +23,7 @@ import { ShareIntentProvider } from 'expo-share-intent'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { useEffect, useRef } from 'react'
-import { StatusBar, useColorScheme } from 'react-native'
+import { StatusBar, useColorScheme, View } from 'react-native'
 import { Navigation } from '@/ui/navigation/Navigation'
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native'
 import { useFonts } from 'expo-font'
@@ -44,6 +44,7 @@ import Saves from '@/features/saves/saves-sheet'
 import Referencers from '@/ui/profiles/sheets/ReferencersSheet'
 import { AddRefSheet } from '@/ui/profiles/sheets/AddRefSheet'
 import { NewRefSheet } from '@/ui/profiles/sheets/NewRefSheet'
+import { magic } from '@/features/magic'
 
 install()
 polyfillEncoding()
@@ -96,12 +97,11 @@ function FontProvider({ children }: { children: React.ReactNode }) {
 }
 
 export default function RootLayout() {
-  const { init } = useAppStore()
+  const { init, connectCanvas } = useAppStore()
 
   useEffect(() => {
-    // Initialize user store to sync with PocketBase auth
-    init()
-  }, [init])
+    connectCanvas().then(init)
+  }, [init, connectCanvas])
 
   return (
     <Providers>
@@ -134,7 +134,8 @@ function RootLayoutNav() {
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <StatusBar barStyle={colorScheme === 'dark' ? 'light-content' : 'dark-content'} />
       <RegisterPushNotifications />
-      <MessagesInit />
+      {/* <MessagesInit /> */}
+      <magic.Relayer />
       <Navigation savesBottomSheetRef={savesBottomSheetRef} />
 
       <Stack
@@ -168,7 +169,7 @@ function RootLayoutNav() {
           }}
         />
         <Stack.Screen
-          name="user/[userName]/index"
+          name="user/[did]/index"
           options={{
             title: 'User',
             // presentation: 'modal',

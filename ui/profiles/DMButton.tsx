@@ -32,15 +32,15 @@ export const DMButton = ({
         const directConversations = await getDirectConversations()
         for (const conversation of directConversations) {
           const otherUserId = conversation.expand?.memberships_via_conversation
-            .map((m) => m.expand?.user.id)
-            .filter((id) => id !== user?.id)[0]
-          if (otherUserId === profile.id) {
+            .map((m) => m.expand?.user.did)
+            .filter((id) => id !== user?.did)[0]
+          if (otherUserId === profile.did) {
             existingConversationId = conversation.id
             break
           }
         }
         if (!existingConversationId) {
-          setTarget(`/user/${profile.userName}/new-dm`)
+          setTarget(`/user/${profile.did}/new-dm`)
         } else {
           setTarget('/messages/' + existingConversationId)
         }

@@ -11,27 +11,27 @@ import { DimensionValue, Pressable, View } from 'react-native'
 
 export default function NewDMScreen() {
   const { user } = useAppStore()
-  const { userName } = useGlobalSearchParams()
+  const { did } = useGlobalSearchParams()
   const [message, setMessage] = useState<string>('')
-  const { createConversation, sendMessage, getUserByUserName } = useAppStore()
+  const { createConversation, sendMessage, getUserByDid } = useAppStore()
   const [profile, setProfile] = useState<Profile>()
 
   useEffect(() => {
     async function getProfile() {
-      if (typeof userName === 'string') {
-        const profile = await getUserByUserName(userName)
+      if (typeof did === 'string') {
+        const profile = await getUserByDid(did)
         setProfile(profile)
       }
     }
     getProfile()
-  }, [userName])
+  }, [did])
 
   if (!user) {
     router.dismissTo('/')
     return
   }
 
-  if (userName === user.userName) {
+  if (did === user.did) {
     router.dismissTo('/')
     return
   }
@@ -39,8 +39,8 @@ export default function NewDMScreen() {
   if (!profile) return null
 
   const onMessageSubmit = async () => {
-    const conversationId = await createConversation(true, user.id, [profile.id])
-    await sendMessage(user.id, conversationId, message)
+    const conversationId = await createConversation(true, user, [profile])
+    await sendMessage(user, conversationId, message)
     router.replace(`/messages/${conversationId}`)
   }
 

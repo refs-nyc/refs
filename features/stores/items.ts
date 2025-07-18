@@ -344,7 +344,15 @@ async function expandItem(item: Item): Promise<ExpandedItem> {
     },
   })
 
-  return { ...item, expand: { ref, creator, items_via_parent: itemsViaParent } }
+  const itemsWithRefViaParent = await Promise.all(
+    itemsViaParent.map(async (item) => {
+      const ref = await canvasApp.db.get<Ref>('ref', item.ref as PrimaryKeyValue)
+      if (!ref) throw new Error('Ref not found')
+      return { ...item, expand: { ref } }
+    })
+  )
+
+  return { ...item, expand: { ref, creator, items_via_parent: itemsWithRefViaParent } }
 }
 
 async function expandItems(items: Item[]): Promise<ExpandedItem[]> {

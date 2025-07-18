@@ -13,7 +13,11 @@ export type ExpandedProfile = Profile & {
 }
 
 export type ExpandedItem = Item & {
-  expand: { ref: Ref; creator: Profile; items_via_parent: Item[] }
+  expand: { ref: Ref; creator: Profile; items_via_parent: ItemWithRef[] }
+}
+
+export type ItemWithRef = Item & {
+  expand: { ref: Ref }
 }
 
 export type GridTileType = 'add' | 'image' | 'text' | 'list' | 'placeholder' | ''

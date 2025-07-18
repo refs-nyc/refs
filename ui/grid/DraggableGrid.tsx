@@ -2,12 +2,12 @@ import React, { useState, useRef } from 'react'
 import { ScrollView, TouchableOpacity, View, Text, FlatList, ScrollViewProps } from 'react-native'
 import { GridTile } from '../grid/GridTile'
 import { s } from '@/features/style'
-import { CompleteRef } from '@/features/types'
+import { Ref } from '@/features/types'
 
 // @ts-ignore
 import { DraggableGrid as DraggableGridComponent } from 'react-native-draggable-grid'
 
-export const FlatListGrid = ({ items }: { items: CompleteRef[] }) => {
+export const FlatListGrid = ({ items }: { items: Ref[] }) => {
   return (
     <FlatList
       style={{ width: '100%' }}

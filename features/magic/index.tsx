@@ -1,6 +1,5 @@
 import { Magic } from '@magic-sdk/react-native-expo'
 import { Web3Provider } from '@ethersproject/providers'
-import { ethers } from 'ethers'
 import { SIWESigner } from '@canvas-js/signer-ethereum'
 
 if (!process.env.EXPO_PUBLIC_MAGIC_KEY) {

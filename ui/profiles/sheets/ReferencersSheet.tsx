@@ -18,7 +18,8 @@ export default function Referencers({
 }) {
   const [users, setUsers] = useState<any[]>([])
   const [refData, setRefData] = useState<any>({})
-  const { getItemsByRefIds, addRefSheetRef, setAddingRefId, currentRefId } = useAppStore()
+  const { getItemsByRefIds, addRefSheetRef, setAddingRefId, currentRefId, getRefById } =
+    useAppStore()
 
   useEffect(() => {
     const getUsers = async () => {
@@ -40,7 +41,8 @@ export default function Referencers({
       }
 
       setUsers(users)
-      setRefData(items[0].expand?.ref)
+      const ref = await getRefById(currentRefId)
+      setRefData(ref)
     }
     getUsers()
   }, [currentRefId])

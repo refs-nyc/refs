@@ -138,7 +138,7 @@ export const NewRefSheet = ({
               }}
               onChooseExistingRef={(r, newImage) => {
                 setExistingRefId(r.id)
-                setRefFields({ title: r.title!, image: newImage, url: r.url })
+                setRefFields({ title: r.title || '', image: newImage, url: r.url || '' })
                 setStep('add')
               }}
             />
@@ -240,6 +240,7 @@ export const NewRefSheet = ({
                       url: '',
                       image: '',
                       list: true,
+                      parent: null,
                     },
                     backlog
                   )

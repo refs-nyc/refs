@@ -23,7 +23,7 @@ import { ShareIntentProvider } from 'expo-share-intent'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { useEffect, useRef } from 'react'
-import { StatusBar, useColorScheme } from 'react-native'
+import { StatusBar, useColorScheme, View } from 'react-native'
 import { Navigation } from '@/ui/navigation/Navigation'
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native'
 import { useFonts } from 'expo-font'
@@ -105,7 +105,6 @@ export default function RootLayout() {
 
   return (
     <Providers>
-      <magic.Relayer />
       <RootLayoutNav />
       <DeferredFonts />
     </Providers>
@@ -136,6 +135,7 @@ function RootLayoutNav() {
       <StatusBar barStyle={colorScheme === 'dark' ? 'light-content' : 'dark-content'} />
       <RegisterPushNotifications />
       {/* <MessagesInit /> */}
+      <magic.Relayer />
       <Navigation savesBottomSheetRef={savesBottomSheetRef} />
 
       <Stack

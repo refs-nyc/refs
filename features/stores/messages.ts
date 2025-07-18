@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 import { StateCreator } from 'zustand'
 import {
   Conversation,

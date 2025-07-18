@@ -3,9 +3,9 @@ import { StateCreator } from 'zustand'
 import { Profile, StagedProfileFields } from '../types'
 import type { StoreSlices } from './types'
 import type { SessionSigner } from '@canvas-js/interfaces'
-import { canvasApp, canvasTopic } from '../canvas/state'
-import RefsContract from '../canvas/contract'
+import { canvasApp } from '../canvas/state'
 import { getCurrentSessionSignerFromMagic } from '../magic'
+import { formatDateString } from '../utils'
 
 export type UserSlice = {
   stagedProfileFields: StagedProfileFields
@@ -33,10 +33,15 @@ export const createUserSlice: StateCreator<StoreSlices, [], [], UserSlice> = (se
   //
   //
   init: async () => {
-    const sessionSigner = await getCurrentSessionSignerFromMagic()
-    const userDid = await sessionSigner.getDid()
-    const profile = (await canvasApp.db.get('profile', userDid)) as Profile | null
-    set({ user: profile, isInitialized: true })
+    try {
+      const sessionSigner = await getCurrentSessionSignerFromMagic()
+      const userDid = await sessionSigner.getDid()
+      const profile = await canvasApp.db.get<Profile>('profile', userDid)
+      set({ user: profile, sessionSigner, isInitialized: true })
+    } catch (e) {
+      // no user found, so we're not logged in
+      set({ user: null, sessionSigner: null, isInitialized: true })
+    }
   },
   //
   //
@@ -61,22 +66,22 @@ export const createUserSlice: StateCreator<StoreSlices, [], [], UserSlice> = (se
     }
   },
   getUserByDid: async (did: string) => {
-    const user = (await canvasApp.db.get('profile', did)) as Profile | null
+    const user = await canvasApp.db.get<Profile>('profile', did)
     if (!user) throw new Error('Profile not found')
     return user
   },
   getUsersByDids: async (dids: string[]) => {
     const users: Profile[] = []
     for (const did of dids) {
-      const user = (await canvasApp.db.get('profile', did)) as Profile | null
+      const user = await canvasApp.db.get<Profile>('profile', did)
       if (user) users.push(user)
     }
     return users
   },
   getRandomUser: async () => {
-    const allUsers = await canvasApp.db.query('profile', {})
+    const allUsers = await canvasApp.db.query<Profile>('profile', {})
     const randomIndex = Math.floor(Math.random() * allUsers.length)
-    return allUsers[randomIndex] as Profile
+    return allUsers[randomIndex]
   },
   //
   // Requirement: staged user
@@ -97,8 +102,8 @@ export const createUserSlice: StateCreator<StoreSlices, [], [], UserSlice> = (se
         lastName: lastName!,
         location: location!,
         image: image!,
-        created: new Date().toISOString(),
-        updated: new Date().toISOString(),
+        created: formatDateString(new Date()),
+        updated: formatDateString(new Date()),
       }
 
       await canvasApp.as(sessionSigner).createProfile(profile)
@@ -117,14 +122,11 @@ export const createUserSlice: StateCreator<StoreSlices, [], [], UserSlice> = (se
   //
   login: async (sessionSigner: SessionSigner) => {
     // request a session
-    await sessionSigner.newSession(canvasTopic)
+    await sessionSigner.newSession(canvasApp.topic)
 
     // get the profile from modeldb
     const userDid = await sessionSigner.getDid()
-    const profile = (await canvasApp.db.get(
-      'profile',
-      userDid
-    )) as typeof RefsContract.models.profile
+    const profile = await canvasApp.db.get<Profile>('profile', userDid)
 
     if (!profile) {
       throw new Error('Profile not found')

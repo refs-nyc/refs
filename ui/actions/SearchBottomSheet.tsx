@@ -9,7 +9,7 @@ import { Pressable, Text, TextInput, View } from 'react-native'
 import { Heading } from '../typo/Heading'
 import { XStack, YStack } from '../core/Stacks'
 import { Button } from '../buttons/Button'
-import { CompleteRef, Profile } from '@/features/types'
+import { Ref, Profile } from '@/features/types'
 import { useAppStore } from '@/features/stores'
 import { SimplePinataImage } from '../images/SimplePinataImage'
 import { Ionicons } from '@expo/vector-icons'
@@ -27,8 +27,8 @@ export default function SearchBottomSheet() {
   const [searchTerm, setSearchTerm] = useState('')
   const searchTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined)
 
-  const [results, setResults] = useState<CompleteRef[]>([])
-  const [refs, setRefs] = useState<CompleteRef[]>([])
+  const [results, setResults] = useState<Ref[]>([])
+  const [refs, setRefs] = useState<Ref[]>([])
 
   const {
     user,
@@ -64,7 +64,7 @@ export default function SearchBottomSheet() {
     }
   }
 
-  const onAddRefToSearch = (r: CompleteRef) => {
+  const onAddRefToSearch = (r: Ref) => {
     setRefs((prevState) => [...prevState.filter((ref) => ref.id !== r.id), r])
     setSearchTerm('')
   }

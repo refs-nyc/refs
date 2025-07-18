@@ -1,5 +1,5 @@
 import { useAppStore } from '@/features/stores'
-import { ExpandedItem, CompleteRef, Profile } from '@/features/types'
+import { ExpandedItem, Ref, Profile } from '@/features/types'
 import { base, c, s, t } from '@/features/style'
 import { SearchRef } from '@/ui/actions/SearchRef'
 import { Avatar } from '@/ui/atoms/Avatar'
@@ -50,7 +50,7 @@ const AuthorMeta = ({ author, numberOfLines }: { author: string; numberOfLines?:
   )
 }
 
-const Meta = ({ refRecord, numberOfLines }: { refRecord: CompleteRef; numberOfLines?: number }) => {
+const Meta = ({ refRecord, numberOfLines }: { refRecord: Ref; numberOfLines?: number }) => {
   if (!refRecord) return
 
   let refMeta: { location?: string; author?: string } = {}
@@ -62,12 +62,6 @@ const Meta = ({ refRecord, numberOfLines }: { refRecord: CompleteRef; numberOfLi
 
   let location = refMeta.location
   let author = refMeta.author
-
-  if (refRecord.type === 'place') {
-    location = refRecord.meta
-  } else if (refRecord.type === 'artwork') {
-    author = refRecord.meta
-  }
 
   return (
     <YStack gap={s.$05}>
@@ -274,7 +268,7 @@ export const DetailsCarouselItem = ({ item, index }: { item: ExpandedItem; index
                         },
                         base.editableItem,
                       ]}
-                      value={url}
+                      value={url || ''}
                       placeholder="abc.xyz"
                       onChangeText={async (e) => {
                         setUrl(e)
@@ -293,8 +287,8 @@ export const DetailsCarouselItem = ({ item, index }: { item: ExpandedItem; index
                         },
                         base.editableItem,
                       ]}
-                      defaultValue={item.expand.ref.title}
-                      value={listTitle}
+                      defaultValue={item.expand.ref.title || ''}
+                      value={listTitle || ''}
                       placeholder="Add a list title"
                       onChangeText={async (e) => {
                         setListTitle(e),
@@ -307,7 +301,7 @@ export const DetailsCarouselItem = ({ item, index }: { item: ExpandedItem; index
                     <Pressable
                       onPress={() => {
                         if (!editingThisItem) {
-                          setCurrentRefId(item.ref)
+                          setCurrentRefId(item.expand.ref.id || '')
                           referencersBottomSheetRef.current?.expand()
                           return
                         }
@@ -406,7 +400,7 @@ export const DetailsCarouselItem = ({ item, index }: { item: ExpandedItem; index
             >
               {editingThisItem ? (
                 <BottomSheetTextInput
-                  defaultValue={item.text}
+                  defaultValue={item.text || ''}
                   placeholder="Add a caption for your profile..."
                   style={[{ width: '100%', minHeight: s.$10 }, t.pmuted]}
                   multiline={true}
@@ -441,7 +435,7 @@ export const DetailsCarouselItem = ({ item, index }: { item: ExpandedItem; index
             textStyle={{ fontSize: s.$1, fontWeight: 800 }}
             onPress={() => {
               // open a dialog for adding this ref to your profile
-              setAddingRefId(item.ref)
+              setAddingRefId(item.expand.ref.id || '')
               addRefSheetRef.current?.expand()
             }}
             variant="raised"
@@ -466,7 +460,7 @@ export const DetailsCarouselItem = ({ item, index }: { item: ExpandedItem; index
             onChooseExistingRef={async (r) => {
               // Update the ref
               updateEditedState({
-                ref: r.id,
+                ref: r.id || '',
               })
               const newRecord = await update()
               setCurrentItem(newRecord as ExpandedItem)

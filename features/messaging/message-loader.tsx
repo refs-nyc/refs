@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 import { useEffect } from 'react'
 import { pocketbase } from '@/features/pocketbase'
 import { useAppStore } from '@/features/stores'
@@ -11,7 +13,6 @@ import {
   Reaction,
   Save,
 } from '@/features/types'
-import { ConversationsRecord } from '@/features/pocketbase/pocketbase-types'
 
 export function MessagesInit() {
   const {
@@ -178,7 +179,7 @@ export function MessagesInit() {
 
   return <></>
 
-  async function loadInitialMessages(conversation: ConversationsRecord) {
+  async function loadInitialMessages(conversation: Conversation) {
     const messages = await pocketbase.collection('messages').getList<Message>(0, PAGE_SIZE, {
       filter: `conversation = "${conversation.id}"`,
       sort: '-created',

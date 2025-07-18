@@ -9,15 +9,10 @@ if (!canvasUrl) {
   throw new Error('EXPO_PUBLIC_CANVAS_URL is not set')
 }
 
-export const canvasTopic = process.env.EXPO_PUBLIC_CANVAS_TOPIC_OVERRIDE!
-if (!canvasTopic) {
-  throw new Error('EXPO_PUBLIC_CANVAS_TOPIC_OVERRIDE is not set')
-}
-
 export const canvasApp = new Canvas({
   contract: RefsContract,
-  topicOverride: canvasTopic,
-})
+  topicOverride: 'alpha.refs.nyc.RefsContract:a20c55add64ee95c647d6c3b540eb181',
+}) as Core<typeof RefsContract.models, RefsContract>
 
 export type CanvasSlice = {
   connectCanvas: () => Promise<void>

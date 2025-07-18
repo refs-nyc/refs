@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 import { useAppStore } from '@/features/stores'
 import { Message } from '@/features/types'
 import { c, s } from '@/features/style'

@@ -76,7 +76,7 @@ export const Navigation = ({
     [messagesPerConversation, memberships, user]
   )
 
-  if (!user || pathname === '/onboarding') return null
+  if (!user || pathname === '/onboarding' || pathname === '/user/register') return null
 
   return (
     <View style={{ display: 'flex', flexDirection: 'row', paddingLeft: 2 }}>
@@ -115,7 +115,7 @@ export const Navigation = ({
             </Link>
           </View>
         </View>
-        <Button style={{ width: 20 }} variant="inlineSmallMuted" title="Log out" onPress={logout} />
+
         <View style={{ top: 1.5, paddingRight: 17 }}>
           <Link href={`/user/${user.did}`}>
             <Avatar source={user.image} size={30} />

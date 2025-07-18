@@ -158,6 +158,7 @@ export const Feed = () => {
       setItems(items)
     } catch (error) {
       console.error('Error fetching feed items:', error)
+      setItems([])
     }
   }
 
@@ -197,7 +198,7 @@ export const Feed = () => {
                       detailsSheetRef.current?.snapToIndex(0)
                     }}
                     onTitlePress={() => {
-                      setCurrentRefId(item.ref)
+                      setCurrentRefId(item.expand.ref.id)
                       referencersBottomSheetRef.current?.expand()
                     }}
                   />

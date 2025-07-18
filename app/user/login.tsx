@@ -7,7 +7,7 @@ import { View, Dimensions, Text, TouchableOpacity } from 'react-native'
 import Carousel, { ICarouselInstance } from 'react-native-reanimated-carousel'
 import { ErrorView, FormFieldWithIcon } from '@/ui/inputs/FormFieldWithIcon'
 import { Controller, useForm } from 'react-hook-form'
-import { getSessionSignerFromSMS } from '@/features/magic'
+import { getSessionSignerFromSMS, magic } from '@/features/magic'
 import { canvasApp } from '@/features/canvas/state'
 
 const win = Dimensions.get('window')

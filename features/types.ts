@@ -1,36 +1,41 @@
-import * as PBTypes from '@/features/pocketbase/pocketbase-types'
+import { DeriveModelTypes } from '@canvas-js/core'
 import type { SessionSigner } from '@canvas-js/interfaces'
+import RefsContract from './canvas/contract'
 
-export type CompleteRef = PBTypes.RefsRecord
-export type Profile = {
-  did: string
-  firstName: string
-  lastName: string
-  location: string
-  image: string
+type ContractModelTypes = DeriveModelTypes<typeof RefsContract.models>
+
+export type Item = ContractModelTypes['item']
+export type Ref = ContractModelTypes['ref']
+export type Profile = ContractModelTypes['profile']
+
+export type ExpandedProfile = Profile & {
+  items: Item[]
 }
-export type Item = PBTypes.ItemsRecord
 
-export type ExpandedProfile = PBTypes.UsersResponse<{ items: PBTypes.ItemsRecord[] }>
-export type ExpandedItem = PBTypes.ItemsResponse<{
-  ref: PBTypes.RefsRecord
-  creator: PBTypes.UsersRecord
-  items_via_parent: PBTypes.ItemsRecord[] // list children
-}>
+export type ExpandedItem = Item & {
+  expand: { ref: Ref; creator: Profile; items_via_parent: Item[] }
+}
 
 export type GridTileType = 'add' | 'image' | 'text' | 'list' | 'placeholder' | ''
 
-export type Conversation = PBTypes.ConversationsRecord
-export type Message = PBTypes.MessagesRecord
-export type Reaction = PBTypes.ReactionsRecord
-export type Save = PBTypes.SavesRecord
+export type Membership = ContractModelTypes['membership']
+export type Conversation = ContractModelTypes['conversation']
+export type Message = ContractModelTypes['message']
+export type Reaction = ContractModelTypes['reaction']
+export type Save = ContractModelTypes['save']
 
-export type ConversationWithMemberships = PBTypes.ConversationsResponse<{
-  memberships_via_conversation: ExpandedMembership[]
-}>
-export type ExpandedMembership = PBTypes.MembershipsResponse<{ user: PBTypes.UsersRecord }>
-export type ExpandedReaction = PBTypes.ReactionsResponse<{ user: PBTypes.UsersRecord }>
-export type ExpandedSave = PBTypes.SavesResponse<{ user: PBTypes.UsersRecord }>
+export type ConversationWithMemberships = Conversation & {
+  expand: { memberships_via_conversation: ExpandedMembership[] }
+}
+export type ExpandedMembership = Membership & {
+  expand: { user: Profile }
+}
+export type ExpandedReaction = Reaction & {
+  expand: { user: Profile }
+}
+export type ExpandedSave = Save & {
+  expand: { user: Profile }
+}
 
 // these are the fields that are provided by the user in the new/update ref form
 export type StagedItemFields = {
@@ -41,7 +46,7 @@ export type StagedItemFields = {
   image: string
   promptContext?: string // NEW: the prompt the user replied to
   list?: boolean
-  parent?: string
+  parent: string | null
 }
 
 export type StagedRefFields = {

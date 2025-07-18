@@ -12,7 +12,7 @@ import { DeviceLocation } from '../inputs/DeviceLocation'
 import { AvatarPicker } from '../inputs/AvatarPicker'
 import { FirstVisitScreen } from './FirstVisitScreen'
 import { SizableText } from '../typo/SizableText'
-import { getSessionSignerFromSMS } from '@/features/magic'
+import { getSessionSignerFromSMS, magic } from '@/features/magic'
 import { canvasApp } from '@/features/canvas/state'
 
 const win = Dimensions.get('window')

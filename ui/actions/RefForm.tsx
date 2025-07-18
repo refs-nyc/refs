@@ -434,7 +434,7 @@ export const RefForm = ({
 
               try {
                 setCreateInProgress(true)
-                await onAddRefToList({ title, text, url, image: pinataSource, meta })
+                await onAddRefToList({ title, text, url, image: pinataSource, meta, parent: null })
               } catch (e) {
                 console.error(e)
               } finally {
@@ -481,7 +481,7 @@ export const RefForm = ({
 
                 try {
                   setCreateInProgress(true)
-                  await onAddRef({ title, text, url, image: pinataSource, meta })
+                  await onAddRef({ title, text, url, image: pinataSource, meta, parent: null })
                 } catch (e) {
                   console.error(e)
                 } finally {

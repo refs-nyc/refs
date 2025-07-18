@@ -37,10 +37,13 @@ export const AddRefSheet = ({
   useEffect(() => {
     const getRef = async () => {
       const ref = await getRefById(addingRefId)
+      if (!ref) {
+        return setRefFields(null)
+      }
       setRefFields({
-        title: ref.title!,
-        image: ref.image,
-        url: ref.url,
+        title: ref.title || '',
+        image: ref.image || '',
+        url: ref.url || '',
       })
     }
     getRef()

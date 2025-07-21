@@ -205,15 +205,22 @@ export const createItemSlice: StateCreator<StoreSlices, [], [], ItemSlice> = (se
     if (!sessionSigner) throw new Error('not logged in')
 
     const editedState = get().editedState
-    const { result: updatedItem } = await canvasApp
-      .as(sessionSigner)
-      .updateItem(id || get().editing, {
-        image: editedState.image,
-        url: editedState.url,
-        text: editedState.text,
-        listTitle: editedState.listTitle,
-        updated: formatDateString(new Date()),
-      })
+    const itemId = id || get().editing
+    await canvasApp.as(sessionSigner).updateItem(itemId, {
+      image: editedState.image,
+      url: editedState.url,
+      text: editedState.text,
+
+      updated: formatDateString(new Date()),
+    })
+
+    const updatedItem = await canvasApp.db.get<Item>('item', itemId)
+
+    if (editedState.listTitle) {
+      await canvasApp
+        .as(sessionSigner)
+        .updateRefTitle(updatedItem!.ref as string, editedState.listTitle)
+    }
 
     // Trigger feed refresh since updates might affect feed visibility
     get().triggerFeedRefresh()

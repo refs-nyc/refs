@@ -11,7 +11,7 @@ if (!canvasUrl) {
 
 export const canvasApp = new Canvas({
   contract: RefsContract,
-  topicOverride: 'alpha.refs.nyc.RefsContract:a20c55add64ee95c647d6c3b540eb181',
+  topicOverride: 'alpha.refs.nyc.RefsContract:a7931dd4167ded6b183261b82c95927a',
 }) as Core<typeof RefsContract.models, RefsContract>
 
 export type CanvasSlice = {

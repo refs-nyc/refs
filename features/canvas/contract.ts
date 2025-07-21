@@ -111,23 +111,24 @@ export default class RefsContract extends Contract<typeof RefsContract.models> {
     created: string
     updated: string
   }) {
-    await this.db.set('profile', {
-      ...createProfileArgs,
-      updated: null,
+    if (createProfileArgs.did.split('/')[0] !== this.did) {
+      throw new Error('Profile creator does not match')
+    }
+
+    return await this.db.transaction(async () => {
+      await this.db.set('profile', {
+        ...createProfileArgs,
+        updated: null,
+      })
     })
   }
 
   async updateProfileLocation(location: string) {
-    const existingProfile = await this.db.get('profile', this.did)
-    if (!existingProfile) {
-      throw new Error('Profile not found')
-    }
+    return await this.db.transaction(async () => {
+      const updateArgs = { did: this.did, location, updated: formatDateString(new Date()) }
 
-    const updateArgs = { ...existingProfile, location, updated: formatDateString(new Date()) }
-    await this.db.transaction(async () => {
       await this.db.update('profile', updateArgs)
     })
-    return updateArgs
   }
 
   async createRef(createRefArgs: {
@@ -139,16 +140,18 @@ export default class RefsContract extends Contract<typeof RefsContract.models> {
     updated: string | null
     deleted: string | null
   }) {
-    const id = `${this.did}/${this.id}`
-    // this creates a new ref with the given fields
-    const ref = {
-      id,
-      creator: this.did,
-      showInTicker: false,
-      ...createRefArgs,
-    }
-    await this.db.set('ref', ref)
-    return ref
+    return await this.db.transaction(async () => {
+      const id = `${this.did}/${this.id}`
+      // this creates a new ref with the given fields
+      const ref = {
+        id,
+        creator: this.did,
+        showInTicker: false,
+        ...createRefArgs,
+      }
+      await this.db.set('ref', ref)
+      return ref
+    })
   }
 
   async createItem(createItemArgs: {
@@ -164,28 +167,28 @@ export default class RefsContract extends Contract<typeof RefsContract.models> {
     updated: string | null
     deleted: string | null
   }) {
-    const id = `${this.did}/${this.id}`
-    // this creates a new item with the given fields
-    const item = {
-      id,
-      creator: this.did,
-      ...createItemArgs,
-    }
-    await this.db.set('item', item)
-    return item
+    return await this.db.transaction(async () => {
+      const id = `${this.did}/${this.id}`
+      // this creates a new item with the given fields
+      const item = {
+        id,
+        creator: this.did,
+        ...createItemArgs,
+      }
+      await this.db.set('item', item)
+      return item
+    })
   }
 
   async updateRefTitle(refId: string, title: string) {
-    // this updates the ref with the given fields
-    const existingRef = await this.db.get('ref', refId)
-    if (!existingRef) {
-      throw new Error('Ref not found')
+    if (refId.split('/')[0] !== this.did) {
+      throw new Error('Item creator does not match')
     }
-    const updateArgs = { ...existingRef, title, updated: formatDateString(new Date()) }
-    await this.db.transaction(async () => {
+
+    return await this.db.transaction(async () => {
+      const updateArgs = { id: refId, title, updated: formatDateString(new Date()) }
       await this.db.update('ref', updateArgs)
     })
-    return updateArgs
   }
 
   async updateItem(
@@ -202,39 +205,16 @@ export default class RefsContract extends Contract<typeof RefsContract.models> {
       throw new Error('Item creator does not match')
     }
 
-    const existingItem = await this.db.get('item', itemId)
-    if (!existingItem) {
-      throw new Error('Item not found')
-    }
-
-    const updateArgs = {
-      ...existingItem,
-      text: updateItemFields.text ?? existingItem.text,
-      image: updateItemFields.image ?? existingItem.image,
-      url: updateItemFields.url ?? existingItem.url,
-      updated: updateItemFields.updated,
-    }
-
-    let existingRef = null
-    const refId = existingItem?.ref?.toString()
-    if (refId && updateItemFields.listTitle) {
-      existingRef = await this.db.get('ref', refId)
-      if (!existingRef) {
-        throw new Error('Ref not found')
-      }
-    }
-
     await this.db.transaction(async () => {
-      await this.db.update('item', updateArgs)
-
-      if (existingRef) {
-        await this.db.update('ref', {
-          ...existingRef,
-          title: updateItemFields.listTitle,
-        })
+      const updateArgs = {
+        id: itemId,
+        text: updateItemFields.text,
+        image: updateItemFields.image,
+        url: updateItemFields.url,
+        updated: updateItemFields.updated,
       }
+      await this.db.update('item', updateArgs)
     })
-    return updateArgs
   }
 
   async addItemToList(listItemId: string, itemId: string) {
@@ -246,22 +226,14 @@ export default class RefsContract extends Contract<typeof RefsContract.models> {
       throw new Error('List item creator does not match')
     }
 
-    const existingItem = await this.db.get('item', itemId)
-    if (!existingItem) {
-      throw new Error('Item not found')
-    }
-
-    const updateArgs = {
-      ...existingItem,
-      id: itemId,
-      parent: listItemId,
-      updated: formatDateString(new Date()),
-    }
-
     await this.db.transaction(async () => {
+      const updateArgs = {
+        id: itemId,
+        parent: listItemId,
+        updated: formatDateString(new Date()),
+      }
       await this.db.update('item', updateArgs)
     })
-    return updateArgs
   }
 
   async removeItemFromList(listItemId: string, itemId: string) {
@@ -273,17 +245,10 @@ export default class RefsContract extends Contract<typeof RefsContract.models> {
       throw new Error('List item creator does not match')
     }
 
-    const existingItem = await this.db.get('item', itemId)
-    if (!existingItem) {
-      throw new Error('Item not found')
-    }
-
-    const updateArgs = { ...existingItem, parent: null, updated: formatDateString(new Date()) }
     await this.db.transaction(async () => {
+      const updateArgs = { id: itemId, parent: null, updated: formatDateString(new Date()) }
       await this.db.update('item', updateArgs)
     })
-
-    return updateArgs
   }
 
   async moveItemToBacklog(itemId: string) {
@@ -291,16 +256,10 @@ export default class RefsContract extends Contract<typeof RefsContract.models> {
       throw new Error('Item creator does not match')
     }
 
-    const existingItem = await this.db.get('item', itemId)
-    if (!existingItem) {
-      throw new Error('Item not found')
-    }
-
-    const updateArgs = { ...existingItem, backlog: true, updated: formatDateString(new Date()) }
     await this.db.transaction(async () => {
+      const updateArgs = { id: itemId, backlog: true, updated: formatDateString(new Date()) }
       await this.db.update('item', updateArgs)
     })
-    return updateArgs
   }
 
   async removeItem(itemId: string) {
@@ -308,6 +267,8 @@ export default class RefsContract extends Contract<typeof RefsContract.models> {
       throw new Error('Item creator does not match')
     }
 
-    await this.db.delete('item', itemId)
+    await this.db.transaction(async () => {
+      await this.db.delete('item', itemId)
+    })
   }
 }

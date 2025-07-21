@@ -307,14 +307,8 @@ export const createItemSlice: StateCreator<StoreSlices, [], [], ItemSlice> = (se
     if (!canvasApp) {
       throw new Error('Canvas not initialized!')
     }
-    // console.log(canvasApp.app)
-    const sqliteDbHandle = (canvasApp.db as ModelDB).db
-    // const mdb = canvasApp.app
-    // console.log(mdb)
-    // console.log(Object.keys(canvasApp.db))
-    // console.log(canvasApp.db.db)
-    // console.log(sqliteDbHandle)
 
+    const sqliteDbHandle = (canvasApp.db as ModelDB).db
     const query = await sqliteDbHandle.prepareAsync('SELECT * FROM ref WHERE title LIKE ?')
     const result = await query.executeAsync<Ref>([`%${title}%`])
 
@@ -335,11 +329,8 @@ export const createItemSlice: StateCreator<StoreSlices, [], [], ItemSlice> = (se
     if (!canvasApp) {
       throw new Error('Canvas not initialized!')
     }
-    const refs = await canvasApp.db.query<Ref>('ref', {
-      where: {
-        title,
-      },
-    })
+
+    const refs = await get().getRefsByTitle(title)
 
     const refIds = refs.map((ref) => ref.id)
 

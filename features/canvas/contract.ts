@@ -60,6 +60,12 @@ export default class RefsContract extends Contract<typeof RefsContract.models> {
         updated: 'string?',
         deleted: 'string?',
       },
+
+      // messaging related features
+      encryption_key: {
+        did: 'primary',
+        publicEncryptionKey: 'string',
+      },
       conversation: {
         id: 'primary',
         created: 'string',
@@ -102,14 +108,17 @@ export default class RefsContract extends Contract<typeof RefsContract.models> {
     } satisfies ModelSchema
   }
 
-  async createProfile(createProfileArgs: {
-    firstName: string
-    lastName: string
-    location: string
-    image: string
-    created: string
-    updated: string
-  }) {
+  async createProfile(
+    createProfileArgs: {
+      firstName: string
+      lastName: string
+      location: string
+      image: string
+      created: string
+      updated: string
+    },
+    publicEncryptionKey: string
+  ) {
     return await this.db.transaction(async () => {
       const newProfile = {
         ...createProfileArgs,
@@ -117,6 +126,11 @@ export default class RefsContract extends Contract<typeof RefsContract.models> {
         updated: null,
       }
       await this.db.set('profile', newProfile)
+
+      await this.db.set('encryption_key', {
+        did: this.did,
+        publicEncryptionKey: publicEncryptionKey,
+      })
       return newProfile
     })
   }

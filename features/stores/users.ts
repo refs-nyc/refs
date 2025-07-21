@@ -1,11 +1,19 @@
-import { pocketbase } from '../pocketbase'
-import { StateCreator } from 'zustand'
-import { Profile, StagedProfileFields } from '../types'
-import type { StoreSlices } from './types'
 import type { SessionSigner } from '@canvas-js/interfaces'
-import { getCurrentSessionSignerFromMagic } from '../magic'
-import { formatDateString } from '../utils'
+
+import {
+  decryptSafely,
+  encryptSafely,
+  EthEncryptedData,
+  getEncryptionPublicKey,
+} from '../encryption'
+import { StateCreator } from 'zustand'
 import type { RefsCanvas } from '../canvas/contract'
+import { getCurrentSessionSignerFromMagic, getEncryptionWalletFromMagic } from '../magic'
+import { pocketbase } from '../pocketbase'
+import { Profile, StagedProfileFields } from '../types'
+import { formatDateString } from '../utils'
+import type { StoreSlices } from './types'
+import { Wallet } from 'ethers'
 
 export type UserSlice = {
   stagedProfileFields: StagedProfileFields
@@ -19,6 +27,7 @@ export type UserSlice = {
   getRandomUser: () => Promise<Profile>
   login: (sessionSigner: SessionSigner) => Promise<void>
   sessionSigner: SessionSigner | null
+  encryptionWallet: Wallet | null
 
   canvasActions: ReturnType<RefsCanvas['as']> | null
 
@@ -30,6 +39,7 @@ export const createUserSlice: StateCreator<StoreSlices, [], [], UserSlice> = (se
   stagedProfileFields: {},
   user: null, // user is ALWAYS the user of the app, this is only set if the user is logged in
   isInitialized: false,
+  encryptionWallet: null,
   //
   //
   //
@@ -132,11 +142,16 @@ export const createUserSlice: StateCreator<StoreSlices, [], [], UserSlice> = (se
         updated: formatDateString(new Date()),
       }
 
+      const encryptionWallet = await getEncryptionWalletFromMagic()
+      // publicEncryptionKey = the public part of the keypair
+      const encryptionPublicKey = getEncryptionPublicKey(encryptionWallet.privateKey.slice(2))
+
       const { result: newProfile } = await canvasApp
         .as(sessionSigner)
-        .createProfile(createProfileArgs)
+        .createProfile(createProfileArgs, encryptionPublicKey)
 
       set(() => ({
+        encryptionWallet,
         user: newProfile,
       }))
       return newProfile
@@ -165,10 +180,9 @@ export const createUserSlice: StateCreator<StoreSlices, [], [], UserSlice> = (se
       throw new Error('Profile not found')
     }
 
-    set({
-      user: profile,
-      sessionSigner,
-    })
+    const encryptionWallet = await getEncryptionWalletFromMagic()
+
+    set({ encryptionWallet, user: profile, sessionSigner })
   },
   sessionSigner: null,
   //
@@ -178,6 +192,7 @@ export const createUserSlice: StateCreator<StoreSlices, [], [], UserSlice> = (se
     set(() => ({
       user: null,
       sessionSigner: null,
+      encryptionWallet: null,
       stagedUser: {},
       isInitialized: true,
     }))

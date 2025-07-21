@@ -19,7 +19,7 @@ export const createCanvasSlice: StateCreator<StoreSlices, [], [], CanvasSlice> =
   connectCanvas: async () => {
     const canvasApp = await Canvas.initialize({
       contract: RefsContract,
-      topicOverride: 'alpha.refs.nyc.RefsContract:6c13b9a9308abad4d26cf7a67c80da26',
+      topicOverride: 'alpha.refs.nyc.RefsContract:f44ddfc60fcb560383578e9631e96116',
     })
 
     await canvasApp.connect(canvasUrl)

@@ -8,7 +8,6 @@ import Carousel, { ICarouselInstance } from 'react-native-reanimated-carousel'
 import { ErrorView, FormFieldWithIcon } from '@/ui/inputs/FormFieldWithIcon'
 import { Controller, useForm } from 'react-hook-form'
 import { getSessionSignerFromSMS, magic } from '@/features/magic'
-import { canvasApp } from '@/features/canvas/state'
 
 const win = Dimensions.get('window')
 
@@ -25,7 +24,7 @@ const LoginStep = () => {
     },
   })
   const [loginInProgress, setLoginInProgress] = useState(false)
-  const { login } = useAppStore()
+  const { login, canvasApp } = useAppStore()
 
   return (
     <ProfileStep
@@ -37,7 +36,7 @@ const LoginStep = () => {
 
         // check if the profile already exists
         const userDid = await sessionSigner.getDid()
-        const existingProfile = await canvasApp.db.get('profile', userDid)
+        const existingProfile = await canvasApp!.db.get('profile', userDid)
         if (existingProfile) {
           // if so, then log the user in
           await login(sessionSigner)
@@ -52,7 +51,7 @@ const LoginStep = () => {
           })
         }
       })}
-      disabled={!isValid}
+      disabled={!isValid || !canvasApp}
     >
       <Controller
         name="phoneNumber"

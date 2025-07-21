@@ -2,8 +2,8 @@ import { StateCreator } from 'zustand'
 import { Item, Ref, Profile, StagedItemFields, StagedRefFields, ExpandedItem } from '../types'
 import { createdSort } from '@/ui/profiles/sorts'
 import type { StoreSlices } from './types'
-import { canvasApp } from '../canvas/state'
 import { PrimaryKeyValue } from '@canvas-js/modeldb'
+import { ModelDB } from '@canvas-js/modeldb-sqlite-expo'
 import { formatDateString } from '../utils'
 
 function gridSort(items: ExpandedItem[]): ExpandedItem[] {
@@ -70,6 +70,10 @@ export type ItemSlice = {
   getItemsByRefIds: (refIds: string[]) => Promise<ExpandedItem[]>
   getAllItemsByCreator: (creator: Profile) => Promise<ExpandedItem[]>
   getListsByCreator: (creator: Profile) => Promise<ExpandedItem[]>
+  expandItem: (item: Item) => Promise<ExpandedItem>
+  expandItems: (items: Item[]) => Promise<ExpandedItem[]>
+  getProfileItems: (user: Profile) => Promise<ExpandedItem[]>
+  getBacklogItems: (user: Profile) => Promise<ExpandedItem[]>
 }
 
 // ***
@@ -128,11 +132,10 @@ export const createItemSlice: StateCreator<StoreSlices, [], [], ItemSlice> = (se
 
     get().triggerFeedRefresh()
 
-    return await expandItem(newItem)
+    return await get().expandItem(newItem)
   },
   createRef: async (refFields: StagedRefFields) => {
-    const { sessionSigner } = get()
-    if (!sessionSigner) throw new Error('not logged in')
+    const { canvasActions } = get()
 
     const createRefArgs = {
       title: refFields.title || '',
@@ -144,13 +147,12 @@ export const createItemSlice: StateCreator<StoreSlices, [], [], ItemSlice> = (se
       deleted: null,
     }
 
-    const { result } = await canvasApp.as(sessionSigner).createRef(createRefArgs)
+    const { result } = await canvasActions!.createRef(createRefArgs)
 
     return result
   },
   createItem: async (refId: string, itemFields: StagedItemFields, backlog: boolean) => {
-    const { sessionSigner } = get()
-    if (!sessionSigner) throw new Error('not logged in')
+    const { canvasActions } = get()
 
     const createItemArgs = {
       ref: refId,
@@ -166,14 +168,19 @@ export const createItemSlice: StateCreator<StoreSlices, [], [], ItemSlice> = (se
       deleted: null,
     }
 
-    const { result } = await canvasApp.as(sessionSigner).createItem(createItemArgs)
+    const { result } = await canvasActions!.createItem(createItemArgs)
 
     return result
   },
 
   removeItem: async (id: string): Promise<void> => {
-    const { sessionSigner } = get()
-    if (!sessionSigner) throw new Error('not logged in')
+    const { canvasApp, canvasActions } = get()
+    if (!canvasApp) {
+      throw new Error('Canvas not initialized!')
+    }
+    if (!canvasActions) {
+      throw new Error('Canvas not logged in!')
+    }
 
     const item = await canvasApp.db.get('item', id)
 
@@ -182,18 +189,20 @@ export const createItemSlice: StateCreator<StoreSlices, [], [], ItemSlice> = (se
     if (item.list) {
       const children = await canvasApp.db.query('item', { where: { parent: id } })
       for (const child of children) {
-        await canvasApp.as(sessionSigner).removeItem(child.id)
+        await canvasActions.removeItem(child.id)
       }
     }
-    await canvasApp.as(sessionSigner).removeItem(id)
+    await canvasActions.removeItem(id)
 
     get().triggerFeedRefresh()
   },
   addItemToList: async (listId: string, itemId: string) => {
-    const { sessionSigner } = get()
-    if (!sessionSigner) throw new Error('not logged in')
+    const { canvasActions } = get()
+    if (!canvasActions) {
+      throw new Error('Canvas not logged in!')
+    }
 
-    await canvasApp.as(sessionSigner).addItemToList(listId, itemId)
+    await canvasActions.addItemToList(listId, itemId)
 
     // newly created item might appear in feed before it is added to a list
     // so we should refresh after choosing a list
@@ -201,12 +210,17 @@ export const createItemSlice: StateCreator<StoreSlices, [], [], ItemSlice> = (se
     get().triggerFeedRefresh()
   },
   update: async (id?: string) => {
-    const { sessionSigner } = get()
-    if (!sessionSigner) throw new Error('not logged in')
+    const { canvasApp, canvasActions } = get()
+    if (!canvasApp) {
+      throw new Error('Canvas not initialized!')
+    }
+    if (!canvasActions) {
+      throw new Error('Canvas not logged in!')
+    }
 
     const editedState = get().editedState
     const itemId = id || get().editing
-    await canvasApp.as(sessionSigner).updateItem(itemId, {
+    await canvasActions.updateItem(itemId, {
       image: editedState.image,
       url: editedState.url,
       text: editedState.text,
@@ -217,9 +231,7 @@ export const createItemSlice: StateCreator<StoreSlices, [], [], ItemSlice> = (se
     const updatedItem = await canvasApp.db.get<Item>('item', itemId)
 
     if (editedState.listTitle) {
-      await canvasApp
-        .as(sessionSigner)
-        .updateRefTitle(updatedItem!.ref as string, editedState.listTitle)
+      await canvasActions.updateRefTitle(updatedItem!.ref as string, editedState.listTitle)
     }
 
     // Trigger feed refresh since updates might affect feed visibility
@@ -228,21 +240,32 @@ export const createItemSlice: StateCreator<StoreSlices, [], [], ItemSlice> = (se
     return updatedItem!
   },
   moveToBacklog: async (id: string) => {
-    const { sessionSigner } = get()
-    if (!sessionSigner) throw new Error('not logged in')
+    const { canvasApp, canvasActions } = get()
 
-    await canvasApp.as(sessionSigner).moveItemToBacklog(id)
+    if (!canvasApp) {
+      throw new Error('Canvas not initialized!')
+    }
+    if (!canvasActions) {
+      throw new Error('Canvas not logged in!')
+    }
+
+    await canvasActions.moveItemToBacklog(id)
 
     // Trigger feed refresh since backlog items don't appear in the feed
     get().triggerFeedRefresh()
   },
   updateRefTitle: async (id: string, title: string) => {
-    const { sessionSigner } = get()
-    if (!sessionSigner) throw new Error('not logged in')
-
-    await canvasApp.as(sessionSigner).updateRefTitle(id, title)
+    const { canvasActions } = get()
+    if (!canvasActions) {
+      throw new Error('Canvas not logged in!')
+    }
+    await canvasActions.updateRefTitle(id, title)
   },
   getFeedItems: async () => {
+    const { canvasApp } = get()
+    if (!canvasApp) {
+      throw new Error('Canvas not initialized!')
+    }
     const result = await canvasApp.db.query<Item>('item', {
       where: {
         creator: {
@@ -255,9 +278,13 @@ export const createItemSlice: StateCreator<StoreSlices, [], [], ItemSlice> = (se
         created: 'desc',
       },
     })
-    return await expandItems(result)
+    return await get().expandItems(result)
   },
   getTickerItems: async () => {
+    const { canvasApp } = get()
+    if (!canvasApp) {
+      throw new Error('Canvas not initialized!')
+    }
     const refs = await canvasApp.db.query<Ref>('ref', {
       where: {
         showInTicker: true,
@@ -269,24 +296,45 @@ export const createItemSlice: StateCreator<StoreSlices, [], [], ItemSlice> = (se
     return refs
   },
   getRefById: async (id: string) => {
+    const { canvasApp } = get()
+    if (!canvasApp) {
+      return null
+    }
     return await canvasApp.db.get('ref', id)
   },
   getRefsByTitle: async (title: string) => {
-    const refs = await canvasApp.db.query<Ref>('ref', {
-      where: {
-        title,
-      },
-    })
+    const { canvasApp } = get()
+    if (!canvasApp) {
+      throw new Error('Canvas not initialized!')
+    }
+    // console.log(canvasApp.app)
+    const sqliteDbHandle = (canvasApp.db as ModelDB).db
+    // const mdb = canvasApp.app
+    // console.log(mdb)
+    // console.log(Object.keys(canvasApp.db))
+    // console.log(canvasApp.db.db)
+    // console.log(sqliteDbHandle)
 
-    return refs
+    const query = await sqliteDbHandle.prepareAsync('SELECT * FROM ref WHERE title LIKE ?')
+    const result = await query.executeAsync<Ref>([`%${title}%`])
+
+    return await result.getAllAsync()
   },
   getItemById: async (id: string) => {
+    const { canvasApp } = get()
+    if (!canvasApp) {
+      throw new Error('Canvas not initialized!')
+    }
     const item = await canvasApp.db.get<Item>('item', id)
     if (!item) return null
 
-    return await expandItem(item)
+    return await get().expandItem(item)
   },
   getItemsByRefTitle: async (title: string) => {
+    const { canvasApp } = get()
+    if (!canvasApp) {
+      throw new Error('Canvas not initialized!')
+    }
     const refs = await canvasApp.db.query<Ref>('ref', {
       where: {
         title,
@@ -305,9 +353,13 @@ export const createItemSlice: StateCreator<StoreSlices, [], [], ItemSlice> = (se
       items.push(...matchingItems)
     }
 
-    return await expandItems(items)
+    return await get().expandItems(items)
   },
   getItemsByRefIds: async (refIds: string[]) => {
+    const { canvasApp } = get()
+    if (!canvasApp) {
+      throw new Error('Canvas not initialized!')
+    }
     const items: Item[] = []
     for (const refId of refIds) {
       const items = await canvasApp.db.query<Item>('item', {
@@ -318,74 +370,89 @@ export const createItemSlice: StateCreator<StoreSlices, [], [], ItemSlice> = (se
       items.push(...items)
     }
 
-    return await expandItems(items)
+    return await get().expandItems(items)
   },
   getAllItemsByCreator: async (creator: Profile) => {
+    const { canvasApp } = get()
+    if (!canvasApp) {
+      throw new Error('Canvas not initialized!')
+    }
     const items = await canvasApp.db.query<Item>('item', {
       where: {
         creator: creator.did,
       },
     })
-    return await expandItems(items)
+    return await get().expandItems(items)
   },
   getListsByCreator: async (creator: Profile) => {
+    const { canvasApp } = get()
+    if (!canvasApp) {
+      throw new Error('Canvas not initialized!')
+    }
     const items = await canvasApp.db.query<Item>('item', {
       where: {
         list: true,
         creator: creator.did,
       },
     })
-    return await expandItems(items)
+    return await get().expandItems(items)
+  },
+
+  expandItem: async (item: Item) => {
+    const { canvasApp } = get()
+    if (!canvasApp) throw new Error('Canvas not initialized')
+
+    const ref = await canvasApp.db.get<Ref>('ref', item.ref as PrimaryKeyValue)
+    if (!ref) throw new Error('Ref not found')
+    const creator = await canvasApp.db.get<Profile>('profile', item.creator as PrimaryKeyValue)
+    if (!creator) throw new Error('Creator not found')
+
+    const itemsViaParent = await canvasApp.db.query<Item>('item', {
+      where: {
+        parent: item.id,
+      },
+    })
+
+    const itemsWithRefViaParent = await Promise.all(
+      itemsViaParent.map(async (item) => {
+        const ref = await canvasApp.db.get<Ref>('ref', item.ref as PrimaryKeyValue)
+        if (!ref) throw new Error('Ref not found')
+        return { ...item, expand: { ref } }
+      })
+    )
+
+    return { ...item, expand: { ref, creator, items_via_parent: itemsWithRefViaParent } }
+  },
+
+  expandItems: async (items: Item[]) => {
+    const expandedItems = await Promise.all(items.map(get().expandItem))
+    return expandedItems
+  },
+
+  getProfileItems: async (user: Profile) => {
+    const { canvasApp } = get()
+    if (!canvasApp) throw new Error('Canvas not initialized')
+    const items = await canvasApp.db.query<Item>('item', {
+      where: {
+        creator: user.did,
+        backlog: false,
+        parent: null,
+      },
+    })
+    return gridSort(await get().expandItems(items))
+  },
+
+  getBacklogItems: async (user: Profile) => {
+    const { canvasApp } = get()
+    if (!canvasApp) throw new Error('Canvas not initialized')
+    const items = await canvasApp.db.query<Item>('item', {
+      where: {
+        creator: user.did,
+        backlog: true,
+        parent: null,
+      },
+    })
+    const expandedItems = await get().expandItems(items)
+    return expandedItems.sort(createdSort)
   },
 })
-
-async function expandItem(item: Item): Promise<ExpandedItem> {
-  const ref = await canvasApp.db.get<Ref>('ref', item.ref as PrimaryKeyValue)
-  if (!ref) throw new Error('Ref not found')
-  const creator = await canvasApp.db.get<Profile>('profile', item.creator as PrimaryKeyValue)
-  if (!creator) throw new Error('Creator not found')
-
-  const itemsViaParent = await canvasApp.db.query<Item>('item', {
-    where: {
-      parent: item.id,
-    },
-  })
-
-  const itemsWithRefViaParent = await Promise.all(
-    itemsViaParent.map(async (item) => {
-      const ref = await canvasApp.db.get<Ref>('ref', item.ref as PrimaryKeyValue)
-      if (!ref) throw new Error('Ref not found')
-      return { ...item, expand: { ref } }
-    })
-  )
-
-  return { ...item, expand: { ref, creator, items_via_parent: itemsWithRefViaParent } }
-}
-
-async function expandItems(items: Item[]): Promise<ExpandedItem[]> {
-  const expandedItems = await Promise.all(items.map(expandItem))
-  return expandedItems
-}
-
-export const getProfileItems = async (user: Profile) => {
-  const items = await canvasApp.db.query<Item>('item', {
-    where: {
-      creator: user.did,
-      backlog: false,
-      parent: null,
-    },
-  })
-  return gridSort(await expandItems(items))
-}
-
-export const getBacklogItems = async (user: Profile) => {
-  const items = await canvasApp.db.query<Item>('item', {
-    where: {
-      creator: user.did,
-      backlog: true,
-      parent: null,
-    },
-  })
-  const expandedItems = await expandItems(items)
-  return expandedItems.sort(createdSort)
-}

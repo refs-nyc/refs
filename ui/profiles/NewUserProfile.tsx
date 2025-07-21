@@ -12,8 +12,7 @@ import { DeviceLocation } from '../inputs/DeviceLocation'
 import { AvatarPicker } from '../inputs/AvatarPicker'
 import { FirstVisitScreen } from './FirstVisitScreen'
 import { SizableText } from '../typo/SizableText'
-import { getSessionSignerFromSMS, magic } from '@/features/magic'
-import { canvasApp } from '@/features/canvas/state'
+import { getSessionSignerFromSMS } from '@/features/magic'
 
 const win = Dimensions.get('window')
 
@@ -23,20 +22,20 @@ const PhoneNumberStep = ({ carouselRef }: { carouselRef: React.RefObject<ICarous
     handleSubmit,
     formState: { errors, isValid },
   } = useForm({ mode: 'onChange' })
-  const { login, updateStagedProfileFields } = useAppStore()
+  const { login, updateStagedProfileFields, canvasApp } = useAppStore()
 
   return (
     <ProfileStep
       buttonTitle="Next"
       showFullHeightStack={false}
-      disabled={!isValid}
+      disabled={!isValid || !canvasApp}
       onSubmit={handleSubmit(
         async (values) => {
           const sessionSigner = await getSessionSignerFromSMS(values.phoneNumber)
 
           // check if the profile already exists
           const userDid = await sessionSigner.getDid()
-          const existingProfile = await canvasApp.db.get('profile', userDid)
+          const existingProfile = await canvasApp!.db.get('profile', userDid)
 
           if (existingProfile) {
             // if so, then log the user in

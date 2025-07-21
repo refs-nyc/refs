@@ -5,7 +5,7 @@ import { SimplePinataImage } from '@/ui/images/SimplePinataImage'
 import { AddRefSheetGrid } from '@/ui/profiles/sheets/AddRefSheetGrid'
 import { Text, View } from 'react-native'
 import { useEffect, useState } from 'react'
-import { getProfileItems } from '@/features/stores/items'
+
 import { useAppStore } from '@/features/stores'
 
 export const SelectItemToReplace = ({
@@ -18,7 +18,7 @@ export const SelectItemToReplace = ({
   onAddToBacklog: () => Promise<void>
 }) => {
   const [gridItems, setGridItems] = useState<ExpandedItem[]>([])
-  const user = useAppStore((state) => state.user)
+  const { user, getProfileItems } = useAppStore()
 
   useEffect(() => {
     const fetchGridItems = async () => {

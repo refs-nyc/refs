@@ -1,4 +1,4 @@
-import { ModelSchema } from '@canvas-js/core'
+import { Canvas, ModelSchema } from '@canvas-js/core'
 import { Contract } from '@canvas-js/core/contract'
 import { formatDateString } from '../utils'
 
@@ -103,7 +103,6 @@ export default class RefsContract extends Contract<typeof RefsContract.models> {
   }
 
   async createProfile(createProfileArgs: {
-    did: string
     firstName: string
     lastName: string
     location: string
@@ -111,15 +110,14 @@ export default class RefsContract extends Contract<typeof RefsContract.models> {
     created: string
     updated: string
   }) {
-    if (createProfileArgs.did.split('/')[0] !== this.did) {
-      throw new Error('Profile creator does not match')
-    }
-
     return await this.db.transaction(async () => {
-      await this.db.set('profile', {
+      const newProfile = {
         ...createProfileArgs,
+        did: this.did,
         updated: null,
-      })
+      }
+      await this.db.set('profile', newProfile)
+      return newProfile
     })
   }
 
@@ -272,3 +270,5 @@ export default class RefsContract extends Contract<typeof RefsContract.models> {
     })
   }
 }
+
+export type RefsCanvas = Canvas<typeof RefsContract.models, RefsContract>

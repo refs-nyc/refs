@@ -1,5 +1,4 @@
 import { useAppStore } from '@/features/stores'
-import { getProfileItems } from '@/features/stores/items'
 import { ExpandedItem, Profile } from '@/features/types'
 import { c } from '@/features/style'
 import BottomSheet, { BottomSheetBackdrop } from '@gorhom/bottom-sheet'
@@ -27,6 +26,7 @@ export const ProfileDetailsSheet = ({
     detailsBackdropAnimatedIndex,
     registerBackdropPress,
     unregisterBackdropPress,
+    getProfileItems,
   } = useAppStore()
 
   useEffect(() => {

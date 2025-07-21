@@ -100,7 +100,11 @@ export default function RootLayout() {
   const { init, connectCanvas } = useAppStore()
 
   useEffect(() => {
-    connectCanvas().then(init)
+    async function doInit() {
+      await connectCanvas()
+      await init()
+    }
+    doInit()
   }, [init, connectCanvas])
 
   return (

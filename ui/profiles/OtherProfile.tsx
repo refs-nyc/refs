@@ -1,5 +1,4 @@
 import { useAppStore } from '@/features/stores'
-import { getBacklogItems, getProfileItems } from '@/features/stores/items'
 import type { Profile } from '@/features/types'
 import { ExpandedItem } from '@/features/types'
 import { s } from '@/features/style'
@@ -20,7 +19,14 @@ export const OtherProfile = ({ did }: { did: string }) => {
   const [backlogItems, setBacklogItems] = useState<ExpandedItem[]>([])
   const [loading, setLoading] = useState<boolean>(true)
 
-  const { profileRefreshTrigger, user, stopEditing, getUserByDid } = useAppStore()
+  const {
+    profileRefreshTrigger,
+    user,
+    stopEditing,
+    getUserByDid,
+    getBacklogItems,
+    getProfileItems,
+  } = useAppStore()
 
   const refreshGrid = async (did: string) => {
     setLoading(true)

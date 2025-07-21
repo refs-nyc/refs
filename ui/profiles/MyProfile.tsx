@@ -1,5 +1,4 @@
 import { useAppStore } from '@/features/stores'
-import { getBacklogItems, getProfileItems } from '@/features/stores/items'
 import type { Profile } from '@/features/types'
 import { ExpandedItem } from '@/features/types'
 import { s } from '@/features/style'
@@ -35,6 +34,8 @@ export const MyProfile = ({ did }: { did: string }) => {
     stopEditProfile,
     setAddingNewRefTo,
     newRefSheetRef,
+    getBacklogItems,
+    getProfileItems,
   } = useAppStore()
 
   const [removingItem, setRemovingItem] = useState<ExpandedItem | null>(null)

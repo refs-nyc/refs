@@ -1,5 +1,4 @@
 import { useAppStore } from '@/features/stores'
-import { getProfileItems } from '@/features/stores/items'
 import { ExpandedItem, StagedItemFields } from '@/features/types'
 import { c, s } from '@/features/style'
 import { AddedNewRefConfirmation } from '@/ui/actions/AddedNewRefConfirmation'
@@ -31,8 +30,16 @@ export const AddRefSheet = ({
   // the resulting item
   const [itemData, setItemData] = useState<ExpandedItem | null>(null)
 
-  const { user, moveToBacklog, removeItem, addToProfile, getRefById, addingRefId, setAddingRefId } =
-    useAppStore()
+  const {
+    user,
+    moveToBacklog,
+    removeItem,
+    addToProfile,
+    getRefById,
+    addingRefId,
+    setAddingRefId,
+    getProfileItems,
+  } = useAppStore()
 
   useEffect(() => {
     const getRef = async () => {

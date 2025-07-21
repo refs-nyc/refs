@@ -51,7 +51,7 @@ const LoginStep = () => {
           })
         }
       })}
-      disabled={!isValid || !canvasApp}
+      disabled={!isValid || !canvasApp || loginInProgress}
     >
       <Controller
         name="phoneNumber"

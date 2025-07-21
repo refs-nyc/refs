@@ -1,4 +1,4 @@
-import { useRef } from 'react'
+import { useRef, useState } from 'react'
 import { View } from 'react-native'
 import { Dimensions } from 'react-native'
 import { useAppStore } from '@/features/stores'
@@ -23,30 +23,37 @@ const PhoneNumberStep = ({ carouselRef }: { carouselRef: React.RefObject<ICarous
     formState: { errors, isValid },
   } = useForm({ mode: 'onChange' })
   const { login, updateStagedProfileFields, canvasApp } = useAppStore()
+  const [checkingPhoneNumber, setCheckingPhoneNumber] = useState(false)
 
   return (
     <ProfileStep
-      buttonTitle="Next"
+      buttonTitle={checkingPhoneNumber ? 'Verifying phone number...' : 'Next'}
       showFullHeightStack={false}
-      disabled={!isValid || !canvasApp}
+      disabled={!isValid || !canvasApp || checkingPhoneNumber}
       onSubmit={handleSubmit(
         async (values) => {
-          const sessionSigner = await getSessionSignerFromSMS(values.phoneNumber)
+          setCheckingPhoneNumber(true)
 
-          // check if the profile already exists
-          const userDid = await sessionSigner.getDid()
-          const existingProfile = await canvasApp!.db.get('profile', userDid)
+          try {
+            const sessionSigner = await getSessionSignerFromSMS(values.phoneNumber)
 
-          if (existingProfile) {
-            // if so, then log the user in
-            await login(sessionSigner)
-            router.dismissAll()
-          } else {
-            // otherwise update the staged user and move to the next step
-            updateStagedProfileFields({
-              sessionSigner,
-            })
-            carouselRef.current?.next()
+            // check if the profile already exists
+            const userDid = await sessionSigner.getDid()
+            const existingProfile = await canvasApp!.db.get('profile', userDid)
+
+            if (existingProfile) {
+              // if so, then log the user in
+              await login(sessionSigner)
+              router.dismissAll()
+            } else {
+              // otherwise update the staged user and move to the next step
+              updateStagedProfileFields({
+                sessionSigner,
+              })
+              carouselRef.current?.next()
+            }
+          } finally {
+            setCheckingPhoneNumber(false)
           }
         },
         (errors) => console.error('Errors:', errors)

@@ -1,5 +1,3 @@
-// @ts-nocheck
-
 import { StateCreator } from 'zustand'
 import {
   Conversation,
@@ -12,7 +10,7 @@ import {
   Reaction,
   Save,
 } from '../types'
-import { pocketbase } from '../pocketbase'
+
 import type { StoreSlices } from './types'
 
 export const PAGE_SIZE = 10
@@ -60,11 +58,6 @@ export type MessageSlice = {
   sendReaction: (sender: Profile, messageId: string, emoji: string) => Promise<void>
   deleteReaction: (id: string) => Promise<void>
   removeReaction: (reaction: Reaction) => void
-
-  saves: ExpandedSave[]
-  setSaves: (saves: ExpandedSave[]) => void
-  addSave: (user: Profile, savedBy: Profile) => Promise<void>
-  removeSave: (id: string) => Promise<void>
 
   archiveConversation: (user: Profile, conversationId: string) => Promise<void>
   unarchiveConversation: (user: Profile, conversationId: string) => Promise<void>
@@ -344,42 +337,7 @@ export const createMessageSlice: StateCreator<StoreSlices, [], [], MessageSlice>
       console.error(error)
     }
   },
-  saves: [],
-  setSaves: (saves: ExpandedSave[]) => {
-    set((state) => ({
-      saves: saves,
-    }))
-  },
-  addSave: async (user: Profile, savedBy: Profile) => {
-    try {
-      const id = (
-        await pocketbase.collection('saves').create<Save>({ user: user.did, saved_by: savedBy.did })
-      ).id
-      const save = await pocketbase.collection('saves').getOne<ExpandedSave>(id, { expand: 'user' })
-      set((state) => {
-        if (!state.saves.length) return { saves: [save] }
-        return {
-          saves: state.saves.some((m) => m.id === save.id)
-            ? [...state.saves]
-            : [...state.saves, save],
-        }
-      })
-    } catch (error) {
-      console.error(error)
-    }
-  },
-  removeSave: async (id: string) => {
-    try {
-      await pocketbase.collection('saves').delete(id)
-      set((state) => {
-        return {
-          saves: state.saves.filter((m) => m.id !== id),
-        }
-      })
-    } catch (error) {
-      console.error(error)
-    }
-  },
+
   archiveConversation: async (user: Profile, conversationId: string) => {
     const membership = get().memberships[conversationId].find(
       (m) => m.expand?.user.did === user.did

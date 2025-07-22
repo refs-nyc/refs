@@ -283,6 +283,25 @@ export default class RefsContract extends Contract<typeof RefsContract.models> {
       await this.db.delete('item', itemId)
     })
   }
+
+  async createSave(createSaveParams: { user: string; saved_by: string; created: string }) {
+    return await this.db.transaction(async () => {
+      const id = `${this.did}/${this.id}`
+      const newSave = {
+        id,
+        updated: null,
+        ...createSaveParams,
+      }
+      await this.db.set('save', newSave)
+      return newSave
+    })
+  }
+
+  async removeSave(saveId: string) {
+    await this.db.transaction(async () => {
+      await this.db.delete('save', saveId)
+    })
+  }
 }
 
 export type RefsCanvas = Canvas<typeof RefsContract.models, RefsContract>

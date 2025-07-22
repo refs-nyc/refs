@@ -2,9 +2,10 @@ import { pocketbase, useItemStore, useUserStore } from '@/features/pocketbase'
 import { getBacklogItems, getProfileItems } from '@/features/pocketbase/stores/items'
 import type { ExpandedProfile } from '@/features/pocketbase/stores/types'
 import { ExpandedItem } from '@/features/pocketbase/stores/types'
+import { getPreloadedData } from '@/features/pocketbase/background-preloader'
 import { s } from '@/features/style'
 import BottomSheet from '@gorhom/bottom-sheet'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useMemo } from 'react'
 import { ScrollView, View } from 'react-native'
 import { Grid } from '../grid/Grid'
 import { PlaceholderGrid } from '../grid/PlaceholderGrid'
@@ -22,20 +23,59 @@ export const OtherProfile = ({ userName }: { userName: string }) => {
 
   const { profileRefreshTrigger } = useItemStore()
   const { user } = useUserStore()
+  
+  // Simple cache to avoid refetching the same data
+  const lastFetchedUserName = useRef<string>('')
+  const lastFetchedTrigger = useRef<number>(0)
 
   const refreshGrid = async (userName: string) => {
+    // Check if we already have this data cached
+    if (lastFetchedUserName.current === userName && lastFetchedTrigger.current === profileRefreshTrigger) {
+      console.log('🚀 Using cached profile data for:', userName)
+      return
+    }
+    
+    console.log('🔄 Fetching profile data for:', userName)
+    const startTime = Date.now()
+    
+    // Check for preloaded data first (try both other-profile and search-result-profile)
+    const otherProfileKey = `other-profile-${userName}-${profileRefreshTrigger}`
+    const searchResultKey = `search-result-profile-${user?.id || 'unknown'}`
+    const preloadedData = getPreloadedData(otherProfileKey) || getPreloadedData(searchResultKey)
+    
+    if (preloadedData) {
+      console.log('🚀 Using preloaded data for:', userName)
+      setProfile(preloadedData.profile)
+      setGridItems(preloadedData.gridItems)
+      lastFetchedUserName.current = userName
+      lastFetchedTrigger.current = profileRefreshTrigger
+      const loadTime = Date.now() - startTime
+      console.log(`✅ Profile loaded from cache in ${loadTime}ms for:`, userName)
+      return
+    }
+    
     setLoading(true)
     try {
-      const profile = await pocketbase
+      // Make API calls parallel instead of sequential
+      const [profile, gridItems] = await Promise.all([
+        pocketbase
         .collection('users')
-        .getFirstListItem<ExpandedProfile>(`userName = "${userName}"`)
+          .getFirstListItem<ExpandedProfile>(`userName = "${userName}"`),
+        getProfileItems(userName)
+      ])
+      
       setProfile(profile)
-
-      const gridItems = await getProfileItems(userName)
       setGridItems(gridItems)
 
-      const backlogItems = await getBacklogItems(userName)
-      setBacklogItems(backlogItems as ExpandedItem[])
+      // Update cache
+      lastFetchedUserName.current = userName
+      lastFetchedTrigger.current = profileRefreshTrigger
+      
+      const loadTime = Date.now() - startTime
+      console.log(`✅ Profile loaded in ${loadTime}ms for:`, userName)
+      
+      // Removed backlogItems fetch since it's not used in the UI
+      // setBacklogItems(backlogItems as ExpandedItem[])
     } catch (error) {
       console.error(error)
     } finally {

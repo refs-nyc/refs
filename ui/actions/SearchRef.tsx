@@ -82,29 +82,17 @@ export const SearchRef = ({
   url,
   image,
   paste,
-<<<<<<< Updated upstream
   onChooseExistingRef,
   onAddNewRef,
   prompt,
-=======
-  onComplete,
-  initialPrompt,
-  autoFocus = false,
->>>>>>> Stashed changes
 }: {
   noNewRef?: boolean
   url?: string
   image?: string
   paste?: boolean
-<<<<<<< Updated upstream
   onChooseExistingRef: (r: CompleteRef, newImage?: string) => void
   onAddNewRef: (fields: NewRefFields) => void
   prompt?: string
-=======
-  onComplete: (r: CompleteRef) => void
-  initialPrompt?: string
-  autoFocus?: boolean
->>>>>>> Stashed changes
 }) => {
   const [searchQuery, setSearchQuery] = useState('')
   const [disableNewRef, setDisableNewRef] = useState(false)
@@ -126,8 +114,8 @@ export const SearchRef = ({
 
   // Handle auto-focus with a delay for BottomSheet compatibility
   useEffect(() => {
-    if (autoFocus && textInputRef.current) {
-      console.log('SearchRef: Attempting to focus input with autoFocus')
+    if (textInputRef.current) {
+      console.log('SearchRef: Attempting to focus input')
       requestAnimationFrame(() => {
         setTimeout(() => {
           if (textInputRef.current) {
@@ -137,11 +125,11 @@ export const SearchRef = ({
         }, 300)
       })
     }
-  }, [autoFocus])
+  }, [])
 
   // Also try to focus when component mounts if autoFocus is true
   useEffect(() => {
-    if (autoFocus && textInputRef.current) {
+    if (textInputRef.current) {
       console.log('SearchRef: Mount effect - attempting to focus input')
       requestAnimationFrame(() => {
         setTimeout(() => {
@@ -298,6 +286,11 @@ export const SearchRef = ({
         (res) => res.json()
       )
 
+      if (!results || !results.items) {
+        setImageSearchResults([])
+        setDisplayingImagesFor('')
+        return
+      }
       const resultUrls = results.items.map((item: any) => item.link).slice(0, 3)
       setImageSearchResults(resultUrls)
     } catch (error) {
@@ -316,6 +309,9 @@ export const SearchRef = ({
             alignItems: 'center',
             backgroundColor: 'transparent',
             marginVertical: s.$1,
+            marginHorizontal: 10, // 10px padding from either side of the screen
+            width: '90%', // ADDED: make search bar less wide
+            alignSelf: 'center', // ADDED: center the search bar
             height: 42,
             paddingVertical: 0,
             paddingHorizontal: 10,
@@ -334,16 +330,9 @@ export const SearchRef = ({
               textAlignVertical: 'center',
             }}
             value={searchQuery}
-<<<<<<< Updated upstream
             placeholder={prompt || 'search anything or paste a link'}
             placeholderTextColor={'rgba(243,242,237,0.5)'}
             onChangeText={onQueryChange}
-            autoFocus={true}
-=======
-            placeholder={initialPrompt || "Search anything or start typing"}
-            placeholderTextColor={c.surface50}
-            onChangeText={onQueryChange}
->>>>>>> Stashed changes
           />
           {searchQuery.length > 0 && (
             <Pressable onPress={() => setSearchQuery('')} hitSlop={10} style={{ marginLeft: 8 }}>
@@ -385,6 +374,7 @@ export const SearchRef = ({
               borderColor: 'transparent',
               alignSelf: 'center',
               minWidth: 180,
+              // REMOVED: marginTop to return to previous height
             }}
           />
         )}

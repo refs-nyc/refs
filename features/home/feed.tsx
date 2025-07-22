@@ -13,6 +13,8 @@ import { SimplePinataImage } from '@/ui/images/SimplePinataImage'
 import { ProfileDetailsSheet } from '@/ui/profiles/ProfileDetailsSheet'
 import { useUIStore } from '@/ui/state'
 import BottomSheet from '@gorhom/bottom-sheet'
+import { getPreloadedData } from '@/features/pocketbase/background-preloader'
+import { performanceMonitor } from '@/features/pocketbase/performance-monitor'
 
 const win = Dimensions.get('window')
 
@@ -148,34 +150,94 @@ const ListItem = ({
 
 export const Feed = () => {
   const [items, setItems] = useState<ExpandedItem[]>([])
+  const [isLoadingMore, setIsLoadingMore] = useState(false)
+  const [hasMoreItems, setHasMoreItems] = useState(true)
+  const [currentPage, setCurrentPage] = useState(1)
   const feedRefreshTrigger = useItemStore((state) => state.feedRefreshTrigger)
   const [detailsItem, setDetailsItem] = useState<ExpandedItem | null>(null)
   const detailsSheetRef = useRef<BottomSheet>(null)
   const { referencersBottomSheetRef, setCurrentRefId } = useUIStore()
 
-  const fetchFeedItems = async () => {
+  const fetchFeedItems = async (page: number = 1, append: boolean = false) => {
+    if (page === 1) {
+      performanceMonitor.startTimer('feed_load')
+    }
+    
+    // Check for preloaded feed data first (only for first page)
+    if (page === 1) {
+      const cacheKey = `feed-data-${feedRefreshTrigger}`
+      const preloadedFeed = getPreloadedData(cacheKey)
+      
+      if (preloadedFeed) {
+        console.log('🚀 Using preloaded feed data')
+        setItems(preloadedFeed)
+        setCurrentPage(1)
+        setHasMoreItems(true)
+        performanceMonitor.endTimer('feed_load', true)
+        return
+      }
+    }
+    
     try {
-      const records = await pocketbase.collection('items').getList<ExpandedItem>(1, 30, {
+      const records = await pocketbase.collection('items').getList<ExpandedItem>(page, 10, {
         // TODO: remove list = false once we have a way to display lists in the feed
         // also consider showing backlog items in the feed, when we have a way to link to them
         filter: `creator != null && backlog = false && list = false && parent = null`,
         sort: '-created',
         expand: 'ref,creator',
       })
+      
+      if (append) {
+        setItems(prev => [...prev, ...records.items])
+      } else {
       setItems(records.items)
+      }
+      
+      setCurrentPage(page)
+      setHasMoreItems(records.items.length === 10)
+      
+      if (page === 1) {
+        performanceMonitor.endTimer('feed_load', false)
+      }
     } catch (error) {
       console.error('Error fetching feed items:', error)
+      if (page === 1) {
+        performanceMonitor.endTimer('feed_load', false)
+      }
+    }
+  }
+
+  const loadMoreItems = async () => {
+    if (isLoadingMore || !hasMoreItems) return
+    
+    setIsLoadingMore(true)
+    try {
+      await fetchFeedItems(currentPage + 1, true)
+    } finally {
+      setIsLoadingMore(false)
     }
   }
 
   useEffect(() => {
-    fetchFeedItems()
+    fetchFeedItems(1, false)
   }, [feedRefreshTrigger]) // Refetch whenever the trigger changes
 
   return (
     <>
       <DismissKeyboard>
-        <ScrollView>
+        <ScrollView
+          onScroll={({ nativeEvent }) => {
+            const { layoutMeasurement, contentOffset, contentSize } = nativeEvent
+            const paddingToBottom = 20
+            const isCloseToBottom = layoutMeasurement.height + contentOffset.y >= 
+              contentSize.height - paddingToBottom
+            
+            if (isCloseToBottom && hasMoreItems && !isLoadingMore) {
+              loadMoreItems()
+            }
+          }}
+          scrollEventThrottle={400}
+        >
           <View style={{ height: '100%' }}>
             <View
               style={{
@@ -209,6 +271,11 @@ export const Feed = () => {
                     }}
                   />
                 ))}
+                {isLoadingMore && (
+                  <View style={{ padding: s.$2, alignItems: 'center' }}>
+                    <Text style={{ color: c.muted }}>Loading more...</Text>
+                  </View>
+                )}
               </YStack>
             </View>
           </View>

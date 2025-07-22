@@ -12,11 +12,7 @@ export const GridTile = ({
   backgroundColor,
   flex,
   size = DEFAULT_TILE_SIZE,
-<<<<<<< Updated upstream
-  isPlaceholder = false,
-=======
   activeOpacity,
->>>>>>> Stashed changes
 }: {
   children?: React.ReactNode
   borderColor?: string
@@ -24,34 +20,20 @@ export const GridTile = ({
   backgroundColor?: string
   flex?: boolean
   size?: number
-<<<<<<< Updated upstream
-  isPlaceholder?: boolean
-=======
   activeOpacity?: number
->>>>>>> Stashed changes
 }) => {
   const { stopEditProfile } = useUIStore()
 
-  const placeholderStyle = isPlaceholder
-    ? {
-        backgroundColor: backgroundColor || c.surface2,
-        width: size,
-        alignItems: 'center' as const,
-        justifyContent: 'center' as const,
-      }
-    : {
-        borderWidth: 2,
-        borderColor: borderColor || c.surface2,
-        backgroundColor: backgroundColor || c.surface2,
-        width: size,
-      }
+  const placeholderStyle = {
+    backgroundColor: backgroundColor || c.surface2,
+    width: size,
+    alignItems: 'center' as const,
+    justifyContent: 'center' as const,
+  }
 
   return (
     <TouchableOpacity
       onPress={stopEditProfile}
-<<<<<<< Updated upstream
-      style={[base.gridTile, placeholderStyle]}
-=======
       activeOpacity={activeOpacity !== undefined ? activeOpacity : 0.2}
       style={[
         base.gridTile,
@@ -62,7 +44,6 @@ export const GridTile = ({
           width: flex ? size : '100%',
         },
       ]}
->>>>>>> Stashed changes
     >
       {children}
     </TouchableOpacity>

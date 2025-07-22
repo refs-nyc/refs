@@ -29,20 +29,14 @@ export type NewRefStep =
 
 export const NewRefSheet = ({
   bottomSheetRef,
-<<<<<<< Updated upstream
-=======
   handleCreateNewRef,
   onClose,
   promptText = '',
->>>>>>> Stashed changes
 }: {
   bottomSheetRef: React.RefObject<BottomSheet>
-<<<<<<< Updated upstream
-=======
   handleCreateNewRef: (itm: ExpandedItem) => Promise<void>
   onClose: () => void
   promptText?: string
->>>>>>> Stashed changes
 }) => {
   const { triggerProfileRefresh } = useItemStore()
   const { addingNewRefTo, setAddingNewRefTo, addRefPrompt } = useUIStore()
@@ -128,22 +122,7 @@ export const NewRefSheet = ({
       keyboardBehavior="interactive"
     >
       {isOpen && (
-<<<<<<< Updated upstream
-        <BottomSheetView
-          style={{
-            paddingHorizontal: s.$2,
-            paddingTop: 8,
-            alignItems: 'center',
-            justifyContent: 'center',
-=======
-        <NewRef
-          backlog={addingTo === 'backlog'}
-          initialRefData={{ title: promptText }}
-          onStep={(step) => {
-            if (step === 'add') bottomSheetRef.current?.snapToIndex(1)
->>>>>>> Stashed changes
-          }}
-        >
+        <>
           {step === 'search' && (
             <SearchRef
               prompt={addRefPrompt}
@@ -294,7 +273,7 @@ export const NewRefSheet = ({
           {(step === 'addedToBacklog' || step === 'addedToGrid') && itemData && (
             <AddedNewRefConfirmation itemData={itemData} />
           )}
-        </BottomSheetView>
+        </>
       )}
     </BottomSheet>
   )

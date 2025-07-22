@@ -21,7 +21,7 @@ const HEADER_HEIGHT = s.$8
 
 export default function SearchBottomSheet() {
   const [index, setIndex] = useState(0)
-  const { newRefSheetRef, setAddingNewRefTo } = useUIStore()
+  const { newRefSheetRef, setAddingNewRefTo, setAddRefPrompt } = useUIStore()
 
   const isMinimised = index === 0
   const searchSheetRef = useRef<BottomSheet>(null)
@@ -182,7 +182,9 @@ export default function SearchBottomSheet() {
                   <Pressable 
                     onPress={(e) => {
                       e.stopPropagation()
-                      onSearchIconPress()
+                      setAddingNewRefTo('grid')
+                      setAddRefPrompt('')
+                      newRefSheetRef.current?.snapToIndex(1)
                     }}
                   >
                     <View

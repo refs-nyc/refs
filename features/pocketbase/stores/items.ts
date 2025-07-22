@@ -7,6 +7,9 @@ import { canvasApp } from './canvas'
 import { createdSort } from '@/ui/profiles/sorts'
 
 function gridSort(items: ExpandedItem[]): ExpandedItem[] {
+  // If items are already sorted by order and created, we can optimize
+  if (items.length <= 1) return items
+  
   const itemsWithOrder: ExpandedItem[] = []
   const itemsWithoutOrder: ExpandedItem[] = []
 
@@ -17,17 +20,34 @@ function gridSort(items: ExpandedItem[]): ExpandedItem[] {
       itemsWithoutOrder.push(item)
     }
   }
-  // if items have an order value, sort them by order
-  itemsWithOrder.sort((a, b) => a.order - b.order)
-  // otherwise sort them by created date
-  itemsWithoutOrder.sort(createdSort)
+  
+  // Sort items with order
+  if (itemsWithOrder.length > 1) {
+    itemsWithOrder.sort((a, b) => a.order - b.order)
+  }
+  
+  // Sort items without order (they should already be sorted by created from the query)
+  // Only sort if we have multiple items and they're not already in the right order
+  if (itemsWithoutOrder.length > 1) {
+    // Check if they're already sorted by created date
+    let needsSorting = false
+    for (let i = 1; i < itemsWithoutOrder.length; i++) {
+      if (new Date(itemsWithoutOrder[i-1].created) < new Date(itemsWithoutOrder[i].created)) {
+        needsSorting = true
+        break
+      }
+    }
+    if (needsSorting) {
+      itemsWithoutOrder.sort(createdSort)
+    }
+  }
+  
   return [...itemsWithOrder, ...itemsWithoutOrder]
 }
 
 // ***
-// Items
-//
-//
+// Items Store
+// ***
 export const useItemStore = create<{
   editing: string
   addingToList: boolean
@@ -59,22 +79,27 @@ export const useItemStore = create<{
   editingLink: false,
   feedRefreshTrigger: 0,
   profileRefreshTrigger: 0,
+  
   setEditingLink: (newValue: boolean) => set(() => ({ editingLink: newValue })),
   startEditing: (id: string) => set(() => ({ editing: id })),
   setAddingToList: (newValue: boolean) => set(() => ({ addingToList: newValue })),
   setSearchingNewRef: (id: string) => set(() => ({ searchingNewRef: id })),
+  
   stopEditing: () =>
     set(() => {
       return { editing: '', editedState: {}, searchingNewRef: '', editingLink: false }
     }),
+    
   updateEditedState: (editedState: Partial<CompleteRef>) =>
     set(() => ({
       ...get().editedState,
       editedState,
     })),
+    
   triggerFeedRefresh: () => set((state) => ({ feedRefreshTrigger: state.feedRefreshTrigger + 1 })),
   triggerProfileRefresh: () =>
     set((state) => ({ profileRefreshTrigger: state.profileRefreshTrigger + 1 })),
+    
   push: async (newItem: StagedItem) => {
     try {
       const record = await pocketbase
@@ -90,6 +115,7 @@ export const useItemStore = create<{
       throw error
     }
   },
+  
   remove: async (id: string): Promise<void> => {
     const item = await pocketbase.collection('items').getOne(id)
     if (item.list) {
@@ -107,6 +133,7 @@ export const useItemStore = create<{
       feedRefreshTrigger: state.feedRefreshTrigger + 1,
     }))
   },
+  
   addItemToList: async (listId: string, itemId: string) => {
     try {
       await pocketbase.collection('items').update(itemId, { parent: listId })
@@ -119,6 +146,7 @@ export const useItemStore = create<{
       throw error
     }
   },
+  
   update: async (id?: string) => {
     try {
       const record = await pocketbase
@@ -142,6 +170,7 @@ export const useItemStore = create<{
       throw e
     }
   },
+  
   moveToBacklog: async (id: string) => {
     try {
       const record = await pocketbase.collection<ItemsRecord>('items').update(id, { backlog: true })
@@ -156,12 +185,14 @@ export const useItemStore = create<{
       throw error
     }
   },
+  
   pushRef: async (stagedRef: StagedRef) => {
     const record = await pocketbase.collection('refs').create(stagedRef)
     await canvasApp.actions.pushRef({ ...stagedRef, id: record.id })
 
     return record
   },
+  
   updateOneRef: async (id: string, fields: Partial<StagedRef>) => {
     try {
       const record = await pocketbase.collection('refs').update(id, { ...fields })
@@ -173,25 +204,96 @@ export const useItemStore = create<{
   },
 }))
 
+// Helper function to get profile items
 export const getProfileItems = async (userName: string) => {
-  const items = await pocketbase.collection<ExpandedItem>('items').getFullList({
-    filter: pocketbase.filter(
-      'creator.userName = {:userName} && backlog = false && parent = null',
-      {
-        userName,
-      }
-    ),
-    expand: 'items_via_parent, ref, items_via_parent.ref, creator',
-  })
-  return gridSort(items)
+  const startTime = Date.now()
+  console.log('🔄 getProfileItems starting for:', userName)
+  
+  try {
+    // First, get the user to get their ID
+    const user = await pocketbase
+      .collection('users')
+      .getFirstListItem(`userName = "${userName}"`)
+    
+    console.log(`📊 User fetch took ${Date.now() - startTime}ms`)
+    console.log(`📊 User found:`, user?.userName, user?.id)
+    
+    // Then get items without expand first
+    const itemsQueryStart = Date.now()
+    const filter = `creator = "${user.id}" && backlog = false && parent = null`
+    console.log(`📊 Using filter:`, filter)
+    
+    const items = await pocketbase.collection<ExpandedItem>('items').getFullList({
+      filter: filter,
+      fields: 'id,order,created,ref',
+      sort: 'order,created',
+    })
+    
+    const itemsQueryTime = Date.now() - itemsQueryStart
+    console.log(`📊 Items query took ${itemsQueryTime}ms, got ${items.length} items`)
+    console.log(`📊 Items:`, items.map(item => ({ id: item.id, ref: item.ref, order: item.order })))
+    
+    // Then get refs separately if needed
+    if (items.length > 0) {
+      const refIds = [...new Set(items.map(item => item.ref).filter(Boolean))]
+      const refsQueryStart = Date.now()
+      
+      const refs = await pocketbase.collection('refs').getFullList({
+        filter: refIds.map(id => `id = "${id}"`).join(' || '),
+        fields: 'id,title,image',
+      })
+      
+      const refsQueryTime = Date.now() - refsQueryStart
+      console.log(`📊 Refs query took ${refsQueryTime}ms, got ${refs.length} refs`)
+      
+      // Create a map of refs for quick lookup
+      const refsMap = new Map(refs.map(ref => [ref.id, ref]))
+      
+      // Attach refs to items
+      const itemsWithRefs = items.map(item => ({
+        ...item,
+        expand: {
+          ref: refsMap.get(item.ref)
+        }
+      }))
+      
+      const sortStartTime = Date.now()
+      const sortedItems = gridSort(itemsWithRefs)
+      const sortTime = Date.now() - sortStartTime
+      console.log(`📊 gridSort took ${sortTime}ms`)
+      
+      const totalTime = Date.now() - startTime
+      console.log(`✅ getProfileItems total time: ${totalTime}ms`)
+      
+      return sortedItems
+    } else {
+      const totalTime = Date.now() - startTime
+      console.log(`✅ getProfileItems total time: ${totalTime}ms (no items)`)
+      return []
+    }
+  } catch (error) {
+    console.error('❌ getProfileItems error:', error)
+    const totalTime = Date.now() - startTime
+    console.log(`❌ getProfileItems failed after ${totalTime}ms, returning empty array`)
+    return [] // Return empty array instead of throwing
+  }
 }
 
 export const getBacklogItems = async (userName: string) => {
-  const items = await pocketbase.collection('items').getFullList({
-    filter: pocketbase.filter('creator.userName = {:userName} && backlog = true && parent = null', {
-      userName,
-    }),
-    expand: 'children, ref',
-  })
-  return items.sort(createdSort)
+  try {
+    const user = await pocketbase
+      .collection('users')
+      .getFirstListItem(`userName = "${userName}"`)
+    
+    const items = await pocketbase.collection<ExpandedItem>('items').getFullList({
+      filter: `creator = "${user.id}" && backlog = true`,
+      expand: 'ref',
+      sort: '-created',
+    })
+    
+    return items
+  } catch (error) {
+    console.error('Error getting backlog items:', error)
+    throw error
+  }
 }

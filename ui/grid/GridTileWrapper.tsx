@@ -17,6 +17,7 @@ export const GridTileWrapper = ({
   onPress,
   onLongPress,
   size = DEFAULT_TILE_SIZE,
+  tileStyle,
 }: {
   type: GridTileType
   children: React.ReactNode
@@ -25,6 +26,7 @@ export const GridTileWrapper = ({
   onPress?: () => void
   onLongPress?: () => void
   size?: number
+  tileStyle?: any
 }) => {
   const { editingProfile, stopEditProfile } = useUIStore()
 
@@ -70,6 +72,7 @@ export const GridTileWrapper = ({
           base.gridTile,
           type === 'placeholder' ? placeholderStyles : specificStyles,
           { width: size, justifyContent: 'center', alignItems: 'center', backgroundColor: c.surface },
+          tileStyle,
         ]}
       >
         {editingProfile && type !== 'add' && id && (

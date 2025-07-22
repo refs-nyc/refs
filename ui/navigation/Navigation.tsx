@@ -1,5 +1,5 @@
 import { Link, router, usePathname } from 'expo-router'
-import { Text, View, Pressable, Animated } from 'react-native'
+import { Text, View, Pressable } from 'react-native'
 import { Avatar } from '../atoms/Avatar'
 import { c, s } from '@/features/style'
 import { useUserStore } from '@/features/pocketbase/stores/users'
@@ -11,6 +11,8 @@ import SavesIcon from '@/assets/icons/saves.svg'
 import MessageIcon from '@/assets/icons/message.svg'
 import { Ionicons } from '@expo/vector-icons'
 import BottomSheet from '@gorhom/bottom-sheet'
+import { useUIStore } from '../state'
+import { useBackdropStore } from '@/features/pocketbase/stores/backdrop'
 
 export const Navigation = ({
   savesBottomSheetRef,
@@ -19,33 +21,12 @@ export const Navigation = ({
 }) => {
   const { user } = useUserStore()
   const pathname = usePathname()
+  const { setReturningFromSearch } = useUIStore()
 
   const { saves, messagesPerConversation, conversations, memberships } = useMessageStore()
+  
 
   const isHomePage = pathname === '/' || pathname === '/index'
-
-  const scaleAnim = useRef(new Animated.Value(1)).current
-
-  const animateBadge = () => {
-    Animated.sequence([
-      Animated.timing(scaleAnim, {
-        toValue: 1.2,
-        duration: 200,
-        useNativeDriver: true,
-      }),
-      Animated.timing(scaleAnim, {
-        toValue: 1,
-        duration: 200,
-        useNativeDriver: true,
-      }),
-    ]).start()
-  }
-
-  useEffect(() => {
-    if (saves.length > 0) {
-      animateBadge()
-    }
-  }, [saves.length])
 
   const countNewMessages = () => {
     if (!user) return 0
@@ -79,9 +60,9 @@ export const Navigation = ({
 
   if (!user) return null
 
-  return (
-    <View style={{ display: 'flex', flexDirection: 'row', paddingLeft: 2 }}>
-      <NavigationBackdrop />
+    return (
+    <View style={{ display: 'flex', flexDirection: 'row', paddingLeft: 2, backgroundColor: c.surface, zIndex: 1 }}>
+ 
       <View
         style={{
           display: 'flex',
@@ -99,7 +80,19 @@ export const Navigation = ({
           <View style={{ flexDirection: 'row', alignItems: 'center', position: 'relative' }}>
             {!isHomePage && (
               <Pressable
-                onPress={() => router.back()}
+                onPress={() => {
+                  // Try to go back to the user's own profile if we're on someone else's profile
+                  if (pathname.startsWith('/user/') && user) {
+                    const currentUserName = pathname.split('/')[2]
+                    if (currentUserName !== user.userName) {
+                      // Set flag to indicate we're returning from search
+                      setReturningFromSearch(true)
+                      router.dismissTo(`/user/${user.userName}`)
+                      return
+                    }
+                  }
+                  router.back()
+                }}
                 style={{
                   position: 'absolute',
                   left: -15,
@@ -135,11 +128,9 @@ export const Navigation = ({
                 alignItems: 'center',
               }}
             >
-              <Animated.View
-                style={{ top: -2, right: -6, zIndex: 1, transform: [{ scale: scaleAnim }] }}
-              >
+              <View style={{ top: -2, right: -6, zIndex: 1 }}>
                 {saves.length > 0 && <Badge count={saves.length} color="#7e8f78" />}
-              </Animated.View>
+              </View>
             </View>
           </Pressable>
         </View>

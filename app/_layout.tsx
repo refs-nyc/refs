@@ -17,6 +17,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { useEffect, useRef, useState } from 'react'
 import { StatusBar, useColorScheme, useWindowDimensions, View } from 'react-native'
 import { Navigation } from '@/ui/navigation/Navigation'
+import { NavigationBackdrop } from '@/ui/navigation/NavigationBackdrop'
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native'
 import { useFonts } from 'expo-font'
 import { SplashScreen, Stack } from 'expo-router'
@@ -29,6 +30,8 @@ import { KeyboardProvider } from 'react-native-keyboard-controller'
 import { RegisterPushNotifications } from '@/ui/notifications/RegisterPushNotifications'
 import { MessagesInit } from '@/features/messaging/message-loader'
 import { useUserStore } from '@/features/pocketbase/stores/users'
+import { BackgroundPreloader } from '@/features/pocketbase/background-preloader'
+import { PerformanceMonitorComponent } from '@/features/pocketbase/performance-monitor'
 
 import { LogBox } from 'react-native'
 import BottomSheet from '@gorhom/bottom-sheet'
@@ -36,7 +39,7 @@ import Saves from '@/features/saves/saves-sheet'
 import Referencers from '@/ui/profiles/sheets/ReferencersSheet'
 import { useUIStore } from '@/ui/state'
 import { AddRefSheet } from '@/ui/profiles/sheets/AddRefSheet'
-import { NewRefSheet } from '@/ui/profiles/sheets/NewRefSheet'
+
 
 install()
 polyfillEncoding()
@@ -126,9 +129,12 @@ function RootLayoutNav() {
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <StatusBar barStyle={colorScheme === 'dark' ? 'light-content' : 'dark-content'} />
+      <BackgroundPreloader />
+      <PerformanceMonitorComponent />
       <RegisterPushNotifications />
       <MessagesInit />
       <Navigation savesBottomSheetRef={savesBottomSheetRef} />
+      <NavigationBackdrop />
 
       <Stack
         screenOptions={{
@@ -188,7 +194,7 @@ function RootLayoutNav() {
       {/* add ref sheet */}
       <AddRefSheet bottomSheetRef={addRefSheetRef} />
       {/* new ref sheet */}
-      <NewRefSheet bottomSheetRef={newRefSheetRef} />
     </ThemeProvider>
   )
 }
+

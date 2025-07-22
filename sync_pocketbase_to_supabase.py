@@ -138,16 +138,16 @@ def safe_sync_items_to_supabase(pb_items: List[Dict[str, Any]]) -> None:
         for i in range(0, len(items_to_insert), batch_size):
             batch = items_to_insert[i:i + batch_size]
             try:
-                response = httpx.post(
-                    f"{SUPA_URL}/rest/v1/items",
-                    headers=headers,
+        response = httpx.post(
+            f"{SUPA_URL}/rest/v1/items",
+            headers=headers,
                     json=batch
-                )
-                if response.status_code == 201:
+        )
+        if response.status_code == 201:
                     print(f"✅ Inserted batch {i//batch_size + 1}/{(len(items_to_insert) + batch_size - 1)//batch_size}")
-                else:
+        else:
                     print(f"❌ Failed to insert batch {i//batch_size + 1}: {response.status_code}")
-                    print(f"Error: {response.text}")
+            print(f"Error: {response.text}")
             except Exception as e:
                 print(f"❌ Error inserting batch {i//batch_size + 1}: {e}")
     
@@ -179,19 +179,19 @@ def verify_sync() -> None:
     }
     
     try:
-        # Check count
-        response = httpx.get(f"{SUPA_URL}/rest/v1/items?select=count", headers=headers)
-        if response.status_code == 200:
-            count = response.json()[0]['count']
-            print(f"📊 Supabase now has {count} items")
-        
-        # Check a few sample items
-        response = httpx.get(f"{SUPA_URL}/rest/v1/items?select=creator,text,ref_id&limit=3", headers=headers)
-        if response.status_code == 200:
-            sample_items = response.json()
-            print("📋 Sample items in Supabase:")
-            for item in sample_items:
-                print(f"  - Creator: {item['creator']}, Ref: {item['ref_id']}, Text: '{item['text']}'")
+    # Check count
+    response = httpx.get(f"{SUPA_URL}/rest/v1/items?select=count", headers=headers)
+    if response.status_code == 200:
+        count = response.json()[0]['count']
+        print(f"📊 Supabase now has {count} items")
+    
+    # Check a few sample items
+    response = httpx.get(f"{SUPA_URL}/rest/v1/items?select=creator,text,ref_id&limit=3", headers=headers)
+    if response.status_code == 200:
+        sample_items = response.json()
+        print("📋 Sample items in Supabase:")
+        for item in sample_items:
+            print(f"  - Creator: {item['creator']}, Ref: {item['ref_id']}, Text: '{item['text']}'")
     except Exception as e:
         print(f"⚠️  Error during verification: {e}")
 
@@ -200,27 +200,27 @@ def main():
     start_time = datetime.now()
     
     try:
-        # Get items from PocketBase
-        print("📥 Fetching items from PocketBase...")
-        items = get_pocketbase_items()
-        print(f"📦 Found {len(items)} grid items in PocketBase")
-        
-        if not items:
-            print("❌ No items found in PocketBase!")
-            return
-        
-        # Show sample items
-        print("📋 Sample items from PocketBase:")
-        for item in items[:3]:
-            print(f"  - Creator: {item['creator']}, Ref: {item['ref_title']} ({item['ref_id']}), Text: '{item['text']}'")
-        
+    # Get items from PocketBase
+    print("📥 Fetching items from PocketBase...")
+    items = get_pocketbase_items()
+    print(f"📦 Found {len(items)} grid items in PocketBase")
+    
+    if not items:
+        print("❌ No items found in PocketBase!")
+        return
+    
+    # Show sample items
+    print("📋 Sample items from PocketBase:")
+    for item in items[:3]:
+        print(f"  - Creator: {item['creator']}, Ref: {item['ref_title']} ({item['ref_id']}), Text: '{item['text']}'")
+    
         # Safe sync to Supabase
         safe_sync_items_to_supabase(items)
-        
-        # Verify
-        print("\n🔍 Verifying sync...")
-        verify_sync()
-        
+    
+    # Verify
+    print("\n🔍 Verifying sync...")
+    verify_sync()
+    
         end_time = datetime.now()
         duration = (end_time - start_time).total_seconds()
         print(f"✅ Sync completed successfully in {duration:.2f} seconds!")

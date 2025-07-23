@@ -117,14 +117,24 @@ export const createMessageSlice: StateCreator<StoreSlices, [], [], MessageSlice>
   },
 
   updateLastRead: async (conversationId: string, user: Profile) => {
-    const lastMessage = get().messagesPerConversation[conversationId]
-    const lastReadDate = lastMessage[0].created
+    const { canvasApp, canvasActions } = get()
+    if (!canvasApp) {
+      throw new Error('Canvas not initialized!')
+    }
+    if (!canvasActions) {
+      throw new Error('Canvas not logged in!')
+    }
 
-    const memberships = get().memberships
-    const ownMembership = memberships[conversationId].filter(
-      (m) => m.expand?.user.did === user.did
+    const lastMessage = (
+      await canvasApp.db.query<Message>('message', {
+        where: { conversation: conversationId },
+        orderBy: { created: 'desc' },
+        limit: 1,
+      })
     )[0]
-    await pocketbase.collection('memberships').update(ownMembership.id, { last_read: lastReadDate })
+
+    const lastReadDate = lastMessage ? lastMessage.created : ''
+    await canvasActions.updateMembershipLastRead(`${user.did}/${conversationId}`, lastReadDate)
   },
 
   getNewMessages: async (conversationId: string, oldestLoadedMessageDate: string) => {

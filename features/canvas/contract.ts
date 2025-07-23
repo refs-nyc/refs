@@ -335,6 +335,16 @@ export default class RefsContract extends Contract<typeof RefsContract.models> {
     })
   }
 
+  async updateMembershipLastRead(membershipId: string, lastRead: string) {
+    if (membershipId.split('/')[0] !== this.did) {
+      throw new Error()
+    }
+
+    await this.db.transaction(async () => {
+      await this.db.update('membership', { id: membershipId, last_read: lastRead })
+    })
+  }
+
   async archiveMembership(membershipId: string) {
     if (membershipId.split('/')[0] !== this.did) {
       throw new Error()

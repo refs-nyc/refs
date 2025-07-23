@@ -1,18 +1,36 @@
 import { useAppStore } from '@/features/stores'
-import { Profile } from '@/features/types'
+import { Membership, Profile } from '@/features/types'
 import { c, s } from '@/features/style'
 import { Heading, XStack, YStack } from '@/ui'
 import { Avatar } from '@/ui/atoms/Avatar'
-import { Ionicons } from '@expo/vector-icons'
-import { Link, router, useLocalSearchParams } from 'expo-router'
-import { View, Text, Pressable, ScrollView } from 'react-native'
+import { Link, useLocalSearchParams } from 'expo-router'
+import { View, Text, ScrollView } from 'react-native'
+import { useEffect, useState } from 'react'
 
 export default function MemberListScreen() {
   const { conversationId } = useLocalSearchParams()
-  const { memberships, conversations } = useAppStore()
+  const { canvasApp } = useAppStore()
 
-  const conversation = conversations[conversationId as string]
-  const members = memberships[conversationId as string].map((m) => m.expand?.user) as Profile[]
+  const [members, setMembers] = useState<Profile[] | null>(null)
+
+  useEffect(() => {
+    async function doRefresh() {
+      if (!canvasApp) return
+
+      const memberships = await canvasApp.db.query<Membership>('membership', {
+        where: { conversation: conversationId },
+      })
+
+      const members = []
+      for (const membership of memberships) {
+        const member = await canvasApp.db.get<Profile>('profile', membership.user as string)
+        if (member) members.push(member)
+      }
+
+      setMembers(members)
+    }
+    doRefresh()
+  }, [canvasApp])
 
   return (
     <View style={{ flex: 1, backgroundColor: c.surface }}>
@@ -50,7 +68,7 @@ export default function MemberListScreen() {
               paddingVertical: s.$2,
             }}
           >
-            {members.map((m) => (
+            {(members || []).map((m) => (
               <View key={m.did}>
                 <Link href={`/user/${m.did}`}>
                   <XStack gap={s.$1}>

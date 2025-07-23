@@ -326,10 +326,24 @@ export default class RefsContract extends Contract<typeof RefsContract.models> {
     if (members.indexOf(this.address) === -1) throw new Error()
     const id = members.join()
 
-    await this.db.set('encryption_group', {
-      id,
-      group_keys: JSON.stringify(groupKeys),
-      key: groupPublicKey,
+    await this.db.transaction(async () => {
+      await this.db.set('encryption_group', {
+        id,
+        group_keys: JSON.stringify(groupKeys),
+        key: groupPublicKey,
+      })
+    })
+  }
+
+  async archiveMembership(membershipId: string) {
+    await this.db.transaction(async () => {
+      await this.db.update('membership', { id: membershipId, archived: true })
+    })
+  }
+
+  async unArchiveMembership(membershipId: string) {
+    await this.db.transaction(async () => {
+      await this.db.update('membership', { id: membershipId, archived: true })
     })
   }
 }

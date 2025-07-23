@@ -155,19 +155,41 @@ export const createMessageSlice: StateCreator<StoreSlices, [], [], MessageSlice>
   },
 
   archiveConversation: async (user: Profile, conversationId: string) => {
-    const membership = get().memberships[conversationId].find(
-      (m) => m.expand?.user.did === user.did
-    )
+    const { canvasApp, canvasActions } = get()
+    if (!canvasApp) {
+      throw new Error('Canvas not initialized!')
+    }
+    if (!canvasActions) {
+      throw new Error('Canvas not logged in!')
+    }
+
+    const membership = (
+      await canvasApp.db.query('membership', {
+        where: { user: user.did, conversation: conversationId },
+      })
+    )[0]
+
     if (membership) {
-      await pocketbase.collection('memberships').update(membership.id, { archived: true })
+      await canvasActions.archiveMembership(membership.id)
     }
   },
   unarchiveConversation: async (user: Profile, conversationId: string) => {
-    const membership = get().memberships[conversationId].find(
-      (m) => m.expand?.user.did === user.did
-    )
+    const { canvasApp, canvasActions } = get()
+    if (!canvasApp) {
+      throw new Error('Canvas not initialized!')
+    }
+    if (!canvasActions) {
+      throw new Error('Canvas not logged in!')
+    }
+
+    const membership = (
+      await canvasApp.db.query('membership', {
+        where: { user: user.did, conversation: conversationId },
+      })
+    )[0]
+
     if (membership) {
-      await pocketbase.collection('memberships').update(membership.id, { archived: false })
+      await canvasActions.unArchiveMembership(membership.id)
     }
   },
 })

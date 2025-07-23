@@ -24,10 +24,7 @@ export type MessageSlice = {
     parentMessageId?: string,
     imageUrl?: string
   ) => Promise<void>
-  messagesPerConversation: Record<string, Message[]>
-  oldestLoadedMessageDate: Record<string, string>
-  setOldestLoadedMessageDate: (conversationId: string, dateString: string) => void
-  addOlderMessages: (conversationId: string, messages: Message[]) => void
+
   updateLastRead: (conversationId: string, user: Profile) => Promise<void>
   getNewMessages: (conversationId: string, oldestLoadedMessageDate: string) => Promise<Message[]>
 
@@ -68,11 +65,6 @@ export const createMessageSlice: StateCreator<StoreSlices, [], [], MessageSlice>
           expand: 'user',
         })
 
-      set((state) => ({
-        conversations: { ...state.conversations, [newConversation.id]: newConversation },
-        memberships: { ...state.memberships, [newConversation.id]: newMemberships },
-      }))
-
       return newConversation.id
     } catch (error) {
       throw new Error()
@@ -99,10 +91,6 @@ export const createMessageSlice: StateCreator<StoreSlices, [], [], MessageSlice>
           filter: `conversation = "${conversationId}"`,
           expand: 'user',
         })
-
-      set((state) => ({
-        memberships: { ...state.memberships, [conversationId]: newMemberships },
-      }))
     } catch (error) {
       console.error(error)
     }
@@ -126,33 +114,6 @@ export const createMessageSlice: StateCreator<StoreSlices, [], [], MessageSlice>
     } catch (error) {
       console.error(error)
     }
-  },
-
-  messagesPerConversation: {},
-  oldestLoadedMessageDate: {},
-
-  addOlderMessages: (conversationId: string, messages: Message[]) => {
-    set((state) => {
-      const newMessages = messages.filter(
-        (m) => !state.messagesPerConversation[conversationId].some((m2) => m2.id === m.id)
-      )
-      return {
-        messagesPerConversation: {
-          ...state.messagesPerConversation,
-          [conversationId]: [...state.messagesPerConversation[conversationId], ...newMessages],
-        },
-      }
-    })
-  },
-  setOldestLoadedMessageDate: (conversationId: string, dateString: string) => {
-    set((state) => {
-      return {
-        oldestLoadedMessageDate: {
-          ...state.oldestLoadedMessageDate,
-          [conversationId]: dateString,
-        },
-      }
-    })
   },
 
   updateLastRead: async (conversationId: string, user: Profile) => {

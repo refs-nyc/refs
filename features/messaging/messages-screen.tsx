@@ -242,7 +242,7 @@ export function MessagesScreen({ conversationId }: { conversationId: string }) {
               setReplying(false)
             }}
             onEmojiSelected={(e: any) => {
-              sendReaction(user, highlightedMessageId, e.emoji)
+              sendReaction(highlightedMessageId, e.emoji)
               setHighlightedMessageId('')
               setShowEmojiPicker(false)
             }}

@@ -28,7 +28,7 @@ export type MessageSlice = {
   updateLastRead: (conversationId: string, user: Profile) => Promise<void>
   getNewMessages: (conversationId: string, oldestLoadedMessageDate: string) => Promise<Message[]>
 
-  sendReaction: (sender: Profile, messageId: string, emoji: string) => Promise<void>
+  sendReaction: (messageId: string, emoji: string) => Promise<void>
   deleteReaction: (id: string) => Promise<void>
 
   archiveConversation: (user: Profile, conversationId: string) => Promise<void>
@@ -145,23 +145,30 @@ export const createMessageSlice: StateCreator<StoreSlices, [], [], MessageSlice>
     return newMessages.items
   },
 
-  sendReaction: async (sender, messageId, emoji) => {
-    try {
-      await pocketbase.collection('reactions').create({
-        message: messageId,
-        emoji,
-        user: sender.did,
-      })
-    } catch (error) {
-      console.error(error)
+  sendReaction: async (messageId, emoji) => {
+    const { canvasActions } = get()
+
+    if (!canvasActions) {
+      throw new Error('Canvas not logged in!')
     }
+    // TODO: encrypt the contents (in this case, the emoji)
+    const encryptedData = 'TODO'
+
+    await canvasActions.createReaction({
+      message: messageId,
+      emoji,
+      created: '',
+      encrypted_data: encryptedData,
+    })
   },
   deleteReaction: async (id: string) => {
-    try {
-      await pocketbase.collection('reactions').delete(id)
-    } catch (error) {
-      console.error(error)
+    const { canvasActions } = get()
+
+    if (!canvasActions) {
+      throw new Error('Canvas not logged in!')
     }
+
+    await canvasActions.deleteReaction(id)
   },
 
   archiveConversation: async (user: Profile, conversationId: string) => {

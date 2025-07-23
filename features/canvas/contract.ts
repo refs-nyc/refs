@@ -92,10 +92,10 @@ export default class RefsContract extends Contract<typeof RefsContract.models> {
         created: 'string',
         id: 'primary',
         encrypted_data: 'json',
-        // unencrypted fields:
+        sender: '@profile',
+        // encrypted fields:
         // image: 'string?',
         // replying_to: '@message?',
-        // sender: '@profile',
         // text: 'string?',
       },
       reaction: {
@@ -103,10 +103,10 @@ export default class RefsContract extends Contract<typeof RefsContract.models> {
         created: 'string',
         updated: 'string?',
         message: '@message',
+        sender: '@profile',
         encrypted_data: 'json',
-        // unencrypted fields:
+        // encrypted fields:
         // emoji: 'string',
-        // user: '@profile',
       },
       save: {
         created: 'string',
@@ -332,6 +332,32 @@ export default class RefsContract extends Contract<typeof RefsContract.models> {
         group_keys: JSON.stringify(groupKeys),
         key: groupPublicKey,
       })
+    })
+  }
+
+  async createReaction(createReactionArgs: {
+    message: string
+    emoji: string
+    created: string
+    encrypted_data: string
+  }) {
+    await this.db.transaction(async () => {
+      await this.db.create('reaction', {
+        id: `${this.did}/${createReactionArgs.message}`,
+        sender: this.did,
+        updated: null,
+        ...createReactionArgs,
+      })
+    })
+  }
+
+  async deleteReaction(reactionId: string) {
+    if (reactionId.split('/')[0] !== this.did) {
+      throw new Error()
+    }
+
+    await this.db.transaction(async () => {
+      await this.db.delete('reaction', reactionId)
     })
   }
 

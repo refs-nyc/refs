@@ -26,7 +26,6 @@ export function MessagesScreen({ conversationId }: { conversationId: string }) {
     oldestLoadedMessageDate,
     setOldestLoadedMessageDate,
     addOlderMessages,
-    firstMessageDate,
     updateLastRead,
     getNewMessages,
   } = useAppStore()
@@ -95,7 +94,8 @@ export function MessagesScreen({ conversationId }: { conversationId: string }) {
 
   const loadMoreMessages = async () => {
     if (!user) return
-    if (oldestLoadedMessageDate[conversationId] === firstMessageDate[conversationId]) return
+    // TODO: implement this using a state hook in this component
+    // if (oldestLoadedMessageDate[conversationId] === firstMessageDate[conversationId]) return
 
     const newMessages = await getNewMessages(
       conversationId,

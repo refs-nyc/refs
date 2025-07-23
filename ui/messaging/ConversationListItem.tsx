@@ -1,5 +1,3 @@
-// @ts-nocheck
-
 import { useAppStore } from '@/features/stores'
 import { Conversation } from '@/features/types'
 import { s, c } from '@/features/style'

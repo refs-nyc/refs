@@ -2,6 +2,7 @@ import { StateCreator } from 'zustand'
 import { ConversationWithMemberships, ExpandedMembership, Message, Profile } from '../types'
 
 import type { StoreSlices } from './types'
+import { formatDateString } from '../utils'
 
 export const PAGE_SIZE = 10
 
@@ -17,15 +18,14 @@ export type MessageSlice = {
 
   createMemberships: (users: Profile[], conversationId: string) => Promise<void>
 
-  sendMessage: (
-    sender: Profile,
-    conversationId: string,
-    text: string,
-    parentMessageId?: string,
+  sendMessage: (sendMessageArgs: {
+    conversationId: string
+    text: string
+    parentMessageId?: string
     imageUrl?: string
-  ) => Promise<void>
+  }) => Promise<void>
 
-  updateLastRead: (conversationId: string, user: Profile) => Promise<void>
+  updateLastRead: (conversationId: string) => Promise<void>
   getNewMessages: (conversationId: string, oldestLoadedMessageDate: string) => Promise<Message[]>
 
   sendReaction: (messageId: string, emoji: string) => Promise<void>
@@ -96,33 +96,36 @@ export const createMessageSlice: StateCreator<StoreSlices, [], [], MessageSlice>
     }
   },
 
-  sendMessage: async (sender, conversationId, text, parentMessageId, imageUrl) => {
-    try {
-      const message = await pocketbase.collection('messages').create<Message>({
-        conversation: conversationId,
-        text,
-        sender: sender.did,
-        replying_to: parentMessageId,
-        image: imageUrl,
-      })
-      const membership = await pocketbase
-        .collection('memberships')
-        .getFirstListItem(`conversation = "${conversationId}" && user = "${sender.did}"`)
-      await pocketbase
-        .collection('memberships')
-        .update(membership.id, { last_read: message.created })
-    } catch (error) {
-      console.error(error)
+  sendMessage: async (sendMessageArgs) => {
+    const { canvasActions, updateLastRead } = get()
+    if (!canvasActions) {
+      throw new Error('Canvas not logged in!')
     }
+
+    // TODO: encrypt data
+    // text, parentMessageId, imageUrl
+    const encryptedData = 'TODO'
+
+    // call canvas action to create a message
+    await canvasActions.createMessage({
+      conversation: sendMessageArgs.conversationId,
+      encrypted_data: encryptedData,
+      created: formatDateString(new Date()),
+    })
+
+    await updateLastRead(sendMessageArgs.conversationId)
   },
 
-  updateLastRead: async (conversationId: string, user: Profile) => {
-    const { canvasApp, canvasActions } = get()
+  updateLastRead: async (conversationId: string) => {
+    const { canvasApp, canvasActions, user } = get()
     if (!canvasApp) {
       throw new Error('Canvas not initialized!')
     }
     if (!canvasActions) {
       throw new Error('Canvas not logged in!')
+    }
+    if (!user) {
+      throw new Error('Not logged in!')
     }
 
     const lastMessage = (

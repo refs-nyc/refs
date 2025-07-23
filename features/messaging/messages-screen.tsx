@@ -1,5 +1,3 @@
-// @ts-nocheck
-
 import { useAppStore } from '@/features/stores'
 import { Message } from '@/features/types'
 import { c, s } from '@/features/style'
@@ -20,7 +18,6 @@ export function MessagesScreen({ conversationId }: { conversationId: string }) {
     user,
     conversations,
     memberships,
-    messagesPerConversation,
     sendMessage,
     sendReaction,
     oldestLoadedMessageDate,
@@ -56,20 +53,22 @@ export function MessagesScreen({ conversationId }: { conversationId: string }) {
   }, [members.length])
 
   useEffect(() => {
-    if (!user) return
-    updateLastRead(conversationId, user)
+    try {
+      updateLastRead(conversationId)
+    } catch (e) {
+      // do nothing
+    }
   }, [])
 
   if (!user) return null
 
   const onMessageSubmit = () => {
-    sendMessage(
-      user,
+    sendMessage({
       conversationId,
-      message,
-      replying ? highlightedMessageId : undefined,
-      imageUrl || undefined
-    )
+      text: message,
+      parentMessageId: replying ? highlightedMessageId : undefined,
+      imageUrl: imageUrl || undefined,
+    })
     setMessage('')
     setHighlightedMessageId('')
     setReplying(false)

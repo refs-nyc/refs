@@ -1,5 +1,3 @@
-// @ts-nocheck
-
 import { useAppStore } from '@/features/stores'
 import { c, s } from '@/features/style'
 import { Button, XStack, YStack } from '@/ui'

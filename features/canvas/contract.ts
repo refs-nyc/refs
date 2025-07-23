@@ -1,6 +1,7 @@
 import { Canvas, ModelSchema } from '@canvas-js/core'
 import { Contract } from '@canvas-js/core/contract'
 import { formatDateString } from '../utils'
+import { EthEncryptedData } from '../encryption'
 
 export default class RefsContract extends Contract<typeof RefsContract.models> {
   public static get topic() {
@@ -66,6 +67,11 @@ export default class RefsContract extends Contract<typeof RefsContract.models> {
         did: 'primary',
         publicEncryptionKey: 'string',
       },
+      encryption_group: {
+        id: 'primary',
+        group_keys: 'string',
+        key: 'string',
+      },
       conversation: {
         id: 'primary',
         created: 'string',
@@ -85,18 +91,22 @@ export default class RefsContract extends Contract<typeof RefsContract.models> {
         conversation: '@conversation',
         created: 'string',
         id: 'primary',
-        image: 'string?',
-        replying_to: '@message?',
-        sender: '@profile',
-        text: 'string?',
+        encrypted_data: 'json',
+        // unencrypted fields:
+        // image: 'string?',
+        // replying_to: '@message?',
+        // sender: '@profile',
+        // text: 'string?',
       },
       reaction: {
         id: 'primary',
         created: 'string',
-        emoji: 'string',
-        message: '@message',
-        user: '@profile',
         updated: 'string?',
+        message: '@message',
+        encrypted_data: 'json',
+        // unencrypted fields:
+        // emoji: 'string',
+        // user: '@profile',
       },
       save: {
         created: 'string',
@@ -300,6 +310,26 @@ export default class RefsContract extends Contract<typeof RefsContract.models> {
   async removeSave(saveId: string) {
     await this.db.transaction(async () => {
       await this.db.delete('save', saveId)
+    })
+  }
+
+  async createEncryptionGroup({
+    members,
+    groupKeys,
+    groupPublicKey,
+  }: {
+    members: string[]
+    groupKeys: EthEncryptedData[]
+    groupPublicKey: string
+  }) {
+    // TODO: enforce the encryption group is sorted correctly, and each groupKey is registered correctly
+    if (members.indexOf(this.address) === -1) throw new Error()
+    const id = members.join()
+
+    await this.db.set('encryption_group', {
+      id,
+      group_keys: JSON.stringify(groupKeys),
+      key: groupPublicKey,
     })
   }
 }

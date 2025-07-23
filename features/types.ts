@@ -41,6 +41,9 @@ export type ExpandedSave = Save & {
   expand: { user: Profile }
 }
 
+export type EncryptionKey = ContractModelTypes['encryption_key']
+export type EncryptionGroup = ContractModelTypes['encryption_group']
+
 // these are the fields that are provided by the user in the new/update ref form
 export type StagedItemFields = {
   title?: string // only used when creating a new ref

@@ -39,7 +39,7 @@ export default function NewDMScreen() {
   if (!profile) return null
 
   const onMessageSubmit = async () => {
-    const conversationId = await createConversation(true, user, [profile])
+    const conversationId = await createConversation(true, [profile])
     await sendMessage({ conversationId, text: message })
     router.replace(`/messages/${conversationId}`)
   }

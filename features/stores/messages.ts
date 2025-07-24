@@ -9,7 +9,6 @@ export const PAGE_SIZE = 10
 export type MessageSlice = {
   createConversation: (
     is_direct: boolean,
-    creator: Profile,
     otherMembers: Profile[],
     title?: string
   ) => Promise<string>
@@ -41,7 +40,6 @@ export type MessageSlice = {
 export const createMessageSlice: StateCreator<StoreSlices, [], [], MessageSlice> = (set, get) => ({
   createConversation: async (
     is_direct: boolean,
-    creator: Profile,
     otherMembers: Profile[],
     title?: string
   ): Promise<string> => {

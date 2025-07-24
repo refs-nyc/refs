@@ -43,7 +43,7 @@ export default function NewGCScreen() {
   }
 
   const onMessageSubmit = async () => {
-    const conversationId = await createConversation(false, user!, users, title)
+    const conversationId = await createConversation(false, users, title)
     await sendMessage({ conversationId, text: message })
     router.replace(`/messages/${conversationId}`)
   }

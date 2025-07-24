@@ -313,6 +313,40 @@ export default class RefsContract extends Contract<typeof RefsContract.models> {
     })
   }
 
+  async createConversation(createConversationArgs: {
+    otherMembers: string[]
+    title?: string
+    is_direct: boolean
+    created: string
+  }) {
+    const members = [...createConversationArgs.otherMembers, this.did]
+    members.sort()
+
+    const conversationId = members.join(',')
+
+    await this.db.transaction(async () => {
+      await this.db.create('conversation', {
+        id: conversationId,
+        created: createConversationArgs.created,
+        is_direct: createConversationArgs.is_direct,
+        title: createConversationArgs.title || 'New Group Chat',
+      })
+
+      for (const member of members) {
+        await this.db.create('membership', {
+          archived: false,
+          conversation: conversationId,
+          created: createConversationArgs.created,
+          id: `${conversationId}/${member}`,
+          last_read: null,
+          updated: null,
+          user: member,
+        })
+      }
+    })
+    return conversationId
+  }
+
   async createEncryptionGroup({
     members,
     groupKeys,

@@ -1,5 +1,12 @@
 import { StateCreator } from 'zustand'
-import { ConversationWithMemberships, ExpandedMembership, Message, Profile } from '../types'
+import {
+  Conversation,
+  ConversationWithMemberships,
+  ExpandedMembership,
+  Membership,
+  Message,
+  Profile,
+} from '../types'
 
 import type { StoreSlices } from './types'
 import { formatDateString } from '../utils'
@@ -14,7 +21,7 @@ export type MessageSlice = {
     title?: string
   ) => Promise<string>
 
-  getDirectConversations: () => Promise<ConversationWithMemberships[]>
+  getDirectConversation: (otherUserDid: string) => Promise<Conversation | null>
 
   createMemberships: (users: Profile[], conversationId: string) => Promise<void>
 
@@ -42,39 +49,53 @@ export const createMessageSlice: StateCreator<StoreSlices, [], [], MessageSlice>
     otherMembers: Profile[],
     title?: string
   ): Promise<string> => {
-    try {
-      const newConversation = await pocketbase.collection('conversations').create({
-        is_direct,
-        title: is_direct ? undefined : title || 'New Group Chat',
-      })
+    const { canvasActions } = get()
 
-      await pocketbase
-        .collection('memberships')
-        .create({ conversation: newConversation.id, user: creator.did })
-
-      for (const member of otherMembers) {
-        await pocketbase
-          .collection('memberships')
-          .create({ conversation: newConversation.id, user: member.did })
-      }
-
-      const newMemberships = await pocketbase
-        .collection('memberships')
-        .getFullList<ExpandedMembership>({
-          filter: `conversation = "${newConversation.id}"`,
-          expand: 'user',
-        })
-
-      return newConversation.id
-    } catch (error) {
-      throw new Error()
+    if (!canvasActions) {
+      throw new Error('Canvas not logged in!')
     }
-  },
-  getDirectConversations: async () => {
-    return await pocketbase.collection<ConversationWithMemberships>('conversations').getFullList({
-      filter: `is_direct = true`,
-      expand: 'memberships_via_conversation.user',
+    const { result: conversationId } = await canvasActions.createConversation({
+      created: formatDateString(new Date()),
+      is_direct,
+      otherMembers: otherMembers.map((member) => member.did),
+      title,
     })
+    return conversationId
+  },
+  getDirectConversation: async (otherUserDid: string) => {
+    const { canvasApp, user } = get()
+    if (!canvasApp) {
+      throw new Error('Canvas not initialized!')
+    }
+    if (!user) {
+      throw new Error('Not logged in!')
+    }
+
+    const myMemberships = await canvasApp.db.query<Membership>('membership', {
+      where: { user: user.did },
+    })
+
+    const otherUserMemberships = await canvasApp.db.query<Membership>('membership', {
+      where: { user: otherUserDid },
+    })
+
+    const myConversationIds = new Set(myMemberships.map((membership) => membership.conversation))
+    const otherUserConversationIds = new Set(
+      otherUserMemberships.map((membership) => membership.conversation)
+    )
+
+    const sharedConversationIds = myConversationIds.intersection(otherUserConversationIds)
+
+    for (const conversationId of sharedConversationIds) {
+      const conversation = await canvasApp.db.get<Conversation>(
+        'conversation',
+        conversationId as string
+      )
+      if (conversation?.is_direct) {
+        return conversation
+      }
+    }
+    return null
   },
 
   async createMemberships(users, conversationId): Promise<void> {

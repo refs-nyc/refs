@@ -22,6 +22,8 @@ export type MessageSlice = {
   ) => Promise<string>
 
   getDirectConversation: (otherUserDid: string) => Promise<Conversation | null>
+  getGroupConversations: () => Promise<Conversation[]>
+  getMembershipCount: (conversationId: string) => Promise<number>
 
   createMemberships: (users: Profile[], conversationId: string) => Promise<void>
 
@@ -98,6 +100,43 @@ export const createMessageSlice: StateCreator<StoreSlices, [], [], MessageSlice>
     return null
   },
 
+  getGroupConversations: async () => {
+    const { canvasApp, user } = get()
+    if (!canvasApp) {
+      throw new Error('Canvas not initialized!')
+    }
+    if (!user) {
+      throw new Error('Not logged in!')
+    }
+
+    const myMemberships = await canvasApp.db.query<Membership>('membership', {
+      where: { user: user.did },
+    })
+
+    const groupConversations = []
+
+    for (const membership of myMemberships) {
+      const conversation = await canvasApp.db.get<Conversation>(
+        'conversation',
+        membership.conversation as string
+      )
+      if (!conversation) continue
+      if (!conversation.is_direct) {
+        groupConversations.push(conversation)
+      }
+    }
+
+    return groupConversations
+  },
+
+  async getMembershipCount(conversationId) {
+    const { canvasApp } = get()
+    if (!canvasApp) {
+      throw new Error('Canvas not initialized!')
+    }
+
+    return await canvasApp.db.count('membership', { conversation: conversationId })
+  },
   async createMemberships(users, conversationId): Promise<void> {
     try {
       for (const user of users) {

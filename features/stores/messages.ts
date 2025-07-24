@@ -1,6 +1,7 @@
 import { StateCreator } from 'zustand'
 import {
   Conversation,
+  EncryptionGroup,
   EncryptionKey,
   ExpandedMembership,
   Membership,
@@ -11,7 +12,7 @@ import {
 
 import type { StoreSlices } from './types'
 import { ethers } from 'ethers'
-import { encryptSafely, getEncryptionPublicKey } from '../encryption'
+import { decryptSafely, encryptSafely, getEncryptionPublicKey } from '../encryption'
 
 export const PAGE_SIZE = 10
 
@@ -108,19 +109,42 @@ export const createMessageSlice: StateCreator<StoreSlices, [], [], MessageSlice>
   },
 
   sendMessage: async (sendMessageArgs) => {
-    const { canvasActions, updateLastRead } = get()
+    const { canvasActions, canvasApp, user, encryptionWallet, updateLastRead } = get()
     if (!canvasActions) {
       throw new Error('Canvas not logged in!')
     }
+    if (!canvasApp) {
+      throw new Error('Canvas not initialized!')
+    }
+    if (!user) {
+      throw new Error('Not logged in!')
+    }
+    if (!encryptionWallet) {
+      throw new Error('No encryption wallet exists for the current user')
+    }
 
-    // TODO: encrypt data
-    // text, parentMessageId, imageUrl
-    const encryptedData = 'TODO'
+    const encryptionGroup = await canvasApp.db.get<EncryptionGroup>(
+      'encryptionGroups',
+      sendMessageArgs.conversationId
+    )
+    if (!encryptionGroup) {
+      throw new Error(`Couldn't find encryption group for ${sendMessageArgs.conversationId}`)
+    }
+
+    const encryptedData = encryptSafely({
+      publicKey: encryptionGroup.key as string,
+      data: JSON.stringify({
+        text: sendMessageArgs.text,
+        imageUrl: sendMessageArgs.imageUrl,
+        parentMessageId: sendMessageArgs.parentMessageId,
+      }),
+      version: 'x25519-xsalsa20-poly1305',
+    })
 
     // call canvas action to create a message
     await canvasActions.createMessage({
       conversation: sendMessageArgs.conversationId,
-      encrypted_data: encryptedData,
+      encrypted_data: JSON.stringify(encryptedData),
     })
 
     await updateLastRead(sendMessageArgs.conversationId)

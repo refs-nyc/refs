@@ -378,7 +378,7 @@ export default class RefsContract extends Contract<typeof RefsContract.models> {
   }) {
     // TODO: enforce the encryption group is sorted correctly, and each groupKey is registered correctly
     if (members.indexOf(this.address) === -1) throw new Error()
-    const id = members.join()
+    const id = members.join(',')
 
     await this.db.transaction(async () => {
       await this.db.set('encryption_group', {

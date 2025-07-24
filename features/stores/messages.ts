@@ -1,7 +1,17 @@
 import { StateCreator } from 'zustand'
-import { Conversation, ExpandedMembership, Membership, Message, Profile, Reaction } from '../types'
+import {
+  Conversation,
+  EncryptionKey,
+  ExpandedMembership,
+  Membership,
+  Message,
+  Profile,
+  Reaction,
+} from '../types'
 
 import type { StoreSlices } from './types'
+import { ethers } from 'ethers'
+import { encryptSafely, getEncryptionPublicKey } from '../encryption'
 
 export const PAGE_SIZE = 10
 
@@ -42,16 +52,47 @@ export const createMessageSlice: StateCreator<StoreSlices, [], [], MessageSlice>
     otherMembers: Profile[],
     title?: string
   ): Promise<string> => {
-    const { canvasActions } = get()
-
+    const { canvasActions, canvasApp, user } = get()
     if (!canvasActions) {
       throw new Error('Canvas not logged in!')
     }
+    if (!canvasApp) {
+      throw new Error('Canvas not initialized!')
+    }
+    if (!user) {
+      throw new Error('Not logged in!')
+    }
+
     const { result: conversationId } = await canvasActions.createConversation({
       is_direct,
       otherMembers: otherMembers.map((member) => member.did),
       title,
     })
+
+    const members = [...otherMembers, user]
+
+    const groupPrivateKey = ethers.Wallet.createRandom().privateKey
+    const groupPublicKey = getEncryptionPublicKey(groupPrivateKey.slice(2))
+    const groupKeys = (
+      await Promise.all(
+        members.map((member) => canvasApp.db.get<EncryptionKey>('encryptionKeys', member.did))
+      )
+    )
+      .map((result) => result?.publicEncryptionKey)
+      .map((key) => {
+        return encryptSafely({
+          publicKey: key as string,
+          data: groupPrivateKey,
+          version: 'x25519-xsalsa20-poly1305',
+        })
+      })
+
+    await canvasActions.createEncryptionGroup({
+      members: members.map((member) => member.did),
+      groupKeys,
+      groupPublicKey,
+    })
+
     return conversationId
   },
 

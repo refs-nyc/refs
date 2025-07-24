@@ -14,6 +14,19 @@ export type MessageSlice = {
     title?: string
   ) => Promise<string>
 
+  createMemberships: (users: Profile[], conversationId: string) => Promise<void>
+  sendMessage: (sendMessageArgs: {
+    conversationId: string
+    text: string
+    parentMessageId?: string
+    imageUrl?: string
+  }) => Promise<void>
+  updateLastRead: (conversationId: string) => Promise<void>
+  sendReaction: (messageId: string, emoji: string) => Promise<void>
+  deleteReaction: (id: string) => Promise<void>
+  archiveConversation: (user: Profile, conversationId: string) => Promise<void>
+  unarchiveConversation: (user: Profile, conversationId: string) => Promise<void>
+
   getConversation: (conversationId: string) => Promise<Conversation | null>
   getDirectConversation: (otherUserDid: string) => Promise<Conversation | null>
   getGroupConversations: () => Promise<Conversation[]>
@@ -23,23 +36,6 @@ export type MessageSlice = {
   getLastMessageForConversation: (conversationId: string) => Promise<Message | null>
   getReactionsForMessage: (messageId: string) => Promise<Reaction[]>
   getNumberUnreadMessages: () => Promise<number>
-
-  createMemberships: (users: Profile[], conversationId: string) => Promise<void>
-
-  sendMessage: (sendMessageArgs: {
-    conversationId: string
-    text: string
-    parentMessageId?: string
-    imageUrl?: string
-  }) => Promise<void>
-
-  updateLastRead: (conversationId: string) => Promise<void>
-
-  sendReaction: (messageId: string, emoji: string) => Promise<void>
-  deleteReaction: (id: string) => Promise<void>
-
-  archiveConversation: (user: Profile, conversationId: string) => Promise<void>
-  unarchiveConversation: (user: Profile, conversationId: string) => Promise<void>
 }
 
 export const createMessageSlice: StateCreator<StoreSlices, [], [], MessageSlice> = (set, get) => ({
@@ -62,6 +58,128 @@ export const createMessageSlice: StateCreator<StoreSlices, [], [], MessageSlice>
     })
     return conversationId
   },
+
+  async createMemberships(users, conversationId): Promise<void> {
+    const { canvasActions } = get()
+    if (!canvasActions) {
+      throw new Error('Canvas not logged in!')
+    }
+    await canvasActions.createMemberships({
+      conversationId,
+      users: users.map((user) => user.did),
+      created: formatDateString(new Date()),
+    })
+  },
+
+  sendMessage: async (sendMessageArgs) => {
+    const { canvasActions, updateLastRead } = get()
+    if (!canvasActions) {
+      throw new Error('Canvas not logged in!')
+    }
+
+    // TODO: encrypt data
+    // text, parentMessageId, imageUrl
+    const encryptedData = 'TODO'
+
+    // call canvas action to create a message
+    await canvasActions.createMessage({
+      conversation: sendMessageArgs.conversationId,
+      encrypted_data: encryptedData,
+      created: formatDateString(new Date()),
+    })
+
+    await updateLastRead(sendMessageArgs.conversationId)
+  },
+
+  updateLastRead: async (conversationId: string) => {
+    const { canvasApp, canvasActions, user } = get()
+    if (!canvasApp) {
+      throw new Error('Canvas not initialized!')
+    }
+    if (!canvasActions) {
+      throw new Error('Canvas not logged in!')
+    }
+    if (!user) {
+      throw new Error('Not logged in!')
+    }
+
+    const lastMessage = (
+      await canvasApp.db.query<Message>('message', {
+        where: { conversation: conversationId },
+        orderBy: { created: 'desc' },
+        limit: 1,
+      })
+    )[0]
+
+    const lastReadDate = lastMessage ? lastMessage.created : ''
+    await canvasActions.updateMembershipLastRead(`${user.did}/${conversationId}`, lastReadDate)
+  },
+
+  sendReaction: async (messageId, emoji) => {
+    const { canvasActions } = get()
+
+    if (!canvasActions) {
+      throw new Error('Canvas not logged in!')
+    }
+    // TODO: encrypt the contents (in this case, the emoji)
+    const encryptedData = 'TODO'
+
+    await canvasActions.createReaction({
+      message: messageId,
+      emoji,
+      created: formatDateString(new Date()),
+      encrypted_data: encryptedData,
+    })
+  },
+  deleteReaction: async (id: string) => {
+    const { canvasActions } = get()
+
+    if (!canvasActions) {
+      throw new Error('Canvas not logged in!')
+    }
+
+    await canvasActions.deleteReaction(id)
+  },
+
+  archiveConversation: async (user: Profile, conversationId: string) => {
+    const { canvasApp, canvasActions } = get()
+    if (!canvasApp) {
+      throw new Error('Canvas not initialized!')
+    }
+    if (!canvasActions) {
+      throw new Error('Canvas not logged in!')
+    }
+
+    const membership = (
+      await canvasApp.db.query('membership', {
+        where: { user: user.did, conversation: conversationId },
+      })
+    )[0]
+
+    if (membership) {
+      await canvasActions.archiveMembership(membership.id)
+    }
+  },
+  unarchiveConversation: async (user: Profile, conversationId: string) => {
+    const { canvasApp, canvasActions } = get()
+    if (!canvasApp) {
+      throw new Error('Canvas not initialized!')
+    }
+    if (!canvasActions) {
+      throw new Error('Canvas not logged in!')
+    }
+
+    const membership = (
+      await canvasApp.db.query('membership', {
+        where: { user: user.did, conversation: conversationId },
+      })
+    )[0]
+
+    if (membership) {
+      await canvasActions.unArchiveMembership(membership.id)
+    }
+  },
+
   getConversation: async (conversationId: string) => {
     const { canvasApp } = get()
     if (!canvasApp) {
@@ -214,125 +332,5 @@ export const createMessageSlice: StateCreator<StoreSlices, [], [], MessageSlice>
     }
 
     return unreadMessageCount
-  },
-  async createMemberships(users, conversationId): Promise<void> {
-    const { canvasActions } = get()
-    if (!canvasActions) {
-      throw new Error('Canvas not logged in!')
-    }
-    await canvasActions.createMemberships({
-      conversationId,
-      users: users.map((user) => user.did),
-      created: formatDateString(new Date()),
-    })
-  },
-
-  sendMessage: async (sendMessageArgs) => {
-    const { canvasActions, updateLastRead } = get()
-    if (!canvasActions) {
-      throw new Error('Canvas not logged in!')
-    }
-
-    // TODO: encrypt data
-    // text, parentMessageId, imageUrl
-    const encryptedData = 'TODO'
-
-    // call canvas action to create a message
-    await canvasActions.createMessage({
-      conversation: sendMessageArgs.conversationId,
-      encrypted_data: encryptedData,
-      created: formatDateString(new Date()),
-    })
-
-    await updateLastRead(sendMessageArgs.conversationId)
-  },
-
-  updateLastRead: async (conversationId: string) => {
-    const { canvasApp, canvasActions, user } = get()
-    if (!canvasApp) {
-      throw new Error('Canvas not initialized!')
-    }
-    if (!canvasActions) {
-      throw new Error('Canvas not logged in!')
-    }
-    if (!user) {
-      throw new Error('Not logged in!')
-    }
-
-    const lastMessage = (
-      await canvasApp.db.query<Message>('message', {
-        where: { conversation: conversationId },
-        orderBy: { created: 'desc' },
-        limit: 1,
-      })
-    )[0]
-
-    const lastReadDate = lastMessage ? lastMessage.created : ''
-    await canvasActions.updateMembershipLastRead(`${user.did}/${conversationId}`, lastReadDate)
-  },
-
-  sendReaction: async (messageId, emoji) => {
-    const { canvasActions } = get()
-
-    if (!canvasActions) {
-      throw new Error('Canvas not logged in!')
-    }
-    // TODO: encrypt the contents (in this case, the emoji)
-    const encryptedData = 'TODO'
-
-    await canvasActions.createReaction({
-      message: messageId,
-      emoji,
-      created: formatDateString(new Date()),
-      encrypted_data: encryptedData,
-    })
-  },
-  deleteReaction: async (id: string) => {
-    const { canvasActions } = get()
-
-    if (!canvasActions) {
-      throw new Error('Canvas not logged in!')
-    }
-
-    await canvasActions.deleteReaction(id)
-  },
-
-  archiveConversation: async (user: Profile, conversationId: string) => {
-    const { canvasApp, canvasActions } = get()
-    if (!canvasApp) {
-      throw new Error('Canvas not initialized!')
-    }
-    if (!canvasActions) {
-      throw new Error('Canvas not logged in!')
-    }
-
-    const membership = (
-      await canvasApp.db.query('membership', {
-        where: { user: user.did, conversation: conversationId },
-      })
-    )[0]
-
-    if (membership) {
-      await canvasActions.archiveMembership(membership.id)
-    }
-  },
-  unarchiveConversation: async (user: Profile, conversationId: string) => {
-    const { canvasApp, canvasActions } = get()
-    if (!canvasApp) {
-      throw new Error('Canvas not initialized!')
-    }
-    if (!canvasActions) {
-      throw new Error('Canvas not logged in!')
-    }
-
-    const membership = (
-      await canvasApp.db.query('membership', {
-        where: { user: user.did, conversation: conversationId },
-      })
-    )[0]
-
-    if (membership) {
-      await canvasActions.unArchiveMembership(membership.id)
-    }
   },
 })

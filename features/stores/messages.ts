@@ -1,5 +1,5 @@
 import { StateCreator } from 'zustand'
-import { Conversation, ExpandedMembership, Membership, Message, Profile } from '../types'
+import { Conversation, ExpandedMembership, Membership, Message, Profile, Reaction } from '../types'
 
 import type { StoreSlices } from './types'
 import { formatDateString } from '../utils'
@@ -20,6 +20,8 @@ export type MessageSlice = {
   getMembers: (conversationId: string) => Promise<ExpandedMembership[]>
   getMembershipCount: (conversationId: string) => Promise<number>
   getMessagesForConversation: (conversationId: string) => Promise<Message[]>
+  getLastMessageForConversation: (conversationId: string) => Promise<Message | null>
+  getReactionsForMessage: (messageId: string) => Promise<Reaction[]>
 
   createMemberships: (users: Profile[], conversationId: string) => Promise<void>
 
@@ -162,6 +164,27 @@ export const createMessageSlice: StateCreator<StoreSlices, [], [], MessageSlice>
     }
 
     return await canvasApp.db.query<Message>('message', { where: { conversation: conversationId } })
+  },
+  getLastMessageForConversation: async (conversationId) => {
+    const { canvasApp } = get()
+    if (!canvasApp) {
+      throw new Error('Canvas not initialized!')
+    }
+
+    const messages = await canvasApp.db.query<Message>('message', {
+      where: { conversation: conversationId },
+      orderBy: { created: 'desc' },
+      limit: 1,
+    })
+    return messages[0] || null
+  },
+  getReactionsForMessage: async (messageId) => {
+    const { canvasApp } = get()
+    if (!canvasApp) {
+      throw new Error('Canvas not initialized!')
+    }
+
+    return await canvasApp.db.query<Reaction>('reaction', { where: { message: messageId } })
   },
   async createMemberships(users, conversationId): Promise<void> {
     const { canvasActions } = get()

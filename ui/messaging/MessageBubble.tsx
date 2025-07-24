@@ -1,6 +1,6 @@
 import { formatTimestamp } from '@/features/messaging/utils'
 import { useAppStore } from '@/features/stores'
-import { Message, Profile } from '@/features/types'
+import { Message, Profile, Reaction } from '@/features/types'
 import { c, s } from '@/features/style'
 import { useCalendars } from 'expo-localization'
 import { View, Text } from 'react-native'
@@ -10,6 +10,7 @@ import { XStack } from '../core/Stacks'
 import { Link } from 'expo-router'
 import ContextMenu from 'react-native-context-menu-view'
 import PressableImage from '../atoms/PressableImage'
+import { useEffect, useState } from 'react'
 
 export default function MessageBubble({
   message,
@@ -33,9 +34,17 @@ export default function MessageBubble({
   onExpandReactionsPress: (messageId: string) => void
 }) {
   const calendars = useCalendars()
-  const { user, reactions, deleteReaction } = useAppStore()
+  const { user, deleteReaction, getReactionsForMessage } = useAppStore()
 
-  const messageReactions = reactions[message.id]
+  const [messageReactions, setMessageReactions] = useState<Reaction[]>()
+
+  useEffect(() => {
+    async function updateReactions() {
+      const reactions = await getReactionsForMessage(message.id)
+      setMessageReactions(reactions)
+    }
+    updateReactions()
+  }, [])
 
   const timeZone = calendars[0].timeZone || 'America/New_York'
 

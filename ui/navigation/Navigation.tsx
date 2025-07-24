@@ -1,6 +1,5 @@
 import { Link, router, usePathname } from 'expo-router'
 import { Text, View, Pressable, Animated } from 'react-native'
-import { Button } from '@/ui/buttons/Button'
 import { Avatar } from '../atoms/Avatar'
 import { c, s } from '@/features/style'
 import { useAppStore } from '@/features/stores'

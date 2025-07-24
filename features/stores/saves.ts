@@ -1,7 +1,6 @@
 import { StateCreator } from 'zustand'
 import { ExpandedSave, Profile, Save } from '../types'
 import { StoreSlices } from './types'
-import { formatDateString } from '../utils'
 
 export type SavesSlice = {
   saves: ExpandedSave[]
@@ -26,7 +25,6 @@ export const createSaveSlice: StateCreator<StoreSlices, [], [], SavesSlice> = (s
     const { result } = await canvasActions.createSave({
       user: user.did,
       saved_by: savedBy.did,
-      created: formatDateString(new Date()),
     })
 
     return result

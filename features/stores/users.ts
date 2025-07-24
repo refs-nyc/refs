@@ -10,7 +10,6 @@ import { StateCreator } from 'zustand'
 import type { RefsCanvas } from '../canvas/contract'
 import { getCurrentSessionSignerFromMagic, getEncryptionWalletFromMagic } from '../magic'
 import { Profile, StagedProfileFields } from '../types'
-import { formatDateString } from '../utils'
 import type { StoreSlices } from './types'
 import { Wallet } from 'ethers'
 
@@ -137,8 +136,6 @@ export const createUserSlice: StateCreator<StoreSlices, [], [], UserSlice> = (se
         lastName: lastName!,
         location: location!,
         image: image!,
-        created: formatDateString(new Date()),
-        updated: formatDateString(new Date()),
       }
 
       const encryptionWallet = await getEncryptionWalletFromMagic()

@@ -2,7 +2,6 @@ import { StateCreator } from 'zustand'
 import { Conversation, ExpandedMembership, Membership, Message, Profile, Reaction } from '../types'
 
 import type { StoreSlices } from './types'
-import { formatDateString } from '../utils'
 
 export const PAGE_SIZE = 10
 
@@ -49,7 +48,6 @@ export const createMessageSlice: StateCreator<StoreSlices, [], [], MessageSlice>
       throw new Error('Canvas not logged in!')
     }
     const { result: conversationId } = await canvasActions.createConversation({
-      created: formatDateString(new Date()),
       is_direct,
       otherMembers: otherMembers.map((member) => member.did),
       title,
@@ -65,7 +63,6 @@ export const createMessageSlice: StateCreator<StoreSlices, [], [], MessageSlice>
     await canvasActions.createMemberships({
       conversationId,
       users: users.map((user) => user.did),
-      created: formatDateString(new Date()),
     })
   },
 
@@ -83,7 +80,6 @@ export const createMessageSlice: StateCreator<StoreSlices, [], [], MessageSlice>
     await canvasActions.createMessage({
       conversation: sendMessageArgs.conversationId,
       encrypted_data: encryptedData,
-      created: formatDateString(new Date()),
     })
 
     await updateLastRead(sendMessageArgs.conversationId)
@@ -125,7 +121,6 @@ export const createMessageSlice: StateCreator<StoreSlices, [], [], MessageSlice>
     await canvasActions.createReaction({
       message: messageId,
       emoji,
-      created: formatDateString(new Date()),
       encrypted_data: encryptedData,
     })
   },

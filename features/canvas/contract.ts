@@ -1,6 +1,5 @@
 import { Canvas, ModelSchema } from '@canvas-js/core'
 import { Contract } from '@canvas-js/core/contract'
-import { formatDateString } from '../utils'
 import { EthEncryptedData } from '../encryption'
 
 export default class RefsContract extends Contract<typeof RefsContract.models> {
@@ -124,14 +123,13 @@ export default class RefsContract extends Contract<typeof RefsContract.models> {
       lastName: string
       location: string
       image: string
-      created: string
-      updated: string
     },
     publicEncryptionKey: string
   ) {
     return await this.db.transaction(async () => {
       const newProfile = {
         ...createProfileArgs,
+        created: new Date(this.timestamp).toISOString(),
         did: this.did,
         updated: null,
       }
@@ -147,21 +145,17 @@ export default class RefsContract extends Contract<typeof RefsContract.models> {
 
   async updateProfileLocation(location: string) {
     return await this.db.transaction(async () => {
-      const updateArgs = { did: this.did, location, updated: formatDateString(new Date()) }
+      const updateArgs = {
+        did: this.did,
+        location,
+        updated: new Date(this.timestamp).toISOString(),
+      }
 
       await this.db.update('profile', updateArgs)
     })
   }
 
-  async createRef(createRefArgs: {
-    title: string
-    meta: string
-    image: string
-    url: string
-    created: string
-    updated: string | null
-    deleted: string | null
-  }) {
+  async createRef(createRefArgs: { title: string; meta: string; image: string; url: string }) {
     return await this.db.transaction(async () => {
       const id = `${this.did}/${this.id}`
       // this creates a new ref with the given fields
@@ -169,6 +163,9 @@ export default class RefsContract extends Contract<typeof RefsContract.models> {
         id,
         creator: this.did,
         showInTicker: false,
+        created: new Date(this.timestamp).toISOString(),
+        updated: null,
+        deleted: null,
         ...createRefArgs,
       }
       await this.db.set('ref', ref)
@@ -185,9 +182,6 @@ export default class RefsContract extends Contract<typeof RefsContract.models> {
     list: boolean
     backlog: boolean
     promptContext: string | null
-    created: string
-    updated: string | null
-    deleted: string | null
   }) {
     return await this.db.transaction(async () => {
       const id = `${this.did}/${this.id}`
@@ -195,6 +189,9 @@ export default class RefsContract extends Contract<typeof RefsContract.models> {
       const item = {
         id,
         creator: this.did,
+        created: new Date(this.timestamp).toISOString(),
+        updated: null,
+        deleted: null,
         ...createItemArgs,
       }
       await this.db.set('item', item)
@@ -208,7 +205,7 @@ export default class RefsContract extends Contract<typeof RefsContract.models> {
     }
 
     return await this.db.transaction(async () => {
-      const updateArgs = { id: refId, title, updated: formatDateString(new Date()) }
+      const updateArgs = { id: refId, title, updated: new Date(this.timestamp).toISOString() }
       await this.db.update('ref', updateArgs)
     })
   }
@@ -220,7 +217,6 @@ export default class RefsContract extends Contract<typeof RefsContract.models> {
       image?: string
       url?: string
       listTitle?: string | null
-      updated: string | null
     }
   ) {
     if (itemId.split('/')[0] !== this.did) {
@@ -233,7 +229,7 @@ export default class RefsContract extends Contract<typeof RefsContract.models> {
         text: updateItemFields.text,
         image: updateItemFields.image,
         url: updateItemFields.url,
-        updated: updateItemFields.updated,
+        updated: new Date(this.timestamp).toISOString(),
       }
       await this.db.update('item', updateArgs)
     })
@@ -252,7 +248,7 @@ export default class RefsContract extends Contract<typeof RefsContract.models> {
       const updateArgs = {
         id: itemId,
         parent: listItemId,
-        updated: formatDateString(new Date()),
+        updated: new Date(this.timestamp).toISOString(),
       }
       await this.db.update('item', updateArgs)
     })
@@ -268,7 +264,11 @@ export default class RefsContract extends Contract<typeof RefsContract.models> {
     }
 
     await this.db.transaction(async () => {
-      const updateArgs = { id: itemId, parent: null, updated: formatDateString(new Date()) }
+      const updateArgs = {
+        id: itemId,
+        parent: null,
+        updated: new Date(this.timestamp).toISOString(),
+      }
       await this.db.update('item', updateArgs)
     })
   }
@@ -279,7 +279,11 @@ export default class RefsContract extends Contract<typeof RefsContract.models> {
     }
 
     await this.db.transaction(async () => {
-      const updateArgs = { id: itemId, backlog: true, updated: formatDateString(new Date()) }
+      const updateArgs = {
+        id: itemId,
+        backlog: true,
+        updated: new Date(this.timestamp).toISOString(),
+      }
       await this.db.update('item', updateArgs)
     })
   }
@@ -294,11 +298,12 @@ export default class RefsContract extends Contract<typeof RefsContract.models> {
     })
   }
 
-  async createSave(createSaveParams: { user: string; saved_by: string; created: string }) {
+  async createSave(createSaveParams: { user: string; saved_by: string }) {
     return await this.db.transaction(async () => {
       const id = `${this.did}/${this.id}`
       const newSave = {
         id,
+        created: new Date(this.timestamp).toISOString(),
         updated: null,
         ...createSaveParams,
       }
@@ -317,7 +322,6 @@ export default class RefsContract extends Contract<typeof RefsContract.models> {
     otherMembers: string[]
     title?: string
     is_direct: boolean
-    created: string
   }) {
     const members = [...createConversationArgs.otherMembers, this.did]
     members.sort()
@@ -327,7 +331,7 @@ export default class RefsContract extends Contract<typeof RefsContract.models> {
     await this.db.transaction(async () => {
       await this.db.create('conversation', {
         id: conversationId,
-        created: createConversationArgs.created,
+        created: new Date(this.timestamp).toISOString(),
         is_direct: createConversationArgs.is_direct,
         title: createConversationArgs.title || 'New Group Chat',
       })
@@ -336,7 +340,7 @@ export default class RefsContract extends Contract<typeof RefsContract.models> {
         await this.db.create('membership', {
           archived: false,
           conversation: conversationId,
-          created: createConversationArgs.created,
+          created: new Date(this.timestamp).toISOString(),
           id: `${conversationId}/${member}`,
           last_read: null,
           updated: null,
@@ -347,17 +351,13 @@ export default class RefsContract extends Contract<typeof RefsContract.models> {
     return conversationId
   }
 
-  async createMemberships(createMemberhipsParams: {
-    conversationId: string
-    users: string[]
-    created: string
-  }) {
+  async createMemberships(createMemberhipsParams: { conversationId: string; users: string[] }) {
     await this.db.transaction(async () => {
       for (const user of createMemberhipsParams.users) {
         await this.db.create('membership', {
           archived: false,
           conversation: createMemberhipsParams.conversationId,
-          created: createMemberhipsParams.created,
+          created: new Date(this.timestamp).toISOString(),
           id: `${createMemberhipsParams.conversationId}/${user}`,
           last_read: null,
           updated: null,
@@ -389,14 +389,11 @@ export default class RefsContract extends Contract<typeof RefsContract.models> {
     })
   }
 
-  async createMessage(createMessageArgs: {
-    conversation: string
-    encrypted_data: string
-    created: string
-  }) {
+  async createMessage(createMessageArgs: { conversation: string; encrypted_data: string }) {
     await this.db.transaction(async () => {
       await this.db.set('message', {
         id: `${this.did}/${createMessageArgs.conversation}`,
+        created: new Date(this.timestamp).toISOString(),
         sender: this.did,
         ...createMessageArgs,
       })
@@ -406,13 +403,13 @@ export default class RefsContract extends Contract<typeof RefsContract.models> {
   async createReaction(createReactionArgs: {
     message: string
     emoji: string
-    created: string
     encrypted_data: string
   }) {
     await this.db.transaction(async () => {
       await this.db.create('reaction', {
         id: `${this.did}/${createReactionArgs.message}`,
         sender: this.did,
+        created: new Date(this.timestamp).toISOString(),
         updated: null,
         ...createReactionArgs,
       })

@@ -4,7 +4,6 @@ import { createdSort } from '@/ui/profiles/sorts'
 import type { StoreSlices } from './types'
 import { PrimaryKeyValue } from '@canvas-js/modeldb'
 import { ModelDB } from '@canvas-js/modeldb-sqlite-expo'
-import { formatDateString } from '../utils'
 
 function gridSort(items: ExpandedItem[]): ExpandedItem[] {
   const itemsWithOrder: ExpandedItem[] = []
@@ -142,9 +141,6 @@ export const createItemSlice: StateCreator<StoreSlices, [], [], ItemSlice> = (se
       url: refFields.url || '',
       meta: refFields.meta || '{}',
       image: refFields.image || '',
-      created: formatDateString(new Date()),
-      updated: null,
-      deleted: null,
     }
 
     const { result } = await canvasActions!.createRef(createRefArgs)
@@ -163,9 +159,6 @@ export const createItemSlice: StateCreator<StoreSlices, [], [], ItemSlice> = (se
       parent: itemFields.parent || null,
       promptContext: itemFields.promptContext || null,
       backlog,
-      created: formatDateString(new Date()),
-      updated: null,
-      deleted: null,
     }
 
     const { result } = await canvasActions!.createItem(createItemArgs)
@@ -224,8 +217,6 @@ export const createItemSlice: StateCreator<StoreSlices, [], [], ItemSlice> = (se
       image: editedState.image,
       url: editedState.url,
       text: editedState.text,
-
-      updated: formatDateString(new Date()),
     })
 
     const updatedItem = await canvasApp.db.get<Item>('item', itemId)

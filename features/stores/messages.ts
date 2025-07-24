@@ -172,22 +172,15 @@ export const createMessageSlice: StateCreator<StoreSlices, [], [], MessageSlice>
     return await canvasApp.db.query<Message>('message', { where: { conversation: conversationId } })
   },
   async createMemberships(users, conversationId): Promise<void> {
-    try {
-      for (const user of users) {
-        await pocketbase
-          .collection('memberships')
-          .create({ conversation: conversationId, user: user.did })
-      }
-
-      const newMemberships = await pocketbase
-        .collection('memberships')
-        .getFullList<ExpandedMembership>({
-          filter: `conversation = "${conversationId}"`,
-          expand: 'user',
-        })
-    } catch (error) {
-      console.error(error)
+    const { canvasActions } = get()
+    if (!canvasActions) {
+      throw new Error('Canvas not logged in!')
     }
+    await canvasActions.createMemberships({
+      conversationId,
+      users: users.map((user) => user.did),
+      created: formatDateString(new Date()),
+    })
   },
 
   sendMessage: async (sendMessageArgs) => {
@@ -254,7 +247,7 @@ export const createMessageSlice: StateCreator<StoreSlices, [], [], MessageSlice>
     await canvasActions.createReaction({
       message: messageId,
       emoji,
-      created: '',
+      created: formatDateString(new Date()),
       encrypted_data: encryptedData,
     })
   },

@@ -347,6 +347,26 @@ export default class RefsContract extends Contract<typeof RefsContract.models> {
     return conversationId
   }
 
+  async createMemberships(createMemberhipsParams: {
+    conversationId: string
+    users: string[]
+    created: string
+  }) {
+    await this.db.transaction(async () => {
+      for (const user of createMemberhipsParams.users) {
+        await this.db.create('membership', {
+          archived: false,
+          conversation: createMemberhipsParams.conversationId,
+          created: createMemberhipsParams.created,
+          id: `${createMemberhipsParams.conversationId}/${user}`,
+          last_read: null,
+          updated: null,
+          user,
+        })
+      }
+    })
+  }
+
   async createEncryptionGroup({
     members,
     groupKeys,

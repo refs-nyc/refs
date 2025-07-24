@@ -2,7 +2,7 @@ import { Pressable, TextInput, View, Text } from 'react-native'
 import { XStack, YStack } from '../core/Stacks'
 import { c, s } from '@/features/style'
 import { Ionicons } from '@expo/vector-icons'
-import { Message, Profile } from '@/features/types'
+import { DecryptedMessage, Message, Profile } from '@/features/types'
 
 export default function MessageInput({
   onMessageSubmit,
@@ -19,7 +19,7 @@ export default function MessageInput({
   setMessage: (str: string) => void
   message: string
   disabled: boolean
-  parentMessage?: Message
+  parentMessage?: DecryptedMessage
   parentMessageSender?: Profile
   onReplyClose?: () => void
   allowAttachment?: boolean
@@ -34,7 +34,7 @@ export default function MessageInput({
               <Text style={{ fontWeight: 'bold' }}>
                 Replying to {parentMessageSender?.firstName}
               </Text>
-              <Text>{parentMessage.text}</Text>
+              <Text>{parentMessage.expand.decryptedData.text}</Text>
             </YStack>
             <Pressable onPress={onReplyClose}>
               <Ionicons name="close-outline" size={s.$2} color={c.grey2} />

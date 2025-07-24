@@ -1,38 +1,42 @@
-import { pocketbase } from '../pocketbase'
 import { StateCreator } from 'zustand'
-import { ExpandedItem, CompleteRef, StagedItemFields, StagedRefFields } from '../types'
-import { ItemsRecord, RefsRecord } from '../pocketbase/pocketbase-types'
+import { Item, Ref, Profile, StagedItemFields, StagedRefFields, ExpandedItem } from '../types'
 import { createdSort } from '@/ui/profiles/sorts'
 import type { StoreSlices } from './types'
+import { PrimaryKeyValue } from '@canvas-js/modeldb'
+import { ModelDB } from '@canvas-js/modeldb-sqlite-expo'
 
 function gridSort(items: ExpandedItem[]): ExpandedItem[] {
   const itemsWithOrder: ExpandedItem[] = []
   const itemsWithoutOrder: ExpandedItem[] = []
 
   for (const item of items) {
-    if (item.order !== 0) {
-      itemsWithOrder.push(item)
-    } else {
-      itemsWithoutOrder.push(item)
-    }
+    // if (item.order !== 0) {
+    //   itemsWithOrder.push(item)
+    // } else {
+    itemsWithoutOrder.push(item)
+    // }
   }
   // if items have an order value, sort them by order
-  itemsWithOrder.sort((a, b) => a.order - b.order)
+  // itemsWithOrder.sort((a, b) => a.order - b.order)
   // otherwise sort them by created date
   itemsWithoutOrder.sort(createdSort)
-  return [...itemsWithOrder, ...itemsWithoutOrder]
+  // return [...itemsWithOrder, ...itemsWithoutOrder]
+  return itemsWithoutOrder
+}
+
+export type EditedState = {
+  ref: string
+  text: string
+  image: string
+  url: string
+  listTitle: string
 }
 
 export type ItemSlice = {
   editing: string
   isAddingToList: boolean
   searchingNewRef: string
-  editedState: {
-    text?: string
-    image?: string
-    url?: string
-    listTitle?: string
-  }
+  editedState: Partial<EditedState>
   editingLink: boolean
   feedRefreshTrigger: number
   profileRefreshTrigger: number
@@ -46,29 +50,29 @@ export type ItemSlice = {
     itemFields: StagedItemFields,
     backlog: boolean
   ) => Promise<ExpandedItem>
-  createRef: (refFields: StagedRefFields) => Promise<CompleteRef>
-  createItem: (
-    refId: string,
-    itemFields: StagedItemFields,
-    backlog: boolean
-  ) => Promise<ExpandedItem>
+  createRef: (refFields: StagedRefFields) => Promise<Ref>
+  createItem: (refId: string, itemFields: StagedItemFields, backlog: boolean) => Promise<Item>
   addItemToList: (listId: string, itemId: string) => Promise<void>
-  update: (id?: string) => Promise<ExpandedItem>
-  updateEditedState: (e: Partial<ExpandedItem & { listTitle: string }>) => void
+  update: (id?: string) => Promise<Item>
+  updateEditedState: (e: Partial<EditedState>) => void
   removeItem: (id: string) => Promise<void>
-  moveToBacklog: (id: string) => Promise<ItemsRecord>
+  moveToBacklog: (id: string) => Promise<void>
   triggerFeedRefresh: () => void
   triggerProfileRefresh: () => void
-  updateRefTitle: (id: string, title: string) => Promise<CompleteRef>
+  updateRefTitle: (id: string, title: string) => Promise<void>
   getFeedItems: () => Promise<ExpandedItem[]>
-  getTickerItems: () => Promise<RefsRecord[]>
-  getRefById: (id: string) => Promise<CompleteRef>
-  getRefsByTitle: (title: string) => Promise<CompleteRef[]>
-  getItemById: (id: string) => Promise<ExpandedItem>
+  getTickerItems: () => Promise<Ref[]>
+  getRefById: (id: string) => Promise<Ref | null>
+  getRefsByTitle: (title: string) => Promise<Ref[]>
+  getItemById: (id: string) => Promise<ExpandedItem | null>
   getItemsByRefTitle: (title: string) => Promise<ExpandedItem[]>
   getItemsByRefIds: (refIds: string[]) => Promise<ExpandedItem[]>
-  getAllItemsByCreator: (creatorId: string) => Promise<ExpandedItem[]>
-  getListsByCreator: (creatorId: string) => Promise<ExpandedItem[]>
+  getAllItemsByCreator: (creator: Profile) => Promise<ExpandedItem[]>
+  getListsByCreator: (creator: Profile) => Promise<ExpandedItem[]>
+  expandItem: (item: Item) => Promise<ExpandedItem>
+  expandItems: (items: Item[]) => Promise<ExpandedItem[]>
+  getProfileItems: (user: Profile) => Promise<ExpandedItem[]>
+  getBacklogItems: (user: Profile) => Promise<ExpandedItem[]>
 }
 
 // ***
@@ -89,17 +93,25 @@ export const createItemSlice: StateCreator<StoreSlices, [], [], ItemSlice> = (se
   setSearchingNewRef: (id: string) => set(() => ({ searchingNewRef: id })),
   stopEditing: () =>
     set(() => {
-      return { editing: '', editedState: {}, searchingNewRef: '', editingLink: false }
+      return {
+        editing: '',
+        editedState: {
+          text: '',
+          image: '',
+          url: '',
+          listTitle: '',
+          ref: '',
+        },
+        searchingNewRef: '',
+        editingLink: false,
+      }
     }),
-  updateEditedState: (editedState: {
-    text?: string
-    image?: string
-    url?: string
-    listTitle?: string
-  }) =>
+  updateEditedState: (editedState: Partial<EditedState>) =>
     set(() => ({
-      ...get().editedState,
-      editedState,
+      editedState: {
+        ...get().editedState,
+        ...editedState,
+      },
     })),
   triggerFeedRefresh: () => set((state) => ({ feedRefreshTrigger: state.feedRefreshTrigger + 1 })),
   triggerProfileRefresh: () =>
@@ -119,228 +131,310 @@ export const createItemSlice: StateCreator<StoreSlices, [], [], ItemSlice> = (se
 
     get().triggerFeedRefresh()
 
-    return newItem
+    return await get().expandItem(newItem)
   },
   createRef: async (refFields: StagedRefFields) => {
-    const userId = pocketbase.authStore.record?.id
-    if (!userId) {
-      throw new Error('User not found')
-    }
+    const { canvasActions } = get()
 
     const createRefArgs = {
-      creator: userId,
       title: refFields.title || '',
       url: refFields.url || '',
       meta: refFields.meta || '{}',
       image: refFields.image || '',
     }
 
-    // create the ref in pocketbase
-    const newRef = await pocketbase.collection<CompleteRef>('refs').create(createRefArgs)
+    const { result } = await canvasActions!.createRef(createRefArgs)
 
-    return newRef
+    return result
   },
   createItem: async (refId: string, itemFields: StagedItemFields, backlog: boolean) => {
-    const userId = pocketbase.authStore.record?.id
-    if (!userId) {
-      throw new Error('User not found')
-    }
+    const { canvasActions } = get()
 
     const createItemArgs = {
-      creator: userId,
       ref: refId,
       image: itemFields.image,
       url: itemFields.url,
       text: itemFields.text,
       list: itemFields.list || false,
       parent: itemFields.parent || null,
+      promptContext: itemFields.promptContext || null,
       backlog,
     }
 
-    // create the item in pocketbase
-    const newItem = await pocketbase.collection('items').create<ExpandedItem>(createItemArgs, {
-      expand: 'ref',
-    })
+    const { result } = await canvasActions!.createItem(createItemArgs)
 
-    return newItem
+    return result
   },
 
   removeItem: async (id: string): Promise<void> => {
-    const userId = pocketbase.authStore.record?.id
-    if (!userId) {
-      throw new Error('User not found')
+    const { canvasApp, canvasActions } = get()
+    if (!canvasApp) {
+      throw new Error('Canvas not initialized!')
+    }
+    if (!canvasActions) {
+      throw new Error('Canvas not logged in!')
     }
 
-    const item = await pocketbase.collection('items').getOne(id)
+    const item = await canvasApp.db.get('item', id)
+
+    if (!item) throw new Error('Item not found')
 
     if (item.list) {
-      const children = await pocketbase
-        .collection('items')
-        .getFullList({ filter: `parent = "${id}"` })
+      const children = await canvasApp.db.query('item', { where: { parent: id } })
       for (const child of children) {
-        await pocketbase.collection('items').delete(child.id)
+        await canvasActions.removeItem(child.id)
       }
     }
-    await pocketbase.collection('items').delete(id)
+    await canvasActions.removeItem(id)
 
     get().triggerFeedRefresh()
   },
   addItemToList: async (listId: string, itemId: string) => {
-    try {
-      const userId = pocketbase.authStore.record?.id
-      if (!userId) {
-        throw new Error('User not found')
-      }
-
-      // update the item in pocketbase
-      await pocketbase.collection('items').update(itemId, { parent: listId })
-
-      // newly created item might appear in feed before it is added to a list
-      // so we should refresh after choosing a list
-      // (because currently we are filtering out list children from feed)
-      get().triggerFeedRefresh()
-    } catch (error) {
-      console.error(error)
-      throw error
+    const { canvasActions } = get()
+    if (!canvasActions) {
+      throw new Error('Canvas not logged in!')
     }
+
+    await canvasActions.addItemToList(listId, itemId)
+
+    // newly created item might appear in feed before it is added to a list
+    // so we should refresh after choosing a list
+    // (because currently we are filtering out list children from feed)
+    get().triggerFeedRefresh()
   },
   update: async (id?: string) => {
-    try {
-      const userId = pocketbase.authStore.record?.id
-      if (!userId) {
-        throw new Error('User not found')
-      }
-
-      const editedState = get().editedState
-      const updatedItem = await pocketbase
-        .collection<ExpandedItem>('items')
-        .update(id || get().editing, editedState, { expand: 'ref' })
-
-      if (editedState.listTitle && updatedItem.list) {
-        const ref = await pocketbase
-          .collection('refs')
-          .update(updatedItem.ref, { title: editedState.listTitle })
-        if (updatedItem.expand?.ref) updatedItem.expand.ref = ref
-      }
-
-      if (editedState.listTitle && updatedItem.list) {
-        await get().updateRefTitle(updatedItem.ref, editedState.listTitle)
-      }
-
-      // Trigger feed refresh since updates might affect feed visibility
-      get().triggerFeedRefresh()
-
-      return updatedItem
-    } catch (e) {
-      console.error(e)
-      throw e
+    const { canvasApp, canvasActions } = get()
+    if (!canvasApp) {
+      throw new Error('Canvas not initialized!')
     }
+    if (!canvasActions) {
+      throw new Error('Canvas not logged in!')
+    }
+
+    const editedState = get().editedState
+    const itemId = id || get().editing
+    await canvasActions.updateItem(itemId, {
+      image: editedState.image,
+      url: editedState.url,
+      text: editedState.text,
+    })
+
+    const updatedItem = await canvasApp.db.get<Item>('item', itemId)
+
+    if (editedState.listTitle) {
+      await canvasActions.updateRefTitle(updatedItem!.ref as string, editedState.listTitle)
+    }
+
+    // Trigger feed refresh since updates might affect feed visibility
+    get().triggerFeedRefresh()
+
+    return updatedItem!
   },
   moveToBacklog: async (id: string) => {
-    try {
-      const userId = pocketbase.authStore.record?.id
-      if (!userId) {
-        throw new Error('User not found')
-      }
+    const { canvasApp, canvasActions } = get()
 
-      const record = await pocketbase.collection<ItemsRecord>('items').update(id, { backlog: true })
-
-      // Trigger feed refresh since backlog items don't appear in the feed
-      get().triggerFeedRefresh()
-
-      return record
-    } catch (error) {
-      console.error(error)
-      throw error
+    if (!canvasApp) {
+      throw new Error('Canvas not initialized!')
     }
+    if (!canvasActions) {
+      throw new Error('Canvas not logged in!')
+    }
+
+    await canvasActions.moveItemToBacklog(id)
+
+    // Trigger feed refresh since backlog items don't appear in the feed
+    get().triggerFeedRefresh()
   },
   updateRefTitle: async (id: string, title: string) => {
-    const userId = pocketbase.authStore.record?.id
-    if (!userId) {
-      throw new Error('User not found')
+    const { canvasActions } = get()
+    if (!canvasActions) {
+      throw new Error('Canvas not logged in!')
     }
-    try {
-      const record = await pocketbase.collection('refs').update(id, { title })
-      return record
-    } catch (error) {
-      console.error(error)
-      throw error
-    }
+    await canvasActions.updateRefTitle(id, title)
   },
   getFeedItems: async () => {
-    const result = await pocketbase.collection('items').getList<ExpandedItem>(1, 30, {
-      // TODO: remove list = false once we have a way to display lists in the feed
-      // also consider showing backlog items in the feed, when we have a way to link to them
-      filter: `creator != null && backlog = false && list = false && parent = null`,
-      sort: '-created',
-      expand: 'ref,creator',
+    const { canvasApp } = get()
+    if (!canvasApp) {
+      throw new Error('Canvas not initialized!')
+    }
+    const result = await canvasApp.db.query<Item>('item', {
+      where: {
+        creator: {
+          neq: null,
+        },
+        backlog: false,
+        list: false,
+      },
+      orderBy: {
+        created: 'desc',
+      },
     })
-    return result.items
+    return await get().expandItems(result)
   },
   getTickerItems: async () => {
-    return await pocketbase.collection('refs').getFullList<RefsRecord>({
-      filter: 'showInTicker=true',
-      sort: '-created',
+    const { canvasApp } = get()
+    if (!canvasApp) {
+      throw new Error('Canvas not initialized!')
+    }
+    const refs = await canvasApp.db.query<Ref>('ref', {
+      where: {
+        showInTicker: true,
+      },
+      orderBy: {
+        created: 'desc',
+      },
     })
+    return refs
   },
   getRefById: async (id: string) => {
-    return await pocketbase.collection<CompleteRef>('refs').getOne(id)
+    const { canvasApp } = get()
+    if (!canvasApp) {
+      return null
+    }
+    return await canvasApp.db.get('ref', id)
   },
   getRefsByTitle: async (title: string) => {
-    return await pocketbase
-      .collection<CompleteRef>('refs')
-      .getFullList({ filter: `title ~ "${title}"` })
+    const { canvasApp } = get()
+    if (!canvasApp) {
+      throw new Error('Canvas not initialized!')
+    }
+
+    const sqliteDbHandle = (canvasApp.db as ModelDB).db
+    const query = await sqliteDbHandle.prepareAsync('SELECT * FROM ref WHERE title LIKE ?')
+    const result = await query.executeAsync<Ref>([`%${title}%`])
+
+    return await result.getAllAsync()
   },
   getItemById: async (id: string) => {
-    return await pocketbase.collection('items').getOne<ExpandedItem>(id, {
-      expand: 'ref,items_via_parent,items_via_parent.ref',
-    })
+    const { canvasApp } = get()
+    if (!canvasApp) {
+      throw new Error('Canvas not initialized!')
+    }
+    const item = await canvasApp.db.get<Item>('item', id)
+    if (!item) return null
+
+    return await get().expandItem(item)
   },
   getItemsByRefTitle: async (title: string) => {
-    return await pocketbase
-      .collection<ExpandedItem>('items')
-      .getFullList({ filter: `ref.title ~ "${title}"`, expand: 'ref' })
+    const { canvasApp } = get()
+    if (!canvasApp) {
+      throw new Error('Canvas not initialized!')
+    }
+
+    const refs = await get().getRefsByTitle(title)
+
+    const refIds = refs.map((ref) => ref.id)
+
+    const items = []
+    for (const refId of refIds) {
+      const matchingItems = await canvasApp.db.query<Item>('item', {
+        where: {
+          ref: refId,
+        },
+      })
+      items.push(...matchingItems)
+    }
+
+    return await get().expandItems(items)
   },
   getItemsByRefIds: async (refIds: string[]) => {
-    const filter = refIds.map((id) => `ref="${id}"`).join(' || ')
+    const { canvasApp } = get()
+    if (!canvasApp) {
+      throw new Error('Canvas not initialized!')
+    }
+    const items: Item[] = []
+    for (const refId of refIds) {
+      const items = await canvasApp.db.query<Item>('item', {
+        where: {
+          ref: refId,
+        },
+      })
+      items.push(...items)
+    }
 
-    return await pocketbase.collection('items').getFullList({
-      filter,
-      expand: 'creator, ref',
-    })
+    return await get().expandItems(items)
   },
-  getAllItemsByCreator: async (creatorId: string) => {
-    return await pocketbase.collection('items').getFullList<ExpandedItem>({
-      filter: `creator = "${creatorId}"`,
-      expand: 'ref',
+  getAllItemsByCreator: async (creator: Profile) => {
+    const { canvasApp } = get()
+    if (!canvasApp) {
+      throw new Error('Canvas not initialized!')
+    }
+    const items = await canvasApp.db.query<Item>('item', {
+      where: {
+        creator: creator.did,
+      },
     })
+    return await get().expandItems(items)
   },
-  getListsByCreator: async (creatorId: string) => {
-    return await pocketbase
-      .collection<ExpandedItem>('items')
-      .getFullList({ filter: `list = true && creator = "${creatorId}"`, expand: 'ref' })
+  getListsByCreator: async (creator: Profile) => {
+    const { canvasApp } = get()
+    if (!canvasApp) {
+      throw new Error('Canvas not initialized!')
+    }
+    const items = await canvasApp.db.query<Item>('item', {
+      where: {
+        list: true,
+        creator: creator.did,
+      },
+    })
+    return await get().expandItems(items)
+  },
+
+  expandItem: async (item: Item) => {
+    const { canvasApp } = get()
+    if (!canvasApp) throw new Error('Canvas not initialized')
+
+    const ref = await canvasApp.db.get<Ref>('ref', item.ref as PrimaryKeyValue)
+    if (!ref) throw new Error('Ref not found')
+    const creator = await canvasApp.db.get<Profile>('profile', item.creator as PrimaryKeyValue)
+    if (!creator) throw new Error('Creator not found')
+
+    const itemsViaParent = await canvasApp.db.query<Item>('item', {
+      where: {
+        parent: item.id,
+      },
+    })
+
+    const itemsWithRefViaParent = await Promise.all(
+      itemsViaParent.map(async (item) => {
+        const ref = await canvasApp.db.get<Ref>('ref', item.ref as PrimaryKeyValue)
+        if (!ref) throw new Error('Ref not found')
+        return { ...item, expand: { ref } }
+      })
+    )
+
+    return { ...item, expand: { ref, creator, items_via_parent: itemsWithRefViaParent } }
+  },
+
+  expandItems: async (items: Item[]) => {
+    const expandedItems = await Promise.all(items.map(get().expandItem))
+    return expandedItems
+  },
+
+  getProfileItems: async (user: Profile) => {
+    const { canvasApp } = get()
+    if (!canvasApp) throw new Error('Canvas not initialized')
+    const items = await canvasApp.db.query<Item>('item', {
+      where: {
+        creator: user.did,
+        backlog: false,
+        parent: null,
+      },
+    })
+    return gridSort(await get().expandItems(items))
+  },
+
+  getBacklogItems: async (user: Profile) => {
+    const { canvasApp } = get()
+    if (!canvasApp) throw new Error('Canvas not initialized')
+    const items = await canvasApp.db.query<Item>('item', {
+      where: {
+        creator: user.did,
+        backlog: true,
+        parent: null,
+      },
+    })
+    const expandedItems = await get().expandItems(items)
+    return expandedItems.sort(createdSort)
   },
 })
-
-export const getProfileItems = async (userName: string) => {
-  const items = await pocketbase.collection<ExpandedItem>('items').getFullList({
-    filter: pocketbase.filter(
-      'creator.userName = {:userName} && backlog = false && parent = null',
-      {
-        userName,
-      }
-    ),
-    expand: 'items_via_parent, ref, items_via_parent.ref, creator',
-  })
-  return gridSort(items)
-}
-
-export const getBacklogItems = async (userName: string) => {
-  const items = await pocketbase.collection('items').getFullList({
-    filter: pocketbase.filter('creator.userName = {:userName} && backlog = true && parent = null', {
-      userName,
-    }),
-    expand: 'ref',
-  })
-  return items.sort(createdSort)
-}

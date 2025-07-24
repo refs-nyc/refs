@@ -1,5 +1,5 @@
 import { useAppStore } from '@/features/stores'
-import { Message } from '@/features/types'
+import { Conversation, DecryptedMessage, ExpandedMembership, Message } from '@/features/types'
 import { c, s } from '@/features/style'
 import { Heading, Sheet, XStack } from '@/ui'
 import { Avatar, AvatarStack } from '@/ui/atoms/Avatar'
@@ -16,17 +16,15 @@ import { randomColors } from './utils'
 export function MessagesScreen({ conversationId }: { conversationId: string }) {
   const {
     user,
-    conversations,
-    memberships,
-    messagesPerConversation,
     sendMessage,
     sendReaction,
-    oldestLoadedMessageDate,
-    setOldestLoadedMessageDate,
-    addOlderMessages,
-    firstMessageDate,
+    // oldestLoadedMessageDate,
+    // setOldestLoadedMessageDate,
+    // addOlderMessages,
+    getConversation,
+    getMembers,
+    getMessagesForConversation,
     updateLastRead,
-    getNewMessages,
   } = useAppStore()
   const flatListRef = useRef<FlatList>(null)
   const [message, setMessage] = useState<string>('')
@@ -37,38 +35,56 @@ export function MessagesScreen({ conversationId }: { conversationId: string }) {
   const [showEmojiPicker, setShowEmojiPicker] = useState<boolean>(false)
   const windowHeight = useWindowDimensions().height
 
-  const conversation = conversations[conversationId]
-  const members = memberships[conversationId].filter((m) => m.expand?.user.id !== user?.id)
+  const [conversation, setConversation] = useState<Conversation | null>(null)
+  const [members, setMembers] = useState<ExpandedMembership[]>([])
+  const [conversationMessages, setConversationMessages] = useState<DecryptedMessage[]>([])
 
-  const conversationMessages = messagesPerConversation[conversationId]
+  useEffect(() => {
+    async function updateData() {
+      const conversation = await getConversation(conversationId)
+      setConversation(conversation)
+
+      const members = await getMembers(conversationId)
+      setMembers(members)
+
+      const messages = await getMessagesForConversation(conversationId)
+      setConversationMessages(messages)
+    }
+    updateData()
+  })
+
+  const otherMembers = members.filter((m) => m.expand?.user.did !== user?.did)
   const highlightedMessage = conversationMessages.find((m) => m.id === highlightedMessageId)
 
   const colorMap = useMemo(() => {
-    const colors = randomColors(members.length)
+    const colors = randomColors(otherMembers.length)
 
-    const map = members.reduce((acc, member, index) => {
-      if (member.expand?.user.id) acc[member.expand?.user.id] = colors[index]
+    const map = otherMembers.reduce((acc, member, index) => {
+      if (member.expand?.user.did) acc[member.expand?.user.did] = colors[index]
       return acc
     }, {} as Record<string, any>)
 
     return map
-  }, [members.length])
+  }, [otherMembers.length])
 
   useEffect(() => {
-    if (!user) return
-    updateLastRead(conversationId, user.id)
+    try {
+      updateLastRead(conversationId)
+    } catch (e) {
+      // do nothing
+    }
   }, [])
 
   if (!user) return null
+  if (conversation === null) return null
 
   const onMessageSubmit = () => {
-    sendMessage(
-      user.id,
+    sendMessage({
       conversationId,
-      message,
-      replying ? highlightedMessageId : undefined,
-      imageUrl || undefined
-    )
+      text: message,
+      parentMessageId: replying ? highlightedMessageId : undefined,
+      imageUrl: imageUrl || undefined,
+    })
     setMessage('')
     setHighlightedMessageId('')
     setReplying(false)
@@ -93,35 +109,37 @@ export function MessagesScreen({ conversationId }: { conversationId: string }) {
 
   const loadMoreMessages = async () => {
     if (!user) return
-    if (oldestLoadedMessageDate[conversationId] === firstMessageDate[conversationId]) return
+    // TODO: implement this using a state hook in this component
+    // if (oldestLoadedMessageDate[conversationId] === firstMessageDate[conversationId]) return
 
-    const newMessages = await getNewMessages(
-      conversationId,
-      oldestLoadedMessageDate[conversationId]
-    )
-    const oldestMessage = newMessages[newMessages.length - 1]
-    setOldestLoadedMessageDate(conversationId, oldestMessage.created!)
-    addOlderMessages(conversationId, newMessages)
+    // const newMessages = await getNewMessages(
+    //   conversationId,
+    //   oldestLoadedMessageDate[conversationId]
+    // )
+    // const oldestMessage = newMessages[newMessages.length - 1]
+    // setOldestLoadedMessageDate(conversationId, oldestMessage.created!)
+    // addOlderMessages(conversationId, newMessages)
   }
 
-  function renderMessage({ item }: { item: Message }) {
-    const parentMessageIndex = conversationMessages.findIndex((m) => m.id === item.replying_to)
-    const parentMessage = item.replying_to ? conversationMessages[parentMessageIndex] : undefined
+  function renderMessage({ item }: { item: DecryptedMessage }) {
+    const parentMessageIndex = conversationMessages.findIndex(
+      (m) => m.id === item.expand.decryptedData.parentMessageId
+    )
+    const parentMessage = item.expand.decryptedData.parentMessageId
+      ? conversationMessages[parentMessageIndex]
+      : undefined
     const parentMessageSender = parentMessage
-      ? memberships[conversationId].find(
-          (member) => member.expand?.user.id === parentMessage.sender
-        )?.expand?.user
+      ? members.find((member) => member.expand?.user.did === parentMessage.sender)?.expand?.user
       : undefined
     return (
       <MessageBubble
         key={item.id}
         message={item}
         sender={
-          memberships[conversationId].find((member) => member.expand?.user.id === item.sender)
-            ?.expand?.user || user!
+          members.find((member) => member.expand?.user.did === item.sender)?.expand?.user || user!
         }
-        showSender={!conversation.is_direct}
-        senderColor={colorMap[item.sender]}
+        showSender={!conversation!.is_direct}
+        senderColor={colorMap[item.sender as string]}
         onReplyPress={onReplyPress}
         onExpandReactionsPress={onExpandReactionsPress}
         parentMessage={parentMessage}
@@ -163,17 +181,17 @@ export function MessagesScreen({ conversationId }: { conversationId: string }) {
           numberOfLines={2}
         >
           {conversation.is_direct
-            ? members[0].expand?.user.firstName + ' ' + members[0].expand?.user.lastName
+            ? otherMembers[0].expand?.user.firstName + ' ' + otherMembers[0].expand?.user.lastName
             : conversation.title}
         </Heading>
         {conversation.is_direct ? (
-          <Link href={`/user/${members[0].expand?.user.userName}`}>
+          <Link href={`/user/${members[0].expand?.user.did}`}>
             <Avatar source={members[0].expand?.user.image} size={s.$4} />
           </Link>
         ) : (
           <XStack style={{ flex: 1, justifyContent: 'flex-end' }}>
             <Link href={`/messages/${conversationId}/member-list`}>
-              <AvatarStack sources={members.map((m) => m.expand?.user.image)} size={s.$3} />
+              <AvatarStack sources={members.map((m) => m.expand?.user.image || '')} size={s.$3} />
             </Link>
           </XStack>
         )}
@@ -220,7 +238,7 @@ export function MessagesScreen({ conversationId }: { conversationId: string }) {
           parentMessage={replying ? highlightedMessage : undefined}
           parentMessageSender={
             replying
-              ? members.find((m) => m.expand?.user.id === highlightedMessage?.sender)?.expand
+              ? members.find((m) => m.expand?.user.did === highlightedMessage?.sender)?.expand
                   ?.user || user
               : undefined
           }
@@ -240,7 +258,7 @@ export function MessagesScreen({ conversationId }: { conversationId: string }) {
               setReplying(false)
             }}
             onEmojiSelected={(e: any) => {
-              sendReaction(user.id, highlightedMessageId, e.emoji)
+              sendReaction(highlightedMessageId, e.emoji)
               setHighlightedMessageId('')
               setShowEmojiPicker(false)
             }}

@@ -63,7 +63,7 @@ const ListItem = ({
   onImagePress: () => void
 }) => {
   const creator = item.expand!.creator
-  const creatorProfileUrl = `/user/${creator.userName}/` as const
+  const creatorProfileUrl = `/user/${creator.did}/` as const
 
   return (
     <View
@@ -158,6 +158,7 @@ export const Feed = () => {
       setItems(items)
     } catch (error) {
       console.error('Error fetching feed items:', error)
+      setItems([])
     }
   }
 
@@ -197,7 +198,7 @@ export const Feed = () => {
                       detailsSheetRef.current?.snapToIndex(0)
                     }}
                     onTitlePress={() => {
-                      setCurrentRefId(item.ref)
+                      setCurrentRefId(item.expand.ref.id)
                       referencersBottomSheetRef.current?.expand()
                     }}
                   />
@@ -212,7 +213,7 @@ export const Feed = () => {
       {detailsItem && (
         <ProfileDetailsSheet
           detailsSheetRef={detailsSheetRef}
-          profileUsername={detailsItem.expand!.creator.userName}
+          profile={detailsItem.expand!.creator}
           detailsItemId={detailsItem.id}
           onChange={(index) => {
             // if the index is -1, then the user has closed the sheet

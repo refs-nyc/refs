@@ -16,7 +16,7 @@ export const DMButton = ({
   disabled?: boolean
   style?: any
 }) => {
-  const { user, getDirectConversations } = useAppStore()
+  const { getDirectConversation } = useAppStore()
 
   const [target, setTarget] = useState<string>('')
 
@@ -27,20 +27,9 @@ export const DMButton = ({
         return
       }
       try {
-        let existingConversationId = ''
-
-        const directConversations = await getDirectConversations()
-        for (const conversation of directConversations) {
-          const otherUserId = conversation.expand?.memberships_via_conversation
-            .map((m) => m.expand?.user.id)
-            .filter((id) => id !== user?.id)[0]
-          if (otherUserId === profile.id) {
-            existingConversationId = conversation.id
-            break
-          }
-        }
+        const existingConversationId = await getDirectConversation(profile.did)
         if (!existingConversationId) {
-          setTarget(`/user/${profile.userName}/new-dm`)
+          setTarget(`/user/${profile.did}/new-dm`)
         } else {
           setTarget('/messages/' + existingConversationId)
         }

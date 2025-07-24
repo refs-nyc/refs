@@ -1,4 +1,4 @@
-import type { ExpandedItem } from '@/features/types'
+import type { ExpandedItem, Profile } from '@/features/types'
 
 import { useState, useEffect } from 'react'
 import { Pressable } from 'react-native'
@@ -9,11 +9,11 @@ import { NewListItemButton } from '@/ui/lists/NewListItemButton'
 import { useAppStore } from '@/features/stores'
 
 export const UserLists = ({
-  creatorId,
+  creator,
   onComplete,
   onCreateList,
 }: {
-  creatorId: string
+  creator: Profile
   onComplete: (r: ExpandedItem) => void
   onCreateList: () => void
 }) => {
@@ -23,7 +23,7 @@ export const UserLists = ({
   // Load items based on filter
   const loadItems = async () => {
     try {
-      const results = await getListsByCreator(creatorId)
+      const results = await getListsByCreator(creator)
 
       setItems(results)
     } catch (error) {
@@ -33,7 +33,7 @@ export const UserLists = ({
 
   useEffect(() => {
     loadItems()
-  }, [creatorId])
+  }, [creator])
 
   // Render individual item
   const renderItem = ({ item }: { item: ExpandedItem }) => {

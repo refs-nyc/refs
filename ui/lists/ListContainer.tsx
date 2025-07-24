@@ -22,7 +22,7 @@ export const ListContainer = ({
         {item?.expand?.items_via_parent.map((itm) => (
           <ListItem
             onTitlePress={() => {
-              setCurrentRefId(itm.ref || '')
+              setCurrentRefId(itm.ref?.toString() || '')
               referencersBottomSheetRef.current?.expand()
             }}
             largeImage={true}

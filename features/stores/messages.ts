@@ -21,9 +21,12 @@ export type MessageSlice = {
     title?: string
   ) => Promise<string>
 
+  getConversation: (conversationId: string) => Promise<Conversation | null>
   getDirectConversation: (otherUserDid: string) => Promise<Conversation | null>
   getGroupConversations: () => Promise<Conversation[]>
+  getMembers: (conversationId: string) => Promise<ExpandedMembership[]>
   getMembershipCount: (conversationId: string) => Promise<number>
+  getMessagesForConversation: (conversationId: string) => Promise<Message[]>
 
   createMemberships: (users: Profile[], conversationId: string) => Promise<void>
 
@@ -63,6 +66,14 @@ export const createMessageSlice: StateCreator<StoreSlices, [], [], MessageSlice>
       title,
     })
     return conversationId
+  },
+  getConversation: async (conversationId: string) => {
+    const { canvasApp } = get()
+    if (!canvasApp) {
+      throw new Error('Canvas not initialized!')
+    }
+
+    return await canvasApp.db.get<Conversation>('conversation', conversationId)
   },
   getDirectConversation: async (otherUserDid: string) => {
     const { canvasApp, user } = get()
@@ -128,7 +139,22 @@ export const createMessageSlice: StateCreator<StoreSlices, [], [], MessageSlice>
 
     return groupConversations
   },
+  getMembers: async (conversationId) => {
+    const { canvasApp } = get()
+    if (!canvasApp) {
+      throw new Error('Canvas not initialized!')
+    }
 
+    const members: ExpandedMembership[] = []
+    for (const membership of await canvasApp.db.query<Membership>('membership', {
+      where: { conversation: conversationId },
+    })) {
+      const user = await canvasApp.db.get<Profile>('user', membership.user as string)
+      if (!user) continue
+      members.push({ ...membership, expand: { user } })
+    }
+    return members
+  },
   async getMembershipCount(conversationId) {
     const { canvasApp } = get()
     if (!canvasApp) {
@@ -136,6 +162,14 @@ export const createMessageSlice: StateCreator<StoreSlices, [], [], MessageSlice>
     }
 
     return await canvasApp.db.count('membership', { conversation: conversationId })
+  },
+  getMessagesForConversation: async (conversationId: string) => {
+    const { canvasApp } = get()
+    if (!canvasApp) {
+      throw new Error('Canvas not initialized!')
+    }
+
+    return await canvasApp.db.query<Message>('message', { where: { conversation: conversationId } })
   },
   async createMemberships(users, conversationId): Promise<void> {
     try {

@@ -25,6 +25,13 @@ export type GridTileType = 'add' | 'image' | 'text' | 'list' | 'placeholder' | '
 export type Membership = ContractModelTypes['membership']
 export type Conversation = ContractModelTypes['conversation']
 export type Message = ContractModelTypes['message']
+export type MessageDecryptedData = {
+  text: string
+  parentMessageId?: string
+  imageUrl?: string
+}
+export type DecryptedMessage = Message & { expand: { decryptedData: MessageDecryptedData } }
+
 export type Reaction = ContractModelTypes['reaction']
 export type Save = ContractModelTypes['save']
 

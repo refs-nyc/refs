@@ -43,13 +43,15 @@ export type MessageSlice = {
   archiveConversation: (user: Profile, conversationId: string) => Promise<void>
   unarchiveConversation: (user: Profile, conversationId: string) => Promise<void>
 
+  decryptMessages: (conversationId: string, messages: Message[]) => Promise<DecryptedMessage[]>
+
   getConversation: (conversationId: string) => Promise<Conversation | null>
   getDirectConversation: (otherUserDid: string) => Promise<Conversation | null>
   getGroupConversations: () => Promise<Conversation[]>
   getMembers: (conversationId: string) => Promise<ExpandedMembership[]>
   getMembershipCount: (conversationId: string) => Promise<number>
   getMessagesForConversation: (conversationId: string) => Promise<DecryptedMessage[]>
-  getLastMessageForConversation: (conversationId: string) => Promise<Message | null>
+  getLastMessageForConversation: (conversationId: string) => Promise<DecryptedMessage | null>
   getReactionsForMessage: (messageId: string) => Promise<Reaction[]>
   getNumberUnreadMessages: () => Promise<number>
 }
@@ -245,6 +247,56 @@ export const createMessageSlice: StateCreator<StoreSlices, [], [], MessageSlice>
     }
   },
 
+  decryptMessages: async (conversationId, messages) => {
+    if (messages.length === 0) {
+      return []
+    }
+
+    const { canvasApp, encryptionWallet, user } = get()
+    if (!canvasApp) {
+      throw new Error('Canvas not initialized!')
+    }
+
+    if (!encryptionWallet) {
+      throw new Error('No encryption wallet exists for the current user')
+    }
+
+    if (!user) {
+      throw new Error('Not logged in!')
+    }
+
+    // get the encryption group for this conversation
+    const encryptionGroup = await canvasApp.db.get<EncryptionGroup>(
+      'encryption_group',
+      conversationId
+    )
+    if (!encryptionGroup) {
+      throw new Error(`No encryption group exists for ${conversationId}`)
+    }
+
+    // extract my key from the encryption group
+    const myKey = JSON.parse(encryptionGroup.group_keys)[user.did]
+
+    const groupPrivateKey = decryptSafely({
+      encryptedData: myKey,
+      privateKey: encryptionWallet?.privateKey,
+    })
+
+    const decryptedMessages = []
+    for (const message of messages) {
+      // decrypt the message
+      const decryptedData = decryptSafely({
+        encryptedData: message.encrypted_data as EthEncryptedData,
+        privateKey: groupPrivateKey,
+      })
+
+      const decryptedFields = JSON.parse(decryptedData) as MessageDecryptedData
+      decryptedMessages.push({ ...message, expand: { decryptedData: decryptedFields } })
+    }
+
+    return decryptedMessages
+  },
+
   getConversation: async (conversationId: string) => {
     const { canvasApp } = get()
     if (!canvasApp) {
@@ -349,42 +401,11 @@ export const createMessageSlice: StateCreator<StoreSlices, [], [], MessageSlice>
     if (!user) {
       throw new Error('Not logged in!')
     }
-    if (!encryptionWallet) {
-      throw new Error('No encryption wallet exists for the current user')
-    }
-
-    // get the encryption group for this conversation
-    const encryptionGroup = await canvasApp.db.get<EncryptionGroup>(
-      'encryption_group',
-      conversationId
-    )
-    if (!encryptionGroup) {
-      throw new Error(`No encryption group exists for ${conversationId}`)
-    }
-
-    // extract my key from the encryption group
-    const myKey = JSON.parse(encryptionGroup.group_keys)[user.did]
-
-    const groupPrivateKey = decryptSafely({
-      encryptedData: myKey,
-      privateKey: encryptionWallet?.privateKey,
-    })
 
     const messages = await canvasApp.db.query<Message>('message', {
       where: { conversation: conversationId },
     })
-
-    const decryptedMessages = []
-    for (const message of messages) {
-      // decrypt the message
-      const decryptedData = decryptSafely({
-        encryptedData: message.encrypted_data as EthEncryptedData,
-        privateKey: groupPrivateKey,
-      })
-
-      const decryptedFields = JSON.parse(decryptedData) as MessageDecryptedData
-      decryptedMessages.push({ ...message, expand: { decryptedData: decryptedFields } })
-    }
+    const decryptedMessages = await get().decryptMessages(conversationId, messages)
 
     return decryptedMessages
   },
@@ -399,7 +420,10 @@ export const createMessageSlice: StateCreator<StoreSlices, [], [], MessageSlice>
       orderBy: { created: 'desc' },
       limit: 1,
     })
-    return messages[0] || null
+
+    const decryptedMessages = await get().decryptMessages(conversationId, messages)
+
+    return decryptedMessages[0] || null
   },
   getReactionsForMessage: async (messageId) => {
     const { canvasApp } = get()

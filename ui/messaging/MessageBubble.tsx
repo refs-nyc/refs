@@ -1,6 +1,6 @@
 import { formatTimestamp } from '@/features/messaging/utils'
 import { useAppStore } from '@/features/stores'
-import { Message, Profile, Reaction } from '@/features/types'
+import { DecryptedMessage, Message, Profile, Reaction } from '@/features/types'
 import { c, s } from '@/features/style'
 import { useCalendars } from 'expo-localization'
 import { View, Text } from 'react-native'
@@ -23,11 +23,11 @@ export default function MessageBubble({
   onReplyPress,
   onExpandReactionsPress,
 }: {
-  message: Message
+  message: DecryptedMessage
   showSender: boolean
   sender: Profile
   senderColor?: string
-  parentMessage?: Message
+  parentMessage?: DecryptedMessage
   parentMessageSender?: Profile
   onParentMessagePress?: () => void
   onReplyPress: (messageId: string) => void
@@ -100,12 +100,16 @@ export default function MessageBubble({
                 <Text style={{ color: c.black }}>
                   <Text style={{ fontWeight: 'bold' }}>{parentMessageSender?.firstName}</Text> said:
                 </Text>
-                <Text style={{ fontStyle: 'italic', color: c.muted }}>{parentMessage?.text}</Text>
+                <Text style={{ fontStyle: 'italic', color: c.muted }}>
+                  {parentMessage ? parentMessage.expand.decryptedData.text : ''}
+                </Text>
               </View>
             </Pressable>
           )}
-          {message.image && <PressableImage source={message.image} size={s.$15} />}
-          <Text>{message.text}</Text>
+          {message.expand.decryptedData.imageUrl && (
+            <PressableImage source={message.expand.decryptedData.imageUrl} size={s.$15} />
+          )}
+          <Text>{message.expand.decryptedData.text}</Text>
           {messageReactions && (
             <XStack>
               {messageReactions.map((r) => {

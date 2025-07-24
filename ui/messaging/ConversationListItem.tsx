@@ -1,5 +1,5 @@
 import { useAppStore } from '@/features/stores'
-import { Conversation, ExpandedMembership, Message } from '@/features/types'
+import { Conversation, DecryptedMessage, ExpandedMembership, Message } from '@/features/types'
 import { s, c } from '@/features/style'
 import { View, Text } from 'react-native'
 import { XStack, YStack } from '../core/Stacks'
@@ -17,7 +17,7 @@ export default function ConversationListItem({
 }): JSX.Element | null {
   const { user, getLastMessageForConversation, getMembers } = useAppStore()
 
-  const [lastMessage, setLastMessage] = useState<Message | null>(null)
+  const [lastMessage, setLastMessage] = useState<DecryptedMessage | null>(null)
   const [conversationMemberships, setConversationMemberships] = useState<ExpandedMembership[]>([])
 
   useEffect(() => {
@@ -82,8 +82,7 @@ export default function ConversationListItem({
                 ? members[0].firstName + ' ' + members[0].lastName
                 : conversation.title}
             </Text>
-            {/* TODO: decryption */}
-            <Text>{lastMessage?.text}</Text>
+            <Text>{lastMessage ? lastMessage.expand.decryptedData.text : ''}</Text>
           </YStack>
         </XStack>
         <Text style={{ color: c.muted, margin: s.$05, alignSelf: 'flex-start' }}>

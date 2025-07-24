@@ -1,5 +1,5 @@
 import { useAppStore } from '@/features/stores'
-import { Conversation, ExpandedMembership, Message } from '@/features/types'
+import { Conversation, DecryptedMessage, ExpandedMembership, Message } from '@/features/types'
 import { c, s } from '@/features/style'
 import { Heading, Sheet, XStack } from '@/ui'
 import { Avatar, AvatarStack } from '@/ui/atoms/Avatar'
@@ -37,7 +37,7 @@ export function MessagesScreen({ conversationId }: { conversationId: string }) {
 
   const [conversation, setConversation] = useState<Conversation | null>(null)
   const [members, setMembers] = useState<ExpandedMembership[]>([])
-  const [conversationMessages, setConversationMessages] = useState<Message[]>([])
+  const [conversationMessages, setConversationMessages] = useState<DecryptedMessage[]>([])
 
   useEffect(() => {
     async function updateData() {
@@ -121,9 +121,13 @@ export function MessagesScreen({ conversationId }: { conversationId: string }) {
     // addOlderMessages(conversationId, newMessages)
   }
 
-  function renderMessage({ item }: { item: Message }) {
-    const parentMessageIndex = conversationMessages.findIndex((m) => m.id === item.replying_to)
-    const parentMessage = item.replying_to ? conversationMessages[parentMessageIndex] : undefined
+  function renderMessage({ item }: { item: DecryptedMessage }) {
+    const parentMessageIndex = conversationMessages.findIndex(
+      (m) => m.id === item.expand.decryptedData.parentMessageId
+    )
+    const parentMessage = item.expand.decryptedData.parentMessageId
+      ? conversationMessages[parentMessageIndex]
+      : undefined
     const parentMessageSender = parentMessage
       ? members.find((member) => member.expand?.user.did === parentMessage.sender)?.expand?.user
       : undefined

@@ -1,12 +1,5 @@
 import { StateCreator } from 'zustand'
-import {
-  Conversation,
-  ConversationWithMemberships,
-  ExpandedMembership,
-  Membership,
-  Message,
-  Profile,
-} from '../types'
+import { Conversation, ExpandedMembership, Membership, Message, Profile } from '../types'
 
 import type { StoreSlices } from './types'
 import { formatDateString } from '../utils'
@@ -38,7 +31,6 @@ export type MessageSlice = {
   }) => Promise<void>
 
   updateLastRead: (conversationId: string) => Promise<void>
-  getNewMessages: (conversationId: string, oldestLoadedMessageDate: string) => Promise<Message[]>
 
   sendReaction: (messageId: string, emoji: string) => Promise<void>
   deleteReaction: (id: string) => Promise<void>
@@ -225,14 +217,6 @@ export const createMessageSlice: StateCreator<StoreSlices, [], [], MessageSlice>
 
     const lastReadDate = lastMessage ? lastMessage.created : ''
     await canvasActions.updateMembershipLastRead(`${user.did}/${conversationId}`, lastReadDate)
-  },
-
-  getNewMessages: async (conversationId: string, oldestLoadedMessageDate: string) => {
-    const newMessages = await pocketbase.collection('messages').getList<Message>(0, PAGE_SIZE, {
-      filter: `conversation = "${conversationId}" && created < "${oldestLoadedMessageDate}"`,
-      sort: '-created',
-    })
-    return newMessages.items
   },
 
   sendReaction: async (messageId, emoji) => {

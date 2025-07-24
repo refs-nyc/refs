@@ -25,7 +25,6 @@ export function MessagesScreen({ conversationId }: { conversationId: string }) {
     getMembers,
     getMessagesForConversation,
     updateLastRead,
-    getNewMessages,
   } = useAppStore()
   const flatListRef = useRef<FlatList>(null)
   const [message, setMessage] = useState<string>('')

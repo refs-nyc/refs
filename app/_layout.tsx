@@ -37,7 +37,6 @@ import { KeyboardProvider } from 'react-native-keyboard-controller'
 import { RegisterPushNotifications } from '@/ui/notifications/RegisterPushNotifications'
 import { useAppStore } from '@/features/stores'
 
-import { LogBox } from 'react-native'
 import BottomSheet from '@gorhom/bottom-sheet'
 import Saves from '@/features/saves/saves-sheet'
 import Referencers from '@/ui/profiles/sheets/ReferencersSheet'
@@ -48,11 +47,6 @@ import { magic } from '@/features/magic'
 install()
 polyfillEncoding()
 configureReanimatedLogger({ strict: false })
-
-// TODO: this error keeps getting thrown whenever the app fast reloads in development
-// I suspect that pocketbase subscribes to updates and then doesn't unsubscribe when the app is being reloaded
-// Ignoring these error messages for now
-LogBox.ignoreLogs(['ClientResponseError 404'])
 
 export {
   // Catch any errors thrown by the Layout component.

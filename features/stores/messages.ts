@@ -22,6 +22,7 @@ export type MessageSlice = {
   getMessagesForConversation: (conversationId: string) => Promise<Message[]>
   getLastMessageForConversation: (conversationId: string) => Promise<Message | null>
   getReactionsForMessage: (messageId: string) => Promise<Reaction[]>
+  getNumberUnreadMessages: () => Promise<number>
 
   createMemberships: (users: Profile[], conversationId: string) => Promise<void>
 
@@ -185,6 +186,34 @@ export const createMessageSlice: StateCreator<StoreSlices, [], [], MessageSlice>
     }
 
     return await canvasApp.db.query<Reaction>('reaction', { where: { message: messageId } })
+  },
+  getNumberUnreadMessages: async () => {
+    const { canvasApp, user } = get()
+    if (!canvasApp) {
+      throw new Error('Canvas not initialized!')
+    }
+    if (!user) {
+      throw new Error('Not logged in!')
+    }
+
+    let unreadMessageCount = 0
+
+    const myMemberships = await canvasApp.db.query<Membership>('membership', {
+      where: { user: user.did },
+    })
+
+    for (const membership of myMemberships) {
+      const countForConversation = await canvasApp.db.count('message', {
+        conversation: membership.conversation,
+        sender: { neq: user.did },
+        created: {
+          lt: membership.last_read,
+        },
+      })
+      unreadMessageCount += countForConversation
+    }
+
+    return unreadMessageCount
   },
   async createMemberships(users, conversationId): Promise<void> {
     const { canvasActions } = get()

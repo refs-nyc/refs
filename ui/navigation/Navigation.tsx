@@ -5,7 +5,7 @@ import { c, s } from '@/features/style'
 import { useAppStore } from '@/features/stores'
 import { NavigationBackdrop } from '@/ui/navigation/NavigationBackdrop'
 import { Badge } from '../atoms/Badge'
-import { useMemo, useRef, useEffect } from 'react'
+import { useRef, useEffect, useState } from 'react'
 import SavesIcon from '@/assets/icons/saves.svg'
 import MessageIcon from '@/assets/icons/message.svg'
 import { Ionicons } from '@expo/vector-icons'
@@ -18,7 +18,8 @@ export const Navigation = ({
 }) => {
   const pathname = usePathname()
 
-  const { user, saves, messagesPerConversation, conversations, memberships, logout } = useAppStore()
+  const { user, saves, getNumberUnreadMessages } = useAppStore()
+  const [newMessages, setNewMessages] = useState(0)
 
   const isHomePage = pathname === '/' || pathname === '/index'
 
@@ -45,35 +46,9 @@ export const Navigation = ({
     }
   }, [saves.length])
 
-  const countNewMessages = () => {
-    if (!user) return 0
-    if (!messagesPerConversation) return 0
-    // messages not loaded yet
-    if (Object.keys(memberships).length === 0) return 0
-    let newMessages = 0
-    for (const conversationId in conversations) {
-      const membership = memberships[conversationId].find((m) => m.expand?.user.did === user?.did)
-      if (!membership) continue
-      if (membership?.archived) continue
-      const lastRead = membership?.last_read
-      const lastReadDate = new Date(lastRead || '')
-      const conversationMessages = messagesPerConversation[conversationId]
-      if (!conversationMessages) continue
-      let unreadMessages
-      if (lastRead) {
-        const msgs = conversationMessages.filter(
-          (m) => new Date(m.created!) > lastReadDate && m.sender !== user?.did
-        )
-        unreadMessages = msgs.length
-      } else unreadMessages = conversationMessages.length
-      newMessages += unreadMessages
-    }
-    return newMessages
-  }
-  const newMessages = useMemo(
-    () => countNewMessages(),
-    [messagesPerConversation, memberships, user]
-  )
+  useEffect(() => {
+    getNumberUnreadMessages().then(setNewMessages)
+  }, [])
 
   if (!user || pathname === '/onboarding' || pathname === '/user/register') return null
 

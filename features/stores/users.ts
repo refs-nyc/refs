@@ -9,7 +9,6 @@ import {
 import { StateCreator } from 'zustand'
 import type { RefsCanvas } from '../canvas/contract'
 import { getCurrentSessionSignerFromMagic, getEncryptionWalletFromMagic } from '../magic'
-import { pocketbase } from '../pocketbase'
 import { Profile, StagedProfileFields } from '../types'
 import { formatDateString } from '../utils'
 import type { StoreSlices } from './types'
@@ -196,9 +195,6 @@ export const createUserSlice: StateCreator<StoreSlices, [], [], UserSlice> = (se
       stagedUser: {},
       isInitialized: true,
     }))
-
-    pocketbase.realtime.unsubscribe()
-    pocketbase.authStore.clear()
   },
 
   canvasActions: null,

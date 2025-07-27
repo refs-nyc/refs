@@ -31,11 +31,9 @@ export const OtherProfile = ({ userName }: { userName: string }) => {
   const refreshGrid = async (userName: string) => {
     // Check if we already have this data cached
     if (lastFetchedUserName.current === userName && lastFetchedTrigger.current === profileRefreshTrigger) {
-      console.log('🚀 Using cached profile data for:', userName)
       return
     }
     
-    console.log('🔄 Fetching profile data for:', userName)
     const startTime = Date.now()
     
     // Check for preloaded data first (try both other-profile and search-result-profile)
@@ -44,13 +42,10 @@ export const OtherProfile = ({ userName }: { userName: string }) => {
     const preloadedData = getPreloadedData(otherProfileKey) || getPreloadedData(searchResultKey)
     
     if (preloadedData) {
-      console.log('🚀 Using preloaded data for:', userName)
       setProfile(preloadedData.profile)
       setGridItems(preloadedData.gridItems)
       lastFetchedUserName.current = userName
       lastFetchedTrigger.current = profileRefreshTrigger
-      const loadTime = Date.now() - startTime
-      console.log(`✅ Profile loaded from cache in ${loadTime}ms for:`, userName)
       return
     }
     
@@ -70,9 +65,6 @@ export const OtherProfile = ({ userName }: { userName: string }) => {
       // Update cache
       lastFetchedUserName.current = userName
       lastFetchedTrigger.current = profileRefreshTrigger
-      
-      const loadTime = Date.now() - startTime
-      console.log(`✅ Profile loaded in ${loadTime}ms for:`, userName)
       
       // Removed backlogItems fetch since it's not used in the UI
       // setBacklogItems(backlogItems as ExpandedItem[])
@@ -134,6 +126,7 @@ export const OtherProfile = ({ userName }: { userName: string }) => {
                   columns={3}
                   items={gridItems}
                   rows={4}
+                  editingRights={false}
                   onPressItem={(item) => {
                     setDetailsItem(item!)
                     detailsSheetRef.current?.snapToIndex(0)

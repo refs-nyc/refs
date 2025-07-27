@@ -2,16 +2,17 @@ import SavesList from '@/features/messaging/saves'
 import { c, s } from '@/features/style'
 import BottomSheet, { BottomSheetBackdrop } from '@gorhom/bottom-sheet'
 import { useCallback } from 'react'
+import { useBackdropStore } from '@/features/pocketbase/stores/backdrop'
 
 export default function Saves({
   savesBottomSheetRef,
 }: {
   savesBottomSheetRef: React.RefObject<BottomSheet>
 }) {
+
+  
   const renderBackdrop = useCallback(
-    (p: any) => <BottomSheetBackdrop {...p} disappearsOnIndex={-1} appearsOnIndex={0} />,
-    []
-  )
+    (p: any) => <BottomSheetBackdrop {...p} disappearsOnIndex={-1} appearsOnIndex={0} />, []);
 
   return (
     <BottomSheet
@@ -23,6 +24,8 @@ export default function Saves({
       snapPoints={['80%']}
       backgroundStyle={{ backgroundColor: c.olive, borderRadius: 50 }}
       handleComponent={null}
+      style={{ zIndex: 0 }}
+
       // handleIndicatorStyle={{ width: s.$13, height: s.$075, backgroundColor: c.white }}
     >
       <SavesList />

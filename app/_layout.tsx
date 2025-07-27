@@ -17,7 +17,6 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { useEffect, useRef, useState } from 'react'
 import { StatusBar, useColorScheme, useWindowDimensions, View } from 'react-native'
 import { Navigation } from '@/ui/navigation/Navigation'
-import { NavigationBackdrop } from '@/ui/navigation/NavigationBackdrop'
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native'
 import { useFonts } from 'expo-font'
 import { SplashScreen, Stack } from 'expo-router'
@@ -39,6 +38,7 @@ import Saves from '@/features/saves/saves-sheet'
 import Referencers from '@/ui/profiles/sheets/ReferencersSheet'
 import { useUIStore } from '@/ui/state'
 import { AddRefSheet } from '@/ui/profiles/sheets/AddRefSheet'
+import { NewRefSheet } from '@/ui/profiles/sheets/NewRefSheet'
 
 
 install()
@@ -134,8 +134,6 @@ function RootLayoutNav() {
       <RegisterPushNotifications />
       <MessagesInit />
       <Navigation savesBottomSheetRef={savesBottomSheetRef} />
-      <NavigationBackdrop />
-
       <Stack
         screenOptions={{
           headerShown: false,
@@ -194,6 +192,15 @@ function RootLayoutNav() {
       {/* add ref sheet */}
       <AddRefSheet bottomSheetRef={addRefSheetRef} />
       {/* new ref sheet */}
+      <NewRefSheet 
+        bottomSheetRef={newRefSheetRef}
+        handleCreateNewRef={async (item) => {
+          // This will be handled by the NewRefSheet component itself
+        }}
+        onClose={() => {
+          // This will be handled by the NewRefSheet component itself
+        }}
+      />
     </ThemeProvider>
   )
 }

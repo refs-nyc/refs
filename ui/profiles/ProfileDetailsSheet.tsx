@@ -45,7 +45,7 @@ export const ProfileDetailsSheet = ({
 
   const snapPoints = ['100%']
 
-  const { detailsBackdropAnimatedIndex, registerBackdropPress, unregisterBackdropPress } =
+  const { detailsBackdropAnimatedIndex, headerBackdropAnimatedIndex, registerBackdropPress, unregisterBackdropPress } =
     useBackdropStore()
 
   useEffect(() => {
@@ -59,7 +59,14 @@ export const ProfileDetailsSheet = ({
 
   // Render backdrop remains unchanged
   const renderBackdrop = useCallback(
-    (p: any) => <BottomSheetBackdrop {...p} disappearsOnIndex={-1} appearsOnIndex={0} />,
+    (p: any) => (
+      <BottomSheetBackdrop 
+        {...p} 
+        disappearsOnIndex={-1} 
+        appearsOnIndex={0} 
+        pressBehavior="close"
+      />
+    ),
     []
   )
 
@@ -76,14 +83,22 @@ export const ProfileDetailsSheet = ({
         borderRadius: 50,
         padding: 0,
       }}
-      animatedIndex={detailsBackdropAnimatedIndex}
       backdropComponent={renderBackdrop}
       handleComponent={null}
       enableDynamicSizing={false}
       snapPoints={snapPoints}
       enablePanDownToClose={true}
       keyboardBehavior="interactive"
-      onChange={onChange}
+      animatedIndex={detailsBackdropAnimatedIndex}
+      onAnimate={(fromIndex: number, toIndex: number) => {
+        // The animatedIndex prop handles the animation automatically
+        // No need to manually set headerBackdropAnimatedIndex.value
+      }}
+      onChange={(i: number) => {
+        onChange(i)
+        // The animatedIndex prop handles the animation automatically
+        // No need to manually set headerBackdropAnimatedIndex.value
+      }}
     >
       {profile && gridItems.length > 0 && (
         <ProfileDetailsProvider

@@ -4,6 +4,7 @@ import BottomSheet, { BottomSheetBackdrop } from '@gorhom/bottom-sheet'
 import { c, s } from '@/features/style'
 import { useUserStore } from '@/features/pocketbase'
 import { Avatar } from '../../atoms/Avatar'
+import { useBackdropStore } from '@/features/pocketbase/stores/backdrop'
 
 interface SearchHistoryItem {
   id: number
@@ -70,6 +71,7 @@ export default function SearchHistorySheet({
       backdropComponent={renderBackdrop}
       handleComponent={null}
       keyboardBehavior="interactive"
+      style={{ zIndex: 0 }}
     >
       <View style={{ flex: 1, padding: s.$2 }}>
         <Text style={{ fontSize: 22, fontWeight: '600', color: c.green, marginBottom: s.$4 }}>Search History</Text>

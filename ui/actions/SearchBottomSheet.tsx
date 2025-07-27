@@ -34,7 +34,7 @@ export default function SearchBottomSheet() {
   const [refs, setRefs] = useState<CompleteRef[]>([])
 
   const { user } = useUserStore()
-  const { moduleBackdropAnimatedIndex } = useBackdropStore()
+  const { headerBackdropAnimatedIndex } = useBackdropStore()
 
   useEffect(() => {
     const runSearch = async (query: string) => {
@@ -95,7 +95,16 @@ export default function SearchBottomSheet() {
         enablePanDownToClose={false}
         snapPoints={snapPoints}
         index={Math.min(index, snapPoints.length - 1)}
-        animatedIndex={moduleBackdropAnimatedIndex}
+        backdropComponent={(p) => (
+          <BottomSheetBackdrop
+            {...p}
+            disappearsOnIndex={0}
+            appearsOnIndex={1}
+            pressBehavior="collapse"
+          />
+        )}
+
+        animatedIndex={headerBackdropAnimatedIndex}
         onChange={(i: number) => {
           setIndex(i)
           if (i === 0) {
@@ -103,21 +112,13 @@ export default function SearchBottomSheet() {
             setRefs([])
             setSearchTerm('')
             setSearching(false)
+            // The animatedIndex prop handles the header dimming automatically
           }
         }}
         backgroundStyle={{ backgroundColor: c.olive, borderRadius: s.$4, paddingTop: 0 }}
-        backdropComponent={(p) => {
-          return (
-            <BottomSheetBackdrop
-              {...p}
-              disappearsOnIndex={0}
-              appearsOnIndex={1}
-              pressBehavior={'collapse'}
-            />
-          )
-        }}
         handleComponent={null}
         keyboardBehavior="interactive"
+        style={{ zIndex: 0 }}
       >
         {
           <BottomSheetView>
@@ -182,7 +183,7 @@ export default function SearchBottomSheet() {
                   <Pressable 
                     onPress={(e) => {
                       e.stopPropagation()
-                      setAddingNewRefTo('grid')
+                      setAddingNewRefTo('search')
                       setAddRefPrompt('')
                       newRefSheetRef.current?.snapToIndex(1)
                     }}

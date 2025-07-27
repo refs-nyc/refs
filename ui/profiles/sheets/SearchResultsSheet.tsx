@@ -22,21 +22,21 @@ export default function SearchResultsSheet({
   bottomSheetRef,
   selectedRefs,
   selectedRefItems,
-  onSheetStateChange,
+
   searchTriggerRef,
 }: {
   bottomSheetRef: React.RefObject<BottomSheet>
   selectedRefs: string[]
   selectedRefItems: any[]
-  onSheetStateChange?: (isOpen: boolean) => void
+
   searchTriggerRef?: React.RefObject<{ triggerSearch: () => void }>
 }) {
-  const snapPoints = ['80%']
+  const snapPoints = ['25%', '80%']
   const resultsAnimation = useRef(new Animated.Value(0)).current
   const dropdownAnimation = useRef(new Animated.Value(0)).current
   const { user } = useUserStore()
   
-  const { moduleBackdropAnimatedIndex, registerBackdropPress, unregisterBackdropPress } = useBackdropStore()
+  const { headerBackdropAnimatedIndex, registerBackdropPress, unregisterBackdropPress } = useBackdropStore()
   
   // Register backdrop press handler
   useEffect(() => {
@@ -108,11 +108,11 @@ export default function SearchResultsSheet({
   // }, [selectedRefItemsKey])
 
   // Track if the sheet is actually open
-  const [isSheetOpen, setIsSheetOpen] = useState(false)
+  const { isSearchResultsSheetOpen, setSearchResultsSheetOpen } = useUIStore()
   
   // Only show error states when sheet is open, but don't auto-search
   useEffect(() => {
-    if (!isSheetOpen) {
+    if (!isSearchResultsSheetOpen) {
       return
     }
     
@@ -126,7 +126,7 @@ export default function SearchResultsSheet({
       // Clear any previous errors
       setSearchError(null)
     }
-  }, [user, selectedRefItemsKey, isSheetOpen])
+  }, [user, selectedRefItemsKey, isSearchResultsSheetOpen])
 
   // Separate effect to handle cached results being set after component is open
   useEffect(() => {
@@ -143,13 +143,9 @@ export default function SearchResultsSheet({
   }, [cachedSearchResults, cachedSearchTitle, cachedSearchSubtitle])
 
   const performSearch = async () => {
-    console.log('🚀 performSearch called with:', { user: !!user, selectedRefItemsLength: selectedRefItems.length })
     if (!user || selectedRefItems.length === 0) {
-      console.log('❌ performSearch early return - no user or no selected items')
       return
     }
-    
-    console.log('✅ performSearch proceeding with search')
     setIsLoading(true)
     setSearchError(null)
 
@@ -215,8 +211,7 @@ export default function SearchResultsSheet({
 
   // Convert search results to Profile format for UserListItem
   const convertToProfiles = (results: PersonResult[]): Profile[] => {
-    console.log('🔄 Converting search results to profiles:', results.length, 'results')
-    console.log('🔄 First result:', results[0])
+
     
     return results.map(result => {
       const profile = {
@@ -230,14 +225,11 @@ export default function SearchResultsSheet({
         password: '',
         tokenKey: '',
       }
-      console.log('🔄 Converted profile:', profile.userName, profile.firstName, profile.lastName)
       return profile
     })
   }
 
   const handleUserPress = (profile: Profile) => {
-    console.log('👤 User pressed:', profile.userName)
-    
     // Set navigation state for returning from search
     setReturningFromSearch(true)
     
@@ -252,20 +244,12 @@ export default function SearchResultsSheet({
 
   // Function to trigger search - can be called from parent component
   const triggerSearch = useCallback(() => {
-    console.log('🚀 triggerSearch called with:', { 
-      user: !!user, 
-      selectedRefItemsLength: selectedRefItems.length,
-      selectedRefItems: selectedRefItems.map(item => item.id)
-    })
-    console.log('🔍 triggerSearch function execution started')
     if (!user || selectedRefItems.length === 0) {
-      console.log('❌ Cannot trigger search - no user or no selected items')
       return
     }
     
     // Check if we have cached results for the same search
     if (cachedSearchResults.length > 0 && !hasUsedCachedResults.current) {
-      console.log('✅ Using cached search results:', cachedSearchResults.length, 'people')
       setSearchResults(cachedSearchResults)
       setSearchTitle(cachedSearchTitle)
       setSearchSubtitle(cachedSearchSubtitle)
@@ -274,24 +258,26 @@ export default function SearchResultsSheet({
       hasUsedCachedResults.current = true
       animateResultsIn()
     } else {
-      console.log('🔄 No cached results, performing new search')
       performSearch()
     }
   }, [user, selectedRefItems, cachedSearchResults, cachedSearchTitle, cachedSearchSubtitle])
 
   // Update the parent's ref when triggerSearch changes
   useEffect(() => {
-    console.log('🔧 Setting up searchTriggerRef:', !!searchTriggerRef?.current, 'triggerSearch function:', !!triggerSearch)
     if (searchTriggerRef?.current) {
       searchTriggerRef.current.triggerSearch = triggerSearch
-      console.log('✅ triggerSearch function assigned to ref')
-    } else {
-      console.log('⚠️ searchTriggerRef is not available')
     }
   }, [triggerSearch, searchTriggerRef])
 
   const renderBackdrop = useCallback(
-    (p: any) => <BottomSheetBackdrop {...p} disappearsOnIndex={-1} appearsOnIndex={0} />,
+    (p: any) => (
+      <BottomSheetBackdrop 
+        {...p} 
+        disappearsOnIndex={-1} 
+        appearsOnIndex={0} 
+        pressBehavior="close"
+      />
+    ),
     []
   )
 
@@ -306,18 +292,21 @@ export default function SearchResultsSheet({
         index={-1}
         backgroundStyle={{ backgroundColor: c.surface, borderRadius: s.$4 }}
         handleIndicatorStyle={{ backgroundColor: 'transparent' }}
-        animatedIndex={moduleBackdropAnimatedIndex}
+        style={{ zIndex: 100 }}
+
         backdropComponent={renderBackdrop}
-        containerStyle={{ zIndex: 9999 }}
+
+        animatedIndex={headerBackdropAnimatedIndex}
+        onAnimate={(fromIndex: number, toIndex: number) => {
+          // The animatedIndex prop handles the animation automatically
+          // No need to manually set headerBackdropAnimatedIndex.value
+        }}
         onChange={(i: number) => {
-          console.log('📱 SearchResultsSheet onChange:', i)
           if (i === -1) {
             handleClose()
-            onSheetStateChange?.(false)
-            setIsSheetOpen(false)
-          } else if (i === 0) {
-            onSheetStateChange?.(true)
-            setIsSheetOpen(true)
+            setSearchResultsSheetOpen(false)
+          } else if (i === 0 || i === 1) {
+            setSearchResultsSheetOpen(true)
             // Reset the flag when sheet opens so we can perform a new search
             hasUsedCachedResults.current = false
           }
@@ -445,7 +434,7 @@ export default function SearchResultsSheet({
         </View>
 
         <BottomSheetScrollView alwaysBounceVertical={false}>
-          <YStack style={{ marginTop: -10 }}>
+          <YStack style={{ marginTop: 10 }}>
             {isLoading ? (
               <View style={{ marginTop: 30 }}>
                 <SearchLoadingSpinner />

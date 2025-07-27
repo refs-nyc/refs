@@ -14,6 +14,7 @@ import { useEffect, useState } from 'react'
 import { View } from 'react-native'
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated'
 import { SheetHandle } from '@/ui/core/SheetHandle'
+import { useBackdropStore } from '@/features/pocketbase/stores/backdrop'
 
 export const AddRefSheet = ({
   bottomSheetRef,
@@ -22,6 +23,7 @@ export const AddRefSheet = ({
 }) => {
   const { user } = useUserStore()
   const { addingRefId, setAddingRefId } = useUIStore()
+  const { globalBackdropAnimatedIndex } = useBackdropStore()
 
   // fields from the ref that is being replaced, or a new ref that is going to be added
 
@@ -67,8 +69,6 @@ export const AddRefSheet = ({
       ? '90%'
       : '30%'
 
-  const disappearsOnIndex = -1
-  const appearsOnIndex = 0
   const HANDLE_HEIGHT = s.$2
 
   return (
@@ -92,13 +92,14 @@ export const AddRefSheet = ({
       backdropComponent={(p) => (
         <BottomSheetBackdrop
           {...p}
-          disappearsOnIndex={disappearsOnIndex}
-          appearsOnIndex={appearsOnIndex}
+          disappearsOnIndex={-1}
+          appearsOnIndex={0}
           pressBehavior={'close'}
         />
       )}
       handleComponent={null}
       keyboardBehavior="interactive"
+      style={{ zIndex: 0 }}
     >
       {!refFields || !user ? (
         <></>

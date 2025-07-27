@@ -25,7 +25,7 @@ export const MyBacklogSheet = ({
 }) => {
   const bottomSheetRef = useRef<BottomSheet>(null)
 
-  const { moduleBackdropAnimatedIndex, registerBackdropPress, unregisterBackdropPress } =
+  const { globalBackdropAnimatedIndex, registerBackdropPress, unregisterBackdropPress } =
     useBackdropStore()
 
   // close the new ref sheet when the user taps the navigation backdrop
@@ -52,7 +52,6 @@ export const MyBacklogSheet = ({
       enablePanDownToClose={false}
       snapPoints={['15%', '90%']}
       index={0}
-      animatedIndex={moduleBackdropAnimatedIndex}
       onChange={(i: number) => {
         setIndex(i)
       }}
@@ -67,6 +66,7 @@ export const MyBacklogSheet = ({
       )}
       handleComponent={null}
       keyboardBehavior="interactive"
+      style={{ zIndex: 0 }}
     >
       <Pressable
         onPress={() => {

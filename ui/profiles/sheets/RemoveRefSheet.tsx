@@ -45,7 +45,7 @@ export const RemoveRefSheet = ({
       enablePanDownToClose={true}
       snapPoints={['35%']}
       index={-1}
-      animatedIndex={removeRefSheetBackdropAnimatedIndex}
+
       backgroundStyle={{ backgroundColor: c.surface, borderRadius: 50, paddingTop: 0 }}
       backdropComponent={(p) => (
         <BottomSheetBackdrop

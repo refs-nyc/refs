@@ -11,8 +11,9 @@ import { NewRefFields, SearchRef } from '@/ui/actions/SearchRef'
 import { SelectItemToReplace } from '@/ui/actions/SelectItemToReplace'
 import { EditableList } from '@/ui/lists/EditableList'
 import { useUIStore } from '@/ui/state'
+import { useBackdropStore } from '@/features/pocketbase/stores/backdrop'
 import BottomSheet, { BottomSheetBackdrop, BottomSheetView } from '@gorhom/bottom-sheet'
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { View, Platform, Keyboard } from 'react-native'
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated'
 import { SheetHandle } from '@/ui/core/SheetHandle'
@@ -40,6 +41,19 @@ export const NewRefSheet = ({
 }) => {
   const { triggerProfileRefresh } = useItemStore()
   const { addingNewRefTo, setAddingNewRefTo, addRefPrompt } = useUIStore()
+  const { headerBackdropAnimatedIndex } = useBackdropStore()
+
+  const renderBackdrop = useCallback(
+    (p: any) => (
+      <BottomSheetBackdrop 
+        {...p} 
+        disappearsOnIndex={-1} 
+        appearsOnIndex={0} 
+        pressBehavior="close"
+      />
+    ),
+    []
+  )
 
   // functions for adding the new item to a list or the grid or the backlog
   const { addItemToList, push: pushItem, pushRef, moveToBacklog, remove } = useItemStore()
@@ -97,6 +111,7 @@ export const NewRefSheet = ({
       snapPoints={snapPoints}
       index={-1}
       backgroundStyle={{ backgroundColor: c.olive, borderRadius: 50, paddingTop: 0 }}
+      backdropComponent={renderBackdrop}
       onChange={(i: number) => {
         setIsSheetOpen(i !== -1)
         if (i === -1) {
@@ -111,14 +126,7 @@ export const NewRefSheet = ({
         }
       }}
       handleComponent={null}
-      backdropComponent={(p) => (
-        <BottomSheetBackdrop
-          {...p}
-          disappearsOnIndex={disappearsOnIndex}
-          appearsOnIndex={appearsOnIndex}
-          pressBehavior={'close'}
-        />
-      )}
+      animatedIndex={headerBackdropAnimatedIndex}
       keyboardBehavior="interactive"
     >
       {isOpen && (

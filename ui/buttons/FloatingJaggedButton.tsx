@@ -3,7 +3,7 @@ import Svg, { G, Path, Rect, Circle } from 'react-native-svg'
 import { Pressable, ViewStyle } from 'react-native'
 import { c } from '@/features/style'
 
-export default function FloatingJaggedButton({ style, onPress }: { style?: ViewStyle, onPress?: () => void }) {
+export default function FloatingJaggedButton({ style, onPress, elevation = 5 }: { style?: ViewStyle, onPress?: () => void, elevation?: number }) {
   // Jagged shape path (from your SVG, accent color)
   const jaggedPaths = [
     { d: 'M29.4253 20.8325L46.7043 29.1072L37.6999 38.1116L29.4253 20.8325Z', fill: c.accent },
@@ -25,7 +25,7 @@ export default function FloatingJaggedButton({ style, onPress }: { style?: ViewS
             shadowOffset: { width: 0, height: 4.44 }, // Figma Y: 4.44
             shadowOpacity: 0.25,
             shadowRadius: 5, // Figma blur: 5
-            elevation: 5,
+            elevation: elevation,
           },
           style,
         ]}

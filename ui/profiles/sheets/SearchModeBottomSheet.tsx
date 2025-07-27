@@ -9,6 +9,7 @@ import { useUserStore } from '@/features/pocketbase/stores/users'
 import { pocketbase } from '@/features/pocketbase/pocketbase'
 import { getPreloadedData } from '@/features/pocketbase/background-preloader'
 import { performanceMonitor } from '@/features/pocketbase/performance-monitor'
+import { useBackdropStore } from '@/features/pocketbase/stores/backdrop'
 
 const HEADER_HEIGHT = s.$8
 
@@ -93,6 +94,7 @@ export default function SearchModeBottomSheet({
   const [refImages, setRefImages] = useState<Record<string, string>>({})
   const [loadingRefs, setLoadingRefs] = useState(false)
   const user = useUserStore((state) => state.user)
+  const { headerBackdropAnimatedIndex } = useBackdropStore()
 
   const minSnapPoint = s.$1 + HEADER_HEIGHT
   const snapPoints: (string | number)[] = [minSnapPoint, '95%']
@@ -238,10 +240,27 @@ export default function SearchModeBottomSheet({
       snapPoints={snapPoints}
       enablePanDownToClose={true}
       onClose={onClose}
-      onChange={handleSheetChange}
+      onChange={(i: number) => {
+        handleSheetChange(i)
+        // Update header dimming
+        if (headerBackdropAnimatedIndex) {
+          headerBackdropAnimatedIndex.value = i
+        }
+        // Prevent sheet from going off-screen when in search mode
+        if (i === -1 && open) {
+          // If sheet is trying to close but we're in search mode, keep it at minimized position
+          return
+        }
+      }}
+      animatedIndex={headerBackdropAnimatedIndex}
       backgroundStyle={{ backgroundColor: c.olive, borderRadius: s.$4, paddingTop: 0 }}
       backdropComponent={(p) => (
-        <BottomSheetBackdrop {...p} disappearsOnIndex={0} appearsOnIndex={1} pressBehavior={'collapse'} />
+        <BottomSheetBackdrop 
+          {...p} 
+          disappearsOnIndex={0} 
+          appearsOnIndex={1} 
+          pressBehavior="close"
+        />
       )}
       handleComponent={null}
       keyboardBehavior="interactive"
@@ -328,7 +347,7 @@ export default function SearchModeBottomSheet({
               </View>
             ) : searchHistory.length > 0 ? (
               <ScrollView showsVerticalScrollIndicator={false} style={{ maxHeight: 500 }}>
-                <YStack gap={s.$2}>
+                <YStack gap={s.$3}>
                   {searchHistory.map((item) => (
                     <Pressable
                       key={item.id}
@@ -336,16 +355,16 @@ export default function SearchModeBottomSheet({
                       style={{
                         backgroundColor: 'rgba(255, 255, 255, 0.1)',
                         borderRadius: s.$2,
-                        padding: s.$1,
+                        padding: s.$2,
                         borderWidth: 1,
                         borderColor: 'rgba(255, 255, 255, 0.2)',
                       }}
                     >
-                      <YStack gap={4}>
-                        <Text style={{ color: 'white', fontSize: s.$1, fontFamily: 'InterBold' }}>
+                      <YStack gap={8}>
+                        <Text style={{ color: 'white', fontSize: s.$1, fontFamily: 'InterBold', lineHeight: 20 }}>
                           {item.ref_titles.join(', ')}
                         </Text>
-                        <XStack gap={5} style={{ alignItems: 'center' }}>
+                        <XStack gap={5} style={{ alignItems: 'center', marginTop: 2 }}>
                           {item.ref_ids.slice(0, 3).map((refId, idx) => {
                             const imageSource = refImages[refId] || ''
                             console.log(`🖼️ Rendering thumbnail for ref ${refId}:`, imageSource)
@@ -357,10 +376,10 @@ export default function SearchModeBottomSheet({
                                   height: 40,
                                   borderRadius: 6,
                                   overflow: 'hidden',
-                                  marginLeft: idx === 0 ? 0 : -8,
+                                  marginLeft: idx === 0 ? 0 : -4,
                                   backgroundColor: c.surface2,
                                   borderWidth: 2,
-                                  borderColor: 'rgba(255, 255, 255, 0.3)',
+                                  borderColor: c.accent || c.olive,
                                 }}
                               >
                                 <SimplePinataImage 
@@ -378,12 +397,12 @@ export default function SearchModeBottomSheet({
                                 height: 40,
                                 borderRadius: 6,
                                 overflow: 'hidden',
-                                marginLeft: -8,
+                                marginLeft: -4,
                                 backgroundColor: c.surface2,
                                 alignItems: 'center',
                                 justifyContent: 'center',
                                 borderWidth: 2,
-                                borderColor: 'rgba(255, 255, 255, 0.3)',
+                                borderColor: c.accent || c.olive,
                               }}
                             >
                               <Text style={{ color: 'white', fontSize: 12, fontWeight: 'bold' }}>
@@ -392,7 +411,7 @@ export default function SearchModeBottomSheet({
                             </View>
                           )}
                         </XStack>
-                        <Text style={{ color: 'white', fontSize: 12, opacity: 0.5 }}>
+                        <Text style={{ color: 'white', fontSize: 12, opacity: 0.5, marginTop: 4 }}>
                           {formatSearchHistoryDate(item.created_at)}
                         </Text>
                       </YStack>

@@ -44,7 +44,7 @@ export const OtherBacklogSheet = ({
       enablePanDownToClose={true}
       snapPoints={['50%', '90%']}
       index={-1}
-      animatedIndex={otherProfileBackdropAnimatedIndex}
+
       backgroundStyle={{ backgroundColor: c.olive, borderRadius: 50, paddingTop: 0 }}
       backdropComponent={(p) => (
         <BottomSheetBackdrop

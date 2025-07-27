@@ -13,6 +13,7 @@ import { Ionicons } from '@expo/vector-icons'
 import BottomSheet from '@gorhom/bottom-sheet'
 import { useUIStore } from '../state'
 import { useBackdropStore } from '@/features/pocketbase/stores/backdrop'
+import Animated, { useAnimatedStyle, interpolate } from 'react-native-reanimated'
 
 export const Navigation = ({
   savesBottomSheetRef,
@@ -21,10 +22,34 @@ export const Navigation = ({
 }) => {
   const { user } = useUserStore()
   const pathname = usePathname()
-  const { setReturningFromSearch } = useUIStore()
+  const { setReturningFromSearch, selectedRefs, setSelectedRefs, setSearchMode, closeActiveBottomSheet, isSearchResultsSheetOpen, setSearchResultsSheetOpen, searchMode } = useUIStore()
+  const { headerBackdropAnimatedIndex, detailsBackdropAnimatedIndex } = useBackdropStore()
 
   const { saves, messagesPerConversation, conversations, memberships } = useMessageStore()
   
+  // Animated style for header dimming
+  const headerBackdropStyle = useAnimatedStyle(() => {
+    const headerOpacity = interpolate(
+      headerBackdropAnimatedIndex?.value ?? -1,
+      [-1, 0, 1],
+      [0, 0, 0.5], // Only dim when sheet is at index 1 or higher (expanded)
+      'clamp'
+    )
+
+    const detailsOpacity = interpolate(
+      detailsBackdropAnimatedIndex?.value ?? -1,
+      [-1, 0],
+      [0, 0.5], // Dim when details sheet is open (index 0)
+      'clamp'
+    )
+
+    // Combine both opacities - show dimming when either sheet is active
+    const opacity = Math.max(headerOpacity, detailsOpacity)
+
+    return {
+      opacity,
+    }
+  })
 
   const isHomePage = pathname === '/' || pathname === '/index'
 
@@ -61,7 +86,51 @@ export const Navigation = ({
   if (!user) return null
 
     return (
-    <View style={{ display: 'flex', flexDirection: 'row', paddingLeft: 2, backgroundColor: c.surface, zIndex: 1 }}>
+    <View style={{ 
+      display: 'flex', 
+      flexDirection: 'row', 
+      paddingLeft: 2, 
+      backgroundColor: c.surface
+    }}>
+      {/* Header backdrop overlay - visual dimming */}
+      <Animated.View
+        style={[
+          {
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            height: 120, // Only cover the header area
+            backgroundColor: 'black',
+            zIndex: 1, // Lower z-index so it doesn't interfere with bottom sheet backdrops
+            pointerEvents: 'none', // Never handle pointer events
+          },
+          headerBackdropStyle,
+        ]}
+      />
+      
+      {/* Header tap-to-close overlay - for ProfileDetailsSheet and SearchResultsSheet */}
+      {/* Do NOT show for SearchModeBottomSheet to allow navigation */}
+      {/* Only show when there's actually an active sheet that can be closed */}
+      {((detailsBackdropAnimatedIndex?.value ?? -1) > -1) || (isSearchResultsSheetOpen && closeActiveBottomSheet !== (() => {})) ? (
+        <Pressable
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            height: 120, // Only cover the header area
+            backgroundColor: 'transparent',
+            zIndex: 5, // Higher than visual dimming but lower than navigation buttons
+          }}
+          onPress={() => {
+            console.log('🔍 Header tap-to-close pressed')
+            closeActiveBottomSheet()
+          }}
+        />
+      ) : null}
+      
+
  
       <View
         style={{
@@ -72,8 +141,6 @@ export const Navigation = ({
           paddingHorizontal: s.$1,
           alignItems: 'center',
           paddingBottom: s.$08,
-          borderBottomColor: '#ddd',
-          borderBottomWidth: 1,
         }}
       >
         <View style={{ flex: 1 }}>
@@ -104,15 +171,51 @@ export const Navigation = ({
                 <Ionicons name="chevron-back" size={18} color={c.grey2} />
               </Pressable>
             )}
-            <Link dismissTo href="/" style={{ paddingLeft: 6 }}>
+            <Pressable 
+              onPress={() => {
+                // Clear search state when navigating to home feed
+                if (selectedRefs.length > 0 || searchMode || isSearchResultsSheetOpen) {
+                  setSelectedRefs([])
+                  setSearchMode(false)
+                  setSearchResultsSheetOpen(false)
+                  // Reset backdrop index to ensure header is not dimmed
+                  if (headerBackdropAnimatedIndex) {
+                    headerBackdropAnimatedIndex.value = -1
+                  }
+                }
+                router.push('/')
+              }}
+              style={{ paddingLeft: 6 }}
+            >
               <Text style={{ fontSize: 24, fontWeight: 'bold', textAlign: 'left' }}>Refs</Text>
-            </Link>
+            </Pressable>
           </View>
         </View>
-        <View style={{ top: 1.5, paddingRight: 17 }}>
-          <Link href={`/user/${user.userName}`}>
+        <View style={{ top: 1.5, paddingRight: 17, zIndex: 10 }}>
+          <Pressable
+            onPress={() => {
+              // If we're in search mode (selectedRefs has items), clear search and stay on profile
+              if (selectedRefs.length > 0) {
+                setSelectedRefs([]) // Clear the selected refs first
+                setSearchMode(false) // Exit search mode
+                setSearchResultsSheetOpen(false) // Ensure search results sheet is also closed
+                // Reset backdrop index to ensure header is not dimmed
+                if (headerBackdropAnimatedIndex) {
+                  headerBackdropAnimatedIndex.value = -1
+                }
+                setReturningFromSearch(true)
+                return
+              }
+              // If we're already on the user's own profile page and not in search mode, do nothing
+              if (pathname === `/user/${user.userName}`) {
+                return
+              }
+              // Otherwise, navigate to the user's own profile page
+              router.push(`/user/${user.userName}`)
+            }}
+          >
             <Avatar source={user.image} size={30} />
-          </Link>
+          </Pressable>
         </View>
         <View style={{ display: 'flex', flexDirection: 'row', paddingRight: 18 }}>
           <Pressable onPress={() => savesBottomSheetRef.current?.expand()}>

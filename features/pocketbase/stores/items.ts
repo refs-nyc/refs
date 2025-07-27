@@ -207,7 +207,6 @@ export const useItemStore = create<{
 // Helper function to get profile items
 export const getProfileItems = async (userName: string) => {
   const startTime = Date.now()
-  console.log('🔄 getProfileItems starting for:', userName)
   
   try {
     // First, get the user to get their ID
@@ -215,23 +214,17 @@ export const getProfileItems = async (userName: string) => {
       .collection('users')
       .getFirstListItem(`userName = "${userName}"`)
     
-    console.log(`📊 User fetch took ${Date.now() - startTime}ms`)
-    console.log(`📊 User found:`, user?.userName, user?.id)
-    
     // Then get items without expand first
     const itemsQueryStart = Date.now()
     const filter = `creator = "${user.id}" && backlog = false && parent = null`
-    console.log(`📊 Using filter:`, filter)
-    
-    const items = await pocketbase.collection<ExpandedItem>('items').getFullList({
+    const itemsResponse = await pocketbase.collection<ExpandedItem>('items').getList(1, 12, {
       filter: filter,
-      fields: 'id,order,created,ref',
       sort: 'order,created',
+      expand: 'items_via_parent',
     })
     
+    const items = itemsResponse.items
     const itemsQueryTime = Date.now() - itemsQueryStart
-    console.log(`📊 Items query took ${itemsQueryTime}ms, got ${items.length} items`)
-    console.log(`📊 Items:`, items.map(item => ({ id: item.id, ref: item.ref, order: item.order })))
     
     // Then get refs separately if needed
     if (items.length > 0) {
@@ -240,11 +233,10 @@ export const getProfileItems = async (userName: string) => {
       
       const refs = await pocketbase.collection('refs').getFullList({
         filter: refIds.map(id => `id = "${id}"`).join(' || '),
-        fields: 'id,title,image',
+        fields: 'id,title,image,meta,type,url',
       })
       
       const refsQueryTime = Date.now() - refsQueryStart
-      console.log(`📊 Refs query took ${refsQueryTime}ms, got ${refs.length} refs`)
       
       // Create a map of refs for quick lookup
       const refsMap = new Map(refs.map(ref => [ref.id, ref]))
@@ -257,24 +249,16 @@ export const getProfileItems = async (userName: string) => {
         }
       }))
       
-      const sortStartTime = Date.now()
       const sortedItems = gridSort(itemsWithRefs)
-      const sortTime = Date.now() - sortStartTime
-      console.log(`📊 gridSort took ${sortTime}ms`)
       
       const totalTime = Date.now() - startTime
-      console.log(`✅ getProfileItems total time: ${totalTime}ms`)
       
       return sortedItems
     } else {
-      const totalTime = Date.now() - startTime
-      console.log(`✅ getProfileItems total time: ${totalTime}ms (no items)`)
       return []
     }
   } catch (error) {
     console.error('❌ getProfileItems error:', error)
-    const totalTime = Date.now() - startTime
-    console.log(`❌ getProfileItems failed after ${totalTime}ms, returning empty array`)
     return [] // Return empty array instead of throwing
   }
 }

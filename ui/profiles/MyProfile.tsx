@@ -36,15 +36,15 @@ export const MyProfile = ({ userName }: { userName: string }) => {
   const [backlogItems, setBacklogItems] = useState<ExpandedItem[]>([])
   const [editingRights, seteditingRights] = useState<boolean>(false)
   const [loading, setLoading] = useState<boolean>(true)
-  const [searchMode, setSearchMode] = useState(false)
+
 
   const [isOpeningSearchResults, setIsOpeningSearchResults] = useState(false)
-  const [isSearchResultsOpen, setIsSearchResultsOpen] = useState(false)
+
   const [restoredRefItems, setRestoredRefItems] = useState<any[]>([])
 
   const { user } = useUserStore()
   const { moveToBacklog, profileRefreshTrigger, remove } = useItemStore()
-  const { returningFromSearch, setReturningFromSearch, selectedRefs, setSelectedRefs } = useUIStore()
+  const { returningFromSearch, setReturningFromSearch, selectedRefs, setSelectedRefs, searchMode, setSearchMode, setCloseActiveBottomSheet } = useUIStore()
 
   const [removingItem, setRemovingItem] = useState<ExpandedItem | null>(null)
   
@@ -55,31 +55,21 @@ export const MyProfile = ({ userName }: { userName: string }) => {
   const refreshGrid = async (userName: string) => {
     // Check if we already have this data cached
     if (lastFetchedUserName.current === userName && lastFetchedTrigger.current === profileRefreshTrigger) {
-      console.log('🚀 Using cached profile data for:', userName)
       return
     }
     
     performanceMonitor.startTimer('profile_load')
-    console.log('🔄 Fetching profile data for:', userName)
     const startTime = Date.now()
     
     // Check for preloaded data first
     const cacheKey = `own-profile-${userName}-${profileRefreshTrigger}`
     const preloadedData = getPreloadedData(cacheKey)
     
-    console.log('🔍 Checking preloaded data for key:', cacheKey)
-    console.log('🔍 Preloaded data found:', !!preloadedData)
-    
     if (preloadedData && preloadedData.gridItems) {
-      console.log('🚀 Using preloaded data for:', userName)
-      console.log('🔍 Preloaded profile:', preloadedData.profile?.userName)
-      console.log('🔍 Preloaded grid items count:', preloadedData.gridItems?.length)
       setProfile(preloadedData.profile)
       setGridItems(preloadedData.gridItems || []) // Ensure we always set an array
       lastFetchedUserName.current = userName
       lastFetchedTrigger.current = profileRefreshTrigger
-      const loadTime = Date.now() - startTime
-      console.log(`✅ Profile loaded from cache in ${loadTime}ms for:`, userName)
       performanceMonitor.endTimer('profile_load', true)
       return
     }
@@ -87,41 +77,26 @@ export const MyProfile = ({ userName }: { userName: string }) => {
     setLoading(true)
     try {
       // Make API calls parallel instead of sequential
-      console.log('🔄 Starting parallel API calls...')
-      const profileStartTime = Date.now()
-      const gridStartTime = Date.now()
-      
       const [profile, gridItems] = await Promise.all([
         (async () => {
-      const profile = await pocketbase
-        .collection('users')
-        .getFirstListItem<ExpandedProfile>(`userName = "${userName}"`)
-          const profileTime = Date.now() - profileStartTime
-          console.log(`📊 Profile fetch took ${profileTime}ms`)
-          console.log(`📊 Profile found:`, profile?.userName)
+          const profile = await pocketbase
+            .collection('users')
+            .getFirstListItem<ExpandedProfile>(`userName = "${userName}"`)
           return profile
         })(),
         (async () => {
           const gridItems = await getProfileItems(userName)
-          const gridTime = Date.now() - gridStartTime
-          console.log(`📊 Grid items fetch took ${gridTime}ms`)
-          console.log(`📊 Grid items found:`, gridItems?.length)
           return gridItems || [] // Ensure we always return an array
         })()
       ])
       
-      const setStateStartTime = Date.now()
       setProfile(profile)
       setGridItems(gridItems || []) // Ensure we always set an array
-      const setStateTime = Date.now() - setStateStartTime
-      console.log(`📊 setState took ${setStateTime}ms`)
       
       // Update cache
       lastFetchedUserName.current = userName
       lastFetchedTrigger.current = profileRefreshTrigger
       
-      const loadTime = Date.now() - startTime
-      console.log(`✅ Profile loaded in ${loadTime}ms for:`, userName)
       performanceMonitor.endTimer('profile_load', false)
       
       // Removed backlogItems fetch since it's not used in the UI
@@ -201,7 +176,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
       setSearchMode(false)
       // Add a small delay to ensure proper state updates
       setTimeout(() => {
-        searchResultsSheetRef.current?.snapToIndex(0)
+        searchResultsSheetRef.current?.snapToIndex(1)
         setReturningFromSearch(false)
         // Reset the flag after a longer delay
         setTimeout(() => setIsOpeningSearchResults(false), 200)
@@ -211,6 +186,33 @@ export const MyProfile = ({ userName }: { userName: string }) => {
     }
   }, [returningFromSearch, selectedRefs, setReturningFromSearch, loading, gridItems?.length || 0])
 
+  // Set the close function for the navigation backdrop
+  useEffect(() => {
+    const closeFunction = () => {
+      
+      
+      // Check if details sheet is open
+      if (detailsSheetRef.current) {
+        detailsSheetRef.current.snapToIndex(-1)
+        return
+      }
+      
+      // Check if search results sheet is open
+      if (searchResultsSheetRef.current) {
+        searchResultsSheetRef.current.snapToIndex(-1)
+        return
+      }
+      
+      // Check if search mode is active
+      if (searchMode) {
+        setSearchMode(false)
+        return
+      }
+    }
+    
+    setCloseActiveBottomSheet(closeFunction)
+  }, [detailsSheetRef, searchResultsSheetRef, searchMode, setSearchMode, setCloseActiveBottomSheet])
+
   return (
     <>
       <ScrollView
@@ -219,9 +221,8 @@ export const MyProfile = ({ userName }: { userName: string }) => {
           justifyContent: 'center',
           alignItems: 'center',
           paddingHorizontal: s.$08,
-          paddingBottom: s.$10,
+          paddingBottom: s.$4,
           gap: s.$4,
-          minHeight: '100%',
         }}
         showsVerticalScrollIndicator={false}
       >
@@ -251,11 +252,14 @@ export const MyProfile = ({ userName }: { userName: string }) => {
                   width: '100%',
                   maxWidth: '98%',
                   alignSelf: 'center',
+                  minHeight: 42, // Keep consistent height regardless of content
                 }}
               >
                 {searchMode
-                  ? 'search at the intersection of...'
-                  : `these prompts will disappear after you add\n... no one will ever know`}
+                  ? 'pick some refs to search with'
+                  : (gridItems?.length || 0) >= 12
+                    ? 'search at the intersection of anything'
+                    : `these prompts will disappear after you add\n... no one will ever know`}
               </Text>
             </View>
 
@@ -311,6 +315,23 @@ export const MyProfile = ({ userName }: { userName: string }) => {
                 />
                 */}
               </View>
+
+              {/* Floating Search Button (toggle search mode) - positioned relative to grid content */}
+              <FloatingJaggedButton
+                onPress={() => {
+                  setSelectedRefs([]) // Clear selected refs when entering search mode
+                  useUIStore.getState().clearCachedSearchResults() // Clear cached search results
+                  setSearchMode(true)
+                }}
+                elevation={0} // Very low elevation to ensure it's below the sheet
+                style={{
+                  position: 'absolute',
+                  bottom: insets.bottom - 30, // 50px lower (24 - 50 = -26)
+                  right: 9, // 10px to the right (24 - 10)
+                  zIndex: 5, // Behind the sheet (zIndex: 100) but above the grid content
+                  opacity: searchMode ? 0 : 1, // Hide with opacity instead of conditional rendering
+                }}
+              />
             </View>
           </View>
         )}
@@ -318,58 +339,37 @@ export const MyProfile = ({ userName }: { userName: string }) => {
         {!user && <Heading tag="h1">Profile for {userName} not found</Heading>}
       </ScrollView>
 
-      {/* Removed problematic overlay - will handle exit differently */}
-
-      {/* Floating Search Button (toggle search mode) - only show when no sheets are open */}
-      {!searchMode && (
-        <FloatingJaggedButton
-          onPress={() => {
-            console.log('🔍 FloatingJaggedButton pressed - entering search mode')
-            setSelectedRefs([]) // Clear selected refs when entering search mode
-            useUIStore.getState().clearCachedSearchResults() // Clear cached search results
-            setSearchMode(true)
-          }}
-          style={{
-            position: 'absolute',
-            bottom: insets.bottom + 24,
-            right: 24,
-            zIndex: 1, // Consistent z-index
-            elevation: 1, // Consistent elevation
-          }}
-        />
-      )}
+      {/* Search Results Sheet - render after FloatingJaggedButton so it appears above */}
+      <SearchResultsSheet
+        bottomSheetRef={searchResultsSheetRef}
+        selectedRefs={selectedRefs}
+        selectedRefItems={restoredRefItems.length > 0 ? restoredRefItems : selectedRefItems}
+        searchTriggerRef={searchResultsSheetTriggerRef}
+      />
 
       {/* Search Bottom Sheet (only in search mode, always rendered last) */}
       {searchMode && (
-        <SearchModeBottomSheet
-          open={false} // start in low position
+                  <SearchModeBottomSheet
+          open={false} // start minimized when searchMode is true
           onClose={() => setSearchMode(false)}
           selectedRefs={selectedRefs}
           selectedRefItems={selectedRefItems}
           onSearch={() => {
-            console.log('🔍 Search button clicked in SearchModeBottomSheet')
-            searchResultsSheetRef.current?.snapToIndex(0)
+            searchResultsSheetRef.current?.snapToIndex(1)
             setSearchMode(false) // Exit search mode when opening search results
             // Trigger the search after a small delay to ensure the sheet is open
             setTimeout(() => {
-              console.log('⏰ Timeout triggered, calling triggerSearch:', !!searchResultsSheetTriggerRef.current)
               if (searchResultsSheetTriggerRef.current) {
-                console.log('🎯 Calling triggerSearch function')
                 searchResultsSheetTriggerRef.current.triggerSearch()
-              } else {
-                console.log('❌ searchResultsSheetTriggerRef.current is null')
               }
             }, 100)
           }}
           onRestoreSearch={async (historyItem) => {
             try {
-              console.log('🔄 Restoring search from history:', historyItem.id)
-              
               // Fetch the stored search results from history
               const response = await fetch(`http://localhost:8000/search-history/${user?.id}/restore/${historyItem.id}`)
               if (response.ok) {
                 const storedResults = await response.json()
-                console.log('✅ Retrieved stored results:', storedResults.people?.length, 'people')
                 
                 // Set the cached search results in the UI store
                 useUIStore.getState().setCachedSearchResults(
@@ -388,8 +388,6 @@ export const MyProfile = ({ userName }: { userName: string }) => {
                     filter: historyItem.ref_ids.map(id => `id = "${id}"`).join(' || '),
                     fields: 'id,title,image'
                   })
-                  console.log('📦 Fetched ref items for thumbnails:', refItems.length)
-                  
                   // Convert refs to item format for the search results sheet
                   const restoredItems = refItems.map(ref => ({
                     id: ref.id,
@@ -407,36 +405,26 @@ export const MyProfile = ({ userName }: { userName: string }) => {
                 
                 // Add a small delay to ensure cached results are set before opening sheet
                 setTimeout(() => {
-                  console.log('🚀 Opening search results with cached data')
-                  searchResultsSheetRef.current?.snapToIndex(0)
+                  searchResultsSheetRef.current?.snapToIndex(1)
                   setSearchMode(false)
                 }, 100)
               } else {
-                console.error('❌ Failed to restore search from history:', response.status)
-                // Fallback: just set the refs and let it do a new search
-                setSelectedRefs(historyItem.ref_ids)
-                searchResultsSheetRef.current?.snapToIndex(0)
+                                               console.error('❌ Failed to restore search from history:', response.status)
+                               // Fallback: just set the refs and let it do a new search
+                               setSelectedRefs(historyItem.ref_ids)
+                               searchResultsSheetRef.current?.snapToIndex(1)
                 setSearchMode(false)
               }
             } catch (error) {
-              console.error('❌ Error restoring search from history:', error)
-              // Fallback: just set the refs and let it do a new search
-              setSelectedRefs(historyItem.ref_ids)
-              searchResultsSheetRef.current?.snapToIndex(0)
+                                             console.error('❌ Error restoring search from history:', error)
+                               // Fallback: just set the refs and let it do a new search
+                               setSelectedRefs(historyItem.ref_ids)
+                               searchResultsSheetRef.current?.snapToIndex(1)
               setSearchMode(false)
             }
           }}
         />
       )}
-      
-      {/* Search Results Sheet */}
-      <SearchResultsSheet
-        bottomSheetRef={searchResultsSheetRef}
-        selectedRefs={selectedRefs}
-        selectedRefItems={restoredRefItems.length > 0 ? restoredRefItems : selectedRefItems}
-        onSheetStateChange={setIsSearchResultsOpen}
-        searchTriggerRef={searchResultsSheetTriggerRef}
-      />
       
       {profile && (
         <>

@@ -36,11 +36,8 @@ export const GridTileWrapper = ({
   }
 
   const placeholderStyles = type === 'placeholder' ? {
-    borderWidth: 2,
-    borderColor: 'rgba(0,0,0,0.5)',
-    borderStyle: 'dashed',
-    borderDashArray: [4, 4],
-    borderMiterLimit: 29,
+    borderWidth: 0,
+    backgroundColor: c.grey2,
   } : {}
 
   const scale = useSharedValue(1)

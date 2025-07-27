@@ -4,7 +4,7 @@ import { ExpandedItem } from '@/features/pocketbase/stores/types'
 import { c } from '@/features/style'
 import { useUIStore } from '@/ui/state'
 import React, { useCallback, useContext, useRef } from 'react'
-import { useWindowDimensions } from 'react-native'
+import { useWindowDimensions, View } from 'react-native'
 import Carousel, { ICarouselInstance } from 'react-native-reanimated-carousel'
 import { useStore } from 'zustand'
 import { Sheet } from '../core/Sheets'
@@ -36,7 +36,7 @@ export const Details = ({ data }: { data: ItemsRecord[] }) => {
   const currentIndex = useStore(profileDetailsStore, (state) => state.currentIndex)
 
   const { addingToList, setAddingToList, addingItem } = useUIStore()
-  const { stopEditing, update } = useItemStore()
+  const { stopEditing, update, editing } = useItemStore()
 
   const handleConfigurePanGesture = useCallback((gesture: any) => {
     'worklet'
@@ -52,15 +52,29 @@ export const Details = ({ data }: { data: ItemsRecord[] }) => {
 
   return (
     <>
-      <ConditionalGridLines />
+      {/* Grid lines with proper clipping */}
+      <View style={{ 
+        position: 'absolute', 
+        top: 0, 
+        left: 0, 
+        right: 0, 
+        bottom: 0,
+        borderRadius: 50, // Match the sheet's borderRadius
+        overflow: 'hidden', // Clip the grid lines to the rounded corners
+        zIndex: -1, // Put behind the carousel so it doesn't block interactions
+        pointerEvents: 'none' // Ensure it doesn't block touch events
+      }}>
+        <ConditionalGridLines />
+      </View>
 
       <Carousel
         loop={data.length > 1}
         ref={ref}
-        mode="parallax"
+        mode={editing ? "parallax" : "parallax"}
         modeConfig={{
-          parallaxScrollingScale: 0.99999,
-          parallaxScrollingOffset: 50,
+          parallaxScrollingScale: editing ? 1 : 1, // Keep in-view item at full size
+          parallaxScrollingOffset: editing ? 0 : 60, // Moderate offset for fun effect
+          parallaxAdjacentItemScale: editing ? 1 : 0.9, // Scale adjacent items down slightly
         }}
         containerStyle={{ padding: 0 }}
         data={data as ExpandedItem[]}
@@ -74,9 +88,9 @@ export const Details = ({ data }: { data: ItemsRecord[] }) => {
         }}
         onConfigurePanGesture={handleConfigurePanGesture}
         renderItem={({ item, index }) => <DetailsCarouselItem item={item} index={index} />}
-        windowSize={5}
-        pagingEnabled={true}
-        snapEnabled={true}
+        windowSize={editing ? 1 : 5} // When editing, only render the current item
+        pagingEnabled={!editing} // Disable paging when editing
+        snapEnabled={!editing} // Disable snapping when editing
       />
 
       {addingToList !== '' && addingItem && (

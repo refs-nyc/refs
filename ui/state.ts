@@ -13,20 +13,26 @@ export const useUIStore = create<{
   addRefSheetRef: React.RefObject<BottomSheet>
   addingRefId: string
   newRefSheetRef: React.RefObject<BottomSheet>
-  addingNewRefTo: null | 'grid' | 'backlog'
+  addingNewRefTo: null | 'grid' | 'backlog' | 'search'
   addRefPrompt: string
   returningFromSearch: boolean
   selectedRefs: string[]
+  searchMode: boolean
+  closeActiveBottomSheet: () => void
+  isSearchResultsSheetOpen: boolean
   cachedSearchResults: PersonResult[]
   cachedSearchTitle: string
   cachedSearchSubtitle: string
-  setAddingNewRefTo: (newState: null | 'grid' | 'backlog') => void
+  setAddingNewRefTo: (newState: null | 'grid' | 'backlog' | 'search') => void
   setAddingRefId: (id: string) => void
   setCurrentRefId: (id: string) => void
   setAddingToList: (newState: string) => void
   setAddRefPrompt: (prompt: string) => void
   setReturningFromSearch: (value: boolean) => void
   setSelectedRefs: (refs: string[]) => void
+  setSearchMode: (mode: boolean) => void
+  setCloseActiveBottomSheet: (closeFn: () => void) => void
+  setSearchResultsSheetOpen: (isOpen: boolean) => void
   setCachedSearchResults: (results: PersonResult[], title: string, subtitle: string) => void
   clearCachedSearchResults: () => void
   stopEditProfile: () => void
@@ -43,10 +49,13 @@ export const useUIStore = create<{
   addRefPrompt: '',
   returningFromSearch: false,
   selectedRefs: [],
+  searchMode: false,
+  closeActiveBottomSheet: () => {},
+  isSearchResultsSheetOpen: false,
   cachedSearchResults: [],
   cachedSearchTitle: '',
   cachedSearchSubtitle: '',
-  setAddingNewRefTo: (newState: null | 'grid' | 'backlog') => {
+      setAddingNewRefTo: (newState: null | 'grid' | 'backlog' | 'search') => {
     set(() => ({
       addingNewRefTo: newState,
     }))
@@ -79,6 +88,21 @@ export const useUIStore = create<{
   setSelectedRefs: (refs: string[]) => {
     set(() => ({
       selectedRefs: refs,
+    }))
+  },
+  setSearchMode: (mode: boolean) => {
+    set(() => ({
+      searchMode: mode,
+    }))
+  },
+  setCloseActiveBottomSheet: (closeFn: () => void) => {
+    set(() => ({
+      closeActiveBottomSheet: closeFn,
+    }))
+  },
+  setSearchResultsSheetOpen: (isOpen: boolean) => {
+    set(() => ({
+      isSearchResultsSheetOpen: isOpen,
     }))
   },
   setCachedSearchResults: (results: PersonResult[], title: string, subtitle: string) => {

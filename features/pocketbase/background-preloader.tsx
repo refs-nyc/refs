@@ -13,5 +13,4 @@ export const getPreloadedData = () => {
 // Function to preload search results
 export const preloadSearchResults = (userIds: string[]) => {
   // This function can be implemented later
-  console.log('Preloading search results for users:', userIds)
 }

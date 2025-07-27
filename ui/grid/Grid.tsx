@@ -54,9 +54,7 @@ export const Grid = ({
   const gridSize = columns * rows
   const screenWidth = Dimensions.get('window').width
   const horizontalPadding = 20 // 10px on each side
-  const normalGap = 6 // s.$075 fallback
-  const searchGap = 10
-  const cellGap = searchMode ? searchGap : normalGap
+  const cellGap = 6 // Keep consistent gap regardless of search mode
   const tileSize = (screenWidth - horizontalPadding - cellGap * (columns - 1)) / columns
 
   const handleGridItemPress = (item: any) => {
@@ -110,8 +108,8 @@ export const Grid = ({
         )
       })}
 
-      {/* Prompt placeholders for empty slots */}
-      {Array.from({ length: gridSize - items.length }).map((_, i) => {
+      {/* Prompt placeholders for empty slots - only show for user's own profile */}
+      {editingRights && Array.from({ length: Math.max(0, gridSize - items.length) }).map((_, i) => {
         const prompt = PROMPTS[i % PROMPTS.length]
         return (
           <GridTileWrapper
@@ -124,6 +122,17 @@ export const Grid = ({
           </GridTileWrapper>
         )
       })}
+      
+      {/* Empty placeholders for other users' profiles */}
+      {!editingRights && Array.from({ length: Math.max(0, gridSize - items.length) }).map((_, i) => (
+        <GridTileWrapper
+          key={`empty-${i}`}
+          type="placeholder"
+          size={tileSize}
+        >
+          <View style={{ width: '100%', height: '100%' }} />
+        </GridTileWrapper>
+      ))}
     </GridWrapper>
   )
 }

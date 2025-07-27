@@ -44,16 +44,18 @@ export const NavigationBackdrop = () => {
       Extrapolation.CLAMP
     )
 
-    // mix together the opacity values
+    // mix together the opacity values - only show backdrop when any sheet is open
     const opacityValue =
       1 -
       (1 - moduleOpacityValue) *
         (1 - detailsOpacityValue) *
         (1 - otherProfileOpacityValue) *
         (1 - removeRefSheetOpacityValue)
+    
     return {
       opacity: opacityValue,
       display: opacityValue < 0.001 ? 'none' : 'flex',
+      pointerEvents: opacityValue > 0.001 ? 'auto' : 'none',
     }
   }, [
     moduleBackdropAnimatedIndex,
@@ -66,14 +68,14 @@ export const NavigationBackdrop = () => {
     <AnimatedPressable
       style={[
         {
-          zIndex: 999999,
+          zIndex: 1000,
           position: 'absolute',
           top: 0,
           bottom: 0,
           right: 0,
           left: 0,
           backgroundColor: 'black',
-          elevation: 999999,
+          elevation: 1000,
         },
         animatedStyle,
       ]}

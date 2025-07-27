@@ -240,7 +240,7 @@ export const DetailsCarouselItem = ({ item, index }: { item: ExpandedItem; index
               )}
             </BottomSheetView>
 
-            {/* Title */}
+            {/* Title - Always show for ALL carousel items */}
             <BottomSheetView style={{ width: '100%' }}>
               <BottomSheetView
                 style={{
@@ -253,7 +253,7 @@ export const DetailsCarouselItem = ({ item, index }: { item: ExpandedItem; index
                 }}
               >
                 {/* Title OR textinput for editing link*/}
-                <View style={{ width: titleWidth, marginRight: titleMargin }}>
+                <View style={{ flex: 1, marginRight: titleMargin, marginLeft: -5 }}>
                   {editingThisItem && editingLink ? (
                     <TextInput
                       style={[
@@ -324,26 +324,25 @@ export const DetailsCarouselItem = ({ item, index }: { item: ExpandedItem; index
                     </Pressable>
                   )}
                 </View>
-                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                  {/* Button for editing link */}
-                  {!item.list && (
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: iconSpacing, marginRight: 5 }}>
+                  {/* Button for editing link - only show for non-list items */}
+                  {!item.list && item.url && (
                     <View
                       style={{
                         width: s.$4,
                         height: s.$4,
                         justifyContent: 'center',
                         alignItems: 'center',
-                        marginRight: iconSpacing,
                       }}
                     >
-                      {!editingThisItem && item.url && (
+                      {!editingThisItem && (
                         <Link
                           style={{ transformOrigin: 'center', transform: 'rotate(-45deg)' }}
                           href={item.url as any}
                         >
                           <Ionicons
                             color={c.muted}
-                            size={s.$2half}
+                            size={s.$2}
                             fillColor="red"
                             name="arrow-forward-outline"
                           />
@@ -354,14 +353,14 @@ export const DetailsCarouselItem = ({ item, index }: { item: ExpandedItem; index
                           <Ionicons
                             name={editingLink ? 'checkmark' : 'arrow-forward-outline'}
                             style={editingLink ? {} : { transform: [{ rotate: '-45deg' }] }}
-                            size={s.$2half}
+                            size={s.$2}
                             color={c.muted}
                           />
                         </Pressable>
                       )}
                     </View>
                   )}
-                  {/* Meatball Menu */}
+                  {/* Meatball Menu - ALWAYS show for ALL carousel items */}
                   <View
                     style={{
                       width: s.$4,
@@ -388,6 +387,7 @@ export const DetailsCarouselItem = ({ item, index }: { item: ExpandedItem; index
                   minHeight: s.$10,
                   paddingHorizontal: s.$1,
                   paddingVertical: s.$075,
+                  marginLeft: -5,
                 },
                 animatedStyle,
               ]}

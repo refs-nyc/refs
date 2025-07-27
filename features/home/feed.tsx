@@ -4,6 +4,7 @@ import { Dimensions, Pressable, ScrollView, View } from 'react-native'
 
 import { Ticker } from '@/features/home/Ticker'
 import { pocketbase, useItemStore } from '@/features/pocketbase'
+import { useBackdropStore } from '@/features/pocketbase/stores/backdrop'
 import type { ExpandedItem } from '@/features/pocketbase/stores/types'
 import { c, s } from '@/features/style'
 import { DismissKeyboard, Heading, Text, XStack, YStack } from '@/ui'
@@ -156,7 +157,8 @@ export const Feed = () => {
   const feedRefreshTrigger = useItemStore((state) => state.feedRefreshTrigger)
   const [detailsItem, setDetailsItem] = useState<ExpandedItem | null>(null)
   const detailsSheetRef = useRef<BottomSheet>(null)
-  const { referencersBottomSheetRef, setCurrentRefId } = useUIStore()
+  const { referencersBottomSheetRef, setCurrentRefId, setCloseActiveBottomSheet, setSearchResultsSheetOpen, setSearchMode, setSelectedRefs } = useUIStore()
+  const { headerBackdropAnimatedIndex } = useBackdropStore()
 
   const fetchFeedItems = async (page: number = 1, append: boolean = false) => {
     if (page === 1) {
@@ -221,6 +223,26 @@ export const Feed = () => {
   useEffect(() => {
     fetchFeedItems(1, false)
   }, [feedRefreshTrigger]) // Refetch whenever the trigger changes
+
+
+
+  // Set the close function for the navigation backdrop
+  useEffect(() => {
+    const closeFunction = () => {
+      console.log('🔍 Close function called from Feed')
+      console.log('🔍 detailsSheetRef.current:', !!detailsSheetRef.current)
+      
+      // Check if details sheet is open
+      if (detailsSheetRef.current) {
+        console.log('🔍 Closing details sheet from Feed')
+        detailsSheetRef.current.snapToIndex(-1)
+        return
+      }
+    }
+    
+    console.log('🔍 Setting close function in Feed')
+    setCloseActiveBottomSheet(closeFunction)
+  }, [detailsSheetRef, setCloseActiveBottomSheet])
 
   return (
     <>

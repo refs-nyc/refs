@@ -6,6 +6,9 @@ type BackdropState = {
   detailsBackdropAnimatedIndex?: SharedValue<number>
   otherProfileBackdropAnimatedIndex?: SharedValue<number>
   removeRefSheetBackdropAnimatedIndex?: SharedValue<number>
+  globalBackdropAnimatedIndex?: SharedValue<number>
+  // Global state for header dimming
+  headerBackdropAnimatedIndex: SharedValue<number>
   // handle backdrop press, we need to close the sheets
   backdropPressHandlers: Record<string, () => void>
   onBackdropPress: () => void
@@ -13,16 +16,20 @@ type BackdropState = {
   unregisterBackdropPress: (key: string) => void
 }
 
-const moduleBackdropAnimatedIndex = makeMutable(0)
+const moduleBackdropAnimatedIndex = makeMutable(-1)
 const detailsBackdropAnimatedIndex = makeMutable(-1)
 const otherProfileBackdropAnimatedIndex = makeMutable(-1)
 const removeRefSheetBackdropAnimatedIndex = makeMutable(-1)
+const globalBackdropAnimatedIndex = makeMutable(-1)
+const headerBackdropAnimatedIndex = makeMutable(-1)
 
 export const useBackdropStore = create<BackdropState>((set, get) => ({
   moduleBackdropAnimatedIndex,
   detailsBackdropAnimatedIndex,
   otherProfileBackdropAnimatedIndex,
   removeRefSheetBackdropAnimatedIndex,
+  globalBackdropAnimatedIndex,
+  headerBackdropAnimatedIndex,
   backdropPressHandlers: {},
   onBackdropPress: () => {},
   registerBackdropPress: (onBackdropPress: () => void) => {

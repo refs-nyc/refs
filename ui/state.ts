@@ -37,6 +37,9 @@ export const useUIStore = create<{
   clearCachedSearchResults: () => void
   stopEditProfile: () => void
   startEditProfile: () => void
+  // Add navigation history tracking
+  navigationHistory: string[]
+  pushNavigationHistory: (route: string) => void
 }>((set) => ({
   addingToList: '',
   addingItem: null,
@@ -128,6 +131,13 @@ export const useUIStore = create<{
   startEditProfile: () => {
     set(() => ({
       editingProfile: true,
+    }))
+  },
+  // Add navigation history tracking
+  navigationHistory: [],
+  pushNavigationHistory: (route: string) => {
+    set((state: any) => ({
+      navigationHistory: [...(state.navigationHistory || []), route].slice(-10), // keep last 10
     }))
   },
 }))

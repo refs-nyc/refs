@@ -67,8 +67,7 @@ class PerformanceMonitor {
     console.log('📊 Performance Summary:')
     types.forEach(type => {
       const avgTime = this.getAverageLoadTime(type)
-      const hitRate = this.getCacheHitRate(type)
-      console.log(`  ${type}: ${avgTime}ms avg, ${hitRate}% cache hit rate`)
+      console.log(`  ${type}: ${avgTime}ms avg`)
     })
   }
 }

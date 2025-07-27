@@ -22,7 +22,7 @@ export const Navigation = ({
 }) => {
   const { user } = useUserStore()
   const pathname = usePathname()
-  const { setReturningFromSearch, selectedRefs, setSelectedRefs, setSearchMode, closeActiveBottomSheet, isSearchResultsSheetOpen, setSearchResultsSheetOpen, searchMode } = useUIStore()
+  const { setReturningFromSearch, selectedRefs, setSelectedRefs, setSearchMode, closeActiveBottomSheet, isSearchResultsSheetOpen, setSearchResultsSheetOpen, searchMode, navigationHistory, pushNavigationHistory } = useUIStore()
   const { headerBackdropAnimatedIndex, detailsBackdropAnimatedIndex } = useBackdropStore()
 
   const { saves, messagesPerConversation, conversations, memberships } = useMessageStore()
@@ -82,6 +82,10 @@ export const Navigation = ({
     () => countNewMessages(),
     [messagesPerConversation, memberships, user]
   )
+
+  useEffect(() => {
+    pushNavigationHistory(pathname)
+  }, [pathname])
 
   if (!user) return null
 
@@ -183,7 +187,13 @@ export const Navigation = ({
                     headerBackdropAnimatedIndex.value = -1
                   }
                 }
-                router.push('/')
+                // Use router.back() if previous route was home
+                const prevRoute = navigationHistory[navigationHistory.length - 2]
+                if (prevRoute === '/' || prevRoute === '/index') {
+                  router.back()
+                } else {
+                  router.push('/')
+                }
               }}
               style={{ paddingLeft: 6 }}
             >

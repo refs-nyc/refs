@@ -124,7 +124,8 @@ export default function SavesList() {
               justifyContent: 'center',
               alignItems: 'center',
               paddingHorizontal: s.$3,
-              marginBottom: insets.bottom + BUTTON_BOTTOM_PADDING - 100,
+              marginBottom: insets.bottom + BUTTON_BOTTOM_PADDING - 110,
+              paddingBottom: s.$2,
             }}
           >
             <DMButton

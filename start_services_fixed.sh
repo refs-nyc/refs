@@ -2,12 +2,14 @@
 
 echo "🚀 Starting Refs People Finder services (Fixed Ports)..."
 
-# Load environment variables
-export OPENAI_API_KEY="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"
-export SUPA_URL="https://zrxgnplwnfaxtpffrqxo.supabase.co"
-export SUPA_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpyeGducGx3bmZheHRwZmZycXhvIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1MjA3MDgzOSwiZXhwIjoyMDY3NjQ2ODM5fQ.7qfmXc1hACRrVkU02J05xiaqhtO95sHMcLqf9yrNxc4"
-
-echo "🔑 Environment variables loaded"
+# Load environment variables from .env file
+if [ -f .env ]; then
+    export $(cat .env | grep -v '^#' | xargs)
+    echo "🔑 Environment variables loaded from .env"
+else
+    echo "❌ .env file not found. Please create one with your API keys."
+    exit 1
+fi
 
 # Kill any existing processes
 echo "🧹 Cleaning up existing processes..."

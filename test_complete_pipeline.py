@@ -8,11 +8,19 @@ import httpx
 import json
 import os
 from typing import Dict, List
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
 
 # Environment variables
-OPENAI_API_KEY = "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"
-SUPA_URL = "https://zrxgnplwnfaxtpffrqxo.supabase.co"
-SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpyeGducGx3bmZheHRwZmZycXhvIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1MjA3MDgzOSwiZXhwIjoyMDY3NjQ2ODM5fQ.7qfmXc1hACRrVkU02J05xiaqhtO95sHMcLqf9yrNxc4"
+OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
+SUPA_URL = os.getenv('SUPA_URL')
+SUPA_KEY = os.getenv('SUPA_KEY')
+
+# Validate required environment variables
+if not all([OPENAI_API_KEY, SUPA_URL, SUPA_KEY]):
+    raise ValueError("Missing required environment variables: OPENAI_API_KEY, SUPA_URL, SUPA_KEY")
 
 async def test_pocketbase_connection():
     """Test 1: PocketBase connection and data"""

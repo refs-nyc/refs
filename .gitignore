@@ -53,4 +53,4 @@ google-services.json
 
 # Vitepress
 docs/.vitepress/cache
-docs/.vitepress/dist
+docs/.vitepress/dist.pocketbase/pb_data/auxiliary.db

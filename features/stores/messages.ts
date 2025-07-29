@@ -23,10 +23,19 @@ import {
   EthEncryptedData,
   getEncryptionPublicKey,
 } from '../encryption'
+import { createRef, MutableRefObject } from 'react'
 
 export const PAGE_SIZE = 10
 
+const subscriptions = createRef<number[]>() as MutableRefObject<number[]>
+subscriptions.current = []
+
 export type MessageSlice = {
+  messagesSubscriptions: MutableRefObject<number[]>
+
+  subscribeToMessages: () => Promise<void>
+  unsubscribeFromMessages: () => void
+
   createConversation: (
     is_direct: boolean,
     otherMembers: Profile[],
@@ -61,6 +70,34 @@ export type MessageSlice = {
 }
 
 export const createMessageSlice: StateCreator<StoreSlices, [], [], MessageSlice> = (set, get) => ({
+  messagesSubscriptions: subscriptions,
+
+  subscribeToMessages: async () => {
+    const { canvasApp, messagesSubscriptions } = get()
+    if (!canvasApp) {
+      throw new Error('Canvas not initialized!')
+    }
+
+    // get the existing state
+
+    // register subscriptions
+  },
+
+  unsubscribeFromMessages: () => {
+    const { canvasApp, messagesSubscriptions } = get()
+    if (!canvasApp) {
+      // canvas app doesn't exist, so we have already unsubscribed
+      messagesSubscriptions.current = []
+      return
+    }
+
+    for (const subscription of messagesSubscriptions.current) {
+      canvasApp?.db.unsubscribe(subscription)
+    }
+
+    messagesSubscriptions.current = []
+  },
+
   createConversation: async (
     is_direct: boolean,
     otherMembers: Profile[],
@@ -89,7 +126,7 @@ export const createMessageSlice: StateCreator<StoreSlices, [], [], MessageSlice>
     const groupPublicKey = getEncryptionPublicKey(groupPrivateKey.slice(2))
     const groupKeys = (
       await Promise.all(
-        members.map((member) => canvasApp.db.get<EncryptionKey>('encryptionKeys', member.did))
+        members.map((member) => canvasApp.db.get<EncryptionKey>('encryption_key', member.did))
       )
     )
       .map((result) => result?.publicEncryptionKey)
@@ -137,7 +174,7 @@ export const createMessageSlice: StateCreator<StoreSlices, [], [], MessageSlice>
     }
 
     const encryptionGroup = await canvasApp.db.get<EncryptionGroup>(
-      'encryptionGroups',
+      'encryption_group',
       sendMessageArgs.conversationId
     )
     if (!encryptionGroup) {

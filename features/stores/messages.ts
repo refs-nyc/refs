@@ -73,7 +73,6 @@ export type MessageSlice = {
   getDirectConversation: (otherUserDid: string) => Conversation | null
   getGroupConversations: () => Promise<Conversation[]>
   getMembers: (conversationId: string) => ExpandedMembership[]
-  getMembershipCount: (conversationId: string) => number
   getLastMessageForConversation: (conversationId: string) => Promise<DecryptedMessage | null>
   getReactionsForMessage: (messageId: string) => Promise<DecryptedReactionWithSender[]>
   getNumberUnreadMessages: () => Promise<number>
@@ -510,10 +509,6 @@ export const createMessageSlice: StateCreator<StoreSlices, [], [], MessageSlice>
       members.push({ ...membership, expand: { user } })
     }
     return members
-  },
-  getMembershipCount(conversationId) {
-    const { membershipsByConversationAndUserId } = get()
-    return Object.keys(membershipsByConversationAndUserId[conversationId]).length
   },
   getLastMessageForConversation: async (conversationId) => {
     const { canvasApp } = get()

@@ -66,7 +66,7 @@ export type MessageSlice = {
   decryptMessages: (conversationId: string, messages: Message[]) => DecryptedMessage[]
   decryptReactions: (conversationId: string, reactions: Reaction[]) => DecryptedReaction[]
 
-  getConversation: (conversationId: string) => Promise<Conversation | null>
+  getConversation: (conversationId: string) => Conversation | null
   getDirectConversation: (otherUserDid: string) => Promise<Conversation | null>
   getGroupConversations: () => Promise<Conversation[]>
   getMembers: (conversationId: string) => Promise<ExpandedMembership[]>
@@ -436,16 +436,13 @@ export const createMessageSlice: StateCreator<StoreSlices, [], [], MessageSlice>
     return decryptedReactions
   },
 
-  getConversation: async (conversationId: string) => {
-    const { canvasApp } = get()
-    if (!canvasApp) {
-      throw new Error('Canvas not initialized!')
-    }
+  getConversation: (conversationId: string) => {
+    const { conversationsById } = get()
 
-    return await canvasApp.db.get<Conversation>('conversation', conversationId)
+    return conversationsById[conversationId] || null
   },
   getDirectConversation: async (otherUserDid: string) => {
-    const { canvasApp, user } = get()
+    const { canvasApp, user, getConversation } = get()
     if (!canvasApp) {
       throw new Error('Canvas not initialized!')
     }
@@ -469,10 +466,8 @@ export const createMessageSlice: StateCreator<StoreSlices, [], [], MessageSlice>
     const sharedConversationIds = myConversationIds.intersection(otherUserConversationIds)
 
     for (const conversationId of sharedConversationIds) {
-      const conversation = await canvasApp.db.get<Conversation>(
-        'conversation',
-        conversationId as string
-      )
+      const conversation = getConversation(conversationId as string)
+
       if (conversation?.is_direct) {
         return conversation
       }
@@ -481,7 +476,7 @@ export const createMessageSlice: StateCreator<StoreSlices, [], [], MessageSlice>
   },
 
   getGroupConversations: async () => {
-    const { canvasApp, user } = get()
+    const { canvasApp, user, getConversation } = get()
     if (!canvasApp) {
       throw new Error('Canvas not initialized!')
     }
@@ -496,10 +491,8 @@ export const createMessageSlice: StateCreator<StoreSlices, [], [], MessageSlice>
     const groupConversations = []
 
     for (const membership of myMemberships) {
-      const conversation = await canvasApp.db.get<Conversation>(
-        'conversation',
-        membership.conversation as string
-      )
+      const conversation = getConversation(membership.conversation as string)
+
       if (!conversation) continue
       if (!conversation.is_direct) {
         groupConversations.push(conversation)

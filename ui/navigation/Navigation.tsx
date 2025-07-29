@@ -11,6 +11,18 @@ import MessageIcon from '@/assets/icons/message.svg'
 import { Ionicons } from '@expo/vector-icons'
 import BottomSheet from '@gorhom/bottom-sheet'
 
+const NewMessagesBadge = () => {
+  const { getNumberUnreadMessages } = useAppStore()
+
+  const [newMessages, setNewMessages] = useState(0)
+
+  useEffect(() => {
+    getNumberUnreadMessages().then(setNewMessages)
+  }, [])
+
+  return newMessages > 0 && <Badge count={newMessages} color="#7e8f78" />
+}
+
 export const Navigation = ({
   savesBottomSheetRef,
 }: {
@@ -18,8 +30,7 @@ export const Navigation = ({
 }) => {
   const pathname = usePathname()
 
-  const { user, saves, getNumberUnreadMessages } = useAppStore()
-  const [newMessages, setNewMessages] = useState(0)
+  const { user, saves } = useAppStore()
 
   const isHomePage = pathname === '/' || pathname === '/index'
 
@@ -45,10 +56,6 @@ export const Navigation = ({
       animateBadge()
     }
   }, [saves.length])
-
-  useEffect(() => {
-    getNumberUnreadMessages().then(setNewMessages)
-  }, [])
 
   if (!user || pathname === '/onboarding' || pathname === '/user/register') return null
 
@@ -132,7 +139,7 @@ export const Navigation = ({
               }}
             >
               <View style={{ bottom: 2, right: -10, zIndex: 1 }}>
-                {newMessages > 0 && <Badge count={newMessages} color="#7e8f78" />}
+                <NewMessagesBadge />
               </View>
             </View>
           </Pressable>

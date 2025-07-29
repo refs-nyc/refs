@@ -32,6 +32,12 @@ export type MessageDecryptedData = {
 }
 export type DecryptedMessage = Message & { expand: { decryptedData: MessageDecryptedData } }
 
+export type ReactionDecryptedData = {
+  emoji: string
+}
+
+export type DecryptedReaction = Reaction & { expand: { decryptedData: ReactionDecryptedData } }
+
 export type Reaction = ContractModelTypes['reaction']
 export type Save = ContractModelTypes['save']
 

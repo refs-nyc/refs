@@ -2,6 +2,7 @@ import { StateCreator } from 'zustand'
 import {
   Conversation,
   DecryptedMessage,
+  DecryptedReaction,
   EncryptionGroup,
   EncryptionKey,
   ExpandedMembership,
@@ -10,6 +11,7 @@ import {
   MessageDecryptedData,
   Profile,
   Reaction,
+  ReactionDecryptedData,
 } from '../types'
 
 import type { StoreSlices } from './types'
@@ -44,6 +46,7 @@ export type MessageSlice = {
   unarchiveConversation: (user: Profile, conversationId: string) => Promise<void>
 
   decryptMessages: (conversationId: string, messages: Message[]) => Promise<DecryptedMessage[]>
+  decryptReactions: (conversationId: string, reactions: Reaction[]) => Promise<DecryptedReaction[]>
 
   getConversation: (conversationId: string) => Promise<Conversation | null>
   getDirectConversation: (otherUserDid: string) => Promise<Conversation | null>
@@ -295,6 +298,56 @@ export const createMessageSlice: StateCreator<StoreSlices, [], [], MessageSlice>
     }
 
     return decryptedMessages
+  },
+
+  decryptReactions: async (conversationId, reactions) => {
+    if (reactions.length === 0) {
+      return []
+    }
+
+    const { canvasApp, encryptionWallet, user } = get()
+    if (!canvasApp) {
+      throw new Error('Canvas not initialized!')
+    }
+
+    if (!encryptionWallet) {
+      throw new Error('No encryption wallet exists for the current user')
+    }
+
+    if (!user) {
+      throw new Error('Not logged in!')
+    }
+
+    // get the encryption group for this conversation
+    const encryptionGroup = await canvasApp.db.get<EncryptionGroup>(
+      'encryption_group',
+      conversationId
+    )
+    if (!encryptionGroup) {
+      throw new Error(`No encryption group exists for ${conversationId}`)
+    }
+
+    // extract my key from the encryption group
+    const myKey = JSON.parse(encryptionGroup.group_keys)[user.did]
+
+    const groupPrivateKey = decryptSafely({
+      encryptedData: myKey,
+      privateKey: encryptionWallet?.privateKey,
+    })
+
+    const decryptedReactions = []
+    for (const reaction of reactions) {
+      // decrypt the reaction
+      const decryptedData = decryptSafely({
+        encryptedData: reaction.encrypted_data as EthEncryptedData,
+        privateKey: groupPrivateKey,
+      })
+
+      const decryptedFields = JSON.parse(decryptedData) as ReactionDecryptedData
+      decryptedReactions.push({ ...reaction, expand: { decryptedData: decryptedFields } })
+    }
+
+    return decryptedReactions
   },
 
   getConversation: async (conversationId: string) => {

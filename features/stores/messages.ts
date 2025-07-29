@@ -3,6 +3,7 @@ import {
   Conversation,
   DecryptedMessage,
   DecryptedReaction,
+  DecryptedReactionWithSender,
   EncryptionGroup,
   EncryptionKey,
   ExpandedMembership,
@@ -55,7 +56,7 @@ export type MessageSlice = {
   getMembershipCount: (conversationId: string) => Promise<number>
   getMessagesForConversation: (conversationId: string) => Promise<DecryptedMessage[]>
   getLastMessageForConversation: (conversationId: string) => Promise<DecryptedMessage | null>
-  getReactionsForMessage: (messageId: string) => Promise<Reaction[]>
+  getReactionsForMessage: (messageId: string) => Promise<DecryptedReactionWithSender[]>
   getNumberUnreadMessages: () => Promise<number>
 }
 
@@ -447,7 +448,7 @@ export const createMessageSlice: StateCreator<StoreSlices, [], [], MessageSlice>
     return await canvasApp.db.count('membership', { conversation: conversationId })
   },
   getMessagesForConversation: async (conversationId: string) => {
-    const { canvasApp, user, encryptionWallet } = get()
+    const { canvasApp, user } = get()
     if (!canvasApp) {
       throw new Error('Canvas not initialized!')
     }
@@ -479,12 +480,31 @@ export const createMessageSlice: StateCreator<StoreSlices, [], [], MessageSlice>
     return decryptedMessages[0] || null
   },
   getReactionsForMessage: async (messageId) => {
-    const { canvasApp } = get()
+    const { canvasApp, decryptReactions } = get()
     if (!canvasApp) {
       throw new Error('Canvas not initialized!')
     }
 
-    return await canvasApp.db.query<Reaction>('reaction', { where: { message: messageId } })
+    const reactions = await canvasApp.db.query<Reaction>('reaction', {
+      where: { message: messageId },
+    })
+
+    const message = await canvasApp.db.get<Message>('message', messageId)
+
+    const decryptedReactionsWithSenders = []
+    for (const decryptedReaction of await decryptReactions(
+      message?.conversation as string,
+      reactions
+    )) {
+      // get the sender
+      const sender = await canvasApp.db.get<Profile>('profile', decryptedReaction.sender as string)
+      decryptedReactionsWithSenders.push({
+        ...decryptedReaction,
+        expand: { ...decryptedReaction.expand, sender: sender! },
+      })
+    }
+
+    return decryptedReactionsWithSenders
   },
   getNumberUnreadMessages: async () => {
     const { canvasApp, user } = get()

@@ -1,6 +1,6 @@
 import { formatTimestamp } from '@/features/messaging/utils'
 import { useAppStore } from '@/features/stores'
-import { DecryptedMessage, Message, Profile, Reaction } from '@/features/types'
+import { DecryptedMessage, DecryptedReactionWithSender, Profile } from '@/features/types'
 import { c, s } from '@/features/style'
 import { useCalendars } from 'expo-localization'
 import { View, Text } from 'react-native'
@@ -36,7 +36,7 @@ export default function MessageBubble({
   const calendars = useCalendars()
   const { user, deleteReaction, getReactionsForMessage } = useAppStore()
 
-  const [messageReactions, setMessageReactions] = useState<Reaction[]>()
+  const [messageReactions, setMessageReactions] = useState<DecryptedReactionWithSender[]>()
 
   useEffect(() => {
     async function updateReactions() {
@@ -113,7 +113,7 @@ export default function MessageBubble({
           {messageReactions && (
             <XStack>
               {messageReactions.map((r) => {
-                const isMine = r.user === user?.did
+                const isMine = r.sender === user?.did
                 return (
                   <Pressable key={r.id} onPress={isMine ? () => deleteReaction(r.id) : null}>
                     <XStack
@@ -123,8 +123,8 @@ export default function MessageBubble({
                         borderRadius: s.$1,
                       }}
                     >
-                      <Text>{r.emoji}</Text>
-                      <Avatar source={r.expand?.user.image} size={s.$1} />
+                      <Text>{r.expand.decryptedData.emoji}</Text>
+                      <Avatar source={r.expand?.sender.image} size={s.$1} />
                     </XStack>
                   </Pressable>
                 )

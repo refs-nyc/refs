@@ -37,6 +37,9 @@ export type ReactionDecryptedData = {
 }
 
 export type DecryptedReaction = Reaction & { expand: { decryptedData: ReactionDecryptedData } }
+export type DecryptedReactionWithSender = Reaction & {
+  expand: { decryptedData: ReactionDecryptedData; sender: Profile }
+}
 
 export type Reaction = ContractModelTypes['reaction']
 export type Save = ContractModelTypes['save']

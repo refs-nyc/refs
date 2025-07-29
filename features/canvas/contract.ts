@@ -400,11 +400,7 @@ export default class RefsContract extends Contract<typeof RefsContract.models> {
     })
   }
 
-  async createReaction(createReactionArgs: {
-    message: string
-    emoji: string
-    encrypted_data: string
-  }) {
+  async createReaction(createReactionArgs: { message: string; encrypted_data: string }) {
     await this.db.transaction(async () => {
       await this.db.create('reaction', {
         id: `${this.did}/${createReactionArgs.message}`,

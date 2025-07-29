@@ -232,15 +232,9 @@ export const createMessageSlice: StateCreator<StoreSlices, [], [], MessageSlice>
   },
 
   sendMessage: async (sendMessageArgs) => {
-    const { canvasActions, canvasApp, user, updateLastRead, encryptForConversation } = get()
+    const { canvasActions, updateLastRead, encryptForConversation } = get()
     if (!canvasActions) {
       throw new Error('Canvas not logged in!')
-    }
-    if (!canvasApp) {
-      throw new Error('Canvas not initialized!')
-    }
-    if (!user) {
-      throw new Error('Not logged in!')
     }
 
     const encryptedData = encryptForConversation(sendMessageArgs.conversationId, {
@@ -516,14 +510,14 @@ export const createMessageSlice: StateCreator<StoreSlices, [], [], MessageSlice>
     return groupConversations
   },
   getMembers: async (conversationId) => {
-    const { canvasApp, membershipsByConversationAndUserId } = get()
+    const { canvasApp, membershipsByConversationAndUserId, profilesByUserDid } = get()
     if (!canvasApp) {
       throw new Error('Canvas not initialized!')
     }
 
     const members: ExpandedMembership[] = []
     for (const membership of Object.values(membershipsByConversationAndUserId[conversationId])) {
-      const user = await canvasApp.db.get<Profile>('profile', membership.user as string)
+      const user = profilesByUserDid[membership.user as string]
       if (!user) continue
       members.push({ ...membership, expand: { user } })
     }
@@ -566,7 +560,7 @@ export const createMessageSlice: StateCreator<StoreSlices, [], [], MessageSlice>
     return decryptedMessages[0] || null
   },
   getReactionsForMessage: async (messageId) => {
-    const { canvasApp, decryptReactions } = get()
+    const { canvasApp, decryptReactions, profilesByUserDid } = get()
     if (!canvasApp) {
       throw new Error('Canvas not initialized!')
     }
@@ -580,7 +574,7 @@ export const createMessageSlice: StateCreator<StoreSlices, [], [], MessageSlice>
     const decryptedReactionsWithSenders = []
     for (const decryptedReaction of decryptReactions(message?.conversation as string, reactions)) {
       // get the sender
-      const sender = await canvasApp.db.get<Profile>('profile', decryptedReaction.sender as string)
+      const sender = profilesByUserDid[decryptedReaction.sender as string]
       decryptedReactionsWithSenders.push({
         ...decryptedReaction,
         expand: { ...decryptedReaction.expand, sender: sender! },

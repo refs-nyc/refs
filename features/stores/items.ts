@@ -381,12 +381,12 @@ export const createItemSlice: StateCreator<StoreSlices, [], [], ItemSlice> = (se
   },
 
   expandItem: async (item: Item) => {
-    const { canvasApp } = get()
+    const { canvasApp, profilesByUserDid } = get()
     if (!canvasApp) throw new Error('Canvas not initialized')
 
     const ref = await canvasApp.db.get<Ref>('ref', item.ref as PrimaryKeyValue)
     if (!ref) throw new Error('Ref not found')
-    const creator = await canvasApp.db.get<Profile>('profile', item.creator as PrimaryKeyValue)
+    const creator = profilesByUserDid[item.creator as string]
     if (!creator) throw new Error('Creator not found')
 
     const itemsViaParent = await canvasApp.db.query<Item>('item', {

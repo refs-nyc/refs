@@ -14,7 +14,6 @@ import { OtherBacklogSheet } from './sheets/OtherBacklogSheet'
 import { OtherButtonsSheet } from './sheets/OtherButtonsSheet'
 
 export const OtherProfile = ({ did }: { did: string }) => {
-  const [profile, setProfile] = useState<Profile>()
   const [gridItems, setGridItems] = useState<ExpandedItem[]>([])
   const [backlogItems, setBacklogItems] = useState<ExpandedItem[]>([])
   const [loading, setLoading] = useState<boolean>(true)
@@ -28,12 +27,11 @@ export const OtherProfile = ({ did }: { did: string }) => {
     getProfileItems,
   } = useAppStore()
 
-  const refreshGrid = async (did: string) => {
+  const profile = getUserByDid(did)
+
+  const refreshGrid = async () => {
     setLoading(true)
     try {
-      const profile = await getUserByDid(did)
-      setProfile(profile)
-
       const gridItems = await getProfileItems(profile)
       setGridItems(gridItems)
 
@@ -49,7 +47,7 @@ export const OtherProfile = ({ did }: { did: string }) => {
   useEffect(() => {
     const init = async () => {
       try {
-        await refreshGrid(did)
+        await refreshGrid()
       } catch (error) {
         console.error(error)
       }

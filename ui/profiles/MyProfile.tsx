@@ -1,5 +1,4 @@
 import { useAppStore } from '@/features/stores'
-import type { Profile } from '@/features/types'
 import { ExpandedItem } from '@/features/types'
 import { s } from '@/features/style'
 import BottomSheet from '@gorhom/bottom-sheet'
@@ -19,7 +18,6 @@ import { RemoveRefSheet } from './sheets/RemoveRefSheet'
 export const MyProfile = ({ did }: { did: string }) => {
   const { hasShareIntent } = useShareIntentContext()
 
-  const [profile, setProfile] = useState<Profile>()
   const [gridItems, setGridItems] = useState<ExpandedItem[]>([])
   const [backlogItems, setBacklogItems] = useState<ExpandedItem[]>([])
   const [loading, setLoading] = useState<boolean>(true)
@@ -40,12 +38,11 @@ export const MyProfile = ({ did }: { did: string }) => {
 
   const [removingItem, setRemovingItem] = useState<ExpandedItem | null>(null)
 
-  const refreshGrid = async (did: string) => {
+  const profile = getUserByDid(did)
+
+  const refreshGrid = async () => {
     setLoading(true)
     try {
-      const profile = await getUserByDid(did)
-      setProfile(profile)
-
       const gridItems = await getProfileItems(profile)
       setGridItems(gridItems)
 
@@ -64,7 +61,7 @@ export const MyProfile = ({ did }: { did: string }) => {
       removeRefSheetRef.current?.close()
       const updatedRecord = await moveToBacklog(removingItem?.id)
       setRemovingItem(null)
-      await refreshGrid(did)
+      await refreshGrid()
     } catch (error) {
       console.error(error)
     }
@@ -75,7 +72,7 @@ export const MyProfile = ({ did }: { did: string }) => {
     removeRefSheetRef.current?.close()
     await removeItem(removingItem.id)
     setRemovingItem(null)
-    await refreshGrid(did)
+    await refreshGrid()
   }
 
   useEffect(() => {
@@ -88,7 +85,7 @@ export const MyProfile = ({ did }: { did: string }) => {
   useEffect(() => {
     const init = async () => {
       try {
-        await refreshGrid(did)
+        await refreshGrid()
       } catch (error) {
         console.error(error)
       }

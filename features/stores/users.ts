@@ -1,27 +1,33 @@
 import type { SessionSigner } from '@canvas-js/interfaces'
 
-import {
-  decryptSafely,
-  encryptSafely,
-  EthEncryptedData,
-  getEncryptionPublicKey,
-} from '../encryption'
+import { getEncryptionPublicKey } from '../encryption'
 import { StateCreator } from 'zustand'
 import type { RefsCanvas } from '../canvas/contract'
 import { getCurrentSessionSignerFromMagic, getEncryptionWalletFromMagic } from '../magic'
 import { Profile, StagedProfileFields } from '../types'
 import type { StoreSlices } from './types'
 import { Wallet } from 'ethers'
+import { createRef, MutableRefObject } from 'react'
+
+const subscriptions = createRef<number[]>() as MutableRefObject<number[]>
+subscriptions.current = []
 
 export type UserSlice = {
+  usersSubscriptions: MutableRefObject<number[]>
+  subscribeToMessages: () => Promise<void>
+  unsubscribeFromMessages: () => void
+
+  profilesByUserDid: Record<string, Profile>
+  updateProfiles: (profiles: Profile[]) => void
+
   stagedProfileFields: StagedProfileFields
   user: Profile | null
   isInitialized: boolean
   register: () => Promise<Profile>
   updateUserLocation: (location: string) => Promise<void>
   updateStagedProfileFields: (formFields: StagedProfileFields) => void
-  getUserByDid: (did: string) => Promise<Profile>
-  getUsersByDids: (dids: string[]) => Promise<Profile[]>
+  getUserByDid: (did: string) => Profile
+  getUsersByDids: (dids: string[]) => Profile[]
   getRandomUser: () => Promise<Profile>
   login: (sessionSigner: SessionSigner) => Promise<void>
   sessionSigner: SessionSigner | null
@@ -34,6 +40,32 @@ export type UserSlice = {
 }
 
 export const createUserSlice: StateCreator<StoreSlices, [], [], UserSlice> = (set, get) => ({
+  usersSubscriptions: subscriptions,
+  subscribeToMessages: async () => {
+    const { canvasApp, updateProfiles, usersSubscriptions } = get()
+    if (!canvasApp) {
+      throw new Error('Canvas not initialized!')
+    }
+
+    const profileSubscription = canvasApp.db.subscribe('profile', {}, (results) =>
+      updateProfiles(results as Profile[])
+    )
+
+    updateProfiles((await profileSubscription.results) as Profile[])
+
+    usersSubscriptions.current = [profileSubscription.id]
+  },
+  unsubscribeFromMessages: () => {},
+
+  profilesByUserDid: {},
+  updateProfiles: (profiles: Profile[]) => {
+    const profilesByUserDid: Record<string, Profile> = {}
+    for (const profile of profiles) {
+      profilesByUserDid[profile.did] = profile
+    }
+    set({ profilesByUserDid })
+  },
+
   stagedProfileFields: {},
   user: null, // user is ALWAYS the user of the app, this is only set if the user is logged in
   isInitialized: false,
@@ -42,14 +74,14 @@ export const createUserSlice: StateCreator<StoreSlices, [], [], UserSlice> = (se
   //
   //
   init: async () => {
+    const { canvasApp, profilesByUserDid } = get()
     try {
-      const canvasApp = get().canvasApp
       if (!canvasApp) {
         throw new Error('Canvas not initialized yet!')
       }
       const sessionSigner = await getCurrentSessionSignerFromMagic()
       const userDid = await sessionSigner.getDid()
-      const profile = await canvasApp.db.get<Profile>('profile', userDid)
+      const profile = profilesByUserDid[userDid]
 
       set({
         user: profile,
@@ -84,36 +116,31 @@ export const createUserSlice: StateCreator<StoreSlices, [], [], UserSlice> = (se
       throw err
     }
   },
-  getUserByDid: async (did: string) => {
-    const { canvasApp } = get()
-    if (!canvasApp) {
-      throw new Error('Canvas not initialized!')
-    }
+  getUserByDid: (did: string) => {
+    const { profilesByUserDid } = get()
 
-    const user = await canvasApp.db.get<Profile>('profile', did)
+    const user = profilesByUserDid[did]
+
     if (!user) throw new Error('Profile not found')
     return user
   },
-  getUsersByDids: async (dids: string[]) => {
-    const { canvasApp } = get()
+  getUsersByDids: (dids: string[]) => {
+    const { canvasApp, profilesByUserDid } = get()
     if (!canvasApp) {
       throw new Error('Canvas not initialized!')
     }
 
     const users: Profile[] = []
     for (const did of dids) {
-      const user = await canvasApp.db.get<Profile>('profile', did)
+      const user = profilesByUserDid[did]
       if (user) users.push(user)
     }
     return users
   },
   getRandomUser: async () => {
-    const { canvasApp } = get()
-    if (!canvasApp) {
-      throw new Error('Canvas not initialized!')
-    }
+    const { profilesByUserDid } = get()
 
-    const allUsers = await canvasApp.db.query<Profile>('profile', {})
+    const allUsers = Object.values(profilesByUserDid)
     const randomIndex = Math.floor(Math.random() * allUsers.length)
     return allUsers[randomIndex]
   },
@@ -160,7 +187,7 @@ export const createUserSlice: StateCreator<StoreSlices, [], [], UserSlice> = (se
   //
   //
   login: async (sessionSigner: SessionSigner) => {
-    const { canvasApp } = get()
+    const { canvasApp, profilesByUserDid } = get()
     if (!canvasApp) {
       throw new Error('Canvas not initialized!')
     }
@@ -170,7 +197,7 @@ export const createUserSlice: StateCreator<StoreSlices, [], [], UserSlice> = (se
 
     // get the profile from modeldb
     const userDid = await sessionSigner.getDid()
-    const profile = await canvasApp.db.get<Profile>('profile', userDid)
+    const profile = profilesByUserDid[userDid]
 
     if (!profile) {
       throw new Error('Profile not found')

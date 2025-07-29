@@ -1,30 +1,18 @@
 import { useAppStore } from '@/features/stores'
 import { c, s } from '@/features/style'
-import { Profile } from '@/features/types'
 import { Heading, XStack, YStack } from '@/ui'
 import { Avatar } from '@/ui/atoms/Avatar'
 import MessageInput from '@/ui/messaging/MessageInput'
-import { Ionicons } from '@expo/vector-icons'
 import { router, useGlobalSearchParams } from 'expo-router'
-import { useEffect, useState } from 'react'
-import { DimensionValue, Pressable, View } from 'react-native'
+import { useState } from 'react'
+import { DimensionValue, View } from 'react-native'
 
 export default function NewDMScreen() {
   const { user } = useAppStore()
   const { did } = useGlobalSearchParams()
   const [message, setMessage] = useState<string>('')
   const { createConversation, sendMessage, getUserByDid } = useAppStore()
-  const [profile, setProfile] = useState<Profile>()
-
-  useEffect(() => {
-    async function getProfile() {
-      if (typeof did === 'string') {
-        const profile = await getUserByDid(did)
-        setProfile(profile)
-      }
-    }
-    getProfile()
-  }, [did])
+  const profile = typeof did === 'string' ? getUserByDid(did) : null
 
   if (!user) {
     router.dismissTo('/')

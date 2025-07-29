@@ -5,28 +5,19 @@ import { XStack, YStack } from '@/ui'
 import { Avatar } from '@/ui/atoms/Avatar'
 import MessageInput from '@/ui/messaging/MessageInput'
 import { Link, router, useLocalSearchParams } from 'expo-router'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { View, Text, DimensionValue, TextInput } from 'react-native'
 
 export default function NewGCScreen() {
   const queryParams = useLocalSearchParams()
-  const [users, setUsers] = useState<Profile[]>([])
+
   const [message, setMessage] = useState<string>('')
   const [title, setTitle] = useState<string>('')
   const { user, createConversation, sendMessage, getUsersByDids } = useAppStore()
 
-  useEffect(() => {
-    const getUsers = async () => {
-      const ids =
-        typeof queryParams.members === 'string'
-          ? queryParams.members.split(',')
-          : queryParams.members
-
-      const users = await getUsersByDids(ids)
-      setUsers(users)
-    }
-    getUsers()
-  }, [])
+  const ids =
+    typeof queryParams.members === 'string' ? queryParams.members.split(',') : queryParams.members
+  const users = getUsersByDids(ids)
 
   const getUserListString = (users: Profile[]) => {
     let s = `Chat with ${users[0].firstName}`

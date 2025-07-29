@@ -43,6 +43,7 @@
     "@react-navigation/bottom-tabs": "^7.0.0",
     "@react-navigation/native": "^7.0.0",
     "babel-plugin-transform-import-meta": "^2.3.2",
+    "base-64": "^1.0.0",
     "crypto-browserify": "^3.12.1",
     "ethers": "^6.13.4",
     "event-target-polyfill": "^0.0.4",
@@ -99,6 +100,7 @@
     "react-native-webview": "13.12.2",
     "rn-emoji-keyboard": "^1.7.0",
     "text-encoding": "^0.7.0",
+    "tweetnacl": "^1.0.3",
     "xcode": "3.0.1",
     "zustand": "^5.0.2"
   },

@@ -4,6 +4,7 @@ import { polyfill as polyfillEncoding } from 'react-native-polyfill-globals/src/
 
 import 'event-target-polyfill'
 import '@/features/polyfill/custom-event-polyfill'
+import '@/features/polyfill/base-64-polyfill'
 import 'react-native-get-random-values'
 import 'fast-text-encoding'
 

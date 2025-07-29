@@ -1,36 +1,26 @@
 import { useAppStore } from '@/features/stores'
-import { Membership, Profile } from '@/features/types'
 import { c, s } from '@/features/style'
 import { Heading, XStack, YStack } from '@/ui'
 import { Avatar } from '@/ui/atoms/Avatar'
 import { Link, useLocalSearchParams } from 'expo-router'
 import { View, Text, ScrollView } from 'react-native'
-import { useEffect, useState } from 'react'
+import { useMemo } from 'react'
 
 export default function MemberListScreen() {
   const { conversationId } = useLocalSearchParams()
-  const { canvasApp } = useAppStore()
+  const { profilesByUserDid, membershipsByConversationAndUserId } = useAppStore()
 
-  const [members, setMembers] = useState<Profile[] | null>(null)
+  const members = useMemo(() => {
+    if (typeof conversationId !== 'string') return
 
-  useEffect(() => {
-    async function doRefresh() {
-      if (!canvasApp) return
+    const members = []
+    for (const userId of Object.keys(membershipsByConversationAndUserId[conversationId])) {
+      const member = profilesByUserDid[userId as string]
 
-      const memberships = await canvasApp.db.query<Membership>('membership', {
-        where: { conversation: conversationId },
-      })
-
-      const members = []
-      for (const membership of memberships) {
-        const member = await canvasApp.db.get<Profile>('profile', membership.user as string)
-        if (member) members.push(member)
-      }
-
-      setMembers(members)
+      if (member) members.push(member)
     }
-    doRefresh()
-  }, [canvasApp])
+    return members
+  }, [conversationId, profilesByUserDid, membershipsByConversationAndUserId])
 
   return (
     <View style={{ flex: 1, backgroundColor: c.surface }}>

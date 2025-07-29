@@ -1,15 +1,15 @@
 import { Heading, XStack } from '@/ui'
 import { View, DimensionValue, Pressable, Text } from 'react-native'
-import { c, s } from '../style'
+import { s } from '../style'
 import { useAppStore } from '@/features/stores'
 import SwipeableConversation from '@/ui/messaging/SwipeableConversation'
 import { router } from 'expo-router'
-import { Conversation, Membership, Message } from '@/features/types'
+import { Conversation, Message } from '@/features/types'
 import ConversationList from '@/ui/messaging/ConversationList'
 import { useEffect, useState } from 'react'
 
 export function ConversationsScreen() {
-  const { user, archiveConversation, canvasApp } = useAppStore()
+  const { user, archiveConversation, canvasApp, membershipsByUserId } = useAppStore()
 
   const [activeConversations, setActiveConversations] = useState<Conversation[]>([])
 
@@ -20,12 +20,10 @@ export function ConversationsScreen() {
         return
       }
 
-      const memberships = await canvasApp.db.query<Membership>('membership', {
-        where: { user: user.did, archived: false },
-      })
-
       const activeConversations = []
-      for (const membership of memberships) {
+      for (const membership of membershipsByUserId[user.did]) {
+        if (membership.archived) continue
+
         const conversation = await canvasApp.db.get<Conversation>(
           'conversation',
           membership.conversation as string

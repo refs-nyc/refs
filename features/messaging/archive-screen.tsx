@@ -3,31 +3,26 @@ import { View, DimensionValue } from 'react-native'
 import { s } from '../style'
 import { useAppStore } from '@/features/stores'
 import SwipeableConversation from '@/ui/messaging/SwipeableConversation'
-import { Conversation, Membership, Message } from '@/features/types'
+import { Conversation, Message } from '@/features/types'
 import ConversationList from '@/ui/messaging/ConversationList'
 import { useEffect, useState } from 'react'
 
 export function ArchiveScreen() {
-  const { user, unarchiveConversation, canvasApp } = useAppStore()
+  const { user, unarchiveConversation, canvasApp, conversationsById, membershipsByUserId } =
+    useAppStore()
 
   const [archivedConversations, setArchivedConversations] = useState<Conversation[]>([])
 
   useEffect(() => {
     async function getArchivedConversations() {
       if (!canvasApp) return
-
-      const memberships = await canvasApp.db.query<Membership>('membership', {
-        where: {
-          archived: true,
-        },
-      })
+      if (!user) return
 
       const archivedConversations = []
-      for (const membership of memberships) {
-        const conversation = await canvasApp.db.get<Conversation>(
-          'conversation',
-          membership.conversation as string
-        )
+      for (const membership of membershipsByUserId[user.did]) {
+        if (!membership.archived) continue
+
+        const conversation = conversationsById[membership.conversation as string]
 
         const lastMessage = (
           await canvasApp.db.query<Message>('message', {

@@ -1,5 +1,5 @@
 import { useAppStore } from '@/features/stores'
-import { Conversation, DecryptedMessage, ExpandedMembership } from '@/features/types'
+import { DecryptedMessage } from '@/features/types'
 import { c, s } from '@/features/style'
 import { Heading, Sheet, XStack } from '@/ui'
 import { Avatar, AvatarStack } from '@/ui/atoms/Avatar'
@@ -36,14 +36,11 @@ export function MessagesScreen({ conversationId }: { conversationId: string }) {
   const windowHeight = useWindowDimensions().height
 
   const conversation = getConversation(conversationId)
-  const [members, setMembers] = useState<ExpandedMembership[]>([])
+  const members = getMembers(conversationId)
   const [conversationMessages, setConversationMessages] = useState<DecryptedMessage[]>([])
 
   useEffect(() => {
     async function updateData() {
-      const members = await getMembers(conversationId)
-      setMembers(members)
-
       const messages = await getMessagesForConversation(conversationId)
       setConversationMessages(messages)
     }

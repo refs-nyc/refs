@@ -1,5 +1,5 @@
 import { useAppStore } from '@/features/stores'
-import { Conversation, DecryptedMessage, ExpandedMembership, Message } from '@/features/types'
+import { Conversation, DecryptedMessage } from '@/features/types'
 import { s, c } from '@/features/style'
 import { View, Text } from 'react-native'
 import { XStack, YStack } from '../core/Stacks'
@@ -18,12 +18,11 @@ export default function ConversationListItem({
   const { user, getLastMessageForConversation, getMembers } = useAppStore()
 
   const [lastMessage, setLastMessage] = useState<DecryptedMessage | null>(null)
-  const [conversationMemberships, setConversationMemberships] = useState<ExpandedMembership[]>([])
+  const conversationMemberships = getMembers(conversation.id)
 
   useEffect(() => {
     async function updateMessages() {
       setLastMessage(await getLastMessageForConversation(conversation.id))
-      setConversationMemberships(await getMembers(conversation.id))
     }
     updateMessages()
   }, [conversation])

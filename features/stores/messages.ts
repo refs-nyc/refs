@@ -73,7 +73,7 @@ export type MessageSlice = {
   getConversation: (conversationId: string) => Conversation | null
   getDirectConversation: (otherUserDid: string) => Promise<Conversation | null>
   getGroupConversations: () => Promise<Conversation[]>
-  getMembers: (conversationId: string) => Promise<ExpandedMembership[]>
+  getMembers: (conversationId: string) => ExpandedMembership[]
   getMembershipCount: (conversationId: string) => number
   getMessagesForConversation: (conversationId: string) => Promise<DecryptedMessage[]>
   getLastMessageForConversation: (conversationId: string) => Promise<DecryptedMessage | null>
@@ -509,11 +509,8 @@ export const createMessageSlice: StateCreator<StoreSlices, [], [], MessageSlice>
 
     return groupConversations
   },
-  getMembers: async (conversationId) => {
-    const { canvasApp, membershipsByConversationAndUserId, profilesByUserDid } = get()
-    if (!canvasApp) {
-      throw new Error('Canvas not initialized!')
-    }
+  getMembers: (conversationId) => {
+    const { membershipsByConversationAndUserId, profilesByUserDid } = get()
 
     const members: ExpandedMembership[] = []
     for (const membership of Object.values(membershipsByConversationAndUserId[conversationId])) {

@@ -46,7 +46,7 @@ export default function SavesList() {
       const membershipCounts: Record<string, number> = {}
 
       for (const conversation in groupConversations) {
-        membershipCounts[conversation] = await getMembershipCount(conversation)
+        membershipCounts[conversation] = getMembershipCount(conversation)
       }
       setMembershipCounts(membershipCounts)
     }

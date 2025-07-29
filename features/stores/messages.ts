@@ -42,6 +42,10 @@ export type MessageSlice = {
   updateConversations: (conversations: Conversation[]) => void
   conversationsById: Record<string, Conversation>
 
+  membershipsByUserId: Record<string, Membership[]>
+  membershipsByConversationAndUserId: Record<string, Record<string, Membership>>
+  updateMemberships: (memberships: Membership[]) => void
+
   createConversation: (
     is_direct: boolean,
     otherMembers: Profile[],
@@ -70,7 +74,7 @@ export type MessageSlice = {
   getDirectConversation: (otherUserDid: string) => Promise<Conversation | null>
   getGroupConversations: () => Promise<Conversation[]>
   getMembers: (conversationId: string) => Promise<ExpandedMembership[]>
-  getMembershipCount: (conversationId: string) => Promise<number>
+  getMembershipCount: (conversationId: string) => number
   getMessagesForConversation: (conversationId: string) => Promise<DecryptedMessage[]>
   getLastMessageForConversation: (conversationId: string) => Promise<DecryptedMessage | null>
   getReactionsForMessage: (messageId: string) => Promise<DecryptedReactionWithSender[]>
@@ -81,7 +85,13 @@ export const createMessageSlice: StateCreator<StoreSlices, [], [], MessageSlice>
   messagesSubscriptions: subscriptions,
 
   subscribeToMessages: async () => {
-    const { canvasApp, messagesSubscriptions, updateEncryptionGroups, updateConversations } = get()
+    const {
+      canvasApp,
+      messagesSubscriptions,
+      updateEncryptionGroups,
+      updateConversations,
+      updateMemberships,
+    } = get()
     if (!canvasApp) {
       throw new Error('Canvas not initialized!')
     }
@@ -95,11 +105,20 @@ export const createMessageSlice: StateCreator<StoreSlices, [], [], MessageSlice>
       updateConversations(results as Conversation[])
     })
 
+    const membershipSubscription = canvasApp.db.subscribe('membership', {}, (results) =>
+      updateMemberships(results as Membership[])
+    )
+
     // TODO: do we need to call it the first time?
     updateEncryptionGroups((await encryptionGroupSubscription.results) as EncryptionGroup[])
     updateConversations((await conversationSubscription.results) as Conversation[])
+    updateMemberships((await membershipSubscription.results) as Membership[])
 
-    messagesSubscriptions.current = [encryptionGroupSubscription.id]
+    messagesSubscriptions.current = [
+      encryptionGroupSubscription.id,
+      conversationSubscription.id,
+      membershipSubscription.id,
+    ]
   },
 
   unsubscribeFromMessages: () => {
@@ -133,6 +152,23 @@ export const createMessageSlice: StateCreator<StoreSlices, [], [], MessageSlice>
       conversationsById[conversation.id] = conversation
     }
     set({ conversationsById })
+  },
+
+  membershipsByUserId: {},
+  membershipsByConversationAndUserId: {},
+  updateMemberships: (memberships) => {
+    const membershipsByUserId: Record<string, Membership[]> = {}
+    const membershipsByConversationAndUserId: Record<string, Record<string, Membership>> = {}
+    for (const membership of memberships) {
+      membershipsByUserId[membership.user as string] ||= []
+      membershipsByUserId[membership.user as string].push(membership)
+
+      membershipsByConversationAndUserId[membership.conversation as string] ||= {}
+      membershipsByConversationAndUserId[membership.conversation as string][
+        membership.user as string
+      ] = membership
+    }
+    set({ membershipsByUserId, membershipsByConversationAndUserId })
   },
 
   createConversation: async (
@@ -196,14 +232,7 @@ export const createMessageSlice: StateCreator<StoreSlices, [], [], MessageSlice>
   },
 
   sendMessage: async (sendMessageArgs) => {
-    const {
-      canvasActions,
-      canvasApp,
-      user,
-
-      updateLastRead,
-      encryptForConversation,
-    } = get()
+    const { canvasActions, canvasApp, user, updateLastRead, encryptForConversation } = get()
     if (!canvasActions) {
       throw new Error('Canvas not logged in!')
     }
@@ -288,7 +317,7 @@ export const createMessageSlice: StateCreator<StoreSlices, [], [], MessageSlice>
   },
 
   archiveConversation: async (user: Profile, conversationId: string) => {
-    const { canvasApp, canvasActions } = get()
+    const { canvasApp, canvasActions, membershipsByConversationAndUserId } = get()
     if (!canvasApp) {
       throw new Error('Canvas not initialized!')
     }
@@ -296,18 +325,14 @@ export const createMessageSlice: StateCreator<StoreSlices, [], [], MessageSlice>
       throw new Error('Canvas not logged in!')
     }
 
-    const membership = (
-      await canvasApp.db.query('membership', {
-        where: { user: user.did, conversation: conversationId },
-      })
-    )[0]
+    const membership = (membershipsByConversationAndUserId[conversationId] || {})[user.did]
 
     if (membership) {
       await canvasActions.archiveMembership(membership.id)
     }
   },
   unarchiveConversation: async (user: Profile, conversationId: string) => {
-    const { canvasApp, canvasActions } = get()
+    const { canvasApp, canvasActions, membershipsByConversationAndUserId } = get()
     if (!canvasApp) {
       throw new Error('Canvas not initialized!')
     }
@@ -315,11 +340,7 @@ export const createMessageSlice: StateCreator<StoreSlices, [], [], MessageSlice>
       throw new Error('Canvas not logged in!')
     }
 
-    const membership = (
-      await canvasApp.db.query('membership', {
-        where: { user: user.did, conversation: conversationId },
-      })
-    )[0]
+    const membership = (membershipsByConversationAndUserId[conversationId] || {})[user.did]
 
     if (membership) {
       await canvasActions.unArchiveMembership(membership.id)
@@ -442,7 +463,7 @@ export const createMessageSlice: StateCreator<StoreSlices, [], [], MessageSlice>
     return conversationsById[conversationId] || null
   },
   getDirectConversation: async (otherUserDid: string) => {
-    const { canvasApp, user, getConversation } = get()
+    const { canvasApp, user, getConversation, membershipsByUserId } = get()
     if (!canvasApp) {
       throw new Error('Canvas not initialized!')
     }
@@ -450,13 +471,8 @@ export const createMessageSlice: StateCreator<StoreSlices, [], [], MessageSlice>
       throw new Error('Not logged in!')
     }
 
-    const myMemberships = await canvasApp.db.query<Membership>('membership', {
-      where: { user: user.did },
-    })
-
-    const otherUserMemberships = await canvasApp.db.query<Membership>('membership', {
-      where: { user: otherUserDid },
-    })
+    const myMemberships = membershipsByUserId[user.did]
+    const otherUserMemberships = membershipsByUserId[otherUserDid]
 
     const myConversationIds = new Set(myMemberships.map((membership) => membership.conversation))
     const otherUserConversationIds = new Set(
@@ -476,7 +492,7 @@ export const createMessageSlice: StateCreator<StoreSlices, [], [], MessageSlice>
   },
 
   getGroupConversations: async () => {
-    const { canvasApp, user, getConversation } = get()
+    const { canvasApp, user, getConversation, membershipsByUserId } = get()
     if (!canvasApp) {
       throw new Error('Canvas not initialized!')
     }
@@ -484,9 +500,7 @@ export const createMessageSlice: StateCreator<StoreSlices, [], [], MessageSlice>
       throw new Error('Not logged in!')
     }
 
-    const myMemberships = await canvasApp.db.query<Membership>('membership', {
-      where: { user: user.did },
-    })
+    const myMemberships = membershipsByUserId[user.did]
 
     const groupConversations = []
 
@@ -502,28 +516,22 @@ export const createMessageSlice: StateCreator<StoreSlices, [], [], MessageSlice>
     return groupConversations
   },
   getMembers: async (conversationId) => {
-    const { canvasApp } = get()
+    const { canvasApp, membershipsByConversationAndUserId } = get()
     if (!canvasApp) {
       throw new Error('Canvas not initialized!')
     }
 
     const members: ExpandedMembership[] = []
-    for (const membership of await canvasApp.db.query<Membership>('membership', {
-      where: { conversation: conversationId },
-    })) {
-      const user = await canvasApp.db.get<Profile>('user', membership.user as string)
+    for (const membership of Object.values(membershipsByConversationAndUserId[conversationId])) {
+      const user = await canvasApp.db.get<Profile>('profile', membership.user as string)
       if (!user) continue
       members.push({ ...membership, expand: { user } })
     }
     return members
   },
-  async getMembershipCount(conversationId) {
-    const { canvasApp } = get()
-    if (!canvasApp) {
-      throw new Error('Canvas not initialized!')
-    }
-
-    return await canvasApp.db.count('membership', { conversation: conversationId })
+  getMembershipCount(conversationId) {
+    const { membershipsByConversationAndUserId } = get()
+    return Object.keys(membershipsByConversationAndUserId[conversationId]).length
   },
   getMessagesForConversation: async (conversationId: string) => {
     const { canvasApp, user } = get()
@@ -582,7 +590,7 @@ export const createMessageSlice: StateCreator<StoreSlices, [], [], MessageSlice>
     return decryptedReactionsWithSenders
   },
   getNumberUnreadMessages: async () => {
-    const { canvasApp, user } = get()
+    const { canvasApp, user, membershipsByUserId } = get()
     if (!canvasApp) {
       throw new Error('Canvas not initialized!')
     }
@@ -592,9 +600,7 @@ export const createMessageSlice: StateCreator<StoreSlices, [], [], MessageSlice>
 
     let unreadMessageCount = 0
 
-    const myMemberships = await canvasApp.db.query<Membership>('membership', {
-      where: { user: user.did },
-    })
+    const myMemberships = membershipsByUserId[user.did]
 
     for (const membership of myMemberships) {
       const countForConversation = await canvasApp.db.count('message', {

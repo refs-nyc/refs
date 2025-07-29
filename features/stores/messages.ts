@@ -57,8 +57,8 @@ export type MessageSlice = {
   archiveConversation: (user: Profile, conversationId: string) => Promise<void>
   unarchiveConversation: (user: Profile, conversationId: string) => Promise<void>
 
-  decryptMessages: (conversationId: string, messages: Message[]) => Promise<DecryptedMessage[]>
-  decryptReactions: (conversationId: string, reactions: Reaction[]) => Promise<DecryptedReaction[]>
+  decryptMessages: (conversationId: string, messages: Message[]) => DecryptedMessage[]
+  decryptReactions: (conversationId: string, reactions: Reaction[]) => DecryptedReaction[]
 
   getConversation: (conversationId: string) => Promise<Conversation | null>
   getDirectConversation: (otherUserDid: string) => Promise<Conversation | null>
@@ -316,7 +316,7 @@ export const createMessageSlice: StateCreator<StoreSlices, [], [], MessageSlice>
     }
   },
 
-  decryptMessages: async (conversationId, messages) => {
+  decryptMessages: (conversationId, messages) => {
     if (messages.length === 0) {
       return []
     }
@@ -363,7 +363,7 @@ export const createMessageSlice: StateCreator<StoreSlices, [], [], MessageSlice>
     return decryptedMessages
   },
 
-  decryptReactions: async (conversationId, reactions) => {
+  decryptReactions: (conversationId, reactions) => {
     if (reactions.length === 0) {
       return []
     }
@@ -518,7 +518,7 @@ export const createMessageSlice: StateCreator<StoreSlices, [], [], MessageSlice>
     const messages = await canvasApp.db.query<Message>('message', {
       where: { conversation: conversationId },
     })
-    const decryptedMessages = await get().decryptMessages(conversationId, messages)
+    const decryptedMessages = get().decryptMessages(conversationId, messages)
 
     return decryptedMessages
   },
@@ -534,7 +534,7 @@ export const createMessageSlice: StateCreator<StoreSlices, [], [], MessageSlice>
       limit: 1,
     })
 
-    const decryptedMessages = await get().decryptMessages(conversationId, messages)
+    const decryptedMessages = get().decryptMessages(conversationId, messages)
 
     return decryptedMessages[0] || null
   },
@@ -551,10 +551,7 @@ export const createMessageSlice: StateCreator<StoreSlices, [], [], MessageSlice>
     const message = await canvasApp.db.get<Message>('message', messageId)
 
     const decryptedReactionsWithSenders = []
-    for (const decryptedReaction of await decryptReactions(
-      message?.conversation as string,
-      reactions
-    )) {
+    for (const decryptedReaction of decryptReactions(message?.conversation as string, reactions)) {
       // get the sender
       const sender = await canvasApp.db.get<Profile>('profile', decryptedReaction.sender as string)
       decryptedReactionsWithSenders.push({

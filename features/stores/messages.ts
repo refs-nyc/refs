@@ -36,6 +36,8 @@ export type MessageSlice = {
   subscribeToMessages: () => Promise<void>
   unsubscribeFromMessages: () => void
 
+  encryptionGroupsByConversationId: Record<string, EncryptionGroup>
+
   createConversation: (
     is_direct: boolean,
     otherMembers: Profile[],
@@ -72,6 +74,8 @@ export type MessageSlice = {
 export const createMessageSlice: StateCreator<StoreSlices, [], [], MessageSlice> = (set, get) => ({
   messagesSubscriptions: subscriptions,
 
+  encryptionGroupsByConversationId: {},
+
   subscribeToMessages: async () => {
     const { canvasApp, messagesSubscriptions } = get()
     if (!canvasApp) {
@@ -80,7 +84,26 @@ export const createMessageSlice: StateCreator<StoreSlices, [], [], MessageSlice>
 
     // get the existing state
 
+    const encryptionGroupsByConversationId: Record<string, EncryptionGroup> = {}
+    for (const encryptionGroup of await canvasApp.db.query<EncryptionGroup>('encryption_group')) {
+      encryptionGroupsByConversationId[encryptionGroup.id as string] = encryptionGroup
+    }
+
     // register subscriptions
+
+    canvasApp.db.subscribe('encryption_group', {}, (results) => {
+      const newEncryptionGroupsByConversationId: Record<string, EncryptionGroup> = {}
+      for (const encryptionGroup of results as EncryptionGroup[]) {
+        newEncryptionGroupsByConversationId[encryptionGroup.id as string] = encryptionGroup
+      }
+      // TODO: we should use Immer or something like it here
+      set(({ encryptionGroupsByConversationId: oldEncryptionGroupsByConversationId }) => ({
+        ...oldEncryptionGroupsByConversationId,
+        ...newEncryptionGroupsByConversationId,
+      }))
+    })
+
+    set({ encryptionGroupsByConversationId })
   },
 
   unsubscribeFromMessages: () => {
@@ -159,7 +182,14 @@ export const createMessageSlice: StateCreator<StoreSlices, [], [], MessageSlice>
   },
 
   sendMessage: async (sendMessageArgs) => {
-    const { canvasActions, canvasApp, user, encryptionWallet, updateLastRead } = get()
+    const {
+      canvasActions,
+      canvasApp,
+      user,
+      encryptionWallet,
+      updateLastRead,
+      encryptionGroupsByConversationId,
+    } = get()
     if (!canvasActions) {
       throw new Error('Canvas not logged in!')
     }
@@ -173,10 +203,8 @@ export const createMessageSlice: StateCreator<StoreSlices, [], [], MessageSlice>
       throw new Error('No encryption wallet exists for the current user')
     }
 
-    const encryptionGroup = await canvasApp.db.get<EncryptionGroup>(
-      'encryption_group',
-      sendMessageArgs.conversationId
-    )
+    const encryptionGroup = encryptionGroupsByConversationId[sendMessageArgs.conversationId]
+
     if (!encryptionGroup) {
       throw new Error(`Couldn't find encryption group for ${sendMessageArgs.conversationId}`)
     }
@@ -293,7 +321,7 @@ export const createMessageSlice: StateCreator<StoreSlices, [], [], MessageSlice>
       return []
     }
 
-    const { canvasApp, encryptionWallet, user } = get()
+    const { canvasApp, encryptionWallet, user, encryptionGroupsByConversationId } = get()
     if (!canvasApp) {
       throw new Error('Canvas not initialized!')
     }
@@ -307,10 +335,7 @@ export const createMessageSlice: StateCreator<StoreSlices, [], [], MessageSlice>
     }
 
     // get the encryption group for this conversation
-    const encryptionGroup = await canvasApp.db.get<EncryptionGroup>(
-      'encryption_group',
-      conversationId
-    )
+    const encryptionGroup = encryptionGroupsByConversationId[conversationId]
     if (!encryptionGroup) {
       throw new Error(`No encryption group exists for ${conversationId}`)
     }
@@ -343,7 +368,7 @@ export const createMessageSlice: StateCreator<StoreSlices, [], [], MessageSlice>
       return []
     }
 
-    const { canvasApp, encryptionWallet, user } = get()
+    const { canvasApp, encryptionWallet, user, encryptionGroupsByConversationId } = get()
     if (!canvasApp) {
       throw new Error('Canvas not initialized!')
     }
@@ -357,10 +382,7 @@ export const createMessageSlice: StateCreator<StoreSlices, [], [], MessageSlice>
     }
 
     // get the encryption group for this conversation
-    const encryptionGroup = await canvasApp.db.get<EncryptionGroup>(
-      'encryption_group',
-      conversationId
-    )
+    const encryptionGroup = encryptionGroupsByConversationId[conversationId]
     if (!encryptionGroup) {
       throw new Error(`No encryption group exists for ${conversationId}`)
     }

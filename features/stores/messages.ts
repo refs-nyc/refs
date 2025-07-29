@@ -91,17 +91,23 @@ export const createMessageSlice: StateCreator<StoreSlices, [], [], MessageSlice>
 
     // register subscriptions
 
-    canvasApp.db.subscribe('encryption_group', {}, (results) => {
-      const newEncryptionGroupsByConversationId: Record<string, EncryptionGroup> = {}
-      for (const encryptionGroup of results as EncryptionGroup[]) {
-        newEncryptionGroupsByConversationId[encryptionGroup.id as string] = encryptionGroup
+    const encryptionGroupSubscription = canvasApp.db.subscribe(
+      'encryption_group',
+      {},
+      (results) => {
+        const newEncryptionGroupsByConversationId: Record<string, EncryptionGroup> = {}
+        for (const encryptionGroup of results as EncryptionGroup[]) {
+          newEncryptionGroupsByConversationId[encryptionGroup.id as string] = encryptionGroup
+        }
+        // TODO: we should use Immer or something like it here
+        set(({ encryptionGroupsByConversationId: oldEncryptionGroupsByConversationId }) => ({
+          ...oldEncryptionGroupsByConversationId,
+          ...newEncryptionGroupsByConversationId,
+        }))
       }
-      // TODO: we should use Immer or something like it here
-      set(({ encryptionGroupsByConversationId: oldEncryptionGroupsByConversationId }) => ({
-        ...oldEncryptionGroupsByConversationId,
-        ...newEncryptionGroupsByConversationId,
-      }))
-    })
+    )
+
+    messagesSubscriptions.current = [encryptionGroupSubscription.id]
 
     set({ encryptionGroupsByConversationId })
   },

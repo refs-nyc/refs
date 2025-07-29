@@ -75,7 +75,6 @@ export type MessageSlice = {
   getGroupConversations: () => Promise<Conversation[]>
   getMembers: (conversationId: string) => ExpandedMembership[]
   getMembershipCount: (conversationId: string) => number
-  getMessagesForConversation: (conversationId: string) => Promise<DecryptedMessage[]>
   getLastMessageForConversation: (conversationId: string) => Promise<DecryptedMessage | null>
   getReactionsForMessage: (messageId: string) => Promise<DecryptedReactionWithSender[]>
   getNumberUnreadMessages: () => Promise<number>
@@ -523,22 +522,6 @@ export const createMessageSlice: StateCreator<StoreSlices, [], [], MessageSlice>
   getMembershipCount(conversationId) {
     const { membershipsByConversationAndUserId } = get()
     return Object.keys(membershipsByConversationAndUserId[conversationId]).length
-  },
-  getMessagesForConversation: async (conversationId: string) => {
-    const { canvasApp, user } = get()
-    if (!canvasApp) {
-      throw new Error('Canvas not initialized!')
-    }
-    if (!user) {
-      throw new Error('Not logged in!')
-    }
-
-    const messages = await canvasApp.db.query<Message>('message', {
-      where: { conversation: conversationId },
-    })
-    const decryptedMessages = get().decryptMessages(conversationId, messages)
-
-    return decryptedMessages
   },
   getLastMessageForConversation: async (conversationId) => {
     const { canvasApp } = get()

@@ -6,6 +6,7 @@ import { Avatar, AvatarStack } from '@/ui/atoms/Avatar'
 import { AvatarPicker } from '@/ui/inputs/AvatarPicker'
 import MessageBubble from '@/ui/messaging/MessageBubble'
 import MessageInput from '@/ui/messaging/MessageInput'
+import { useLiveQuery } from '@canvas-js/hooks'
 import { Link } from 'expo-router'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { FlatList, useWindowDimensions, View } from 'react-native'
@@ -21,9 +22,10 @@ export function MessagesScreen({ conversationId }: { conversationId: string }) {
     // oldestLoadedMessageDate,
     // setOldestLoadedMessageDate,
     // addOlderMessages,
+    canvasApp,
     getConversation,
     getMembers,
-    getMessagesForConversation,
+    decryptMessages,
     updateLastRead,
   } = useAppStore()
   const flatListRef = useRef<FlatList>(null)
@@ -37,18 +39,19 @@ export function MessagesScreen({ conversationId }: { conversationId: string }) {
 
   const conversation = getConversation(conversationId)
   const members = getMembers(conversationId)
-  const [conversationMessages, setConversationMessages] = useState<DecryptedMessage[]>([])
 
-  useEffect(() => {
-    async function updateData() {
-      const messages = await getMessagesForConversation(conversationId)
-      setConversationMessages(messages)
-    }
-    updateData()
+  const conversationMessages = useLiveQuery(canvasApp, 'message', {
+    where: { conversation: conversationId },
   })
 
+  const decryptedConversationMessages = useMemo(() => {
+    return conversationMessages ? decryptMessages(conversationId, conversationMessages) : []
+  }, [conversationMessages])
+
   const otherMembers = members.filter((m) => m.expand?.user.did !== user?.did)
-  const highlightedMessage = conversationMessages.find((m) => m.id === highlightedMessageId)
+  const highlightedMessage = decryptedConversationMessages.find(
+    (m) => m.id === highlightedMessageId
+  )
 
   const colorMap = useMemo(() => {
     const colors = randomColors(otherMembers.length)
@@ -116,11 +119,11 @@ export function MessagesScreen({ conversationId }: { conversationId: string }) {
   }
 
   function renderMessage({ item }: { item: DecryptedMessage }) {
-    const parentMessageIndex = conversationMessages.findIndex(
+    const parentMessageIndex = decryptedConversationMessages.findIndex(
       (m) => m.id === item.expand.decryptedData.parentMessageId
     )
     const parentMessage = item.expand.decryptedData.parentMessageId
-      ? conversationMessages[parentMessageIndex]
+      ? decryptedConversationMessages[parentMessageIndex]
       : undefined
     const parentMessageSender = parentMessage
       ? members.find((member) => member.expand?.user.did === parentMessage.sender)?.expand?.user

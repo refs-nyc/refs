@@ -23,7 +23,7 @@ export function MessagesScreen({ conversationId }: { conversationId: string }) {
     // setOldestLoadedMessageDate,
     // addOlderMessages,
     canvasApp,
-    getConversation,
+    conversationsById,
     getMembers,
     decryptMessages,
     updateLastRead,
@@ -37,7 +37,8 @@ export function MessagesScreen({ conversationId }: { conversationId: string }) {
   const [showEmojiPicker, setShowEmojiPicker] = useState<boolean>(false)
   const windowHeight = useWindowDimensions().height
 
-  const conversation = getConversation(conversationId)
+  const conversation = conversationsById[conversationId]
+
   const members = getMembers(conversationId)
 
   const conversationMessages = useLiveQuery(canvasApp, 'message', {

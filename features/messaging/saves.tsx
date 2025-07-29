@@ -19,8 +19,13 @@ const HEADER_TOP_PADDING = 24 // px, adjust as needed
 const BUTTON_BOTTOM_PADDING = 20 // px, adjust as needed
 
 export default function SavesList() {
-  const { saves, createMemberships, removeSave, getGroupConversations, getMembershipCount } =
-    useAppStore()
+  const {
+    saves,
+    createMemberships,
+    removeSave,
+    getGroupConversations,
+    membershipsByConversationAndUserId,
+  } = useAppStore()
   const { width } = useWindowDimensions()
   const buttonGap = s.$1
   const contentWidth = width - 2 * s.$3
@@ -31,7 +36,6 @@ export default function SavesList() {
   const [searchTerm, setSearchTerm] = useState('')
 
   const [groupConversations, setGroupConversations] = useState<Conversation[]>([])
-  const [membershipCounts, setMembershipCounts] = useState<Record<string, number>>({})
 
   const insets = useSafeAreaInsets()
 
@@ -43,12 +47,6 @@ export default function SavesList() {
     const updateGroupConversations = async () => {
       const groupConversations = await getGroupConversations()
       setGroupConversations(groupConversations)
-      const membershipCounts: Record<string, number> = {}
-
-      for (const conversation in groupConversations) {
-        membershipCounts[conversation] = getMembershipCount(conversation)
-      }
-      setMembershipCounts(membershipCounts)
     }
     updateGroupConversations()
   }, [])
@@ -232,7 +230,9 @@ export default function SavesList() {
                       variant="smallWhiteOutline"
                       onPress={() => {}}
                       style={{ width: '30%' }}
-                      title={`${membershipCounts[gc.id]} members`}
+                      title={`${
+                        Object.values(membershipsByConversationAndUserId[gc.id]).length
+                      } members`}
                     />
                   </XStack>
                 </Pressable>

@@ -39,6 +39,9 @@ export type MessageSlice = {
   updateEncryptionGroups: (newEncryptionGroups: EncryptionGroup[]) => void
   encryptionGroupsByConversationId: Record<string, EncryptionGroup>
 
+  updateConversations: (conversations: Conversation[]) => void
+  conversationsById: Record<string, Conversation>
+
   createConversation: (
     is_direct: boolean,
     otherMembers: Profile[],
@@ -78,7 +81,7 @@ export const createMessageSlice: StateCreator<StoreSlices, [], [], MessageSlice>
   messagesSubscriptions: subscriptions,
 
   subscribeToMessages: async () => {
-    const { canvasApp, messagesSubscriptions, updateEncryptionGroups } = get()
+    const { canvasApp, messagesSubscriptions, updateEncryptionGroups, updateConversations } = get()
     if (!canvasApp) {
       throw new Error('Canvas not initialized!')
     }
@@ -87,8 +90,14 @@ export const createMessageSlice: StateCreator<StoreSlices, [], [], MessageSlice>
     const encryptionGroupSubscription = canvasApp.db.subscribe('encryption_group', {}, (results) =>
       updateEncryptionGroups(results as EncryptionGroup[])
     )
+
+    const conversationSubscription = canvasApp.db.subscribe('conversation', {}, (results) => {
+      updateConversations(results as Conversation[])
+    })
+
     // TODO: do we need to call it the first time?
     updateEncryptionGroups((await encryptionGroupSubscription.results) as EncryptionGroup[])
+    updateConversations((await conversationSubscription.results) as Conversation[])
 
     messagesSubscriptions.current = [encryptionGroupSubscription.id]
   },
@@ -115,6 +124,15 @@ export const createMessageSlice: StateCreator<StoreSlices, [], [], MessageSlice>
       encryptionGroupsByConversationId[encryptionGroup.id as string] = encryptionGroup
     }
     set({ encryptionGroupsByConversationId })
+  },
+
+  conversationsById: {},
+  updateConversations: (conversations) => {
+    const conversationsById: Record<string, Conversation> = {}
+    for (const conversation of conversations) {
+      conversationsById[conversation.id] = conversation
+    }
+    set({ conversationsById })
   },
 
   createConversation: async (

@@ -9,7 +9,8 @@ import ConversationList from '@/ui/messaging/ConversationList'
 import { useEffect, useState } from 'react'
 
 export function ConversationsScreen() {
-  const { user, archiveConversation, canvasApp, membershipsByUserId } = useAppStore()
+  const { user, archiveConversation, canvasApp, membershipsByUserId, conversationsById } =
+    useAppStore()
 
   const [activeConversations, setActiveConversations] = useState<Conversation[]>([])
 
@@ -24,10 +25,8 @@ export function ConversationsScreen() {
       for (const membership of membershipsByUserId[user.did]) {
         if (membership.archived) continue
 
-        const conversation = await canvasApp.db.get<Conversation>(
-          'conversation',
-          membership.conversation as string
-        )
+        const conversation = conversationsById[membership.conversation as string]
+
         if (!conversation) continue
         const lastMessage = (
           await canvasApp.db.query<Message>('message', {

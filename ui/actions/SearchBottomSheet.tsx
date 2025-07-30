@@ -37,6 +37,7 @@ export default function SearchBottomSheet() {
     getRandomUser,
     newRefSheetRef,
     setAddingNewRefTo,
+    setAddRefPrompt,
   } = useAppStore()
 
   useEffect(() => {
@@ -129,7 +130,7 @@ export default function SearchBottomSheet() {
               onPress={async () => {
                 if (!searching && user?.userName) {
                   setAddingNewRefTo('grid')
-                  useAppStore.getState().setAddRefPrompt('')
+                  setAddRefPrompt('')
                   newRefSheetRef.current?.snapToIndex(1)
                 }
               }}
@@ -180,7 +181,9 @@ export default function SearchBottomSheet() {
                   <Pressable
                     onPress={(e) => {
                       e.stopPropagation()
-                      onSearchIconPress()
+                      setAddingNewRefTo('grid')
+                      setAddRefPrompt('')
+                      newRefSheetRef.current?.snapToIndex(1)
                     }}
                   >
                     <View

@@ -29,18 +29,27 @@ export const ProfileDetailsSheet = ({
     registerBackdropPress,
     unregisterBackdropPress,
     getUserByUserName,
+    preloadedGridItems,
   } = useAppStore()
 
+  // Use preloaded data for smooth animation, fallback to fetching if needed
   useEffect(() => {
-    const fetchProfile = async () => {
-      const profile = await getUserByUserName(profileUsername)
-      const gridItems = await getProfileItems(profile.userName)
-
-      setProfile(profile)
-      setGridItems(gridItems)
+    const initializeData = async () => {
+      // If this is the current user's profile and we have preloaded data, use it
+      if (user?.userName === profileUsername && preloadedGridItems.length > 0) {
+        const profile = await getUserByUserName(profileUsername)
+        setProfile(profile)
+        setGridItems(preloadedGridItems)
+      } else {
+        // Fallback to fetching data
+        const profile = await getUserByUserName(profileUsername)
+        const gridItems = await getProfileItems(profile.userName)
+        setProfile(profile)
+        setGridItems(gridItems)
+      }
     }
-    fetchProfile()
-  }, [profileUsername, profileRefreshTrigger])
+    initializeData()
+  }, [profileUsername, profileRefreshTrigger, user?.userName, preloadedGridItems])
 
   // if the current user is the item creator, then they have editing rights
   const editingRights = profile?.id === user?.id
@@ -67,6 +76,8 @@ export const ProfileDetailsSheet = ({
     gridItems.findIndex((itm) => itm.id === detailsItemId)
   )
 
+
+
   return (
     <BottomSheet
       ref={detailsSheetRef}
@@ -83,6 +94,9 @@ export const ProfileDetailsSheet = ({
       enablePanDownToClose={true}
       keyboardBehavior="interactive"
       onChange={onChange}
+      // animationDuration={300}
+      animationEasing="easeOutCubic"
+      enableOverDrag={false}
     >
       {profile && gridItems.length > 0 && (
         <ProfileDetailsProvider

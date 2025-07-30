@@ -389,7 +389,8 @@
         "presentable": false,
         "system": false,
         "type": "autodate"
-      }
+      },
+
     ],
     "indexes": [
       "CREATE UNIQUE INDEX `idx_tokenKey__pb_users_auth_` ON `users` (`tokenKey`)",
@@ -1151,6 +1152,7 @@
         "system": false,
         "type": "text"
       },
+
       {
         "hidden": false,
         "id": "autodate2990389176",

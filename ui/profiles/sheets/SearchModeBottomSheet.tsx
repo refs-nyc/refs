@@ -6,7 +6,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { SimplePinataImage } from '@/ui/images/SimplePinataImage'
 import { useState, useEffect } from 'react'
 import { useAppStore } from '@/features/stores'
-import { getSearchHistory, type SearchHistoryItem } from '@/features/pocketbase/api/search'
+import { getSearchHistory, type SearchHistoryRecord } from '@/features/pocketbase/api/search'
 
 const HEADER_HEIGHT = s.$8
 
@@ -76,9 +76,9 @@ export default function SearchModeBottomSheet({
   selectedRefs: string[]
   selectedRefItems: any[]
   onSearch: () => void
-  onRestoreSearch?: (historyItem: SearchHistoryItem) => void
+  onRestoreSearch?: (historyItem: SearchHistoryRecord) => void
 }) {
-  const [searchHistory, setSearchHistory] = useState<SearchHistoryItem[]>([])
+  const [searchHistory, setSearchHistory] = useState<SearchHistoryRecord[]>([])
   const [loadingHistory, setLoadingHistory] = useState(false)
   const [refImages, setRefImages] = useState<Record<string, string>>({})
   const [loadingRefs, setLoadingRefs] = useState(false)
@@ -136,8 +136,15 @@ export default function SearchModeBottomSheet({
       
       // Fetch images for all refs in history
       const allRefIds = new Set<string>()
-      history.forEach((item: SearchHistoryItem) => {
-        item.search_ref_ids.forEach(refId => allRefIds.add(refId))
+      history.forEach((item: SearchHistoryRecord) => {
+        try {
+          const searchItems = JSON.parse(item.search_items)
+          if (Array.isArray(searchItems)) {
+            searchItems.forEach((refId: string) => allRefIds.add(refId))
+          }
+        } catch (error) {
+          console.error('Error parsing search_items:', error)
+        }
       })
       if (allRefIds.size > 0) {
         fetchRefImages(Array.from(allRefIds))
@@ -150,9 +157,20 @@ export default function SearchModeBottomSheet({
     }
   }
 
-  const handleRestoreSearch = (historyItem: SearchHistoryItem) => {
+  const handleRestoreSearch = (historyItem: SearchHistoryRecord) => {
     if (onRestoreSearch) {
       onRestoreSearch(historyItem)
+    }
+  }
+
+  // Helper function to parse search items from JSON string
+  const parseSearchItems = (searchItemsJson: string): string[] => {
+    try {
+      const parsed = JSON.parse(searchItemsJson)
+      return Array.isArray(parsed) ? parsed : []
+    } catch (error) {
+      console.error('Error parsing search_items:', error)
+      return []
     }
   }
 
@@ -302,10 +320,10 @@ export default function SearchModeBottomSheet({
                     >
                       <YStack gap={8}>
                         <Text style={{ color: 'white', fontSize: s.$1, fontFamily: 'InterBold', lineHeight: 20 }}>
-                          {item.search_ref_titles.join(', ')}
+                          {parseSearchItems(item.search_items).join(', ')}
                         </Text>
                         <XStack gap={5} style={{ alignItems: 'center', marginTop: 2 }}>
-                          {item.search_ref_ids.slice(0, 3).map((refId: string, idx: number) => {
+                          {parseSearchItems(item.search_items).slice(0, 3).map((refId: string, idx: number) => {
                             const imageSource = refImages[refId] || ''
                             console.log(`🖼️ Rendering thumbnail for ref ${refId}:`, imageSource)
                             return (
@@ -330,7 +348,7 @@ export default function SearchModeBottomSheet({
                               </View>
                             )
                           })}
-                          {item.search_ref_ids.length > 3 && (
+                          {parseSearchItems(item.search_items).length > 3 && (
                             <View
                               style={{
                                 width: 40,
@@ -346,7 +364,7 @@ export default function SearchModeBottomSheet({
                               }}
                             >
                               <Text style={{ color: 'white', fontSize: 12, fontWeight: 'bold' }}>
-                                +{String(item.search_ref_ids.length - 3)}
+                                +{String(parseSearchItems(item.search_items).length - 3)}
                               </Text>
                             </View>
                           )}

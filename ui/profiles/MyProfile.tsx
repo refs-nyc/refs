@@ -272,7 +272,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
                   clearCachedSearchResults() // Clear cached search results
                   setSearchMode(true)
                 }}
-                elevation={0} // Very low elevation to ensure it's below the sheet
+
                 style={{
                   position: 'absolute',
                   bottom: insets.bottom - 30, // 50px lower (24 - 50 = -26)
@@ -352,27 +352,30 @@ export const MyProfile = ({ userName }: { userName: string }) => {
               }}
               onRestoreSearch={async (historyItem) => {
                 try {
-                  // Set the cached search results in the UI store
-                  useAppStore.getState().setCachedSearchResults(
-                    historyItem.search_results || [],
-                    'People into', // Use our desired title instead of stored title
-                    'Browse, dm, or add to a group' // Use our desired subtitle instead of stored subtitle
-                  )
+                  // Parse the search items from the history record
+                  const searchItems = JSON.parse(historyItem.search_items)
                   
                   // Set the selected refs from the history item
-                  setSelectedRefs(historyItem.search_ref_ids)
+                  setSelectedRefs(searchItems)
                   
-                  // Add a small delay to ensure cached results are set before opening sheet
+                  // Add a small delay to ensure refs are set before opening sheet
                   setTimeout(() => {
                     searchResultsSheetRef.current?.snapToIndex(1)
                     setSearchMode(false)
                   }, 100)
                 } catch (error) {
                   console.error('❌ Error restoring search from history:', error)
-                  // Fallback: just set the refs and let it do a new search
-                  setSelectedRefs(historyItem.search_ref_ids)
-                  searchResultsSheetRef.current?.snapToIndex(1)
-                  setSearchMode(false)
+                  // Fallback: try to parse as array directly
+                  try {
+                    const searchItems = JSON.parse(historyItem.search_items)
+                    if (Array.isArray(searchItems)) {
+                      setSelectedRefs(searchItems)
+                      searchResultsSheetRef.current?.snapToIndex(1)
+                      setSearchMode(false)
+                    }
+                  } catch (parseError) {
+                    console.error('❌ Failed to parse search items:', parseError)
+                  }
                 }
               }}
             />

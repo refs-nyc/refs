@@ -77,7 +77,7 @@ export const Grid = ({
 
   // Create a Set for O(1) lookup of selected items
   const selectedSet = new Set(selectedRefs)
-  
+
   return (
     <GridWrapper columns={columns} rows={rows}>
       {items.map((item, i) => {

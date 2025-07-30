@@ -1,113 +1,101 @@
-import { View } from 'react-native'
-import { c, s } from '@/features/style'
-import { SizableText } from '../typo/SizableText'
-import Animated, { 
-  useSharedValue, 
-  useAnimatedStyle, 
-  withRepeat, 
-  withTiming,
-  Easing
-} from 'react-native-reanimated'
-import { useEffect } from 'react'
+import React, { useEffect, useRef } from 'react'
+import { View, Animated } from 'react-native'
+import Svg, { Circle } from 'react-native-svg'
+import { c } from '@/features/style'
 
-export function SearchLoadingSpinner() {
-  const leftCircleRotation = useSharedValue(0)
-  const rightCircleRotation = useSharedValue(0)
+interface SearchLoadingSpinnerProps {
+  size?: number
+}
+
+export const SearchLoadingSpinner: React.FC<SearchLoadingSpinnerProps> = ({ size = 71 }) => {
+  const leftCircleRotation = useRef(new Animated.Value(0)).current
+  const rightCircleRotation = useRef(new Animated.Value(0)).current
 
   useEffect(() => {
-    // Left circle spins clockwise
-    leftCircleRotation.value = withRepeat(
-      withTiming(360, {
-        duration: 2000,
-        easing: Easing.linear,
-      }),
-      -1, // infinite
-      false
-    )
+    const startAnimation = () => {
+      // Left circle spins clockwise
+      Animated.loop(
+        Animated.timing(leftCircleRotation, {
+          toValue: 1,
+          duration: 2000,
+          useNativeDriver: true,
+        })
+      ).start()
 
-    // Right circle spins counter-clockwise
-    rightCircleRotation.value = withRepeat(
-      withTiming(-360, {
-        duration: 2500,
-        easing: Easing.linear,
-      }),
-      -1, // infinite
-      false
-    )
-  }, [])
+      // Right circle spins counter-clockwise
+      Animated.loop(
+        Animated.timing(rightCircleRotation, {
+          toValue: -1,
+          duration: 2000,
+          useNativeDriver: true,
+        })
+      ).start()
+    }
 
-  const leftCircleStyle = useAnimatedStyle(() => ({
-    transform: [{ rotate: `${leftCircleRotation.value}deg` }],
-  }))
+    startAnimation()
+  }, [leftCircleRotation, rightCircleRotation])
 
-  const rightCircleStyle = useAnimatedStyle(() => ({
-    transform: [{ rotate: `${rightCircleRotation.value}deg` }],
-  }))
+  const leftCircleSpin = leftCircleRotation.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '360deg'],
+  })
+
+  const rightCircleSpin = rightCircleRotation.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '-360deg'],
+  })
+
+  const scale = size / 71 // Scale factor based on original 71px size
 
   return (
-    <View
-      style={{
-        justifyContent: 'center',
-        alignItems: 'center',
-        paddingVertical: s.$4,
-      }}
-    >
-      {/* Venn Diagram Container */}
-      <View
-        style={{
-          position: 'relative',
-          width: 100,
-          height: 50,
-          justifyContent: 'center',
-          alignItems: 'center',
-        }}
-      >
-        {/* Left Circle */}
+    <View style={{ alignItems: 'center', justifyContent: 'center' }}>
+      <View style={{ width: size, height: size * 0.66, position: 'relative' }}>
+        {/* Left circle */}
         <Animated.View
-          style={[
-            {
-              position: 'absolute',
-              left: 0,
-              width: 50,
-              height: 50,
-              borderRadius: 25,
-              borderWidth: 2,
-              borderStyle: 'dashed',
-              borderColor: c.olive,
-              backgroundColor: 'transparent',
-            },
-            leftCircleStyle,
-          ]}
-        />
-        
-        {/* Right Circle */}
-        <Animated.View
-          style={[
-            {
-              position: 'absolute',
-              right: 0,
-              width: 50,
-              height: 50,
-              borderRadius: 25,
-              borderWidth: 2,
-              borderStyle: 'dashed',
-              borderColor: c.olive,
-              backgroundColor: 'transparent',
-            },
-            rightCircleStyle,
-          ]}
-        />
-      </View>
+          style={{
+            position: 'absolute',
+            left: 0,
+            top: 0,
+            width: size * 0.66,
+            height: size * 0.66,
+            transform: [{ rotate: leftCircleSpin }],
+          }}
+        >
+          <Svg width={size * 0.66} height={size * 0.66} viewBox="0 0 47 47" fill="none">
+            <Circle 
+              cx="23.5" 
+              cy="23.5" 
+              r="23" 
+              stroke={c.black} 
+              strokeDasharray="2 2"
+              strokeWidth="1"
+            />
+          </Svg>
+        </Animated.View>
 
-      <SizableText 
-        style={{ 
-          color: c.grey2, 
-          marginTop: s.$3,
-          textAlign: 'center' 
-        }}
-      >
-        Finding people at the intersection...
-      </SizableText>
+        {/* Right circle */}
+        <Animated.View
+          style={{
+            position: 'absolute',
+            right: 0,
+            top: 0,
+            width: size * 0.66,
+            height: size * 0.66,
+            transform: [{ rotate: rightCircleSpin }],
+          }}
+        >
+          <Svg width={size * 0.66} height={size * 0.66} viewBox="0 0 47 47" fill="none">
+            <Circle 
+              cx="23.5" 
+              cy="23.5" 
+              r="23" 
+              stroke={c.black} 
+              strokeDasharray="2 2"
+              strokeWidth="1"
+            />
+          </Svg>
+        </Animated.View>
+      </View>
     </View>
   )
 } 

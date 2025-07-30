@@ -47,9 +47,9 @@ export const MyBacklogSheet = ({
     <BottomSheet
       enableDynamicSizing={false}
       ref={bottomSheetRef}
-      enablePanDownToClose={false}
       snapPoints={['15%', '90%']}
-      index={0}
+      index={-1}
+      enablePanDownToClose={true}
       animatedIndex={moduleBackdropAnimatedIndex}
       onChange={(i: number) => {
         setIndex(i)

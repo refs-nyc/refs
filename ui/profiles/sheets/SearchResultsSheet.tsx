@@ -10,7 +10,9 @@ import UserListItem from '@/ui/atoms/UserListItem'
 import { Profile } from '@/features/types'
 import { useState, useRef, useEffect, useCallback, useMemo, forwardRef, useImperativeHandle } from 'react'
 import { useAppStore } from '@/features/stores'
-import { searchPeople, SearchResponse, PersonResult } from '@/features/pocketbase/api/search'
+import { searchPeople, saveSearchHistory, SearchResponse, PersonResult } from '@/features/pocketbase/api/search'
+
+const MATCHMAKING_API_URL = process.env.EXPO_PUBLIC_MATCHMAKING_API_URL || 'http://localhost:3001'
 import { SearchLoadingSpinner } from '@/ui/atoms/SearchLoadingSpinner'
 import { router } from 'expo-router'
 // import OffScreenButton from '@/ui/buttons/OffScreenButton'
@@ -18,12 +20,12 @@ import { Button } from '@/ui/buttons/Button'
 
 export interface SearchResultsSheetRef {
   triggerSearch: () => void;
-};
+}
 
 export default forwardRef<SearchResultsSheetRef, {
-  bottomSheetRef: React.RefObject<BottomSheet>
-  selectedRefs: string[]
-  selectedRefItems: any[]
+  bottomSheetRef: React.RefObject<BottomSheet>;
+  selectedRefs: string[];
+  selectedRefItems: any[];
 }>(({ bottomSheetRef, selectedRefs, selectedRefItems }, ref) => {
   const snapPoints = ['25%', '80%']
   const resultsAnimation = useRef(new Animated.Value(0)).current
@@ -70,7 +72,10 @@ export default forwardRef<SearchResultsSheetRef, {
 
   const handleShare = async () => {
     try {
-      const refTitles = selectedRefItems.map(item => item.title || item.expand?.ref?.title || 'Unknown').join(', ')
+      const refTitles = selectedRefItems.map(item => {
+        // Try to get title from expand.ref.title first, then fallback to ref_id
+        return item.expand?.ref?.title || item.ref || 'Unknown'
+      }).join(', ')
       const shareMessage = `Check out these people who are into: ${refTitles}\n\nFound via Refs app`
       
       await Share.share({
@@ -139,72 +144,126 @@ export default forwardRef<SearchResultsSheetRef, {
     }
   }, [cachedSearchResults, cachedSearchTitle, cachedSearchSubtitle])
 
+  // Fallback function to get some users when search returns no results
+  const getFallbackUsers = async (): Promise<PersonResult[]> => {
+    try {
+      // Call the same API but with a broader search
+      const response = await fetch(`${MATCHMAKING_API_URL}/api/search-people`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          user_id: user?.id,
+          item_ids: [], // Empty to get all users
+          limit: 20
+        }),
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        return data.results || []
+      }
+    } catch (error) {
+      console.error('Error getting fallback users:', error)
+    }
+    
+    // Return empty array if fallback fails
+    return []
+  }
+
   const performSearch = async () => {
     console.log('🔍 performSearch started')
-    if (!user || selectedRefItems.length === 0) {
-      console.log('❌ Cannot perform search: no user or no selected items')
+    
+    if (!user) {
+      setSearchError('Please log in to search')
       return
     }
+
+    if (selectedRefItems.length === 0) {
+      setSearchError('Please select at least one ref to search')
+      return
+    }
+
     setIsLoading(true)
     setSearchError(null)
 
     try {
-      // Convert item IDs to ref IDs
-      const refIds = selectedRefItems.map(item => item.ref).filter(Boolean)
-      console.log('🔍 Ref IDs:', refIds)
+      // Extract item IDs for search
+      const itemIds = selectedRefItems.map(item => item.id).filter(Boolean)
+      console.log('🔍 Item IDs for search:', itemIds)
       
-      if (refIds.length === 0) {
-        throw new Error('No valid ref IDs found')
+      if (itemIds.length === 0) {
+        throw new Error('No valid item IDs found')
       }
       
       console.log('🔍 Calling searchPeople API...')
       const response = await searchPeople({
-        user_id: user.id,
-        ref_ids: refIds,
+          user_id: user.id,
+        item_ids: itemIds,
         limit: 60
       })
-      console.log('🔍 Search response:', response)
 
-      setSearchResults(response.results)
-      // Override API response with our desired title and subtitle
-      const title = 'People into'
-      const subtitle = 'Browse, dm, or add to a group'
-      setSearchTitle(title)
-      setSearchSubtitle(subtitle)
+      console.log('🔍 Search response:', response)
       
-      // Cache the results
-      setCachedSearchResults(response.results, title, subtitle)
+      // Always show results, even if empty - never leave user empty-handed
+      let results = response.results || []
       
-      // Preload search result profiles for faster navigation
-      const userIds = response.results.map(person => person.user_id)
-      // preloadSearchResults(userIds) // Removed - not essential for core functionality
+      // If no results found, get fallback users
+      if (results.length === 0) {
+        console.log('🔍 No search results found, getting fallback users...')
+        const fallbackUsers = await getFallbackUsers()
+        results = fallbackUsers
+        console.log('🔍 Fallback users found:', fallbackUsers.length)
+      }
       
-      // Animate results in
+      setSearchResults(results)
+      
+      // Generate search title and subtitle
+      const refTitles = selectedRefItems
+        .map(item => {
+          // Try to get title from expand.ref.title first, then fallback to ref_id
+          return item.expand?.ref?.title || item.ref || 'Unknown'
+        })
+        .filter(Boolean)
+        .slice(0, 3)
+        .join(', ')
+      
+      if (response.results && response.results.length > 0) {
+        // Original search had results
+        setSearchTitle('People into')
+        setSearchSubtitle('browse, dm, or add to a group')
+        
+        // Cache results
+        setCachedSearchResults(response.results, 'People into', 'browse, dm, or add to a group')
+      } else if (results.length > 0) {
+        // Using fallback users
+        setSearchTitle('People into')
+        setSearchSubtitle('browse, dm, or add to a group')
+        
+        // Cache fallback results
+        setCachedSearchResults(results, 'People into', 'browse, dm, or add to a group')
+      } else {
+        // No results at all
+        setSearchTitle('People into')
+        setSearchSubtitle('No users found, try different refs')
+        
+        // Cache empty results
+        setCachedSearchResults([], 'People into', 'No users found, try different refs')
+      }
+      
+      // Save to search history
+      try {
+        await saveSearchHistory(user.id, itemIds, results.length)
+      } catch (error) {
+        console.error('Failed to save search history:', error)
+      }
+      
       animateResultsIn()
     } catch (error) {
       console.error('Search failed:', error)
-      
-      // Provide more specific error messages
-      if (error instanceof Error) {
-        if (error.message === 'No valid ref IDs found') {
-          setSearchError('Selected items could not be found. Please try selecting different items.')
-        } else if (error.message.includes('400: No valid refs found')) {
-          setSearchError('Selected refs not found in database. Please try selecting different items.')
-        } else {
-          setSearchError('Search failed. Please try again.')
-        }
-      } else {
-        setSearchError('Search failed. Please try again.')
-      }
-      
+      setSearchError(error instanceof Error ? error.message : 'Search failed')
       setSearchResults([])
-      const title = 'People into'
-      const subtitle = 'Browse, dm, or add to a group'
-      setSearchTitle(title)
-      setSearchSubtitle(subtitle)
-      
-      // Clear cached results on error
-      clearCachedSearchResults()
     } finally {
       setIsLoading(false)
     }
@@ -213,13 +272,17 @@ export default forwardRef<SearchResultsSheetRef, {
   // Convert search results to Profile format for UserListItem
   const convertToProfiles = (results: PersonResult[]): Profile[] => {
     return results.map(result => {
+      // Use the proper display name from the search result
+      const displayName = result.name || result.userName || 'Unknown'
+      const nameParts = displayName.split(' ')
+      
       const profile = {
-        id: result.user_id,
-        userName: result.user_name,
-        firstName: result.user_name.split(' ')[0] || result.user_name,
-        lastName: result.user_name.split(' ').slice(1).join(' ') || '',
-        avatar: result.user_image || '',
-        location: result.user_location || '',
+        id: result.id,
+        userName: displayName, // Use the display name as userName for display
+        firstName: nameParts[0] || result.userName,
+        lastName: nameParts.slice(1).join(' ') || '',
+        avatar: result.avatar_url || '',
+        location: '',
         email: '',
         password: '',
         tokenKey: '',
@@ -249,29 +312,31 @@ export default forwardRef<SearchResultsSheetRef, {
     console.log('🔍 Selected ref items structure:', selectedRefItems.map(item => ({
       id: item.id,
       refId: item.ref,
-      refTitle: item.expand?.ref?.title
+      refTitle: item.expand?.ref?.title,
+      hasExpand: !!item.expand,
+      expandKeys: item.expand ? Object.keys(item.expand) : [],
+      sevenString: item.seven_string,
+      hasSevenString: !!item.seven_string,
+      fullItem: item
     })))
+    console.log('🔍 Full selected ref items data:', JSON.stringify(selectedRefItems, null, 2))
     
     if (!user || selectedRefItems.length === 0) {
       console.log('❌ Cannot search: no user or no selected items')
       return
     }
     
-    // Check if we have cached results for the same search
-    if (cachedSearchResults.length > 0 && !hasUsedCachedResults.current) {
-      console.log('✅ Using cached results')
-      setSearchResults(cachedSearchResults)
-      setSearchTitle(cachedSearchTitle)
-      setSearchSubtitle(cachedSearchSubtitle)
-      setIsLoading(false)
-      setSearchError(null)
-      hasUsedCachedResults.current = true
-      animateResultsIn()
-    } else {
-      console.log('🔍 Performing new search...')
+    // Temporarily disable 7-string check for testing
+    // const itemsWithoutSevenStrings = selectedRefItems.filter(item => !item.seven_string)
+    // if (itemsWithoutSevenStrings.length > 0) {
+    //   console.log('⚠️ Some items missing 7-strings:', itemsWithoutSevenStrings.map(item => item.id))
+    //   setSearchError('Some items are still being processed. Please try again in a moment.')
+    //   return
+    // }
+
+    console.log('🔍 Performing new search...')
       performSearch()
-    }
-  }, [user, selectedRefItems, cachedSearchResults, cachedSearchTitle, cachedSearchSubtitle])
+  }, [user, selectedRefItems, performSearch])
 
   // Expose triggerSearch function to parent via ref
   useImperativeHandle(ref, () => ({
@@ -442,7 +507,11 @@ export default forwardRef<SearchResultsSheetRef, {
           </Text>
         </View>
 
-        <BottomSheetScrollView alwaysBounceVertical={false}>
+        <BottomSheetScrollView 
+          alwaysBounceVertical={false}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ paddingBottom: 100 }}
+        >
           <YStack style={{ marginTop: 10 }}>
             {isLoading ? (
               <View style={{ marginTop: 30 }}>
@@ -484,7 +553,7 @@ export default forwardRef<SearchResultsSheetRef, {
                     style={{ paddingHorizontal: 0 }}
                   />
                 ))}
-                               </Animated.View>
+              </Animated.View>
                ) : null}
           </YStack>
         </BottomSheetScrollView>

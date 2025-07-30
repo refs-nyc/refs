@@ -6,7 +6,7 @@ import { ClientResponseError } from 'pocketbase'
 import type { StoreSlices } from './types'
 
 export type UserSlice = {
-  stagedUser: Partial<Profile>
+  stagedUser: Partial<Profile> & { password?: string }
   user: Profile | null
   isInitialized: boolean
   register: () => Promise<ExpandedProfile>

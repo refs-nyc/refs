@@ -18,7 +18,7 @@ import { Button } from '@/ui/buttons/Button'
 
 export interface SearchResultsSheetRef {
   triggerSearch: () => void;
-}
+};
 
 export default forwardRef<SearchResultsSheetRef, {
   bottomSheetRef: React.RefObject<BottomSheet>

@@ -71,13 +71,7 @@ export const Details = ({ data }: { data: Item[] }) => {
         windowSize={3}
         pagingEnabled={true}
         snapEnabled={true}
-        enableMomentum={false}
-        maintainVisibleContentPosition={{
-          minIndexForVisible: 0,
-        }}
-        panGestureHandlerProps={{
-          activeOffsetX: [-10, 10],
-        }}
+
       />
 
       {addingToList !== '' && addingItem && (

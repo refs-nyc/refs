@@ -99,7 +99,7 @@ export default function SearchHistorySheet({
                         key={person.id || idx}
                         size={64}
                         source={person.avatar_url || person.avatar || undefined}
-                        name={person.name || person.username || 'User'}
+                        // name={person.name || person.username || 'User'}
                       />
                     ))
                   ) : (

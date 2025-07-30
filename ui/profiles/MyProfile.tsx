@@ -50,8 +50,6 @@ export const MyProfile = ({ userName }: { userName: string }) => {
     setSelectedRefs,
     setReturningFromSearch,
     clearCachedSearchResults,
-    preloadedGridItems,
-    preloadedBacklogItems,
   } = useAppStore()
 
   const [removingItem, setRemovingItem] = useState<ExpandedItem | null>(null)
@@ -70,18 +68,12 @@ export const MyProfile = ({ userName }: { userName: string }) => {
       const profile = await getUserByUserName(userName)
       setProfile(profile)
 
-      // Use preloaded data if available for current user
-      if (user?.userName === userName && preloadedGridItems.length > 0) {
-        setGridItems(preloadedGridItems)
-        setBacklogItems(preloadedBacklogItems as ExpandedItem[])
-      } else {
-        // Fallback to fetching data
-        const gridItems = await getProfileItems(userName)
-        setGridItems(gridItems)
+      // Fetch data
+      const gridItems = await getProfileItems(userName)
+      setGridItems(gridItems)
 
-        const backlogItems = await getBacklogItems(userName)
-        setBacklogItems(backlogItems as ExpandedItem[])
-      }
+      const backlogItems = await getBacklogItems(userName)
+      setBacklogItems(backlogItems as ExpandedItem[])
     } catch (error) {
       console.error(error)
     } finally {
@@ -289,6 +281,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
                   opacity: searchMode ? 0 : 1, // Hide with opacity instead of conditional rendering
                 }}
               />
+
             </View>
           </View>
         )}

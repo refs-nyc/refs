@@ -271,7 +271,7 @@ export const createItemSlice: StateCreator<StoreSlices, [], [], ItemSlice> = (se
     const result = await pocketbase.collection('items').getList<ExpandedItem>(1, 30, {
       // TODO: remove list = false once we have a way to display lists in the feed
       // also consider showing backlog items in the feed, when we have a way to link to them
-      filter: `creator != null && backlog = false && list = false && parent = null`,
+      filter: `creator != "" && backlog = false && list = false && parent = null`,
       sort: '-created',
       expand: 'ref,creator',
     })
@@ -279,8 +279,9 @@ export const createItemSlice: StateCreator<StoreSlices, [], [], ItemSlice> = (se
   },
   getTickerItems: async () => {
     return await pocketbase.collection('refs').getFullList<RefsRecord>({
-      filter: 'showInTicker=true',
+      filter: 'title != ""',
       sort: '-created',
+      perPage: 10,
     })
   },
   getRefById: async (id: string) => {

@@ -29,27 +29,20 @@ export const ProfileDetailsSheet = ({
     registerBackdropPress,
     unregisterBackdropPress,
     getUserByUserName,
-    preloadedGridItems,
+
   } = useAppStore()
 
   // Use preloaded data for smooth animation, fallback to fetching if needed
   useEffect(() => {
     const initializeData = async () => {
-      // If this is the current user's profile and we have preloaded data, use it
-      if (user?.userName === profileUsername && preloadedGridItems.length > 0) {
-        const profile = await getUserByUserName(profileUsername)
-        setProfile(profile)
-        setGridItems(preloadedGridItems)
-      } else {
-        // Fallback to fetching data
-        const profile = await getUserByUserName(profileUsername)
-        const gridItems = await getProfileItems(profile.userName)
-        setProfile(profile)
-        setGridItems(gridItems)
-      }
+      // Fetch data
+      const profile = await getUserByUserName(profileUsername)
+      const gridItems = await getProfileItems(profile.userName)
+      setProfile(profile)
+      setGridItems(gridItems)
     }
     initializeData()
-  }, [profileUsername, profileRefreshTrigger, user?.userName, preloadedGridItems])
+  }, [profileUsername, profileRefreshTrigger, user?.userName])
 
   // if the current user is the item creator, then they have editing rights
   const editingRights = profile?.id === user?.id
@@ -95,7 +88,6 @@ export const ProfileDetailsSheet = ({
       keyboardBehavior="interactive"
       onChange={onChange}
       // animationDuration={300}
-      animationEasing="easeOutCubic"
       enableOverDrag={false}
     >
       {profile && gridItems.length > 0 && (

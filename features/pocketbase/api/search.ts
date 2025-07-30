@@ -1,4 +1,4 @@
-import { useAppStore } from '../stores'
+import { useAppStore } from '@/features/stores'
 
 // Updated search API for new matchmaking system
 const MATCHMAKING_API_URL = process.env.EXPO_PUBLIC_MATCHMAKING_API_URL || 'http://localhost:3001'

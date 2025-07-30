@@ -33,7 +33,7 @@ subscriptions.current = []
 export type MessageSlice = {
   messagesSubscriptions: MutableRefObject<number[]>
 
-  subscribeToMessages: () => Promise<void>
+  subscribeToMessages: () => void
   unsubscribeFromMessages: () => void
 
   updateEncryptionGroups: (newEncryptionGroups: EncryptionGroup[]) => void
@@ -81,7 +81,7 @@ export type MessageSlice = {
 export const createMessageSlice: StateCreator<StoreSlices, [], [], MessageSlice> = (set, get) => ({
   messagesSubscriptions: subscriptions,
 
-  subscribeToMessages: async () => {
+  subscribeToMessages: () => {
     const {
       canvasApp,
       messagesSubscriptions,
@@ -105,11 +105,6 @@ export const createMessageSlice: StateCreator<StoreSlices, [], [], MessageSlice>
     const membershipSubscription = canvasApp.db.subscribe('membership', {}, (results) =>
       updateMemberships(results as Membership[])
     )
-
-    // TODO: do we need to call it the first time?
-    updateEncryptionGroups((await encryptionGroupSubscription.results) as EncryptionGroup[])
-    updateConversations((await conversationSubscription.results) as Conversation[])
-    updateMemberships((await membershipSubscription.results) as Membership[])
 
     messagesSubscriptions.current = [
       encryptionGroupSubscription.id,

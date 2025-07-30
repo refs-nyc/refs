@@ -90,7 +90,15 @@ function FontProvider({ children }: { children: React.ReactNode }) {
 }
 
 export default function RootLayout() {
-  const { init, connectCanvas } = useAppStore()
+  const {
+    init,
+    connectCanvas,
+    canvasApp,
+    subscribeToUsers,
+    subscribeToMessages,
+    unsubscribeFromMessages,
+    unsubscribeFromUsers,
+  } = useAppStore()
 
   useEffect(() => {
     async function doInit() {
@@ -99,6 +107,18 @@ export default function RootLayout() {
     }
     doInit()
   }, [init, connectCanvas])
+
+  useEffect(() => {
+    if (canvasApp) {
+      subscribeToUsers()
+      subscribeToMessages()
+    }
+
+    return () => {
+      unsubscribeFromUsers()
+      unsubscribeFromMessages()
+    }
+  }, [canvasApp])
 
   return (
     <Providers>

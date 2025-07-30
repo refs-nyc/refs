@@ -3,7 +3,7 @@ import type { SessionSigner } from '@canvas-js/interfaces'
 import { getEncryptionPublicKey } from '../encryption'
 import { StateCreator } from 'zustand'
 import type { RefsCanvas } from '../canvas/contract'
-import { getCurrentSessionSignerFromMagic, getEncryptionWalletFromMagic } from '../magic'
+import { getCurrentSessionSignerFromMagic, getEncryptionWalletFromMagic, magic } from '../magic'
 import { Profile, StagedProfileFields } from '../types'
 import type { StoreSlices } from './types'
 import { Wallet } from 'ethers'
@@ -14,8 +14,8 @@ subscriptions.current = []
 
 export type UserSlice = {
   usersSubscriptions: MutableRefObject<number[]>
-  subscribeToMessages: () => Promise<void>
-  unsubscribeFromMessages: () => void
+  subscribeToUsers: () => void
+  unsubscribeFromUsers: () => void
 
   profilesByUserDid: Record<string, Profile>
   updateProfiles: (profiles: Profile[]) => void
@@ -41,7 +41,7 @@ export type UserSlice = {
 
 export const createUserSlice: StateCreator<StoreSlices, [], [], UserSlice> = (set, get) => ({
   usersSubscriptions: subscriptions,
-  subscribeToMessages: async () => {
+  subscribeToUsers: () => {
     const { canvasApp, updateProfiles, usersSubscriptions } = get()
     if (!canvasApp) {
       throw new Error('Canvas not initialized!')
@@ -51,11 +51,22 @@ export const createUserSlice: StateCreator<StoreSlices, [], [], UserSlice> = (se
       updateProfiles(results as Profile[])
     )
 
-    updateProfiles((await profileSubscription.results) as Profile[])
-
     usersSubscriptions.current = [profileSubscription.id]
   },
-  unsubscribeFromMessages: () => {},
+  unsubscribeFromUsers: () => {
+    const { canvasApp, usersSubscriptions } = get()
+    if (!canvasApp) {
+      // canvas app doesn't exist, so we have already unsubscribed
+      usersSubscriptions.current = []
+      return
+    }
+
+    for (const subscription of usersSubscriptions.current) {
+      canvasApp?.db.unsubscribe(subscription)
+    }
+
+    usersSubscriptions.current = []
+  },
 
   profilesByUserDid: {},
   updateProfiles: (profiles: Profile[]) => {
@@ -212,6 +223,7 @@ export const createUserSlice: StateCreator<StoreSlices, [], [], UserSlice> = (se
   //
   //
   logout: () => {
+    magic.user.logout()
     set(() => ({
       user: null,
       sessionSigner: null,

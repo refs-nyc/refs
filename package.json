@@ -43,7 +43,6 @@
     "@react-navigation/bottom-tabs": "^7.0.0",
     "@react-navigation/native": "^7.0.0",
     "babel-plugin-transform-import-meta": "^2.3.2",
-    "base-64": "^1.0.0",
     "crypto-browserify": "^3.12.1",
     "ethers": "^6.13.4",
     "event-target-polyfill": "^0.0.4",

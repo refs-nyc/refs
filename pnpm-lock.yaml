@@ -74,9 +74,6 @@ importers:
       babel-plugin-transform-import-meta:
         specifier: ^2.3.2
         version: 2.3.2(@babel/core@7.26.0)
-      base-64:
-        specifier: ^1.0.0
-        version: 1.0.0
       crypto-browserify:
         specifier: ^3.12.1
         version: 3.12.1
@@ -7581,8 +7578,8 @@ packages:
       text-encoding: '*'
       web-streams-polyfill: '*'
 
-  react-native-quick-base64@2.2.0:
-    resolution: {integrity: sha512-r7/BRsRl8QKEhS0JsHW6QX9+8LrC6NNWlwNnBnZ69h2kbcfABYsUILT71obrs9fqElEIMzuYSI5aHID955akyQ==}
+  react-native-quick-base64@2.2.1:
+    resolution: {integrity: sha512-rAECaDhq3v+P8IM10cLgUVvt3kPJq3v+Jznp7tQRLXk1LlV/VCepump3am0ObwHlE6EoXblm4cddPJoXAlO+CQ==}
     peerDependencies:
       react: '*'
       react-native: '*'
@@ -10657,7 +10654,7 @@ snapshots:
   '@craftzdog/react-native-buffer@6.1.0(react-native@0.76.6(@babel/core@7.26.0)(@babel/preset-env@7.26.0(@babel/core@7.26.0))(@types/react@18.3.16)(bufferutil@4.0.8)(react@18.3.1)(utf-8-validate@5.0.10))(react@18.3.1)':
     dependencies:
       ieee754: 1.2.1
-      react-native-quick-base64: 2.2.0(react-native@0.76.6(@babel/core@7.26.0)(@babel/preset-env@7.26.0(@babel/core@7.26.0))(@types/react@18.3.16)(bufferutil@4.0.8)(react@18.3.1)(utf-8-validate@5.0.10))(react@18.3.1)
+      react-native-quick-base64: 2.2.1(react-native@0.76.6(@babel/core@7.26.0)(@babel/preset-env@7.26.0(@babel/core@7.26.0))(@types/react@18.3.16)(bufferutil@4.0.8)(react@18.3.1)(utf-8-validate@5.0.10))(react@18.3.1)
     transitivePeerDependencies:
       - react
       - react-native
@@ -18751,7 +18748,7 @@ snapshots:
       text-encoding: 0.7.0
       web-streams-polyfill: 3.3.3
 
-  react-native-quick-base64@2.2.0(react-native@0.76.6(@babel/core@7.26.0)(@babel/preset-env@7.26.0(@babel/core@7.26.0))(@types/react@18.3.16)(bufferutil@4.0.8)(react@18.3.1)(utf-8-validate@5.0.10))(react@18.3.1):
+  react-native-quick-base64@2.2.1(react-native@0.76.6(@babel/core@7.26.0)(@babel/preset-env@7.26.0(@babel/core@7.26.0))(@types/react@18.3.16)(bufferutil@4.0.8)(react@18.3.1)(utf-8-validate@5.0.10))(react@18.3.1):
     dependencies:
       react: 18.3.1
       react-native: 0.76.6(@babel/core@7.26.0)(@babel/preset-env@7.26.0(@babel/core@7.26.0))(@types/react@18.3.16)(bufferutil@4.0.8)(react@18.3.1)(utf-8-validate@5.0.10)

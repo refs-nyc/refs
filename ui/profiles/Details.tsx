@@ -56,10 +56,6 @@ export const Details = ({ data }: { data: Item[] }) => {
         loop={data.length > 1}
         ref={ref}
         mode="parallax"
-        modeConfig={{
-          parallaxScrollingScale: 0.99999,
-          parallaxScrollingOffset: 50,
-        }}
         containerStyle={{ padding: 0 }}
         data={data as ExpandedItem[]}
         width={win.width}
@@ -72,7 +68,7 @@ export const Details = ({ data }: { data: Item[] }) => {
         }}
         onConfigurePanGesture={handleConfigurePanGesture}
         renderItem={({ item, index }) => <DetailsCarouselItem item={item} index={index} />}
-        windowSize={5}
+        windowSize={3}
         pagingEnabled={true}
         snapEnabled={true}
       />

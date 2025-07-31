@@ -271,17 +271,28 @@ export const createItemSlice: StateCreator<StoreSlices, [], [], ItemSlice> = (se
     const result = await pocketbase.collection('items').getList<ExpandedItem>(1, 30, {
       // TODO: remove list = false once we have a way to display lists in the feed
       // also consider showing backlog items in the feed, when we have a way to link to them
-      filter: `creator != null && backlog = false && list = false && parent = null`,
+      filter: `creator != "" && backlog = false && list = false && parent = null`,
       sort: '-created',
       expand: 'ref,creator',
     })
     return result.items
   },
   getTickerItems: async () => {
-    return await pocketbase.collection('refs').getFullList<RefsRecord>({
-      filter: 'showInTicker=true',
+    // Only show specific refs in ticker: Musee d'Orsay, Edge City, Bringing Up Baby, Tennis
+    const allowedTickerTitles = ["Musee d'Orsay", 'Edge City', 'Bringing Up Baby', 'Tennis']
+
+    const results = await pocketbase.collection('refs').getFullList<RefsRecord>({
+      filter: allowedTickerTitles.map((title) => `title = "${title}"`).join(' || '),
       sort: '-created',
+      perPage: 10,
     })
+
+    // Deduplicate by title to prevent multiple entries with the same title
+    const uniqueResults = results.filter(
+      (ref, index, self) => index === self.findIndex((r) => r.title === ref.title)
+    )
+
+    return uniqueResults
   },
   getRefById: async (id: string) => {
     return await pocketbase.collection<CompleteRef>('refs').getOne(id)
@@ -323,24 +334,28 @@ export const createItemSlice: StateCreator<StoreSlices, [], [], ItemSlice> = (se
 })
 
 export const getProfileItems = async (userName: string) => {
-  const items = await pocketbase.collection<ExpandedItem>('items').getFullList({
+  // Optimize by limiting to first 50 items and using more efficient expand
+  const items = await pocketbase.collection<ExpandedItem>('items').getList(1, 50, {
     filter: pocketbase.filter(
       'creator.userName = {:userName} && backlog = false && parent = null',
       {
         userName,
       }
     ),
-    expand: 'items_via_parent, ref, items_via_parent.ref, creator',
+    expand: 'ref, creator', // Simplified expand to reduce query complexity
+    sort: '-created',
   })
-  return gridSort(items)
+  return gridSort(items.items)
 }
 
 export const getBacklogItems = async (userName: string) => {
-  const items = await pocketbase.collection('items').getFullList({
+  // Optimize by limiting to first 50 items
+  const items = await pocketbase.collection('items').getList(1, 50, {
     filter: pocketbase.filter('creator.userName = {:userName} && backlog = true && parent = null', {
       userName,
     }),
     expand: 'ref',
+    sort: '-created',
   })
-  return items.sort(createdSort)
+  return items.items.sort(createdSort)
 }

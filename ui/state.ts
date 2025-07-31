@@ -22,6 +22,26 @@ export type UISlice = {
   setAddRefPrompt: (prompt: string) => void
   stopEditProfile: () => void
   startEditProfile: () => void
+  // Search-related state
+  searchMode: boolean
+  selectedRefs: string[]
+  selectedRefItems: any[]
+  returningFromSearch: boolean
+  returningFromSearchViaBackButton: boolean
+  cachedSearchResults: any[]
+  cachedSearchTitle: string
+  cachedSearchSubtitle: string
+  closeActiveBottomSheet: (() => void) | null
+  isSearchResultsSheetOpen: boolean
+  setSearchMode: (mode: boolean) => void
+  setSelectedRefs: (refs: string[]) => void
+  setSelectedRefItems: (items: any[]) => void
+  setReturningFromSearch: (returning: boolean) => void
+  setReturningFromSearchViaBackButton: (returning: boolean) => void
+  setCachedSearchResults: (results: any[], title: string, subtitle: string) => void
+  clearCachedSearchResults: () => void
+  setSearchResultsSheetOpen: (open: boolean) => void
+  setCloseActiveBottomSheet: (closeFunction: (() => void) | null) => void
 }
 
 export const createUISlice: StateCreator<StoreSlices, [], [], UISlice> = (set) => ({
@@ -68,6 +88,66 @@ export const createUISlice: StateCreator<StoreSlices, [], [], UISlice> = (set) =
   startEditProfile: () => {
     set(() => ({
       editingProfile: true,
+    }))
+  },
+  // Search-related state
+  searchMode: false,
+  selectedRefs: [],
+  selectedRefItems: [],
+  returningFromSearch: false,
+  returningFromSearchViaBackButton: false,
+  cachedSearchResults: [],
+  cachedSearchTitle: '',
+  cachedSearchSubtitle: '',
+  closeActiveBottomSheet: null as (() => void) | null,
+  isSearchResultsSheetOpen: false,
+  setSearchMode: (mode: boolean) => {
+    set(() => ({
+      searchMode: mode,
+    }))
+  },
+  setSelectedRefs: (refs: string[]) => {
+    set(() => ({
+      selectedRefs: refs,
+    }))
+  },
+  setSelectedRefItems: (items: any[]) => {
+    set(() => ({
+      selectedRefItems: items,
+    }))
+  },
+  setReturningFromSearch: (returning: boolean) => {
+    set(() => ({
+      returningFromSearch: returning,
+    }))
+  },
+  setReturningFromSearchViaBackButton: (returning: boolean) => {
+    set(() => ({
+      returningFromSearchViaBackButton: returning,
+    }))
+  },
+  setCachedSearchResults: (results: any[], title: string, subtitle: string) => {
+    set(() => ({
+      cachedSearchResults: results,
+      cachedSearchTitle: title,
+      cachedSearchSubtitle: subtitle,
+    }))
+  },
+  clearCachedSearchResults: () => {
+    set(() => ({
+      cachedSearchResults: [],
+      cachedSearchTitle: '',
+      cachedSearchSubtitle: '',
+    }))
+  },
+  setSearchResultsSheetOpen: (open: boolean) => {
+    set(() => ({
+      isSearchResultsSheetOpen: open,
+    }))
+  },
+  setCloseActiveBottomSheet: (closeFunction: (() => void) | null) => {
+    set(() => ({
+      closeActiveBottomSheet: closeFunction,
     }))
   },
 })

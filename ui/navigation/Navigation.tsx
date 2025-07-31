@@ -18,11 +18,47 @@ export const Navigation = ({
 }) => {
   const pathname = usePathname()
 
-  const { user, saves, messagesPerConversation, conversations, memberships } = useAppStore()
+  const {
+    user,
+    saves,
+    messagesPerConversation,
+    conversations,
+    memberships,
+    selectedRefs,
+    cachedSearchResults,
+    setReturningFromSearchViaBackButton,
+    setReturningFromSearch,
+  } = useAppStore()
 
   const isHomePage = pathname === '/' || pathname === '/index'
 
   const scaleAnim = useRef(new Animated.Value(1)).current
+
+  // Custom back button handler for search results
+  const handleBackPress = () => {
+    // Check if we're on a user profile page and have search context
+    if (
+      pathname.startsWith('/user/') &&
+      (selectedRefs.length > 0 || cachedSearchResults.length > 0)
+    ) {
+      // Set the specific flag for back button navigation
+      setReturningFromSearchViaBackButton(true)
+      // Navigate back to the current user's profile page
+      router.push(`/user/${user?.userName}`)
+      // Open the search results sheet after a brief delay for smooth UX
+      setTimeout(() => {
+        if (selectedRefs.length > 0 || cachedSearchResults.length > 0) {
+          // Trigger the search results sheet to open
+          setReturningFromSearch(true)
+          setReturningFromSearchViaBackButton(true) // Also set this flag so MyProfile knows it's from back button
+        } else {
+        }
+      }, 100) // Small delay to ensure navigation completes first
+    } else {
+      // Default back behavior
+      router.back()
+    }
+  }
 
   const animateBadge = () => {
     Animated.sequence([
@@ -45,35 +81,44 @@ export const Navigation = ({
     }
   }, [saves.length])
 
-  const countNewMessages = () => {
-    if (!user) return 0
-    if (!messagesPerConversation) return 0
-    // messages not loaded yet
-    if (Object.keys(memberships).length === 0) return 0
-    let newMessages = 0
-    for (const conversationId in conversations) {
-      const membership = memberships[conversationId].find((m) => m.expand?.user.id === user?.id)
-      if (!membership) continue
-      if (membership?.archived) continue
-      const lastRead = membership?.last_read
-      const lastReadDate = new Date(lastRead || '')
+  const newMessages = useMemo(() => {
+    if (!user?.id || !messagesPerConversation || Object.keys(memberships).length === 0) {
+      return 0
+    }
+
+    const userId = user.id
+    let totalNewMessages = 0
+
+    // Use more efficient iteration
+    const conversationIds = Object.keys(conversations)
+    for (let i = 0; i < conversationIds.length; i++) {
+      const conversationId = conversationIds[i]
+      const membership = memberships[conversationId]?.find((m) => m.expand?.user.id === userId)
+
+      if (!membership || membership?.archived) continue
+
       const conversationMessages = messagesPerConversation[conversationId]
       if (!conversationMessages) continue
-      let unreadMessages
+
+      const lastRead = membership?.last_read
       if (lastRead) {
-        const msgs = conversationMessages.filter(
-          (m) => new Date(m.created!) > lastReadDate && m.sender !== user?.id
-        )
-        unreadMessages = msgs.length
-      } else unreadMessages = conversationMessages.length
-      newMessages += unreadMessages
+        const lastReadDate = new Date(lastRead)
+        // Use more efficient filtering
+        let unreadCount = 0
+        for (let j = 0; j < conversationMessages.length; j++) {
+          const message = conversationMessages[j]
+          if (new Date(message.created!) > lastReadDate && message.sender !== userId) {
+            unreadCount++
+          }
+        }
+        totalNewMessages += unreadCount
+      } else {
+        totalNewMessages += conversationMessages.length
+      }
     }
-    return newMessages
-  }
-  const newMessages = useMemo(
-    () => countNewMessages(),
-    [messagesPerConversation, memberships, user]
-  )
+
+    return totalNewMessages
+  }, [messagesPerConversation, memberships, user?.id, conversations])
 
   if (!user) return null
 
@@ -89,15 +134,13 @@ export const Navigation = ({
           paddingHorizontal: s.$1,
           alignItems: 'center',
           paddingBottom: s.$08,
-          borderBottomColor: '#ddd',
-          borderBottomWidth: 1,
         }}
       >
         <View style={{ flex: 1 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', position: 'relative' }}>
             {!isHomePage && (
               <Pressable
-                onPress={() => router.back()}
+                onPress={handleBackPress}
                 style={{
                   position: 'absolute',
                   left: -15,

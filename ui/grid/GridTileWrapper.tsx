@@ -6,7 +6,7 @@ import { GridTileType } from '@/features/types'
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { c } from '@/features/style'
 import { DEFAULT_TILE_SIZE } from './GridTile'
-import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated'
+
 import { useAppStore } from '@/features/stores'
 
 export const GridTileWrapper = ({
@@ -17,6 +17,7 @@ export const GridTileWrapper = ({
   onPress,
   onLongPress,
   size = DEFAULT_TILE_SIZE,
+  tileStyle,
 }: {
   type: GridTileType
   children: React.ReactNode
@@ -25,6 +26,7 @@ export const GridTileWrapper = ({
   onPress?: () => void
   onLongPress?: () => void
   size?: number
+  tileStyle?: any
 }) => {
   const { editingProfile, stopEditProfile } = useAppStore()
 
@@ -44,71 +46,44 @@ export const GridTileWrapper = ({
         }
       : {}
 
-  const scale = useSharedValue(1)
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
-  }))
-
-  const handlePressIn = () => {
-    if (type === 'placeholder') {
-      scale.value = withSpring(0.95)
-    }
-  }
-
-  const handlePressOut = () => {
-    if (type === 'placeholder') {
-      scale.value = withSpring(1)
-    }
-  }
-
   return (
-    <Animated.View style={animatedStyle}>
-      <TouchableOpacity
-        activeOpacity={1}
-        onPress={() => onPress && onPress()}
-        onPressIn={handlePressIn}
-        onPressOut={handlePressOut}
-        onLongPress={onLongPress}
-        style={[
-          base.gridTile,
-          type === 'placeholder' ? placeholderStyles : specificStyles,
-          {
-            width: size,
-            justifyContent: 'center',
-            alignItems: 'center',
-            backgroundColor: c.surface,
-          },
-        ]}
-      >
-        {editingProfile && type !== 'add' && id && (
-          <YStack style={{ position: 'absolute', zIndex: 999, top: 0, right: 0 }}>
-            <Pressable
-              onPress={() => {
-                stopEditProfile()
-                onRemove && onRemove()
-              }}
-              style={{
-                transform: 'translate(8px, -8px)',
-                backgroundColor: c.grey1,
-                borderRadius: 100,
-              }}
-            >
-              <Ionicons size={12} style={{ padding: 6 }} name="close" />
-            </Pressable>
-          </YStack>
-        )}
-        {type === 'placeholder' ? (
-          <Text
-            style={{ color: c.muted, fontSize: 16, textAlign: 'center', paddingHorizontal: 10 }}
+    <TouchableOpacity
+      activeOpacity={1}
+      onPress={() => onPress && onPress()}
+      onLongPress={onLongPress}
+      style={[
+        base.gridTile,
+        type === 'placeholder' ? placeholderStyles : specificStyles,
+        { width: size, justifyContent: 'center', alignItems: 'center', backgroundColor: c.surface },
+        tileStyle,
+      ]}
+    >
+      {editingProfile && type !== 'add' && id && (
+        <YStack style={{ position: 'absolute', zIndex: 999, top: 0, right: 0 }}>
+          <Pressable
+            onPress={() => {
+              stopEditProfile()
+              onRemove && onRemove()
+            }}
+            style={{
+              transform: 'translate(8px, -8px)',
+              backgroundColor: c.grey1,
+              borderRadius: 100,
+            }}
           >
-            {children}
-          </Text>
-        ) : type === 'add' ? (
-          React.cloneElement(children as React.ReactElement, { isPlaceholder: true })
-        ) : (
-          children
-        )}
-      </TouchableOpacity>
-    </Animated.View>
+            <Ionicons size={12} style={{ padding: 6 }} name="close" />
+          </Pressable>
+        </YStack>
+      )}
+      {type === 'placeholder' ? (
+        <Text style={{ color: c.muted, fontSize: 16, textAlign: 'center', paddingHorizontal: 10 }}>
+          {children}
+        </Text>
+      ) : type === 'add' ? (
+        React.cloneElement(children as React.ReactElement, { isPlaceholder: true })
+      ) : (
+        children
+      )}
+    </TouchableOpacity>
   )
 }

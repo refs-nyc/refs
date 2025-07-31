@@ -31,69 +31,105 @@ export function MessagesInit() {
     setSaves,
   } = useAppStore()
 
-  // load conversations
+  // load conversations - make non-blocking
   useEffect(() => {
+    if (!user) return
+
     const getConversations = async () => {
-      const conversations = await pocketbase.collection('conversations').getFullList<Conversation>({
-        sort: '-created',
-      })
-      setConversations(conversations)
-      for (const conversation of conversations) {
-        await loadInitialMessages(conversation)
+      try {
+        const conversations = await pocketbase
+          .collection('conversations')
+          .getFullList<Conversation>({
+            sort: '-created',
+          })
+        setConversations(conversations)
+
+        // Load messages in batches to avoid overwhelming the system
+        const batchSize = 3
+        for (let i = 0; i < conversations.length; i += batchSize) {
+          const batch = conversations.slice(i, i + batchSize)
+          setTimeout(() => {
+            batch.forEach((conversation) => {
+              loadInitialMessages(conversation).catch((error) => {
+                console.error('Failed to load messages for conversation:', conversation.id, error)
+              })
+            })
+          }, i * 100) // Stagger batches by 100ms
+        }
+      } catch (error) {
+        console.error('Failed to load conversations:', error)
       }
     }
-    try {
+
+    // Use setTimeout to make it non-blocking
+    setTimeout(() => {
       getConversations()
-    } catch (error) {
-      console.error(error)
-    }
+    }, 0)
   }, [user])
 
-  //load reactions
+  //load reactions - make non-blocking
   useEffect(() => {
+    if (!user) return
+
     const getReactions = async () => {
-      const reactions = await pocketbase.collection('reactions').getFullList<ExpandedReaction>({
-        expand: 'user',
-      })
-      setReactions(reactions)
-    }
-    try {
-      getReactions()
-    } catch (error) {
-      console.error(error)
-    }
-  }, [user])
-
-  // load saves
-  useEffect(() => {
-    const getSaves = async () => {
-      const saves = await pocketbase.collection('saves').getFullList<ExpandedSave>({
-        expand: 'user',
-      })
-      setSaves(saves)
-    }
-    try {
-      getSaves()
-    } catch (error) {
-      console.error(error)
-    }
-  }, [user])
-
-  // load memberships
-  useEffect(() => {
-    const getMemberships = async () => {
-      const memberships = await pocketbase
-        .collection('memberships')
-        .getFullList<ExpandedMembership>({
+      try {
+        const reactions = await pocketbase.collection('reactions').getFullList<ExpandedReaction>({
           expand: 'user',
         })
-      setMemberships(memberships)
+        setReactions(reactions)
+      } catch (error) {
+        console.error('Failed to load reactions:', error)
+      }
     }
-    try {
+
+    // Use setTimeout to make it non-blocking
+    setTimeout(() => {
+      getReactions()
+    }, 100) // Small delay to avoid blocking UI
+  }, [user])
+
+  // load saves - make non-blocking
+  useEffect(() => {
+    if (!user) return
+
+    const getSaves = async () => {
+      try {
+        const saves = await pocketbase.collection('saves').getFullList<ExpandedSave>({
+          expand: 'user',
+        })
+        setSaves(saves)
+      } catch (error) {
+        console.error('Failed to load saves:', error)
+      }
+    }
+
+    // Use setTimeout to make it non-blocking
+    setTimeout(() => {
+      getSaves()
+    }, 200) // Small delay to avoid blocking UI
+  }, [user])
+
+  // load memberships - make non-blocking
+  useEffect(() => {
+    if (!user) return
+
+    const getMemberships = async () => {
+      try {
+        const memberships = await pocketbase
+          .collection('memberships')
+          .getFullList<ExpandedMembership>({
+            expand: 'user',
+          })
+        setMemberships(memberships)
+      } catch (error) {
+        console.error('Failed to load memberships:', error)
+      }
+    }
+
+    // Use setTimeout to make it non-blocking
+    setTimeout(() => {
       getMemberships()
-    } catch (error) {
-      console.error(error)
-    }
+    }, 300) // Small delay to avoid blocking UI
   }, [user])
 
   // subscribe to new messages

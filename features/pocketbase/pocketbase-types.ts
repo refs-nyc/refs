@@ -190,6 +190,7 @@ export type SavesRecord = {
 }
 
 export type UsersRecord = {
+  avatar_url?: string
   created?: IsoDateString
   email: string
   emailVisibility?: boolean
@@ -201,9 +202,8 @@ export type UsersRecord = {
   lat?: number
   location?: string
   lon?: number
-  password: string
+  name?: string
   pushToken?: string
-  tokenKey: string
   updated?: IsoDateString
   userName: string
   verified?: boolean

@@ -31,16 +31,17 @@ export const ProfileDetailsSheet = ({
     getUserByUserName,
   } = useAppStore()
 
+  // Use preloaded data for smooth animation, fallback to fetching if needed
   useEffect(() => {
-    const fetchProfile = async () => {
+    const initializeData = async () => {
+      // Fetch data
       const profile = await getUserByUserName(profileUsername)
       const gridItems = await getProfileItems(profile.userName)
-
       setProfile(profile)
       setGridItems(gridItems)
     }
-    fetchProfile()
-  }, [profileUsername, profileRefreshTrigger])
+    initializeData()
+  }, [profileUsername, profileRefreshTrigger, user?.userName])
 
   // if the current user is the item creator, then they have editing rights
   const editingRights = profile?.id === user?.id
@@ -83,6 +84,8 @@ export const ProfileDetailsSheet = ({
       enablePanDownToClose={true}
       keyboardBehavior="interactive"
       onChange={onChange}
+      // animationDuration={300}
+      enableOverDrag={false}
     >
       {profile && gridItems.length > 0 && (
         <ProfileDetailsProvider

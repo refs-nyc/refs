@@ -214,9 +214,11 @@ export const MyProfile = ({ userName }: { userName: string }) => {
                 paddingVertical: s.$1,
                 alignItems: 'center',
                 justifyContent: 'center',
-                marginTop: searchMode ? 14 : 0
+                marginTop: searchMode ? 14 : 0,
+                zIndex: 5 // Above the overlay
               }}
             >
+
               <Text 
                 style={{ 
                   color: gridItems.length < 12 ? '#B0B0B0' : c.muted, 
@@ -243,7 +245,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
               top: 90,
               left: 0,
               right: 0,
-              zIndex: 1
+              zIndex: 5, // Above the overlay
             }}>
               {loading ? (
                 <PlaceholderGrid columns={3} rows={4} />
@@ -304,31 +306,84 @@ export const MyProfile = ({ userName }: { userName: string }) => {
                 }}
               />
 
+
+
             </View>
           </View>
         )}
 
         {!user && <Heading tag="h1">Profile for {userName} not found</Heading>}
-      </ScrollView>
 
-      {/* Transparent overlay to dismiss search mode when tapping outside */}
-      {searchMode && (
-        <Pressable
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'transparent',
-            zIndex: 10,
-          }}
-          onPress={() => {
-            setSearchMode(false)
-            setSelectedRefs([])
-          }}
-        />
-      )}
+        {/* Multiple pressable areas to dismiss search mode - avoiding the grid */}
+        {searchMode && (
+          <>
+            {/* Top area above grid */}
+            <Pressable
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                height: 90, // Up to where grid starts
+                backgroundColor: 'transparent',
+                zIndex: 1,
+              }}
+              onPress={() => {
+                setSearchMode(false)
+                setSelectedRefs([])
+              }}
+            />
+            {/* Left area beside grid */}
+            <Pressable
+              style={{
+                position: 'absolute',
+                top: 90,
+                left: 0,
+                width: 16, // s.$08
+                bottom: 0,
+                backgroundColor: 'transparent',
+                zIndex: 1,
+              }}
+              onPress={() => {
+                setSearchMode(false)
+                setSelectedRefs([])
+              }}
+            />
+            {/* Right area beside grid */}
+            <Pressable
+              style={{
+                position: 'absolute',
+                top: 90,
+                right: 0,
+                width: 16, // s.$08
+                bottom: 0,
+                backgroundColor: 'transparent',
+                zIndex: 1,
+              }}
+              onPress={() => {
+                setSearchMode(false)
+                setSelectedRefs([])
+              }}
+            />
+            {/* Bottom area below grid */}
+            <Pressable
+              style={{
+                position: 'absolute',
+                top: 590, // 90 + 500 (grid height)
+                left: 0,
+                right: 0,
+                bottom: 0,
+                backgroundColor: 'transparent',
+                zIndex: 1,
+              }}
+              onPress={() => {
+                setSearchMode(false)
+                setSelectedRefs([])
+              }}
+            />
+          </>
+        )}
+      </ScrollView>
 
       {profile && (
         <>

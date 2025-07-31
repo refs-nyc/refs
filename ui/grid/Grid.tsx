@@ -39,7 +39,6 @@ const shuffleArray = (array: string[]) => {
   return shuffled
 }
 
-// Nintendo Switch-style animation timing
 const getTileAnimationDelay = (index: number, totalTiles: number) => {
   // First tile: 750ms
   if (index === 0) {
@@ -61,8 +60,8 @@ const getTileAnimationDelay = (index: number, totalTiles: number) => {
   return 2100 + (index - 6) * 100
 }
 
-// Custom Nintendo Switch drop animation component
-const NintendoSwitchTile = ({
+// Custom drop animation component
+const StartupAnimationTile = ({
   children,
   delay,
   isInitialLoad,
@@ -268,7 +267,7 @@ export const Grid = ({
         {items.map((item, i) => {
           const isSelected = searchMode && selectedRefsSet.has(item.id)
           return (
-            <NintendoSwitchTile
+            <StartupAnimationTile
               key={item.id}
               delay={getTileAnimationDelay(i, items.length)}
               isInitialLoad={isInitialLoad}
@@ -306,7 +305,7 @@ export const Grid = ({
                   />
                 )}
               </GridTileWrapper>
-            </NintendoSwitchTile>
+            </StartupAnimationTile>
           )
         })}
 
@@ -315,7 +314,7 @@ export const Grid = ({
           const prompt = shuffledPrompts[i % shuffledPrompts.length] || PROMPTS[i % PROMPTS.length]
           const totalIndex = items.length + i
           return (
-            <NintendoSwitchTile
+            <StartupAnimationTile
               key={`placeholder-${i}-${prompt}`}
               delay={
                 isShuffling
@@ -330,7 +329,7 @@ export const Grid = ({
               >
                 <Text style={{ fontSize: 14 }}>{prompt}</Text>
               </GridTileWrapper>
-            </NintendoSwitchTile>
+            </StartupAnimationTile>
           )
         })}
       </GridWrapper>

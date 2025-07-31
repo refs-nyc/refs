@@ -98,8 +98,6 @@ export const Navigation = ({
           paddingHorizontal: s.$1,
           alignItems: 'center',
           paddingBottom: s.$08,
-          borderBottomColor: '#ddd',
-          borderBottomWidth: 1,
         }}
       >
         <View style={{ flex: 1 }}>

@@ -278,8 +278,16 @@ export const createItemSlice: StateCreator<StoreSlices, [], [], ItemSlice> = (se
     return result.items
   },
   getTickerItems: async () => {
+    // Only show specific refs in ticker: Musee d'Orsay, Edge City, Bringing Up Baby, Tennis
+    const allowedTickerTitles = [
+      'Musee d\'Orsay',
+      'Edge City', 
+      'Bringing Up Baby',
+      'Tennis'
+    ]
+    
     return await pocketbase.collection('refs').getFullList<RefsRecord>({
-      filter: 'title != ""',
+      filter: allowedTickerTitles.map(title => `title = "${title}"`).join(' || '),
       sort: '-created',
       perPage: 10,
     })

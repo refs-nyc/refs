@@ -5,11 +5,13 @@ This document describes the new architecture that separates user data storage (P
 ## Architecture Overview
 
 ### PocketBase (User Data)
+
 - **Purpose**: User authentication, profiles, items, refs, messages
 - **Schema**: Unchanged from original design
 - **Hooks**: Trigger Supabase operations when data changes
 
 ### Supabase (AI/ML Operations)
+
 - **Purpose**: 7-string generation, embeddings, semantic search
 - **Extensions**: pgvector, http
 - **Functions**: OpenAI API integration for text generation and embeddings
@@ -17,6 +19,7 @@ This document describes the new architecture that separates user data storage (P
 ## Data Flow
 
 ### 1. Item Creation/Update
+
 ```
 User adds item to grid in PocketBase
     ↓
@@ -30,6 +33,7 @@ Data stored in Supabase items table
 ```
 
 ### 2. Spirit Vector Generation
+
 ```
 User's grid changes (add/remove items)
     ↓
@@ -43,6 +47,7 @@ Data stored in Supabase users table
 ```
 
 ### 3. Search
+
 ```
 User selects items for search
     ↓
@@ -58,25 +63,29 @@ Results ranked by: exact matches → high similarity → spirit vector tiebreake
 ## Setup Instructions
 
 ### 1. Supabase Setup
+
 ```bash
 # Run the setup script
 node setup-supabase.js
 ```
 
 This will:
+
 - Enable pgvector and http extensions
 - Create items and users tables
 - Create OpenAI integration functions
 - Configure API keys
 
-### 2. PocketBase Hooks
-The hooks in `features/pocketbase/hooks/index.ts` need to be integrated with your PocketBase instance. You'll need to:
+### 2. Supabase Hooks
 
-1. Set up webhooks or use PocketBase's built-in hooks system
+The hooks in `features/supabase/hooks/index.ts` need to be integrated with your Supabase (?) instance. You'll need to:
+
+1. Set up webhooks or use Supabase's built-in hooks system
 2. Configure the hooks to trigger on item/user changes
 3. Ensure proper error handling and retry logic
 
 ### 3. Environment Variables
+
 ```env
 # Supabase
 SUPA_URL=your_supabase_url
@@ -94,6 +103,7 @@ EXPO_PUBLIC_POCKETBASE_URL=your_pocketbase_url
 ### Supabase Tables
 
 #### `items`
+
 - `id` (TEXT, PRIMARY KEY) - PocketBase item ID
 - `ref_id` (TEXT) - PocketBase ref ID
 - `text` (TEXT) - User's caption
@@ -103,6 +113,7 @@ EXPO_PUBLIC_POCKETBASE_URL=your_pocketbase_url
 - `updated_at` (TIMESTAMP)
 
 #### `users`
+
 - `id` (TEXT, PRIMARY KEY) - PocketBase user ID
 - `name` (TEXT) - User's display name
 - `avatar_url` (TEXT) - User's avatar
@@ -114,19 +125,25 @@ EXPO_PUBLIC_POCKETBASE_URL=your_pocketbase_url
 ## Functions
 
 ### `generate_seven_string(ref_title, caption)`
+
 Generates a 7-string using OpenAI GPT-4o from ref title and user caption.
 
 ### `generate_embedding(text_content)`
+
 Generates vector embedding using OpenAI text-embedding-3-small.
 
 ### `process_new_item(item_id, ref_id, item_text, ref_title)`
+
 Complete pipeline for processing a new item:
+
 1. Generate 7-string
 2. Generate embedding
 3. Store in database
 
 ### `regenerate_spirit_vector(user_id)`
+
 Regenerates spirit vector for a user:
+
 1. Collect 7-strings from top 12 grid items
 2. Combine strings
 3. Generate embedding
@@ -165,4 +182,4 @@ Regenerates spirit vector for a user:
 - Log all OpenAI API calls
 - Monitor embedding generation times
 - Track search performance
-- Alert on failed operations 
+- Alert on failed operations

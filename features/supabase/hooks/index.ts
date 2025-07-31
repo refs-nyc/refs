@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
-import type { ItemsRecord, UsersRecord } from '../pocketbase-types'
+import type { ItemsRecord, UsersRecord } from '@/features/pocketbase/pocketbase-types'
 
 // Initialize Supabase client
 const supabase = createClient(process.env.SUPA_URL!, process.env.SUPA_KEY!)

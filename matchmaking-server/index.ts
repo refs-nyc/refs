@@ -1,4 +1,4 @@
-import express, { Request, Response } from 'express'
+import express, { RequestHandler } from 'express'
 import cors from 'cors'
 import dotenv from 'dotenv'
 import { createClient } from '@supabase/supabase-js'
@@ -25,12 +25,12 @@ if (!supabaseUrl || !supabaseKey) {
 const supabase = createClient(supabaseUrl, supabaseKey)
 
 // Health check endpoint
-app.get('/health', (req: Request, res: Response) => {
+app.get('/health', ((req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() })
-})
+}) as RequestHandler)
 
 // Search people endpoint
-app.post('/api/search-people', async (req: Request, res: Response) => {
+app.post('/api/search-people', (async (req, res) => {
   try {
     const { item_ids, user_id, limit = 60 } = req.body
 
@@ -52,10 +52,10 @@ app.post('/api/search-people', async (req: Request, res: Response) => {
     console.error('Error searching people:', error)
     res.status(500).json({ error: 'Internal server error' })
   }
-})
+}) as RequestHandler)
 
 // Search history endpoints
-app.get('/api/search-history', async (req: Request, res: Response) => {
+app.get('/api/search-history', (async (req, res) => {
   try {
     const { user_id } = req.query
 
@@ -80,9 +80,9 @@ app.get('/api/search-history', async (req: Request, res: Response) => {
     console.error('Error in search history:', error)
     res.status(500).json({ error: 'Internal server error' })
   }
-})
+}) as RequestHandler)
 
-app.post('/api/search-history', async (req: Request, res: Response) => {
+app.post('/api/search-history', (async (req, res) => {
   try {
     const { 
       user_id, 
@@ -124,9 +124,9 @@ app.post('/api/search-history', async (req: Request, res: Response) => {
     console.error('Error saving search history:', error)
     res.status(500).json({ error: 'Internal server error' })
   }
-})
+}) as RequestHandler)
 
-app.delete('/api/search-history/:id', async (req: Request, res: Response) => {
+app.delete('/api/search-history/:id', (async (req, res) => {
   try {
     const { id } = req.params
 
@@ -145,7 +145,7 @@ app.delete('/api/search-history/:id', async (req: Request, res: Response) => {
     console.error('Error deleting search history:', error)
     res.status(500).json({ error: 'Internal server error' })
   }
-})
+}) as RequestHandler)
 
 // Utility function to calculate cosine similarity
 function cosineSimilarity(vecA: number[], vecB: number[]): number {

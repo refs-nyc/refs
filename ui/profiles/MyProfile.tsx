@@ -21,6 +21,7 @@ import { MyBacklogSheet } from './sheets/MyBacklogSheet'
 import { RemoveRefSheet } from './sheets/RemoveRefSheet'
 import SearchModeBottomSheet from './sheets/SearchModeBottomSheet'
 import SearchResultsSheet, { SearchResultsSheetRef } from './sheets/SearchResultsSheet'
+import Animated, { FadeIn, FadeOut } from 'react-native-reanimated'
 
 export const MyProfile = ({ userName }: { userName: string }) => {
   const { hasShareIntent } = useShareIntentContext()
@@ -204,30 +205,46 @@ export const MyProfile = ({ userName }: { userName: string }) => {
             }}
           >
             {/* Custom header text based on grid state */}
-            <View style={{ 
-              paddingHorizontal: 10, 
-              paddingVertical: s.$1,
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}>
-              <Text style={{ 
-                color: c.muted, 
-                fontSize: s.$09, 
-                fontFamily: 'System',
-                fontWeight: '300',
-                textAlign: 'center',
-                lineHeight: s.$1half
-              }}>
+            <Animated.View 
+              entering={FadeIn.duration(400).delay(100)}
+              exiting={FadeOut.duration(300)}
+              key={`${searchMode}-${gridItems.length}`}
+              style={{ 
+                paddingHorizontal: 10, 
+                paddingVertical: s.$1,
+                alignItems: 'center',
+                justifyContent: 'center',
+                marginTop: searchMode ? 14 : 0
+              }}
+            >
+              <Text 
+                style={{ 
+                  color: gridItems.length < 12 ? '#B0B0B0' : c.muted, 
+                  fontSize: s.$09, 
+                  fontFamily: 'System',
+                  fontWeight: '300',
+                  textAlign: 'center',
+                  lineHeight: s.$1half
+                }}
+              >
                 {searchMode 
                   ? "searching at the intersection of..." 
                   : gridItems.length >= 12 
                     ? "pick some refs, find people in the middle" 
-                    : "These prompts will disappear after you add...no one will know you used them"
+                    : "These prompts will disappear after you add...no one will ever know"
                 }
               </Text>
-            </View>
+            </Animated.View>
 
-            <View style={{ gap: s.$2 }}>
+            <View style={{ 
+              gap: s.$2, 
+              minHeight: 500,
+              position: 'absolute',
+              top: 90,
+              left: 0,
+              right: 0,
+              zIndex: 1
+            }}>
               {loading ? (
                 <PlaceholderGrid columns={3} rows={4} />
               ) : (
@@ -280,8 +297,8 @@ export const MyProfile = ({ userName }: { userName: string }) => {
 
                 style={{
                   position: 'absolute',
-                  bottom: insets.bottom - 30, // 50px lower (24 - 50 = -26)
-                  right: 9, // 10px to the right (24 - 10)
+                  bottom: insets.bottom - 40, // Moved down by 30px (was -30, now -60)
+                  right: -2, // 10px to the right (24 - 10)
                   zIndex: 5, // Behind the sheet (zIndex: 100) but above the grid content
                   opacity: searchMode ? 0 : 1, // Hide with opacity instead of conditional rendering
                 }}
@@ -293,6 +310,26 @@ export const MyProfile = ({ userName }: { userName: string }) => {
 
         {!user && <Heading tag="h1">Profile for {userName} not found</Heading>}
       </ScrollView>
+
+      {/* Transparent overlay to dismiss search mode when tapping outside */}
+      {searchMode && (
+        <Pressable
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'transparent',
+            zIndex: 10,
+          }}
+          onPress={() => {
+            setSearchMode(false)
+            setSelectedRefs([])
+          }}
+        />
+      )}
+
       {profile && (
         <>
           <MyBacklogSheet

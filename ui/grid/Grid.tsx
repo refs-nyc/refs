@@ -4,8 +4,22 @@ import { GridItem } from './GridItem'
 import { GridTileWrapper } from './GridTileWrapper'
 import { GridTileActionAdd } from './GridTileActionAdd'
 import { ExpandedItem } from '@/features/types'
-import { useState, useCallback, useMemo } from 'react'
-import { Text, View, Dimensions } from 'react-native'
+import { useState, useCallback, useMemo, useEffect } from 'react'
+import { Text, View, Dimensions, Pressable } from 'react-native'
+import { c } from '@/features/style'
+import Animated, { 
+  useSharedValue, 
+  useAnimatedStyle, 
+  withTiming, 
+  withSequence,
+  withSpring,
+  withDelay,
+  runOnJS,
+  FadeIn,
+  FadeOut,
+  Layout,
+  Easing
+} from 'react-native-reanimated'
 
 const PROMPTS = [
   'All-time comfort game',
@@ -22,6 +36,139 @@ const PROMPTS = [
   'Neighborhood spot',
   'Art that moved you',
 ]
+
+// Fisher-Yates shuffle function
+const shuffleArray = (array: string[]) => {
+  const shuffled = [...array]
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1))
+    ;[shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]
+  }
+  return shuffled
+}
+
+// Nintendo Switch-style animation timing
+const getTileAnimationDelay = (index: number, totalTiles: number) => {
+  // First tile: 750ms
+  if (index === 0) {
+    return 0
+  }
+  // Second tile: 750ms
+  if (index === 1) {
+    return 750
+  }
+  // Third tile: 150ms
+  if (index === 2) {
+    return 1500
+  }
+  // Tiles 3-6: 150ms each
+  if (index >= 3 && index <= 5) {
+    return 1650 + (index - 3) * 150
+  }
+  // Tiles 7-12: 100ms each (faster)
+  return 2100 + (index - 6) * 100
+}
+
+// Custom Nintendo Switch drop animation component
+const NintendoSwitchTile = ({ 
+  children, 
+  delay, 
+  isInitialLoad 
+}: { 
+  children: React.ReactNode
+  delay: number
+  isInitialLoad: boolean
+}) => {
+  const translateY = useSharedValue(-60) // Reduced from -100 to -60 for less severe drop
+  const scale = useSharedValue(0.9) // Reduced from 0.8 to 0.9 for less dramatic scale
+  const opacity = useSharedValue(0)
+
+  useEffect(() => {
+    // Only animate on initial load
+    if (!isInitialLoad) {
+      translateY.value = 0
+      scale.value = 1
+      opacity.value = 1
+      return
+    }
+
+    // Reset animation values
+    translateY.value = -60
+    scale.value = 0.9
+    opacity.value = 0
+
+    // Determine if this is a fast tile (100ms timing)
+    const isFastTile = delay >= 2100
+
+    // Animate after delay
+    const timer = setTimeout(() => {
+      // Slam down with spring animation (gentler for fast tiles)
+      translateY.value = withSpring(0, {
+        damping: isFastTile ? 20 : 15,
+        stiffness: isFastTile ? 200 : 250,
+        mass: isFastTile ? 1.0 : 0.9,
+      })
+      
+      // Scale up with bounce (gentler for fast tiles)
+      scale.value = withSpring(1, {
+        damping: isFastTile ? 22 : 18,
+        stiffness: isFastTile ? 300 : 350,
+        mass: isFastTile ? 0.8 : 0.7,
+      })
+      
+      // Fade in quickly
+      opacity.value = withTiming(1, { duration: 200 })
+
+      // After slam, add the bounce-back effect (much more subtle for fast tiles)
+      setTimeout(() => {
+        const bounceHeight = isFastTile ? -2 : -3
+        const bounceScale = isFastTile ? 0.995 : 0.99
+        
+        // Bounce back up slightly and shrink
+        translateY.value = withSpring(bounceHeight, {
+          damping: isFastTile ? 35 : 30,
+          stiffness: isFastTile ? 200 : 250,
+          mass: isFastTile ? 0.6 : 0.5,
+        })
+        scale.value = withSpring(bounceScale, {
+          damping: isFastTile ? 35 : 30,
+          stiffness: isFastTile ? 200 : 250,
+          mass: isFastTile ? 0.6 : 0.5,
+        })
+
+        // Then settle back to normal (smoother for fast tiles)
+        setTimeout(() => {
+          translateY.value = withSpring(0, {
+            damping: isFastTile ? 30 : 25,
+            stiffness: isFastTile ? 150 : 200,
+            mass: isFastTile ? 0.8 : 0.7,
+          })
+          scale.value = withSpring(1, {
+            damping: isFastTile ? 30 : 25,
+            stiffness: isFastTile ? 150 : 200,
+            mass: isFastTile ? 0.8 : 0.7,
+          })
+        }, isFastTile ? 80 : 120)
+      }, isFastTile ? 150 : 200)
+    }, delay)
+
+    return () => clearTimeout(timer)
+  }, [isInitialLoad, delay])
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [
+      { translateY: translateY.value },
+      { scale: scale.value }
+    ],
+    opacity: opacity.value,
+  }))
+
+  return (
+    <Animated.View style={animatedStyle}>
+      {children}
+    </Animated.View>
+  )
+}
 
 export const Grid = ({
   onPressItem,
@@ -52,9 +199,46 @@ export const Grid = ({
 }) => {
   const gridSize = columns * rows
   const screenWidth = Dimensions.get('window').width
-  const horizontalPadding = 20 // 10px on each side
-  const cellGap = 6 // Keep consistent gap regardless of search mode
-  const tileSize = (screenWidth - horizontalPadding - cellGap * (columns - 1)) / columns
+
+  // State for shuffled prompts
+  const [shuffledPrompts, setShuffledPrompts] = useState<string[]>([])
+  const [isShuffling, setIsShuffling] = useState(false)
+  const [isInitialLoad, setIsInitialLoad] = useState(false) // Start as false
+
+  // Animation values
+  const buttonScale = useSharedValue(1)
+
+  // Initialize with random prompts on mount
+  useEffect(() => {
+    setShuffledPrompts(shuffleArray(PROMPTS))
+  }, [])
+
+  // Only trigger initial load animation if this is the first time seeing the grid
+  // This should be controlled by the parent component (MyProfile) based on onboarding state
+  useEffect(() => {
+    // For now, we'll disable the animation entirely to prevent the navigation issue
+    // The parent component can pass a prop to enable it when appropriate
+    setIsInitialLoad(false)
+  }, [])
+
+  // Shuffle prompts function with animation
+  const handleShufflePrompts = useCallback(() => {
+    if (isShuffling) return // Prevent multiple rapid clicks
+    
+    setIsShuffling(true)
+    
+    // Button press animation
+    buttonScale.value = withSequence(
+      withTiming(0.95, { duration: 100 }),
+      withTiming(1, { duration: 100 })
+    )
+    
+    // Shuffle after a brief delay to allow fade out
+    setTimeout(() => {
+      setShuffledPrompts(shuffleArray(PROMPTS))
+      setIsShuffling(false)
+    }, 150)
+  }, [isShuffling, buttonScale])
 
   const handleGridItemPress = useCallback((item: any) => {
     if (searchMode && setSelectedRefs) {
@@ -80,57 +264,104 @@ export const Grid = ({
   // Memoize the selected refs set for O(1) lookup
   const selectedRefsSet = useMemo(() => new Set(selectedRefs), [selectedRefs])
 
-  return (
-    <GridWrapper columns={columns} rows={rows}>
-      {items.map((item, i) => {
-        const isSelected = searchMode && selectedRefsSet.has(item.id)
-        return (
-        <GridTileWrapper
-          key={item.id}
-          id={item.id}
-          onPress={useCallback(() => handleGridItemPress(item), [handleGridItemPress, item])}
-          onLongPress={onLongPressItem}
-          onRemove={useCallback(() => {
-            if (onRemoveItem) onRemoveItem(item)
-          }, [onRemoveItem, item])}
-          type={item.list ? 'list' : item.expand.ref?.image || item.image ? 'image' : 'text'}
-          tileStyle={searchMode ? {
-            opacity: isSelected ? 1 : 0.25,
-          } : {}}
-        >
-          <GridItem item={item} i={i} />
-          {searchMode && isSelected && (
-            <View
-              style={{
-                position: 'absolute',
-                top: -2.5,
-                left: -2.5,
-                right: -2.5,
-                bottom: -2.5,
-                borderWidth: 5,
-                borderColor: '#A3C9A8',
-                borderRadius: 8 + 2.5,
-                pointerEvents: 'none',
-              }}
-            />
-          )}
-        </GridTileWrapper>
-        )
-      })}
+  // Button animation style
+  const buttonAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: buttonScale.value }]
+  }))
 
-      {/* Prompt placeholders for empty slots */}
-      {Array.from({ length: gridSize - items.length }).map((_, i) => {
-        const prompt = PROMPTS[i % PROMPTS.length]
-        return (
-          <GridTileWrapper
-            key={`placeholder-${i}`}
-            type="placeholder"
-            onPress={() => onAddItemWithPrompt && onAddItemWithPrompt(prompt)}
+  return (
+    <View style={{ marginTop: 10 }}>
+      <GridWrapper columns={columns} rows={rows}>
+        {items.map((item, i) => {
+          const isSelected = searchMode && selectedRefsSet.has(item.id)
+          return (
+            <NintendoSwitchTile
+              key={item.id}
+              delay={getTileAnimationDelay(i, items.length)}
+              isInitialLoad={isInitialLoad}
+            >
+              <GridTileWrapper
+                id={item.id}
+                onPress={useCallback(() => handleGridItemPress(item), [handleGridItemPress, item])}
+                onLongPress={onLongPressItem}
+                onRemove={useCallback(() => {
+                  if (onRemoveItem) onRemoveItem(item)
+                }, [onRemoveItem, item])}
+                type={item.list ? 'list' : item.expand.ref?.image || item.image ? 'image' : 'text'}
+                tileStyle={searchMode ? {
+                  opacity: isSelected ? 1 : 0.25,
+                } : {}}
+              >
+                <GridItem item={item} i={i} />
+                {searchMode && isSelected && (
+                  <View
+                    style={{
+                      position: 'absolute',
+                      top: -2.5,
+                      left: -2.5,
+                      right: -2.5,
+                      bottom: -2.5,
+                      borderWidth: 5,
+                      borderColor: '#A3C9A8',
+                      borderRadius: 8 + 2.5,
+                      pointerEvents: 'none',
+                    }}
+                  />
+                )}
+              </GridTileWrapper>
+            </NintendoSwitchTile>
+          )
+        })}
+
+        {/* Prompt placeholders for empty slots */}
+        {Array.from({ length: gridSize - items.length }).map((_, i) => {
+          const prompt = shuffledPrompts[i % shuffledPrompts.length] || PROMPTS[i % PROMPTS.length]
+          const totalIndex = items.length + i
+          return (
+            <NintendoSwitchTile
+              key={`placeholder-${i}-${prompt}`}
+              delay={isShuffling ? 
+                getTileAnimationDelay(i, gridSize - items.length) :
+                getTileAnimationDelay(totalIndex, gridSize)
+              }
+              isInitialLoad={isInitialLoad}
+            >
+              <GridTileWrapper
+                type="placeholder"
+                onPress={() => onAddItemWithPrompt && onAddItemWithPrompt(prompt)}
+              >
+                <Text style={{ fontSize: 14 }}>{prompt}</Text>
+              </GridTileWrapper>
+            </NintendoSwitchTile>
+          )
+        })}
+      </GridWrapper>
+
+      {/* Shuffle prompts button */}
+      {editingRights && !searchMode && (
+        <Animated.View style={buttonAnimatedStyle}>
+          <Pressable
+            onPress={handleShufflePrompts}
+            style={{
+              alignSelf: 'center',
+              marginTop: 40,
+              paddingVertical: 4,
+              paddingHorizontal: 8,
+            }}
           >
-            <Text style={{ fontSize: 14 }}>{prompt}</Text>
-          </GridTileWrapper>
-        )
-      })}
-    </GridWrapper>
+            <Text
+              style={{
+                color: c.accent,
+                fontSize: 14,
+                fontWeight: '600',
+                opacity: isShuffling ? 0.6 : 1,
+              }}
+            >
+              shuffle prompts
+            </Text>
+          </Pressable>
+        </Animated.View>
+      )}
+    </View>
   )
 }

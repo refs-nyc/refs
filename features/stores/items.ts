@@ -286,11 +286,18 @@ export const createItemSlice: StateCreator<StoreSlices, [], [], ItemSlice> = (se
       'Tennis'
     ]
     
-    return await pocketbase.collection('refs').getFullList<RefsRecord>({
+    const results = await pocketbase.collection('refs').getFullList<RefsRecord>({
       filter: allowedTickerTitles.map(title => `title = "${title}"`).join(' || '),
       sort: '-created',
       perPage: 10,
     })
+
+    // Deduplicate by title to prevent multiple entries with the same title
+    const uniqueResults = results.filter((ref, index, self) => 
+      index === self.findIndex(r => r.title === ref.title)
+    )
+
+    return uniqueResults
   },
   getRefById: async (id: string) => {
     return await pocketbase.collection<CompleteRef>('refs').getOne(id)

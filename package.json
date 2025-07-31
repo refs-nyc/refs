@@ -116,6 +116,7 @@
     "@types/jest": "^29.5.12",
     "@types/luxon": "^3.6.2",
     "@types/react": "~18.3.12",
+    "@types/react-native": "^0.73.0",
     "@types/react-native-get-random-values": "^1.8.2",
     "@types/react-test-renderer": "^18.3.0",
     "eslint": "^9.25.1",

@@ -122,7 +122,6 @@ export type ItemsRecord = {
   backlog?: boolean
   created?: IsoDateString
   creator?: RecordIdString
-  deleted?: IsoDateString
   id: string
   image?: string
   list?: boolean
@@ -172,7 +171,6 @@ export enum RefsTypeOptions {
 export type RefsRecord = {
   created?: IsoDateString
   creator?: RecordIdString
-  deleted?: IsoDateString
   id: string
   image?: string
   meta?: string

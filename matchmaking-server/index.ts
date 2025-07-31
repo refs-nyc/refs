@@ -1,4 +1,4 @@
-import express from 'express'
+import express, { Request, Response } from 'express'
 import cors from 'cors'
 import dotenv from 'dotenv'
 import { createClient } from '@supabase/supabase-js'
@@ -25,12 +25,12 @@ if (!supabaseUrl || !supabaseKey) {
 const supabase = createClient(supabaseUrl, supabaseKey)
 
 // Health check endpoint
-app.get('/health', (req, res) => {
+app.get('/health', (req: Request, res: Response) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() })
 })
 
 // Search people endpoint
-app.post('/api/search-people', async (req, res) => {
+app.post('/api/search-people', async (req: Request, res: Response) => {
   try {
     const { item_ids, user_id, limit = 60 } = req.body
 
@@ -55,7 +55,7 @@ app.post('/api/search-people', async (req, res) => {
 })
 
 // Search history endpoints
-app.get('/api/search-history', async (req, res) => {
+app.get('/api/search-history', async (req: Request, res: Response) => {
   try {
     const { user_id } = req.query
 
@@ -82,7 +82,7 @@ app.get('/api/search-history', async (req, res) => {
   }
 })
 
-app.post('/api/search-history', async (req, res) => {
+app.post('/api/search-history', async (req: Request, res: Response) => {
   try {
     const { 
       user_id, 
@@ -126,7 +126,7 @@ app.post('/api/search-history', async (req, res) => {
   }
 })
 
-app.delete('/api/search-history/:id', async (req, res) => {
+app.delete('/api/search-history/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params
 

@@ -224,7 +224,9 @@ export const Grid = ({
 
     // Shuffle after a brief delay to allow fade out
     setTimeout(() => {
-      setShuffledPrompts(shuffleArray(PROMPTS))
+      // Create a new shuffled array but preserve the same length
+      const newShuffledPrompts = shuffleArray([...PROMPTS])
+      setShuffledPrompts(newShuffledPrompts)
       setIsShuffling(false)
     }, 150)
   }, [isShuffling, buttonScale])
@@ -315,7 +317,7 @@ export const Grid = ({
           const totalIndex = items.length + i
           return (
             <StartupAnimationTile
-              key={`placeholder-${i}-${prompt}`}
+              key={`placeholder-${totalIndex}`}
               delay={
                 isShuffling
                   ? getTileAnimationDelay(i, gridSize - items.length)

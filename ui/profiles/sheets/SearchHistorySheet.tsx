@@ -1,9 +1,11 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useMemo } from 'react'
 import { View, Text, Pressable, ScrollView, ActivityIndicator } from 'react-native'
 import BottomSheet, { BottomSheetBackdrop } from '@gorhom/bottom-sheet'
 import { c, s } from '@/features/style'
 import { useAppStore } from '@/features/stores'
 import { Avatar } from '../../atoms/Avatar'
+import { Image } from 'expo-image'
+import { Ionicons } from '@expo/vector-icons'
 
 interface SearchHistoryItem {
   id: number
@@ -43,6 +45,22 @@ export default function SearchHistorySheet({
       if (response.ok) {
         const data = await response.json()
         setSearchHistory(data.history || [])
+        
+        // Preload thumbnails for faster display
+        if (data.history) {
+          data.history.forEach((item: SearchHistoryItem) => {
+            if (item.search_results) {
+              item.search_results.forEach((person: any) => {
+                const avatarUrl = person.avatar_url || person.avatar
+                if (avatarUrl) {
+                  Image.prefetch(avatarUrl).catch(() => {
+                    // Silently fail if prefetch fails
+                  })
+                }
+              })
+            }
+          })
+        }
       }
     } catch (error) {
       // handle error
@@ -57,6 +75,39 @@ export default function SearchHistorySheet({
   }
 
   const renderBackdrop = (props: any) => <BottomSheetBackdrop {...props} />
+
+  // Optimized thumbnail component for search history
+  const FastThumbnail = ({ source, size = 64 }: { source: string | undefined; size: number }) => {
+    if (!source) {
+      return (
+        <View style={{ 
+          width: size, 
+          height: size, 
+          backgroundColor: "#A6B89F", 
+          borderRadius: size / 2, 
+          alignItems: "center",
+          justifyContent: "center"
+        }}>
+          <Ionicons name="person" size={size * 0.4} color='#fff' />
+        </View>
+      )
+    }
+
+    return (
+      <Image
+        source={source}
+        style={{ 
+          width: size, 
+          height: size, 
+          borderRadius: size / 2,
+          backgroundColor: '#ddd'
+        }}
+        contentFit="cover"
+        cachePolicy="memory-disk"
+        priority="high"
+      />
+    )
+  }
 
   return (
     <BottomSheet
@@ -101,11 +152,10 @@ export default function SearchHistorySheet({
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: s.$3 }}>
                   {item.search_results && item.search_results.length > 0 ? (
                     item.search_results.map((person, idx) => (
-                      <Avatar
+                      <FastThumbnail
                         key={person.id || idx}
                         size={64}
                         source={person.avatar_url || person.avatar || undefined}
-                        // name={person.name || person.username || 'User'}
                       />
                     ))
                   ) : (

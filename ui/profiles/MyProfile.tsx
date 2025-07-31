@@ -524,7 +524,8 @@ export const MyProfile = ({ userName }: { userName: string }) => {
               detailsItemId={detailsItem.id}
               onChange={(index: number) => {
                 if (index === -1) {
-                  stopEditing()
+                  // Don't call stopEditing() here as it might interfere with touch events
+                  // Just clear the details item to close the carousel
                   setDetailsItem(null)
                 }
               }}

@@ -6,8 +6,16 @@ import { GridTileType } from '@/features/types'
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { c } from '@/features/style'
 import { DEFAULT_TILE_SIZE } from './GridTile'
+import Animated, { 
+  useSharedValue, 
+  useAnimatedStyle, 
+  withSpring,
+  runOnJS 
+} from 'react-native-reanimated'
 
 import { useAppStore } from '@/features/stores'
+
+const AnimatedTouchableOpacity = Animated.createAnimatedComponent(TouchableOpacity)
 
 export const GridTileWrapper = ({
   type,
@@ -29,6 +37,44 @@ export const GridTileWrapper = ({
   tileStyle?: any
 }) => {
   const { editingProfile, stopEditProfile } = useAppStore()
+  
+  // Animation values - always start fresh
+  const scale = useSharedValue(1)
+  const isPressed = useSharedValue(false)
+
+  // Animated style for press feedback
+  const animatedStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{ scale: scale.value }],
+    }
+  })
+
+  // Handle press in - smooth spring down
+  const handlePressIn = () => {
+    isPressed.value = true
+    scale.value = withSpring(0.92, {
+      damping: 12,
+      stiffness: 300,
+      mass: 0.8,
+    })
+  }
+
+  // Handle press out - smooth spring back
+  const handlePressOut = () => {
+    isPressed.value = false
+    scale.value = withSpring(1, {
+      damping: 12,
+      stiffness: 300,
+      mass: 0.8,
+    })
+  }
+
+  // Handle press
+  const handlePress = () => {
+    if (onPress) {
+      onPress()
+    }
+  }
 
   const specificStyles = {
     borderWidth: type !== 'image' && type !== '' && type !== 'placeholder' ? 1.5 : 0,
@@ -47,15 +93,18 @@ export const GridTileWrapper = ({
       : {}
 
   return (
-    <TouchableOpacity
+    <AnimatedTouchableOpacity
       activeOpacity={1}
-      onPress={() => onPress && onPress()}
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
+      onPress={handlePress}
       onLongPress={onLongPress}
       style={[
         base.gridTile,
         type === 'placeholder' ? placeholderStyles : specificStyles,
         { width: size, justifyContent: 'center', alignItems: 'center', backgroundColor: c.surface },
         tileStyle,
+        animatedStyle,
       ]}
     >
       {editingProfile && type !== 'add' && id && (
@@ -84,6 +133,6 @@ export const GridTileWrapper = ({
       ) : (
         children
       )}
-    </TouchableOpacity>
+    </AnimatedTouchableOpacity>
   )
 }

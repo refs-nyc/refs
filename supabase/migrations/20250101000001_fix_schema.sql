@@ -22,7 +22,6 @@ CREATE TABLE IF NOT EXISTS items (
   promptContext TEXT,
   created TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  deleted TIMESTAMP WITH TIME ZONE,
   -- Supabase-specific columns for embeddings
   seven_string TEXT,
   seven_string_embedding vector(1536)
@@ -82,4 +81,4 @@ DROP TRIGGER IF EXISTS update_refs_updated_at ON refs;
 CREATE TRIGGER update_refs_updated_at BEFORE UPDATE ON refs FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 DROP TRIGGER IF EXISTS update_users_updated_at ON users;
-CREATE TRIGGER update_users_updated_at BEFORE UPDATE ON users FOR EACH ROW EXECUTE FUNCTION update_updated_at_column(); 
+CREATE TRIGGER update_users_updated_at BEFORE UPDATE ON users FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();

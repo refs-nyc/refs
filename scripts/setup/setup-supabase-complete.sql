@@ -25,7 +25,6 @@ CREATE TABLE IF NOT EXISTS items (
   promptContext TEXT,
   created TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  deleted TIMESTAMP WITH TIME ZONE,
   -- Supabase-specific columns for embeddings
   seven_string TEXT,
   seven_string_embedding vector(1536)
@@ -88,14 +87,14 @@ DROP TRIGGER IF EXISTS update_users_updated_at ON users;
 CREATE TRIGGER update_users_updated_at BEFORE UPDATE ON users FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- Insert some test data
-INSERT INTO users (id, name, userName, avatarURL, email) VALUES 
+INSERT INTO users (id, name, userName, avatarURL, email) VALUES
 ('test_user_1', 'Test User', 'testuser', 'https://example.com/avatar.jpg', 'test@example.com')
 ON CONFLICT (id) DO NOTHING;
 
-INSERT INTO refs (id, title, creator, type) VALUES 
+INSERT INTO refs (id, title, creator, type) VALUES
 ('test_ref_1', 'Test Reference', 'test_user_1', 'other')
 ON CONFLICT (id) DO NOTHING;
 
-INSERT INTO items (id, ref, text, creator, image) VALUES 
+INSERT INTO items (id, ref, text, creator, image) VALUES
 ('test_item_1', 'test_ref_1', 'Test item text', 'test_user_1', 'https://example.com/image.jpg')
-ON CONFLICT (id) DO NOTHING; 
+ON CONFLICT (id) DO NOTHING;

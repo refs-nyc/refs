@@ -15,45 +15,45 @@ const supabase = createClient(supabaseUrl, supabaseKey)
 
 async function syncPocketBaseToSupabase() {
   console.log('🔄 Starting PocketBase to Supabase sync...')
-  
+
   try {
     // 1. Sync Users
     console.log('📥 Syncing users...')
     const users = await pocketbase.collection('users').getFullList({
-      sort: '-created'
+      sort: '-created',
     })
-    
+
     for (const user of users) {
-      const { error } = await supabase
-        .from('users')
-        .upsert({
+      const { error } = await supabase.from('users').upsert(
+        {
           id: user.id,
           name: user.name,
           userName: user.userName,
           email: user.email,
           avatarURL: user.avatarURL,
           created: user.created,
-          updated: user.updated
-        }, { onConflict: 'id' })
-      
+          updated: user.updated,
+        },
+        { onConflict: 'id' }
+      )
+
       if (error) {
         console.error(`❌ Error syncing user ${user.id}:`, error)
       } else {
         console.log(`✅ Synced user: ${user.userName}`)
       }
     }
-    
+
     // 2. Sync Refs
     console.log('📥 Syncing refs...')
     const refs = await pocketbase.collection('refs').getFullList({
       sort: '-created',
-      expand: 'creator'
+      expand: 'creator',
     })
-    
+
     for (const ref of refs) {
-      const { error } = await supabase
-        .from('refs')
-        .upsert({
+      const { error } = await supabase.from('refs').upsert(
+        {
           id: ref.id,
           title: ref.title,
           image: ref.image,
@@ -63,27 +63,28 @@ async function syncPocketBaseToSupabase() {
           url: ref.url,
           showInTicker: ref.showInTicker,
           created: ref.created,
-          updated: ref.updated
-        }, { onConflict: 'id' })
-      
+          updated: ref.updated,
+        },
+        { onConflict: 'id' }
+      )
+
       if (error) {
         console.error(`❌ Error syncing ref ${ref.id}:`, error)
       } else {
         console.log(`✅ Synced ref: ${ref.title}`)
       }
     }
-    
+
     // 3. Sync Items
     console.log('📥 Syncing items...')
     const items = await pocketbase.collection('items').getFullList({
       sort: '-created',
-      expand: 'ref,creator'
+      expand: 'ref,creator',
     })
-    
+
     for (const item of items) {
-      const { error } = await supabase
-        .from('items')
-        .upsert({
+      const { error } = await supabase.from('items').upsert(
+        {
           id: item.id,
           ref: item.ref,
           image: item.image,
@@ -97,26 +98,26 @@ async function syncPocketBaseToSupabase() {
           promptContext: item.promptContext,
           created: item.created,
           updated: item.updated,
-          deleted: item.deleted
-        }, { onConflict: 'id' })
-      
+        },
+        { onConflict: 'id' }
+      )
+
       if (error) {
         console.error(`❌ Error syncing item ${item.id}:`, error)
       } else {
         console.log(`✅ Synced item: ${item.text?.substring(0, 30)}...`)
       }
     }
-    
+
     console.log('🎉 Sync completed!')
     console.log(`📊 Summary:`)
     console.log(`   - Users: ${users.length}`)
     console.log(`   - Refs: ${refs.length}`)
     console.log(`   - Items: ${items.length}`)
-    
   } catch (error) {
     console.error('❌ Sync failed:', error)
   }
 }
 
 // Run the sync
-syncPocketBaseToSupabase() 
+syncPocketBaseToSupabase()

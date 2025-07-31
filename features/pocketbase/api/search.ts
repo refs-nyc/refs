@@ -54,8 +54,6 @@ export async function searchPeople(request: SearchRequest): Promise<SearchRespon
   }
 
   try {
-    console.log('🔍 Calling matchmaking API with:', request)
-
     const response = await fetch(`${MATCHMAKING_API_URL}/api/search-people`, {
       method: 'POST',
       headers: {
@@ -71,7 +69,6 @@ export async function searchPeople(request: SearchRequest): Promise<SearchRespon
     }
 
     const data = await response.json()
-    console.log('🔍 Search results:', data.results?.length || 0, 'people found')
 
     return data
   } catch (error) {
@@ -122,8 +119,6 @@ export async function saveSearchHistory(
       search_results: searchResults, // Cache the actual search results
     }
 
-    console.log('🔍 Saving search history with request body:', requestBody)
-
     const response = await fetch(`${MATCHMAKING_API_URL}/api/search-history`, {
       method: 'POST',
       headers: {
@@ -135,8 +130,6 @@ export async function saveSearchHistory(
     if (!response.ok) {
       throw new Error(`Failed to save search history: ${response.status}`)
     }
-
-    console.log('✅ Search history saved successfully')
   } catch (error) {
     console.error('Error saving search history:', error)
     throw error

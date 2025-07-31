@@ -145,10 +145,8 @@ export default forwardRef<
     }
 
     if (!user) {
-      console.log('❌ User not logged in')
       setSearchError('Please log in to search')
     } else if (selectedRefItems.length === 0) {
-      console.log('❌ No selected ref items')
       setSearchError('Please select at least one ref to search')
     } else {
       // Clear any previous errors
@@ -159,7 +157,6 @@ export default forwardRef<
   // Separate effect to handle cached results being set after component is open
   useEffect(() => {
     if (cachedSearchResults.length > 0 && !hasUsedCachedResults.current) {
-      console.log('✅ Cached results set after component opened, using them now')
       setSearchResults(cachedSearchResults)
       setSearchTitle(cachedSearchTitle)
       setSearchSubtitle(cachedSearchSubtitle)
@@ -195,12 +192,6 @@ export default forwardRef<
         Array.isArray(historyItem.search_results) &&
         historyItem.search_results.length > 0
       ) {
-        console.log(
-          '🔄 Restoring search from history:',
-          historyItem.search_results.length,
-          'results'
-        )
-
         // Set the search results directly from history
         setSearchResults(historyItem.search_results)
         setSearchTitle(historyItem.search_title || 'People into')
@@ -234,7 +225,6 @@ export default forwardRef<
             setIsLoadingProfiles(false)
           })
       } else {
-        console.log('⚠️ History item has no cached results, cannot restore')
         setSearchError('Cannot restore search from history (no cached results)')
       }
     } catch (error) {
@@ -272,8 +262,6 @@ export default forwardRef<
   }
 
   const performSearch = async () => {
-    console.log('🔍 performSearch started')
-
     if (!user) {
       setSearchError('Please log in to search')
       return
@@ -290,30 +278,24 @@ export default forwardRef<
     try {
       // Extract item IDs for search
       const itemIds = selectedRefItems.map((item) => item.id).filter(Boolean)
-      console.log('🔍 Item IDs for search:', itemIds)
 
       if (itemIds.length === 0) {
         throw new Error('No valid item IDs found')
       }
 
-      console.log('🔍 Calling searchPeople API...')
       const response = await searchPeople({
         user_id: user.id,
         item_ids: itemIds,
         limit: 60,
       })
 
-      console.log('🔍 Search response:', response)
-
       // Always show results, even if empty - never leave user empty-handed
       let results = response.results || []
 
       // If no results found, get fallback users
       if (results.length === 0) {
-        console.log('🔍 No search results found, getting fallback users...')
         const fallbackUsers = await getFallbackUsers()
         results = fallbackUsers
-        console.log('🔍 Fallback users found:', fallbackUsers.length)
       }
 
       setSearchResults(results)
@@ -398,7 +380,6 @@ export default forwardRef<
           (title) => title.length > 10 && /^[a-z0-9]+$/.test(title)
         )
         if (needsRefTitles) {
-          console.log('🔍 Some ref titles are raw IDs, fetching from PocketBase...')
           const pocketbase = new PocketBase(
             process.env.EXPO_PUBLIC_POCKETBASE_URL || 'http://127.0.0.1:8090'
           )
@@ -414,24 +395,10 @@ export default forwardRef<
             refTitles = selectedRefItems.map(
               (item) => refMap.get(item.ref) || item.expand?.ref?.title || item.ref || 'Unknown'
             )
-            console.log('🔍 Fetched ref titles from PocketBase:', refTitles)
           } catch (error) {
             console.error('Failed to fetch ref titles from PocketBase:', error)
           }
         }
-
-        console.log('🔍 Final ref titles for search history:', refTitles)
-        console.log('🔍 Ref images for search history:', refImages)
-        console.log(
-          '🔍 Selected ref items structure:',
-          selectedRefItems.map((item) => ({
-            id: item.id,
-            ref: item.ref,
-            expandRefTitle: item.expand?.ref?.title,
-            expandRefImage: item.expand?.ref?.image,
-            image: item.image,
-          }))
-        )
 
         await saveSearchHistory(user.id, itemIds, refTitles, refImages, results, results.length)
       } catch (error) {
@@ -544,26 +511,7 @@ export default forwardRef<
 
   // Function to trigger search - can be called from parent component
   const triggerSearch = useCallback(() => {
-    console.log('🔍 triggerSearch called')
-    console.log('🔍 User:', user?.id)
-    console.log('🔍 Selected ref items:', selectedRefItems)
-    console.log(
-      '🔍 Selected ref items structure:',
-      selectedRefItems.map((item) => ({
-        id: item.id,
-        refId: item.ref,
-        refTitle: item.expand?.ref?.title,
-        hasExpand: !!item.expand,
-        expandKeys: item.expand ? Object.keys(item.expand) : [],
-        sevenString: item.seven_string,
-        hasSevenString: !!item.seven_string,
-        fullItem: item,
-      }))
-    )
-    console.log('🔍 Full selected ref items data:', JSON.stringify(selectedRefItems, null, 2))
-
     if (!user || selectedRefItems.length === 0) {
-      console.log('❌ Cannot search: no user or no selected items')
       return
     }
 
@@ -575,7 +523,6 @@ export default forwardRef<
     //   return
     // }
 
-    console.log('🔍 Performing new search...')
     performSearch()
   }, [user, selectedRefItems, performSearch])
 

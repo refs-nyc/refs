@@ -86,16 +86,6 @@ export const MyProfile = ({ userName }: { userName: string }) => {
       ? globalSelectedRefItems
       : selectedRefItems
 
-  useEffect(() => {
-    console.log('🔍 MyProfile: Final selectedRefItems for SearchResultsSheet:', {
-      restoredRefItemsLength: restoredRefItems.length,
-      globalSelectedRefItemsLength: globalSelectedRefItems.length,
-      selectedRefItemsLength: selectedRefItems.length,
-      finalLength: finalSelectedRefItems.length,
-      finalItems: finalSelectedRefItems.slice(0, 2),
-    })
-  }, [restoredRefItems, globalSelectedRefItems, selectedRefItems, finalSelectedRefItems])
-
   const refreshGrid = async (userName: string) => {
     setLoading(true)
     try {
@@ -165,54 +155,10 @@ export const MyProfile = ({ userName }: { userName: string }) => {
 
   // Check if we're returning from a search result and should open search results sheet
   useEffect(() => {
-    console.log('🔍 MyProfile useEffect - returningFromSearch:', returningFromSearch)
-    console.log(
-      '🔍 MyProfile useEffect - returningFromSearchViaBackButton:',
-      returningFromSearchViaBackButton
-    )
-    console.log('🔍 MyProfile useEffect - selectedRefs:', selectedRefs.length)
-    console.log('🔍 MyProfile useEffect - cachedSearchResults:', cachedSearchResults.length)
-    console.log('🔍 MyProfile useEffect - loading:', loading)
-    console.log('🔍 MyProfile useEffect - gridItems:', gridItems.length)
-
-    // Debug: Log the condition check
-    console.log('🔍 MyProfile: Should open search results?', {
-      returningFromSearchViaBackButton,
-      returningFromSearch,
-      selectedRefsLength: selectedRefs.length,
-      cachedResultsLength: cachedSearchResults.length,
-      loading,
-      gridItemsLength: gridItems.length,
-      isOpeningSearchResults,
-    })
-
-    // Debug: Check each condition individually
-    if (returningFromSearchViaBackButton) {
-      console.log('🔍 MyProfile: Condition check - returningFromSearchViaBackButton: ✅')
-      console.log(
-        '🔍 MyProfile: Condition check - returningFromSearch:',
-        returningFromSearch ? '✅' : '❌'
-      )
-      console.log(
-        '🔍 MyProfile: Condition check - selectedRefs.length > 0:',
-        selectedRefs.length > 0 ? '✅' : '❌'
-      )
-      console.log('🔍 MyProfile: Condition check - !loading:', !loading ? '✅' : '❌')
-      console.log(
-        '🔍 MyProfile: Condition check - gridItems.length > 0:',
-        gridItems.length > 0 ? '✅' : '❌'
-      )
-      console.log(
-        '🔍 MyProfile: Condition check - !isOpeningSearchResults:',
-        !isOpeningSearchResults ? '✅' : '❌'
-      )
-    }
-
     // Only open search results if we're returning via back button specifically
     if (!returningFromSearchViaBackButton) {
       // Clear the general returningFromSearch flag if we're not coming via back button
       if (returningFromSearch) {
-        console.log('🔍 MyProfile: Clearing returningFromSearch (not via back button)')
         setReturningFromSearch(false)
       }
       return
@@ -220,12 +166,10 @@ export const MyProfile = ({ userName }: { userName: string }) => {
 
     // If returning from search but selectedRefs is empty, try to reconstruct from cached results
     if (returningFromSearch && selectedRefs.length === 0 && cachedSearchResults.length > 0) {
-      console.log('🔍 MyProfile: Reconstructing selectedRefs from cached results')
       // Extract ref IDs from cached search results
       const refIds = cachedSearchResults.map((result) => result.id).filter(Boolean)
       if (refIds.length > 0) {
         setSelectedRefs(refIds)
-        console.log('🔍 MyProfile: Reconstructed selectedRefs:', refIds.length)
 
         // Also restore the ref items for thumbnails and share button
         // We need to get the ref items from the search history, not cachedSearchResults
@@ -250,11 +194,6 @@ export const MyProfile = ({ userName }: { userName: string }) => {
             })
             .filter(Boolean)
 
-          console.log(
-            '🔍 MyProfile: Restoring ref items for thumbnails from gridItems:',
-            restoredItems.length
-          )
-          console.log('🔍 MyProfile: restoredItems sample:', restoredItems.slice(0, 2))
           setRestoredRefItems(restoredItems)
           setGlobalSelectedRefItems(restoredItems) // Also set in global state
         }
@@ -270,11 +209,6 @@ export const MyProfile = ({ userName }: { userName: string }) => {
       gridItems.length > 0 &&
       !isOpeningSearchResults
     ) {
-      console.log('🔍 MyProfile: Opening search results sheet - ALL CONDITIONS MET')
-      console.log('🔍 MyProfile: selectedRefs.length:', selectedRefs.length)
-      console.log('🔍 MyProfile: loading:', loading)
-      console.log('🔍 MyProfile: gridItems.length:', gridItems.length)
-      console.log('🔍 MyProfile: isOpeningSearchResults:', isOpeningSearchResults)
       setIsOpeningSearchResults(true)
       setSearchMode(false)
       // Add a small delay to ensure proper state updates
@@ -283,13 +217,10 @@ export const MyProfile = ({ userName }: { userName: string }) => {
           try {
             searchResultsSheetRef.current.snapToIndex(1)
           } catch (error) {
-            console.log('🔍 Error opening search results sheet:', error)
             // Fallback: try index 0 if index 1 fails
             try {
               searchResultsSheetRef.current.snapToIndex(0)
-            } catch (fallbackError) {
-              console.log('🔍 Fallback also failed:', fallbackError)
-            }
+            } catch (fallbackError) {}
           }
         }
         // Clear the back button flag after opening the sheet
@@ -302,9 +233,6 @@ export const MyProfile = ({ userName }: { userName: string }) => {
       selectedRefs.length === 0 &&
       cachedSearchResults.length === 0
     ) {
-      console.log(
-        '🔍 MyProfile: Clearing returningFromSearch (no selected refs and no cached results)'
-      )
       setReturningFromSearch(false)
       setReturningFromSearchViaBackButton(false)
     }
@@ -601,8 +529,6 @@ export const MyProfile = ({ userName }: { userName: string }) => {
               selectedRefs={selectedRefs}
               selectedRefItems={selectedRefItems}
               onSearch={() => {
-                console.log('🔍 Search triggered with selectedRefs:', selectedRefs)
-                console.log('🔍 Selected ref items:', selectedRefItems)
                 // Clear restored ref items for new searches
                 setRestoredRefItems([])
                 searchResultsSheetRef.current?.snapToIndex(1)
@@ -610,10 +536,8 @@ export const MyProfile = ({ userName }: { userName: string }) => {
                 // Trigger the search after a small delay to ensure the sheet is open
                 setTimeout(() => {
                   if (searchResultsSheetTriggerRef.current) {
-                    console.log('🔍 Calling triggerSearch...')
                     searchResultsSheetTriggerRef.current.triggerSearch()
                   } else {
-                    console.log('❌ searchResultsSheetTriggerRef.current is null')
                   }
                 }, 300) // Increased delay to ensure sheet is fully open
               }}
@@ -634,7 +558,6 @@ export const MyProfile = ({ userName }: { userName: string }) => {
                     },
                   }))
 
-                  console.log('🔄 Restoring ref items from history:', restoredItems)
                   setRestoredRefItems(restoredItems)
 
                   // Open the search results sheet immediately
@@ -644,10 +567,8 @@ export const MyProfile = ({ userName }: { userName: string }) => {
                   // Use the cached search results from history
                   setTimeout(() => {
                     if (searchResultsSheetTriggerRef.current) {
-                      console.log('🔄 Restoring search from history...')
                       searchResultsSheetTriggerRef.current.restoreSearchFromHistory(historyItem)
                     } else {
-                      console.log('❌ searchResultsSheetTriggerRef.current is null')
                     }
                   }, 100)
                 } catch (error) {

@@ -107,7 +107,6 @@ export const createUISlice: StateCreator<StoreSlices, [], [], UISlice> = (set) =
     }))
   },
   setSelectedRefs: (refs: string[]) => {
-    console.log('🔍 setSelectedRefs called with:', refs.length, 'refs:', refs)
     set(() => ({
       selectedRefs: refs,
     }))

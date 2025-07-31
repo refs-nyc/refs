@@ -157,17 +157,6 @@ export default function SearchModeBottomSheet({
 
   // Memoize parsed search history to avoid repeated JSON parsing
   const parsedSearchHistory = useMemo(() => {
-    console.log(
-      '🔍 Parsing search history:',
-      searchHistory.map((item) => ({
-        id: item.id,
-        ref_ids: item.ref_ids,
-        ref_titles: item.ref_titles,
-        ref_images: item.ref_images || [],
-        search_results: item.search_results ? 'has results' : 'no results',
-      }))
-    )
-
     return searchHistory.map((item) => {
       return {
         ...item,
@@ -194,11 +183,10 @@ export default function SearchModeBottomSheet({
 
     try {
       setLoadingRefs(true)
-      console.log('🔍 Fetching ref images for:', refIds)
 
       // For now, we'll skip fetching ref images since we need to implement this
       // TODO: Implement ref image fetching from PocketBase or Supabase
-      console.log('📦 Skipping ref image fetch for now')
+      // console.log('📦 Skipping ref image fetch for now')
     } catch (error) {
       console.error('❌ Error fetching ref images:', error)
     } finally {
@@ -215,7 +203,6 @@ export default function SearchModeBottomSheet({
     // Prevent duplicate requests within 2 seconds
     const now = Date.now()
     if (!force && (isFetchingHistory || now - lastFetchTime < 2000)) {
-      console.log('🔄 Skipping duplicate search history fetch')
       return
     }
 
@@ -224,12 +211,10 @@ export default function SearchModeBottomSheet({
 
     try {
       setLoadingHistory(true)
-      console.log('Fetching search history for user:', user.id)
 
       // Make API call non-blocking
       getSearchHistory(user.id)
         .then((history) => {
-          console.log('Search history data:', history)
           setSearchHistory(history)
           setLoadingHistory(false)
           setIsFetchingHistory(false)

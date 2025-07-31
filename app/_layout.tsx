@@ -42,7 +42,7 @@ import Saves from '@/features/saves/saves-sheet'
 import Referencers from '@/ui/profiles/sheets/ReferencersSheet'
 import { AddRefSheet } from '@/ui/profiles/sheets/AddRefSheet'
 import { NewRefSheet } from '@/ui/profiles/sheets/NewRefSheet'
-import { magic } from '@/features/magic'
+import { MagicSheet } from '@/features/magic/MagicSheet'
 
 install()
 polyfillEncoding()
@@ -151,7 +151,7 @@ function RootLayoutNav() {
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <StatusBar barStyle={colorScheme === 'dark' ? 'light-content' : 'dark-content'} />
       <RegisterPushNotifications />
-      <magic.Relayer />
+
       <Navigation savesBottomSheetRef={savesBottomSheetRef} />
 
       <Stack
@@ -213,6 +213,8 @@ function RootLayoutNav() {
       <AddRefSheet bottomSheetRef={addRefSheetRef} />
       {/* new ref sheet */}
       <NewRefSheet bottomSheetRef={newRefSheetRef} />
+      {/* magic login sheet */}
+      <MagicSheet />
     </ThemeProvider>
   )
 }

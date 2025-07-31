@@ -22,6 +22,8 @@ export type UISlice = {
   setAddRefPrompt: (prompt: string) => void
   stopEditProfile: () => void
   startEditProfile: () => void
+  showMagicSheet: boolean
+  setShowMagicSheet: (showMagicSheet: boolean) => void
 }
 
 export const createUISlice: StateCreator<StoreSlices, [], [], UISlice> = (set) => ({
@@ -69,5 +71,9 @@ export const createUISlice: StateCreator<StoreSlices, [], [], UISlice> = (set) =
     set(() => ({
       editingProfile: true,
     }))
+  },
+  showMagicSheet: false,
+  setShowMagicSheet: (showMagicSheet: boolean) => {
+    set(() => ({ showMagicSheet }))
   },
 })

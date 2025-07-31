@@ -24,7 +24,7 @@ const LoginStep = () => {
     },
   })
   const [loginInProgress, setLoginInProgress] = useState(false)
-  const { login, canvasApp } = useAppStore()
+  const { login, canvasApp, setShowMagicSheet } = useAppStore()
 
   return (
     <ProfileStep
@@ -32,23 +32,30 @@ const LoginStep = () => {
       showFullHeightStack={false}
       onSubmit={handleSubmit(async (values) => {
         setLoginInProgress(true)
-        const sessionSigner = await getSessionSignerFromSMS(values.phoneNumber)
+        try {
+          setShowMagicSheet(true)
+          const sessionSigner = await getSessionSignerFromSMS(values.phoneNumber)
+          setShowMagicSheet(false)
 
-        // check if the profile already exists
-        const userDid = await sessionSigner.getDid()
-        const existingProfile = await canvasApp!.db.get('profile', userDid)
-        if (existingProfile) {
-          // if so, then log the user in
-          await login(sessionSigner)
-          router.dismissAll()
-          setLoginInProgress(false)
-        } else {
-          // otherwise show an error, user with this number doesn't exist
-          setLoginInProgress(false)
-          setError('phoneNumber', {
-            type: 'loginFailed',
-            message: "User with this number doesn't exist",
-          })
+          // check if the profile already exists
+          const userDid = await sessionSigner.getDid()
+          const existingProfile = await canvasApp!.db.get('profile', userDid)
+          if (existingProfile) {
+            // if so, then log the user in
+            await login(sessionSigner)
+            router.dismissAll()
+            setLoginInProgress(false)
+          } else {
+            // otherwise show an error, user with this number doesn't exist
+            setLoginInProgress(false)
+            setError('phoneNumber', {
+              type: 'loginFailed',
+              message: "User with this number doesn't exist",
+            })
+          }
+        } catch (e) {
+          console.error('error while performing Magic SMS verification:', e)
+          setShowMagicSheet(false)
         }
       })}
       disabled={!isValid || !canvasApp || loginInProgress}

@@ -22,7 +22,7 @@ const PhoneNumberStep = ({ carouselRef }: { carouselRef: React.RefObject<ICarous
     handleSubmit,
     formState: { errors, isValid },
   } = useForm({ mode: 'onChange' })
-  const { login, updateStagedProfileFields, canvasApp } = useAppStore()
+  const { login, updateStagedProfileFields, canvasApp, setShowMagicSheet } = useAppStore()
   const [checkingPhoneNumber, setCheckingPhoneNumber] = useState(false)
 
   return (
@@ -35,22 +35,30 @@ const PhoneNumberStep = ({ carouselRef }: { carouselRef: React.RefObject<ICarous
           setCheckingPhoneNumber(true)
 
           try {
-            const sessionSigner = await getSessionSignerFromSMS(values.phoneNumber)
+            setShowMagicSheet(true)
 
-            // check if the profile already exists
-            const userDid = await sessionSigner.getDid()
-            const existingProfile = await canvasApp!.db.get('profile', userDid)
+            try {
+              const sessionSigner = await getSessionSignerFromSMS(values.phoneNumber)
+              setShowMagicSheet(false)
 
-            if (existingProfile) {
-              // if so, then log the user in
-              await login(sessionSigner)
-              router.dismissAll()
-            } else {
-              // otherwise update the staged user and move to the next step
-              updateStagedProfileFields({
-                sessionSigner,
-              })
-              carouselRef.current?.next()
+              // check if the profile already exists
+              const userDid = await sessionSigner.getDid()
+              const existingProfile = await canvasApp!.db.get('profile', userDid)
+
+              if (existingProfile) {
+                // if so, then log the user in
+                await login(sessionSigner)
+                router.dismissAll()
+              } else {
+                // otherwise update the staged user and move to the next step
+                updateStagedProfileFields({
+                  sessionSigner,
+                })
+                carouselRef.current?.next()
+              }
+            } catch (e) {
+              console.error('error while performing Magic SMS verification:', e)
+              setShowMagicSheet(false)
             }
           } finally {
             setCheckingPhoneNumber(false)

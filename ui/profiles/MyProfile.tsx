@@ -86,6 +86,19 @@ export const MyProfile = ({ userName }: { userName: string }) => {
       ? globalSelectedRefItems
       : selectedRefItems
 
+  // Debug: Log the selectedRefItems state
+  useEffect(() => {
+    console.log('🔍 MyProfile: selectedRefItems debug:', {
+      restoredRefItemsLength: restoredRefItems.length,
+      globalSelectedRefItemsLength: globalSelectedRefItems.length,
+      selectedRefItemsLength: selectedRefItems.length,
+      finalSelectedRefItemsLength: finalSelectedRefItems.length,
+      selectedRefsLength: selectedRefs.length,
+      returningFromSearch,
+      returningFromSearchViaBackButton
+    })
+  }, [restoredRefItems, globalSelectedRefItems, selectedRefItems, finalSelectedRefItems, selectedRefs, returningFromSearch, returningFromSearchViaBackButton])
+
   const refreshGrid = async (userName: string) => {
     setLoading(true)
     try {
@@ -170,36 +183,40 @@ export const MyProfile = ({ userName }: { userName: string }) => {
       const refIds = cachedSearchResults.map((result) => result.id).filter(Boolean)
       if (refIds.length > 0) {
         setSelectedRefs(refIds)
-
-        // Also restore the ref items for thumbnails and share button
-        // We need to get the ref items from the search history, not cachedSearchResults
-        // For now, let's try to reconstruct from the selectedRefs and gridItems
-        if (selectedRefs.length > 0 && gridItems.length > 0) {
-          const restoredItems = selectedRefs
-            .map((refId) => {
-              const gridItem = gridItems.find((item) => item.id === refId)
-              return {
-                id: refId,
-                ref: refId,
-                image: gridItem?.image || '',
-                title: gridItem?.expand?.ref?.title || refId,
-                expand: {
-                  ref: {
-                    id: refId,
-                    title: gridItem?.expand?.ref?.title || refId,
-                    image: gridItem?.image || '',
-                  },
-                },
-              }
-            })
-            .filter(Boolean)
-
-          setRestoredRefItems(restoredItems)
-          setGlobalSelectedRefItems(restoredItems) // Also set in global state
-        }
-
         return // Exit early, let the next useEffect run handle opening the sheet
       }
+    }
+
+    // Always restore ref items when returning from search (regardless of selectedRefs state)
+    if (returningFromSearch && selectedRefs.length > 0 && gridItems.length > 0) {
+      console.log('🔍 MyProfile: Restoring ref items for thumbnails...')
+      console.log('🔍 MyProfile: selectedRefs:', selectedRefs)
+      console.log('🔍 MyProfile: gridItems.length:', gridItems.length)
+      
+      const restoredItems = selectedRefs
+        .map((refId) => {
+          const gridItem = gridItems.find((item) => item.id === refId)
+          console.log('🔍 MyProfile: Looking for refId:', refId, 'Found:', !!gridItem)
+          return {
+            id: refId,
+            ref: refId,
+            image: gridItem?.image || '',
+            title: gridItem?.expand?.ref?.title || refId,
+            expand: {
+              ref: {
+                id: refId,
+                title: gridItem?.expand?.ref?.title || refId,
+                image: gridItem?.image || '',
+              },
+            },
+          }
+        })
+        .filter(Boolean)
+
+      console.log('🔍 MyProfile: Restored items:', restoredItems.length)
+      console.log('🔍 MyProfile: restoredItems sample:', restoredItems.slice(0, 2))
+      setRestoredRefItems(restoredItems)
+      setGlobalSelectedRefItems(restoredItems) // Also set in global state
     }
 
     if (

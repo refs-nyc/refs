@@ -42,6 +42,7 @@ export default forwardRef<
     selectedRefItems: any[]
   }
 >(({ bottomSheetRef, selectedRefs, selectedRefItems }, ref) => {
+
   const snapPoints = ['25%', '80%']
   const resultsAnimation = useRef(new Animated.Value(0)).current
   const dropdownAnimation = useRef(new Animated.Value(0)).current
@@ -195,13 +196,15 @@ export default forwardRef<
         // Set the search results directly from history
         setSearchResults(historyItem.search_results)
         setSearchTitle(historyItem.search_title || 'People into')
-        setSearchSubtitle(historyItem.search_subtitle || 'browse, dm, or add to a group')
+        setSearchSubtitle(historyItem.search_subtitle || 'Browse, dm, or add to a group')
 
         // Also update the cached search results in the global store
         setCachedSearchResults(
           historyItem.search_results,
           historyItem.search_title || 'People into',
-          historyItem.search_subtitle || 'browse, dm, or add to a group'
+          historyItem.search_subtitle || 'Browse, dm, or add to a group',
+          historyItem.ref_titles || [],
+          historyItem.ref_images || []
         )
 
         setIsLoading(false)
@@ -345,29 +348,45 @@ export default forwardRef<
       if (response.results && response.results.length > 0) {
         // Original search had results
         setSearchTitle('People into')
-        setSearchSubtitle('browse, dm, or add to a group')
+        setSearchSubtitle('Browse, dm, or add to a group')
 
-        // Cache results
-        setCachedSearchResults(response.results, 'People into', 'browse, dm, or add to a group')
+        // Extract ref titles and images from selectedRefItems
+        let refTitles = selectedRefItems.map(
+          (item) => item.expand?.ref?.title || item.ref || 'Unknown'
+        )
+        const refImages = selectedRefItems.map(
+          (item) => item.image || item.expand?.ref?.image || ''
+        )
+
+        // Cache results with ref titles and images
+        setCachedSearchResults(response.results, 'People into', 'Browse, dm, or add to a group', refTitles, refImages)
       } else if (results.length > 0) {
         // Using fallback users
         setSearchTitle('People into')
-        setSearchSubtitle('browse, dm, or add to a group')
+        setSearchSubtitle('Browse, dm, or add to a group')
 
-        // Cache fallback results
-        setCachedSearchResults(results, 'People into', 'browse, dm, or add to a group')
+        // Extract ref titles and images from selectedRefItems
+        let refTitles = selectedRefItems.map(
+          (item) => item.expand?.ref?.title || item.ref || 'Unknown'
+        )
+        const refImages = selectedRefItems.map(
+          (item) => item.image || item.expand?.ref?.image || ''
+        )
+
+        // Cache fallback results with ref titles and images
+        setCachedSearchResults(results, 'People into', 'Browse, dm, or add to a group', refTitles, refImages)
       } else {
         // No results at all
         setSearchTitle('People into')
         setSearchSubtitle('No users found, try different refs')
 
         // Cache empty results
-        setCachedSearchResults([], 'People into', 'No users found, try different refs')
+        setCachedSearchResults([], 'People into', 'No users found, try different refs', [], [])
       }
 
       // Save to search history with ref titles, images, and cached results
       try {
-        // Extract ref titles and images from selectedRefItems
+        // Extract ref titles and images from selectedRefItems (if not already extracted)
         let refTitles = selectedRefItems.map(
           (item) => item.expand?.ref?.title || item.ref || 'Unknown'
         )

@@ -31,6 +31,8 @@ export type UISlice = {
   cachedSearchResults: any[]
   cachedSearchTitle: string
   cachedSearchSubtitle: string
+  cachedRefTitles: string[]
+  cachedRefImages: string[]
   closeActiveBottomSheet: (() => void) | null
   isSearchResultsSheetOpen: boolean
   setSearchMode: (mode: boolean) => void
@@ -38,7 +40,7 @@ export type UISlice = {
   setSelectedRefItems: (items: any[]) => void
   setReturningFromSearch: (returning: boolean) => void
   setReturningFromSearchViaBackButton: (returning: boolean) => void
-  setCachedSearchResults: (results: any[], title: string, subtitle: string) => void
+  setCachedSearchResults: (results: any[], title: string, subtitle: string, refTitles?: string[], refImages?: string[]) => void
   clearCachedSearchResults: () => void
   setSearchResultsSheetOpen: (open: boolean) => void
   setCloseActiveBottomSheet: (closeFunction: (() => void) | null) => void
@@ -99,6 +101,8 @@ export const createUISlice: StateCreator<StoreSlices, [], [], UISlice> = (set) =
   cachedSearchResults: [],
   cachedSearchTitle: '',
   cachedSearchSubtitle: '',
+  cachedRefTitles: [] as string[],
+  cachedRefImages: [] as string[],
   closeActiveBottomSheet: null as (() => void) | null,
   isSearchResultsSheetOpen: false,
   setSearchMode: (mode: boolean) => {
@@ -126,11 +130,13 @@ export const createUISlice: StateCreator<StoreSlices, [], [], UISlice> = (set) =
       returningFromSearchViaBackButton: returning,
     }))
   },
-  setCachedSearchResults: (results: any[], title: string, subtitle: string) => {
+  setCachedSearchResults: (results: any[], title: string, subtitle: string, refTitles?: string[], refImages?: string[]) => {
     set(() => ({
       cachedSearchResults: results,
       cachedSearchTitle: title,
       cachedSearchSubtitle: subtitle,
+      cachedRefTitles: refTitles || [],
+      cachedRefImages: refImages || [],
     }))
   },
   clearCachedSearchResults: () => {
@@ -138,6 +144,8 @@ export const createUISlice: StateCreator<StoreSlices, [], [], UISlice> = (set) =
       cachedSearchResults: [],
       cachedSearchTitle: '',
       cachedSearchSubtitle: '',
+      cachedRefTitles: [],
+      cachedRefImages: [],
     }))
   },
   setSearchResultsSheetOpen: (open: boolean) => {

@@ -114,7 +114,7 @@ export async function saveSearchHistory(
       ref_titles: searchRefTitles,
       ref_images: searchRefImages, // Add ref_images to the request
       search_title: 'People into',
-      search_subtitle: 'browse, dm, or add to a group',
+      search_subtitle: 'Browse, dm, or add to a group',
       result_count: resultsCount,
       search_results: searchResults, // Cache the actual search results
     }

@@ -27,6 +27,7 @@ export type UISlice = {
   selectedRefs: string[]
   selectedRefItems: any[]
   returningFromSearch: boolean
+  returningFromSearchViaBackButton: boolean
   cachedSearchResults: any[]
   cachedSearchTitle: string
   cachedSearchSubtitle: string
@@ -36,6 +37,7 @@ export type UISlice = {
   setSelectedRefs: (refs: string[]) => void
   setSelectedRefItems: (items: any[]) => void
   setReturningFromSearch: (returning: boolean) => void
+  setReturningFromSearchViaBackButton: (returning: boolean) => void
   setCachedSearchResults: (results: any[], title: string, subtitle: string) => void
   clearCachedSearchResults: () => void
   setSearchResultsSheetOpen: (open: boolean) => void
@@ -93,6 +95,7 @@ export const createUISlice: StateCreator<StoreSlices, [], [], UISlice> = (set) =
   selectedRefs: [],
   selectedRefItems: [],
   returningFromSearch: false,
+  returningFromSearchViaBackButton: false,
   cachedSearchResults: [],
   cachedSearchTitle: '',
   cachedSearchSubtitle: '',
@@ -104,6 +107,7 @@ export const createUISlice: StateCreator<StoreSlices, [], [], UISlice> = (set) =
     }))
   },
   setSelectedRefs: (refs: string[]) => {
+    console.log('🔍 setSelectedRefs called with:', refs.length, 'refs:', refs)
     set(() => ({
       selectedRefs: refs,
     }))
@@ -116,6 +120,11 @@ export const createUISlice: StateCreator<StoreSlices, [], [], UISlice> = (set) =
   setReturningFromSearch: (returning: boolean) => {
     set(() => ({
       returningFromSearch: returning,
+    }))
+  },
+  setReturningFromSearchViaBackButton: (returning: boolean) => {
+    set(() => ({
+      returningFromSearchViaBackButton: returning,
     }))
   },
   setCachedSearchResults: (results: any[], title: string, subtitle: string) => {

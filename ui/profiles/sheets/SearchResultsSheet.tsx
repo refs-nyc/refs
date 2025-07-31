@@ -89,7 +89,7 @@ export default forwardRef<SearchResultsSheetRef, {
     }
   }
   
-  const { setReturningFromSearch, cachedSearchResults, cachedSearchTitle, cachedSearchSubtitle, setCachedSearchResults, clearCachedSearchResults } = useAppStore()
+  const { returningFromSearch, setReturningFromSearch, cachedSearchResults, cachedSearchTitle, cachedSearchSubtitle, setCachedSearchResults, clearCachedSearchResults } = useAppStore()
   
   // Search state
   const [searchResults, setSearchResults] = useState<PersonResult[]>([])
@@ -173,6 +173,10 @@ export default forwardRef<SearchResultsSheetRef, {
         setSearchResults(historyItem.search_results)
         setSearchTitle(historyItem.search_title || 'People into')
         setSearchSubtitle(historyItem.search_subtitle || 'browse, dm, or add to a group')
+        
+        // Also update the cached search results in the global store
+        setCachedSearchResults(historyItem.search_results, historyItem.search_title || 'People into', historyItem.search_subtitle || 'browse, dm, or add to a group')
+        
         setIsLoading(false)
         setSearchError(null)
         hasUsedCachedResults.current = true
@@ -482,11 +486,13 @@ export default forwardRef<SearchResultsSheetRef, {
     }
   }
 
+
+
   const handleUserPress = (profile: Profile) => {
     // Set navigation state for returning from search
     setReturningFromSearch(true)
     
-    // Navigate to user profile
+    // Use push to maintain navigation history for back button
     router.push(`/user/${profile.userName}`)
   }
 
@@ -571,6 +577,11 @@ export default forwardRef<SearchResultsSheetRef, {
           if (i === -1) {
             handleClose()
             setSearchResultsSheetOpen(false)
+            // Only clear returningFromSearch if we're not navigating to a user profile
+            // (The handleUserPress function will set returningFromSearchViaBackButton)
+            if (!returningFromSearch) {
+              setReturningFromSearch(false)
+            }
           } else if (i === 0 || i === 1) {
             setSearchResultsSheetOpen(true)
             // Reset the flag when sheet opens so we can perform a new search

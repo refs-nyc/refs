@@ -18,11 +18,45 @@ export const Navigation = ({
 }) => {
   const pathname = usePathname()
 
-  const { user, saves, messagesPerConversation, conversations, memberships } = useAppStore()
+  const { user, saves, messagesPerConversation, conversations, memberships, returningFromSearch, selectedRefs, cachedSearchResults, setReturningFromSearchViaBackButton, setReturningFromSearch } = useAppStore()
 
   const isHomePage = pathname === '/' || pathname === '/index'
 
   const scaleAnim = useRef(new Animated.Value(1)).current
+
+  // Custom back button handler for search results
+  const handleBackPress = () => {
+    // Check if we're on a user profile page and have search context
+    if (pathname.startsWith('/user/') && (selectedRefs.length > 0 || cachedSearchResults.length > 0)) {
+      console.log('🔙 Back button: navigating to user profile with search context')
+      console.log('🔙 User:', user?.userName)
+      console.log('🔙 Selected refs:', selectedRefs.length)
+      console.log('🔙 Cached results:', cachedSearchResults.length)
+      // Set the specific flag for back button navigation
+      setReturningFromSearchViaBackButton(true)
+      console.log('🔙 Back button: Set returningFromSearchViaBackButton = true')
+      // Navigate back to the current user's profile page
+      router.push(`/user/${user?.userName}`)
+      // Open the search results sheet after a brief delay for smooth UX
+      setTimeout(() => {
+        console.log('🔙 Back button: Timeout triggered')
+        console.log('🔙 Back button: selectedRefs.length:', selectedRefs.length)
+        console.log('🔙 Back button: cachedSearchResults.length:', cachedSearchResults.length)
+        if (selectedRefs.length > 0 || cachedSearchResults.length > 0) {
+          console.log('🔙 Back button: Opening search results sheet after navigation')
+          // Trigger the search results sheet to open
+          setReturningFromSearch(true)
+          setReturningFromSearchViaBackButton(true) // Also set this flag so MyProfile knows it's from back button
+        } else {
+          console.log('🔙 Back button: No search context found, not opening sheet')
+        }
+      }, 100) // Small delay to ensure navigation completes first
+    } else {
+      console.log('🔙 Back button: default behavior')
+      // Default back behavior
+      router.back()
+    }
+  }
 
   const animateBadge = () => {
     Animated.sequence([
@@ -104,7 +138,7 @@ export const Navigation = ({
           <View style={{ flexDirection: 'row', alignItems: 'center', position: 'relative' }}>
             {!isHomePage && (
               <Pressable
-                onPress={() => router.back()}
+                onPress={handleBackPress}
                 style={{
                   position: 'absolute',
                   left: -15,

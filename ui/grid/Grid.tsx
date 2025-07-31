@@ -4,7 +4,7 @@ import { GridItem } from './GridItem'
 import { GridTileWrapper } from './GridTileWrapper'
 import { GridTileActionAdd } from './GridTileActionAdd'
 import { ExpandedItem } from '@/features/types'
-import { useState } from 'react'
+import { useState, useCallback, useMemo } from 'react'
 import { Text, View, Dimensions } from 'react-native'
 
 const PROMPTS = [
@@ -56,41 +56,43 @@ export const Grid = ({
   const cellGap = 6 // Keep consistent gap regardless of search mode
   const tileSize = (screenWidth - horizontalPadding - cellGap * (columns - 1)) / columns
 
-  const handleGridItemPress = (item: any) => {
+  const handleGridItemPress = useCallback((item: any) => {
     if (searchMode && setSelectedRefs) {
       const itemId = item.id
+      
+      // Use Set for O(1) lookup and manipulation
       const selectedSet = new Set(selectedRefs)
       
       if (selectedSet.has(itemId)) {
         // Remove item
         selectedSet.delete(itemId)
-        setSelectedRefs(Array.from(selectedSet))
       } else {
         // Add item
         selectedSet.add(itemId)
-        setSelectedRefs(Array.from(selectedSet))
       }
+      
+      setSelectedRefs(Array.from(selectedSet))
     } else if (onPressItem) {
       onPressItem(item)
     }
-  }
+  }, [searchMode, setSelectedRefs, selectedRefs, onPressItem])
 
-  // Create a Set for O(1) lookup of selected items
-  const selectedSet = new Set(selectedRefs)
+  // Memoize the selected refs set for O(1) lookup
+  const selectedRefsSet = useMemo(() => new Set(selectedRefs), [selectedRefs])
 
   return (
     <GridWrapper columns={columns} rows={rows}>
       {items.map((item, i) => {
-        const isSelected = searchMode && selectedSet.has(item.id)
+        const isSelected = searchMode && selectedRefsSet.has(item.id)
         return (
         <GridTileWrapper
           key={item.id}
           id={item.id}
-          onPress={() => handleGridItemPress(item)}
+          onPress={useCallback(() => handleGridItemPress(item), [handleGridItemPress, item])}
           onLongPress={onLongPressItem}
-          onRemove={() => {
+          onRemove={useCallback(() => {
             if (onRemoveItem) onRemoveItem(item)
-          }}
+          }, [onRemoveItem, item])}
           type={item.list ? 'list' : item.expand.ref?.image || item.image ? 'image' : 'text'}
           tileStyle={searchMode ? {
             opacity: isSelected ? 1 : 0.25,

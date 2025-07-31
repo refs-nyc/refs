@@ -34,9 +34,10 @@ export const createUserSlice: StateCreator<StoreSlices, [], [], UserSlice> = (se
       // If PocketBase has a valid auth store, sync it with our store
       if (pocketbase.authStore.isValid && pocketbase.authStore.record) {
         try {
+          // Optimize by not expanding items on init - load them separately if needed
           const record = await pocketbase
             .collection<Profile>('users')
-            .getOne(pocketbase.authStore.record.id, { expand: 'items,items.ref' })
+            .getOne(pocketbase.authStore.record.id)
 
           set(() => ({
             user: record,

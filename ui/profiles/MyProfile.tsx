@@ -62,21 +62,42 @@ export const MyProfile = ({ userName }: { userName: string }) => {
   const lastFetchedUserName = useRef<string>('')
   const lastFetchedTrigger = useRef<number>(0)
 
+  // Memoized grid items map for O(1) lookup
+  const gridItemsMap = useMemo(() => 
+    new Map(gridItems.map(item => [item.id, item])), 
+    [gridItems]
+  )
+
+  // Memoized selectedRefItems computation for better performance
+  const selectedRefItems = useMemo(() => {
+    if (selectedRefs.length === 0 || gridItems.length === 0) {
+      return []
+    }
+    
+    return selectedRefs
+      .map(id => gridItemsMap.get(id))
+      .filter(Boolean) as ExpandedItem[]
+  }, [selectedRefs, gridItemsMap])
+
   const refreshGrid = async (userName: string) => {
     setLoading(true)
     try {
-      const profile = await getUserByUserName(userName)
-      setProfile(profile)
-
-      // Fetch data
-      const gridItems = await getProfileItems(userName)
-      setGridItems(gridItems)
-
-      const backlogItems = await getBacklogItems(userName)
-      setBacklogItems(backlogItems as ExpandedItem[])
+      // Fetch data in parallel for better performance (non-blocking)
+      Promise.all([
+        getUserByUserName(userName),
+        getProfileItems(userName),
+        getBacklogItems(userName)
+      ]).then(([profile, gridItems, backlogItems]) => {
+        setProfile(profile)
+        setGridItems(gridItems)
+        setBacklogItems(backlogItems as ExpandedItem[])
+        setLoading(false)
+      }).catch(error => {
+        console.error('Failed to refresh grid:', error)
+        setLoading(false)
+      })
     } catch (error) {
-      console.error(error)
-    } finally {
+      console.error('Failed to refresh grid:', error)
       setLoading(false)
     }
   }
@@ -113,10 +134,14 @@ export const MyProfile = ({ userName }: { userName: string }) => {
       try {
         await refreshGrid(userName)
       } catch (error) {
-        console.error(error)
+        console.error('Failed to refresh grid:', error)
       }
     }
-    init()
+    
+    // Make initialization non-blocking
+    setTimeout(() => {
+      init()
+    }, 0)
   }, [userName, profileRefreshTrigger])
 
   // Check if we're returning from a search result and should open search results sheet
@@ -135,19 +160,6 @@ export const MyProfile = ({ userName }: { userName: string }) => {
       setReturningFromSearch(false)
     }
   }, [returningFromSearch, selectedRefs, setReturningFromSearch, loading, gridItems?.length || 0])
-
-  // Memoized selectedRefItems computation for better performance
-  const selectedRefItems = useMemo(() => {
-    if (selectedRefs.length === 0 || gridItems.length === 0) {
-      return []
-    }
-    
-    // Create a Map for O(1) lookup
-    const gridItemsMap = new Map(gridItems.map(item => [item.id, item]))
-    return selectedRefs
-      .map(id => gridItemsMap.get(id))
-      .filter(Boolean) as ExpandedItem[]
-  }, [selectedRefs, gridItems])
 
   // Reset search mode when component unmounts or user navigates away
   useEffect(() => {
@@ -338,6 +350,8 @@ export const MyProfile = ({ userName }: { userName: string }) => {
               onSearch={() => {
                 console.log('🔍 Search triggered with selectedRefs:', selectedRefs)
                 console.log('🔍 Selected ref items:', selectedRefItems)
+                // Clear restored ref items for new searches
+                setRestoredRefItems([])
                 searchResultsSheetRef.current?.snapToIndex(1)
                 setSearchMode(false) // Exit search mode when opening search results
                 // Trigger the search after a small delay to ensure the sheet is open
@@ -352,30 +366,39 @@ export const MyProfile = ({ userName }: { userName: string }) => {
               }}
               onRestoreSearch={async (historyItem) => {
                 try {
-                  // Parse the search items from the history record
-                  const searchItems = JSON.parse(historyItem.search_items)
+                  // Create ref items from history data with images
+                  const restoredItems = historyItem.ref_ids.map((refId: string, index: number) => ({
+                    id: refId,
+                    ref: refId,
+                    image: historyItem.ref_images?.[index] || '',
+                    title: historyItem.ref_titles?.[index] || refId,
+                    expand: {
+                      ref: {
+                        id: refId,
+                        title: historyItem.ref_titles?.[index] || refId,
+                        image: historyItem.ref_images?.[index] || ''
+                      }
+                    }
+                  }))
                   
-                  // Set the selected refs from the history item
-                  setSelectedRefs(searchItems)
+                  console.log('🔄 Restoring ref items from history:', restoredItems)
+                  setRestoredRefItems(restoredItems)
                   
-                  // Add a small delay to ensure refs are set before opening sheet
+                  // Open the search results sheet immediately
+                  searchResultsSheetRef.current?.snapToIndex(1)
+                  setSearchMode(false)
+                  
+                  // Use the cached search results from history
                   setTimeout(() => {
-                    searchResultsSheetRef.current?.snapToIndex(1)
-                    setSearchMode(false)
+                    if (searchResultsSheetTriggerRef.current) {
+                      console.log('🔄 Restoring search from history...')
+                      searchResultsSheetTriggerRef.current.restoreSearchFromHistory(historyItem)
+                    } else {
+                      console.log('❌ searchResultsSheetTriggerRef.current is null')
+                    }
                   }, 100)
                 } catch (error) {
                   console.error('❌ Error restoring search from history:', error)
-                  // Fallback: try to parse as array directly
-                  try {
-                    const searchItems = JSON.parse(historyItem.search_items)
-                    if (Array.isArray(searchItems)) {
-                      setSelectedRefs(searchItems)
-                      searchResultsSheetRef.current?.snapToIndex(1)
-                      setSearchMode(false)
-                    }
-                  } catch (parseError) {
-                    console.error('❌ Failed to parse search items:', parseError)
-                  }
                 }
               }}
             />

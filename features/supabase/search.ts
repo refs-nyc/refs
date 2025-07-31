@@ -2,9 +2,6 @@ import { createClient } from '@supabase/supabase-js'
 
 export interface SearchResult {
   id: string
-  name: string
-  avatar_url: string
-  userName: string
   similarityScore: number
   exactMatches: number
   highSimilarityMatches: number
@@ -266,9 +263,6 @@ export async function searchPeople(
       if (exactMatch) {
         results.push({
           id: user.id,
-          name: user.name || user.username || 'Unknown',
-          avatar_url: user.avatarurl || '',
-          userName: user.username || user.name || 'Unknown',
           similarityScore: 1.0, // Perfect match
           exactMatches: exactMatch.refs.length,
           highSimilarityMatches: exactMatch.items.length,
@@ -285,9 +279,6 @@ export async function searchPeople(
       if (highSimilarity) {
         tier2Results.push({
           id: user.id,
-          name: user.name || user.username || 'Unknown',
-          avatar_url: user.avatarurl || '',
-          userName: user.username || user.name || 'Unknown',
           similarityScore: highSimilarity.avgSimilarity,
           exactMatches: 0,
           highSimilarityMatches: highSimilarity.highSimilarityCount,
@@ -316,9 +307,6 @@ export async function searchPeople(
       if (closestHit) {
         tier3Results.push({
           id: user.id,
-          name: user.name || user.username || 'Unknown',
-          avatar_url: user.avatarurl || '',
-          userName: user.username || user.name || 'Unknown',
           similarityScore: closestHit.maxSimilarity,
           exactMatches: 0,
           highSimilarityMatches: 0,
@@ -386,9 +374,6 @@ export async function searchPeople(
       // Create Tier 4 results with spirit vector similarity scores
       const tier4Results: SearchResult[] = usersWithSpiritSimilarity.map(({ user, spiritSimilarity }) => ({
         id: user.id,
-        name: user.name || user.username || 'Unknown',
-        avatar_url: user.avatarurl || '',
-        userName: user.username || user.name || 'Unknown',
         similarityScore: spiritSimilarity, // Use spirit vector similarity
         exactMatches: 0,
         highSimilarityMatches: 0,
@@ -404,9 +389,6 @@ export async function searchPeople(
       // Fallback: just add remaining users in order
       const tier4Results: SearchResult[] = remainingUsers.map(user => ({
         id: user.id,
-        name: user.name || user.username || 'Unknown',
-        avatar_url: user.avatarurl || '',
-        userName: user.username || user.name || 'Unknown',
         similarityScore: 0.0, // No spirit vector similarity
         exactMatches: 0,
         highSimilarityMatches: 0,

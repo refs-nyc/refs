@@ -45,35 +45,44 @@ export const Navigation = ({
     }
   }, [saves.length])
 
-  const countNewMessages = () => {
-    if (!user) return 0
-    if (!messagesPerConversation) return 0
-    // messages not loaded yet
-    if (Object.keys(memberships).length === 0) return 0
-    let newMessages = 0
-    for (const conversationId in conversations) {
-      const membership = memberships[conversationId].find((m) => m.expand?.user.id === user?.id)
-      if (!membership) continue
-      if (membership?.archived) continue
-      const lastRead = membership?.last_read
-      const lastReadDate = new Date(lastRead || '')
+  const newMessages = useMemo(() => {
+    if (!user?.id || !messagesPerConversation || Object.keys(memberships).length === 0) {
+      return 0
+    }
+    
+    const userId = user.id
+    let totalNewMessages = 0
+    
+    // Use more efficient iteration
+    const conversationIds = Object.keys(conversations)
+    for (let i = 0; i < conversationIds.length; i++) {
+      const conversationId = conversationIds[i]
+      const membership = memberships[conversationId]?.find((m) => m.expand?.user.id === userId)
+      
+      if (!membership || membership?.archived) continue
+      
       const conversationMessages = messagesPerConversation[conversationId]
       if (!conversationMessages) continue
-      let unreadMessages
+      
+      const lastRead = membership?.last_read
       if (lastRead) {
-        const msgs = conversationMessages.filter(
-          (m) => new Date(m.created!) > lastReadDate && m.sender !== user?.id
-        )
-        unreadMessages = msgs.length
-      } else unreadMessages = conversationMessages.length
-      newMessages += unreadMessages
+        const lastReadDate = new Date(lastRead)
+        // Use more efficient filtering
+        let unreadCount = 0
+        for (let j = 0; j < conversationMessages.length; j++) {
+          const message = conversationMessages[j]
+          if (new Date(message.created!) > lastReadDate && message.sender !== userId) {
+            unreadCount++
+          }
+        }
+        totalNewMessages += unreadCount
+      } else {
+        totalNewMessages += conversationMessages.length
+      }
     }
-    return newMessages
-  }
-  const newMessages = useMemo(
-    () => countNewMessages(),
-    [messagesPerConversation, memberships, user]
-  )
+    
+    return totalNewMessages
+  }, [messagesPerConversation, memberships, user?.id, conversations])
 
   if (!user) return null
 

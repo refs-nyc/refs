@@ -4,59 +4,118 @@ import { View, Text, Pressable, ScrollView } from 'react-native'
 import { XStack, YStack } from '@/ui/core/Stacks'
 import { Ionicons } from '@expo/vector-icons'
 import { SimplePinataImage } from '@/ui/images/SimplePinataImage'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useAppStore } from '@/features/stores'
-import { getSearchHistory, type SearchHistoryRecord } from '@/features/pocketbase/api/search'
+import { getSearchHistory, type SearchHistoryRecord, type PersonResult } from '@/features/pocketbase/api/search'
 
 const HEADER_HEIGHT = s.$8
 
 
 
-// Date formatting function
+// Date formatting function with proper relative date framework
 const formatSearchHistoryDate = (dateString: string): string => {
   const date = new Date(dateString)
   const now = new Date()
-  const diffTime = Math.abs(now.getTime() - date.getTime())
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+  
+  // Reset time to start of day for accurate day comparison
+  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  const startOfDate = new Date(date.getFullYear(), date.getMonth(), date.getDate())
+  
+  const diffTime = startOfToday.getTime() - startOfDate.getTime()
+  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24))
   
   // Today
   if (diffDays === 0) {
-    return 'today'
+    return 'Today'
   }
   
   // Yesterday
   if (diffDays === 1) {
-    return 'yesterday'
+    return 'Yesterday'
   }
   
-  // This week (day of week)
-  if (diffDays <= 7) {
+  // This week (day of week) - 2 to 6 days ago
+  if (diffDays >= 2 && diffDays <= 6) {
     const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
     return dayNames[date.getDay()]
   }
   
-  // Last week
-  if (diffDays <= 14) {
+  // Last week - 7 to 13 days ago
+  if (diffDays >= 7 && diffDays <= 13) {
     return 'last week'
   }
   
-  // 2 weeks ago, 3 weeks ago
-  if (diffDays <= 21) {
+  // 2 weeks ago - 14 to 20 days ago
+  if (diffDays >= 14 && diffDays <= 20) {
     return '2 weeks ago'
   }
-  if (diffDays <= 28) {
+  
+  // 3 weeks ago - 21 to 27 days ago
+  if (diffDays >= 21 && diffDays <= 27) {
     return '3 weeks ago'
   }
   
-  // Past month but within a year
-  if (diffDays <= 365) {
-    const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
-    const day = date.getDate()
-    const suffix = day === 1 ? 'st' : day === 2 ? 'nd' : day === 3 ? 'rd' : 'th'
-    return `${monthNames[date.getMonth()]} ${day}${suffix}`
+  // 4 weeks ago - 28 to 34 days ago
+  if (diffDays >= 28 && diffDays <= 34) {
+    return '4 weeks ago'
   }
   
-  // Past a year
+  // Last month - 35 to 65 days ago
+  if (diffDays >= 35 && diffDays <= 65) {
+    return 'last month'
+  }
+  
+  // 2 months ago - 66 to 95 days ago
+  if (diffDays >= 66 && diffDays <= 95) {
+    return '2 months ago'
+  }
+  
+  // 3 months ago - 96 to 125 days ago
+  if (diffDays >= 96 && diffDays <= 125) {
+    return '3 months ago'
+  }
+  
+  // 4 months ago - 126 to 155 days ago
+  if (diffDays >= 126 && diffDays <= 155) {
+    return '4 months ago'
+  }
+  
+  // 5 months ago - 156 to 185 days ago
+  if (diffDays >= 156 && diffDays <= 185) {
+    return '5 months ago'
+  }
+  
+  // 6 months ago - 186 to 215 days ago
+  if (diffDays >= 186 && diffDays <= 215) {
+    return '6 months ago'
+  }
+  
+  // 7 months ago - 216 to 245 days ago
+  if (diffDays >= 216 && diffDays <= 245) {
+    return '7 months ago'
+  }
+  
+  // 8 months ago - 246 to 275 days ago
+  if (diffDays >= 246 && diffDays <= 275) {
+    return '8 months ago'
+  }
+  
+  // 9 months ago - 276 to 305 days ago
+  if (diffDays >= 276 && diffDays <= 305) {
+    return '9 months ago'
+  }
+  
+  // 10 months ago - 306 to 335 days ago
+  if (diffDays >= 306 && diffDays <= 335) {
+    return '10 months ago'
+  }
+  
+  // 11 months ago - 336 to 365 days ago
+  if (diffDays >= 336 && diffDays <= 365) {
+    return '11 months ago'
+  }
+  
+  // For dates beyond 1 year, show the actual date
   const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
   const day = date.getDate()
   const suffix = day === 1 ? 'st' : day === 2 ? 'nd' : day === 3 ? 'rd' : 'th'
@@ -83,6 +142,28 @@ export default function SearchModeBottomSheet({
   const [refImages, setRefImages] = useState<Record<string, string>>({})
   const [loadingRefs, setLoadingRefs] = useState(false)
   const { user, moduleBackdropAnimatedIndex } = useAppStore()
+
+  // Memoize parsed search history to avoid repeated JSON parsing
+  const parsedSearchHistory = useMemo(() => {
+    console.log('🔍 Parsing search history:', searchHistory.map(item => ({
+      id: item.id,
+      ref_ids: item.ref_ids,
+      ref_titles: item.ref_titles,
+      ref_images: item.ref_images || [],
+      search_results: item.search_results ? 'has results' : 'no results'
+    })))
+    
+    return searchHistory.map(item => {
+      return {
+        ...item,
+        parsedItems: item.ref_ids || [],
+        parsedRefTitles: item.ref_titles || [],
+        parsedRefImages: item.ref_images || [], // Use actual ref images from API
+        parsedSearchResults: item.search_results || [],
+        formattedDate: formatSearchHistoryDate(item.created_at)
+      }
+    })
+  }, [searchHistory])
 
   const minSnapPoint = s.$1 + HEADER_HEIGHT
   const snapPoints: (string | number)[] = [minSnapPoint, '95%']
@@ -130,28 +211,23 @@ export default function SearchModeBottomSheet({
     try {
       setLoadingHistory(true)
       console.log('Fetching search history for user:', user.id)
-      const history = await getSearchHistory(user.id)
-      console.log('Search history data:', history)
-      setSearchHistory(history)
       
-      // Fetch images for all refs in history
-      const allRefIds = new Set<string>()
-      history.forEach((item: SearchHistoryRecord) => {
-        try {
-          const searchItems = JSON.parse(item.search_items)
-          if (Array.isArray(searchItems)) {
-            searchItems.forEach((refId: string) => allRefIds.add(refId))
-          }
-        } catch (error) {
-          console.error('Error parsing search_items:', error)
-        }
+      // Make API call non-blocking
+      getSearchHistory(user.id).then(history => {
+        console.log('Search history data:', history)
+        setSearchHistory(history)
+        setLoadingHistory(false)
+        setIsFetchingHistory(false)
+      }).catch(error => {
+        console.error('Error fetching search history:', error)
+        setLoadingHistory(false)
+        setIsFetchingHistory(false)
       })
-      if (allRefIds.size > 0) {
-        fetchRefImages(Array.from(allRefIds))
-      }
+      
+      // Skip image fetching for now to improve performance
+      // TODO: Implement lazy image loading if needed
     } catch (error) {
       console.error('Error fetching search history:', error)
-    } finally {
       setLoadingHistory(false)
       setIsFetchingHistory(false)
     }
@@ -163,29 +239,19 @@ export default function SearchModeBottomSheet({
     }
   }
 
-  // Helper function to parse search items from JSON string
-  const parseSearchItems = (searchItemsJson: string): string[] => {
-    try {
-      const parsed = JSON.parse(searchItemsJson)
-      return Array.isArray(parsed) ? parsed : []
-    } catch (error) {
-      console.error('Error parsing search_items:', error)
-      return []
-    }
-  }
-
-  // Fetch search history when sheet opens or when user changes
+  // Fetch search history when sheet opens or when user changes (lazy loading)
   useEffect(() => {
-    if (open) {
+    if (open && searchHistory.length === 0) {
+      // Only fetch if we don't have data already
       fetchSearchHistory()
     }
   }, [open, user?.id])
 
-  // Also fetch when the sheet index changes (when user drags up)
+  // Also fetch when the sheet index changes (when user drags up) - optimized
   const handleSheetChange = (index: number) => {
     if (index === 1) { // When expanded to show history
       // Only fetch if we don't already have data and haven't fetched recently
-      if (searchHistory.length === 0 && !isFetchingHistory) {
+      if (searchHistory.length === 0 && !isFetchingHistory && !loadingHistory) {
         fetchSearchHistory()
       }
     }
@@ -303,10 +369,10 @@ export default function SearchModeBottomSheet({
               <View style={{ alignItems: 'center', paddingVertical: s.$4 }}>
                 <Text style={{ color: 'white', opacity: 0.7 }}>Loading...</Text>
               </View>
-            ) : searchHistory.length > 0 ? (
+            ) : parsedSearchHistory.length > 0 ? (
               <ScrollView showsVerticalScrollIndicator={false} style={{ maxHeight: 500 }}>
                 <YStack gap={s.$3}>
-                  {searchHistory.map((item) => (
+                  {parsedSearchHistory.map((item) => (
                     <Pressable
                       key={item.id}
                       onPress={() => handleRestoreSearch(item)}
@@ -320,42 +386,63 @@ export default function SearchModeBottomSheet({
                     >
                       <YStack gap={8}>
                         <Text style={{ color: 'white', fontSize: s.$1, fontFamily: 'InterBold', lineHeight: 20 }}>
-                          {parseSearchItems(item.search_items).join(', ')}
+                          {item.parsedRefTitles.length > 0 
+                            ? `${item.parsedRefTitles.slice(0, 3).join(', ')}${item.parsedRefTitles.length > 3 ? '...' : ''}`
+                            : `${item.parsedItems.length} refs`
+                          }
                         </Text>
                         <XStack gap={5} style={{ alignItems: 'center', marginTop: 2 }}>
-                          {parseSearchItems(item.search_items).slice(0, 3).map((refId: string, idx: number) => {
-                            const imageSource = refImages[refId] || ''
-                            console.log(`🖼️ Rendering thumbnail for ref ${refId}:`, imageSource)
-                            return (
-                              <View
-                                key={refId}
-                                style={{
-                                  width: 40,
-                                  height: 40,
-                                  borderRadius: 6,
-                                  overflow: 'hidden',
-                                  marginLeft: idx === 0 ? 0 : -4,
-                                  backgroundColor: c.surface2,
-                                  borderWidth: 2,
-                                  borderColor: c.accent || c.olive,
-                                }}
-                              >
-                                <SimplePinataImage 
-                                  originalSource={imageSource} 
-                                  style={{ width: 40, height: 40, borderRadius: 6 }} 
-                                  imageOptions={{ width: 40, height: 40 }} 
-                                />
-                              </View>
-                            )
-                          })}
-                          {parseSearchItems(item.search_items).length > 3 && (
+                          {item.parsedRefImages.length > 0 ? (
+                            <>
+                              {item.parsedRefImages.slice(0, 3).map((imageUrl: string, idx: number) => (
+                                <View
+                                  key={idx}
+                                  style={{
+                                    width: 40,
+                                    height: 40,
+                                    borderRadius: 6,
+                                    overflow: 'hidden',
+                                    marginLeft: idx === 0 ? 0 : -4,
+                                    backgroundColor: c.surface2,
+                                    borderWidth: 2,
+                                    borderColor: c.accent || c.olive,
+                                  }}
+                                >
+                                  <SimplePinataImage 
+                                    originalSource={imageUrl} 
+                                    style={{ width: 40, height: 40, borderRadius: 6 }} 
+                                    imageOptions={{ width: 40, height: 40 }} 
+                                  />
+                                </View>
+                              ))}
+                              {item.parsedRefImages.length > 3 && (
+                                <View
+                                  style={{
+                                    width: 40,
+                                    height: 40,
+                                    borderRadius: 6,
+                                    overflow: 'hidden',
+                                    marginLeft: -4,
+                                    backgroundColor: c.surface2,
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    borderWidth: 2,
+                                    borderColor: c.accent || c.olive,
+                                  }}
+                                >
+                                  <Text style={{ color: 'white', fontSize: 12, fontWeight: 'bold' }}>
+                                    +{String(item.parsedRefImages.length - 3)}
+                                  </Text>
+                                </View>
+                              )}
+                            </>
+                          ) : (
+                            // Fallback: show placeholder for old format
                             <View
                               style={{
                                 width: 40,
                                 height: 40,
                                 borderRadius: 6,
-                                overflow: 'hidden',
-                                marginLeft: -4,
                                 backgroundColor: c.surface2,
                                 alignItems: 'center',
                                 justifyContent: 'center',
@@ -364,13 +451,13 @@ export default function SearchModeBottomSheet({
                               }}
                             >
                               <Text style={{ color: 'white', fontSize: 12, fontWeight: 'bold' }}>
-                                +{String(parseSearchItems(item.search_items).length - 3)}
+                                {item.parsedItems.length}
                               </Text>
                             </View>
-                          )}
+                                                    )}
                         </XStack>
                         <Text style={{ color: 'white', fontSize: 12, opacity: 0.5, marginTop: 4 }}>
-                          {formatSearchHistoryDate(item.created_at)}
+                          {item.formattedDate}
                         </Text>
                       </YStack>
                     </Pressable>

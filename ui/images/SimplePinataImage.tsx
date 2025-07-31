@@ -15,15 +15,22 @@ function useSignedImageUrl(originalSource: string, imageOptions: OptimizeImageOp
   )
 
   useEffect(() => {
-    getSignedUrl(url)
-  }, [url])
-
-  useEffect(() => {
-    if (signedUrls[url]) {
+    // Only fetch if we don't already have a valid signed URL
+    if (!signedUrls[url] || signedUrls[url].expires + signedUrls[url].date < Date.now()) {
+      getSignedUrl(url).then(signedUrl => {
+        setSource(signedUrl)
+        setLoading(false)
+      }).catch(() => {
+        // Fallback to original source if signing fails
+        setSource(originalSource)
+        setLoading(false)
+      })
+    } else {
+      // Use cached signed URL
       setSource(signedUrls[url].signedUrl)
       setLoading(false)
     }
-  }, [signedUrls[url]])
+  }, [url, signedUrls[url], originalSource])
 
   return { source, loading }
 }

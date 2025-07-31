@@ -324,24 +324,28 @@ export const createItemSlice: StateCreator<StoreSlices, [], [], ItemSlice> = (se
 })
 
 export const getProfileItems = async (userName: string) => {
-  const items = await pocketbase.collection<ExpandedItem>('items').getFullList({
+  // Optimize by limiting to first 50 items and using more efficient expand
+  const items = await pocketbase.collection<ExpandedItem>('items').getList(1, 50, {
     filter: pocketbase.filter(
       'creator.userName = {:userName} && backlog = false && parent = null',
       {
         userName,
       }
     ),
-    expand: 'items_via_parent, ref, items_via_parent.ref, creator',
+    expand: 'ref, creator', // Simplified expand to reduce query complexity
+    sort: '-created',
   })
-  return gridSort(items)
+  return gridSort(items.items)
 }
 
 export const getBacklogItems = async (userName: string) => {
-  const items = await pocketbase.collection('items').getFullList({
+  // Optimize by limiting to first 50 items
+  const items = await pocketbase.collection('items').getList(1, 50, {
     filter: pocketbase.filter('creator.userName = {:userName} && backlog = true && parent = null', {
       userName,
     }),
     expand: 'ref',
+    sort: '-created',
   })
-  return items.sort(createdSort)
+  return items.items.sort(createdSort)
 }

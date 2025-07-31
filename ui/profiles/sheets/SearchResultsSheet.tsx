@@ -10,7 +10,8 @@ import UserListItem from '@/ui/atoms/UserListItem'
 import { Profile } from '@/features/types'
 import { useState, useRef, useEffect, useCallback, useMemo, forwardRef, useImperativeHandle } from 'react'
 import { useAppStore } from '@/features/stores'
-import { searchPeople, saveSearchHistory, SearchResponse, PersonResult } from '@/features/pocketbase/api/search'
+import { searchPeople, saveSearchHistory, SearchResponse, PersonResult, SearchHistoryRecord } from '@/features/pocketbase/api/search'
+import PocketBase from 'pocketbase'
 
 const MATCHMAKING_API_URL = process.env.EXPO_PUBLIC_MATCHMAKING_API_URL || 'http://localhost:3001'
 import { SearchLoadingSpinner } from '@/ui/atoms/SearchLoadingSpinner'
@@ -20,6 +21,7 @@ import { Button } from '@/ui/buttons/Button'
 
 export interface SearchResultsSheetRef {
   triggerSearch: () => void;
+  restoreSearchFromHistory: (historyItem: SearchHistoryRecord) => void;
 }
 
 export default forwardRef<SearchResultsSheetRef, {
@@ -54,7 +56,7 @@ export default forwardRef<SearchResultsSheetRef, {
     resultsAnimation.setValue(0)
     Animated.timing(resultsAnimation, {
       toValue: 1,
-      duration: 400,
+      duration: 200, // Reduced from 400ms to 200ms
       useNativeDriver: true,
     }).start()
   }
@@ -91,7 +93,9 @@ export default forwardRef<SearchResultsSheetRef, {
   
   // Search state
   const [searchResults, setSearchResults] = useState<PersonResult[]>([])
+  const [profiles, setProfiles] = useState<Profile[]>([])
   const [isLoading, setIsLoading] = useState(false)
+  const [isLoadingProfiles, setIsLoadingProfiles] = useState(false)
   const [searchError, setSearchError] = useState<string | null>(null)
   const [searchTitle, setSearchTitle] = useState('People into')
   const [searchSubtitle, setSearchSubtitle] = useState('Browse, dm, or add to a group')
@@ -140,9 +144,62 @@ export default forwardRef<SearchResultsSheetRef, {
       setIsLoading(false)
       setSearchError(null)
       hasUsedCachedResults.current = true
-      animateResultsIn()
+      
+      // Convert cached results to profiles (non-blocking)
+      setProfiles([]) // Clear profiles first for immediate UI response
+      setIsLoadingProfiles(true) // Show loading state for profiles
+      animateResultsIn() // Start animation immediately
+      
+      // Convert profiles in background
+      convertToProfiles(cachedSearchResults).then(convertedProfiles => {
+        setProfiles(convertedProfiles)
+        setIsLoadingProfiles(false)
+      }).catch(error => {
+        console.error('Error converting cached results to profiles:', error)
+        setProfiles([])
+        setIsLoadingProfiles(false)
+      })
     }
   }, [cachedSearchResults, cachedSearchTitle, cachedSearchSubtitle])
+
+  // Function to restore search from history
+  const restoreSearchFromHistory = useCallback((historyItem: SearchHistoryRecord) => {
+    try {
+      // Check if we have cached search results
+      if (historyItem.search_results && Array.isArray(historyItem.search_results) && historyItem.search_results.length > 0) {
+        console.log('🔄 Restoring search from history:', historyItem.search_results.length, 'results')
+        
+        // Set the search results directly from history
+        setSearchResults(historyItem.search_results)
+        setSearchTitle(historyItem.search_title || 'People into')
+        setSearchSubtitle(historyItem.search_subtitle || 'browse, dm, or add to a group')
+        setIsLoading(false)
+        setSearchError(null)
+        hasUsedCachedResults.current = true
+        
+        // Convert cached results to profiles (non-blocking)
+        setProfiles([]) // Clear profiles first for immediate UI response
+        setIsLoadingProfiles(true) // Show loading state for profiles
+        animateResultsIn() // Start animation immediately
+        
+        // Convert profiles in background
+        convertToProfiles(historyItem.search_results).then(convertedProfiles => {
+          setProfiles(convertedProfiles)
+          setIsLoadingProfiles(false)
+        }).catch(error => {
+          console.error('Error converting history results to profiles:', error)
+          setProfiles([])
+          setIsLoadingProfiles(false)
+        })
+      } else {
+        console.log('⚠️ History item has no cached results, cannot restore')
+        setSearchError('Cannot restore search from history (no cached results)')
+      }
+    } catch (error) {
+      console.error('Error restoring search from history:', error)
+      setSearchError('Failed to restore search from history')
+    }
+  }, [])
 
   // Fallback function to get some users when search returns no results
   const getFallbackUsers = async (): Promise<PersonResult[]> => {
@@ -219,6 +276,36 @@ export default forwardRef<SearchResultsSheetRef, {
       
       setSearchResults(results)
       
+      // Create immediate placeholder profiles for instant interaction
+      const placeholderProfiles = results.slice(0, 15).map(result => ({
+        id: result.id,
+        userName: result.id, // Use ID as username for navigation
+        firstName: 'Loading...',
+        lastName: '',
+        image: '',
+        avatar: '',
+        location: '',
+        email: '',
+        password: '',
+        tokenKey: '',
+        name: 'Loading...',
+      }))
+      
+      setProfiles(placeholderProfiles) // Show placeholders immediately
+      setIsLoadingProfiles(true) // Show loading state for profiles
+      
+      // Convert search results to profiles by fetching from PocketBase (non-blocking with delay)
+      setTimeout(() => {
+        convertToProfiles(results).then(convertedProfiles => {
+          setProfiles(convertedProfiles)
+          setIsLoadingProfiles(false)
+        }).catch(error => {
+          console.error('Error converting search results to profiles:', error)
+          // Keep placeholder profiles if conversion fails
+          setIsLoadingProfiles(false)
+        })
+      }, 100) // Small delay to ensure UI is responsive first
+      
       // Generate search title and subtitle
       const refTitles = selectedRefItems
         .map(item => {
@@ -252,9 +339,57 @@ export default forwardRef<SearchResultsSheetRef, {
         setCachedSearchResults([], 'People into', 'No users found, try different refs')
       }
       
-      // Save to search history
+      // Save to search history with ref titles, images, and cached results
       try {
-        await saveSearchHistory(user.id, itemIds, results.length)
+        // Extract ref titles and images from selectedRefItems
+        let refTitles = selectedRefItems.map(item => 
+          item.expand?.ref?.title || item.ref || 'Unknown'
+        )
+        const refImages = selectedRefItems.map(item => 
+          item.image || item.expand?.ref?.image || ''
+        )
+        
+        // If any ref titles are still raw IDs, try to fetch them from PocketBase
+        const needsRefTitles = refTitles.some(title => title.length > 10 && /^[a-z0-9]+$/.test(title))
+        if (needsRefTitles) {
+          console.log('🔍 Some ref titles are raw IDs, fetching from PocketBase...')
+          const pocketbase = new PocketBase(process.env.EXPO_PUBLIC_POCKETBASE_URL || 'http://127.0.0.1:8090')
+          
+          try {
+            const refIds = selectedRefItems.map(item => item.ref).filter(Boolean)
+            const refs = await pocketbase.collection('refs').getList(1, 50, {
+              filter: refIds.map(id => `id = "${id}"`).join(' || '),
+              fields: 'id,title'
+            })
+            
+            const refMap = new Map(refs.items.map(ref => [ref.id, ref.title]))
+            refTitles = selectedRefItems.map(item => 
+              refMap.get(item.ref) || item.expand?.ref?.title || item.ref || 'Unknown'
+            )
+            console.log('🔍 Fetched ref titles from PocketBase:', refTitles)
+          } catch (error) {
+            console.error('Failed to fetch ref titles from PocketBase:', error)
+          }
+        }
+        
+        console.log('🔍 Final ref titles for search history:', refTitles)
+        console.log('🔍 Ref images for search history:', refImages)
+        console.log('🔍 Selected ref items structure:', selectedRefItems.map(item => ({
+          id: item.id,
+          ref: item.ref,
+          expandRefTitle: item.expand?.ref?.title,
+          expandRefImage: item.expand?.ref?.image,
+          image: item.image
+        })))
+        
+        await saveSearchHistory(
+          user.id, 
+          itemIds, 
+          refTitles,
+          refImages,
+          results,
+          results.length
+        )
       } catch (error) {
         console.error('Failed to save search history:', error)
       }
@@ -269,26 +404,82 @@ export default forwardRef<SearchResultsSheetRef, {
     }
   }
 
-  // Convert search results to Profile format for UserListItem
-  const convertToProfiles = (results: PersonResult[]): Profile[] => {
-    return results.map(result => {
-      // Use the proper display name from the search result
-      const displayName = result.name || result.userName || 'Unknown'
-      const nameParts = displayName.split(' ')
+  // Fetch user profiles from PocketBase and convert to Profile format for UserListItem
+  const convertToProfiles = async (results: PersonResult[]): Promise<Profile[]> => {
+    const pocketbase = new PocketBase(process.env.EXPO_PUBLIC_POCKETBASE_URL || 'http://127.0.0.1:8090')
+    
+    try {
+      // Limit to first 10 results for better performance
+      const limitedResults = results.slice(0, 10)
+      const userIds = limitedResults.map(result => result.id)
       
-      const profile = {
+      // Use more efficient query with proper escaping
+      const filter = userIds.map(id => `id = "${id}"`).join(' || ')
+      
+      const userProfiles = await pocketbase.collection('users').getList(1, 10, {
+        filter,
+        fields: 'id,userName,name,firstName,lastName,image',
+        perPage: 10
+      })
+      
+      // Create a map for O(1) lookup
+      const userMap = new Map(userProfiles.items.map(user => [user.id, user]))
+      
+      // Convert search results to Profile format
+      return limitedResults.map(result => {
+        const userProfile = userMap.get(result.id)
+        
+        if (userProfile) {
+          // Optimize name construction
+          const displayName = userProfile.firstName && userProfile.lastName 
+            ? `${userProfile.firstName} ${userProfile.lastName}`
+            : userProfile.userName || 'Unknown'
+          
+          return {
+            id: result.id,
+            userName: userProfile.userName || displayName,
+            firstName: userProfile.firstName || userProfile.userName || '',
+            lastName: userProfile.lastName || '',
+            image: userProfile.image || '',
+            avatar: userProfile.image || '',
+            location: '',
+            email: '',
+            password: '',
+            tokenKey: '',
+            name: displayName,
+          }
+        } else {
+          // Fallback if user profile not found
+          return {
+            id: result.id,
+            userName: 'Unknown User',
+            firstName: 'Unknown',
+            lastName: '',
+            image: '',
+            avatar: '',
+            location: '',
+            email: '',
+            password: '',
+            tokenKey: '',
+          }
+        }
+      })
+    } catch (error) {
+      console.error('Error fetching user profiles from PocketBase:', error)
+      // Return fallback profiles if PocketBase fetch fails
+      return results.slice(0, 10).map(result => ({
         id: result.id,
-        userName: displayName, // Use the display name as userName for display
-        firstName: nameParts[0] || result.userName,
-        lastName: nameParts.slice(1).join(' ') || '',
-        avatar: result.avatar_url || '',
+        userName: 'Unknown User',
+        firstName: 'Unknown',
+        lastName: '',
+        image: '',
+        avatar: '',
         location: '',
         email: '',
         password: '',
         tokenKey: '',
-      }
-      return profile
-    })
+      }))
+    }
   }
 
   const handleUserPress = (profile: Profile) => {
@@ -340,8 +531,9 @@ export default forwardRef<SearchResultsSheetRef, {
 
   // Expose triggerSearch function to parent via ref
   useImperativeHandle(ref, () => ({
-    triggerSearch
-  }), [triggerSearch])
+    triggerSearch,
+    restoreSearchFromHistory
+  }), [triggerSearch, restoreSearchFromHistory])
 
   const renderBackdrop = useCallback(
     (p: any) => (
@@ -544,7 +736,7 @@ export default forwardRef<SearchResultsSheetRef, {
                   })
                 }]
               }}>
-                {convertToProfiles(searchResults).map((profile, index) => (
+                {profiles.map((profile, index) => (
                   <UserListItem
                     key={profile.id}
                     user={profile}

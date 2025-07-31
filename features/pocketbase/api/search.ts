@@ -10,13 +10,11 @@ export interface SearchRequest {
 
 export interface PersonResult {
   id: string
-  name: string
-  avatar_url?: string
-  userName: string
   similarityScore: number
   exactMatches: number
   highSimilarityMatches: number
   sharedRefs: string[]
+  tier: number
 }
 
 export interface SearchResponse {
@@ -26,9 +24,15 @@ export interface SearchResponse {
 export interface SearchHistoryRecord {
   id: string
   user_id: string
-  search_items: string
-  results_count: number
+  ref_ids: string[]
+  ref_titles: string[]
+  ref_images: string[]
+  search_title: string
+  search_subtitle: string
+  result_count: number
+  search_results: PersonResult[] | null
   created_at: string
+  updated_at: string
 }
 
 export interface SearchHistoryItem {
@@ -96,29 +100,43 @@ export async function getSearchHistory(userId: string): Promise<SearchHistoryRec
 }
 
 /**
- * Save search to history
+ * Save search to history with ref titles, images, and cached results
  */
 export async function saveSearchHistory(
   userId: string, 
   searchItems: string[], 
+  searchRefTitles: string[],
+  searchRefImages: string[],
+  searchResults: PersonResult[],
   resultsCount: number
 ): Promise<void> {
   try {
+    const requestBody = {
+      user_id: userId,
+      ref_ids: searchItems,
+      ref_titles: searchRefTitles,
+      ref_images: searchRefImages, // Add ref_images to the request
+      search_title: 'People into',
+      search_subtitle: 'browse, dm, or add to a group',
+      result_count: resultsCount,
+      search_results: searchResults, // Cache the actual search results
+    }
+    
+    console.log('🔍 Saving search history with request body:', requestBody)
+    
     const response = await fetch(`${MATCHMAKING_API_URL}/api/search-history`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        user_id: userId,
-        search_items: searchItems,
-        results_count: resultsCount,
-      }),
+      body: JSON.stringify(requestBody),
     })
 
     if (!response.ok) {
       throw new Error(`Failed to save search history: ${response.status}`)
     }
+    
+    console.log('✅ Search history saved successfully')
   } catch (error) {
     console.error('Error saving search history:', error)
     throw error

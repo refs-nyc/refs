@@ -84,21 +84,35 @@ app.get('/api/search-history', async (req, res) => {
 
 app.post('/api/search-history', async (req, res) => {
   try {
-    const { user_id, search_items, results_count } = req.body
+    const { 
+      user_id, 
+      ref_ids, 
+      ref_titles, 
+      search_title, 
+      search_subtitle, 
+      result_count, 
+      search_results 
+    } = req.body
 
-    if (!user_id || !search_items) {
-      return res.status(400).json({ error: 'user_id and search_items are required' })
+    if (!user_id || !ref_ids || !Array.isArray(ref_ids)) {
+      return res.status(400).json({ error: 'user_id and ref_ids array are required' })
     }
 
-    const { data, error } = await supabase
-      .from('search_history')
-      .insert({
-        user_id,
-        search_items: JSON.stringify(search_items),
-        results_count: results_count || 0,
-        created_at: new Date().toISOString(),
-      })
-      .select()
+            const { data, error } = await supabase
+          .from('search_history')
+          .insert({
+            user_id,
+            ref_ids,
+            ref_titles: ref_titles || ref_ids, // Fallback to ref_ids if no titles
+            ref_images: req.body.ref_images || [], // Store ref images
+            search_title: search_title || 'People into',
+            search_subtitle: search_subtitle || 'browse, dm, or add to a group',
+            result_count: result_count || 0,
+            search_results: search_results || null,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          })
+          .select()
 
     if (error) {
       console.error('Error saving search history:', error)

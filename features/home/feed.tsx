@@ -6,7 +6,7 @@ import { Ticker } from '@/features/home/Ticker'
 import { useAppStore } from '@/features/stores'
 import type { ExpandedItem } from '@/features/types'
 import { c, s } from '@/features/style'
-import { DismissKeyboard, Heading, Text, XStack, YStack } from '@/ui'
+import { Button, DismissKeyboard, Heading, Text, XStack, YStack } from '@/ui'
 import SearchBottomSheet from '@/ui/actions/SearchBottomSheet'
 import { Avatar } from '@/ui/atoms/Avatar'
 import { SimplePinataImage } from '@/ui/images/SimplePinataImage'
@@ -150,7 +150,7 @@ export const Feed = () => {
   const feedRefreshTrigger = useAppStore((state) => state.feedRefreshTrigger)
   const [detailsItem, setDetailsItem] = useState<ExpandedItem | null>(null)
   const detailsSheetRef = useRef<BottomSheet>(null)
-  const { getFeedItems, referencersBottomSheetRef, setCurrentRefId } = useAppStore()
+  const { getFeedItems, referencersBottomSheetRef, setCurrentRefId, logout } = useAppStore()
 
   const fetchFeedItems = async () => {
     try {
@@ -202,6 +202,16 @@ export const Feed = () => {
                     }}
                   />
                 ))}
+                
+                {/* Logout button at the bottom of the feed */}
+                <View style={{ marginTop: s.$4, marginBottom: s.$2, alignItems: 'center' }}>
+                  <Button
+                    style={{ width: 120 }}
+                    variant="inlineSmallMuted"
+                    title="Log out"
+                    onPress={logout}
+                  />
+                </View>
               </YStack>
             </View>
           </View>

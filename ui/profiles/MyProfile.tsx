@@ -170,7 +170,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
     }
   }, [setSearchMode, setSelectedRefs])
 
-  const { logout, stopEditing } = useAppStore()
+  const { stopEditing } = useAppStore()
 
   const bottomSheetRef = useRef<BottomSheet>(null)
   const detailsSheetRef = useRef<BottomSheet>(null)
@@ -268,14 +268,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
                 />
               )}
 
-              <View style={{ marginBottom: s.$2, alignItems: 'center' }}>
-                <Button
-                  style={{ width: 20 }}
-                  variant="inlineSmallMuted"
-                  title="Log out"
-                  onPress={logout}
-                />
-              </View>
+
 
               {/* Floating Search Button (toggle search mode) - positioned relative to grid content */}
               <FloatingJaggedButton

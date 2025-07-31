@@ -17,16 +17,18 @@ const supabase = createClient(supabaseUrl, supabaseKey)
 async function generateSevenStringsForAll() {
   try {
     console.log('🔄 Starting 7-string generation for all existing items...')
-    
+
     // Get all items that don't have seven_string_embedding yet
     const { data: items, error: itemsError } = await supabase
       .from('items')
-      .select(`
+      .select(
+        `
         id,
         ref,
         text,
         creator
-      `)
+      `
+      )
       .is('seven_string_embedding', null)
       .limit(100) // Process in batches
 
@@ -48,7 +50,7 @@ async function generateSevenStringsForAll() {
     for (const item of items) {
       try {
         console.log(`🔄 Processing item ${item.id}...`)
-        
+
         // Get the ref title
         const { data: refData, error: refError } = await supabase
           .from('refs')
@@ -66,16 +68,19 @@ async function generateSevenStringsForAll() {
         }
 
         // Call the Edge Function to process this item
-        const { data: processData, error: processError } = await supabase.functions.invoke('openai', {
-          body: {
-            action: 'process_item',
-            item_id: item.id,
-            ref_id: item.ref,
-            creator: item.creator,
-            item_text: item.text || '',
-            ref_title: refTitle
+        const { data: processData, error: processError } = await supabase.functions.invoke(
+          'openai',
+          {
+            body: {
+              action: 'process_item',
+              item_id: item.id,
+              ref_id: item.ref,
+              creator: item.creator,
+              item_text: item.text || '',
+              ref_title: refTitle,
+            },
           }
-        })
+        )
 
         if (processError) {
           console.error(`❌ Error processing item ${item.id}:`, processError)
@@ -86,8 +91,7 @@ async function generateSevenStringsForAll() {
         }
 
         // Small delay to avoid rate limiting
-        await new Promise(resolve => setTimeout(resolve, 100))
-
+        await new Promise((resolve) => setTimeout(resolve, 100))
       } catch (error) {
         console.error(`❌ Error processing item ${item.id}:`, error)
         errorCount++
@@ -112,11 +116,10 @@ async function generateSevenStringsForAll() {
     } else {
       console.log(`🎉 All items have been processed!`)
     }
-
   } catch (error) {
     console.error('❌ Fatal error:', error)
   }
 }
 
 // Run the script
-generateSevenStringsForAll() 
+generateSevenStringsForAll()

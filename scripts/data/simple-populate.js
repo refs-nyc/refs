@@ -40,14 +40,16 @@ async function simplePopulate() {
 
       try {
         // For now, just create a simple 7-string without calling the function
-        const simpleSevenString = `${item.ref_id} | ${item.text || 'no caption'} | simple | basic | test | demo | placeholder`
-        
+        const simpleSevenString = `${item.ref_id} | ${
+          item.text || 'no caption'
+        } | simple | basic | test | demo | placeholder`
+
         // Update the item with just the 7-string
         const { error } = await supabase
           .from('items')
-          .update({ 
+          .update({
             seven_string: simpleSevenString,
-            updated_at: new Date().toISOString()
+            updated_at: new Date().toISOString(),
           })
           .eq('id', item.id)
 
@@ -58,19 +60,17 @@ async function simplePopulate() {
         }
 
         // Small delay
-        await new Promise(resolve => setTimeout(resolve, 500))
-
+        await new Promise((resolve) => setTimeout(resolve, 500))
       } catch (error) {
         console.error(`❌ Error processing item ${item.id}:`, error)
       }
     }
 
     console.log('✅ Finished processing items')
-
   } catch (error) {
     console.error('❌ Error in simplePopulate:', error)
   }
 }
 
 // Run the script
-simplePopulate() 
+simplePopulate()

@@ -34,21 +34,23 @@ export function MessagesInit() {
   // load conversations - make non-blocking
   useEffect(() => {
     if (!user) return
-    
+
     const getConversations = async () => {
       try {
-        const conversations = await pocketbase.collection('conversations').getFullList<Conversation>({
-          sort: '-created',
-        })
+        const conversations = await pocketbase
+          .collection('conversations')
+          .getFullList<Conversation>({
+            sort: '-created',
+          })
         setConversations(conversations)
-        
+
         // Load messages in batches to avoid overwhelming the system
         const batchSize = 3
         for (let i = 0; i < conversations.length; i += batchSize) {
           const batch = conversations.slice(i, i + batchSize)
           setTimeout(() => {
-            batch.forEach(conversation => {
-              loadInitialMessages(conversation).catch(error => {
+            batch.forEach((conversation) => {
+              loadInitialMessages(conversation).catch((error) => {
                 console.error('Failed to load messages for conversation:', conversation.id, error)
               })
             })
@@ -58,7 +60,7 @@ export function MessagesInit() {
         console.error('Failed to load conversations:', error)
       }
     }
-    
+
     // Use setTimeout to make it non-blocking
     setTimeout(() => {
       getConversations()
@@ -68,7 +70,7 @@ export function MessagesInit() {
   //load reactions - make non-blocking
   useEffect(() => {
     if (!user) return
-    
+
     const getReactions = async () => {
       try {
         const reactions = await pocketbase.collection('reactions').getFullList<ExpandedReaction>({
@@ -79,7 +81,7 @@ export function MessagesInit() {
         console.error('Failed to load reactions:', error)
       }
     }
-    
+
     // Use setTimeout to make it non-blocking
     setTimeout(() => {
       getReactions()
@@ -89,7 +91,7 @@ export function MessagesInit() {
   // load saves - make non-blocking
   useEffect(() => {
     if (!user) return
-    
+
     const getSaves = async () => {
       try {
         const saves = await pocketbase.collection('saves').getFullList<ExpandedSave>({
@@ -100,7 +102,7 @@ export function MessagesInit() {
         console.error('Failed to load saves:', error)
       }
     }
-    
+
     // Use setTimeout to make it non-blocking
     setTimeout(() => {
       getSaves()
@@ -110,7 +112,7 @@ export function MessagesInit() {
   // load memberships - make non-blocking
   useEffect(() => {
     if (!user) return
-    
+
     const getMemberships = async () => {
       try {
         const memberships = await pocketbase
@@ -123,7 +125,7 @@ export function MessagesInit() {
         console.error('Failed to load memberships:', error)
       }
     }
-    
+
     // Use setTimeout to make it non-blocking
     setTimeout(() => {
       getMemberships()

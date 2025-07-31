@@ -178,7 +178,7 @@ export default function SearchBottomSheet() {
                   <Text style={{ color: c.white, fontSize: 26, fontWeight: 'bold' }}>
                     Add Ref +
                   </Text>
-                  <Pressable 
+                  <Pressable
                     onPress={(e) => {
                       e.stopPropagation()
                       setAddingNewRefTo('grid')
@@ -195,7 +195,7 @@ export default function SearchBottomSheet() {
                         justifyContent: 'center',
                       }}
                     >
-                    <Ionicons name="search" size={s.$2} color={c.white} />
+                      <Ionicons name="search" size={s.$2} color={c.white} />
                     </View>
                   </Pressable>
                 </XStack>

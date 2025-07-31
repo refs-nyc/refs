@@ -18,7 +18,17 @@ export const Navigation = ({
 }) => {
   const pathname = usePathname()
 
-  const { user, saves, messagesPerConversation, conversations, memberships, returningFromSearch, selectedRefs, cachedSearchResults, setReturningFromSearchViaBackButton, setReturningFromSearch } = useAppStore()
+  const {
+    user,
+    saves,
+    messagesPerConversation,
+    conversations,
+    memberships,
+    selectedRefs,
+    cachedSearchResults,
+    setReturningFromSearchViaBackButton,
+    setReturningFromSearch,
+  } = useAppStore()
 
   const isHomePage = pathname === '/' || pathname === '/index'
 
@@ -27,7 +37,10 @@ export const Navigation = ({
   // Custom back button handler for search results
   const handleBackPress = () => {
     // Check if we're on a user profile page and have search context
-    if (pathname.startsWith('/user/') && (selectedRefs.length > 0 || cachedSearchResults.length > 0)) {
+    if (
+      pathname.startsWith('/user/') &&
+      (selectedRefs.length > 0 || cachedSearchResults.length > 0)
+    ) {
       console.log('🔙 Back button: navigating to user profile with search context')
       console.log('🔙 User:', user?.userName)
       console.log('🔙 Selected refs:', selectedRefs.length)
@@ -83,21 +96,21 @@ export const Navigation = ({
     if (!user?.id || !messagesPerConversation || Object.keys(memberships).length === 0) {
       return 0
     }
-    
+
     const userId = user.id
     let totalNewMessages = 0
-    
+
     // Use more efficient iteration
     const conversationIds = Object.keys(conversations)
     for (let i = 0; i < conversationIds.length; i++) {
       const conversationId = conversationIds[i]
       const membership = memberships[conversationId]?.find((m) => m.expand?.user.id === userId)
-      
+
       if (!membership || membership?.archived) continue
-      
+
       const conversationMessages = messagesPerConversation[conversationId]
       if (!conversationMessages) continue
-      
+
       const lastRead = membership?.last_read
       if (lastRead) {
         const lastReadDate = new Date(lastRead)
@@ -114,7 +127,7 @@ export const Navigation = ({
         totalNewMessages += conversationMessages.length
       }
     }
-    
+
     return totalNewMessages
   }, [messagesPerConversation, memberships, user?.id, conversations])
 

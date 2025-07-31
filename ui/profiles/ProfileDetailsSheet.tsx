@@ -29,7 +29,6 @@ export const ProfileDetailsSheet = ({
     registerBackdropPress,
     unregisterBackdropPress,
     getUserByUserName,
-
   } = useAppStore()
 
   // Use preloaded data for smooth animation, fallback to fetching if needed
@@ -68,8 +67,6 @@ export const ProfileDetailsSheet = ({
     0,
     gridItems.findIndex((itm) => itm.id === detailsItemId)
   )
-
-
 
   return (
     <BottomSheet

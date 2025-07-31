@@ -5,6 +5,7 @@ This directory contains all the utility scripts for the Refs project, organized 
 ## 📁 Directory Structure
 
 ### `/setup/` - Database Setup Scripts
+
 Scripts for initial database setup and configuration.
 
 - **`setup-supabase-complete.js`** - Complete Supabase database setup (schema + functions)
@@ -12,6 +13,7 @@ Scripts for initial database setup and configuration.
 - **`supabase-functions.sql`** - Database functions for search and embeddings
 
 ### `/data/` - Data Processing & Sync Scripts
+
 Scripts for data synchronization and processing.
 
 - **`generate-seven-strings.ts`** - Generate 7-word descriptions and embeddings for items
@@ -24,11 +26,13 @@ Scripts for data synchronization and processing.
 - **`update-ticker-refs.sql`** - Update which refs appear in the ticker
 
 ### `/deploy/` - Deployment Scripts
+
 Scripts for deploying the application.
 
 - **`deploy-supabase.sh`** - Deploy Supabase functions and schema
 
 ### `/archive/` - One-time Fix Scripts
+
 **DEPRECATED** - These scripts were used for one-time fixes and are no longer needed.
 
 - Various `fix-*.js` and `fix-*.sql` files that addressed specific database issues
@@ -41,6 +45,7 @@ Scripts for deploying the application.
 ## 🚀 Usage
 
 ### Initial Setup
+
 ```bash
 # Set up Supabase database
 cd scripts/setup
@@ -48,6 +53,7 @@ node setup-supabase-complete.js
 ```
 
 ### Data Processing
+
 ```bash
 # Generate 7-strings for all items
 cd scripts/data
@@ -58,6 +64,7 @@ npx tsx sync-pocketbase-to-supabase.ts
 ```
 
 ### Deployment
+
 ```bash
 # Deploy to Supabase
 cd scripts/deploy
@@ -74,7 +81,8 @@ cd scripts/deploy
 ## 🔧 Maintenance
 
 When adding new scripts:
+
 1. Place them in the appropriate directory based on their purpose
 2. Update this README with a description
 3. Add any required environment variables or dependencies
-4. Test the script thoroughly before committing 
+4. Test the script thoroughly before committing

@@ -15,7 +15,7 @@ async function testVectorStorage() {
   try {
     // Create a test vector
     const testVector = new Array(1536).fill(0.1)
-    
+
     console.log(`📊 Test vector length: ${testVector.length}`)
     console.log(`📊 Test vector sample: [${testVector.slice(0, 3).join(', ')}]`)
 
@@ -31,7 +31,7 @@ async function testVectorStorage() {
       console.error('❌ Error updating with vector:', updateError)
     } else {
       console.log('✅ Successfully updated with vector')
-      
+
       // Check what was actually stored
       const { data: item, error: fetchError } = await supabase
         .from('items')
@@ -43,15 +43,24 @@ async function testVectorStorage() {
         console.error('❌ Error fetching item:', fetchError)
       } else {
         console.log('📊 Stored embedding type:', typeof item.seven_string_embedding)
-        console.log('📊 Stored embedding length:', Array.isArray(item.seven_string_embedding) ? item.seven_string_embedding.length : 'not an array')
-        console.log('📊 Stored embedding sample:', Array.isArray(item.seven_string_embedding) ? item.seven_string_embedding.slice(0, 3) : item.seven_string_embedding?.substring(0, 50))
+        console.log(
+          '📊 Stored embedding length:',
+          Array.isArray(item.seven_string_embedding)
+            ? item.seven_string_embedding.length
+            : 'not an array'
+        )
+        console.log(
+          '📊 Stored embedding sample:',
+          Array.isArray(item.seven_string_embedding)
+            ? item.seven_string_embedding.slice(0, 3)
+            : item.seven_string_embedding?.substring(0, 50)
+        )
       }
     }
-
   } catch (error) {
     console.error('❌ Fatal error:', error)
   }
 }
 
 // Run the test
-testVectorStorage() 
+testVectorStorage()

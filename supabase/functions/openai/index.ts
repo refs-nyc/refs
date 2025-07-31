@@ -1,4 +1,4 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const corsHeaders = {
@@ -35,7 +35,7 @@ serve(async (req) => {
 
   try {
     const { action, ...data } = await req.json()
-    
+
     // Get OpenAI API key from environment
     const openaiApiKey = Deno.env.get('OPENAI_API_KEY')
     if (!openaiApiKey) {
@@ -45,7 +45,7 @@ serve(async (req) => {
     // Initialize Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL')
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
-    
+
     if (!supabaseUrl || !supabaseServiceKey) {
       throw new Error('Supabase configuration missing')
     }
@@ -55,29 +55,29 @@ serve(async (req) => {
     switch (action) {
       case 'generate_seven_string':
         return await handleGenerateSevenString(data as GenerateSevenStringRequest, openaiApiKey)
-      
+
       case 'generate_embedding':
         return await handleGenerateEmbedding(data as GenerateEmbeddingRequest, openaiApiKey)
-      
+
       case 'process_item':
         return await handleProcessItem(data as ProcessItemRequest, supabase, openaiApiKey)
-      
+
       case 'regenerate_spirit_vector':
-        return await handleRegenerateSpiritVector(data as RegenerateSpiritVectorRequest, supabase, openaiApiKey)
-      
+        return await handleRegenerateSpiritVector(
+          data as RegenerateSpiritVectorRequest,
+          supabase,
+          openaiApiKey
+        )
+
       default:
         throw new Error(`Unknown action: ${action}`)
     }
-
   } catch (error) {
     console.error('Error:', error.message)
-    return new Response(
-      JSON.stringify({ error: error.message }),
-      { 
-        status: 400, 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-      }
-    )
+    return new Response(JSON.stringify({ error: error.message }), {
+      status: 400,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    })
   }
 })
 
@@ -87,7 +87,7 @@ async function handleGenerateSevenString(data: GenerateSevenStringRequest, apiKe
   const response = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
     headers: {
-      'Authorization': `Bearer ${apiKey}`,
+      Authorization: `Bearer ${apiKey}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
@@ -95,16 +95,17 @@ async function handleGenerateSevenString(data: GenerateSevenStringRequest, apiKe
       messages: [
         {
           role: 'system',
-          content: 'You are a matchmaking descriptor engine. Generate one seven‑slot line, pipes between slots, ≤ 5 words per slot. 1. Intellectual signal – domain or thinking style (e.g., "Constraint‑fiction devotee") 2. Aesthetic vibe – sensory or stylistic flavour (e.g., "Desaturated desert minimalism") 3. Likely skill or habit – action they probably practise (e.g., "Sketches street portraits") 4. Conversation‑starter keyword – quick hook (e.g., "Ask about Oulipo") 5. Core value – guiding principle (e.g., "Rules as creative fuel") 6. Social‑energy cue – preferred social setting (e.g., "Thrives in micro‑salons") 7. Ideal‑match trait – quality a partner should have (e.g., "Loves playful debate") Return the line only. No extra commentary.'
+          content:
+            'You are a matchmaking descriptor engine. Generate one seven‑slot line, pipes between slots, ≤ 5 words per slot. 1. Intellectual signal – domain or thinking style (e.g., "Constraint‑fiction devotee") 2. Aesthetic vibe – sensory or stylistic flavour (e.g., "Desaturated desert minimalism") 3. Likely skill or habit – action they probably practise (e.g., "Sketches street portraits") 4. Conversation‑starter keyword – quick hook (e.g., "Ask about Oulipo") 5. Core value – guiding principle (e.g., "Rules as creative fuel") 6. Social‑energy cue – preferred social setting (e.g., "Thrives in micro‑salons") 7. Ideal‑match trait – quality a partner should have (e.g., "Loves playful debate") Return the line only. No extra commentary.',
         },
         {
           role: 'user',
-          content: `Ref title: «${ref_title}» Caption: «${caption || ''}»`
-        }
+          content: `Ref title: «${ref_title}» Caption: «${caption || ''}»`,
+        },
       ],
       temperature: 0.7,
-      max_tokens: 100
-    })
+      max_tokens: 100,
+    }),
   })
 
   if (!response.ok) {
@@ -114,12 +115,9 @@ async function handleGenerateSevenString(data: GenerateSevenStringRequest, apiKe
   const result = await response.json()
   const sevenString = result.choices[0]?.message?.content?.trim() || ''
 
-  return new Response(
-    JSON.stringify({ seven_string: sevenString }),
-    { 
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-    }
-  )
+  return new Response(JSON.stringify({ seven_string: sevenString }), {
+    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+  })
 }
 
 async function handleGenerateEmbedding(data: GenerateEmbeddingRequest, apiKey: string) {
@@ -128,13 +126,13 @@ async function handleGenerateEmbedding(data: GenerateEmbeddingRequest, apiKey: s
   const response = await fetch('https://api.openai.com/v1/embeddings', {
     method: 'POST',
     headers: {
-      'Authorization': `Bearer ${apiKey}`,
+      Authorization: `Bearer ${apiKey}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
       model: 'text-embedding-3-small',
-      input: text
-    })
+      input: text,
+    }),
   })
 
   if (!response.ok) {
@@ -144,12 +142,9 @@ async function handleGenerateEmbedding(data: GenerateEmbeddingRequest, apiKey: s
   const result = await response.json()
   const embedding = result.data[0]?.embedding || []
 
-  return new Response(
-    JSON.stringify({ embedding }),
-    { 
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-    }
-  )
+  return new Response(JSON.stringify({ embedding }), {
+    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+  })
 }
 
 async function handleProcessItem(data: ProcessItemRequest, supabase: any, apiKey: string) {
@@ -162,11 +157,11 @@ async function handleProcessItem(data: ProcessItemRequest, supabase: any, apiKey
   if (item_text && item_text.trim() !== '') {
     // User added a caption - generate 7-string
     console.log(`🔄 Generating 7-string for item ${item_id} with caption: "${item_text}"`)
-    
+
     const sevenStringResponse = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${apiKey}`,
+        Authorization: `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
@@ -174,16 +169,17 @@ async function handleProcessItem(data: ProcessItemRequest, supabase: any, apiKey
         messages: [
           {
             role: 'system',
-            content: 'You are a matchmaking descriptor engine. Generate one seven‑slot line, pipes between slots, ≤ 5 words per slot. 1. Intellectual signal – domain or thinking style (e.g., "Constraint‑fiction devotee") 2. Aesthetic vibe – sensory or stylistic flavour (e.g., "Desaturated desert minimalism") 3. Likely skill or habit – action they probably practise (e.g., "Sketches street portraits") 4. Conversation‑starter keyword – quick hook (e.g., "Ask about Oulipo") 5. Core value – guiding principle (e.g., "Rules as creative fuel") 6. Social‑energy cue – preferred social setting (e.g., "Thrives in micro‑salons") 7. Ideal‑match trait – quality a partner should have (e.g., "Loves playful debate") Return the line only. No extra commentary.'
+            content:
+              'You are a matchmaking descriptor engine. Generate one seven‑slot line, pipes between slots, ≤ 5 words per slot. 1. Intellectual signal – domain or thinking style (e.g., "Constraint‑fiction devotee") 2. Aesthetic vibe – sensory or stylistic flavour (e.g., "Desaturated desert minimalism") 3. Likely skill or habit – action they probably practise (e.g., "Sketches street portraits") 4. Conversation‑starter keyword – quick hook (e.g., "Ask about Oulipo") 5. Core value – guiding principle (e.g., "Rules as creative fuel") 6. Social‑energy cue – preferred social setting (e.g., "Thrives in micro‑salons") 7. Ideal‑match trait – quality a partner should have (e.g., "Loves playful debate") Return the line only. No extra commentary.',
           },
           {
             role: 'user',
-            content: `Ref title: «${ref_title}» Caption: «${item_text}»`
-          }
+            content: `Ref title: «${ref_title}» Caption: «${item_text}»`,
+          },
         ],
         temperature: 0.7,
-        max_tokens: 100
-      })
+        max_tokens: 100,
+      }),
     })
 
     if (!sevenStringResponse.ok) {
@@ -192,7 +188,7 @@ async function handleProcessItem(data: ProcessItemRequest, supabase: any, apiKey
 
     const sevenStringResult = await sevenStringResponse.json()
     sevenString = sevenStringResult.choices[0]?.message?.content?.trim() || ''
-    
+
     console.log(`✅ Generated 7-string: "${sevenString}"`)
   } else {
     // No caption - use ref title as the text to embed
@@ -204,13 +200,13 @@ async function handleProcessItem(data: ProcessItemRequest, supabase: any, apiKey
   const embeddingResponse = await fetch('https://api.openai.com/v1/embeddings', {
     method: 'POST',
     headers: {
-      'Authorization': `Bearer ${apiKey}`,
+      Authorization: `Bearer ${apiKey}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
       model: 'text-embedding-3-small',
-      input: sevenString
-    })
+      input: sevenString,
+    }),
   })
 
   if (!embeddingResponse.ok) {
@@ -219,41 +215,43 @@ async function handleProcessItem(data: ProcessItemRequest, supabase: any, apiKey
 
   const embeddingResult = await embeddingResponse.json()
   embedding = embeddingResult.data[0]?.embedding || []
-  
+
   console.log(`✅ Generated embedding for: "${sevenString}"`)
 
   // Store in Supabase
-  const { error } = await supabase
-    .from('items')
-    .upsert({
-      id: item_id,
-      ref: ref_id,
-      creator,
-      text: item_text,
-      seven_string: sevenString,
-      seven_string_embedding: embedding,
-      updated: new Date().toISOString()
-    })
+  const { error } = await supabase.from('items').upsert({
+    id: item_id,
+    ref: ref_id,
+    creator,
+    text: item_text,
+    seven_string: sevenString,
+    seven_string_embedding: embedding,
+    updated: new Date().toISOString(),
+  })
 
   if (error) {
     throw new Error(`Supabase error: ${error.message}`)
   }
 
   return new Response(
-    JSON.stringify({ 
-      success: true, 
-      item_id, 
+    JSON.stringify({
+      success: true,
+      item_id,
       seven_string: sevenString,
       had_caption: item_text && item_text.trim() !== '',
-      processed_text: sevenString
+      processed_text: sevenString,
     }),
-    { 
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+    {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     }
   )
 }
 
-async function handleRegenerateSpiritVector(data: RegenerateSpiritVectorRequest, supabase: any, apiKey: string) {
+async function handleRegenerateSpiritVector(
+  data: RegenerateSpiritVectorRequest,
+  supabase: any,
+  apiKey: string
+) {
   const { user_id } = data
 
   // Get user's top 12 items
@@ -273,20 +271,20 @@ async function handleRegenerateSpiritVector(data: RegenerateSpiritVectorRequest,
   }
 
   // Combine 7-strings
-  const sevenStrings = items.map(item => item.seven_string).filter(Boolean)
+  const sevenStrings = items.map((item) => item.seven_string).filter(Boolean)
   const combinedString = sevenStrings.join(' | ')
 
   // Generate embedding for the combined spirit vector
   const embeddingResponse = await fetch('https://api.openai.com/v1/embeddings', {
     method: 'POST',
     headers: {
-      'Authorization': `Bearer ${apiKey}`,
+      Authorization: `Bearer ${apiKey}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
       model: 'text-embedding-3-small',
-      input: combinedString
-    })
+      input: combinedString,
+    }),
   })
 
   if (!embeddingResponse.ok) {
@@ -297,27 +295,25 @@ async function handleRegenerateSpiritVector(data: RegenerateSpiritVectorRequest,
   const embedding = embeddingResult.data[0]?.embedding || []
 
   // Update user's spirit vector
-  const { error: updateError } = await supabase
-    .from('users')
-    .upsert({
-      id: user_id,
-      spirit_vector: combinedString,
-      spirit_vector_embedding: embedding,
-      updated_at: new Date().toISOString()
-    })
+  const { error: updateError } = await supabase.from('users').upsert({
+    id: user_id,
+    spirit_vector: combinedString,
+    spirit_vector_embedding: embedding,
+    updated_at: new Date().toISOString(),
+  })
 
   if (updateError) {
     throw new Error(`Error updating spirit vector: ${updateError.message}`)
   }
 
   return new Response(
-    JSON.stringify({ 
-      success: true, 
-      user_id, 
-      spirit_vector: combinedString 
+    JSON.stringify({
+      success: true,
+      user_id,
+      spirit_vector: combinedString,
     }),
-    { 
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+    {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     }
   )
-} 
+}

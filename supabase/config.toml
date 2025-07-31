@@ -85,4 +85,4 @@ enable_signup = true
 # If enabled, users need to confirm their phone number before signing in.
 enable_confirmations = false
 # Template for sending a confirmation message. Use {{ .Code }} to insert the confirmation code.
-template = "Your confirmation code is {{ .Code }}" 
+template = "Your confirmation code is {{ .Code }}"

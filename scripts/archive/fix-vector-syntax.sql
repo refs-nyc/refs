@@ -12,10 +12,10 @@ DECLARE
 BEGIN
   -- Get the OpenAI API key
   api_key := current_setting('app.openai_api_key', true);
-  
+
   -- Create a proper zero array for fallback
   zero_array := array_fill(0::float8, ARRAY[1536]);
-  
+
   -- Check if API key is set
   IF api_key IS NULL OR api_key = '' THEN
     RAISE NOTICE 'OpenAI API key not set, returning zero vector';
@@ -55,4 +55,4 @@ EXCEPTION
     -- Return a zero vector if embedding generation fails
     RETURN zero_array::vector(1536);
   END;
-$$; 
+$$;

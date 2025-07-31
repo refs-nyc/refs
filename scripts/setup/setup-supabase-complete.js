@@ -20,25 +20,25 @@ async function setupSupabaseComplete() {
   try {
     // Step 1: Read SQL files
     console.log('1️⃣ Reading SQL files...')
-    
+
     const schemaSQL = fs.readFileSync(path.join(__dirname, 'supabase-schema.sql'), 'utf8')
     const functionsSQL = fs.readFileSync(path.join(__dirname, 'supabase-functions.sql'), 'utf8')
-    
+
     console.log('✅ SQL files read successfully')
 
     // Step 2: Apply schema
     console.log('2️⃣ Applying database schema...')
-    
+
     // Split schema into individual statements
-    const schemaStatements = schemaSQL.split(';').filter(stmt => stmt.trim())
-    
+    const schemaStatements = schemaSQL.split(';').filter((stmt) => stmt.trim())
+
     for (const statement of schemaStatements) {
       if (statement.trim()) {
         try {
           const { error } = await supabase.rpc('exec_sql', {
-            sql: statement.trim() + ';'
+            sql: statement.trim() + ';',
           })
-          
+
           if (error) {
             console.log(`⚠️ Schema statement warning (may already exist):`, error.message)
           } else {
@@ -52,17 +52,17 @@ async function setupSupabaseComplete() {
 
     // Step 3: Apply functions
     console.log('3️⃣ Applying database functions...')
-    
+
     // Split functions into individual statements
-    const functionStatements = functionsSQL.split(';').filter(stmt => stmt.trim())
-    
+    const functionStatements = functionsSQL.split(';').filter((stmt) => stmt.trim())
+
     for (const statement of functionStatements) {
       if (statement.trim()) {
         try {
           const { error } = await supabase.rpc('exec_sql', {
-            sql: statement.trim() + ';'
+            sql: statement.trim() + ';',
           })
-          
+
           if (error) {
             console.log(`⚠️ Function statement warning (may already exist):`, error.message)
           } else {
@@ -76,13 +76,13 @@ async function setupSupabaseComplete() {
 
     // Step 4: Test OpenAI API key
     console.log('4️⃣ Testing OpenAI API key...')
-    
+
     try {
       const { data, error } = await supabase.rpc('generate_seven_string', {
         ref_title: 'Test Ref',
-        caption: 'Test Caption'
+        caption: 'Test Caption',
       })
-      
+
       if (error) {
         console.log('⚠️ OpenAI API key may not be set or invalid:', error.message)
         console.log('📝 Please set your OpenAI API key in Supabase dashboard:')
@@ -99,14 +99,14 @@ async function setupSupabaseComplete() {
 
     // Step 5: Test basic database operations
     console.log('5️⃣ Testing basic database operations...')
-    
+
     try {
       // Test items table
       const { data: itemsTest, error: itemsError } = await supabase
         .from('items')
         .select('*')
         .limit(1)
-      
+
       if (itemsError) {
         console.error('❌ Items table test failed:', itemsError)
       } else {
@@ -118,13 +118,12 @@ async function setupSupabaseComplete() {
         .from('users')
         .select('*')
         .limit(1)
-      
+
       if (usersError) {
         console.error('❌ Users table test failed:', usersError)
       } else {
         console.log('✅ Users table is accessible')
       }
-
     } catch (error) {
       console.error('❌ Database operations test failed:', error)
     }
@@ -135,11 +134,10 @@ async function setupSupabaseComplete() {
     console.log('   1. Run: node populate-supabase-from-pocketbase.js')
     console.log('   2. Start your matchmaking server')
     console.log('   3. Test the search functionality')
-
   } catch (error) {
     console.error('❌ Error in setupSupabaseComplete:', error)
   }
 }
 
 // Run the setup
-setupSupabaseComplete() 
+setupSupabaseComplete()

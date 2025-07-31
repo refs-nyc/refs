@@ -73,9 +73,11 @@ export default function SearchHistorySheet({
       style={{ zIndex: 0 }}
     >
       <View style={{ flex: 1, padding: s.$2 }}>
-        <Text style={{ fontSize: 22, fontWeight: '600', color: c.accent, marginBottom: s.$4 }}>Search History</Text>
+        <Text style={{ fontSize: 22, fontWeight: '600', color: c.accent, marginBottom: s.$4 }}>
+          Search History
+        </Text>
         {loading ? (
-                      <ActivityIndicator size="large" color={c.accent} />
+          <ActivityIndicator size="large" color={c.accent} />
         ) : (
           <ScrollView showsVerticalScrollIndicator={false}>
             {searchHistory.map((item, index) => (
@@ -91,9 +93,13 @@ export default function SearchHistorySheet({
                   },
                 ]}
               >
-                <Text style={{ fontSize: 18, fontWeight: '600', color: c.accent, marginBottom: s.$2 }}>People into</Text>
+                <Text
+                  style={{ fontSize: 18, fontWeight: '600', color: c.accent, marginBottom: s.$2 }}
+                >
+                  People into
+                </Text>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: s.$3 }}>
-                  {(item.search_results && item.search_results.length > 0) ? (
+                  {item.search_results && item.search_results.length > 0 ? (
                     item.search_results.map((person, idx) => (
                       <Avatar
                         key={person.id || idx}
@@ -113,4 +119,4 @@ export default function SearchHistorySheet({
       </View>
     </BottomSheet>
   )
-} 
+}

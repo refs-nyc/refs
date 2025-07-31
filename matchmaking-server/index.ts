@@ -46,7 +46,7 @@ app.post('/api/search-people', (async (req, res) => {
 
     // Use the new Supabase search function
     const results = await searchPeople(item_ids, user_id, limit)
-    
+
     res.json({ results })
   } catch (error) {
     console.error('Error searching people:', error)
@@ -84,35 +84,35 @@ app.get('/api/search-history', (async (req, res) => {
 
 app.post('/api/search-history', (async (req, res) => {
   try {
-    const { 
-      user_id, 
-      ref_ids, 
-      ref_titles, 
-      search_title, 
-      search_subtitle, 
-      result_count, 
-      search_results 
+    const {
+      user_id,
+      ref_ids,
+      ref_titles,
+      search_title,
+      search_subtitle,
+      result_count,
+      search_results,
     } = req.body
 
     if (!user_id || !ref_ids || !Array.isArray(ref_ids)) {
       return res.status(400).json({ error: 'user_id and ref_ids array are required' })
     }
 
-            const { data, error } = await supabase
-          .from('search_history')
-          .insert({
-            user_id,
-            ref_ids,
-            ref_titles: ref_titles || ref_ids, // Fallback to ref_ids if no titles
-            ref_images: req.body.ref_images || [], // Store ref images
-            search_title: search_title || 'People into',
-            search_subtitle: search_subtitle || 'browse, dm, or add to a group',
-            result_count: result_count || 0,
-            search_results: search_results || null,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-          })
-          .select()
+    const { data, error } = await supabase
+      .from('search_history')
+      .insert({
+        user_id,
+        ref_ids,
+        ref_titles: ref_titles || ref_ids, // Fallback to ref_ids if no titles
+        ref_images: req.body.ref_images || [], // Store ref images
+        search_title: search_title || 'People into',
+        search_subtitle: search_subtitle || 'browse, dm, or add to a group',
+        result_count: result_count || 0,
+        search_results: search_results || null,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      })
+      .select()
 
     if (error) {
       console.error('Error saving search history:', error)
@@ -130,10 +130,7 @@ app.delete('/api/search-history/:id', (async (req, res) => {
   try {
     const { id } = req.params
 
-    const { error } = await supabase
-      .from('search_history')
-      .delete()
-      .eq('id', id)
+    const { error } = await supabase.from('search_history').delete().eq('id', id)
 
     if (error) {
       console.error('Error deleting search history:', error)
@@ -174,4 +171,4 @@ function cosineSimilarity(vecA: number[], vecB: number[]): number {
 app.listen(port, () => {
   console.log(`Matchmaking server running on port ${port}`)
   console.log(`Health check: http://localhost:${port}/health`)
-}) 
+})

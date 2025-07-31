@@ -152,4 +152,4 @@ BEGIN
       updated_at = NOW()
   WHERE id = user_id;
 END;
-$$; 
+$$;

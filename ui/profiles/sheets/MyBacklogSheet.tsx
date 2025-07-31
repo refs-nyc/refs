@@ -8,7 +8,6 @@ import { Ionicons } from '@expo/vector-icons'
 import BottomSheet, { BottomSheetBackdrop } from '@gorhom/bottom-sheet'
 import { useEffect, useRef, useState } from 'react'
 import { Pressable, View } from 'react-native'
-import Animated, { FadeIn, FadeOut } from 'react-native-reanimated'
 
 export const MyBacklogSheet = ({
   backlogItems,

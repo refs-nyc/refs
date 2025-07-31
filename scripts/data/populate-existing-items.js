@@ -44,7 +44,7 @@ async function populateExistingItems() {
           item_id: item.id,
           ref_id: item.ref_id,
           item_text: item.text || '',
-          ref_title: item.ref_id // For now, use ref_id as title
+          ref_title: item.ref_id, // For now, use ref_id as title
         })
 
         if (error) {
@@ -54,19 +54,17 @@ async function populateExistingItems() {
         }
 
         // Small delay to avoid rate limiting
-        await new Promise(resolve => setTimeout(resolve, 1000))
-
+        await new Promise((resolve) => setTimeout(resolve, 1000))
       } catch (error) {
         console.error(`❌ Error processing item ${item.id}:`, error)
       }
     }
 
     console.log('✅ Finished processing items')
-
   } catch (error) {
     console.error('❌ Error in populateExistingItems:', error)
   }
 }
 
 // Run the script
-populateExistingItems() 
+populateExistingItems()

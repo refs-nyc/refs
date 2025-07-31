@@ -48,13 +48,13 @@ export async function searchPeople(
     console.log(`🔍 Found ${searchItems.length} search items`)
 
     // Extract search refs for exact matching
-    const searchRefs = searchItems.map(item => item.ref).filter(Boolean)
+    const searchRefs = searchItems.map((item) => item.ref).filter(Boolean)
     console.log(`🔍 Search refs: ${searchRefs.join(', ')}`)
 
     // Get search embeddings for semantic matching
     const searchEmbeddings = searchItems
-      .map(item => item.seven_string_embedding)
-      .filter(embedding => embedding && embedding.length > 0)
+      .map((item) => item.seven_string_embedding)
+      .filter((embedding) => embedding && embedding.length > 0)
 
     if (searchEmbeddings.length === 0) {
       console.log('⚠️ No valid embeddings found in search items')
@@ -84,9 +84,9 @@ export async function searchPeople(
 
     // TIER 1: Find exact ref matches (hard matches)
     console.log('🎯 Tier 1: Finding exact ref matches...')
-    const exactMatches = new Map<string, { items: any[], refs: string[] }>()
-    
-    allItems.forEach(item => {
+    const exactMatches = new Map<string, { items: any[]; refs: string[] }>()
+
+    allItems.forEach((item) => {
       if (searchRefs.includes(item.ref)) {
         const creatorId = item.creator
         if (!exactMatches.has(creatorId)) {
@@ -104,30 +104,33 @@ export async function searchPeople(
 
     // TIER 2: Calculate semantic similarity for high similarity matches (>0.7)
     console.log('🎯 Tier 2: Calculating high similarity matches...')
-    const highSimilarityUsers = new Map<string, { 
-      items: any[], 
-      totalSimilarity: number, 
-      avgSimilarity: number,
-      highSimilarityCount: number,
-      maxSimilarity: number 
-    }>()
+    const highSimilarityUsers = new Map<
+      string,
+      {
+        items: any[]
+        totalSimilarity: number
+        avgSimilarity: number
+        highSimilarityCount: number
+        maxSimilarity: number
+      }
+    >()
 
-    allItems.forEach(item => {
+    allItems.forEach((item) => {
       if (!item.seven_string_embedding) return
 
       let maxSimilarity = 0
-      searchEmbeddings.forEach(searchEmbedding => {
+      searchEmbeddings.forEach((searchEmbedding) => {
         try {
           // Standardize embedding lengths by truncating to the shorter length
           const minLength = Math.min(searchEmbedding.length, item.seven_string_embedding.length)
           const standardizedSearchEmbedding = searchEmbedding.slice(0, minLength)
           const standardizedItemEmbedding = item.seven_string_embedding.slice(0, minLength)
-          
+
           if (minLength === 0) {
             console.warn('⚠️ Empty embedding after standardization')
             return
           }
-          
+
           const similarity = calculateCosineSimilarity(
             standardizedSearchEmbedding,
             standardizedItemEmbedding
@@ -138,16 +141,18 @@ export async function searchPeople(
         }
       })
 
-      if (maxSimilarity > 0.7) { // High similarity threshold (back to 0.7 as requested)
+      if (maxSimilarity > 0.7) {
+        // High similarity threshold (back to 0.7 as requested)
         const creatorId = item.creator
-        if (!exactMatches.has(creatorId)) { // Skip if already in exact matches
+        if (!exactMatches.has(creatorId)) {
+          // Skip if already in exact matches
           if (!highSimilarityUsers.has(creatorId)) {
             highSimilarityUsers.set(creatorId, {
               items: [],
               totalSimilarity: 0,
               avgSimilarity: 0,
               highSimilarityCount: 0,
-              maxSimilarity: 0
+              maxSimilarity: 0,
             })
           }
           const userData = highSimilarityUsers.get(creatorId)!
@@ -159,7 +164,7 @@ export async function searchPeople(
     })
 
     // Calculate averages for high similarity users
-    highSimilarityUsers.forEach(userData => {
+    highSimilarityUsers.forEach((userData) => {
       userData.avgSimilarity = userData.totalSimilarity / userData.items.length
       userData.highSimilarityCount = userData.items.length // All items in this tier are above threshold
     })
@@ -168,13 +173,16 @@ export async function searchPeople(
 
     // TIER 3: Find closest hit for remaining users
     console.log('🎯 Tier 3: Finding closest hits...')
-    const closestHitUsers = new Map<string, { 
-      items: any[], 
-      maxSimilarity: number,
-      bestItem: any 
-    }>()
+    const closestHitUsers = new Map<
+      string,
+      {
+        items: any[]
+        maxSimilarity: number
+        bestItem: any
+      }
+    >()
 
-    allItems.forEach(item => {
+    allItems.forEach((item) => {
       if (!item.seven_string_embedding) return
 
       const creatorId = item.creator
@@ -184,18 +192,18 @@ export async function searchPeople(
       }
 
       let maxSimilarity = 0
-      searchEmbeddings.forEach(searchEmbedding => {
+      searchEmbeddings.forEach((searchEmbedding) => {
         try {
           // Standardize embedding lengths by truncating to the shorter length
           const minLength = Math.min(searchEmbedding.length, item.seven_string_embedding.length)
           const standardizedSearchEmbedding = searchEmbedding.slice(0, minLength)
           const standardizedItemEmbedding = item.seven_string_embedding.slice(0, minLength)
-          
+
           if (minLength === 0) {
             console.warn('⚠️ Empty embedding after standardization')
             return
           }
-          
+
           const similarity = calculateCosineSimilarity(
             standardizedSearchEmbedding,
             standardizedItemEmbedding
@@ -211,7 +219,7 @@ export async function searchPeople(
           closestHitUsers.set(creatorId, {
             items: [],
             maxSimilarity: 0,
-            bestItem: null
+            bestItem: null,
           })
         }
         const userData = closestHitUsers.get(creatorId)!
@@ -229,7 +237,7 @@ export async function searchPeople(
     const allUserIds = [
       ...exactMatches.keys(),
       ...highSimilarityUsers.keys(),
-      ...closestHitUsers.keys()
+      ...closestHitUsers.keys(),
     ]
 
     // Get all users to ensure we can fill up to the limit
@@ -258,7 +266,7 @@ export async function searchPeople(
     const results: SearchResult[] = []
 
     // TIER 1: Exact matches (highest priority)
-    tierUsers?.forEach(user => {
+    tierUsers?.forEach((user) => {
       const exactMatch = exactMatches.get(user.id)
       if (exactMatch) {
         results.push({
@@ -267,14 +275,14 @@ export async function searchPeople(
           exactMatches: exactMatch.refs.length,
           highSimilarityMatches: exactMatch.items.length,
           sharedRefs: exactMatch.refs,
-          tier: 1
+          tier: 1,
         })
       }
     })
 
     // TIER 2: High similarity users (ranked by hits, then by spirit vector)
     const tier2Results: SearchResult[] = []
-    tierUsers?.forEach(user => {
+    tierUsers?.forEach((user) => {
       const highSimilarity = highSimilarityUsers.get(user.id)
       if (highSimilarity) {
         tier2Results.push({
@@ -282,8 +290,8 @@ export async function searchPeople(
           similarityScore: highSimilarity.avgSimilarity,
           exactMatches: 0,
           highSimilarityMatches: highSimilarity.highSimilarityCount,
-          sharedRefs: highSimilarity.items.map(item => item.ref).filter(Boolean),
-          tier: 2
+          sharedRefs: highSimilarity.items.map((item) => item.ref).filter(Boolean),
+          tier: 2,
         })
       }
     })
@@ -302,7 +310,7 @@ export async function searchPeople(
 
     // TIER 3: Closest hit users (ranked by spirit vector)
     const tier3Results: SearchResult[] = []
-    tierUsers?.forEach(user => {
+    tierUsers?.forEach((user) => {
       const closestHit = closestHitUsers.get(user.id)
       if (closestHit) {
         tier3Results.push({
@@ -310,8 +318,8 @@ export async function searchPeople(
           similarityScore: closestHit.maxSimilarity,
           exactMatches: 0,
           highSimilarityMatches: 0,
-          sharedRefs: closestHit.items.map(item => item.ref).filter(Boolean),
-          tier: 3
+          sharedRefs: closestHit.items.map((item) => item.ref).filter(Boolean),
+          tier: 3,
         })
       }
     })
@@ -323,31 +331,34 @@ export async function searchPeople(
 
     // TIER 4: Spirit vector fallback to fill up to limit
     console.log('🎯 Tier 4: Spirit vector fallback...')
-    
+
     // Get users not already in results
-    const resultUserIds = new Set(results.map(r => r.id))
-    const remainingUsers = allUsers?.filter(user => !resultUserIds.has(user.id)) || []
-    
+    const resultUserIds = new Set(results.map((r) => r.id))
+    const remainingUsers = allUsers?.filter((user) => !resultUserIds.has(user.id)) || []
+
     console.log(`🎯 Found ${remainingUsers.length} remaining users for spirit vector ranking`)
-    
+
     // Get the searching user's spirit vector for comparison
-    const searchingUser = allUsers?.find(user => user.id === userId)
+    const searchingUser = allUsers?.find((user) => user.id === userId)
     const searchingUserSpiritVector = searchingUser?.spirit_vector_embedding
-    
+
     if (searchingUserSpiritVector) {
       console.log('🎯 Calculating spirit vector similarities...')
-      
+
       // Calculate spirit vector similarity for each remaining user
-      const usersWithSpiritSimilarity = remainingUsers.map(user => {
+      const usersWithSpiritSimilarity = remainingUsers.map((user) => {
         let spiritSimilarity = 0.0
-        
+
         if (user.spirit_vector_embedding) {
           try {
             // Standardize embedding lengths by truncating to the shorter length
-            const minLength = Math.min(searchingUserSpiritVector.length, user.spirit_vector_embedding.length)
+            const minLength = Math.min(
+              searchingUserSpiritVector.length,
+              user.spirit_vector_embedding.length
+            )
             const standardizedSearchingVector = searchingUserSpiritVector.slice(0, minLength)
             const standardizedUserVector = user.spirit_vector_embedding.slice(0, minLength)
-            
+
             if (minLength > 0) {
               spiritSimilarity = calculateCosineSimilarity(
                 standardizedSearchingVector,
@@ -355,47 +366,58 @@ export async function searchPeople(
               )
             }
           } catch (error) {
-            console.warn(`⚠️ Error calculating spirit vector similarity for user ${user.id}:`, error)
+            console.warn(
+              `⚠️ Error calculating spirit vector similarity for user ${user.id}:`,
+              error
+            )
           }
         }
-        
+
         return {
           user,
-          spiritSimilarity
+          spiritSimilarity,
         }
       })
-      
+
       // Sort by spirit vector similarity (descending)
       usersWithSpiritSimilarity.sort((a, b) => b.spiritSimilarity - a.spiritSimilarity)
-      
-      console.log(`🎯 Spirit vector similarities calculated for ${usersWithSpiritSimilarity.length} users`)
-      console.log(`🎯 Top 5 spirit similarities: ${usersWithSpiritSimilarity.slice(0, 5).map(u => `${u.user.username}: ${u.spiritSimilarity.toFixed(3)}`).join(', ')}`)
-      
+
+      console.log(
+        `🎯 Spirit vector similarities calculated for ${usersWithSpiritSimilarity.length} users`
+      )
+      console.log(
+        `🎯 Top 5 spirit similarities: ${usersWithSpiritSimilarity
+          .slice(0, 5)
+          .map((u) => `${u.user.username}: ${u.spiritSimilarity.toFixed(3)}`)
+          .join(', ')}`
+      )
+
       // Create Tier 4 results with spirit vector similarity scores
-      const tier4Results: SearchResult[] = usersWithSpiritSimilarity.map(({ user, spiritSimilarity }) => ({
-        id: user.id,
-        similarityScore: spiritSimilarity, // Use spirit vector similarity
-        exactMatches: 0,
-        highSimilarityMatches: 0,
-        sharedRefs: [],
-        tier: 4
-      }))
-      
+      const tier4Results: SearchResult[] = usersWithSpiritSimilarity.map(
+        ({ user, spiritSimilarity }) => ({
+          id: user.id,
+          similarityScore: spiritSimilarity, // Use spirit vector similarity
+          exactMatches: 0,
+          highSimilarityMatches: 0,
+          sharedRefs: [],
+          tier: 4,
+        })
+      )
+
       results.push(...tier4Results)
-      
     } else {
       console.log('⚠️ No spirit vector found for searching user, using random order for Tier 4')
-      
+
       // Fallback: just add remaining users in order
-      const tier4Results: SearchResult[] = remainingUsers.map(user => ({
+      const tier4Results: SearchResult[] = remainingUsers.map((user) => ({
         id: user.id,
         similarityScore: 0.0, // No spirit vector similarity
         exactMatches: 0,
         highSimilarityMatches: 0,
         sharedRefs: [],
-        tier: 4
+        tier: 4,
       }))
-      
+
       results.push(...tier4Results)
     }
 
@@ -403,14 +425,15 @@ export async function searchPeople(
     const limitedResults = results.slice(0, limit)
 
     console.log(`✅ Search completed with 4-tier ranking:`)
-    console.log(`   - Tier 1 (exact matches): ${results.filter(r => r.tier === 1).length}`)
-    console.log(`   - Tier 2 (high similarity): ${results.filter(r => r.tier === 2).length}`)
-    console.log(`   - Tier 3 (closest hit): ${results.filter(r => r.tier === 3).length}`)
-    console.log(`   - Tier 4 (spirit vector fallback): ${results.filter(r => r.tier === 4).length}`)
+    console.log(`   - Tier 1 (exact matches): ${results.filter((r) => r.tier === 1).length}`)
+    console.log(`   - Tier 2 (high similarity): ${results.filter((r) => r.tier === 2).length}`)
+    console.log(`   - Tier 3 (closest hit): ${results.filter((r) => r.tier === 3).length}`)
+    console.log(
+      `   - Tier 4 (spirit vector fallback): ${results.filter((r) => r.tier === 4).length}`
+    )
     console.log(`   - Total results: ${limitedResults.length}`)
 
     return limitedResults
-
   } catch (error) {
     console.error('❌ Error in searchPeople:', error)
     throw error
@@ -441,4 +464,4 @@ export function calculateCosineSimilarity(vecA: number[], vecB: number[]): numbe
   }
 
   return dotProduct / (normA * normB)
-} 
+}

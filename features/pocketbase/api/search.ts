@@ -48,14 +48,14 @@ export interface SearchHistoryItem {
  */
 export async function searchPeople(request: SearchRequest): Promise<SearchResponse> {
   const { user } = useAppStore.getState()
-  
+
   if (!user) {
     throw new Error('User not authenticated')
   }
 
   try {
     console.log('🔍 Calling matchmaking API with:', request)
-    
+
     const response = await fetch(`${MATCHMAKING_API_URL}/api/search-people`, {
       method: 'POST',
       headers: {
@@ -72,7 +72,7 @@ export async function searchPeople(request: SearchRequest): Promise<SearchRespon
 
     const data = await response.json()
     console.log('🔍 Search results:', data.results?.length || 0, 'people found')
-    
+
     return data
   } catch (error) {
     console.error('Error in searchPeople:', error)
@@ -86,7 +86,7 @@ export async function searchPeople(request: SearchRequest): Promise<SearchRespon
 export async function getSearchHistory(userId: string): Promise<SearchHistoryRecord[]> {
   try {
     const response = await fetch(`${MATCHMAKING_API_URL}/api/search-history?user_id=${userId}`)
-    
+
     if (!response.ok) {
       throw new Error(`Failed to fetch search history: ${response.status}`)
     }
@@ -103,8 +103,8 @@ export async function getSearchHistory(userId: string): Promise<SearchHistoryRec
  * Save search to history with ref titles, images, and cached results
  */
 export async function saveSearchHistory(
-  userId: string, 
-  searchItems: string[], 
+  userId: string,
+  searchItems: string[],
   searchRefTitles: string[],
   searchRefImages: string[],
   searchResults: PersonResult[],
@@ -121,9 +121,9 @@ export async function saveSearchHistory(
       result_count: resultsCount,
       search_results: searchResults, // Cache the actual search results
     }
-    
+
     console.log('🔍 Saving search history with request body:', requestBody)
-    
+
     const response = await fetch(`${MATCHMAKING_API_URL}/api/search-history`, {
       method: 'POST',
       headers: {
@@ -135,7 +135,7 @@ export async function saveSearchHistory(
     if (!response.ok) {
       throw new Error(`Failed to save search history: ${response.status}`)
     }
-    
+
     console.log('✅ Search history saved successfully')
   } catch (error) {
     console.error('Error saving search history:', error)
@@ -172,7 +172,4 @@ export async function checkMatchmakingHealth(): Promise<boolean> {
     console.error('Matchmaking server health check failed:', error)
     return false
   }
-} 
- 
- 
- 
+}

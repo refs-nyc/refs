@@ -1,24 +1,16 @@
 import { GridWrapper } from './GridWrapper'
-import { GridTile } from './GridTile'
 import { GridItem } from './GridItem'
 import { GridTileWrapper } from './GridTileWrapper'
-import { GridTileActionAdd } from './GridTileActionAdd'
 import { ExpandedItem } from '@/features/types'
 import { useState, useCallback, useMemo, useEffect } from 'react'
-import { Text, View, Dimensions, Pressable } from 'react-native'
+import { Text, View, Pressable } from 'react-native'
 import { c } from '@/features/style'
-import Animated, { 
-  useSharedValue, 
-  useAnimatedStyle, 
-  withTiming, 
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
   withSequence,
   withSpring,
-  withDelay,
-  runOnJS,
-  FadeIn,
-  FadeOut,
-  Layout,
-  Easing
 } from 'react-native-reanimated'
 
 const PROMPTS = [
@@ -70,11 +62,11 @@ const getTileAnimationDelay = (index: number, totalTiles: number) => {
 }
 
 // Custom Nintendo Switch drop animation component
-const NintendoSwitchTile = ({ 
-  children, 
-  delay, 
-  isInitialLoad 
-}: { 
+const NintendoSwitchTile = ({
+  children,
+  delay,
+  isInitialLoad,
+}: {
   children: React.ReactNode
   delay: number
   isInitialLoad: boolean
@@ -108,66 +100,65 @@ const NintendoSwitchTile = ({
         stiffness: isFastTile ? 200 : 250,
         mass: isFastTile ? 1.0 : 0.9,
       })
-      
+
       // Scale up with bounce (gentler for fast tiles)
       scale.value = withSpring(1, {
         damping: isFastTile ? 22 : 18,
         stiffness: isFastTile ? 300 : 350,
         mass: isFastTile ? 0.8 : 0.7,
       })
-      
+
       // Fade in quickly
       opacity.value = withTiming(1, { duration: 200 })
 
       // After slam, add the bounce-back effect (much more subtle for fast tiles)
-      setTimeout(() => {
-        const bounceHeight = isFastTile ? -2 : -3
-        const bounceScale = isFastTile ? 0.995 : 0.99
-        
-        // Bounce back up slightly and shrink
-        translateY.value = withSpring(bounceHeight, {
-          damping: isFastTile ? 35 : 30,
-          stiffness: isFastTile ? 200 : 250,
-          mass: isFastTile ? 0.6 : 0.5,
-        })
-        scale.value = withSpring(bounceScale, {
-          damping: isFastTile ? 35 : 30,
-          stiffness: isFastTile ? 200 : 250,
-          mass: isFastTile ? 0.6 : 0.5,
-        })
+      setTimeout(
+        () => {
+          const bounceHeight = isFastTile ? -2 : -3
+          const bounceScale = isFastTile ? 0.995 : 0.99
 
-        // Then settle back to normal (smoother for fast tiles)
-        setTimeout(() => {
-          translateY.value = withSpring(0, {
-            damping: isFastTile ? 30 : 25,
-            stiffness: isFastTile ? 150 : 200,
-            mass: isFastTile ? 0.8 : 0.7,
+          // Bounce back up slightly and shrink
+          translateY.value = withSpring(bounceHeight, {
+            damping: isFastTile ? 35 : 30,
+            stiffness: isFastTile ? 200 : 250,
+            mass: isFastTile ? 0.6 : 0.5,
           })
-          scale.value = withSpring(1, {
-            damping: isFastTile ? 30 : 25,
-            stiffness: isFastTile ? 150 : 200,
-            mass: isFastTile ? 0.8 : 0.7,
+          scale.value = withSpring(bounceScale, {
+            damping: isFastTile ? 35 : 30,
+            stiffness: isFastTile ? 200 : 250,
+            mass: isFastTile ? 0.6 : 0.5,
           })
-        }, isFastTile ? 80 : 120)
-      }, isFastTile ? 150 : 200)
+
+          // Then settle back to normal (smoother for fast tiles)
+          setTimeout(
+            () => {
+              translateY.value = withSpring(0, {
+                damping: isFastTile ? 30 : 25,
+                stiffness: isFastTile ? 150 : 200,
+                mass: isFastTile ? 0.8 : 0.7,
+              })
+              scale.value = withSpring(1, {
+                damping: isFastTile ? 30 : 25,
+                stiffness: isFastTile ? 150 : 200,
+                mass: isFastTile ? 0.8 : 0.7,
+              })
+            },
+            isFastTile ? 80 : 120
+          )
+        },
+        isFastTile ? 150 : 200
+      )
     }, delay)
 
     return () => clearTimeout(timer)
   }, [isInitialLoad, delay])
 
   const animatedStyle = useAnimatedStyle(() => ({
-    transform: [
-      { translateY: translateY.value },
-      { scale: scale.value }
-    ],
+    transform: [{ translateY: translateY.value }, { scale: scale.value }],
     opacity: opacity.value,
   }))
 
-  return (
-    <Animated.View style={animatedStyle}>
-      {children}
-    </Animated.View>
-  )
+  return <Animated.View style={animatedStyle}>{children}</Animated.View>
 }
 
 export const Grid = ({
@@ -198,7 +189,6 @@ export const Grid = ({
   setSelectedRefs?: (refs: string[]) => void
 }) => {
   const gridSize = columns * rows
-  const screenWidth = Dimensions.get('window').width
 
   // State for shuffled prompts
   const [shuffledPrompts, setShuffledPrompts] = useState<string[]>([])
@@ -224,15 +214,15 @@ export const Grid = ({
   // Shuffle prompts function with animation
   const handleShufflePrompts = useCallback(() => {
     if (isShuffling) return // Prevent multiple rapid clicks
-    
+
     setIsShuffling(true)
-    
+
     // Button press animation
     buttonScale.value = withSequence(
       withTiming(0.95, { duration: 100 }),
       withTiming(1, { duration: 100 })
     )
-    
+
     // Shuffle after a brief delay to allow fade out
     setTimeout(() => {
       setShuffledPrompts(shuffleArray(PROMPTS))
@@ -240,33 +230,36 @@ export const Grid = ({
     }, 150)
   }, [isShuffling, buttonScale])
 
-  const handleGridItemPress = useCallback((item: any) => {
-    if (searchMode && setSelectedRefs) {
-      const itemId = item.id
-      
-      // Use Set for O(1) lookup and manipulation
-      const selectedSet = new Set(selectedRefs)
-      
-      if (selectedSet.has(itemId)) {
-        // Remove item
-        selectedSet.delete(itemId)
-      } else {
-        // Add item
-        selectedSet.add(itemId)
+  const handleGridItemPress = useCallback(
+    (item: any) => {
+      if (searchMode && setSelectedRefs) {
+        const itemId = item.id
+
+        // Use Set for O(1) lookup and manipulation
+        const selectedSet = new Set(selectedRefs)
+
+        if (selectedSet.has(itemId)) {
+          // Remove item
+          selectedSet.delete(itemId)
+        } else {
+          // Add item
+          selectedSet.add(itemId)
+        }
+
+        setSelectedRefs(Array.from(selectedSet))
+      } else if (onPressItem) {
+        onPressItem(item)
       }
-      
-      setSelectedRefs(Array.from(selectedSet))
-    } else if (onPressItem) {
-      onPressItem(item)
-    }
-  }, [searchMode, setSelectedRefs, selectedRefs, onPressItem])
+    },
+    [searchMode, setSelectedRefs, selectedRefs, onPressItem]
+  )
 
   // Memoize the selected refs set for O(1) lookup
   const selectedRefsSet = useMemo(() => new Set(selectedRefs), [selectedRefs])
 
   // Button animation style
   const buttonAnimatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: buttonScale.value }]
+    transform: [{ scale: buttonScale.value }],
   }))
 
   return (
@@ -288,9 +281,13 @@ export const Grid = ({
                   if (onRemoveItem) onRemoveItem(item)
                 }, [onRemoveItem, item])}
                 type={item.list ? 'list' : item.expand.ref?.image || item.image ? 'image' : 'text'}
-                tileStyle={searchMode ? {
-                  opacity: isSelected ? 1 : 0.25,
-                } : {}}
+                tileStyle={
+                  searchMode
+                    ? {
+                        opacity: isSelected ? 1 : 0.25,
+                      }
+                    : {}
+                }
               >
                 <GridItem item={item} i={i} />
                 {searchMode && isSelected && (
@@ -320,9 +317,10 @@ export const Grid = ({
           return (
             <NintendoSwitchTile
               key={`placeholder-${i}-${prompt}`}
-              delay={isShuffling ? 
-                getTileAnimationDelay(i, gridSize - items.length) :
-                getTileAnimationDelay(totalIndex, gridSize)
+              delay={
+                isShuffling
+                  ? getTileAnimationDelay(i, gridSize - items.length)
+                  : getTileAnimationDelay(totalIndex, gridSize)
               }
               isInitialLoad={isInitialLoad}
             >

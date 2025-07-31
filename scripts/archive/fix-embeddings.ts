@@ -14,7 +14,7 @@ async function generateEmbedding(text: string): Promise<number[]> {
     const response = await fetch('https://api.openai.com/v1/embeddings', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
+        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
@@ -43,12 +43,14 @@ async function fixEmbeddings() {
     // Get all items that have seven_string but need embedding fix
     const { data: items, error: itemsError } = await supabase
       .from('items')
-      .select(`
+      .select(
+        `
         id,
         text,
         seven_string,
         seven_string_embedding
-      `)
+      `
+      )
       .is('deleted', null)
       .not('seven_string', 'is', null)
 
@@ -69,7 +71,10 @@ async function fixEmbeddings() {
         console.log(`🔄 Fixing embedding for item ${item.id}: "${item.text?.substring(0, 50)}..."`)
 
         // Check if embedding is already correct (should be 1536 dimensions)
-        if (Array.isArray(item.seven_string_embedding) && item.seven_string_embedding.length === 1536) {
+        if (
+          Array.isArray(item.seven_string_embedding) &&
+          item.seven_string_embedding.length === 1536
+        ) {
           console.log(`✅ Item ${item.id} already has correct embedding`)
           continue
         }
@@ -93,19 +98,17 @@ async function fixEmbeddings() {
         }
 
         // Rate limiting
-        await new Promise(resolve => setTimeout(resolve, 1000))
-
+        await new Promise((resolve) => setTimeout(resolve, 1000))
       } catch (error) {
         console.error(`❌ Error processing item ${item.id}:`, error)
       }
     }
 
     console.log('🎉 Embedding fix completed!')
-
   } catch (error) {
     console.error('❌ Fatal error:', error)
   }
 }
 
 // Run the script
-fixEmbeddings() 
+fixEmbeddings()

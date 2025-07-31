@@ -14,7 +14,7 @@ async function generateEmbedding(text: string): Promise<number[]> {
     const response = await fetch('https://api.openai.com/v1/embeddings', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
+        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
@@ -58,11 +58,13 @@ async function fixEmbeddingsSimple() {
     // Get all items that have seven_string
     const { data: items, error: itemsError } = await supabase
       .from('items')
-      .select(`
+      .select(
+        `
         id,
         text,
         seven_string
-      `)
+      `
+      )
       .is('deleted', null)
       .not('seven_string', 'is', null)
 
@@ -101,19 +103,17 @@ async function fixEmbeddingsSimple() {
         }
 
         // Rate limiting
-        await new Promise(resolve => setTimeout(resolve, 1000))
-
+        await new Promise((resolve) => setTimeout(resolve, 1000))
       } catch (error) {
         console.error(`❌ Error processing item ${item.id}:`, error)
       }
     }
 
     console.log('🎉 Embedding fix completed!')
-
   } catch (error) {
     console.error('❌ Fatal error:', error)
   }
 }
 
 // Run the script
-fixEmbeddingsSimple() 
+fixEmbeddingsSimple()

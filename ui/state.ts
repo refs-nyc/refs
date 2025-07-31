@@ -31,7 +31,7 @@ export type UISlice = {
   cachedSearchResults: any[]
   cachedSearchTitle: string
   cachedSearchSubtitle: string
-  closeActiveBottomSheet: (() => void) | null,
+  closeActiveBottomSheet: (() => void) | null
   isSearchResultsSheetOpen: boolean
   setSearchMode: (mode: boolean) => void
   setSelectedRefs: (refs: string[]) => void

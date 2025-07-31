@@ -71,7 +71,6 @@ export const Details = ({ data }: { data: Item[] }) => {
         windowSize={3}
         pagingEnabled={true}
         snapEnabled={true}
-
       />
 
       {addingToList !== '' && addingItem && (

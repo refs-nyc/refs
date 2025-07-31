@@ -202,7 +202,7 @@ export const Feed = () => {
                     }}
                   />
                 ))}
-                
+
                 {/* Logout button at the bottom of the feed */}
                 <View style={{ marginTop: s.$4, marginBottom: s.$2, alignItems: 'center' }}>
                   <Button

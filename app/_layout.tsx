@@ -100,7 +100,7 @@ export default function RootLayout() {
 
   useEffect(() => {
     // Initialize user store to sync with PocketBase auth - make non-blocking
-    init().catch(error => {
+    init().catch((error) => {
       console.error('Failed to initialize app:', error)
     })
   }, [init])

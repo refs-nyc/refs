@@ -61,13 +61,13 @@ class EdgeFunctionClient {
     const response = await fetch(this.functionUrl, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${process.env.SUPA_KEY}`,
+        Authorization: `Bearer ${process.env.SUPA_KEY}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
         action,
-        ...data
-      })
+        ...data,
+      }),
     })
 
     if (!response.ok) {
@@ -78,7 +78,9 @@ class EdgeFunctionClient {
     return response.json()
   }
 
-  async generateSevenString(request: GenerateSevenStringRequest): Promise<GenerateSevenStringResponse> {
+  async generateSevenString(
+    request: GenerateSevenStringRequest
+  ): Promise<GenerateSevenStringResponse> {
     return this.callFunction<GenerateSevenStringResponse>('generate_seven_string', request)
   }
 
@@ -90,7 +92,9 @@ class EdgeFunctionClient {
     return this.callFunction<ProcessItemResponse>('process_item', request)
   }
 
-  async regenerateSpiritVector(request: RegenerateSpiritVectorRequest): Promise<RegenerateSpiritVectorResponse> {
+  async regenerateSpiritVector(
+    request: RegenerateSpiritVectorRequest
+  ): Promise<RegenerateSpiritVectorResponse> {
     return this.callFunction<RegenerateSpiritVectorResponse>('regenerate_spirit_vector', request)
   }
 }
@@ -107,5 +111,5 @@ export type {
   GenerateSevenStringResponse,
   GenerateEmbeddingResponse,
   ProcessItemResponse,
-  RegenerateSpiritVectorResponse
-} 
+  RegenerateSpiritVectorResponse,
+}

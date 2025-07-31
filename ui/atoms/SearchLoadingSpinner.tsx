@@ -62,11 +62,11 @@ export const SearchLoadingSpinner: React.FC<SearchLoadingSpinnerProps> = ({ size
           }}
         >
           <Svg width={size * 0.66} height={size * 0.66} viewBox="0 0 47 47" fill="none">
-            <Circle 
-              cx="23.5" 
-              cy="23.5" 
-              r="23" 
-              stroke={c.black} 
+            <Circle
+              cx="23.5"
+              cy="23.5"
+              r="23"
+              stroke={c.black}
               strokeDasharray="2 2"
               strokeWidth="1"
             />
@@ -85,11 +85,11 @@ export const SearchLoadingSpinner: React.FC<SearchLoadingSpinnerProps> = ({ size
           }}
         >
           <Svg width={size * 0.66} height={size * 0.66} viewBox="0 0 47 47" fill="none">
-            <Circle 
-              cx="23.5" 
-              cy="23.5" 
-              r="23" 
-              stroke={c.black} 
+            <Circle
+              cx="23.5"
+              cy="23.5"
+              r="23"
+              stroke={c.black}
               strokeDasharray="2 2"
               strokeWidth="1"
             />
@@ -98,4 +98,4 @@ export const SearchLoadingSpinner: React.FC<SearchLoadingSpinnerProps> = ({ size
       </View>
     </View>
   )
-} 
+}

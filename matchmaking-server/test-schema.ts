@@ -15,15 +15,12 @@ const supabase = createClient(supabaseUrl, supabaseKey)
 
 async function testSchema() {
   console.log('Testing Supabase schema...')
-  
+
   try {
     // Test 1: Check if items table exists and what columns it has
     console.log('\n1. Testing items table...')
-    const { data: items, error: itemsError } = await supabase
-      .from('items')
-      .select('*')
-      .limit(1)
-    
+    const { data: items, error: itemsError } = await supabase.from('items').select('*').limit(1)
+
     if (itemsError) {
       console.error('Items table error:', itemsError)
     } else {
@@ -33,11 +30,8 @@ async function testSchema() {
 
     // Test 2: Check if users table exists
     console.log('\n2. Testing users table...')
-    const { data: users, error: usersError } = await supabase
-      .from('users')
-      .select('*')
-      .limit(1)
-    
+    const { data: users, error: usersError } = await supabase.from('users').select('*').limit(1)
+
     if (usersError) {
       console.error('Users table error:', usersError)
     } else {
@@ -47,21 +41,17 @@ async function testSchema() {
 
     // Test 3: Check if refs table exists
     console.log('\n3. Testing refs table...')
-    const { data: refs, error: refsError } = await supabase
-      .from('refs')
-      .select('*')
-      .limit(1)
-    
+    const { data: refs, error: refsError } = await supabase.from('refs').select('*').limit(1)
+
     if (refsError) {
       console.error('Refs table error:', refsError)
     } else {
       console.log('Refs table columns:', Object.keys(refs[0] || {}))
       console.log('Sample ref:', refs[0])
     }
-
   } catch (error) {
     console.error('Schema test error:', error)
   }
 }
 
-testSchema() 
+testSchema()

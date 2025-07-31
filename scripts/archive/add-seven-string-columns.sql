@@ -1,10 +1,10 @@
 -- Add 7-string and embedding columns to existing items table
-ALTER TABLE items 
+ALTER TABLE items
 ADD COLUMN IF NOT EXISTS seven_string TEXT,
 ADD COLUMN IF NOT EXISTS seven_string_embedding vector(1536);
 
--- Add spirit vector columns to existing users table  
-ALTER TABLE users 
+-- Add spirit vector columns to existing users table
+ALTER TABLE users
 ADD COLUMN IF NOT EXISTS spirit_vector TEXT,
 ADD COLUMN IF NOT EXISTS spirit_vector_embedding vector(1536);
 
@@ -16,4 +16,4 @@ CREATE INDEX IF NOT EXISTS users_spirit_vector_embedding_idx ON users USING ivff
 CREATE EXTENSION IF NOT EXISTS vector;
 
 -- Enable http extension for OpenAI API calls
-CREATE EXTENSION IF NOT EXISTS http; 
+CREATE EXTENSION IF NOT EXISTS http;

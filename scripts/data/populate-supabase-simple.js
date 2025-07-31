@@ -21,22 +21,20 @@ async function populateSupabaseSimple() {
     // First, populate users
     console.log('1️⃣ Populating users...')
     const users = await pb.collection('users').getList(1, 1000, {
-      expand: 'items'
+      expand: 'items',
     })
 
     console.log(`📝 Found ${users.items.length} users`)
 
     for (const user of users.items) {
       try {
-        const { error } = await supabase
-          .from('users')
-          .upsert({
-            id: user.id,
-            name: user.name || user.userName,
-            avatar_url: user.avatar_url || user.image,
-            created_at: user.created,
-            updated_at: user.updated
-          })
+        const { error } = await supabase.from('users').upsert({
+          id: user.id,
+          name: user.name || user.userName,
+          avatar_url: user.avatar_url || user.image,
+          created_at: user.created,
+          updated_at: user.updated,
+        })
 
         if (error) {
           console.error(`❌ Error upserting user ${user.id}:`, error)
@@ -51,7 +49,7 @@ async function populateSupabaseSimple() {
     // Then, populate items (without 7-string generation for now)
     console.log('2️⃣ Populating items...')
     const items = await pb.collection('items').getList(1, 1000, {
-      expand: 'ref,creator'
+      expand: 'ref,creator',
     })
 
     console.log(`📝 Found ${items.items.length} items`)
@@ -59,16 +57,14 @@ async function populateSupabaseSimple() {
     for (const item of items.items) {
       try {
         // Direct upsert without 7-string generation
-        const { error: upsertError } = await supabase
-          .from('items')
-          .upsert({
-            id: item.id,
-            ref_id: item.ref,
-            creator: item.creator,
-            text: item.text || '',
-            created_at: item.created,
-            updated_at: item.updated
-          })
+        const { error: upsertError } = await supabase.from('items').upsert({
+          id: item.id,
+          ref_id: item.ref,
+          creator: item.creator,
+          text: item.text || '',
+          created_at: item.created,
+          updated_at: item.updated,
+        })
 
         if (upsertError) {
           console.error(`❌ Error upserting item ${item.id}:`, upsertError)
@@ -77,19 +73,17 @@ async function populateSupabaseSimple() {
         }
 
         // Small delay to avoid rate limiting
-        await new Promise(resolve => setTimeout(resolve, 50))
-
+        await new Promise((resolve) => setTimeout(resolve, 50))
       } catch (error) {
         console.error(`❌ Error processing item ${item.id}:`, error)
       }
     }
 
     console.log('✅ Finished populating Supabase from PocketBase')
-
   } catch (error) {
     console.error('❌ Error in populateSupabaseSimple:', error)
   }
 }
 
 // Run the script
-populateSupabaseSimple() 
+populateSupabaseSimple()

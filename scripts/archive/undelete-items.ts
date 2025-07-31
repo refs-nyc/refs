@@ -53,19 +53,17 @@ async function undeleteItems() {
         }
 
         // Rate limiting
-        await new Promise(resolve => setTimeout(resolve, 100))
-
+        await new Promise((resolve) => setTimeout(resolve, 100))
       } catch (error) {
         console.error(`❌ Error processing item ${item.id}:`, error)
       }
     }
 
     console.log('🎉 Items un-deleted successfully!')
-
   } catch (error) {
     console.error('❌ Fatal error:', error)
   }
 }
 
 // Run the script
-undeleteItems() 
+undeleteItems()

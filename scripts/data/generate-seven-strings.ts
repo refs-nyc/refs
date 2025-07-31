@@ -14,7 +14,7 @@ async function generateSevenString(itemText: string, refTitle: string): Promise<
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
+        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
@@ -22,12 +22,13 @@ async function generateSevenString(itemText: string, refTitle: string): Promise<
         messages: [
           {
             role: 'system',
-            content: 'You are a helpful assistant that generates concise, descriptive 7-word strings that capture the essence of content.'
+            content:
+              'You are a helpful assistant that generates concise, descriptive 7-word strings that capture the essence of content.',
           },
           {
             role: 'user',
-            content: `Generate a 7-word string that describes this content: "${itemText}" from "${refTitle}". The string should be exactly 7 words, descriptive, and capture the key themes or essence.`
-          }
+            content: `Generate a 7-word string that describes this content: "${itemText}" from "${refTitle}". The string should be exactly 7 words, descriptive, and capture the key themes or essence.`,
+          },
         ],
         max_tokens: 50,
         temperature: 0.7,
@@ -40,7 +41,7 @@ async function generateSevenString(itemText: string, refTitle: string): Promise<
 
     const data = await response.json()
     const sevenString = data.choices[0].message.content.trim()
-    
+
     // Ensure it's exactly 7 words
     const words = sevenString.split(' ').filter((word: string) => word.length > 0)
     if (words.length !== 7) {
@@ -53,7 +54,7 @@ async function generateSevenString(itemText: string, refTitle: string): Promise<
       }
       return words.join(' ')
     }
-    
+
     return sevenString
   } catch (error) {
     console.error('Error generating 7-string:', error)
@@ -66,7 +67,7 @@ async function generateEmbedding(text: string): Promise<number[]> {
     const response = await fetch('https://api.openai.com/v1/embeddings', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
+        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
@@ -95,13 +96,15 @@ async function processItems() {
     // Get all active items (not deleted) that don't have seven_string yet
     const { data: items, error: itemsError } = await supabase
       .from('items')
-      .select(`
+      .select(
+        `
         id,
         text,
         ref,
         seven_string,
         seven_string_embedding
-      `)
+      `
+      )
       .is('deleted', null)
       .is('seven_string', null)
 
@@ -133,7 +136,11 @@ async function processItems() {
     const batchSize = 5
     for (let i = 0; i < items.length; i += batchSize) {
       const batch = items.slice(i, i + batchSize)
-      console.log(`🔄 Processing batch ${Math.floor(i / batchSize) + 1}/${Math.ceil(items.length / batchSize)}`)
+      console.log(
+        `🔄 Processing batch ${Math.floor(i / batchSize) + 1}/${Math.ceil(
+          items.length / batchSize
+        )}`
+      )
 
       for (const item of batch) {
         try {
@@ -164,8 +171,7 @@ async function processItems() {
           }
 
           // Rate limiting - wait a bit between items
-          await new Promise(resolve => setTimeout(resolve, 1000))
-
+          await new Promise((resolve) => setTimeout(resolve, 1000))
         } catch (error) {
           console.error(`❌ Error processing item ${item.id}:`, error)
         }
@@ -174,16 +180,15 @@ async function processItems() {
       // Wait between batches
       if (i + batchSize < items.length) {
         console.log('⏳ Waiting between batches...')
-        await new Promise(resolve => setTimeout(resolve, 2000))
+        await new Promise((resolve) => setTimeout(resolve, 2000))
       }
     }
 
     console.log('🎉 7-string generation completed!')
-
   } catch (error) {
     console.error('❌ Fatal error:', error)
   }
 }
 
 // Run the script
-processItems() 
+processItems()

@@ -101,7 +101,7 @@ BEGIN
 
   -- Extract the embedding from OpenAI response
   embedding_vector := (response->'data'->0->>'embedding')::vector(1536);
-  
+
   RETURN embedding_vector;
 EXCEPTION
   WHEN OTHERS THEN
@@ -155,18 +155,18 @@ BEGIN
   FROM items i
   WHERE i.creator = user_id AND i.backlog = false
   LIMIT 12;
-  
+
   -- Combine all 7-strings
   combined_string := array_to_string(seven_strings, ' | ');
-  
+
   -- Generate embedding for the combined spirit vector
   spirit_embedding := generate_embedding(combined_string);
-  
+
   -- Update user's spirit vector
-  UPDATE users 
+  UPDATE users
   SET spirit_vector = combined_string,
       spirit_vector_embedding = spirit_embedding,
       updated = NOW()
   WHERE id = user_id;
 END;
-$$; 
+$$;

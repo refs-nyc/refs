@@ -19,19 +19,19 @@ async function setOpenAISecret() {
     // Set the secret using the REST API
     const { data, error } = await supabase.rpc('set_config', {
       key: 'app.openai_api_key',
-      value: openaiKey
+      value: openaiKey,
     })
 
     if (error) {
       console.error('❌ Error setting OpenAI secret:', error)
-      
+
       // Alternative approach - try to set it via SQL
       console.log('🔄 Trying alternative approach...')
-      
+
       const { error: sqlError } = await supabase.rpc('exec_sql', {
-        sql: `SELECT set_config('app.openai_api_key', '${openaiKey}', false)`
+        sql: `SELECT set_config('app.openai_api_key', '${openaiKey}', false)`,
       })
-      
+
       if (sqlError) {
         console.error('❌ Alternative approach also failed:', sqlError)
         console.log('📝 You may need to set this manually in the Supabase dashboard:')
@@ -44,7 +44,6 @@ async function setOpenAISecret() {
     } else {
       console.log('✅ OpenAI API key set successfully')
     }
-
   } catch (error) {
     console.error('❌ Error in setOpenAISecret:', error)
     console.log('📝 Manual setup required:')
@@ -55,4 +54,4 @@ async function setOpenAISecret() {
 }
 
 // Run the script
-setOpenAISecret() 
+setOpenAISecret()

@@ -11,7 +11,7 @@ DECLARE
 BEGIN
   -- Get the OpenAI API key
   api_key := current_setting('app.openai_api_key', true);
-  
+
   -- Check if API key is set
   IF api_key IS NULL OR api_key = '' THEN
     RAISE NOTICE 'OpenAI API key not set, returning zero vector';
@@ -66,7 +66,7 @@ DECLARE
 BEGIN
   -- Get the OpenAI API key
   api_key := current_setting('app.openai_api_key', true);
-  
+
   -- Check if API key is set
   IF api_key IS NULL OR api_key = '' THEN
     RAISE NOTICE 'OpenAI API key not set, returning fallback string';
@@ -121,4 +121,4 @@ EXCEPTION
     -- Fallback: return a simple concatenation if OpenAI fails
     RETURN COALESCE(ref_title, '') || ' | ' || COALESCE(caption, '');
   END;
-$$; 
+$$;

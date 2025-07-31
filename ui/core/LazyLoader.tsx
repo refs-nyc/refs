@@ -6,17 +6,10 @@ interface LazyLoaderProps {
   children: React.ReactNode
   delay?: number
   fallback?: React.ReactNode
-  threshold?: number // Only render if component is within this many pixels of viewport
 }
 
-export const LazyLoader: React.FC<LazyLoaderProps> = ({
-  children,
-  delay = 100,
-  fallback,
-  threshold = 100
-}) => {
+export const LazyLoader: React.FC<LazyLoaderProps> = ({ children, delay = 100, fallback }) => {
   const [shouldRender, setShouldRender] = useState(false)
-  const [isVisible, setIsVisible] = useState(false)
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -27,15 +20,19 @@ export const LazyLoader: React.FC<LazyLoaderProps> = ({
   }, [delay])
 
   if (!shouldRender) {
-    return fallback || (
-      <View style={{ 
-        padding: 20, 
-        alignItems: 'center', 
-        justifyContent: 'center',
-        backgroundColor: c.surface 
-      }}>
-        <ActivityIndicator size="small" color={c.grey1} />
-      </View>
+    return (
+      fallback || (
+        <View
+          style={{
+            padding: 20,
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: c.surface,
+          }}
+        >
+          <ActivityIndicator size="small" color={c.grey1} />
+        </View>
+      )
     )
   }
 
@@ -56,4 +53,4 @@ export const useIntersectionObserver = (threshold = 100) => {
   }, [threshold])
 
   return isVisible
-} 
+}

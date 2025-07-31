@@ -42,7 +42,7 @@ async function generateSevenString(itemText: string, refTitle: string): Promise<
     const sevenString = data.choices[0].message.content.trim()
     
     // Ensure it's exactly 7 words
-    const words = sevenString.split(' ').filter(word => word.length > 0)
+    const words = sevenString.split(' ').filter((word: string) => word.length > 0)
     if (words.length !== 7) {
       console.warn(`Generated string has ${words.length} words, expected 7: "${sevenString}"`)
       // Pad or truncate to exactly 7 words
@@ -117,7 +117,7 @@ async function processItems() {
     }
 
     // Get ref titles for all items
-    const refIds = [...new Set(items.map(item => item.ref).filter(Boolean))]
+    const refIds = [...new Set(items.map((item: any) => item.ref).filter(Boolean))]
     const { data: refs, error: refsError } = await supabase
       .from('refs')
       .select('id, title')
@@ -127,7 +127,7 @@ async function processItems() {
       throw new Error(`Error fetching refs: ${refsError.message}`)
     }
 
-    const refTitles = new Map(refs?.map(ref => [ref.id, ref.title]) || [])
+    const refTitles = new Map(refs?.map((ref: any) => [ref.id, ref.title]) || [])
 
     // Process items in batches
     const batchSize = 5

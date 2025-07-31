@@ -32,7 +32,7 @@ export const LazyLoader: React.FC<LazyLoaderProps> = ({
         padding: 20, 
         alignItems: 'center', 
         justifyContent: 'center',
-        backgroundColor: c.surface1 
+        backgroundColor: c.surface 
       }}>
         <ActivityIndicator size="small" color={c.grey1} />
       </View>

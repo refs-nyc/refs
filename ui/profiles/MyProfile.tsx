@@ -97,6 +97,11 @@ export const MyProfile = ({ userName }: { userName: string }) => {
       returningFromSearch,
       returningFromSearchViaBackButton
     })
+    
+    // Debug: Log the actual content of finalSelectedRefItems
+    if (finalSelectedRefItems.length > 0) {
+      console.log('🔍 MyProfile: finalSelectedRefItems sample:', finalSelectedRefItems.slice(0, 2))
+    }
   }, [restoredRefItems, globalSelectedRefItems, selectedRefItems, finalSelectedRefItems, selectedRefs, returningFromSearch, returningFromSearchViaBackButton])
 
   const refreshGrid = async (userName: string) => {
@@ -226,6 +231,9 @@ export const MyProfile = ({ userName }: { userName: string }) => {
       gridItems.length > 0 &&
       !isOpeningSearchResults
     ) {
+      console.log('🔍 MyProfile: Opening search results sheet...')
+      console.log('🔍 MyProfile: finalSelectedRefItems length before opening:', finalSelectedRefItems.length)
+      
       setIsOpeningSearchResults(true)
       setSearchMode(false)
       // Add a small delay to ensure proper state updates
@@ -548,6 +556,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
               onSearch={() => {
                 // Clear restored ref items for new searches
                 setRestoredRefItems([])
+                setGlobalSelectedRefItems([]) // Also clear global state
                 searchResultsSheetRef.current?.snapToIndex(1)
                 setSearchMode(false) // Exit search mode when opening search results
                 // Trigger the search after a small delay to ensure the sheet is open

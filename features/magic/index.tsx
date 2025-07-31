@@ -1,4 +1,7 @@
 import { SIWESigner } from '@canvas-js/signer-ethereum'
+// must be imported before Web3Provider
+import '@/features/polyfill/base-64-polyfill'
+import { Web3Provider } from '@ethersproject/providers'
 import { Magic } from '@magic-sdk/react-native-expo'
 import { sha256 } from '@noble/hashes/sha2'
 import { bytesToHex } from '@noble/hashes/utils'
@@ -9,7 +12,6 @@ if (!process.env.EXPO_PUBLIC_MAGIC_KEY) {
 }
 
 export const getCurrentSessionSignerFromMagic = async () => {
-  const { Web3Provider } = await import('@ethersproject/providers')
   const provider = new Web3Provider(magic.rpcProvider as any)
   const signer = provider.getSigner()
 
@@ -17,7 +19,6 @@ export const getCurrentSessionSignerFromMagic = async () => {
 }
 
 export const getEncryptionWalletFromMagic = async () => {
-  const { Web3Provider } = await import('@ethersproject/providers')
   const provider = new Web3Provider(magic.rpcProvider as any)
   const signer = provider.getSigner()
 

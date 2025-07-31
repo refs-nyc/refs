@@ -45,7 +45,7 @@ export function MessagesInit() {
         setConversations(conversations)
 
         // Load messages in batches to avoid overwhelming the system
-        const batchSize = 3
+        const batchSize = 5 // Increased batch size for better performance
         for (let i = 0; i < conversations.length; i += batchSize) {
           const batch = conversations.slice(i, i + batchSize)
           setTimeout(() => {
@@ -54,7 +54,7 @@ export function MessagesInit() {
                 console.error('Failed to load messages for conversation:', conversation.id, error)
               })
             })
-          }, i * 100) // Stagger batches by 100ms
+          }, i * 50) // Reduced delay from 100ms to 50ms
         }
       } catch (error) {
         console.error('Failed to load conversations:', error)
@@ -82,10 +82,10 @@ export function MessagesInit() {
       }
     }
 
-    // Use setTimeout to make it non-blocking
+    // Reduced delay from 100ms to 10ms
     setTimeout(() => {
       getReactions()
-    }, 100) // Small delay to avoid blocking UI
+    }, 10)
   }, [user])
 
   // load saves - make non-blocking
@@ -103,10 +103,10 @@ export function MessagesInit() {
       }
     }
 
-    // Use setTimeout to make it non-blocking
+    // Reduced delay from 200ms to 20ms
     setTimeout(() => {
       getSaves()
-    }, 200) // Small delay to avoid blocking UI
+    }, 20)
   }, [user])
 
   // load memberships - make non-blocking
@@ -126,10 +126,10 @@ export function MessagesInit() {
       }
     }
 
-    // Use setTimeout to make it non-blocking
+    // Reduced delay from 300ms to 30ms
     setTimeout(() => {
       getMemberships()
-    }, 300) // Small delay to avoid blocking UI
+    }, 30)
   }, [user])
 
   // subscribe to new messages

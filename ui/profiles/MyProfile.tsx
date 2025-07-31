@@ -114,23 +114,19 @@ export const MyProfile = ({ userName }: { userName: string }) => {
     setLoading(true)
     try {
       // Fetch data in parallel for better performance (non-blocking)
-      Promise.all([
+      const [profile, gridItems, backlogItems] = await Promise.all([
         getUserByUserName(userName),
         getProfileItems(userName),
         getBacklogItems(userName),
       ])
-        .then(([profile, gridItems, backlogItems]) => {
-          setProfile(profile)
-          setGridItems(gridItems)
-          setBacklogItems(backlogItems as ExpandedItem[])
-          setLoading(false)
-        })
-        .catch((error) => {
-          console.error('Failed to refresh grid:', error)
-          setLoading(false)
-        })
+      
+      // Batch state updates to reduce re-renders
+      setProfile(profile)
+      setGridItems(gridItems)
+      setBacklogItems(backlogItems as ExpandedItem[])
     } catch (error) {
       console.error('Failed to refresh grid:', error)
+    } finally {
       setLoading(false)
     }
   }
@@ -171,10 +167,8 @@ export const MyProfile = ({ userName }: { userName: string }) => {
       }
     }
 
-    // Make initialization non-blocking
-    setTimeout(() => {
-      init()
-    }, 0)
+    // Initialize immediately to prevent blank screen
+    init()
   }, [userName, profileRefreshTrigger])
 
   // Check if we're returning from a search result and should open search results sheet

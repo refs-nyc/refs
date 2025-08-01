@@ -11,7 +11,7 @@ const store = new AsyncAuthStore({
   initial: AsyncStorage.getItem('pb_auth'),
 })
 
-const pocketbase = new PocketBase(process.env.EXPO_PUBLIC_POCKETBASE_URL, store)
+const pocketbase = new PocketBase(process.env.EXPO_PUBLIC_POCKETBASE_URL || 'http://127.0.0.1:8090', store)
 
 pocketbase.autoCancellation(false)
 

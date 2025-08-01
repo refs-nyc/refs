@@ -3,7 +3,7 @@ import type { SessionSigner } from '@canvas-js/interfaces'
 import { getEncryptionPublicKey } from '../encryption'
 import { StateCreator } from 'zustand'
 import type { RefsCanvas } from '../canvas/contract'
-import { getCurrentJsonRpcSignerFromMagic, getEncryptionWallet, magic } from '../magic'
+import { getCurrentJsonRpcSignerFromMagic, getEncryptionWalletFromMagic, magic } from '../magic'
 import { Profile, StagedProfileFields } from '../types'
 import type { StoreSlices } from './types'
 import { Wallet } from 'ethers'
@@ -180,7 +180,7 @@ export const createUserSlice: StateCreator<StoreSlices, [], [], UserSlice> = (se
         image: image!,
       }
 
-      const encryptionWallet = await getEncryptionWallet(jsonRpcSigner)
+      const encryptionWallet = await getEncryptionWalletFromMagic(jsonRpcSigner)
       // publicEncryptionKey = the public part of the keypair
       const encryptionPublicKey = getEncryptionPublicKey(encryptionWallet.privateKey.slice(2))
 
@@ -222,7 +222,7 @@ export const createUserSlice: StateCreator<StoreSlices, [], [], UserSlice> = (se
       throw new Error('Profile not found')
     }
 
-    const encryptionWallet = await getEncryptionWallet(signer)
+    const encryptionWallet = await getEncryptionWalletFromMagic(signer)
 
     set({
       canvasActions: canvasApp.as(sessionSigner),

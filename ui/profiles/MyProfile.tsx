@@ -39,6 +39,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
     removeItem,
     startEditProfile,
     stopEditProfile,
+    stopEditing,
     setAddingNewRefTo,
     newRefSheetRef,
     searchMode,
@@ -278,8 +279,6 @@ export const MyProfile = ({ userName }: { userName: string }) => {
     }
   }, [setSearchMode])
 
-  const { stopEditing } = useAppStore()
-
   const bottomSheetRef = useRef<BottomSheet>(null)
   const detailsSheetRef = useRef<BottomSheet>(null)
   const removeRefSheetRef = useRef<BottomSheet>(null)
@@ -330,7 +329,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
                   color: gridItems.length < 12 ? '#B0B0B0' : c.muted,
                   fontSize: s.$09,
                   fontFamily: 'System',
-                  fontWeight: '300',
+                  fontWeight: '400',
                   textAlign: 'center',
                   lineHeight: s.$1half,
                 }}
@@ -339,7 +338,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
                   ? 'searching at the intersection of...'
                   : gridItems.length >= 12
                   ? 'pick some refs, find people in the middle'
-                  : 'These prompts will disappear after you add...no one will ever know'}
+                  : 'These prompts will disappear after you add...\nno one will ever know'}
               </Text>
             </Animated.View>
 
@@ -524,8 +523,8 @@ export const MyProfile = ({ userName }: { userName: string }) => {
               detailsItemId={detailsItem.id}
               onChange={(index: number) => {
                 if (index === -1) {
-                  // Don't call stopEditing() here as it might interfere with touch events
-                  // Just clear the details item to close the carousel
+                  // Reset editing mode when carousel closes
+                  stopEditing()
                   setDetailsItem(null)
                 }
               }}

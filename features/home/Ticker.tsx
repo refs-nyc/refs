@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { ScrollView, Text, TouchableOpacity, View } from 'react-native'
 import { CompleteRef } from '@/features/types'
 import { useAppStore } from '@/features/stores'
+import { pocketbase } from '@/features/pocketbase'
 
 function truncate(text: string, maxLength: number) {
   return text.length > maxLength ? text.slice(0, maxLength) + '...' : text
@@ -10,12 +11,15 @@ function truncate(text: string, maxLength: number) {
 
 export const Ticker = () => {
   const [tickerItems, setTickerItems] = useState<CompleteRef[]>([])
-  const { getTickerItems, referencersBottomSheetRef, setCurrentRefId } = useAppStore()
+  const { getTickerItems, referencersBottomSheetRef, setCurrentRefId, debugEdgeCityItems } = useAppStore()
 
   useEffect(() => {
     async function fetchTickerItems() {
       const queryResponse = await getTickerItems()
       setTickerItems(queryResponse)
+      
+      // Debug Edge City items
+      await debugEdgeCityItems()
     }
     fetchTickerItems()
   }, [])
@@ -41,7 +45,37 @@ export const Ticker = () => {
       >
         {tickerItems.map((ref, index) => (
           <TouchableOpacity
-            onPress={() => {
+            onPress={async () => {
+              console.log('Ticker: Clicked ref:', ref.title, 'with ID:', ref.id)
+              if (ref.title === 'Edge City') {
+                console.log('Ticker: Debugging Edge City...')
+                try {
+                  // Get all Edge City refs
+                  const edgeCityRefs = await pocketbase.collection('refs').getFullList({
+                    filter: 'title ~ "Edge City"',
+                    sort: '-created',
+                  })
+                  console.log('Ticker: All Edge City refs:', edgeCityRefs.map(r => ({ id: r.id, title: r.title })))
+                  
+                  // Check items for each Edge City ref
+                  for (const edgeRef of edgeCityRefs) {
+                    const items = await pocketbase.collection('items').getFullList({
+                      filter: `ref = "${edgeRef.id}"`,
+                      expand: 'creator,ref',
+                    })
+                    console.log(`Ticker: Items for ref "${edgeRef.title}" (${edgeRef.id}):`, items.length)
+                    if (items.length > 0) {
+                      console.log(`Ticker: Items details:`, items.map(item => ({
+                        id: item.id,
+                        creator: item.expand?.creator?.userName || 'unknown',
+                        ref: item.expand?.ref?.title || 'unknown'
+                      })))
+                    }
+                  }
+                } catch (error) {
+                  console.log('Ticker: Error debugging Edge City:', error)
+                }
+              }
               setCurrentRefId(ref.id)
               referencersBottomSheetRef.current?.expand()
             }}

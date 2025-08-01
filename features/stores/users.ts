@@ -31,6 +31,11 @@ export const createUserSlice: StateCreator<StoreSlices, [], [], UserSlice> = (se
   //
   init: async () => {
     try {
+      // Mark as initialized immediately to allow UI to be responsive
+      set(() => ({
+        isInitialized: true,
+      }))
+
       // If PocketBase has a valid auth store, sync it with our store
       if (pocketbase.authStore.isValid && pocketbase.authStore.record) {
         try {
@@ -41,7 +46,6 @@ export const createUserSlice: StateCreator<StoreSlices, [], [], UserSlice> = (se
 
           set(() => ({
             user: record,
-            isInitialized: true,
           }))
         } catch (error) {
           console.error('Failed to sync user state:', error)
@@ -49,21 +53,18 @@ export const createUserSlice: StateCreator<StoreSlices, [], [], UserSlice> = (se
           pocketbase.authStore.clear()
           set(() => ({
             user: null,
-            isInitialized: true,
           }))
         }
       } else {
         // No valid auth, mark as initialized with no user
         set(() => ({
           user: null,
-          isInitialized: true,
         }))
       }
     } catch (error) {
       console.error('Init error:', error)
       set(() => ({
         user: null,
-        isInitialized: true,
       }))
     }
   },

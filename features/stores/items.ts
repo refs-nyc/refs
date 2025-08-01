@@ -279,19 +279,41 @@ export const createItemSlice: StateCreator<StoreSlices, [], [], ItemSlice> = (se
   },
   getTickerItems: async () => {
     // Only show specific refs in ticker: Musee d'Orsay, Edge City, Bringing Up Baby, Tennis
-    const allowedTickerTitles = ["Musee d'Orsay", 'Edge City', 'Bringing Up Baby', 'Tennis']
+    const allowedTickerTitles = ["Musee d'Orsay", 'Edge city ', 'Bringing Up Baby', 'Tennis']
 
+    console.log('getTickerItems: Searching for refs with titles:', allowedTickerTitles)
+    
     const results = await pocketbase.collection('refs').getFullList<RefsRecord>({
       filter: allowedTickerTitles.map((title) => `title = "${title}"`).join(' || '),
       sort: '-created',
       perPage: 10,
     })
 
+    console.log('getTickerItems: Found refs:', results.map(r => ({ id: r.id, title: r.title })))
+    
+    // Check if there are multiple Edge City refs
+    const edgeCityRefs = results.filter(r => r.title === 'Edge City')
+    if (edgeCityRefs.length > 1) {
+      console.log('getTickerItems: WARNING - Multiple Edge City refs found:', edgeCityRefs)
+    }
+
+    // Also check ALL Edge City refs in the database, not just the allowed ones
+    try {
+      const allEdgeCityRefs = await pocketbase.collection('refs').getFullList<RefsRecord>({
+        filter: 'title ~ "Edge City"',
+        sort: '-created',
+      })
+      console.log('getTickerItems: ALL Edge City refs in database:', allEdgeCityRefs.map(r => ({ id: r.id, title: r.title })))
+    } catch (error) {
+      console.log('getTickerItems: Error checking all Edge City refs:', error)
+    }
+
     // Deduplicate by title to prevent multiple entries with the same title
     const uniqueResults = results.filter(
       (ref, index, self) => index === self.findIndex((r) => r.title === ref.title)
     )
 
+    console.log('getTickerItems: Unique refs:', uniqueResults.map(r => ({ id: r.id, title: r.title })))
     return uniqueResults
   },
   getRefById: async (id: string) => {
@@ -314,11 +336,17 @@ export const createItemSlice: StateCreator<StoreSlices, [], [], ItemSlice> = (se
   },
   getItemsByRefIds: async (refIds: string[]) => {
     const filter = refIds.map((id) => `ref="${id}"`).join(' || ')
+    
+    console.log('getItemsByRefIds: Searching for items with ref IDs:', refIds)
+    console.log('getItemsByRefIds: Using filter:', filter)
 
-    return await pocketbase.collection('items').getFullList({
+    const results = await pocketbase.collection('items').getFullList<ExpandedItem>({
       filter,
       expand: 'creator, ref',
     })
+    
+    console.log('getItemsByRefIds: Found items:', results.length)
+    return results
   },
   getAllItemsByCreator: async (creatorId: string) => {
     return await pocketbase.collection('items').getFullList<ExpandedItem>({
@@ -330,6 +358,35 @@ export const createItemSlice: StateCreator<StoreSlices, [], [], ItemSlice> = (se
     return await pocketbase
       .collection<ExpandedItem>('items')
       .getFullList({ filter: `list = true && creator = "${creatorId}"`, expand: 'ref' })
+  },
+  // Debug function to check Edge City items
+  debugEdgeCityItems: async () => {
+    try {
+      // Get all Edge City refs
+      const edgeCityRefs = await pocketbase.collection('refs').getFullList<RefsRecord>({
+        filter: 'title ~ "Edge City"',
+        sort: '-created',
+      })
+      console.log('debugEdgeCityItems: All Edge City refs:', edgeCityRefs.map(r => ({ id: r.id, title: r.title })))
+      
+      // Check items for each Edge City ref
+      for (const ref of edgeCityRefs) {
+        const items = await pocketbase.collection('items').getFullList({
+          filter: `ref = "${ref.id}"`,
+          expand: 'creator,ref',
+        })
+        console.log(`debugEdgeCityItems: Items for ref "${ref.title}" (${ref.id}):`, items.length)
+        if (items.length > 0) {
+          console.log(`debugEdgeCityItems: Items details:`, items.map(item => ({
+            id: item.id,
+            creator: item.expand?.creator?.userName || 'unknown',
+            ref: item.expand?.ref?.title || 'unknown'
+          })))
+        }
+      }
+    } catch (error) {
+      console.log('debugEdgeCityItems: Error:', error)
+    }
   },
 })
 

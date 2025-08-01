@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { pocketbase } from '@/features/pocketbase'
 import { useAppStore } from '@/features/stores'
 import { PAGE_SIZE } from '@/features/stores/messages'
@@ -29,11 +29,23 @@ export function MessagesInit() {
     setMemberships,
     updateMembership,
     setSaves,
+    setBackgroundLoading,
   } = useAppStore()
 
-  // load conversations - make non-blocking
+  // Track completion of background operations
+  const [completedOperations, setCompletedOperations] = useState({
+    conversations: false,
+    reactions: false,
+    saves: false,
+    memberships: false,
+  })
+
+  // load conversations - make non-blocking and more lazy
   useEffect(() => {
     if (!user) return
+
+    // Start background loading indicator
+    setBackgroundLoading(true)
 
     const getConversations = async () => {
       try {
@@ -44,8 +56,8 @@ export function MessagesInit() {
           })
         setConversations(conversations)
 
-        // Load messages in batches to avoid overwhelming the system
-        const batchSize = 5 // Increased batch size for better performance
+        // Load messages in smaller batches with longer delays to be less aggressive
+        const batchSize = 3 // Reduced batch size for better responsiveness
         for (let i = 0; i < conversations.length; i += batchSize) {
           const batch = conversations.slice(i, i + batchSize)
           setTimeout(() => {
@@ -54,20 +66,24 @@ export function MessagesInit() {
                 console.error('Failed to load messages for conversation:', conversation.id, error)
               })
             })
-          }, i * 50) // Reduced delay from 100ms to 50ms
+          }, i * 200) // Increased delay to 200ms for better responsiveness
         }
+        
+        // Mark conversations as completed
+        setCompletedOperations(prev => ({ ...prev, conversations: true }))
       } catch (error) {
         console.error('Failed to load conversations:', error)
+        setCompletedOperations(prev => ({ ...prev, conversations: true }))
       }
     }
 
-    // Use setTimeout to make it non-blocking
+    // Use a longer delay to prioritize UI responsiveness
     setTimeout(() => {
       getConversations()
-    }, 0)
+    }, 1000) // Increased from 0ms to 1000ms to prioritize UI responsiveness
   }, [user])
 
-  //load reactions - make non-blocking
+  //load reactions - make non-blocking and more lazy
   useEffect(() => {
     if (!user) return
 
@@ -77,18 +93,20 @@ export function MessagesInit() {
           expand: 'user',
         })
         setReactions(reactions)
+        setCompletedOperations(prev => ({ ...prev, reactions: true }))
       } catch (error) {
         console.error('Failed to load reactions:', error)
+        setCompletedOperations(prev => ({ ...prev, reactions: true }))
       }
     }
 
-    // Reduced delay from 100ms to 10ms
+    // Increased delay to prioritize UI responsiveness
     setTimeout(() => {
       getReactions()
-    }, 10)
+    }, 1500) // Increased from 10ms to 1500ms to prioritize UI responsiveness
   }, [user])
 
-  // load saves - make non-blocking
+  // load saves - make non-blocking and more lazy
   useEffect(() => {
     if (!user) return
 
@@ -98,22 +116,24 @@ export function MessagesInit() {
           expand: 'user',
         })
         setSaves(saves)
+        setCompletedOperations(prev => ({ ...prev, saves: true }))
       } catch (error) {
         console.error('Failed to load saves:', error)
+        setCompletedOperations(prev => ({ ...prev, saves: true }))
       }
     }
 
-    // Reduced delay from 200ms to 20ms
+    // Increased delay to prioritize UI responsiveness
     setTimeout(() => {
       getSaves()
-    }, 20)
+    }, 2000) // Increased from 20ms to 2000ms to prioritize UI responsiveness
   }, [user])
 
-  // load memberships - make non-blocking
+    // load memberships - make non-blocking and more lazy
   useEffect(() => {
     if (!user) return
 
-    const getMemberships = async () => {
+        const getMemberships = async () => {
       try {
         const memberships = await pocketbase
           .collection('memberships')
@@ -121,16 +141,29 @@ export function MessagesInit() {
             expand: 'user',
           })
         setMemberships(memberships)
+        setCompletedOperations(prev => ({ ...prev, memberships: true }))
       } catch (error) {
         console.error('Failed to load memberships:', error)
+        setCompletedOperations(prev => ({ ...prev, memberships: true }))
       }
     }
 
-    // Reduced delay from 300ms to 30ms
+    // Increased delay to prioritize UI responsiveness
     setTimeout(() => {
       getMemberships()
-    }, 30)
+    }, 2500) // Increased from 30ms to 2500ms to prioritize UI responsiveness
   }, [user])
+
+  // Stop background loading when all operations are complete
+  useEffect(() => {
+    const allComplete = Object.values(completedOperations).every(complete => complete)
+    if (allComplete) {
+      // Add a small delay to ensure smooth transition
+      setTimeout(() => {
+        setBackgroundLoading(false)
+      }, 500)
+    }
+  }, [completedOperations, setBackgroundLoading])
 
   // subscribe to new messages
   useEffect(() => {

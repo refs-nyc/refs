@@ -22,6 +22,9 @@ export type UISlice = {
   setAddRefPrompt: (prompt: string) => void
   stopEditProfile: () => void
   startEditProfile: () => void
+  // Background loading state
+  isBackgroundLoading: boolean
+  setBackgroundLoading: (loading: boolean) => void
   // Search-related state
   searchMode: boolean
   selectedRefs: string[]
@@ -56,6 +59,12 @@ export const createUISlice: StateCreator<StoreSlices, [], [], UISlice> = (set) =
   newRefSheetRef: React.createRef(),
   addingNewRefTo: null,
   addRefPrompt: '',
+  isBackgroundLoading: false,
+  setBackgroundLoading: (loading: boolean) => {
+    set(() => ({
+      isBackgroundLoading: loading,
+    }))
+  },
   setAddingNewRefTo: (newState: null | 'grid' | 'backlog') => {
     set(() => ({
       addingNewRefTo: newState,

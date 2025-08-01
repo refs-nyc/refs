@@ -6,6 +6,33 @@ import BottomSheet, { BottomSheetBackdrop } from '@gorhom/bottom-sheet'
 import { useCallback, useEffect, useState } from 'react'
 import { Details } from './Details'
 import { ProfileDetailsProvider } from './profileDetailsStore'
+import { GridLines } from '../display/Gridlines'
+import React from 'react'
+import { View } from 'react-native'
+
+// --- Helper Components for State Isolation ---
+
+const ConditionalGridLines = React.memo(() => {
+  const editing = useAppStore((state) => state.editing)
+  if (editing === '') {
+    return null
+  }
+  return (
+    <View style={{ 
+      position: 'absolute', 
+      top: 0, 
+      left: 0, 
+      right: 0, 
+      bottom: 0, 
+      zIndex: -1,
+      borderRadius: 50,
+      overflow: 'hidden',
+    }}>
+      <GridLines lineColor={c.grey1} size={20} />
+    </View>
+  )
+})
+ConditionalGridLines.displayName = 'ConditionalGridLines'
 
 export const ProfileDetailsSheet = ({
   onChange,
@@ -75,6 +102,7 @@ export const ProfileDetailsSheet = ({
         backgroundColor: c.surface,
         borderRadius: 50,
         padding: 0,
+        overflow: 'hidden',
       }}
       animatedIndex={detailsBackdropAnimatedIndex}
       backdropComponent={renderBackdrop}
@@ -87,6 +115,7 @@ export const ProfileDetailsSheet = ({
       // animationDuration={300}
       enableOverDrag={false}
     >
+      <ConditionalGridLines />
       {profile && gridItems.length > 0 && (
         <ProfileDetailsProvider
           editingRights={editingRights}

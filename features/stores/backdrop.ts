@@ -14,7 +14,7 @@ export type BackdropSlice = {
   unregisterBackdropPress: (key: string) => void
 }
 
-const moduleBackdropAnimatedIndex = makeMutable(0)
+const moduleBackdropAnimatedIndex = makeMutable(-1)
 const detailsBackdropAnimatedIndex = makeMutable(-1)
 const otherProfileBackdropAnimatedIndex = makeMutable(-1)
 const removeRefSheetBackdropAnimatedIndex = makeMutable(-1)

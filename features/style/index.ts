@@ -219,7 +219,7 @@ export const base = StyleSheet.create({
     backgroundColor: c.surface,
     borderColor: c.grey1,
     borderWidth: 2,
-    borderRadius: s.$1,
+    borderRadius: s.$075,
   },
 })
 

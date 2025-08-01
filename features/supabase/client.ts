@@ -1,21 +1,38 @@
 import { createClient } from '@supabase/supabase-js'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 
-const supabaseUrl = process.env.EXPO_PUBLIC_SUPA_URL
-const supabaseKey = process.env.EXPO_PUBLIC_SUPA_KEY
+let supabaseInstance: any = null
 
-if (!supabaseUrl || !supabaseKey) {
-  throw new Error('Missing Supabase credentials')
+const getSupabaseClient = () => {
+  if (supabaseInstance) {
+    return supabaseInstance
+  }
+
+  const supabaseUrl = process.env.EXPO_PUBLIC_SUPA_URL
+  const supabaseKey = process.env.EXPO_PUBLIC_SUPA_KEY
+
+  if (!supabaseUrl || !supabaseKey) {
+    console.warn('Missing Supabase credentials - client not initialized')
+    return null
+  }
+
+  supabaseInstance = createClient(supabaseUrl, supabaseKey, {
+    auth: {
+      storage: AsyncStorage,
+      autoRefreshToken: true,
+      persistSession: true,
+      detectSessionInUrl: false,
+    },
+  })
+
+  return supabaseInstance
 }
 
-export const supabase = createClient(supabaseUrl, supabaseKey, {
-  auth: {
-    storage: AsyncStorage,
-    autoRefreshToken: true,
-    persistSession: true,
-    detectSessionInUrl: false,
+export const supabase = {
+  get client() {
+    return getSupabaseClient()
   },
-})
+}
 
 // Export types for user management
 export interface SupabaseUser {

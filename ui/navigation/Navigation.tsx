@@ -43,17 +43,11 @@ export const Navigation = ({
     ) {
       // Set the specific flag for back button navigation
       setReturningFromSearchViaBackButton(true)
-      // Navigate back to the current user's profile page
-      router.push(`/user/${user?.userName}`)
-      // Open the search results sheet after a brief delay for smooth UX
-      setTimeout(() => {
-        if (selectedRefs.length > 0 || cachedSearchResults.length > 0) {
-          // Trigger the search results sheet to open
-          setReturningFromSearch(true)
-          setReturningFromSearchViaBackButton(true) // Also set this flag so MyProfile knows it's from back button
-        } else {
-        }
-      }, 100) // Small delay to ensure navigation completes first
+      setReturningFromSearch(true)
+      // Don't navigate if we're already on the current user's profile
+      if (pathname !== `/user/${user?.userName}`) {
+        router.push(`/user/${user?.userName}`)
+      }
     } else {
       // Default back behavior
       router.back()

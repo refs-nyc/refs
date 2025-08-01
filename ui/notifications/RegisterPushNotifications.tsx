@@ -26,27 +26,31 @@ export function RegisterPushNotifications() {
       const { data: pushTokenString } = await Notifications.getExpoPushTokenAsync({ projectId })
     }
 
-    registerForPushNotificationsAsync()
-      .then(async (token) => {
-        setExpoPushToken(token ?? '')
-        // Only update user if we still have a logged in user
-        if (user && token) {
-          await updateUser({ pushToken: token })
-        }
+    // Delay push notification registration to prioritize UI responsiveness
+    const timeoutId = setTimeout(() => {
+      registerForPushNotificationsAsync()
+        .then(async (token) => {
+          setExpoPushToken(token ?? '')
+          // Only update user if we still have a logged in user
+          if (user && token) {
+            await updateUser({ pushToken: token })
+          }
+        })
+        .catch((error: any) => setExpoPushToken(`${error}`))
+
+      notificationListener.current = Notifications.addNotificationReceivedListener((notification) => {
+        setNotification(notification)
       })
-      .catch((error: any) => setExpoPushToken(`${error}`))
 
-    notificationListener.current = Notifications.addNotificationReceivedListener((notification) => {
-      setNotification(notification)
-    })
+      responseListener.current = Notifications.addNotificationResponseReceivedListener((response) => {
+        // log the response if we want to
+      })
 
-    responseListener.current = Notifications.addNotificationResponseReceivedListener((response) => {
-      // log the response if we want to
-    })
-
-    process.env.NODE_ENV === 'development' && logInformation()
+      process.env.NODE_ENV === 'development' && logInformation()
+    }, 3000) // Delay by 3 seconds to prioritize UI responsiveness
 
     return () => {
+      clearTimeout(timeoutId)
       notificationListener.current &&
         Notifications.removeNotificationSubscription(notificationListener.current)
       responseListener.current &&

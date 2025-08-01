@@ -106,7 +106,7 @@ app.post('/api/search-history', (async (req, res) => {
         ref_titles: ref_titles || ref_ids, // Fallback to ref_ids if no titles
         ref_images: req.body.ref_images || [], // Store ref images
         search_title: search_title || 'People into',
-        search_subtitle: search_subtitle || 'browse, dm, or add to a group',
+        search_subtitle: search_subtitle || 'Browse, dm, or add to a group',
         result_count: result_count || 0,
         search_results: search_results || null,
         created_at: new Date().toISOString(),

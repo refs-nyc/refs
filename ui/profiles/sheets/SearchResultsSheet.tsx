@@ -37,11 +37,12 @@ export interface SearchResultsSheetRef {
 export default forwardRef<
   SearchResultsSheetRef,
   {
-    bottomSheetRef: React.RefObject<BottomSheet>
-    selectedRefs: string[]
-    selectedRefItems: any[]
+    bottomSheetRef: React.RefObject<BottomSheet>;
+    selectedRefs: string[];
+    selectedRefItems: any[];
   }
 >(({ bottomSheetRef, selectedRefs, selectedRefItems }, ref) => {
+
   const snapPoints = ['25%', '80%']
   const resultsAnimation = useRef(new Animated.Value(0)).current
   const dropdownAnimation = useRef(new Animated.Value(0)).current
@@ -62,10 +63,15 @@ export default forwardRef<
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
 
   const animateResultsIn = () => {
+    if (hasAnimatedResults.current) {
+      return // Don't animate if we've already animated
+    }
+    
+    hasAnimatedResults.current = true
     resultsAnimation.setValue(0)
     Animated.timing(resultsAnimation, {
       toValue: 1,
-      duration: 200, // Reduced from 400ms to 200ms
+      duration: 300, // Smooth fade-in duration
       useNativeDriver: true,
     }).start()
   }
@@ -114,13 +120,13 @@ export default forwardRef<
   const [searchResults, setSearchResults] = useState<PersonResult[]>([])
   const [profiles, setProfiles] = useState<Profile[]>([])
   const [isLoading, setIsLoading] = useState(false)
-  const [isLoadingProfiles, setIsLoadingProfiles] = useState(false)
   const [searchError, setSearchError] = useState<string | null>(null)
   const [searchTitle, setSearchTitle] = useState('People into')
   const [searchSubtitle, setSearchSubtitle] = useState('Browse, dm, or add to a group')
 
   // Track if we've already used cached results to prevent infinite loops
   const hasUsedCachedResults = useRef(false)
+  const hasAnimatedResults = useRef(false)
 
   // Create a stable dependency for selectedRefItems
   const selectedRefItemsKey = useMemo(() => {
@@ -156,35 +162,27 @@ export default forwardRef<
 
   // Separate effect to handle cached results being set after component is open
   useEffect(() => {
-    if (cachedSearchResults.length > 0 && !hasUsedCachedResults.current) {
-      setSearchResults(cachedSearchResults)
-      setSearchTitle(cachedSearchTitle)
-      setSearchSubtitle(cachedSearchSubtitle)
-      setIsLoading(false)
-      setSearchError(null)
-      hasUsedCachedResults.current = true
+    const loadCachedResults = async () => {
+      if (cachedSearchResults.length > 0 && !hasUsedCachedResults.current && !isLoading) {
+        setSearchResults(cachedSearchResults)
+        setSearchTitle(cachedSearchTitle)
+        setSearchSubtitle(cachedSearchSubtitle)
+        setIsLoading(false)
+        setSearchError(null)
+        hasUsedCachedResults.current = true
 
-      // Convert cached results to profiles (non-blocking)
-      setProfiles([]) // Clear profiles first for immediate UI response
-      setIsLoadingProfiles(true) // Show loading state for profiles
-      animateResultsIn() // Start animation immediately
-
-      // Convert profiles in background
-      convertToProfiles(cachedSearchResults)
-        .then((convertedProfiles) => {
-          setProfiles(convertedProfiles)
-          setIsLoadingProfiles(false)
-        })
-        .catch((error) => {
-          console.error('Error converting cached results to profiles:', error)
-          setProfiles([])
-          setIsLoadingProfiles(false)
-        })
+        // Convert cached results to profiles immediately
+        animateResultsIn() // Start animation immediately
+        const convertedProfiles = await convertToProfiles(cachedSearchResults)
+        setProfiles(convertedProfiles)
+      }
     }
-  }, [cachedSearchResults, cachedSearchTitle, cachedSearchSubtitle])
+    
+    loadCachedResults()
+  }, [cachedSearchResults, cachedSearchTitle, cachedSearchSubtitle, isLoading])
 
   // Function to restore search from history
-  const restoreSearchFromHistory = useCallback((historyItem: SearchHistoryRecord) => {
+  const restoreSearchFromHistory = useCallback(async (historyItem: SearchHistoryRecord) => {
     try {
       // Check if we have cached search results
       if (
@@ -195,35 +193,25 @@ export default forwardRef<
         // Set the search results directly from history
         setSearchResults(historyItem.search_results)
         setSearchTitle(historyItem.search_title || 'People into')
-        setSearchSubtitle(historyItem.search_subtitle || 'browse, dm, or add to a group')
+        setSearchSubtitle(historyItem.search_subtitle || 'Browse, dm, or add to a group')
 
         // Also update the cached search results in the global store
         setCachedSearchResults(
           historyItem.search_results,
           historyItem.search_title || 'People into',
-          historyItem.search_subtitle || 'browse, dm, or add to a group'
+          historyItem.search_subtitle || 'Browse, dm, or add to a group',
+          historyItem.ref_titles || [],
+          historyItem.ref_images || []
         )
 
         setIsLoading(false)
         setSearchError(null)
         hasUsedCachedResults.current = true
 
-        // Convert cached results to profiles (non-blocking)
-        setProfiles([]) // Clear profiles first for immediate UI response
-        setIsLoadingProfiles(true) // Show loading state for profiles
+        // Convert cached results to profiles immediately
         animateResultsIn() // Start animation immediately
-
-        // Convert profiles in background
-        convertToProfiles(historyItem.search_results)
-          .then((convertedProfiles) => {
-            setProfiles(convertedProfiles)
-            setIsLoadingProfiles(false)
-          })
-          .catch((error) => {
-            console.error('Error converting history results to profiles:', error)
-            setProfiles([])
-            setIsLoadingProfiles(false)
-          })
+        const convertedProfiles = await convertToProfiles(historyItem.search_results)
+        setProfiles(convertedProfiles)
       } else {
         setSearchError('Cannot restore search from history (no cached results)')
       }
@@ -272,6 +260,11 @@ export default forwardRef<
       return
     }
 
+    // Prevent multiple simultaneous searches
+    if (isLoading) {
+      return
+    }
+
     setIsLoading(true)
     setSearchError(null)
 
@@ -300,37 +293,10 @@ export default forwardRef<
 
       setSearchResults(results)
 
-      // Create immediate placeholder profiles for instant interaction
-      const placeholderProfiles = results.slice(0, 15).map((result) => ({
-        id: result.id,
-        userName: result.id, // Use ID as username for navigation
-        firstName: 'Loading...',
-        lastName: '',
-        image: '',
-        avatar: '',
-        location: '',
-        email: '',
-        password: '',
-        tokenKey: '',
-        name: 'Loading...',
-      }))
-
-      setProfiles(placeholderProfiles) // Show placeholders immediately
-      setIsLoadingProfiles(true) // Show loading state for profiles
-
-      // Convert search results to profiles by fetching from PocketBase (non-blocking with delay)
-      setTimeout(() => {
-        convertToProfiles(results)
-          .then((convertedProfiles) => {
-            setProfiles(convertedProfiles)
-            setIsLoadingProfiles(false)
-          })
-          .catch((error) => {
-            console.error('Error converting search results to profiles:', error)
-            // Keep placeholder profiles if conversion fails
-            setIsLoadingProfiles(false)
-          })
-      }, 100) // Small delay to ensure UI is responsive first
+      // Convert search results to profiles immediately (no placeholder flash)
+      const convertedProfiles = await convertToProfiles(results)
+      setProfiles(convertedProfiles)
+      setIsLoading(false) // End loading state once we have real profiles
 
       // Generate search title and subtitle
       const refTitles = selectedRefItems
@@ -345,29 +311,45 @@ export default forwardRef<
       if (response.results && response.results.length > 0) {
         // Original search had results
         setSearchTitle('People into')
-        setSearchSubtitle('browse, dm, or add to a group')
+        setSearchSubtitle('Browse, dm, or add to a group')
 
-        // Cache results
-        setCachedSearchResults(response.results, 'People into', 'browse, dm, or add to a group')
+        // Extract ref titles and images from selectedRefItems
+        let refTitles = selectedRefItems.map(
+          (item) => item.expand?.ref?.title || item.ref || 'Unknown'
+        )
+        const refImages = selectedRefItems.map(
+          (item) => item.image || item.expand?.ref?.image || ''
+        )
+
+        // Cache results with ref titles and images
+        setCachedSearchResults(response.results, 'People into', 'Browse, dm, or add to a group', refTitles, refImages)
       } else if (results.length > 0) {
         // Using fallback users
         setSearchTitle('People into')
-        setSearchSubtitle('browse, dm, or add to a group')
+        setSearchSubtitle('Browse, dm, or add to a group')
 
-        // Cache fallback results
-        setCachedSearchResults(results, 'People into', 'browse, dm, or add to a group')
+        // Extract ref titles and images from selectedRefItems
+        let refTitles = selectedRefItems.map(
+          (item) => item.expand?.ref?.title || item.ref || 'Unknown'
+        )
+        const refImages = selectedRefItems.map(
+          (item) => item.image || item.expand?.ref?.image || ''
+        )
+
+        // Cache fallback results with ref titles and images
+        setCachedSearchResults(results, 'People into', 'Browse, dm, or add to a group', refTitles, refImages)
       } else {
         // No results at all
         setSearchTitle('People into')
         setSearchSubtitle('No users found, try different refs')
 
         // Cache empty results
-        setCachedSearchResults([], 'People into', 'No users found, try different refs')
+        setCachedSearchResults([], 'People into', 'No users found, try different refs', [], [])
       }
 
       // Save to search history with ref titles, images, and cached results
       try {
-        // Extract ref titles and images from selectedRefItems
+        // Extract ref titles and images from selectedRefItems (if not already extracted)
         let refTitles = selectedRefItems.map(
           (item) => item.expand?.ref?.title || item.ref || 'Unknown'
         )
@@ -515,6 +497,10 @@ export default forwardRef<
       return
     }
 
+    // Reset the flags when explicitly triggering a new search
+    hasUsedCachedResults.current = false
+    hasAnimatedResults.current = false
+
     // Temporarily disable 7-string check for testing
     // const itemsWithoutSevenStrings = selectedRefItems.filter(item => !item.seven_string)
     // if (itemsWithoutSevenStrings.length > 0) {
@@ -570,8 +556,7 @@ export default forwardRef<
           }
         } else if (i === 0 || i === 1) {
           setSearchResultsSheetOpen(true)
-          // Reset the flag when sheet opens so we can perform a new search
-          hasUsedCachedResults.current = false
+          // Don't reset the flag here - let the triggerSearch function handle it
         }
       }}
     >
@@ -748,7 +733,7 @@ export default forwardRef<
                     {
                       translateY: resultsAnimation.interpolate({
                         inputRange: [0, 1],
-                        outputRange: [20, 0],
+                        outputRange: [15, 0],
                       }),
                     },
                   ],

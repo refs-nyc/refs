@@ -39,6 +39,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
     removeItem,
     startEditProfile,
     stopEditProfile,
+    stopEditing,
     setAddingNewRefTo,
     newRefSheetRef,
     searchMode,
@@ -53,6 +54,10 @@ export const MyProfile = ({ userName }: { userName: string }) => {
     setSelectedRefItems: setGlobalSelectedRefItems,
     setReturningFromSearch,
     setReturningFromSearchViaBackButton,
+    cachedRefTitles,
+    cachedRefImages,
+    cachedSearchTitle,
+    cachedSearchSubtitle,
     clearCachedSearchResults,
   } = useAppStore()
 
@@ -75,7 +80,25 @@ export const MyProfile = ({ userName }: { userName: string }) => {
       return []
     }
 
-    return selectedRefs.map((id) => gridItemsMap.get(id)).filter(Boolean) as ExpandedItem[]
+    return selectedRefs.map((id) => {
+      const gridItem = gridItemsMap.get(id)
+      if (!gridItem) return null
+      
+      // Transform ExpandedItem to the structure SearchResultsSheet expects
+      return {
+        id: gridItem.id,
+        ref: gridItem.ref,
+        image: gridItem.image || '',
+        title: gridItem.expand?.ref?.title || gridItem.id,
+        expand: {
+          ref: {
+            id: gridItem.id,
+            title: gridItem.expand?.ref?.title || gridItem.id,
+            image: gridItem.image || '',
+          },
+        },
+      }
+    }).filter(Boolean)
   }, [selectedRefs, gridItemsMap])
 
   // Debug: Log what selectedRefItems are being passed to SearchResultsSheet
@@ -85,6 +108,8 @@ export const MyProfile = ({ userName }: { userName: string }) => {
       : globalSelectedRefItems.length > 0
       ? globalSelectedRefItems
       : selectedRefItems
+
+
 
   const refreshGrid = async (userName: string) => {
     setLoading(true)
@@ -164,49 +189,43 @@ export const MyProfile = ({ userName }: { userName: string }) => {
       return
     }
 
-    // If returning from search but selectedRefs is empty, try to reconstruct from cached results
-    if (returningFromSearch && selectedRefs.length === 0 && cachedSearchResults.length > 0) {
-      // Extract ref IDs from cached search results
-      const refIds = cachedSearchResults.map((result) => result.id).filter(Boolean)
+    // If returning from search but selectedRefs is empty, try to reconstruct from cached ref data
+    if (returningFromSearch && selectedRefs.length === 0 && cachedRefTitles.length > 0) {
+      // Reconstruct ref IDs from cached ref titles (these are the original ref items used for search)
+      const refIds = cachedRefTitles.map((_, index) => `ref_${index}`) // Generate ref IDs based on count
       if (refIds.length > 0) {
         setSelectedRefs(refIds)
-
-        // Also restore the ref items for thumbnails and share button
-        // We need to get the ref items from the search history, not cachedSearchResults
-        // For now, let's try to reconstruct from the selectedRefs and gridItems
-        if (selectedRefs.length > 0 && gridItems.length > 0) {
-          const restoredItems = selectedRefs
-            .map((refId) => {
-              const gridItem = gridItems.find((item) => item.id === refId)
-              return {
-                id: refId,
-                ref: refId,
-                image: gridItem?.image || '',
-                title: gridItem?.expand?.ref?.title || refId,
-                expand: {
-                  ref: {
-                    id: refId,
-                    title: gridItem?.expand?.ref?.title || refId,
-                    image: gridItem?.image || '',
-                  },
-                },
-              }
-            })
-            .filter(Boolean)
-
-          setRestoredRefItems(restoredItems)
-          setGlobalSelectedRefItems(restoredItems) // Also set in global state
-        }
-
         return // Exit early, let the next useEffect run handle opening the sheet
       }
+    }
+
+
+
+    
+    // SIMPLE: Just ensure we have the right selectedRefItems for the sheet
+    if (returningFromSearch && selectedRefs.length > 0 && cachedRefTitles.length > 0) {
+      // Create the items that the SearchResultsSheet needs for thumbnails
+      const items = selectedRefs.map((refId: string, index: number) => ({
+        id: refId,
+        ref: refId,
+        image: cachedRefImages[index] || '',
+        title: cachedRefTitles[index] || refId,
+        expand: {
+          ref: {
+            id: refId,
+            title: cachedRefTitles[index] || refId,
+            image: cachedRefImages[index] || '',
+          },
+        },
+      }))
+
+      setRestoredRefItems(items)
+      setGlobalSelectedRefItems(items)
     }
 
     if (
       returningFromSearch &&
       selectedRefs.length > 0 &&
-      !loading &&
-      gridItems.length > 0 &&
       !isOpeningSearchResults
     ) {
       setIsOpeningSearchResults(true)
@@ -220,7 +239,9 @@ export const MyProfile = ({ userName }: { userName: string }) => {
             // Fallback: try index 0 if index 1 fails
             try {
               searchResultsSheetRef.current.snapToIndex(0)
-            } catch (fallbackError) {}
+            } catch (fallbackError) {
+              // Sheet failed to open
+            }
           }
         }
         // Clear the back button flag after opening the sheet
@@ -257,8 +278,6 @@ export const MyProfile = ({ userName }: { userName: string }) => {
       // Don't clear selectedRefs here - let the returningFromSearch logic handle it
     }
   }, [setSearchMode])
-
-  const { stopEditing } = useAppStore()
 
   const bottomSheetRef = useRef<BottomSheet>(null)
   const detailsSheetRef = useRef<BottomSheet>(null)
@@ -310,7 +329,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
                   color: gridItems.length < 12 ? '#B0B0B0' : c.muted,
                   fontSize: s.$09,
                   fontFamily: 'System',
-                  fontWeight: '300',
+                  fontWeight: '400',
                   textAlign: 'center',
                   lineHeight: s.$1half,
                 }}
@@ -319,7 +338,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
                   ? 'searching at the intersection of...'
                   : gridItems.length >= 12
                   ? 'pick some refs, find people in the middle'
-                  : 'These prompts will disappear after you add...no one will ever know'}
+                  : 'These prompts will disappear after you add...\nno one will ever know'}
               </Text>
             </Animated.View>
 
@@ -504,6 +523,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
               detailsItemId={detailsItem.id}
               onChange={(index: number) => {
                 if (index === -1) {
+                  // Reset editing mode when carousel closes
                   stopEditing()
                   setDetailsItem(null)
                 }
@@ -531,6 +551,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
               onSearch={() => {
                 // Clear restored ref items for new searches
                 setRestoredRefItems([])
+                setGlobalSelectedRefItems([]) // Also clear global state
                 searchResultsSheetRef.current?.snapToIndex(1)
                 setSearchMode(false) // Exit search mode when opening search results
                 // Trigger the search after a small delay to ensure the sheet is open

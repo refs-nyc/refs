@@ -3,6 +3,7 @@ import { c, s } from '@/features/style'
 import UserListItem from '@/ui/atoms/UserListItem'
 import { Button } from '@/ui/buttons/Button'
 import { YStack } from '@/ui/core/Stacks'
+import { pocketbase } from '@/features/pocketbase'
 
 import { Heading } from '@/ui/typo/Heading'
 import BottomSheet, { BottomSheetBackdrop, BottomSheetScrollView } from '@gorhom/bottom-sheet'
@@ -18,6 +19,7 @@ export default function Referencers({
 }) {
   const [users, setUsers] = useState<any[]>([])
   const [refData, setRefData] = useState<any>({})
+  const [isLoading, setIsLoading] = useState(false)
   const { getItemsByRefIds, addRefSheetRef, setAddingRefId, currentRefId } = useAppStore()
 
   useEffect(() => {
@@ -27,20 +29,30 @@ export default function Referencers({
         setRefData({})
         return
       }
-      const users: Profile[] = []
-      const userIds: Set<string> = new Set()
+      
+      try {
+        setIsLoading(true)
+        const users: Profile[] = []
+        const userIds: Set<string> = new Set()
 
-      const items = await getItemsByRefIds([currentRefId])
+        const items = await getItemsByRefIds([currentRefId])
 
-      for (const item of items) {
-        const user = item.expand?.creator
-        if (!user || userIds.has(user.id)) continue
-        userIds.add(user.id)
-        users.push(user)
+        for (const item of items) {
+          const user = item.expand?.creator
+          if (!user || userIds.has(user.id)) continue
+          userIds.add(user.id)
+          users.push(user)
+        }
+
+        setUsers(users)
+        setRefData(items[0]?.expand?.ref || {})
+      } catch (error) {
+        console.error('ReferencersSheet: Error loading users for ref', currentRefId, ':', error)
+        setUsers([])
+        setRefData({})
+      } finally {
+        setIsLoading(false)
       }
-
-      setUsers(users)
-      setRefData(items[0].expand?.ref)
     }
     getUsers()
   }, [currentRefId])
@@ -82,18 +94,33 @@ export default function Referencers({
         </View>
         <BottomSheetScrollView alwaysBounceVertical={false}>
           <YStack>
-            {users.map((user) => (
-              <UserListItem
-                key={user.id}
-                user={user}
-                small={false}
-                onPress={() => {
-                  referencersBottomSheetRef.current?.close()
-                  router.push(`/user/${user.userName}`)
-                }}
-                style={{ paddingHorizontal: 0 }}
-              />
-            ))}
+            {isLoading ? (
+              <View style={{ paddingVertical: s.$4, alignItems: 'center' }}>
+                <Text style={{ color: c.muted, fontSize: 14 }}>Loading...</Text>
+              </View>
+            ) : users.length > 0 ? (
+              users.map((user) => (
+                <UserListItem
+                  key={user.id}
+                  user={user}
+                  small={false}
+                  onPress={() => {
+                    referencersBottomSheetRef.current?.close()
+                    router.push(`/user/${user.userName}`)
+                  }}
+                  style={{ paddingHorizontal: 0 }}
+                />
+              ))
+            ) : (
+              <View style={{ paddingVertical: s.$4, alignItems: 'center' }}>
+                <Text style={{ color: c.muted, fontSize: 14, textAlign: 'center' }}>
+                  No one has added this ref to their profile yet.
+                </Text>
+                <Text style={{ color: c.muted, fontSize: 12, textAlign: 'center', marginTop: s.$1 }}>
+                  Be the first to add it!
+                </Text>
+              </View>
+            )}
           </YStack>
         </BottomSheetScrollView>
         <View

@@ -69,6 +69,7 @@ export type ItemSlice = {
   getItemsByRefIds: (refIds: string[]) => Promise<ExpandedItem[]>
   getAllItemsByCreator: (creatorId: string) => Promise<ExpandedItem[]>
   getListsByCreator: (creatorId: string) => Promise<ExpandedItem[]>
+
 }
 
 // ***
@@ -279,7 +280,7 @@ export const createItemSlice: StateCreator<StoreSlices, [], [], ItemSlice> = (se
   },
   getTickerItems: async () => {
     // Only show specific refs in ticker: Musee d'Orsay, Edge City, Bringing Up Baby, Tennis
-    const allowedTickerTitles = ["Musee d'Orsay", 'Edge City', 'Bringing Up Baby', 'Tennis']
+    const allowedTickerTitles = ["Musee d'Orsay", 'Edge city ', 'Bringing Up Baby', 'Tennis']
 
     const results = await pocketbase.collection('refs').getFullList<RefsRecord>({
       filter: allowedTickerTitles.map((title) => `title = "${title}"`).join(' || '),
@@ -315,10 +316,12 @@ export const createItemSlice: StateCreator<StoreSlices, [], [], ItemSlice> = (se
   getItemsByRefIds: async (refIds: string[]) => {
     const filter = refIds.map((id) => `ref="${id}"`).join(' || ')
 
-    return await pocketbase.collection('items').getFullList({
+    const results = await pocketbase.collection('items').getFullList<ExpandedItem>({
       filter,
       expand: 'creator, ref',
     })
+    
+    return results
   },
   getAllItemsByCreator: async (creatorId: string) => {
     return await pocketbase.collection('items').getFullList<ExpandedItem>({

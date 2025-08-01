@@ -83,6 +83,8 @@ const StartupAnimationTile = ({
       return
     }
 
+
+
     // Reset animation values
     translateY.value = -60
     scale.value = 0.9
@@ -151,6 +153,8 @@ const StartupAnimationTile = ({
 
     return () => clearTimeout(timer)
   }, [isInitialLoad, delay])
+
+
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: translateY.value }, { scale: scale.value }],
@@ -224,9 +228,11 @@ export const Grid = ({
 
     // Shuffle after a brief delay to allow fade out
     setTimeout(() => {
-      setShuffledPrompts(shuffleArray(PROMPTS))
+      // Create a new shuffled array but preserve the same length
+      const newShuffledPrompts = shuffleArray([...PROMPTS])
+      setShuffledPrompts(newShuffledPrompts)
       setIsShuffling(false)
-    }, 150)
+    }, 300) // Increased delay for smoother animation
   }, [isShuffling, buttonScale])
 
   const handleGridItemPress = useCallback(
@@ -313,9 +319,13 @@ export const Grid = ({
         {Array.from({ length: gridSize - items.length }).map((_, i) => {
           const prompt = shuffledPrompts[i % shuffledPrompts.length] || PROMPTS[i % PROMPTS.length]
           const totalIndex = items.length + i
+          
+          // Only show prompt squares on own profile when grid isn't full
+          const shouldShowPrompt = editingRights && items.length < gridSize
+          
           return (
             <StartupAnimationTile
-              key={`placeholder-${i}-${prompt}`}
+              key={`placeholder-${totalIndex}`}
               delay={
                 isShuffling
                   ? getTileAnimationDelay(i, gridSize - items.length)
@@ -324,10 +334,13 @@ export const Grid = ({
               isInitialLoad={isInitialLoad}
             >
               <GridTileWrapper
-                type="placeholder"
-                onPress={() => onAddItemWithPrompt && onAddItemWithPrompt(prompt)}
+                type={shouldShowPrompt ? "prompt" : "placeholder"}
+                onPress={() => shouldShowPrompt && onAddItemWithPrompt && onAddItemWithPrompt(prompt)}
+                isShuffling={isShuffling}
               >
-                <Text style={{ fontSize: 14 }}>{prompt}</Text>
+                <Text style={{ fontSize: 14 }}>
+                  {shouldShowPrompt ? prompt : ''}
+                </Text>
               </GridTileWrapper>
             </StartupAnimationTile>
           )

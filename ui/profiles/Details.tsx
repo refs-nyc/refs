@@ -34,7 +34,7 @@ export const Details = ({ data }: { data: Item[] }) => {
   const setCurrentIndex = useStore(profileDetailsStore, (state) => state.setCurrentIndex)
   const currentIndex = useStore(profileDetailsStore, (state) => state.currentIndex)
 
-  const { stopEditing, update, addingToList, setAddingToList, addingItem } = useAppStore()
+  const { stopEditing, update, addingToList, setAddingToList, addingItem, startEditing, editing } = useAppStore()
 
   const handleConfigurePanGesture = useCallback((gesture: any) => {
     'worklet'
@@ -50,27 +50,38 @@ export const Details = ({ data }: { data: Item[] }) => {
 
   return (
     <>
-      <ConditionalGridLines />
-
       <Carousel
         loop={data.length > 1}
         ref={ref}
         mode="parallax"
-        containerStyle={{ padding: 0 }}
+        modeConfig={{
+          parallaxScrollingScale: 1.0,
+          parallaxScrollingOffset: 50,
+        }}
+        containerStyle={{ padding: 0, overflow: 'hidden', marginTop: 3 }}
         data={data as ExpandedItem[]}
         width={win.width}
         height={win.height}
         defaultIndex={currentIndex}
         onSnapToItem={(index) => {
           setCurrentIndex(index)
-          stopEditing()
           setShowContextMenu(false)
+          
+          // If we're currently editing, immediately switch to editing the new item
+          if (editing !== '') {
+            const newItem = data[index]
+            if (newItem) {
+              // Immediately start editing the new item
+              startEditing(newItem.id)
+            }
+          }
         }}
         onConfigurePanGesture={handleConfigurePanGesture}
         renderItem={({ item, index }) => <DetailsCarouselItem item={item} index={index} />}
-        windowSize={3}
+        windowSize={2}
         pagingEnabled={true}
         snapEnabled={true}
+        style={{ overflow: 'hidden' }}
       />
 
       {addingToList !== '' && addingItem && (

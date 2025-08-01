@@ -11,7 +11,7 @@ export type ExpandedItem = PBTypes.ItemsResponse<{
   items_via_parent: PBTypes.ItemsRecord[] // list children
 }>
 
-export type GridTileType = 'add' | 'image' | 'text' | 'list' | 'placeholder' | ''
+export type GridTileType = 'add' | 'image' | 'text' | 'list' | 'placeholder' | 'prompt' | ''
 
 export type Conversation = PBTypes.ConversationsRecord
 export type Message = PBTypes.MessagesRecord

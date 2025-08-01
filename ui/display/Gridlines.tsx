@@ -8,6 +8,7 @@ interface GridLinesProps {
   lineThickness?: number
   animationDuration?: number // Duration for each individual line's fade animation
   staggerMs?: number // Delay between the start of each consecutive line's animation
+  containerStyle?: any // Allow custom container styling
 }
 
 export const GridLines = ({
@@ -16,14 +17,19 @@ export const GridLines = ({
   lineThickness = 1,
   animationDuration = 300, // Default duration for fade in/out
   staggerMs = 15, // Default delay between lines starting animation
+  containerStyle,
 }: GridLinesProps) => {
   const { width, height } = useWindowDimensions()
+  
+  // Use container dimensions if provided, otherwise use full screen
+  const containerWidth = containerStyle ? (containerStyle.width || width) : width
+  const containerHeight = containerStyle ? (containerStyle.height || height) : height
 
   const horizontalLines = []
   const verticalLines = []
 
-  const numHorizontal = Math.ceil(height / size)
-  const numVertical = Math.ceil(width / size)
+  const numHorizontal = Math.ceil(containerHeight / size)
+  const numVertical = Math.ceil(containerWidth / size)
   const totalHorizontalLines = numHorizontal > 0 ? numHorizontal - 1 : 0
   const totalVerticalLines = numVertical > 0 ? numVertical - 1 : 0
 
@@ -81,7 +87,13 @@ export const GridLines = ({
 
   // The container itself doesn't need animation, just the lines within it
   return (
-    <View style={styles.container} pointerEvents="none">
+    <View 
+      style={[
+        styles.container,
+        containerStyle
+      ]} 
+      pointerEvents="none"
+    >
       {horizontalLines}
       {verticalLines}
     </View>
@@ -90,7 +102,11 @@ export const GridLines = ({
 
 const styles = StyleSheet.create({
   container: {
-    ...StyleSheet.absoluteFillObject,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     zIndex: -1, // Keep it in the background
     overflow: 'hidden', // Hide lines potentially drawn slightly outside bounds during animation/layout
   },

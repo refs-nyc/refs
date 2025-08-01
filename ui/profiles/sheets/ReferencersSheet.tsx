@@ -35,22 +35,7 @@ export default function Referencers({
         const users: Profile[] = []
         const userIds: Set<string> = new Set()
 
-        console.log('ReferencersSheet: Loading users for ref ID:', currentRefId)
         const items = await getItemsByRefIds([currentRefId])
-        console.log('ReferencersSheet: Found items for ref', currentRefId, ':', items.length)
-        console.log('ReferencersSheet: Items data:', items)
-        
-        // Check if there are any items at all for this ref ID
-        console.log('ReferencersSheet: Checking all items for ref ID:', currentRefId)
-        try {
-          const allItemsForRef = await pocketbase.collection('items').getFullList({
-            filter: `ref = "${currentRefId}"`,
-          })
-          console.log('ReferencersSheet: All items for ref ID (no expand):', allItemsForRef.length)
-          console.log('ReferencersSheet: All items for ref ID (no expand):', allItemsForRef)
-        } catch (error) {
-          console.log('ReferencersSheet: Error checking all items for ref ID:', error)
-        }
 
         for (const item of items) {
           const user = item.expand?.creator
@@ -59,7 +44,6 @@ export default function Referencers({
           users.push(user)
         }
 
-        console.log('ReferencersSheet: Found users for ref', currentRefId, ':', users.length)
         setUsers(users)
         setRefData(items[0]?.expand?.ref || {})
       } catch (error) {

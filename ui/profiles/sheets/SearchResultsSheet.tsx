@@ -25,7 +25,7 @@ import {
 } from '@/features/pocketbase/api/search'
 import PocketBase from 'pocketbase'
 
-const MATCHMAKING_API_URL = process.env.EXPO_PUBLIC_MATCHMAKING_API_URL || 'http://localhost:3001'
+
 import { SearchLoadingSpinner } from '@/ui/atoms/SearchLoadingSpinner'
 import { router } from 'expo-router'
 
@@ -224,23 +224,14 @@ export default forwardRef<
   // Fallback function to get some users when search returns no results
   const getFallbackUsers = async (): Promise<PersonResult[]> => {
     try {
-      // Call the same API but with a broader search
-      const response = await fetch(`${MATCHMAKING_API_URL}/api/search-people`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          user_id: user?.id,
-          item_ids: [], // Empty to get all users
-          limit: 20,
-        }),
+      // Call Supabase search with empty item_ids to get fallback users
+      const response = await searchPeople({
+        user_id: user?.id || '',
+        item_ids: [], // Empty to get all users
+        limit: 20,
       })
 
-      if (response.ok) {
-        const data = await response.json()
-        return data.results || []
-      }
+      return response.results || []
     } catch (error) {
       console.error('Error getting fallback users:', error)
     }

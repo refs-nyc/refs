@@ -1,21 +1,3 @@
-import { install } from 'react-native-quick-crypto'
-
-import { polyfill as polyfillEncoding } from 'react-native-polyfill-globals/src/encoding'
-
-import 'event-target-polyfill'
-import '@/features/polyfill/custom-event-polyfill'
-import 'react-native-get-random-values'
-import 'fast-text-encoding'
-
-// polyfill AbortSignal
-if (!AbortSignal.prototype.throwIfAborted) {
-  AbortSignal.prototype.throwIfAborted = function () {
-    if (this.aborted) {
-      throw new Error('Aborted')
-    }
-  }
-}
-
 // Disable strict mode warnings caused by carousel
 import { configureReanimatedLogger } from 'react-native-reanimated'
 import { ShareIntentProvider } from 'expo-share-intent'
@@ -98,9 +80,29 @@ export default function RootLayout() {
   useEffect(() => {
     // Initialize polyfills after React Native bridge is ready
     try {
+      // Import polyfills dynamically to avoid immediate execution
+      const { install } = require('react-native-quick-crypto')
+      const { polyfill: polyfillEncoding } = require('react-native-polyfill-globals/src/encoding')
+      
+      // Import other polyfills
+      require('event-target-polyfill')
+      require('@/features/polyfill/custom-event-polyfill')
+      require('react-native-get-random-values')
+      require('fast-text-encoding')
+      
+      // Initialize polyfills
       install()
       polyfillEncoding()
       configureReanimatedLogger({ strict: false })
+      
+      // polyfill AbortSignal
+      if (!AbortSignal.prototype.throwIfAborted) {
+        AbortSignal.prototype.throwIfAborted = function () {
+          if (this.aborted) {
+            throw new Error('Aborted')
+          }
+        }
+      }
     } catch (error) {
       console.error('Failed to initialize polyfills:', error)
     }

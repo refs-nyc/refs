@@ -23,8 +23,6 @@ import {
   PersonResult,
   SearchHistoryRecord,
 } from '@/features/pocketbase/api/search'
-import PocketBase from 'pocketbase'
-
 
 import { SearchLoadingSpinner } from '@/ui/atoms/SearchLoadingSpinner'
 import { router } from 'expo-router'
@@ -37,12 +35,11 @@ export interface SearchResultsSheetRef {
 export default forwardRef<
   SearchResultsSheetRef,
   {
-    bottomSheetRef: React.RefObject<BottomSheet>;
-    selectedRefs: string[];
-    selectedRefItems: any[];
+    bottomSheetRef: React.RefObject<BottomSheet>
+    selectedRefs: string[]
+    selectedRefItems: any[]
   }
 >(({ bottomSheetRef, selectedRefs, selectedRefItems }, ref) => {
-
   const snapPoints = ['25%', '80%']
   const resultsAnimation = useRef(new Animated.Value(0)).current
   const dropdownAnimation = useRef(new Animated.Value(0)).current
@@ -66,7 +63,7 @@ export default forwardRef<
     if (hasAnimatedResults.current) {
       return // Don't animate if we've already animated
     }
-    
+
     hasAnimatedResults.current = true
     resultsAnimation.setValue(0)
     Animated.timing(resultsAnimation, {
@@ -114,6 +111,8 @@ export default forwardRef<
     cachedSearchSubtitle,
     setCachedSearchResults,
     clearCachedSearchResults,
+    getUsersByDids,
+    getRefById,
   } = useAppStore()
 
   // Search state
@@ -162,23 +161,20 @@ export default forwardRef<
 
   // Separate effect to handle cached results being set after component is open
   useEffect(() => {
-    const loadCachedResults = async () => {
-      if (cachedSearchResults.length > 0 && !hasUsedCachedResults.current && !isLoading) {
-        setSearchResults(cachedSearchResults)
-        setSearchTitle(cachedSearchTitle)
-        setSearchSubtitle(cachedSearchSubtitle)
-        setIsLoading(false)
-        setSearchError(null)
-        hasUsedCachedResults.current = true
+    if (cachedSearchResults.length > 0 && !hasUsedCachedResults.current && !isLoading) {
+      setSearchResults(cachedSearchResults)
+      setSearchTitle(cachedSearchTitle)
+      setSearchSubtitle(cachedSearchSubtitle)
+      setIsLoading(false)
+      setSearchError(null)
+      hasUsedCachedResults.current = true
 
-        // Convert cached results to profiles immediately
-        animateResultsIn() // Start animation immediately
-        const convertedProfiles = await convertToProfiles(cachedSearchResults)
-        setProfiles(convertedProfiles)
-      }
+      // Convert cached results to profiles immediately
+      animateResultsIn() // Start animation immediately
+
+      const convertedProfiles = getUsersByDids(cachedSearchResults.map((result) => result.did))
+      setProfiles(convertedProfiles)
     }
-    
-    loadCachedResults()
   }, [cachedSearchResults, cachedSearchTitle, cachedSearchSubtitle, isLoading])
 
   // Function to restore search from history
@@ -210,7 +206,7 @@ export default forwardRef<
 
         // Convert cached results to profiles immediately
         animateResultsIn() // Start animation immediately
-        const convertedProfiles = await convertToProfiles(historyItem.search_results)
+        const convertedProfiles = getUsersByDids(cachedSearchResults.map((result) => result.did))
         setProfiles(convertedProfiles)
       } else {
         setSearchError('Cannot restore search from history (no cached results)')
@@ -226,7 +222,7 @@ export default forwardRef<
     try {
       // Call Supabase search with empty item_ids to get fallback users
       const response = await searchPeople({
-        user_id: user?.id || '',
+        user_id: user?.did || '',
         item_ids: [], // Empty to get all users
         limit: 20,
       })
@@ -268,7 +264,7 @@ export default forwardRef<
       }
 
       const response = await searchPeople({
-        user_id: user.id,
+        user_id: user.did,
         item_ids: itemIds,
         limit: 60,
       })
@@ -285,7 +281,7 @@ export default forwardRef<
       setSearchResults(results)
 
       // Convert search results to profiles immediately (no placeholder flash)
-      const convertedProfiles = await convertToProfiles(results)
+      const convertedProfiles = getUsersByDids(cachedSearchResults.map((result) => result.did))
       setProfiles(convertedProfiles)
       setIsLoading(false) // End loading state once we have real profiles
 
@@ -313,7 +309,13 @@ export default forwardRef<
         )
 
         // Cache results with ref titles and images
-        setCachedSearchResults(response.results, 'People into', 'Browse, dm, or add to a group', refTitles, refImages)
+        setCachedSearchResults(
+          response.results,
+          'People into',
+          'Browse, dm, or add to a group',
+          refTitles,
+          refImages
+        )
       } else if (results.length > 0) {
         // Using fallback users
         setSearchTitle('People into')
@@ -328,7 +330,13 @@ export default forwardRef<
         )
 
         // Cache fallback results with ref titles and images
-        setCachedSearchResults(results, 'People into', 'Browse, dm, or add to a group', refTitles, refImages)
+        setCachedSearchResults(
+          results,
+          'People into',
+          'Browse, dm, or add to a group',
+          refTitles,
+          refImages
+        )
       } else {
         // No results at all
         setSearchTitle('People into')
@@ -353,27 +361,25 @@ export default forwardRef<
           (title) => title.length > 10 && /^[a-z0-9]+$/.test(title)
         )
         if (needsRefTitles) {
-          const pocketbase = new PocketBase(
-            process.env.EXPO_PUBLIC_POCKETBASE_URL || 'http://127.0.0.1:8090'
-          )
-
           try {
             const refIds = selectedRefItems.map((item) => item.ref).filter(Boolean)
-            const refs = await pocketbase.collection('refs').getList(1, 50, {
-              filter: refIds.map((id) => `id = "${id}"`).join(' || '),
-              fields: 'id,title',
-            })
 
-            const refMap = new Map(refs.items.map((ref) => [ref.id, ref.title]))
+            const refs = await Promise.all(refIds.map((refId) => getRefById(refId)))
+            const refTitleMap: Record<string, string | null> = {}
+            for (const ref of refs) {
+              if (!ref) continue
+              refTitleMap[ref.id as string] = ref.title
+            }
+
             refTitles = selectedRefItems.map(
-              (item) => refMap.get(item.ref) || item.expand?.ref?.title || item.ref || 'Unknown'
+              (item) => refTitleMap[item.ref] || item.expand?.ref?.title || item.ref || 'Unknown'
             )
           } catch (error) {
-            console.error('Failed to fetch ref titles from PocketBase:', error)
+            console.error('Failed to fetch ref titles from ModelDB:', error)
           }
         }
 
-        await saveSearchHistory(user.id, itemIds, refTitles, refImages, results, results.length)
+        await saveSearchHistory(user.did, itemIds, refTitles, refImages, results, results.length)
       } catch (error) {
         console.error('Failed to save search history:', error)
       }
@@ -388,93 +394,12 @@ export default forwardRef<
     }
   }
 
-  // Fetch user profiles from PocketBase and convert to Profile format for UserListItem
-  const convertToProfiles = async (results: PersonResult[]): Promise<Profile[]> => {
-    const pocketbase = new PocketBase(
-      process.env.EXPO_PUBLIC_POCKETBASE_URL || 'http://127.0.0.1:8090'
-    )
-
-    try {
-      // Limit to first 10 results for better performance
-      const limitedResults = results.slice(0, 10)
-      const userIds = limitedResults.map((result) => result.id)
-
-      // Use more efficient query with proper escaping
-      const filter = userIds.map((id) => `id = "${id}"`).join(' || ')
-
-      const userProfiles = await pocketbase.collection('users').getList(1, 10, {
-        filter,
-        fields: 'id,userName,name,firstName,lastName,image',
-        perPage: 10,
-      })
-
-      // Create a map for O(1) lookup
-      const userMap = new Map(userProfiles.items.map((user) => [user.id, user]))
-
-      // Convert search results to Profile format
-      return limitedResults.map((result) => {
-        const userProfile = userMap.get(result.id)
-
-        if (userProfile) {
-          // Optimize name construction
-          const displayName =
-            userProfile.firstName && userProfile.lastName
-              ? `${userProfile.firstName} ${userProfile.lastName}`
-              : userProfile.userName || 'Unknown'
-
-          return {
-            id: result.id,
-            userName: userProfile.userName || displayName,
-            firstName: userProfile.firstName || userProfile.userName || '',
-            lastName: userProfile.lastName || '',
-            image: userProfile.image || '',
-            avatar: userProfile.image || '',
-            location: '',
-            email: '',
-            password: '',
-            tokenKey: '',
-            name: displayName,
-          }
-        } else {
-          // Fallback if user profile not found
-          return {
-            id: result.id,
-            userName: 'Unknown User',
-            firstName: 'Unknown',
-            lastName: '',
-            image: '',
-            avatar: '',
-            location: '',
-            email: '',
-            password: '',
-            tokenKey: '',
-          }
-        }
-      })
-    } catch (error) {
-      console.error('Error fetching user profiles from PocketBase:', error)
-      // Return fallback profiles if PocketBase fetch fails
-      return results.slice(0, 10).map((result) => ({
-        id: result.id,
-        userName: 'Unknown User',
-        firstName: 'Unknown',
-        lastName: '',
-        image: '',
-        avatar: '',
-        location: '',
-        email: '',
-        password: '',
-        tokenKey: '',
-      }))
-    }
-  }
-
   const handleUserPress = (profile: Profile) => {
     // Set navigation state for returning from search
     setReturningFromSearch(true)
 
     // Use push to maintain navigation history for back button
-    router.push(`/user/${profile.userName}`)
+    router.push(`/user/${profile.did}`)
   }
 
   const handleClose = () => {
@@ -732,7 +657,7 @@ export default forwardRef<
               >
                 {profiles.map((profile, index) => (
                   <UserListItem
-                    key={profile.id}
+                    key={profile.did}
                     user={profile}
                     small={false}
                     onPress={() => handleUserPress(profile)}

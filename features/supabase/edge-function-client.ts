@@ -46,8 +46,8 @@ class EdgeFunctionClient {
   private functionUrl: string
 
   constructor() {
-    const supabaseUrl = process.env.SUPA_URL
-    const supabaseKey = process.env.SUPA_KEY
+    const supabaseUrl = process.env.EXPO_PUBLIC_SUPA_URL
+    const supabaseKey = process.env.EXPO_PUBLIC_SUPA_KEY
 
     if (!supabaseUrl || !supabaseKey) {
       throw new Error('Missing Supabase credentials')
@@ -61,7 +61,7 @@ class EdgeFunctionClient {
     const response = await fetch(this.functionUrl, {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${process.env.SUPA_KEY}`,
+        Authorization: `Bearer ${process.env.EXPO_PUBLIC_SUPA_KEY}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({

@@ -96,7 +96,7 @@ async function handleGenerateSevenString(data: GenerateSevenStringRequest, apiKe
         {
           role: 'system',
           content:
-            'You are a matchmaking descriptor engine. Generate one seven‑slot line, pipes between slots, ≤ 5 words per slot. 1. Intellectual signal – domain or thinking style (e.g., "Constraint‑fiction devotee") 2. Aesthetic vibe – sensory or stylistic flavour (e.g., "Desaturated desert minimalism") 3. Likely skill or habit – action they probably practise (e.g., "Sketches street portraits") 4. Conversation‑starter keyword – quick hook (e.g., "Ask about Oulipo") 5. Core value – guiding principle (e.g., "Rules as creative fuel") 6. Social‑energy cue – preferred social setting (e.g., "Thrives in micro‑salons") 7. Ideal‑match trait – quality a partner should have (e.g., "Loves playful debate") Return the line only. No extra commentary.',
+            'You are a matchmaking descriptor engine. Generate one seven‑slot line, pipes between slots, ≤ 5 words per slot. 1. Intellectual signal – domain or thinking style (e.g., "Constraint‑fiction fan") 2. Aesthetic vibe – sensory or stylistic flavour (e.g., "cozy nordic minimalism") 3. Likely skill or habit – action they might practise (e.g., "hosts themed potlucks") 4. Conversation‑starter keyword – quick hook (e.g., "Oulipo") 5. Core value – guiding principle (e.g., "Rules as creative fuel") 6. Social‑energy cue – preferred social setting (e.g., "Thrives in micro‑salons") 7. Ideal‑match trait – quality a partner should have (e.g., "Loves playful debate") Return the line only. No extra commentary.',
         },
         {
           role: 'user',
@@ -164,22 +164,22 @@ async function handleProcessItem(data: ProcessItemRequest, supabase: any, apiKey
         Authorization: `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        model: 'gpt-4o',
-        messages: [
-          {
-            role: 'system',
-            content:
-              'You are a matchmaking descriptor engine. Generate one seven‑slot line, pipes between slots, ≤ 5 words per slot. 1. Intellectual signal – domain or thinking style (e.g., "Constraint‑fiction devotee") 2. Aesthetic vibe – sensory or stylistic flavour (e.g., "Desaturated desert minimalism") 3. Likely skill or habit – action they probably practise (e.g., "Sketches street portraits") 4. Conversation‑starter keyword – quick hook (e.g., "Ask about Oulipo") 5. Core value – guiding principle (e.g., "Rules as creative fuel") 6. Social‑energy cue – preferred social setting (e.g., "Thrives in micro‑salons") 7. Ideal‑match trait – quality a partner should have (e.g., "Loves playful debate") Return the line only. No extra commentary.',
-          },
-          {
-            role: 'user',
-            content: `Ref title: «${ref_title}» Caption: «${item_text}»`,
-          },
-        ],
-        temperature: 0.7,
-        max_tokens: 100,
-      }),
+              body: JSON.stringify({
+          model: 'gpt-4o',
+          messages: [
+            {
+              role: 'system',
+              content:
+                'You are a matchmaking descriptor engine. Generate one seven‑slot line, pipes between slots, ≤ 5 words per slot. 1. Intellectual signal – domain or thinking style (e.g., "Constraint‑fiction fan") 2. Aesthetic vibe – sensory or stylistic flavour (e.g., "cozy nordic minimalism") 3. Likely skill or habit – action they might practise (e.g., "hosts themed potlucks") 4. Conversation‑starter keyword – quick hook (e.g., "Oulipo") 5. Core value – guiding principle (e.g., "Rules as creative fuel") 6. Social‑energy cue – preferred social setting (e.g., "Thrives in micro‑salons") 7. Ideal‑match trait – quality a partner should have (e.g., "Loves playful debate") Return the line only. No extra commentary.',
+            },
+            {
+              role: 'user',
+              content: `Ref title: «${ref_title}» Caption: «${item_text}»`,
+            },
+          ],
+          temperature: 0.7,
+          max_tokens: 100,
+        }),
     })
 
     if (!sevenStringResponse.ok) {

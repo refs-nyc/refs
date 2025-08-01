@@ -9,8 +9,8 @@ config()
 const pocketbase = new PocketBase(process.env.EXPO_PUBLIC_POCKETBASE_URL || 'http://127.0.0.1:8090')
 
 // Supabase setup
-const supabaseUrl = process.env.SUPA_URL!
-const supabaseKey = process.env.SUPA_KEY!
+const supabaseUrl = process.env.EXPO_PUBLIC_SUPA_URL!
+const supabaseKey = process.env.EXPO_PUBLIC_SUPA_KEY!
 const supabase = createClient(supabaseUrl, supabaseKey)
 
 async function syncPocketBaseToSupabase() {

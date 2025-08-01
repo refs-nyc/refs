@@ -36,7 +36,7 @@
     "@ipld/dag-cbor": "^9.2.2",
     "@libp2p/interface": "2.2.0",
     "@likashefqet/react-native-image-zoom": "^4.3.0",
-    "@magic-sdk/react-native-expo": "^29.19.1",
+    "@magic-sdk/react-native-expo": "^30.4.1",
     "@react-native-async-storage/async-storage": "^2.1.0",
     "@react-native-community/netinfo": "^11.4.1",
     "@react-native-picker/picker": "2.9.0",

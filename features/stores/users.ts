@@ -3,11 +3,13 @@ import type { SessionSigner } from '@canvas-js/interfaces'
 import { getEncryptionPublicKey } from '../encryption'
 import { StateCreator } from 'zustand'
 import type { RefsCanvas } from '../canvas/contract'
-import { getCurrentSessionSignerFromMagic, getEncryptionWalletFromMagic, magic } from '../magic'
+import { getCurrentJsonRpcSignerFromMagic, getEncryptionWallet, magic } from '../magic'
 import { Profile, StagedProfileFields } from '../types'
 import type { StoreSlices } from './types'
 import { Wallet } from 'ethers'
 import { createRef, MutableRefObject } from 'react'
+import { SIWESigner } from '@canvas-js/signer-ethereum'
+import { JsonRpcSigner } from '@ethersproject/providers'
 
 const subscriptions = createRef<number[]>() as MutableRefObject<number[]>
 subscriptions.current = []
@@ -29,7 +31,7 @@ export type UserSlice = {
   getUserByDid: (did: string) => Profile
   getUsersByDids: (dids: string[]) => Profile[]
   getRandomUser: () => Promise<Profile>
-  login: (sessionSigner: SessionSigner) => Promise<void>
+  login: (signer: JsonRpcSigner) => Promise<void>
   sessionSigner: SessionSigner | null
   encryptionWallet: Wallet | null
 
@@ -90,7 +92,9 @@ export const createUserSlice: StateCreator<StoreSlices, [], [], UserSlice> = (se
       if (!canvasApp) {
         throw new Error('Canvas not initialized yet!')
       }
-      const sessionSigner = await getCurrentSessionSignerFromMagic()
+
+      const jsonRpcSigner = getCurrentJsonRpcSignerFromMagic()
+      const sessionSigner = new SIWESigner({ signer: jsonRpcSigner })
       const userDid = await sessionSigner.getDid()
       const profile = profilesByUserDid[userDid]
 
@@ -164,9 +168,9 @@ export const createUserSlice: StateCreator<StoreSlices, [], [], UserSlice> = (se
       throw new Error('Canvas not initialized!')
     }
 
-    const { firstName, lastName, location, image, sessionSigner } = stagedProfileFields
+    const { firstName, lastName, location, image, jsonRpcSigner } = stagedProfileFields
 
-    if (!sessionSigner) throw new Error('Session signer is required')
+    if (!jsonRpcSigner) throw new Error('JSON RPC signer is required')
 
     try {
       const createProfileArgs = {
@@ -176,16 +180,19 @@ export const createUserSlice: StateCreator<StoreSlices, [], [], UserSlice> = (se
         image: image!,
       }
 
-      const encryptionWallet = await getEncryptionWalletFromMagic()
+      const encryptionWallet = await getEncryptionWallet(jsonRpcSigner)
       // publicEncryptionKey = the public part of the keypair
       const encryptionPublicKey = getEncryptionPublicKey(encryptionWallet.privateKey.slice(2))
 
+      const sessionSigner = new SIWESigner({ signer: jsonRpcSigner })
       const { result: newProfile } = await canvasApp
         .as(sessionSigner)
         .createProfile(createProfileArgs, encryptionPublicKey)
 
       set(() => ({
+        canvasActions: canvasApp.as(sessionSigner),
         encryptionWallet,
+        sessionSigner,
         user: newProfile,
       }))
       return newProfile
@@ -197,12 +204,13 @@ export const createUserSlice: StateCreator<StoreSlices, [], [], UserSlice> = (se
   //
   //
   //
-  login: async (sessionSigner: SessionSigner) => {
+  login: async (signer) => {
     const { canvasApp, profilesByUserDid } = get()
     if (!canvasApp) {
       throw new Error('Canvas not initialized!')
     }
 
+    const sessionSigner = new SIWESigner({ signer })
     // request a session
     await sessionSigner.newSession(canvasApp.topic)
 
@@ -214,9 +222,14 @@ export const createUserSlice: StateCreator<StoreSlices, [], [], UserSlice> = (se
       throw new Error('Profile not found')
     }
 
-    const encryptionWallet = await getEncryptionWalletFromMagic()
+    const encryptionWallet = await getEncryptionWallet(signer)
 
-    set({ encryptionWallet, user: profile, sessionSigner })
+    set({
+      canvasActions: canvasApp.as(sessionSigner),
+      encryptionWallet,
+      sessionSigner,
+      user: profile,
+    })
   },
   sessionSigner: null,
   //

@@ -1,6 +1,7 @@
 import { DeriveModelTypes } from '@canvas-js/core'
 import type { SessionSigner } from '@canvas-js/interfaces'
 import RefsContract from './canvas/contract'
+import { JsonRpcSigner } from '@ethersproject/providers'
 
 type ContractModelTypes = DeriveModelTypes<typeof RefsContract.models>
 
@@ -80,7 +81,7 @@ export type StagedRefFields = {
 }
 
 export type StagedProfileFields = {
-  sessionSigner?: SessionSigner
+  jsonRpcSigner?: JsonRpcSigner
   firstName?: string
   lastName?: string
   location?: string

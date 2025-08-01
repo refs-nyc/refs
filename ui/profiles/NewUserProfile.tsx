@@ -12,7 +12,10 @@ import { DeviceLocation } from '../inputs/DeviceLocation'
 import { AvatarPicker } from '../inputs/AvatarPicker'
 import { FirstVisitScreen } from './FirstVisitScreen'
 import { SizableText } from '../typo/SizableText'
-import { getSessionSignerFromSMS } from '@/features/magic'
+import { getJsonRpcSignerFromSMS } from '@/features/magic'
+import { SIWESigner } from '@canvas-js/signer-ethereum'
+import { AbstractSigner, ethers } from 'ethers'
+import { JsonRpcSigner } from '@ethersproject/providers'
 
 const win = Dimensions.get('window')
 
@@ -38,7 +41,8 @@ const PhoneNumberStep = ({ carouselRef }: { carouselRef: React.RefObject<ICarous
             setShowMagicSheet(true)
 
             try {
-              const sessionSigner = await getSessionSignerFromSMS(values.phoneNumber)
+              const jsonRpcSigner = await getJsonRpcSignerFromSMS(values.phoneNumber)
+              const sessionSigner = new SIWESigner({ signer: jsonRpcSigner })
               setShowMagicSheet(false)
 
               // check if the profile already exists
@@ -47,12 +51,12 @@ const PhoneNumberStep = ({ carouselRef }: { carouselRef: React.RefObject<ICarous
 
               if (existingProfile) {
                 // if so, then log the user in
-                await login(sessionSigner)
+                await login(jsonRpcSigner)
                 router.dismissAll()
               } else {
                 // otherwise update the staged user and move to the next step
                 updateStagedProfileFields({
-                  sessionSigner,
+                  jsonRpcSigner,
                 })
                 carouselRef.current?.next()
               }

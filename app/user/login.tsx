@@ -7,7 +7,8 @@ import { View, Dimensions, Text, TouchableOpacity } from 'react-native'
 import Carousel, { ICarouselInstance } from 'react-native-reanimated-carousel'
 import { ErrorView, FormFieldWithIcon } from '@/ui/inputs/FormFieldWithIcon'
 import { Controller, useForm } from 'react-hook-form'
-import { getSessionSignerFromSMS, magic } from '@/features/magic'
+import { getJsonRpcSignerFromSMS } from '@/features/magic'
+import { SIWESigner } from '@canvas-js/signer-ethereum'
 
 const win = Dimensions.get('window')
 
@@ -34,15 +35,16 @@ const LoginStep = () => {
         setLoginInProgress(true)
         try {
           setShowMagicSheet(true)
-          const sessionSigner = await getSessionSignerFromSMS(values.phoneNumber)
+          const jsonRpcSigner = await getJsonRpcSignerFromSMS(values.phoneNumber)
           setShowMagicSheet(false)
 
           // check if the profile already exists
+          const sessionSigner = new SIWESigner({ signer: jsonRpcSigner })
           const userDid = await sessionSigner.getDid()
           const existingProfile = await canvasApp!.db.get('profile', userDid)
           if (existingProfile) {
             // if so, then log the user in
-            await login(sessionSigner)
+            await login(jsonRpcSigner)
             router.dismissAll()
             setLoginInProgress(false)
           } else {

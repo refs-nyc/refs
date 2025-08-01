@@ -54,3 +54,7 @@ google-services.json
 # Vitepress
 docs/.vitepress/cache
 docs/.vitepress/dist
+
+# AI Agent files (not part of build)
+agent.readme.md
+agent.readme.md.backup

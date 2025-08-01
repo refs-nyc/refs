@@ -276,9 +276,13 @@ export const createItemSlice: StateCreator<StoreSlices, [], [], ItemSlice> = (se
     if (!canvasApp) {
       throw new Error('Canvas not initialized!')
     }
+    const allowedTickerTitles = ["Musee d'Orsay", 'Edge city ', 'Bringing Up Baby', 'Tennis']
+
     const refs = await canvasApp.db.query<Ref>('ref', {
       where: {
-        showInTicker: true,
+        title: {
+          in: allowedTickerTitles,
+        },
       },
       orderBy: {
         created: 'desc',

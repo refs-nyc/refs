@@ -35,7 +35,7 @@ export const createImageSlice: StateCreator<StoreSlices, [], [], ImageSlice> = (
 
     // if it exists and is not expired, then return it
     if (cachedSignedUrl) {
-      const isExpired = cachedSignedUrl.expires + cachedSignedUrl.date > Date.now()
+      const isExpired = cachedSignedUrl.expires + cachedSignedUrl.date < Date.now()
       if (!isExpired) {
         return cachedSignedUrl.signedUrl
       }
@@ -52,17 +52,22 @@ export const createImageSlice: StateCreator<StoreSlices, [], [], ImageSlice> = (
       currentPromisePool[url] = promiseToAwait
     }
 
-    const signedUrlEntry = await promiseToAwait
+    try {
+      const signedUrlEntry = await promiseToAwait
 
-    set((state) => ({
-      signedUrls: {
-        ...state.signedUrls,
-        [url]: signedUrlEntry,
-      },
-    }))
+      set((state) => ({
+        signedUrls: {
+          ...state.signedUrls,
+          [url]: signedUrlEntry,
+        },
+      }))
 
-    delete currentPromisePool[url]
-
-    return signedUrlEntry.signedUrl
+      delete currentPromisePool[url]
+      return signedUrlEntry.signedUrl
+    } catch (error) {
+      // Clean up failed promise from pool
+      delete currentPromisePool[url]
+      throw error
+    }
   },
 })

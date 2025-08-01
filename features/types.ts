@@ -20,7 +20,7 @@ export type ItemWithRef = Item & {
   expand: { ref: Ref }
 }
 
-export type GridTileType = 'add' | 'image' | 'text' | 'list' | 'placeholder' | ''
+export type GridTileType = 'add' | 'image' | 'text' | 'list' | 'placeholder' | 'prompt' | ''
 
 export type Membership = ContractModelTypes['membership']
 export type Conversation = ContractModelTypes['conversation']

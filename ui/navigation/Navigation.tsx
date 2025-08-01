@@ -5,7 +5,7 @@ import { c, s } from '@/features/style'
 import { useAppStore } from '@/features/stores'
 import { NavigationBackdrop } from '@/ui/navigation/NavigationBackdrop'
 import { Badge } from '../atoms/Badge'
-import { useRef, useEffect, useState } from 'react'
+import { useRef, useEffect, useState, useMemo } from 'react'
 import SavesIcon from '@/assets/icons/saves.svg'
 import MessageIcon from '@/assets/icons/message.svg'
 import { Ionicons } from '@expo/vector-icons'
@@ -30,11 +30,44 @@ export const Navigation = ({
 }) => {
   const pathname = usePathname()
 
-  const { user, saves } = useAppStore()
+  const {
+    user,
+    saves,
+    selectedRefs,
+    cachedSearchResults,
+    setReturningFromSearchViaBackButton,
+    setReturningFromSearch,
+  } = useAppStore()
 
   const isHomePage = pathname === '/' || pathname === '/index'
 
   const scaleAnim = useRef(new Animated.Value(1)).current
+
+  // Custom back button handler for search results
+  const handleBackPress = () => {
+    // Check if we're on a user profile page and have search context
+    if (
+      pathname.startsWith('/user/') &&
+      (selectedRefs.length > 0 || cachedSearchResults.length > 0)
+    ) {
+      // Set the specific flag for back button navigation
+      setReturningFromSearchViaBackButton(true)
+      // Navigate back to the current user's profile page
+      router.push(`/user/${user?.did}`)
+      // Open the search results sheet after a brief delay for smooth UX
+      setTimeout(() => {
+        if (selectedRefs.length > 0 || cachedSearchResults.length > 0) {
+          // Trigger the search results sheet to open
+          setReturningFromSearch(true)
+          setReturningFromSearchViaBackButton(true) // Also set this flag so MyProfile knows it's from back button
+        } else {
+        }
+      }, 100) // Small delay to ensure navigation completes first
+    } else {
+      // Default back behavior
+      router.back()
+    }
+  }
 
   const animateBadge = () => {
     Animated.sequence([
@@ -71,15 +104,13 @@ export const Navigation = ({
           paddingHorizontal: s.$1,
           alignItems: 'center',
           paddingBottom: s.$08,
-          borderBottomColor: '#ddd',
-          borderBottomWidth: 1,
         }}
       >
         <View style={{ flex: 1 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', position: 'relative' }}>
             {!isHomePage && (
               <Pressable
-                onPress={() => router.back()}
+                onPress={handleBackPress}
                 style={{
                   position: 'absolute',
                   left: -15,

@@ -40,18 +40,18 @@ export const MeatballMenu = ({
     <Pressable
       onPress={onPress}
       style={{
-        width: s.$5,
-        height: s.$5,
+        width: s.$4,
+        height: s.$3,
         aspectRatio: 1,
-        gap: 5,
+        gap: 2,
         justifyContent: 'center',
         alignItems: 'center',
         // backgroundColor: 'red',
       }}
     >
-      <View style={{ width: 5, height: 5, borderRadius: s.$05, backgroundColor: color }} />
-      <View style={{ width: 5, height: 5, borderRadius: s.$05, backgroundColor: color }} />
-      <View style={{ width: 5, height: 5, borderRadius: s.$05, backgroundColor: color }} />
+      <View style={{ width: 4, height: 4, borderRadius: s.$05, backgroundColor: color }} />
+      <View style={{ width: 4, height: 4, borderRadius: s.$05, backgroundColor: color }} />
+      <View style={{ width: 4, height: 4, borderRadius: s.$05, backgroundColor: color }} />
     </Pressable>
   )
 }

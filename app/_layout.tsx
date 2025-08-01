@@ -36,6 +36,7 @@ import { KeyboardProvider } from 'react-native-keyboard-controller'
 
 import { RegisterPushNotifications } from '@/ui/notifications/RegisterPushNotifications'
 import { useAppStore } from '@/features/stores'
+import { StartupLoadingIndicator } from '@/ui/atoms/StartupLoadingIndicator'
 
 import BottomSheet from '@gorhom/bottom-sheet'
 import Saves from '@/features/saves/saves-sheet'
@@ -153,6 +154,7 @@ function RootLayoutNav() {
       <RegisterPushNotifications />
 
       <Navigation savesBottomSheetRef={savesBottomSheetRef} />
+      <StartupLoadingIndicator />
 
       <Stack
         screenOptions={{

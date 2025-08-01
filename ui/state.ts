@@ -24,6 +24,37 @@ export type UISlice = {
   startEditProfile: () => void
   showMagicSheet: boolean
   setShowMagicSheet: (showMagicSheet: boolean) => void
+  // Background loading state
+  isBackgroundLoading: boolean
+  setBackgroundLoading: (loading: boolean) => void
+  // Search-related state
+  searchMode: boolean
+  selectedRefs: string[]
+  selectedRefItems: any[]
+  returningFromSearch: boolean
+  returningFromSearchViaBackButton: boolean
+  cachedSearchResults: any[]
+  cachedSearchTitle: string
+  cachedSearchSubtitle: string
+  cachedRefTitles: string[]
+  cachedRefImages: string[]
+  closeActiveBottomSheet: (() => void) | null
+  isSearchResultsSheetOpen: boolean
+  setSearchMode: (mode: boolean) => void
+  setSelectedRefs: (refs: string[]) => void
+  setSelectedRefItems: (items: any[]) => void
+  setReturningFromSearch: (returning: boolean) => void
+  setReturningFromSearchViaBackButton: (returning: boolean) => void
+  setCachedSearchResults: (
+    results: any[],
+    title: string,
+    subtitle: string,
+    refTitles?: string[],
+    refImages?: string[]
+  ) => void
+  clearCachedSearchResults: () => void
+  setSearchResultsSheetOpen: (open: boolean) => void
+  setCloseActiveBottomSheet: (closeFunction: (() => void) | null) => void
 }
 
 export const createUISlice: StateCreator<StoreSlices, [], [], UISlice> = (set) => ({
@@ -36,6 +67,12 @@ export const createUISlice: StateCreator<StoreSlices, [], [], UISlice> = (set) =
   newRefSheetRef: React.createRef(),
   addingNewRefTo: null,
   addRefPrompt: '',
+  isBackgroundLoading: false,
+  setBackgroundLoading: (loading: boolean) => {
+    set(() => ({
+      isBackgroundLoading: loading,
+    }))
+  },
   setAddingNewRefTo: (newState: null | 'grid' | 'backlog') => {
     set(() => ({
       addingNewRefTo: newState,
@@ -75,5 +112,77 @@ export const createUISlice: StateCreator<StoreSlices, [], [], UISlice> = (set) =
   showMagicSheet: false,
   setShowMagicSheet: (showMagicSheet: boolean) => {
     set(() => ({ showMagicSheet }))
+  },
+  // Search-related state
+  searchMode: false,
+  selectedRefs: [],
+  selectedRefItems: [],
+  returningFromSearch: false,
+  returningFromSearchViaBackButton: false,
+  cachedSearchResults: [],
+  cachedSearchTitle: '',
+  cachedSearchSubtitle: '',
+  cachedRefTitles: [] as string[],
+  cachedRefImages: [] as string[],
+  closeActiveBottomSheet: null as (() => void) | null,
+  isSearchResultsSheetOpen: false,
+  setSearchMode: (mode: boolean) => {
+    set(() => ({
+      searchMode: mode,
+    }))
+  },
+  setSelectedRefs: (refs: string[]) => {
+    set(() => ({
+      selectedRefs: refs,
+    }))
+  },
+  setSelectedRefItems: (items: any[]) => {
+    set(() => ({
+      selectedRefItems: items,
+    }))
+  },
+  setReturningFromSearch: (returning: boolean) => {
+    set(() => ({
+      returningFromSearch: returning,
+    }))
+  },
+  setReturningFromSearchViaBackButton: (returning: boolean) => {
+    set(() => ({
+      returningFromSearchViaBackButton: returning,
+    }))
+  },
+  setCachedSearchResults: (
+    results: any[],
+    title: string,
+    subtitle: string,
+    refTitles?: string[],
+    refImages?: string[]
+  ) => {
+    set(() => ({
+      cachedSearchResults: results,
+      cachedSearchTitle: title,
+      cachedSearchSubtitle: subtitle,
+      cachedRefTitles: refTitles || [],
+      cachedRefImages: refImages || [],
+    }))
+  },
+  clearCachedSearchResults: () => {
+    set(() => ({
+      cachedSearchResults: [],
+      cachedSearchTitle: '',
+      cachedSearchSubtitle: '',
+      cachedRefTitles: [],
+      cachedRefImages: [],
+    }))
+  },
+  setSearchResultsSheetOpen: (open: boolean) => {
+    set(() => ({
+      isSearchResultsSheetOpen: open,
+    }))
+  },
+  setCloseActiveBottomSheet: (closeFunction: (() => void) | null) => {
+    set(() => ({
+      closeActiveBottomSheet: closeFunction,
+    }))
   },
 })

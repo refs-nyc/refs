@@ -17,11 +17,11 @@ import { BottomSheetScrollView, BottomSheetTextInput, BottomSheetView } from '@g
 import { Zoomable } from '@likashefqet/react-native-image-zoom'
 import { Image } from 'expo-image'
 import { Link, useRouter } from 'expo-router'
-import { useContext, useState } from 'react'
+import { useContext, useState, useEffect } from 'react'
 import { Keyboard, Pressable, Text, useWindowDimensions, View } from 'react-native'
 import { TextInput } from 'react-native-gesture-handler'
 import { KeyboardAvoidingView } from 'react-native-keyboard-controller'
-import Animated, { useAnimatedStyle } from 'react-native-reanimated'
+import Animated, { useAnimatedStyle, withTiming, useSharedValue } from 'react-native-reanimated'
 import { useStore } from 'zustand'
 
 const LocationMeta = ({
@@ -129,26 +129,68 @@ export const DetailsCarouselItem = ({ item, index }: { item: ExpandedItem; index
     referencersBottomSheetRef,
     setCurrentRefId,
   } = useAppStore()
-  const [text, setText] = useState(item?.text)
-  const [url, setUrl] = useState(item?.url)
-  const [listTitle, setListTitle] = useState(item.list ? item?.expand.ref.title : '')
+
+  // Lazy load editing state - only initialize when actually editing
+  const [isEditingInitialized, setIsEditingInitialized] = useState(false)
+  const [text, setText] = useState('')
+  const [url, setUrl] = useState('')
+  const [listTitle, setListTitle] = useState('')
+  const [refTitle, setRefTitle] = useState('')
 
   const editingThisItem = editing === item.id
 
+  // Initialize editing state only when needed
+  useEffect(() => {
+    if (editingThisItem && !isEditingInitialized) {
+      setText(item?.text || '')
+      setUrl(item?.url || '')
+      setListTitle(item.list ? item?.expand.ref.title || '' : '')
+      setRefTitle(item?.expand?.ref?.title || '')
+      setIsEditingInitialized(true)
+    }
+  }, [editingThisItem, item.id, isEditingInitialized])
+
+  // Sync local state with item data when not editing
+  useEffect(() => {
+    if (!editingThisItem) {
+      setText(item?.text || '')
+      setUrl(item?.url || '')
+      setListTitle(item.list ? item?.expand.ref.title || '' : '')
+      setRefTitle(item?.expand?.ref?.title || '')
+      setIsEditingInitialized(false)
+    }
+  }, [item.id, item?.text, item?.url, item?.expand?.ref?.title, editingThisItem])
+
   const showAddRefButton = item.creator !== user?.did
+
+  // Animated opacity for checkbox fade-in
+  const checkboxOpacity = useSharedValue(0)
+
+  useEffect(() => {
+    if (editingThisItem) {
+      checkboxOpacity.value = withTiming(1, { duration: 100 })
+    } else {
+      checkboxOpacity.value = withTiming(0, { duration: 80 })
+    }
+  }, [editingThisItem])
+
+  const checkboxAnimatedStyle = useAnimatedStyle(() => {
+    return {
+      opacity: checkboxOpacity.value,
+    }
+  })
 
   // Calculate title width based on whether there's a link icon
   const hasLinkIcon = !item.list && item.url
   const meatballWidth = s.$4 // 44px - smaller for better proportion
-  const linkIconWidth = hasLinkIcon ? s.$4 : 0 // 44px or 0
+  const linkIconWidth = s.$4 // Always reserve space for link icon
   const iconSpacing = 8 // 8px between link and meatball icons
   const titleMargin = 12 // 12px spacing after title
-  const totalIconsWidth =
-    meatballWidth + (hasLinkIcon ? linkIconWidth + iconSpacing : 0) + titleMargin
+  const totalIconsWidth = meatballWidth + linkIconWidth + iconSpacing + titleMargin
   const titleWidth = win.width - totalIconsWidth - s.$2 * 2 // subtract horizontal padding
 
   const animatedStyle = useAnimatedStyle(() => {
-    return editingThisItem ? base.editableItem : base.nonEditableItem
+    return withTiming(editingThisItem ? base.editableItem : base.nonEditableItem, { duration: 150 })
   }, [editingThisItem])
 
   return (
@@ -158,6 +200,7 @@ export const DetailsCarouselItem = ({ item, index }: { item: ExpandedItem; index
         height: win.height * 0.8,
         gap: s.$1,
         justifyContent: 'flex-start',
+        overflow: 'hidden',
       }}
       key={currentItem.id}
     >
@@ -176,9 +219,14 @@ export const DetailsCarouselItem = ({ item, index }: { item: ExpandedItem; index
           <View style={{ paddingLeft: s.$3, paddingTop: s.$1, paddingBottom: s.$05 }}>
             {openedFromFeed && <ProfileLabel profile={item.expand.creator} />}
           </View>
-          <View style={{ position: 'absolute', right: s.$3, top: s.$2, zIndex: 99 }}>
-            {editing && <ApplyChangesButton />}
-          </View>
+          <Animated.View
+            style={[
+              { position: 'absolute', right: s.$2, top: s.$1, zIndex: 99 },
+              checkboxAnimatedStyle,
+            ]}
+          >
+            {editingThisItem && <ApplyChangesButton />}
+          </Animated.View>
           <Pressable
             style={{
               gap: s.$09,
@@ -297,6 +345,32 @@ export const DetailsCarouselItem = ({ item, index }: { item: ExpandedItem; index
                           })
                       }}
                     />
+                  ) : editingThisItem ? (
+                    <TextInput
+                      style={[
+                        {
+                          position: 'absolute',
+                          top: -25,
+                          left: 10,
+                          width: titleWidth,
+                          paddingHorizontal: s.$1,
+                          paddingVertical: 10,
+                          textAlignVertical: 'center',
+                          fontSize: s.$1,
+                          fontWeight: '700',
+                          color: '#000',
+                          justifyContent: 'center',
+                          alignItems: 'center',
+                        },
+                        base.editableItem,
+                      ]}
+                      value={refTitle}
+                      placeholder="Add a title"
+                      multiline={true}
+                      onChangeText={async (e) => {
+                        setRefTitle(e)
+                      }}
+                    />
                   ) : (
                     <Pressable
                       onPress={() => {
@@ -336,7 +410,6 @@ export const DetailsCarouselItem = ({ item, index }: { item: ExpandedItem; index
                     <View
                       style={{
                         width: s.$4,
-                        height: s.$4,
                         justifyContent: 'center',
                         alignItems: 'center',
                         marginRight: iconSpacing,
@@ -349,7 +422,7 @@ export const DetailsCarouselItem = ({ item, index }: { item: ExpandedItem; index
                         >
                           <Ionicons
                             color={c.muted}
-                            size={s.$2half}
+                            size={s.$2}
                             fillColor="red"
                             name="arrow-forward-outline"
                           />
@@ -360,7 +433,7 @@ export const DetailsCarouselItem = ({ item, index }: { item: ExpandedItem; index
                           <Ionicons
                             name={editingLink ? 'checkmark' : 'arrow-forward-outline'}
                             style={editingLink ? {} : { transform: [{ rotate: '-45deg' }] }}
-                            size={s.$2half}
+                            size={s.$2}
                             color={c.muted}
                           />
                         </Pressable>
@@ -371,7 +444,6 @@ export const DetailsCarouselItem = ({ item, index }: { item: ExpandedItem; index
                   <View
                     style={{
                       width: s.$4,
-                      height: s.$4,
                       justifyContent: 'center',
                       alignItems: 'center',
                     }}
@@ -388,34 +460,46 @@ export const DetailsCarouselItem = ({ item, index }: { item: ExpandedItem; index
 
             {/* Notes */}
             <Animated.View
-              style={[
-                {
-                  width: '100%',
-                  minHeight: s.$10,
-                  paddingHorizontal: s.$1,
-                  paddingVertical: s.$075,
-                },
-                animatedStyle,
-              ]}
+              style={{
+                width: '100%',
+                paddingHorizontal: s.$1,
+                paddingVertical: s.$075,
+              }}
             >
               {editingThisItem ? (
                 <BottomSheetTextInput
-                  defaultValue={item.text || ''}
+                  value={text}
                   placeholder="Add a caption for your profile..."
-                  style={[{ width: '100%', minHeight: s.$10 }, t.pmuted]}
+                  style={[
+                    {
+                      width: '100%',
+                      minHeight: s.$10,
+                      paddingHorizontal: s.$1,
+                      paddingVertical: 10,
+                      color: c.muted,
+                      backgroundColor: c.surface,
+                      borderColor: c.grey1,
+                      borderWidth: 2,
+                      borderRadius: s.$075,
+                    },
+                  ]}
                   multiline={true}
-                  numberOfLines={4}
+                  maxLength={1000}
                   onChangeText={async (e) => {
                     updateEditedState({
                       text: e,
                     })
                     setText(e)
                   }}
-                ></BottomSheetTextInput>
+                />
               ) : (
-                <Text numberOfLines={4} style={t.pmuted}>
-                  {text}
-                </Text>
+                <BottomSheetScrollView
+                  style={{ flex: 1 }}
+                  showsVerticalScrollIndicator={false}
+                  nestedScrollEnabled={true}
+                >
+                  <Text style={t.pmuted}>{text}</Text>
+                </BottomSheetScrollView>
               )}
             </Animated.View>
           </Pressable>

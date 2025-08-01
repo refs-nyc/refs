@@ -1,4 +1,4 @@
-import { Profile } from '@/features/types'
+import { Profile, Ref } from '@/features/types'
 import { c, s } from '@/features/style'
 import UserListItem from '@/ui/atoms/UserListItem'
 import { Button } from '@/ui/buttons/Button'
@@ -16,33 +16,42 @@ export default function Referencers({
 }: {
   referencersBottomSheetRef: React.RefObject<BottomSheet>
 }) {
-  const [users, setUsers] = useState<any[]>([])
-  const [refData, setRefData] = useState<any>({})
-  const { getItemsByRefIds, addRefSheetRef, setAddingRefId, currentRefId, getRefById } =
-    useAppStore()
+  const [users, setUsers] = useState<Profile[]>([])
+  const [refData, setRefData] = useState<Ref | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
+  const { getItemsByRefIds, addRefSheetRef, setAddingRefId, currentRefId } = useAppStore()
 
   useEffect(() => {
     const getUsers = async () => {
       if (!currentRefId) {
         setUsers([])
-        setRefData({})
+        setRefData(null)
         return
       }
-      const users: Profile[] = []
-      const userDids: Set<string> = new Set()
 
-      const items = await getItemsByRefIds([currentRefId])
+      try {
+        setIsLoading(true)
+        const users: Profile[] = []
+        const userIds: Set<string> = new Set()
 
-      for (const item of items) {
-        const user = item.expand?.creator
-        if (!user || userDids.has(user.did)) continue
-        userDids.add(user.did)
-        users.push(user)
+        const items = await getItemsByRefIds([currentRefId])
+
+        for (const item of items) {
+          const user = item.expand?.creator
+          if (!user || userIds.has(user.did)) continue
+          userIds.add(user.did)
+          users.push(user)
+        }
+
+        setUsers(users)
+        setRefData(items[0]?.expand?.ref)
+      } catch (error) {
+        console.error('ReferencersSheet: Error loading users for ref', currentRefId, ':', error)
+        setUsers([])
+        setRefData(null)
+      } finally {
+        setIsLoading(false)
       }
-
-      setUsers(users)
-      const ref = await getRefById(currentRefId)
-      setRefData(ref)
     }
     getUsers()
   }, [currentRefId])
@@ -84,18 +93,35 @@ export default function Referencers({
         </View>
         <BottomSheetScrollView alwaysBounceVertical={false}>
           <YStack>
-            {users.map((user) => (
-              <UserListItem
-                key={user.did}
-                user={user}
-                small={false}
-                onPress={() => {
-                  referencersBottomSheetRef.current?.close()
-                  router.push(`/user/${user.did}`)
-                }}
-                style={{ paddingHorizontal: 0 }}
-              />
-            ))}
+            {isLoading ? (
+              <View style={{ paddingVertical: s.$4, alignItems: 'center' }}>
+                <Text style={{ color: c.muted, fontSize: 14 }}>Loading...</Text>
+              </View>
+            ) : users.length > 0 ? (
+              users.map((user) => (
+                <UserListItem
+                  key={user.did}
+                  user={user}
+                  small={false}
+                  onPress={() => {
+                    referencersBottomSheetRef.current?.close()
+                    router.push(`/user/${user.did}`)
+                  }}
+                  style={{ paddingHorizontal: 0 }}
+                />
+              ))
+            ) : (
+              <View style={{ paddingVertical: s.$4, alignItems: 'center' }}>
+                <Text style={{ color: c.muted, fontSize: 14, textAlign: 'center' }}>
+                  No one has added this ref to their profile yet.
+                </Text>
+                <Text
+                  style={{ color: c.muted, fontSize: 12, textAlign: 'center', marginTop: s.$1 }}
+                >
+                  Be the first to add it!
+                </Text>
+              </View>
+            )}
           </YStack>
         </BottomSheetScrollView>
         <View

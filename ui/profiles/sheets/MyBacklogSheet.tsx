@@ -8,7 +8,6 @@ import { Ionicons } from '@expo/vector-icons'
 import BottomSheet, { BottomSheetBackdrop } from '@gorhom/bottom-sheet'
 import { useEffect, useRef, useState } from 'react'
 import { Pressable, View } from 'react-native'
-import Animated, { FadeIn, FadeOut } from 'react-native-reanimated'
 
 export const MyBacklogSheet = ({
   backlogItems,
@@ -22,21 +21,23 @@ export const MyBacklogSheet = ({
   openAddtoBacklog: () => void
 }) => {
   const bottomSheetRef = useRef<BottomSheet>(null)
+  const [index, setIndex] = useState(0)
 
   const { moduleBackdropAnimatedIndex, registerBackdropPress, unregisterBackdropPress } =
     useAppStore()
 
   // close the new ref sheet when the user taps the navigation backdrop
   useEffect(() => {
-    const key = registerBackdropPress(() => {
-      bottomSheetRef.current?.collapse()
-    })
-    return () => {
-      unregisterBackdropPress(key)
+    // Only register backdrop press when sheet is visible
+    if (index > -1) {
+      const key = registerBackdropPress(() => {
+        bottomSheetRef.current?.close()
+      })
+      return () => {
+        unregisterBackdropPress(key)
+      }
     }
-  }, [])
-
-  const [index, setIndex] = useState(0)
+  }, [index])
 
   const disappearsOnIndex = 0
   const appearsOnIndex = 1
@@ -47,10 +48,10 @@ export const MyBacklogSheet = ({
     <BottomSheet
       enableDynamicSizing={false}
       ref={bottomSheetRef}
-      enablePanDownToClose={false}
       snapPoints={['15%', '90%']}
-      index={0}
-      animatedIndex={moduleBackdropAnimatedIndex}
+      index={-1}
+      enablePanDownToClose={true}
+      animatedIndex={index > -1 ? moduleBackdropAnimatedIndex : undefined}
       onChange={(i: number) => {
         setIndex(i)
       }}

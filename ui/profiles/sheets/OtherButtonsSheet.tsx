@@ -21,7 +21,7 @@ export const OtherButtonsSheet = ({
 }) => {
   const { moduleBackdropAnimatedIndex, saves, addSave, removeSave } = useAppStore()
 
-  const saveId = saves.find((s) => s.expand.user.id === profile?.id)?.id
+  const saveId = saves.find((s) => s.expand.user.did === profile?.did)?.id
   const disappearsOnIndex = 0
   const appearsOnIndex = 1
 
@@ -51,7 +51,7 @@ export const OtherButtonsSheet = ({
         </View>
         <View style={{ height: s.$4, width: s.$10 }}>
           <Pressable
-            onPress={saveId ? () => removeSave(saveId) : () => addSave(profile.id, user?.id!)}
+            onPress={saveId ? () => removeSave(saveId) : () => addSave(profile, user!)}
             style={[
               {
                 alignItems: 'center',

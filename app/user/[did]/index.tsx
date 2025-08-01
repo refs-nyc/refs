@@ -5,7 +5,7 @@ import { useGlobalSearchParams, useRouter } from 'expo-router'
 export default function Screen() {
   const { user } = useAppStore()
 
-  const { userName } = useGlobalSearchParams()
+  const { did } = useGlobalSearchParams()
 
   // Only show the modal if the user is logged in
   const router = useRouter()
@@ -15,7 +15,7 @@ export default function Screen() {
     return
   }
 
-  const userNameParam = typeof userName === 'string' ? userName : userName?.[0]
+  const didParam = typeof did === 'string' ? did : did?.[0]
 
-  return <UserProfileScreen userName={userNameParam} />
+  return <UserProfileScreen did={didParam} />
 }

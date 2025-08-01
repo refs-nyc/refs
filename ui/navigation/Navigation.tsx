@@ -5,11 +5,23 @@ import { c, s } from '@/features/style'
 import { useAppStore } from '@/features/stores'
 import { NavigationBackdrop } from '@/ui/navigation/NavigationBackdrop'
 import { Badge } from '../atoms/Badge'
-import { useMemo, useRef, useEffect } from 'react'
+import { useRef, useEffect, useState, useMemo } from 'react'
 import SavesIcon from '@/assets/icons/saves.svg'
 import MessageIcon from '@/assets/icons/message.svg'
 import { Ionicons } from '@expo/vector-icons'
 import BottomSheet from '@gorhom/bottom-sheet'
+
+const NewMessagesBadge = () => {
+  const { getNumberUnreadMessages } = useAppStore()
+
+  const [newMessages, setNewMessages] = useState(0)
+
+  useEffect(() => {
+    getNumberUnreadMessages().then(setNewMessages)
+  }, [])
+
+  return newMessages > 0 && <Badge count={newMessages} color="#7e8f78" />
+}
 
 export const Navigation = ({
   savesBottomSheetRef,
@@ -21,9 +33,6 @@ export const Navigation = ({
   const {
     user,
     saves,
-    messagesPerConversation,
-    conversations,
-    memberships,
     selectedRefs,
     cachedSearchResults,
     setReturningFromSearchViaBackButton,
@@ -44,7 +53,7 @@ export const Navigation = ({
       // Set the specific flag for back button navigation
       setReturningFromSearchViaBackButton(true)
       // Navigate back to the current user's profile page
-      router.push(`/user/${user?.userName}`)
+      router.push(`/user/${user?.did}`)
       // Open the search results sheet after a brief delay for smooth UX
       setTimeout(() => {
         if (selectedRefs.length > 0 || cachedSearchResults.length > 0) {
@@ -81,46 +90,7 @@ export const Navigation = ({
     }
   }, [saves.length])
 
-  const newMessages = useMemo(() => {
-    if (!user?.id || !messagesPerConversation || Object.keys(memberships).length === 0) {
-      return 0
-    }
-
-    const userId = user.id
-    let totalNewMessages = 0
-
-    // Use more efficient iteration
-    const conversationIds = Object.keys(conversations)
-    for (let i = 0; i < conversationIds.length; i++) {
-      const conversationId = conversationIds[i]
-      const membership = memberships[conversationId]?.find((m) => m.expand?.user.id === userId)
-
-      if (!membership || membership?.archived) continue
-
-      const conversationMessages = messagesPerConversation[conversationId]
-      if (!conversationMessages) continue
-
-      const lastRead = membership?.last_read
-      if (lastRead) {
-        const lastReadDate = new Date(lastRead)
-        // Use more efficient filtering
-        let unreadCount = 0
-        for (let j = 0; j < conversationMessages.length; j++) {
-          const message = conversationMessages[j]
-          if (new Date(message.created!) > lastReadDate && message.sender !== userId) {
-            unreadCount++
-          }
-        }
-        totalNewMessages += unreadCount
-      } else {
-        totalNewMessages += conversationMessages.length
-      }
-    }
-
-    return totalNewMessages
-  }, [messagesPerConversation, memberships, user?.id, conversations])
-
-  if (!user) return null
+  if (!user || pathname === '/onboarding' || pathname === '/user/register') return null
 
   return (
     <View style={{ display: 'flex', flexDirection: 'row', paddingLeft: 2 }}>
@@ -157,8 +127,9 @@ export const Navigation = ({
             </Link>
           </View>
         </View>
+
         <View style={{ top: 1.5, paddingRight: 17 }}>
-          <Link href={`/user/${user.userName}`}>
+          <Link href={`/user/${user.did}`}>
             <Avatar source={user.image} size={30} />
           </Link>
         </View>
@@ -199,7 +170,7 @@ export const Navigation = ({
               }}
             >
               <View style={{ bottom: 2, right: -10, zIndex: 1 }}>
-                {newMessages > 0 && <Badge count={newMessages} color="#7e8f78" />}
+                <NewMessagesBadge />
               </View>
             </View>
           </Pressable>

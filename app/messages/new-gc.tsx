@@ -5,28 +5,19 @@ import { XStack, YStack } from '@/ui'
 import { Avatar } from '@/ui/atoms/Avatar'
 import MessageInput from '@/ui/messaging/MessageInput'
 import { Link, router, useLocalSearchParams } from 'expo-router'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { View, Text, DimensionValue, TextInput } from 'react-native'
 
 export default function NewGCScreen() {
   const queryParams = useLocalSearchParams()
-  const [users, setUsers] = useState<Profile[]>([])
+
   const [message, setMessage] = useState<string>('')
   const [title, setTitle] = useState<string>('')
-  const { user, createConversation, sendMessage, getUsersByIds } = useAppStore()
+  const { user, createConversation, sendMessage, getUsersByDids } = useAppStore()
 
-  useEffect(() => {
-    const getUsers = async () => {
-      const ids =
-        typeof queryParams.members === 'string'
-          ? queryParams.members.split(',')
-          : queryParams.members
-
-      const users = await getUsersByIds(ids)
-      setUsers(users)
-    }
-    getUsers()
-  }, [])
+  const ids =
+    typeof queryParams.members === 'string' ? queryParams.members.split(',') : queryParams.members
+  const users = getUsersByDids(ids)
 
   const getUserListString = (users: Profile[]) => {
     let s = `Chat with ${users[0].firstName}`
@@ -43,13 +34,8 @@ export default function NewGCScreen() {
   }
 
   const onMessageSubmit = async () => {
-    const conversationId = await createConversation(
-      false,
-      user!.id,
-      users.map((u) => u.id),
-      title
-    )
-    await sendMessage(user!.id, conversationId, message)
+    const conversationId = await createConversation(false, users, title)
+    await sendMessage({ conversationId, text: message })
     router.replace(`/messages/${conversationId}`)
   }
 
@@ -88,7 +74,7 @@ export default function NewGCScreen() {
         <Text>{getUserListString(users)}</Text>
         <XStack gap={s.$05} style={{ flexWrap: 'wrap' }}>
           {users.map((u) => (
-            <Link key={u.id} href={`/user/${u.userName}`}>
+            <Link key={u.did} href={`/user/${u.did}`}>
               <Avatar source={u.image} size={s.$3} />
             </Link>
           ))}

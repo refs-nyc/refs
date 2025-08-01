@@ -198,7 +198,7 @@ export default function SearchModeBottomSheet({
   const [lastFetchTime, setLastFetchTime] = useState(0)
 
   const fetchSearchHistory = async (force = false) => {
-    if (!user?.id) return
+    if (!user?.did) return
 
     // Prevent duplicate requests within 2 seconds
     const now = Date.now()
@@ -213,7 +213,7 @@ export default function SearchModeBottomSheet({
       setLoadingHistory(true)
 
       // Make API call non-blocking
-      getSearchHistory(user.id)
+      getSearchHistory(user.did)
         .then((history) => {
           setSearchHistory(history)
           setLoadingHistory(false)
@@ -246,7 +246,7 @@ export default function SearchModeBottomSheet({
       // Only fetch if we don't have data already
       fetchSearchHistory()
     }
-  }, [open, user?.id])
+  }, [open, user?.did])
 
   // Also fetch when the sheet index changes (when user drags up) - optimized
   const handleSheetChange = (index: number) => {

@@ -38,7 +38,7 @@ export default function SwipeableBacklogItem({
         }}
       >
         <SimplePinataImage
-          originalSource={item.image}
+          originalSource={item.image || ''}
           imageOptions={{ width: s.$4, height: s.$4 }}
           style={{
             width: s.$4,
@@ -50,7 +50,7 @@ export default function SwipeableBacklogItem({
         <Pressable
           style={{ flex: 1, justifyContent: 'center' }}
           onPress={() => {
-            setCurrentRefId(item.ref)
+            setCurrentRefId(item.expand.ref.id)
             // sometimes the sheet shows the previous item for a second
             // but this timeout seems to fix it
             setTimeout(() => {

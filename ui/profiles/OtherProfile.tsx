@@ -1,5 +1,4 @@
 import { useAppStore } from '@/features/stores'
-import { getBacklogItems, getProfileItems } from '@/features/stores/items'
 import type { Profile } from '@/features/types'
 import { ExpandedItem } from '@/features/types'
 import { s } from '@/features/style'
@@ -14,24 +13,29 @@ import { ProfileHeader } from './ProfileHeader'
 import { OtherBacklogSheet } from './sheets/OtherBacklogSheet'
 import { OtherButtonsSheet } from './sheets/OtherButtonsSheet'
 
-export const OtherProfile = ({ userName }: { userName: string }) => {
-  const [profile, setProfile] = useState<Profile>()
+export const OtherProfile = ({ did }: { did: string }) => {
   const [gridItems, setGridItems] = useState<ExpandedItem[]>([])
   const [backlogItems, setBacklogItems] = useState<ExpandedItem[]>([])
   const [loading, setLoading] = useState<boolean>(true)
 
-  const { profileRefreshTrigger, user, stopEditing, getUserByUserName } = useAppStore()
+  const {
+    profileRefreshTrigger,
+    user,
+    stopEditing,
+    getUserByDid,
+    getBacklogItems,
+    getProfileItems,
+  } = useAppStore()
 
-  const refreshGrid = async (userName: string) => {
+  const profile = getUserByDid(did)
+
+  const refreshGrid = async () => {
     setLoading(true)
     try {
-      const profile = await getUserByUserName(userName)
-      setProfile(profile)
-
-      const gridItems = await getProfileItems(userName)
+      const gridItems = await getProfileItems(profile)
       setGridItems(gridItems)
 
-      const backlogItems = await getBacklogItems(userName)
+      const backlogItems = await getBacklogItems(profile)
       setBacklogItems(backlogItems as ExpandedItem[])
     } catch (error) {
       console.error(error)
@@ -43,13 +47,13 @@ export const OtherProfile = ({ userName }: { userName: string }) => {
   useEffect(() => {
     const init = async () => {
       try {
-        await refreshGrid(userName)
+        await refreshGrid()
       } catch (error) {
         console.error(error)
       }
     }
     init()
-  }, [userName, profileRefreshTrigger])
+  }, [did, profileRefreshTrigger])
 
   const bottomSheetRef = useRef<BottomSheet>(null)
   const detailsSheetRef = useRef<BottomSheet>(null)
@@ -99,7 +103,7 @@ export const OtherProfile = ({ userName }: { userName: string }) => {
           </View>
         )}
 
-        {!user && <Heading tag="h1">Profile for {userName} not found</Heading>}
+        {!user && <Heading tag="h1">Profile for {did} not found</Heading>}
       </ScrollView>
       {profile && (
         <>
@@ -118,7 +122,7 @@ export const OtherProfile = ({ userName }: { userName: string }) => {
           />
           {detailsItem && (
             <ProfileDetailsSheet
-              profileUsername={profile.userName}
+              profile={profile}
               detailsItemId={detailsItem.id}
               onChange={(index: number) => {
                 if (index === -1) {

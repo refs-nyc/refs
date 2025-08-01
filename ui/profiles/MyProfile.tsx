@@ -1,6 +1,4 @@
 import { useAppStore } from '@/features/stores'
-import { getBacklogItems, getProfileItems } from '@/features/stores/items'
-import type { Profile } from '@/features/types'
 import { ExpandedItem } from '@/features/types'
 import { s, c } from '@/features/style'
 import BottomSheet from '@gorhom/bottom-sheet'
@@ -20,11 +18,10 @@ import SearchModeBottomSheet from './sheets/SearchModeBottomSheet'
 import SearchResultsSheet, { SearchResultsSheetRef } from './sheets/SearchResultsSheet'
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated'
 
-export const MyProfile = ({ userName }: { userName: string }) => {
+export const MyProfile = ({ did }: { did: string }) => {
   const { hasShareIntent } = useShareIntentContext()
   const insets = useSafeAreaInsets()
 
-  const [profile, setProfile] = useState<Profile>()
   const [gridItems, setGridItems] = useState<ExpandedItem[]>([])
   const [backlogItems, setBacklogItems] = useState<ExpandedItem[]>([])
   const [loading, setLoading] = useState<boolean>(true)
@@ -33,7 +30,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
 
   const {
     user,
-    getUserByUserName,
+    getUserByDid,
     moveToBacklog,
     profileRefreshTrigger,
     removeItem,
@@ -42,6 +39,8 @@ export const MyProfile = ({ userName }: { userName: string }) => {
     stopEditing,
     setAddingNewRefTo,
     newRefSheetRef,
+    getBacklogItems,
+    getProfileItems,
     searchMode,
     selectedRefs,
     selectedRefItems: globalSelectedRefItems,
@@ -63,6 +62,8 @@ export const MyProfile = ({ userName }: { userName: string }) => {
 
   const [removingItem, setRemovingItem] = useState<ExpandedItem | null>(null)
 
+  const profile = getUserByDid(did)
+
   // Search-related refs
   const searchResultsSheetRef = useRef<BottomSheet>(null)
   const searchResultsSheetTriggerRef = useRef<SearchResultsSheetRef>(null)
@@ -80,25 +81,27 @@ export const MyProfile = ({ userName }: { userName: string }) => {
       return []
     }
 
-    return selectedRefs.map((id) => {
-      const gridItem = gridItemsMap.get(id)
-      if (!gridItem) return null
-      
-      // Transform ExpandedItem to the structure SearchResultsSheet expects
-      return {
-        id: gridItem.id,
-        ref: gridItem.ref,
-        image: gridItem.image || '',
-        title: gridItem.expand?.ref?.title || gridItem.id,
-        expand: {
-          ref: {
-            id: gridItem.id,
-            title: gridItem.expand?.ref?.title || gridItem.id,
-            image: gridItem.image || '',
+    return selectedRefs
+      .map((id) => {
+        const gridItem = gridItemsMap.get(id)
+        if (!gridItem) return null
+
+        // Transform ExpandedItem to the structure SearchResultsSheet expects
+        return {
+          id: gridItem.id,
+          ref: gridItem.ref,
+          image: gridItem.image || '',
+          title: gridItem.expand?.ref?.title || gridItem.id,
+          expand: {
+            ref: {
+              id: gridItem.id,
+              title: gridItem.expand?.ref?.title || gridItem.id,
+              image: gridItem.image || '',
+            },
           },
-        },
-      }
-    }).filter(Boolean)
+        }
+      })
+      .filter(Boolean)
   }, [selectedRefs, gridItemsMap])
 
   // Debug: Log what selectedRefItems are being passed to SearchResultsSheet
@@ -109,27 +112,14 @@ export const MyProfile = ({ userName }: { userName: string }) => {
       ? globalSelectedRefItems
       : selectedRefItems
 
-
-
-  const refreshGrid = async (userName: string) => {
+  const refreshGrid = async () => {
     setLoading(true)
     try {
-      // Fetch data in parallel for better performance (non-blocking)
-      Promise.all([
-        getUserByUserName(userName),
-        getProfileItems(userName),
-        getBacklogItems(userName),
-      ])
-        .then(([profile, gridItems, backlogItems]) => {
-          setProfile(profile)
-          setGridItems(gridItems)
-          setBacklogItems(backlogItems as ExpandedItem[])
-          setLoading(false)
-        })
-        .catch((error) => {
-          console.error('Failed to refresh grid:', error)
-          setLoading(false)
-        })
+      const gridItems = await getProfileItems(profile)
+      setGridItems(gridItems)
+
+      const backlogItems = await getBacklogItems(profile)
+      setBacklogItems(backlogItems as ExpandedItem[])
     } catch (error) {
       console.error('Failed to refresh grid:', error)
       setLoading(false)
@@ -142,7 +132,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
       removeRefSheetRef.current?.close()
       const updatedRecord = await moveToBacklog(removingItem?.id)
       setRemovingItem(null)
-      await refreshGrid(userName)
+      await refreshGrid()
     } catch (error) {
       console.error(error)
     }
@@ -153,7 +143,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
     removeRefSheetRef.current?.close()
     await removeItem(removingItem.id)
     setRemovingItem(null)
-    await refreshGrid(userName)
+    await refreshGrid()
   }
 
   useEffect(() => {
@@ -166,17 +156,13 @@ export const MyProfile = ({ userName }: { userName: string }) => {
   useEffect(() => {
     const init = async () => {
       try {
-        await refreshGrid(userName)
+        await refreshGrid()
       } catch (error) {
         console.error('Failed to refresh grid:', error)
       }
     }
-
-    // Make initialization non-blocking
-    setTimeout(() => {
-      init()
-    }, 0)
-  }, [userName, profileRefreshTrigger])
+    init()
+  }, [did, profileRefreshTrigger])
 
   // Check if we're returning from a search result and should open search results sheet
   useEffect(() => {
@@ -199,9 +185,6 @@ export const MyProfile = ({ userName }: { userName: string }) => {
       }
     }
 
-
-
-    
     // SIMPLE: Just ensure we have the right selectedRefItems for the sheet
     if (returningFromSearch && selectedRefs.length > 0 && cachedRefTitles.length > 0) {
       // Create the items that the SearchResultsSheet needs for thumbnails
@@ -223,11 +206,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
       setGlobalSelectedRefItems(items)
     }
 
-    if (
-      returningFromSearch &&
-      selectedRefs.length > 0 &&
-      !isOpeningSearchResults
-    ) {
+    if (returningFromSearch && selectedRefs.length > 0 && !isOpeningSearchResults) {
       setIsOpeningSearchResults(true)
       setSearchMode(false)
       // Add a small delay to ensure proper state updates
@@ -415,7 +394,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
           </View>
         )}
 
-        {!user && <Heading tag="h1">Profile for {userName} not found</Heading>}
+        {!user && <Heading tag="h1">Profile for {did} not found</Heading>}
 
         {/* Multiple pressable areas to dismiss search mode - avoiding the grid */}
         {searchMode && (
@@ -519,7 +498,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
           />
           {detailsItem && (
             <ProfileDetailsSheet
-              profileUsername={profile.userName}
+              profile={profile}
               detailsItemId={detailsItem.id}
               onChange={(index: number) => {
                 if (index === -1) {

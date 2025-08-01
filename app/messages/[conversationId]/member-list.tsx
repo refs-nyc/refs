@@ -1,18 +1,26 @@
 import { useAppStore } from '@/features/stores'
-import { Profile } from '@/features/types'
 import { c, s } from '@/features/style'
 import { Heading, XStack, YStack } from '@/ui'
 import { Avatar } from '@/ui/atoms/Avatar'
-import { Ionicons } from '@expo/vector-icons'
-import { Link, router, useLocalSearchParams } from 'expo-router'
-import { View, Text, Pressable, ScrollView } from 'react-native'
+import { Link, useLocalSearchParams } from 'expo-router'
+import { View, Text, ScrollView } from 'react-native'
+import { useMemo } from 'react'
 
 export default function MemberListScreen() {
   const { conversationId } = useLocalSearchParams()
-  const { memberships, conversations } = useAppStore()
+  const { profilesByUserDid, membershipsByConversationAndUserId } = useAppStore()
 
-  const conversation = conversations[conversationId as string]
-  const members = memberships[conversationId as string].map((m) => m.expand?.user) as Profile[]
+  const members = useMemo(() => {
+    if (typeof conversationId !== 'string') return
+
+    const members = []
+    for (const userId of Object.keys(membershipsByConversationAndUserId[conversationId])) {
+      const member = profilesByUserDid[userId as string]
+
+      if (member) members.push(member)
+    }
+    return members
+  }, [conversationId, profilesByUserDid, membershipsByConversationAndUserId])
 
   return (
     <View style={{ flex: 1, backgroundColor: c.surface }}>
@@ -50,9 +58,9 @@ export default function MemberListScreen() {
               paddingVertical: s.$2,
             }}
           >
-            {members.map((m) => (
-              <View key={m.id}>
-                <Link href={`/user/${m.userName}`}>
+            {(members || []).map((m) => (
+              <View key={m.did}>
+                <Link href={`/user/${m.did}`}>
                   <XStack gap={s.$1}>
                     <Avatar source={m.image} size={s.$5} />
                     <YStack>

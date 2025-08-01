@@ -46,10 +46,6 @@ import Referencers from '@/ui/profiles/sheets/ReferencersSheet'
 import { AddRefSheet } from '@/ui/profiles/sheets/AddRefSheet'
 import { NewRefSheet } from '@/ui/profiles/sheets/NewRefSheet'
 
-install()
-polyfillEncoding()
-configureReanimatedLogger({ strict: false })
-
 // TODO: this error keeps getting thrown whenever the app fast reloads in development
 // I suspect that pocketbase subscribes to updates and then doesn't unsubscribe when the app is being reloaded
 // Ignoring these error messages for now
@@ -98,6 +94,17 @@ function FontProvider({ children }: { children: React.ReactNode }) {
 
 export default function RootLayout() {
   const { init } = useAppStore()
+
+  useEffect(() => {
+    // Initialize polyfills after React Native bridge is ready
+    try {
+      install()
+      polyfillEncoding()
+      configureReanimatedLogger({ strict: false })
+    } catch (error) {
+      console.error('Failed to initialize polyfills:', error)
+    }
+  }, [])
 
   useEffect(() => {
     // Initialize user store to sync with PocketBase auth - make non-blocking

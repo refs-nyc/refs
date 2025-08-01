@@ -23,7 +23,6 @@ export const MagicSheet = () => {
     <BottomSheet
       enableDynamicSizing={false}
       ref={bottomSheetRef}
-      enablePanDownToClose={true}
       snapPoints={['90%']}
       index={-1}
       backgroundStyle={{ backgroundColor: c.olive, borderRadius: 50, paddingTop: 0 }}

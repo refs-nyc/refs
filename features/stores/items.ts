@@ -211,13 +211,13 @@ export const createItemSlice: StateCreator<StoreSlices, [], [], ItemSlice> = (se
       expand: 'ref',
     })
 
-    // Trigger webhook for item creation
-    await triggerItemWebhook(newItem.id, 'create', {
-      ref: newItem.ref,
-      creator: newItem.creator,
-      text: newItem.text,
-      ref_title: newItem.expand?.ref?.title || 'Unknown',
-    });
+    // Temporarily disabled webhook to prevent production crashes
+    // await triggerItemWebhook(newItem.id, 'create', {
+    //   ref: newItem.ref,
+    //   creator: newItem.creator,
+    //   text: newItem.text,
+    //   ref_title: newItem.expand?.ref?.title || 'Unknown',
+    // });
 
     return newItem
   },
@@ -284,13 +284,13 @@ export const createItemSlice: StateCreator<StoreSlices, [], [], ItemSlice> = (se
         await get().updateRefTitle(updatedItem.ref, editedState.listTitle)
       }
 
-      // Trigger webhook for item update
-      await triggerItemWebhook(updatedItem.id, 'update', {
-        ref: updatedItem.ref,
-        creator: updatedItem.creator,
-        text: updatedItem.text,
-        ref_title: updatedItem.expand?.ref?.title || 'Unknown',
-      });
+      // Temporarily disabled webhook to prevent production crashes
+      // await triggerItemWebhook(updatedItem.id, 'update', {
+      //   ref: updatedItem.ref,
+      //   creator: updatedItem.creator,
+      //   text: updatedItem.text,
+      //   ref_title: updatedItem.expand?.ref?.title || 'Unknown',
+      // });
 
       // Trigger feed refresh since updates might affect feed visibility
       get().triggerFeedRefresh()

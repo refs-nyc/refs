@@ -1,9 +1,22 @@
-import { pocketbase } from '../pocketbase'
 import { StateCreator } from 'zustand'
 import { Profile, ExpandedProfile } from '../types'
 import { UsersRecord } from '../pocketbase/pocketbase-types'
 import { ClientResponseError } from 'pocketbase'
 import type { StoreSlices } from './types'
+
+// Lazy-load PocketBase to prevent immediate crashes
+let pocketbase: any = null
+const getPocketBase = () => {
+  if (!pocketbase) {
+    try {
+      pocketbase = require('../pocketbase').pocketbase
+    } catch (error) {
+      console.error('Failed to load PocketBase:', error)
+      return null
+    }
+  }
+  return pocketbase
+}
 
 export type UserSlice = {
   stagedUser: Partial<Profile> & { password?: string }
@@ -36,13 +49,22 @@ export const createUserSlice: StateCreator<StoreSlices, [], [], UserSlice> = (se
         isInitialized: true,
       }))
 
+      const pb = getPocketBase()
+      if (!pb) {
+        console.error('PocketBase not available during init')
+        set(() => ({
+          user: null,
+        }))
+        return
+      }
+
       // If PocketBase has a valid auth store, sync it with our store
-      if (pocketbase.authStore.isValid && pocketbase.authStore.record) {
+      if (pb.authStore.isValid && pb.authStore.record) {
         try {
           // Optimize by not expanding items on init - load them separately if needed
-          const record = await pocketbase
+          const record = await pb
             .collection<Profile>('users')
-            .getOne(pocketbase.authStore.record.id)
+            .getOne(pb.authStore.record.id)
 
           set(() => ({
             user: record,
@@ -50,7 +72,7 @@ export const createUserSlice: StateCreator<StoreSlices, [], [], UserSlice> = (se
         } catch (error) {
           console.error('Failed to sync user state:', error)
           // If we can't get the user record, clear the auth store
-          pocketbase.authStore.clear()
+          pb.authStore.clear()
           set(() => ({
             user: null,
           }))
@@ -85,13 +107,18 @@ export const createUserSlice: StateCreator<StoreSlices, [], [], UserSlice> = (se
   //
   updateUser: async (fields: Partial<Profile>) => {
     try {
-      if (!pocketbase.authStore.record) {
+      const pb = getPocketBase()
+      if (!pb) {
+        throw new Error('PocketBase not available')
+      }
+
+      if (!pb.authStore.record) {
         throw new Error('not logged in')
       }
 
-      const record = await pocketbase
+      const record = await pb
         .collection<UsersRecord>('users')
-        .update(pocketbase.authStore.record.id, { ...fields })
+        .update(pb.authStore.record.id, { ...fields })
 
       return record
     } catch (err) {
@@ -113,19 +140,34 @@ export const createUserSlice: StateCreator<StoreSlices, [], [], UserSlice> = (se
     return userRecord
   },
   getUserByUserName: async (userName: string) => {
-    const userRecord = await pocketbase
+    const pb = getPocketBase()
+    if (!pb) {
+      throw new Error('PocketBase not available')
+    }
+
+    const userRecord = await pb
       .collection<Profile>('users')
       .getFirstListItem(`userName = "${userName}"`)
     return userRecord
   },
   getUsersByIds: async (ids: string[]) => {
+    const pb = getPocketBase()
+    if (!pb) {
+      throw new Error('PocketBase not available')
+    }
+
     const filter = ids.map((id) => `id="${id}"`).join(' || ')
-    return await pocketbase.collection('users').getFullList<Profile>({
+    return await pb.collection('users').getFullList<Profile>({
       filter: filter,
     })
   },
   getRandomUser: async () => {
-    const result = await pocketbase.collection('users').getList<Profile>(1, 1, {
+    const pb = getPocketBase()
+    if (!pb) {
+      throw new Error('PocketBase not available')
+    }
+
+    const result = await pb.collection('users').getList<Profile>(1, 1, {
       filter: 'items:length > 5',
       sort: '@random',
     })
@@ -152,7 +194,12 @@ export const createUserSlice: StateCreator<StoreSlices, [], [], UserSlice> = (se
     }
 
     try {
-      const record = await pocketbase
+      const pb = getPocketBase()
+      if (!pb) {
+        throw new Error('PocketBase not available')
+      }
+
+      const record = await pb
         .collection('users')
         .create<ExpandedProfile>(finalUser, { expand: 'items,items.ref' })
 
@@ -171,7 +218,12 @@ export const createUserSlice: StateCreator<StoreSlices, [], [], UserSlice> = (se
   //
   //
   loginWithPassword: async (email: string, password: string) => {
-    const response = await pocketbase
+    const pb = getPocketBase()
+    if (!pb) {
+      throw new Error('PocketBase not available')
+    }
+
+    const response = await pb
       .collection<UsersRecord>('users')
       .authWithPassword(email, password)
     set(() => ({
@@ -184,7 +236,12 @@ export const createUserSlice: StateCreator<StoreSlices, [], [], UserSlice> = (se
   //
   login: async (userName: string) => {
     try {
-      const record = await pocketbase
+      const pb = getPocketBase()
+      if (!pb) {
+        throw new Error('PocketBase not available')
+      }
+
+      const record = await pb
         .collection<Profile>('users')
         .getFirstListItem(`userName = "${userName}"`, { expand: 'items,items.ref' })
 
@@ -200,7 +257,7 @@ export const createUserSlice: StateCreator<StoreSlices, [], [], UserSlice> = (se
       }
 
       // Authenticate with PocketBase
-      await pocketbase.collection('users').authWithPassword(record.email, password)
+      await pb.collection('users').authWithPassword(record.email, password)
 
       set(() => ({
         user: record,
@@ -233,7 +290,10 @@ export const createUserSlice: StateCreator<StoreSlices, [], [], UserSlice> = (se
       stagedUser: {},
       isInitialized: true,
     }))
-    pocketbase.realtime.unsubscribe()
-    pocketbase.authStore.clear()
+    const pb = getPocketBase()
+    if (pb) {
+      pb.realtime.unsubscribe()
+      pb.authStore.clear()
+    }
   },
 })

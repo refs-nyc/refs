@@ -1,13 +1,27 @@
-import { pocketbase } from '../pocketbase'
 import { StateCreator } from 'zustand'
 import { ExpandedItem, CompleteRef, StagedItemFields, StagedRefFields } from '../types'
 import { ItemsRecord, RefsRecord } from '../pocketbase/pocketbase-types'
 import { createdSort } from '@/ui/profiles/sorts'
 import type { StoreSlices } from './types'
 
+// Lazy-load PocketBase to prevent immediate crashes
+let pocketbase: any = null
+const getPocketBase = () => {
+  if (!pocketbase) {
+    try {
+      pocketbase = require('../pocketbase').pocketbase
+    } catch (error) {
+      console.error('Failed to load PocketBase:', error)
+      return null
+    }
+  }
+  return pocketbase
+}
+
 // Helper function to trigger webhook for item changes
 async function triggerItemWebhook(itemId: string, action: 'create' | 'update', itemData: any) {
   try {
+    // Access environment variable inside function to prevent module-level crashes
     const webhookUrl = process.env.EXPO_PUBLIC_WEBHOOK_URL || 'http://localhost:3002';
     
     await fetch(`${webhookUrl}/webhook/item-change`, {
@@ -147,7 +161,12 @@ export const createItemSlice: StateCreator<StoreSlices, [], [], ItemSlice> = (se
     return newItem
   },
   createRef: async (refFields: StagedRefFields) => {
-    const userId = pocketbase.authStore.record?.id
+    const pb = getPocketBase()
+    if (!pb) {
+      throw new Error('PocketBase not available')
+    }
+
+    const userId = pb.authStore.record?.id
     if (!userId) {
       throw new Error('User not found')
     }
@@ -161,12 +180,17 @@ export const createItemSlice: StateCreator<StoreSlices, [], [], ItemSlice> = (se
     }
 
     // create the ref in pocketbase
-    const newRef = await pocketbase.collection<CompleteRef>('refs').create(createRefArgs)
+    const newRef = await pb.collection<CompleteRef>('refs').create(createRefArgs)
 
     return newRef
   },
   createItem: async (refId: string, itemFields: StagedItemFields, backlog: boolean) => {
-    const userId = pocketbase.authStore.record?.id
+    const pb = getPocketBase()
+    if (!pb) {
+      throw new Error('PocketBase not available')
+    }
+
+    const userId = pb.authStore.record?.id
     if (!userId) {
       throw new Error('User not found')
     }
@@ -183,7 +207,7 @@ export const createItemSlice: StateCreator<StoreSlices, [], [], ItemSlice> = (se
     }
 
     // create the item in pocketbase
-    const newItem = await pocketbase.collection('items').create<ExpandedItem>(createItemArgs, {
+    const newItem = await pb.collection('items').create<ExpandedItem>(createItemArgs, {
       expand: 'ref',
     })
 

@@ -12,6 +12,8 @@ import { Avatar } from '@/ui/atoms/Avatar'
 import { SimplePinataImage } from '@/ui/images/SimplePinataImage'
 import { ProfileDetailsSheet } from '@/ui/profiles/ProfileDetailsSheet'
 import BottomSheet from '@gorhom/bottom-sheet'
+import { Image } from 'expo-image'
+import { isPinataUrl } from '../pinata'
 
 const win = Dimensions.get('window')
 
@@ -117,17 +119,30 @@ const ListItem = ({
                 minHeight: FEED_REF_IMAGE_SIZE,
               }}
             >
-              <SimplePinataImage
-                originalSource={item.image}
-                imageOptions={{ width: FEED_REF_IMAGE_SIZE, height: FEED_REF_IMAGE_SIZE }}
-                style={{
-                  width: FEED_REF_IMAGE_SIZE,
-                  height: FEED_REF_IMAGE_SIZE,
-                  backgroundColor: c.accent,
-                  borderRadius: s.$075,
-                  top: 2,
-                }}
-              />
+              {isPinataUrl(item.image) ? (
+                <SimplePinataImage
+                  originalSource={item.image}
+                  imageOptions={{ width: FEED_REF_IMAGE_SIZE, height: FEED_REF_IMAGE_SIZE }}
+                  style={{
+                    width: FEED_REF_IMAGE_SIZE,
+                    height: FEED_REF_IMAGE_SIZE,
+                    backgroundColor: c.accent,
+                    borderRadius: s.$075,
+                    top: 2,
+                  }}
+                />
+              ) : (
+                <Image
+                  source={item.image}
+                  style={{
+                    width: FEED_REF_IMAGE_SIZE,
+                    height: FEED_REF_IMAGE_SIZE,
+                    backgroundColor: c.accent,
+                    borderRadius: s.$075,
+                    top: 2,
+                  }}
+                />
+              )}
             </View>
           </Pressable>
         ) : (

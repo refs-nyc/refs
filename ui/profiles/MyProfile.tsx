@@ -41,16 +41,11 @@ export const MyProfile = ({ did }: { did: string }) => {
     getProfileItems,
     searchMode,
     selectedRefs,
-    selectedRefItems: globalSelectedRefItems,
     cachedSearchResults,
     isSearchResultsSheetOpen,
     setSearchMode,
     setSelectedRefs,
     setSelectedRefItems: setGlobalSelectedRefItems,
-    cachedRefTitles,
-    cachedRefImages,
-    cachedSearchTitle,
-    cachedSearchSubtitle,
     clearCachedSearchResults,
     returningFromSearchNavigation,
     setReturningFromSearchNavigation,
@@ -65,10 +60,6 @@ export const MyProfile = ({ did }: { did: string }) => {
   const searchResultsSheetRef = useRef<BottomSheet>(null)
   const isExpandingSheetRef = useRef(false) // Track if we're already expanding the sheet
   const searchResultsSheetTriggerRef = useRef<SearchResultsSheetRef>(null)
-
-  // Simple cache to avoid refetching the same data
-  const lastFetchedUserName = useRef<string>('')
-  const lastFetchedTrigger = useRef<number>(0)
 
   // Memoized grid items map for O(1) lookup
   const gridItemsMap = useMemo(() => new Map(gridItems.map((item) => [item.id, item])), [gridItems])
@@ -113,6 +104,7 @@ export const MyProfile = ({ did }: { did: string }) => {
 
       const backlogItems = await getBacklogItems(profile)
       setBacklogItems(backlogItems as ExpandedItem[])
+      setLoading(false)
     } catch (error) {
       console.error('Failed to refresh grid:', error)
       setLoading(false)

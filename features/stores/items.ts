@@ -385,17 +385,17 @@ export const createItemSlice: StateCreator<StoreSlices, [], [], ItemSlice> = (se
     if (!canvasApp) {
       throw new Error('Canvas not initialized!')
     }
-    const items: Item[] = []
+    const foundItems: Item[] = []
     for (const refId of refIds) {
       const items = await canvasApp.db.query<Item>('item', {
         where: {
           ref: refId,
         },
       })
-      items.push(...items)
+      foundItems.push(...items)
     }
 
-    return await get().expandItems(items)
+    return await get().expandItems(foundItems)
   },
   getAllItemsByCreator: async (creator: Profile) => {
     const { canvasApp } = get()

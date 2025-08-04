@@ -479,7 +479,7 @@ export const createMessageSlice: StateCreator<StoreSlices, [], [], MessageSlice>
       throw new Error('Not logged in!')
     }
 
-    const myMemberships = membershipsByUserId[user.did]
+    const myMemberships = membershipsByUserId[user.did] || []
 
     const groupConversations = []
 
@@ -556,7 +556,7 @@ export const createMessageSlice: StateCreator<StoreSlices, [], [], MessageSlice>
 
     let unreadMessageCount = 0
 
-    const myMemberships = membershipsByUserId[user.did]
+    const myMemberships = membershipsByUserId[user.did] || []
 
     for (const membership of myMemberships) {
       const countForConversation = await canvasApp.db.count('message', {

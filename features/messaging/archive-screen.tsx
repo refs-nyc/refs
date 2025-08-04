@@ -19,7 +19,7 @@ export function ArchiveScreen() {
       if (!user) return
 
       const archivedConversations = []
-      for (const membership of membershipsByUserId[user.did]) {
+      for (const membership of membershipsByUserId[user.did] || []) {
         if (!membership.archived) continue
 
         const conversation = conversationsById[membership.conversation as string]

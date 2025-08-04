@@ -317,19 +317,17 @@ export const createItemSlice: StateCreator<StoreSlices, [], [], ItemSlice> = (se
     if (!canvasApp) {
       throw new Error('Canvas not initialized!')
     }
-    const allowedTickerTitles = ["Musee d'Orsay", 'Edge city ', 'Bringing Up Baby', 'Tennis']
+    const allowedTickerTitles = ["Musee d''Orsay", 'Edge city', 'Bringing Up Baby', 'Tennis']
 
-    const refs = await canvasApp.db.query<Ref>('ref', {
-      where: {
-        title: {
-          in: allowedTickerTitles,
-        },
-      },
-      orderBy: {
-        created: 'desc',
-      },
-    })
-    return refs
+    const sqliteDbHandle = (canvasApp.db as ModelDB).db
+
+    const queryString = `SELECT * FROM ref WHERE ${allowedTickerTitles
+      .map((title) => `title LIKE '${title}'`)
+      .join(' OR ')} ORDER BY created DESC`
+    const query = await sqliteDbHandle.prepareAsync(queryString)
+    const result = await query.executeAsync<Ref>()
+
+    return await result.getAllAsync()
   },
   getRefById: async (id: string) => {
     const { canvasApp } = get()

@@ -3,27 +3,14 @@ import { ExpandedItem, CompleteRef, StagedItemFields, StagedRefFields } from '..
 import { ItemsRecord, RefsRecord } from '../pocketbase/pocketbase-types'
 import { createdSort } from '@/ui/profiles/sorts'
 import type { StoreSlices } from './types'
-
-// Lazy-load PocketBase to prevent immediate crashes
-let pocketbase: any = null
-const getPocketBase = () => {
-  if (!pocketbase) {
-    try {
-      pocketbase = require('../pocketbase').pocketbase
-    } catch (error) {
-      console.error('Failed to load PocketBase:', error)
-      return null
-    }
-  }
-  return pocketbase
-}
+import { pocketbase } from '../pocketbase'
 
 // Helper function to trigger webhook for item changes
 async function triggerItemWebhook(itemId: string, action: 'create' | 'update', itemData: any) {
   try {
     // Access environment variable inside function to prevent module-level crashes
-    const webhookUrl = process.env.EXPO_PUBLIC_WEBHOOK_URL || 'http://localhost:3002';
-    
+    const webhookUrl = process.env.EXPO_PUBLIC_WEBHOOK_URL || 'http://localhost:3002'
+
     await fetch(`${webhookUrl}/webhook/item-change`, {
       method: 'POST',
       headers: {
@@ -34,11 +21,11 @@ async function triggerItemWebhook(itemId: string, action: 'create' | 'update', i
         action,
         itemData,
       }),
-    });
-    
-    console.log(`✅ Webhook triggered for item ${itemId} (${action})`);
+    })
+
+    console.log(`✅ Webhook triggered for item ${itemId} (${action})`)
   } catch (error) {
-    console.error(`❌ Failed to trigger webhook for item ${itemId}:`, error);
+    console.error(`❌ Failed to trigger webhook for item ${itemId}:`, error)
     // Don't throw - webhook failure shouldn't break the main flow
   }
 }
@@ -107,7 +94,6 @@ export type ItemSlice = {
   getItemsByRefIds: (refIds: string[]) => Promise<ExpandedItem[]>
   getAllItemsByCreator: (creatorId: string) => Promise<ExpandedItem[]>
   getListsByCreator: (creatorId: string) => Promise<ExpandedItem[]>
-
 }
 
 // ***
@@ -161,12 +147,7 @@ export const createItemSlice: StateCreator<StoreSlices, [], [], ItemSlice> = (se
     return newItem
   },
   createRef: async (refFields: StagedRefFields) => {
-    const pb = getPocketBase()
-    if (!pb) {
-      throw new Error('PocketBase not available')
-    }
-
-    const userId = pb.authStore.record?.id
+    const userId = pocketbase.authStore.record?.id
     if (!userId) {
       throw new Error('User not found')
     }
@@ -180,17 +161,12 @@ export const createItemSlice: StateCreator<StoreSlices, [], [], ItemSlice> = (se
     }
 
     // create the ref in pocketbase
-    const newRef = await pb.collection<CompleteRef>('refs').create(createRefArgs)
+    const newRef = await pocketbase.collection<CompleteRef>('refs').create(createRefArgs)
 
     return newRef
   },
   createItem: async (refId: string, itemFields: StagedItemFields, backlog: boolean) => {
-    const pb = getPocketBase()
-    if (!pb) {
-      throw new Error('PocketBase not available')
-    }
-
-    const userId = pb.authStore.record?.id
+    const userId = pocketbase.authStore.record?.id
     if (!userId) {
       throw new Error('User not found')
     }
@@ -207,7 +183,7 @@ export const createItemSlice: StateCreator<StoreSlices, [], [], ItemSlice> = (se
     }
 
     // create the item in pocketbase
-    const newItem = await pb.collection('items').create<ExpandedItem>(createItemArgs, {
+    const newItem = await pocketbase.collection('items').create<ExpandedItem>(createItemArgs, {
       expand: 'ref',
     })
 
@@ -384,7 +360,7 @@ export const createItemSlice: StateCreator<StoreSlices, [], [], ItemSlice> = (se
       filter,
       expand: 'creator, ref',
     })
-    
+
     return results
   },
   getAllItemsByCreator: async (creatorId: string) => {

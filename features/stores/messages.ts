@@ -450,8 +450,8 @@ export const createMessageSlice: StateCreator<StoreSlices, [], [], MessageSlice>
       throw new Error('Not logged in!')
     }
 
-    const myMemberships = membershipsByUserId[user.did]
-    const otherUserMemberships = membershipsByUserId[otherUserDid]
+    const myMemberships = membershipsByUserId[user.did] || []
+    const otherUserMemberships = membershipsByUserId[otherUserDid] || []
 
     const myConversationIds = new Set(myMemberships.map((membership) => membership.conversation))
     const otherUserConversationIds = new Set(

@@ -87,7 +87,7 @@ export const createUserSlice: StateCreator<StoreSlices, [], [], UserSlice> = (se
   //
   //
   init: async () => {
-    const { canvasApp, profilesByUserDid } = get()
+    const { canvasApp } = get()
     try {
       if (!canvasApp) {
         throw new Error('Canvas not initialized yet!')
@@ -96,7 +96,7 @@ export const createUserSlice: StateCreator<StoreSlices, [], [], UserSlice> = (se
       const jsonRpcSigner = getCurrentJsonRpcSignerFromMagic()
       const sessionSigner = new SIWESigner({ signer: jsonRpcSigner })
       const userDid = await sessionSigner.getDid()
-      const profile = profilesByUserDid[userDid]
+      const profile = await canvasApp.db.get<Profile>('profile', userDid)
 
       set({
         user: profile,

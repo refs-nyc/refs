@@ -31,8 +31,6 @@ export type UISlice = {
   searchMode: boolean
   selectedRefs: string[]
   selectedRefItems: any[]
-  returningFromSearch: boolean
-  returningFromSearchViaBackButton: boolean
   cachedSearchResults: any[]
   cachedSearchTitle: string
   cachedSearchSubtitle: string
@@ -40,11 +38,10 @@ export type UISlice = {
   cachedRefImages: string[]
   closeActiveBottomSheet: (() => void) | null
   isSearchResultsSheetOpen: boolean
+  returningFromSearchNavigation: boolean // Track when returning from search navigation
   setSearchMode: (mode: boolean) => void
   setSelectedRefs: (refs: string[]) => void
   setSelectedRefItems: (items: any[]) => void
-  setReturningFromSearch: (returning: boolean) => void
-  setReturningFromSearchViaBackButton: (returning: boolean) => void
   setCachedSearchResults: (
     results: any[],
     title: string,
@@ -54,6 +51,7 @@ export type UISlice = {
   ) => void
   clearCachedSearchResults: () => void
   setSearchResultsSheetOpen: (open: boolean) => void
+  setReturningFromSearchNavigation: (returning: boolean) => void
   setCloseActiveBottomSheet: (closeFunction: (() => void) | null) => void
 }
 
@@ -117,8 +115,6 @@ export const createUISlice: StateCreator<StoreSlices, [], [], UISlice> = (set) =
   searchMode: false,
   selectedRefs: [],
   selectedRefItems: [],
-  returningFromSearch: false,
-  returningFromSearchViaBackButton: false,
   cachedSearchResults: [],
   cachedSearchTitle: '',
   cachedSearchSubtitle: '',
@@ -126,6 +122,7 @@ export const createUISlice: StateCreator<StoreSlices, [], [], UISlice> = (set) =
   cachedRefImages: [] as string[],
   closeActiveBottomSheet: null as (() => void) | null,
   isSearchResultsSheetOpen: false,
+  returningFromSearchNavigation: false, // Track when returning from search navigation
   setSearchMode: (mode: boolean) => {
     set(() => ({
       searchMode: mode,
@@ -139,16 +136,6 @@ export const createUISlice: StateCreator<StoreSlices, [], [], UISlice> = (set) =
   setSelectedRefItems: (items: any[]) => {
     set(() => ({
       selectedRefItems: items,
-    }))
-  },
-  setReturningFromSearch: (returning: boolean) => {
-    set(() => ({
-      returningFromSearch: returning,
-    }))
-  },
-  setReturningFromSearchViaBackButton: (returning: boolean) => {
-    set(() => ({
-      returningFromSearchViaBackButton: returning,
     }))
   },
   setCachedSearchResults: (
@@ -178,6 +165,11 @@ export const createUISlice: StateCreator<StoreSlices, [], [], UISlice> = (set) =
   setSearchResultsSheetOpen: (open: boolean) => {
     set(() => ({
       isSearchResultsSheetOpen: open,
+    }))
+  },
+  setReturningFromSearchNavigation: (returning: boolean) => {
+    set(() => ({
+      returningFromSearchNavigation: returning,
     }))
   },
   setCloseActiveBottomSheet: (closeFunction: (() => void) | null) => {

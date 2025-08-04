@@ -2,7 +2,7 @@ import { createClient } from '@supabase/supabase-js'
 import type { ItemsRecord, UsersRecord } from '@/features/pocketbase/pocketbase-types'
 
 // Initialize Supabase client
-const supabase = createClient(process.env.SUPA_URL!, process.env.SUPA_KEY!)
+const supabase = createClient(process.env.EXPO_PUBLIC_SUPA_URL!, process.env.EXPO_PUBLIC_SUPA_KEY!)
 
 // Hook for when an item is created or updated
 export async function onItemChange(record: ItemsRecord, isNew: boolean, pb: any) {

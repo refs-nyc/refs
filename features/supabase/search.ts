@@ -10,11 +10,12 @@ export interface SearchResult {
 }
 
 function createSupabaseClient() {
-  const supabaseUrl = process.env.SUPA_URL
-  const supabaseKey = process.env.SUPA_KEY
+  const supabaseUrl = process.env.EXPO_PUBLIC_SUPA_URL
+  const supabaseKey = process.env.EXPO_PUBLIC_SUPA_KEY
 
   if (!supabaseUrl || !supabaseKey) {
-    throw new Error('Missing Supabase credentials')
+    console.warn('Missing Supabase credentials - search not available')
+    return null
   }
 
   return createClient(supabaseUrl, supabaseKey)
@@ -27,7 +28,12 @@ export async function searchPeople(
 ): Promise<SearchResult[]> {
   try {
     console.log('🔍 Starting search with item IDs:', itemIds)
-    const supabase = createSupabaseClient()
+    const supabase = createSupabaseClient() // Get the client here
+
+    if (!supabase) {
+      console.error('Supabase client not available for search.')
+      return []
+    }
 
     // Get the search items from Supabase
     const { data: searchItems, error: itemsError } = await supabase

@@ -5,6 +5,31 @@ import type { StoreSlices } from './types'
 import { PrimaryKeyValue } from '@canvas-js/modeldb'
 import { ModelDB } from '@canvas-js/modeldb-sqlite-expo'
 
+// Helper function to trigger webhook for item changes
+async function triggerItemWebhook(itemId: string, action: 'create' | 'update', itemData: any) {
+  try {
+    // Access environment variable inside function to prevent module-level crashes
+    const webhookUrl = process.env.EXPO_PUBLIC_WEBHOOK_URL || 'http://localhost:3002'
+
+    await fetch(`${webhookUrl}/webhook/item-change`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        itemId,
+        action,
+        itemData,
+      }),
+    })
+
+    console.log(`✅ Webhook triggered for item ${itemId} (${action})`)
+  } catch (error) {
+    console.error(`❌ Failed to trigger webhook for item ${itemId}:`, error)
+    // Don't throw - webhook failure shouldn't break the main flow
+  }
+}
+
 function gridSort(items: ExpandedItem[]): ExpandedItem[] {
   const itemsWithOrder: ExpandedItem[] = []
   const itemsWithoutOrder: ExpandedItem[] = []
@@ -163,6 +188,14 @@ export const createItemSlice: StateCreator<StoreSlices, [], [], ItemSlice> = (se
 
     const { result } = await canvasActions!.createItem(createItemArgs)
 
+    // Temporarily disabled webhook to prevent production crashes
+    // await triggerItemWebhook(newItem.id, 'create', {
+    //   ref: newItem.ref,
+    //   creator: newItem.creator,
+    //   text: newItem.text,
+    //   ref_title: newItem.expand?.ref?.title || 'Unknown',
+    // });
+
     return result
   },
 
@@ -224,6 +257,14 @@ export const createItemSlice: StateCreator<StoreSlices, [], [], ItemSlice> = (se
     if (editedState.listTitle) {
       await canvasActions.updateRefTitle(updatedItem!.ref as string, editedState.listTitle)
     }
+
+    // Temporarily disabled webhook to prevent production crashes
+    // await triggerItemWebhook(updatedItem.id, 'update', {
+    //   ref: updatedItem.ref,
+    //   creator: updatedItem.creator,
+    //   text: updatedItem.text,
+    //   ref_title: updatedItem.expand?.ref?.title || 'Unknown',
+    // });
 
     // Trigger feed refresh since updates might affect feed visibility
     get().triggerFeedRefresh()

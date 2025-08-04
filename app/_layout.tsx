@@ -45,10 +45,6 @@ import { AddRefSheet } from '@/ui/profiles/sheets/AddRefSheet'
 import { NewRefSheet } from '@/ui/profiles/sheets/NewRefSheet'
 import { MagicSheet } from '@/features/magic/MagicSheet'
 
-install()
-polyfillEncoding()
-configureReanimatedLogger({ strict: false })
-
 export {
   // Catch any errors thrown by the Layout component.
   ErrorBoundary,
@@ -62,6 +58,11 @@ Notifications.setNotificationHandler({
     shouldSetBadge: true,
   }),
 })
+
+// Initialize polyfills
+install()
+polyfillEncoding()
+configureReanimatedLogger({ strict: false })
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync()

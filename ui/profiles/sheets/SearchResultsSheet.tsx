@@ -43,8 +43,14 @@ export default forwardRef<
   const snapPoints = ['25%', '80%']
   const resultsAnimation = useRef(new Animated.Value(0)).current
   const dropdownAnimation = useRef(new Animated.Value(0)).current
-  const { user, moduleBackdropAnimatedIndex, registerBackdropPress, unregisterBackdropPress } =
-    useAppStore()
+  const {
+    user,
+    moduleBackdropAnimatedIndex,
+    registerBackdropPress,
+    unregisterBackdropPress,
+    setReturningFromSearchNavigation,
+    returningFromSearchNavigation,
+  } = useAppStore()
 
   // Register backdrop press handler
   useEffect(() => {
@@ -65,7 +71,11 @@ export default forwardRef<
     }
 
     hasAnimatedResults.current = true
-    resultsAnimation.setValue(0)
+    // Don't set to 0 if we're loading cached results - this causes the flash
+    // Only animate from 0 to 1 for fresh searches
+    if (searchResults.length === 0) {
+      resultsAnimation.setValue(0)
+    }
     Animated.timing(resultsAnimation, {
       toValue: 1,
       duration: 300, // Smooth fade-in duration
@@ -104,8 +114,6 @@ export default forwardRef<
   }
 
   const {
-    returningFromSearch,
-    setReturningFromSearch,
     cachedSearchResults,
     cachedSearchTitle,
     cachedSearchSubtitle,
@@ -161,25 +169,61 @@ export default forwardRef<
 
   // Separate effect to handle cached results being set after component is open
   useEffect(() => {
-    if (cachedSearchResults.length > 0 && !hasUsedCachedResults.current && !isLoading) {
-      setSearchResults(cachedSearchResults)
-      setSearchTitle(cachedSearchTitle)
-      setSearchSubtitle(cachedSearchSubtitle)
-      setIsLoading(false)
-      setSearchError(null)
-      hasUsedCachedResults.current = true
+    const loadCachedResults = async () => {
+      if (cachedSearchResults.length > 0 && !hasUsedCachedResults.current && !isLoading) {
+        console.log('🔄 Loading cached search results into sheet...')
 
-      // Convert cached results to profiles immediately
-      animateResultsIn() // Start animation immediately
+        // Check if we already have the same results loaded to prevent duplicate loading
+        const currentResultsKey = searchResults
+          .map((r) => r.id)
+          .sort()
+          .join(',')
+        const cachedResultsKey = cachedSearchResults
+          .map((r) => r.id)
+          .sort()
+          .join(',')
 
-      const convertedProfiles = getUsersByDids(cachedSearchResults.map((result) => result.did))
-      setProfiles(convertedProfiles)
+        if (currentResultsKey === cachedResultsKey && searchResults.length > 0) {
+          console.log('⏸️ Same results already loaded, skipping...')
+          hasUsedCachedResults.current = true
+          return
+        }
+
+        setSearchResults(cachedSearchResults)
+        setSearchTitle(cachedSearchTitle)
+        setSearchSubtitle(cachedSearchSubtitle)
+        setIsLoading(false)
+        setSearchError(null)
+        hasUsedCachedResults.current = true
+
+        // Only reset animation flag if we're actually loading new results
+        if (searchResults.length === 0 || currentResultsKey !== cachedResultsKey) {
+          hasAnimatedResults.current = false
+        }
+
+        // Convert cached results to profiles immediately
+        animateResultsIn() // Start animation immediately
+        const convertedProfiles = getUsersByDids(cachedSearchResults.map((result) => result.did))
+        setProfiles(convertedProfiles)
+        console.log('✅ Successfully loaded cached results into sheet')
+      }
     }
-  }, [cachedSearchResults, cachedSearchTitle, cachedSearchSubtitle, isLoading])
+
+    loadCachedResults()
+  }, [cachedSearchResults.length, cachedSearchTitle, cachedSearchSubtitle, isLoading]) // Only depend on length, not the full array
+
+  // Reset the cached results flag when returning from search navigation
+  useEffect(() => {
+    if (returningFromSearchNavigation && cachedSearchResults.length > 0) {
+      console.log('🔄 Resetting cached results flag for navigation return...')
+      hasUsedCachedResults.current = false
+    }
+  }, [returningFromSearchNavigation, cachedSearchResults.length])
 
   // Function to restore search from history
   const restoreSearchFromHistory = useCallback(async (historyItem: SearchHistoryRecord) => {
     try {
+      console.log('🔄 Restoring search from history...')
       // Check if we have cached search results
       if (
         historyItem.search_results &&
@@ -191,23 +235,26 @@ export default forwardRef<
         setSearchTitle(historyItem.search_title || 'People into')
         setSearchSubtitle(historyItem.search_subtitle || 'Browse, dm, or add to a group')
 
-        // Also update the cached search results in the global store
-        setCachedSearchResults(
-          historyItem.search_results,
-          historyItem.search_title || 'People into',
-          historyItem.search_subtitle || 'Browse, dm, or add to a group',
-          historyItem.ref_titles || [],
-          historyItem.ref_images || []
-        )
+        // Don't update the cached search results in the global store when restoring from history
+        // This prevents the loadCachedResults useEffect from triggering and causing the dip
+        // setCachedSearchResults(
+        //   historyItem.search_results,
+        //   historyItem.search_title || 'People into',
+        //   historyItem.search_subtitle || 'Browse, dm, or add to a group',
+        //   historyItem.ref_titles || [],
+        //   historyItem.ref_images || []
+        // )
 
         setIsLoading(false)
         setSearchError(null)
-        hasUsedCachedResults.current = true
+        // Don't set hasUsedCachedResults to true here - let the cached results system handle it
+        // hasUsedCachedResults.current = true
 
         // Convert cached results to profiles immediately
         animateResultsIn() // Start animation immediately
         const convertedProfiles = getUsersByDids(cachedSearchResults.map((result) => result.did))
         setProfiles(convertedProfiles)
+        console.log('✅ Successfully restored search from history')
       } else {
         setSearchError('Cannot restore search from history (no cached results)')
       }
@@ -395,10 +442,11 @@ export default forwardRef<
   }
 
   const handleUserPress = (profile: Profile) => {
-    // Set navigation state for returning from search
-    setReturningFromSearch(true)
+    // Set flag to indicate we're navigating from search results
+    setReturningFromSearchNavigation(true)
 
-    // Use push to maintain navigation history for back button
+    // Navigate to user profile using push
+    // The search context is preserved in global state and will be restored on back
     router.push(`/user/${profile.did}`)
   }
 
@@ -465,11 +513,6 @@ export default forwardRef<
         if (i === -1) {
           handleClose()
           setSearchResultsSheetOpen(false)
-          // Only clear returningFromSearch if we're not navigating to a user profile
-          // (The handleUserPress function will set returningFromSearchViaBackButton)
-          if (!returningFromSearch) {
-            setReturningFromSearch(false)
-          }
         } else if (i === 0 || i === 1) {
           setSearchResultsSheetOpen(true)
           // Don't reset the flag here - let the triggerSearch function handle it

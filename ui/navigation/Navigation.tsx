@@ -30,43 +30,26 @@ export const Navigation = ({
 }) => {
   const pathname = usePathname()
 
-  const {
-    user,
-    saves,
-    selectedRefs,
-    cachedSearchResults,
-    setReturningFromSearchViaBackButton,
-    setReturningFromSearch,
-  } = useAppStore()
+  const { user, saves, returningFromSearchNavigation, cachedSearchResults } = useAppStore()
 
   const isHomePage = pathname === '/' || pathname === '/index'
 
   const scaleAnim = useRef(new Animated.Value(1)).current
 
-  // Custom back button handler for search results
+  // Enhanced back button handler that preserves search context
   const handleBackPress = () => {
-    // Check if we're on a user profile page and have search context
-    if (
-      pathname.startsWith('/user/') &&
-      (selectedRefs.length > 0 || cachedSearchResults.length > 0)
-    ) {
-      // Set the specific flag for back button navigation
-      setReturningFromSearchViaBackButton(true)
-      // Navigate back to the current user's profile page
-      router.push(`/user/${user?.did}`)
-      // Open the search results sheet after a brief delay for smooth UX
-      setTimeout(() => {
-        if (selectedRefs.length > 0 || cachedSearchResults.length > 0) {
-          // Trigger the search results sheet to open
-          setReturningFromSearch(true)
-          setReturningFromSearchViaBackButton(true) // Also set this flag so MyProfile knows it's from back button
-        } else {
-        }
-      }, 100) // Small delay to ensure navigation completes first
-    } else {
-      // Default back behavior
-      router.back()
+    // Check if we're returning from search navigation and have search context
+    if (returningFromSearchNavigation && cachedSearchResults.length > 0) {
+      // Navigate back to the current user's profile with search context preserved
+      const currentUser = user?.did
+      if (currentUser) {
+        router.push(`/user/${currentUser}`)
+        return
+      }
     }
+
+    // Default back behavior
+    router.back()
   }
 
   const animateBadge = () => {

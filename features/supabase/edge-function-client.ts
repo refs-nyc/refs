@@ -42,26 +42,39 @@ interface RegenerateSpiritVectorResponse {
 }
 
 class EdgeFunctionClient {
-  private supabase: any
-  private functionUrl: string
+  private supabase: any = null
+  private functionUrl: string | null = null
+  private initialized: boolean = false
 
-  constructor() {
-    const supabaseUrl = process.env.SUPA_URL
-    const supabaseKey = process.env.SUPA_KEY
+  private initialize() {
+    if (this.initialized) {
+      return
+    }
+
+    const supabaseUrl = process.env.EXPO_PUBLIC_SUPA_URL
+    const supabaseKey = process.env.EXPO_PUBLIC_SUPA_KEY
 
     if (!supabaseUrl || !supabaseKey) {
-      throw new Error('Missing Supabase credentials')
+      console.warn('Missing Supabase credentials - edge function client not initialized')
+      return
     }
 
     this.supabase = createClient(supabaseUrl, supabaseKey)
     this.functionUrl = `${supabaseUrl}/functions/v1/openai`
+    this.initialized = true
   }
 
   private async callFunction<T>(action: string, data: any): Promise<T> {
-    const response = await fetch(this.functionUrl, {
+    this.initialize()
+    
+    if (!this.initialized) {
+      throw new Error('Edge function client not initialized - missing Supabase credentials')
+    }
+
+    const response = await fetch(this.functionUrl!, {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${process.env.SUPA_KEY}`,
+        Authorization: `Bearer ${process.env.EXPO_PUBLIC_SUPA_KEY}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({

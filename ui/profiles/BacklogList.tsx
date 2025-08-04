@@ -37,21 +37,15 @@ function groupByDate(items_: ExpandedItem[], timeZone: string) {
   for (const item of items) {
     const utcString = item.created.slice(0, -1)
 
-    const dt = DateTime.fromFormat(utcString, 'yyyy-MM-dd HH:mm:ss.SSS', {
-      zone: 'utc',
-    }).setZone(timeZone)
+    const dt = DateTime.fromISO(utcString).setZone(timeZone)
 
     const daysAgo = now.diff(dt, 'days').days
 
     if (daysAgo >= 6) {
-      const month = DateTime.fromFormat(utcString, 'yyyy-MM-dd HH:mm:ss.SSS', {
-        zone: 'utc',
-      }).setZone(timeZone).monthLong
+      const month = DateTime.fromISO(utcString).setZone(timeZone).monthLong
       groups[GROUP_NAMES.indexOf(month!)].push(item)
     } else {
-      const dayOfWeek = DateTime.fromFormat(utcString, 'yyyy-MM-dd HH:mm:ss.SSS', {
-        zone: 'utc',
-      }).setZone(timeZone).weekdayLong
+      const dayOfWeek = DateTime.fromISO(utcString).setZone(timeZone).weekdayLong
 
       if (dayOfWeek == now.weekdayLong) {
         groups[0].push(item)

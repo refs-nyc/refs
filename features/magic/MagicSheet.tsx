@@ -25,7 +25,7 @@ export const MagicSheet = () => {
       ref={bottomSheetRef}
       snapPoints={['90%']}
       index={-1}
-      backgroundStyle={{ backgroundColor: c.olive, borderRadius: 50, paddingTop: 0 }}
+      backgroundStyle={{ backgroundColor: c.white, borderRadius: 50, paddingTop: 0 }}
       backdropComponent={(p) => (
         <BottomSheetBackdrop
           {...p}

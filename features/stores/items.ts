@@ -162,10 +162,13 @@ export const createItemSlice: StateCreator<StoreSlices, [], [], ItemSlice> = (se
     const { canvasActions } = get()
 
     const createRefArgs = {
-      title: refFields.title || '',
-      url: refFields.url || '',
+      // TODO: fix this
+      // We should be able to pass in blank values for these, but for some reason we get this error:
+      // `Exception in HostFunction: unordered_map::at: key not found` when db.set is called
+      title: refFields.title || 'placeholder title',
+      url: refFields.url || 'https://refs.nyc/',
       meta: refFields.meta || '{}',
-      image: refFields.image || '',
+      image: refFields.image || 'https://placecats.com/neo/300/200',
     }
 
     const { result } = await canvasActions!.createRef(createRefArgs)

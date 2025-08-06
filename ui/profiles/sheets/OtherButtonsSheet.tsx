@@ -7,6 +7,7 @@ import { DMButton } from '@/ui/profiles/DMButton'
 import { Heading } from '@/ui/typo/Heading'
 import BottomSheet, { BottomSheetBackdrop } from '@gorhom/bottom-sheet'
 import { Pressable, StyleSheet, Text, View } from 'react-native'
+import { useLiveQuery } from '@canvas-js/hooks/components'
 
 export const OtherButtonsSheet = ({
   bottomSheetRef,
@@ -19,9 +20,13 @@ export const OtherButtonsSheet = ({
   user: Profile | null
   openBacklogSheet: () => void
 }) => {
-  const { moduleBackdropAnimatedIndex, saves, addSave, removeSave } = useAppStore()
+  const { moduleBackdropAnimatedIndex, canvasApp, addSave, removeSave } = useAppStore()
 
-  const saveId = saves.find((s) => s.expand.user.id === profile?.id)?.id
+  const saves = useLiveQuery(canvasApp, 'save', {
+    where: { user: profile.did, saved_by: user?.did },
+  })
+
+  const save = saves ? saves[0] : null
   const disappearsOnIndex = 0
   const appearsOnIndex = 1
 
@@ -51,7 +56,7 @@ export const OtherButtonsSheet = ({
         </View>
         <View style={{ height: s.$4, width: s.$10 }}>
           <Pressable
-            onPress={saveId ? () => removeSave(saveId) : () => addSave(profile.id, user?.id!)}
+            onPress={save ? () => removeSave(save.id) : () => addSave(profile)}
             style={[
               {
                 alignItems: 'center',
@@ -65,7 +70,7 @@ export const OtherButtonsSheet = ({
                 backgroundColor: 'transparent',
                 height: 47,
               },
-              saveId ? styles.saved : {},
+              save ? styles.saved : {},
             ]}
           >
             <Heading
@@ -74,7 +79,7 @@ export const OtherButtonsSheet = ({
                 color: c.white,
               }}
             >
-              <Text style={{ fontSize: 16.5 }}>{saveId ? 'Saved' : 'Save'}</Text>
+              <Text style={{ fontSize: 16.5 }}>{save ? 'Saved' : 'Save'}</Text>
             </Heading>
           </Pressable>
         </View>

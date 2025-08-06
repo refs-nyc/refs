@@ -5,9 +5,9 @@ import { ListItem } from '@/ui/lists/ListItem'
 import { NewRefListItem } from '@/ui/atoms/NewRefListItem'
 import { XStack, YStack } from '@/ui/core/Stacks'
 import { s, c } from '@/features/style'
-import { CompleteRef } from '@/features/types'
+import { Ref } from '@/features/types'
 import { getLinkPreview } from 'link-preview-js'
-import { ShareIntent as ShareIntentType, useShareIntentContext } from 'expo-share-intent'
+import { useShareIntentContext } from 'expo-share-intent'
 import * as Clipboard from 'expo-clipboard'
 import { KeyboardAvoidingView } from 'react-native-keyboard-controller'
 import { Ionicons } from '@expo/vector-icons'
@@ -89,7 +89,7 @@ export const SearchRef = ({
   url?: string
   image?: string
   paste?: boolean
-  onChooseExistingRef: (r: CompleteRef, newImage?: string) => void
+  onChooseExistingRef: (r: Ref, newImage?: string) => void
   onAddNewRef: (fields: NewRefFields) => void
   prompt?: string
 }) => {
@@ -97,7 +97,7 @@ export const SearchRef = ({
   const [disableNewRef, setDisableNewRef] = useState(false)
   const [urlState, setUrlState] = useState(url)
   const [imageState, setImageState] = useState(image)
-  const [searchResults, setSearchResults] = useState<CompleteRef[]>([])
+  const [searchResults, setSearchResults] = useState<Ref[]>([])
   const [debouncedQuery, setDebouncedQuery] = useState('')
   const { hasShareIntent, shareIntent, resetShareIntent } = useShareIntentContext()
   const [picking, setPicking] = useState(false)
@@ -118,7 +118,7 @@ export const SearchRef = ({
   }, [searchQuery])
 
   // Search result item
-  const renderItem = ({ item }: { item: CompleteRef }) => {
+  const renderItem = ({ item }: { item: Ref }) => {
     return (
       <View key={item.id}>
         <Pressable onPress={() => onRefPress(item.id, item)}>
@@ -162,7 +162,7 @@ export const SearchRef = ({
 
   useEffect(() => {
     const runSearch = async () => {
-      let refsResults: CompleteRef[] = []
+      let refsResults: Ref[] = []
 
       if (debouncedQuery === '') {
         setSearchResults([])
@@ -225,7 +225,7 @@ export const SearchRef = ({
     }
   }, [paste])
 
-  const onRefPress = async (refId: string, ref?: CompleteRef) => {
+  const onRefPress = async (refId: string, ref?: Ref) => {
     // if we're already displaying images for this ref, don't do anything
     if (displayingImagesFor === refId) return
 

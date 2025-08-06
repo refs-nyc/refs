@@ -35,17 +35,17 @@ export default function SearchHistorySheet({
   const snapPoints = ['80%', '95%']
 
   useEffect(() => {
-    if (user?.id) fetchSearchHistory()
-  }, [user?.id])
+    if (user?.did) fetchSearchHistory()
+  }, [user?.did])
 
   const fetchSearchHistory = async () => {
     try {
       setLoading(true)
-      const response = await fetch(`http://localhost:8000/search-history/${user?.id}`)
+      const response = await fetch(`http://localhost:8000/search-history/${user?.did}`)
       if (response.ok) {
         const data = await response.json()
         setSearchHistory(data.history || [])
-        
+
         // Preload thumbnails for faster display
         if (data.history) {
           data.history.forEach((item: SearchHistoryItem) => {
@@ -80,15 +80,17 @@ export default function SearchHistorySheet({
   const FastThumbnail = ({ source, size = 64 }: { source: string | undefined; size: number }) => {
     if (!source) {
       return (
-        <View style={{ 
-          width: size, 
-          height: size, 
-          backgroundColor: "#A6B89F", 
-          borderRadius: size / 2, 
-          alignItems: "center",
-          justifyContent: "center"
-        }}>
-          <Ionicons name="person" size={size * 0.4} color='#fff' />
+        <View
+          style={{
+            width: size,
+            height: size,
+            backgroundColor: '#A6B89F',
+            borderRadius: size / 2,
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <Ionicons name="person" size={size * 0.4} color="#fff" />
         </View>
       )
     }
@@ -96,11 +98,11 @@ export default function SearchHistorySheet({
     return (
       <Image
         source={source}
-        style={{ 
-          width: size, 
-          height: size, 
+        style={{
+          width: size,
+          height: size,
           borderRadius: size / 2,
-          backgroundColor: '#ddd'
+          backgroundColor: '#ddd',
         }}
         contentFit="cover"
         cachePolicy="memory-disk"

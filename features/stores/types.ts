@@ -4,10 +4,14 @@ import type { ImageSlice } from './images'
 import type { ItemSlice } from './items'
 import type { MessageSlice } from './messages'
 import type { UserSlice } from './users'
+import type { CanvasSlice } from '../canvas/state'
+import { SavesSlice } from './saves'
 
 export type StoreSlices = BackdropSlice &
   ImageSlice &
   ItemSlice &
   MessageSlice &
   UserSlice &
-  UISlice
+  UISlice &
+  CanvasSlice &
+  SavesSlice

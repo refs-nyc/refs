@@ -1,4 +1,4 @@
-import type { ExpandedItem, CompleteRef } from '@/features/types'
+import type { ExpandedItem, Ref } from '@/features/types'
 import { BottomSheetView, BottomSheetScrollView, BottomSheetTextInput } from '@gorhom/bottom-sheet'
 import { Button } from '../buttons/Button'
 import { t, c, s } from '@/features/style'
@@ -31,13 +31,13 @@ export const EditableList = ({
     titleRef.current?.blur()
     setEditingTitle(false)
     try {
-      await updateRefTitle(item.ref, newTitle)
+      await updateRefTitle(item.expand.ref.id, newTitle)
     } catch (error) {
       console.error(error)
     }
   }
 
-  const onRefFound = async (ref: CompleteRef) => {
+  const onRefFound = async (ref: Ref) => {
     try {
       // use addToProfile instead
       const newItem = await addToProfile(

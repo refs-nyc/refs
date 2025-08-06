@@ -1,35 +1,53 @@
 import { Heading, XStack } from '@/ui'
 import { View, DimensionValue, Pressable, Text } from 'react-native'
-import { c, s } from '../style'
+import { s } from '../style'
 import { useAppStore } from '@/features/stores'
 import SwipeableConversation from '@/ui/messaging/SwipeableConversation'
 import { router } from 'expo-router'
-import { Conversation } from '@/features/types'
+import { Conversation, Message } from '@/features/types'
 import ConversationList from '@/ui/messaging/ConversationList'
-import { Ionicons } from '@expo/vector-icons'
-import { Link } from 'expo-router'
+import { useEffect, useState } from 'react'
 
 export function ConversationsScreen() {
-  const { conversations, memberships, messagesPerConversation, user, archiveConversation } =
+  const { user, archiveConversation, canvasApp, membershipsByUserId, conversationsById } =
     useAppStore()
 
-  const activeConversations = []
-  for (const conversationId in conversations) {
-    const conversation = conversations[conversationId]
-    const membership = memberships[conversationId].find((m) => m.expand?.user.id === user?.id)
-    if (membership && !membership.archived) activeConversations.push(conversation)
-  }
+  const [activeConversations, setActiveConversations] = useState<Conversation[]>([])
 
-  const getLastMessageDate = (conversation: Conversation) => {
-    const lastMessage = messagesPerConversation[conversation.id][0]
-    return new Date(lastMessage?.created ? lastMessage.created : '').getTime()
-  }
+  useEffect(() => {
+    async function getActiveConversations() {
+      if (!canvasApp || !user) {
+        setActiveConversations([])
+        return
+      }
 
-  activeConversations.sort((a, b) => getLastMessageDate(b) - getLastMessageDate(a))
+      const activeConversations = []
+      for (const membership of membershipsByUserId[user.did] || []) {
+        if (membership.archived) continue
+
+        const conversation = conversationsById[membership.conversation as string]
+
+        if (!conversation) continue
+        const lastMessage = (
+          await canvasApp.db.query<Message>('message', {
+            where: { conversation: membership.conversation },
+            orderBy: { created: 'desc' },
+            limit: 1,
+          })
+        )[0]
+        const lastMessageDate = new Date(lastMessage?.created ? lastMessage.created : '').getTime()
+        activeConversations.push({ conversation, lastMessageDate })
+      }
+
+      activeConversations.sort((a, b) => b.lastMessageDate - a.lastMessageDate)
+      setActiveConversations(activeConversations.map(({ conversation }) => conversation))
+    }
+    getActiveConversations()
+  }, [canvasApp])
 
   const onArchive = async (conversation: Conversation) => {
     if (user) {
-      await archiveConversation(user.id, conversation.id)
+      await archiveConversation(user, conversation.id)
     }
   }
 

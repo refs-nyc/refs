@@ -71,7 +71,7 @@ export const OtherBacklogSheet = ({
           {`${profile.firstName}'s Backlog`}
         </Heading>
       </Pressable>
-      {index >= 0 && <BacklogList items={backlogItems.toReversed()} ownProfile={false} />}
+      {index >= 0 && <BacklogList items={backlogItems} ownProfile={false} />}
     </BottomSheet>
   )
 }

@@ -1,9 +1,8 @@
-import { Profile } from '@/features/types'
+import { Profile, Ref } from '@/features/types'
 import { c, s } from '@/features/style'
 import UserListItem from '@/ui/atoms/UserListItem'
 import { Button } from '@/ui/buttons/Button'
 import { YStack } from '@/ui/core/Stacks'
-import { pocketbase } from '@/features/pocketbase'
 
 import { Heading } from '@/ui/typo/Heading'
 import BottomSheet, { BottomSheetBackdrop, BottomSheetScrollView } from '@gorhom/bottom-sheet'
@@ -17,8 +16,8 @@ export default function Referencers({
 }: {
   referencersBottomSheetRef: React.RefObject<BottomSheet>
 }) {
-  const [users, setUsers] = useState<any[]>([])
-  const [refData, setRefData] = useState<any>({})
+  const [users, setUsers] = useState<Profile[]>([])
+  const [refData, setRefData] = useState<Ref | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const { getItemsByRefIds, addRefSheetRef, setAddingRefId, currentRefId } = useAppStore()
 
@@ -26,10 +25,10 @@ export default function Referencers({
     const getUsers = async () => {
       if (!currentRefId) {
         setUsers([])
-        setRefData({})
+        setRefData(null)
         return
       }
-      
+
       try {
         setIsLoading(true)
         const users: Profile[] = []
@@ -39,17 +38,17 @@ export default function Referencers({
 
         for (const item of items) {
           const user = item.expand?.creator
-          if (!user || userIds.has(user.id)) continue
-          userIds.add(user.id)
+          if (!user || userIds.has(user.did)) continue
+          userIds.add(user.did)
           users.push(user)
         }
 
         setUsers(users)
-        setRefData(items[0]?.expand?.ref || {})
+        setRefData(items[0]?.expand?.ref)
       } catch (error) {
         console.error('ReferencersSheet: Error loading users for ref', currentRefId, ':', error)
         setUsers([])
-        setRefData({})
+        setRefData(null)
       } finally {
         setIsLoading(false)
       }
@@ -101,12 +100,12 @@ export default function Referencers({
             ) : users.length > 0 ? (
               users.map((user) => (
                 <UserListItem
-                  key={user.id}
+                  key={user.did}
                   user={user}
                   small={false}
                   onPress={() => {
                     referencersBottomSheetRef.current?.close()
-                    router.push(`/user/${user.userName}`)
+                    router.push(`/user/${user.did}`)
                   }}
                   style={{ paddingHorizontal: 0 }}
                 />
@@ -116,7 +115,9 @@ export default function Referencers({
                 <Text style={{ color: c.muted, fontSize: 14, textAlign: 'center' }}>
                   No one has added this ref to their profile yet.
                 </Text>
-                <Text style={{ color: c.muted, fontSize: 12, textAlign: 'center', marginTop: s.$1 }}>
+                <Text
+                  style={{ color: c.muted, fontSize: 12, textAlign: 'center', marginTop: s.$1 }}
+                >
                   Be the first to add it!
                 </Text>
               </View>

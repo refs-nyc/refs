@@ -1,6 +1,6 @@
 import { formatTimestamp } from '@/features/messaging/utils'
 import { useAppStore } from '@/features/stores'
-import { Message, Profile } from '@/features/types'
+import { DecryptedMessage, DecryptedReactionWithSender, Profile } from '@/features/types'
 import { c, s } from '@/features/style'
 import { useCalendars } from 'expo-localization'
 import { View, Text } from 'react-native'
@@ -10,6 +10,7 @@ import { XStack } from '../core/Stacks'
 import { Link } from 'expo-router'
 import ContextMenu from 'react-native-context-menu-view'
 import PressableImage from '../atoms/PressableImage'
+import { useEffect, useState } from 'react'
 
 export default function MessageBubble({
   message,
@@ -22,24 +23,32 @@ export default function MessageBubble({
   onReplyPress,
   onExpandReactionsPress,
 }: {
-  message: Message
+  message: DecryptedMessage
   showSender: boolean
   sender: Profile
   senderColor?: string
-  parentMessage?: Message
+  parentMessage?: DecryptedMessage
   parentMessageSender?: Profile
   onParentMessagePress?: () => void
   onReplyPress: (messageId: string) => void
   onExpandReactionsPress: (messageId: string) => void
 }) {
   const calendars = useCalendars()
-  const { user, reactions, deleteReaction } = useAppStore()
+  const { user, deleteReaction, getReactionsForMessage } = useAppStore()
 
-  const messageReactions = reactions[message.id]
+  const [messageReactions, setMessageReactions] = useState<DecryptedReactionWithSender[]>()
+
+  useEffect(() => {
+    async function updateReactions() {
+      const reactions = await getReactionsForMessage(message.id)
+      setMessageReactions(reactions)
+    }
+    updateReactions()
+  }, [])
 
   const timeZone = calendars[0].timeZone || 'America/New_York'
 
-  const isMe = message.sender === user?.id
+  const isMe = message.sender === user?.did
   const date = message.created ? message.created.slice(0, message.created.length - 1) : ''
   const formattedDate = formatTimestamp(date, timeZone)
 
@@ -47,7 +56,7 @@ export default function MessageBubble({
     <XStack style={{ alignSelf: isMe ? 'flex-end' : 'flex-start', maxWidth: '75%' }}>
       {sender && showSender && !isMe && (
         <View style={{ alignSelf: 'flex-end' }}>
-          <Link href={`/user/${sender.userName}`}>
+          <Link href={`/user/${sender.did}`}>
             <Avatar source={sender.image} size={s.$3} />
           </Link>
         </View>
@@ -91,16 +100,20 @@ export default function MessageBubble({
                 <Text style={{ color: c.black }}>
                   <Text style={{ fontWeight: 'bold' }}>{parentMessageSender?.firstName}</Text> said:
                 </Text>
-                <Text style={{ fontStyle: 'italic', color: c.muted }}>{parentMessage?.text}</Text>
+                <Text style={{ fontStyle: 'italic', color: c.muted }}>
+                  {parentMessage ? parentMessage.expand.decryptedData.text : ''}
+                </Text>
               </View>
             </Pressable>
           )}
-          {message.image && <PressableImage source={message.image} size={s.$15} />}
-          <Text>{message.text}</Text>
+          {message.expand.decryptedData.imageUrl && (
+            <PressableImage source={message.expand.decryptedData.imageUrl} size={s.$15} />
+          )}
+          <Text>{message.expand.decryptedData.text}</Text>
           {messageReactions && (
             <XStack>
               {messageReactions.map((r) => {
-                const isMine = r.user === user?.id
+                const isMine = r.sender === user?.did
                 return (
                   <Pressable key={r.id} onPress={isMine ? () => deleteReaction(r.id) : null}>
                     <XStack
@@ -110,8 +123,8 @@ export default function MessageBubble({
                         borderRadius: s.$1,
                       }}
                     >
-                      <Text>{r.emoji}</Text>
-                      <Avatar source={r.expand?.user.image} size={s.$1} />
+                      <Text>{r.expand.decryptedData.emoji}</Text>
+                      <Avatar source={r.expand?.sender.image} size={s.$1} />
                     </XStack>
                   </Pressable>
                 )

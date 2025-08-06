@@ -1,6 +1,4 @@
 import { useAppStore } from '@/features/stores'
-import { getBacklogItems, getProfileItems } from '@/features/stores/items'
-import type { Profile } from '@/features/types'
 import { ExpandedItem } from '@/features/types'
 import { s, c } from '@/features/style'
 import BottomSheet from '@gorhom/bottom-sheet'
@@ -20,19 +18,17 @@ import SearchModeBottomSheet from './sheets/SearchModeBottomSheet'
 import SearchResultsSheet, { SearchResultsSheetRef } from './sheets/SearchResultsSheet'
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated'
 
-export const MyProfile = ({ userName }: { userName: string }) => {
+export const MyProfile = ({ did }: { did: string }) => {
   const { hasShareIntent } = useShareIntentContext()
   const insets = useSafeAreaInsets()
 
-  const [profile, setProfile] = useState<Profile>()
   const [gridItems, setGridItems] = useState<ExpandedItem[]>([])
   const [backlogItems, setBacklogItems] = useState<ExpandedItem[]>([])
   const [loading, setLoading] = useState<boolean>(true)
 
-
   const {
     user,
-    getUserByUserName,
+    getUserByDid,
     moveToBacklog,
     profileRefreshTrigger,
     removeItem,
@@ -41,18 +37,15 @@ export const MyProfile = ({ userName }: { userName: string }) => {
     stopEditing,
     setAddingNewRefTo,
     newRefSheetRef,
+    getBacklogItems,
+    getProfileItems,
     searchMode,
     selectedRefs,
-    selectedRefItems: globalSelectedRefItems,
     cachedSearchResults,
     isSearchResultsSheetOpen,
     setSearchMode,
     setSelectedRefs,
     setSelectedRefItems: setGlobalSelectedRefItems,
-    cachedRefTitles,
-    cachedRefImages,
-    cachedSearchTitle,
-    cachedSearchSubtitle,
     clearCachedSearchResults,
     returningFromSearchNavigation,
     setReturningFromSearchNavigation,
@@ -61,14 +54,12 @@ export const MyProfile = ({ userName }: { userName: string }) => {
 
   const [removingItem, setRemovingItem] = useState<ExpandedItem | null>(null)
 
-  // Refs
+  const profile = getUserByDid(did)
+
+  // Search-related refs
   const searchResultsSheetRef = useRef<BottomSheet>(null)
   const isExpandingSheetRef = useRef(false) // Track if we're already expanding the sheet
   const searchResultsSheetTriggerRef = useRef<SearchResultsSheetRef>(null)
-
-  // Simple cache to avoid refetching the same data
-  const lastFetchedUserName = useRef<string>('')
-  const lastFetchedTrigger = useRef<number>(0)
 
   // Memoized grid items map for O(1) lookup
   const gridItemsMap = useMemo(() => new Map(gridItems.map((item) => [item.id, item])), [gridItems])
@@ -79,51 +70,41 @@ export const MyProfile = ({ userName }: { userName: string }) => {
       return []
     }
 
-    return selectedRefs.map((id) => {
-      const gridItem = gridItemsMap.get(id)
-      if (!gridItem) return null
-      
-      // Transform ExpandedItem to the structure SearchResultsSheet expects
-      return {
-        id: gridItem.id,
-        ref: gridItem.ref,
-        image: gridItem.image || '',
-        title: gridItem.expand?.ref?.title || gridItem.id,
-        expand: {
-          ref: {
-            id: gridItem.id,
-            title: gridItem.expand?.ref?.title || gridItem.id,
-            image: gridItem.image || '',
+    return selectedRefs
+      .map((id) => {
+        const gridItem = gridItemsMap.get(id)
+        if (!gridItem) return null
+
+        // Transform ExpandedItem to the structure SearchResultsSheet expects
+        return {
+          id: gridItem.id,
+          ref: gridItem.ref,
+          image: gridItem.image || '',
+          title: gridItem.expand?.ref?.title || gridItem.id,
+          expand: {
+            ref: {
+              id: gridItem.id,
+              title: gridItem.expand?.ref?.title || gridItem.id,
+              image: gridItem.image || '',
+            },
           },
-        },
-      }
-    }).filter(Boolean)
+        }
+      })
+      .filter(Boolean)
   }, [selectedRefs, gridItemsMap])
 
   // Use the selectedRefItems directly
   const finalSelectedRefItems = selectedRefItems
 
-
-
-  const refreshGrid = async (userName: string) => {
+  const refreshGrid = async () => {
     setLoading(true)
     try {
-      // Fetch data in parallel for better performance (non-blocking)
-      Promise.all([
-        getUserByUserName(userName),
-        getProfileItems(userName),
-        getBacklogItems(userName),
-      ])
-        .then(([profile, gridItems, backlogItems]) => {
-          setProfile(profile)
-          setGridItems(gridItems)
-          setBacklogItems(backlogItems as ExpandedItem[])
-          setLoading(false)
-        })
-        .catch((error) => {
-          console.error('Failed to refresh grid:', error)
-          setLoading(false)
-        })
+      const gridItems = await getProfileItems(profile)
+      setGridItems(gridItems)
+
+      const backlogItems = await getBacklogItems(profile)
+      setBacklogItems(backlogItems as ExpandedItem[])
+      setLoading(false)
     } catch (error) {
       console.error('Failed to refresh grid:', error)
       setLoading(false)
@@ -136,7 +117,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
       removeRefSheetRef.current?.close()
       const updatedRecord = await moveToBacklog(removingItem?.id)
       setRemovingItem(null)
-      await refreshGrid(userName)
+      await refreshGrid()
     } catch (error) {
       console.error(error)
     }
@@ -147,7 +128,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
     removeRefSheetRef.current?.close()
     await removeItem(removingItem.id)
     setRemovingItem(null)
-    await refreshGrid(userName)
+    await refreshGrid()
   }
 
   useEffect(() => {
@@ -160,17 +141,13 @@ export const MyProfile = ({ userName }: { userName: string }) => {
   useEffect(() => {
     const init = async () => {
       try {
-        await refreshGrid(userName)
+        await refreshGrid()
       } catch (error) {
         console.error('Failed to refresh grid:', error)
       }
     }
-
-    // Make initialization non-blocking
-    setTimeout(() => {
-      init()
-    }, 0)
-  }, [userName, profileRefreshTrigger])
+    init()
+  }, [did, profileRefreshTrigger])
 
   // Simple back button restoration logic
   useEffect(() => {
@@ -178,20 +155,20 @@ export const MyProfile = ({ userName }: { userName: string }) => {
     if (returningFromSearchNavigation && cachedSearchResults.length > 0) {
       console.log('🔍 Returning from search navigation, restoring search context...')
       console.log('Cached results:', cachedSearchResults.length)
-      
+
       // Prevent multiple simultaneous expansions
       if (isExpandingSheetRef.current) {
         console.log('⏸️ Sheet expansion already in progress, skipping...')
         return
       }
-      
+
       // Small delay to ensure navigation is complete
       const timer = setTimeout(() => {
         if (searchResultsSheetRef.current) {
           try {
             console.log('📱 Attempting to expand search results sheet...')
             isExpandingSheetRef.current = true
-            
+
             // First try to ensure the sheet is in a valid state
             searchResultsSheetRef.current.snapToIndex(0)
             setTimeout(() => {
@@ -220,7 +197,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
           isExpandingSheetRef.current = false
         }
       }, 200) // Increased delay to ensure navigation is complete
-      
+
       return () => clearTimeout(timer)
     } else if (returningFromSearchNavigation) {
       console.log('🔍 Returning from search navigation but no cached results')
@@ -228,29 +205,40 @@ export const MyProfile = ({ userName }: { userName: string }) => {
     } else {
       console.log('🔍 Not returning from search navigation')
     }
-  }, [returningFromSearchNavigation, cachedSearchResults.length, userName, setReturningFromSearchNavigation, setSearchResultsSheetOpen])
+  }, [
+    returningFromSearchNavigation,
+    cachedSearchResults.length,
+    user?.did,
+    setReturningFromSearchNavigation,
+    setSearchResultsSheetOpen,
+  ])
 
   // Additional effect to handle navigation back to profile with search context
   useEffect(() => {
-    // If we have cached search results and we're on the profile page, 
+    // If we have cached search results and we're on the profile page,
     // and we're not already in search mode, restore the search context
     // But don't expand if we're already returning from search navigation
-    if (cachedSearchResults.length > 0 && !searchMode && !isSearchResultsSheetOpen && !returningFromSearchNavigation) {
+    if (
+      cachedSearchResults.length > 0 &&
+      !searchMode &&
+      !isSearchResultsSheetOpen &&
+      !returningFromSearchNavigation
+    ) {
       console.log('🔍 Detected cached search results on profile page, restoring...')
-      
+
       // Prevent multiple simultaneous expansions
       if (isExpandingSheetRef.current) {
         console.log('⏸️ Sheet expansion already in progress, skipping...')
         return
       }
-      
+
       // Small delay to ensure component is fully mounted
       const timer = setTimeout(() => {
         if (searchResultsSheetRef.current) {
           try {
             console.log('📱 Attempting to expand search results sheet from cached results...')
             isExpandingSheetRef.current = true
-            
+
             // First try to ensure the sheet is in a valid state
             searchResultsSheetRef.current.snapToIndex(0)
             setTimeout(() => {
@@ -265,10 +253,17 @@ export const MyProfile = ({ userName }: { userName: string }) => {
           }
         }
       }, 300)
-      
+
       return () => clearTimeout(timer)
     }
-  }, [cachedSearchResults.length, searchMode, isSearchResultsSheetOpen, userName, setSearchResultsSheetOpen, returningFromSearchNavigation])
+  }, [
+    cachedSearchResults.length,
+    searchMode,
+    isSearchResultsSheetOpen,
+    user?.did,
+    setSearchResultsSheetOpen,
+    returningFromSearchNavigation,
+  ])
 
   // Reset search mode when component unmounts or user navigates away
   useEffect(() => {
@@ -398,7 +393,8 @@ export const MyProfile = ({ userName }: { userName: string }) => {
               <FloatingJaggedButton
                 onPress={() => {
                   // Don't clear selectedRefs if we're returning from search
-                  if (!searchMode) { // Changed from returningFromSearch to searchMode
+                  if (!searchMode) {
+                    // Changed from returningFromSearch to searchMode
                     setSelectedRefs([]) // Clear selected refs when entering search mode
                   }
                   clearCachedSearchResults() // Clear cached search results
@@ -416,7 +412,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
           </View>
         )}
 
-        {!user && <Heading tag="h1">Profile for {userName} not found</Heading>}
+        {!user && <Heading tag="h1">Profile for {did} not found</Heading>}
 
         {/* Multiple pressable areas to dismiss search mode - avoiding the grid */}
         {searchMode && (
@@ -435,7 +431,8 @@ export const MyProfile = ({ userName }: { userName: string }) => {
               onPress={() => {
                 setSearchMode(false)
                 // Don't clear selectedRefs if we're returning from search
-                if (!searchMode) { // Changed from returningFromSearch to searchMode
+                if (!searchMode) {
+                  // Changed from returningFromSearch to searchMode
                   setSelectedRefs([])
                 }
               }}
@@ -454,7 +451,8 @@ export const MyProfile = ({ userName }: { userName: string }) => {
               onPress={() => {
                 setSearchMode(false)
                 // Don't clear selectedRefs if we're returning from search
-                if (!searchMode) { // Changed from returningFromSearch to searchMode
+                if (!searchMode) {
+                  // Changed from returningFromSearch to searchMode
                   setSelectedRefs([])
                 }
               }}
@@ -473,7 +471,8 @@ export const MyProfile = ({ userName }: { userName: string }) => {
               onPress={() => {
                 setSearchMode(false)
                 // Don't clear selectedRefs if we're returning from search
-                if (!searchMode) { // Changed from returningFromSearch to searchMode
+                if (!searchMode) {
+                  // Changed from returningFromSearch to searchMode
                   setSelectedRefs([])
                 }
               }}
@@ -492,7 +491,8 @@ export const MyProfile = ({ userName }: { userName: string }) => {
               onPress={() => {
                 setSearchMode(false)
                 // Don't clear selectedRefs if we're returning from search
-                if (!searchMode) { // Changed from returningFromSearch to searchMode
+                if (!searchMode) {
+                  // Changed from returningFromSearch to searchMode
                   setSelectedRefs([])
                 }
               }}
@@ -520,7 +520,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
           />
           {detailsItem && (
             <ProfileDetailsSheet
-              profileUsername={profile.userName}
+              profile={profile}
               detailsItemId={detailsItem.id}
               onChange={(index: number) => {
                 if (index === -1) {
@@ -551,7 +551,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
               selectedRefItems={selectedRefItems}
               onSearch={() => {
                 // Clear restored ref items for new searches
-        
+
                 setGlobalSelectedRefItems([]) // Also clear global state
                 searchResultsSheetRef.current?.snapToIndex(1)
                 setSearchMode(false) // Exit search mode when opening search results
@@ -566,10 +566,10 @@ export const MyProfile = ({ userName }: { userName: string }) => {
               onRestoreSearch={async (historyItem) => {
                 try {
                   console.log('🔄 Restoring search from history with refs:', historyItem.ref_ids)
-                  
+
                   // Set flag to indicate we're returning from search navigation BEFORE setting cached results
                   setReturningFromSearchNavigation(true)
-                  
+
                   // Create ref items from history data with images
                   const restoredItems = historyItem.ref_ids.map((refId: string, index: number) => ({
                     id: refId,

@@ -5,6 +5,10 @@ export type OptimizeImageOptions = {
   height: number
 }
 
+export const isPinataUrl = (url: string) => {
+  return url.startsWith('https://violet-fashionable-blackbird-836.mypinata.cloud/files')
+}
+
 export const constructPinataUrl = (url: string, imageOptions: OptimizeImageOptions) => {
   const cid = /files\/(.*)(?:\?)/g.exec(url)
 

@@ -3,6 +3,8 @@ import { c, s } from '@/features/style'
 import { Button } from '@/ui/buttons/Button'
 import { Text, View } from 'react-native'
 import { SimplePinataImage } from '@/ui/images/SimplePinataImage'
+import { isPinataUrl } from '@/features/pinata'
+import { Image } from 'expo-image'
 
 export const ChooseReplaceItemMethod = ({
   itemToReplace,
@@ -32,14 +34,24 @@ export const ChooseReplaceItemMethod = ({
       {/* display the image of the item to be replaced */}
       {image && (
         <View style={{ alignItems: 'center' }}>
-          <SimplePinataImage
-            originalSource={image}
-            style={{ height: 100, width: 100 }}
-            imageOptions={{
-              width: 100,
-              height: 100,
-            }}
-          />
+          {isPinataUrl(image) ? (
+            <SimplePinataImage
+              originalSource={image}
+              style={{ height: 100, width: 100 }}
+              imageOptions={{
+                width: 100,
+                height: 100,
+              }}
+            />
+          ) : (
+            <Image
+              source={image}
+              style={{
+                width: 100,
+                height: 100,
+              }}
+            />
+          )}
         </View>
       )}
       <Button title="Remove" variant="basic" onPress={removeFromProfile} />

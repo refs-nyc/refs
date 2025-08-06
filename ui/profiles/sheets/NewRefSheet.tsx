@@ -1,4 +1,3 @@
-import { getProfileItems } from '@/features/stores/items'
 import { ExpandedItem, StagedItemFields } from '@/features/types'
 import { useAppStore } from '@/features/stores'
 import { c, s } from '@/features/style'
@@ -42,6 +41,7 @@ export const NewRefSheet = ({
     addingNewRefTo,
     setAddingNewRefTo,
     addRefPrompt,
+    getProfileItems,
   } = useAppStore()
 
   const [step, setStep] = useState<NewRefStep>('search')
@@ -138,7 +138,7 @@ export const NewRefSheet = ({
               }}
               onChooseExistingRef={(r, newImage) => {
                 setExistingRefId(r.id)
-                setRefFields({ title: r.title!, image: newImage, url: r.url })
+                setRefFields({ title: r.title || '', image: newImage, url: r.url || '' })
                 setStep('add')
               }}
             />
@@ -154,7 +154,7 @@ export const NewRefSheet = ({
                 const mergedFields = { ...itemFields, promptContext: refFields?.promptContext }
                 if (!backlog) {
                   // check if the grid is full
-                  const gridItems = await getProfileItems(user?.userName!)
+                  const gridItems = await getProfileItems(user!)
                   if (gridItems.length >= 12) {
                     setStagedItemFields(mergedFields)
                     setStep('selectItemToReplace')
@@ -220,7 +220,7 @@ export const NewRefSheet = ({
           {step === 'addToList' && (
             <View style={{ paddingVertical: s.$1, width: '100%' }}>
               <UserLists
-                creatorId={user?.id!}
+                creator={user!}
                 onComplete={async (list: ExpandedItem) => {
                   // Add the item to the list
                   await addItemToList(list.id, itemData?.id!)
@@ -240,6 +240,7 @@ export const NewRefSheet = ({
                       url: '',
                       image: '',
                       list: true,
+                      parent: null,
                     },
                     backlog
                   )

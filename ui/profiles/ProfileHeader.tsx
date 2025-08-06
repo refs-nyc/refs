@@ -26,7 +26,7 @@ export const ProfileHeader = ({ profile }: { profile: Profile }) => {
 
       <YStack style={{ flex: 1 }} gap={s.$05}>
         <Heading tag="h2">{profile.firstName}</Heading>
-        <Heading tag="small">{profile?.location || profile.userName}</Heading>
+        <Heading tag="small">{profile?.location || profile.did}</Heading>
       </YStack>
     </XStack>
   )

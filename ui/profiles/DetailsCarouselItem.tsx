@@ -1,5 +1,5 @@
 import { useAppStore } from '@/features/stores'
-import { ExpandedItem, CompleteRef, Profile } from '@/features/types'
+import { ExpandedItem, Ref, Profile } from '@/features/types'
 import { base, c, s, t } from '@/features/style'
 import { SearchRef } from '@/ui/actions/SearchRef'
 import { Avatar } from '@/ui/atoms/Avatar'
@@ -50,7 +50,7 @@ const AuthorMeta = ({ author, numberOfLines }: { author: string; numberOfLines?:
   )
 }
 
-const Meta = ({ refRecord, numberOfLines }: { refRecord: CompleteRef; numberOfLines?: number }) => {
+const Meta = ({ refRecord, numberOfLines }: { refRecord: Ref; numberOfLines?: number }) => {
   if (!refRecord) return
 
   let refMeta: { location?: string; author?: string } = {}
@@ -62,12 +62,6 @@ const Meta = ({ refRecord, numberOfLines }: { refRecord: CompleteRef; numberOfLi
 
   let location = refMeta.location
   let author = refMeta.author
-
-  if (refRecord.type === 'place') {
-    location = refRecord.meta
-  } else if (refRecord.type === 'artwork') {
-    author = refRecord.meta
-  }
 
   return (
     <YStack gap={s.$05}>
@@ -97,7 +91,7 @@ const ProfileLabel = ({ profile }: { profile: Profile }) => {
   return (
     <Pressable
       onPress={() => {
-        router.replace(`/user/${profile.userName}`)
+        router.replace(`/user/${profile.did}`)
       }}
     >
       <XStack style={{ alignItems: 'center' }} gap={s.$075}>
@@ -135,7 +129,7 @@ export const DetailsCarouselItem = ({ item, index }: { item: ExpandedItem; index
     referencersBottomSheetRef,
     setCurrentRefId,
   } = useAppStore()
-  
+
   // Lazy load editing state - only initialize when actually editing
   const [isEditingInitialized, setIsEditingInitialized] = useState(false)
   const [text, setText] = useState('')
@@ -167,11 +161,11 @@ export const DetailsCarouselItem = ({ item, index }: { item: ExpandedItem; index
     }
   }, [item.id, item?.text, item?.url, item?.expand?.ref?.title, editingThisItem])
 
-  const showAddRefButton = item.creator !== user?.id
+  const showAddRefButton = item.creator !== user?.did
 
   // Animated opacity for checkbox fade-in
   const checkboxOpacity = useSharedValue(0)
-  
+
   useEffect(() => {
     if (editingThisItem) {
       checkboxOpacity.value = withTiming(1, { duration: 100 })
@@ -192,15 +186,11 @@ export const DetailsCarouselItem = ({ item, index }: { item: ExpandedItem; index
   const linkIconWidth = s.$4 // Always reserve space for link icon
   const iconSpacing = 8 // 8px between link and meatball icons
   const titleMargin = 12 // 12px spacing after title
-  const totalIconsWidth =
-    meatballWidth + linkIconWidth + iconSpacing + titleMargin
+  const totalIconsWidth = meatballWidth + linkIconWidth + iconSpacing + titleMargin
   const titleWidth = win.width - totalIconsWidth - s.$2 * 2 // subtract horizontal padding
 
   const animatedStyle = useAnimatedStyle(() => {
-    return withTiming(
-      editingThisItem ? base.editableItem : base.nonEditableItem,
-      { duration: 150 }
-    )
+    return withTiming(editingThisItem ? base.editableItem : base.nonEditableItem, { duration: 150 })
   }, [editingThisItem])
 
   return (
@@ -229,7 +219,12 @@ export const DetailsCarouselItem = ({ item, index }: { item: ExpandedItem; index
           <View style={{ paddingLeft: s.$3, paddingTop: s.$1, paddingBottom: s.$05 }}>
             {openedFromFeed && <ProfileLabel profile={item.expand.creator} />}
           </View>
-          <Animated.View style={[{ position: 'absolute', right: s.$2, top: s.$1, zIndex: 99 }, checkboxAnimatedStyle]}>
+          <Animated.View
+            style={[
+              { position: 'absolute', right: s.$2, top: s.$1, zIndex: 99 },
+              checkboxAnimatedStyle,
+            ]}
+          >
             {editingThisItem && <ApplyChangesButton />}
           </Animated.View>
           <Pressable
@@ -261,7 +256,7 @@ export const DetailsCarouselItem = ({ item, index }: { item: ExpandedItem; index
                   editingRights={editingRights}
                 />
               )}
-              {item.expand?.ref.image || item.image ? (
+              {(item.expand?.ref.image || item.image) && !item.list ? (
                 <Zoomable minScale={0.25} maxScale={3} isPanEnabled={true}>
                   <Animated.View
                     style={[
@@ -321,7 +316,7 @@ export const DetailsCarouselItem = ({ item, index }: { item: ExpandedItem; index
                         },
                         base.editableItem,
                       ]}
-                      value={url}
+                      value={url || ''}
                       placeholder="abc.xyz"
                       onChangeText={async (e) => {
                         setUrl(e)
@@ -340,8 +335,8 @@ export const DetailsCarouselItem = ({ item, index }: { item: ExpandedItem; index
                         },
                         base.editableItem,
                       ]}
-                      defaultValue={item.expand.ref.title}
-                      value={listTitle}
+                      defaultValue={item.expand.ref.title || ''}
+                      value={listTitle || ''}
                       placeholder="Add a list title"
                       onChangeText={async (e) => {
                         setListTitle(e),
@@ -380,7 +375,7 @@ export const DetailsCarouselItem = ({ item, index }: { item: ExpandedItem; index
                     <Pressable
                       onPress={() => {
                         if (!editingThisItem) {
-                          setCurrentRefId(item.ref)
+                          setCurrentRefId(item.expand.ref.id || '')
                           referencersBottomSheetRef.current?.expand()
                           return
                         }
@@ -476,8 +471,8 @@ export const DetailsCarouselItem = ({ item, index }: { item: ExpandedItem; index
                   value={text}
                   placeholder="Add a caption for your profile..."
                   style={[
-                    { 
-                      width: '100%', 
+                    {
+                      width: '100%',
                       minHeight: s.$10,
                       paddingHorizontal: s.$1,
                       paddingVertical: 10,
@@ -486,7 +481,7 @@ export const DetailsCarouselItem = ({ item, index }: { item: ExpandedItem; index
                       borderColor: c.grey1,
                       borderWidth: 2,
                       borderRadius: s.$075,
-                    }, 
+                    },
                   ]}
                   multiline={true}
                   maxLength={1000}
@@ -498,14 +493,12 @@ export const DetailsCarouselItem = ({ item, index }: { item: ExpandedItem; index
                   }}
                 />
               ) : (
-                <BottomSheetScrollView 
+                <BottomSheetScrollView
                   style={{ flex: 1 }}
                   showsVerticalScrollIndicator={false}
                   nestedScrollEnabled={true}
                 >
-                  <Text style={t.pmuted}>
-                    {text}
-                  </Text>
+                  <Text style={t.pmuted}>{text}</Text>
                 </BottomSheetScrollView>
               )}
             </Animated.View>
@@ -526,7 +519,7 @@ export const DetailsCarouselItem = ({ item, index }: { item: ExpandedItem; index
             textStyle={{ fontSize: s.$1, fontWeight: 800 }}
             onPress={() => {
               // open a dialog for adding this ref to your profile
-              setAddingRefId(item.ref)
+              setAddingRefId(item.expand.ref.id || '')
               addRefSheetRef.current?.expand()
             }}
             variant="raised"
@@ -551,7 +544,7 @@ export const DetailsCarouselItem = ({ item, index }: { item: ExpandedItem; index
             onChooseExistingRef={async (r) => {
               // Update the ref
               updateEditedState({
-                ref: r.id,
+                ref: r.id || '',
               })
               const newRecord = await update()
               setCurrentItem(newRecord as ExpandedItem)

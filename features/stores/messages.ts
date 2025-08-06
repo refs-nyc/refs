@@ -1,390 +1,574 @@
 import { StateCreator } from 'zustand'
 import {
   Conversation,
-  ConversationWithMemberships,
+  DecryptedMessage,
+  DecryptedReaction,
+  DecryptedReactionWithSender,
+  EncryptionGroup,
+  EncryptionKey,
   ExpandedMembership,
-  ExpandedReaction,
-  ExpandedSave,
+  Membership,
   Message,
+  MessageDecryptedData,
+  Profile,
   Reaction,
-  Save,
+  ReactionDecryptedData,
 } from '../types'
-import { pocketbase } from '../pocketbase'
+
 import type { StoreSlices } from './types'
+import { ethers } from 'ethers'
+import {
+  decryptSafely,
+  encryptSafely,
+  EthEncryptedData,
+  getEncryptionPublicKey,
+} from '../encryption'
+import { createRef, MutableRefObject } from 'react'
 
 export const PAGE_SIZE = 10
 
+const subscriptions = createRef<number[]>() as MutableRefObject<number[]>
+subscriptions.current = []
+
 export type MessageSlice = {
-  conversations: Record<string, Conversation>
-  setConversations: (conversations: Conversation[]) => void
-  updateConversation: (conversation: Conversation) => void
+  messagesSubscriptions: MutableRefObject<number[]>
+
+  subscribeToMessages: () => void
+  unsubscribeFromMessages: () => void
+
+  updateEncryptionGroups: (newEncryptionGroups: EncryptionGroup[]) => void
+  encryptionGroupsByConversationId: Record<string, EncryptionGroup>
+
+  updateConversations: (conversations: Conversation[]) => void
+  conversationsById: Record<string, Conversation>
+
+  membershipsByUserId: Record<string, Membership[]>
+  membershipsByConversationAndUserId: Record<string, Record<string, Membership>>
+  updateMemberships: (memberships: Membership[]) => void
+
   createConversation: (
     is_direct: boolean,
-    creatorId: string,
-    otherMemberIds: string[],
+    otherMembers: Profile[],
     title?: string
   ) => Promise<string>
-  addConversation(conversation: Conversation): void
-  getDirectConversations: () => Promise<ConversationWithMemberships[]>
 
-  memberships: Record<string, ExpandedMembership[]>
-  setMemberships: (memberships: ExpandedMembership[]) => void
-  addMembership: (membership: ExpandedMembership) => void
-  updateMembership: (membership: ExpandedMembership) => void
-  createMemberships: (userIds: string[], conversationId: string) => Promise<void>
-
-  sendMessage: (
-    senderId: string,
-    conversationId: string,
-    text: string,
-    parentMessageId?: string,
+  createMemberships: (users: Profile[], conversationId: string) => Promise<void>
+  sendMessage: (sendMessageArgs: {
+    conversationId: string
+    text: string
+    parentMessageId?: string
     imageUrl?: string
-  ) => Promise<void>
-  messagesPerConversation: Record<string, Message[]>
-  setMessagesForConversation: (conversationId: string, messages: Message[]) => void
-  oldestLoadedMessageDate: Record<string, string>
-  setOldestLoadedMessageDate: (conversationId: string, dateString: string) => void
-  addOlderMessages: (conversationId: string, messages: Message[]) => void
-  addNewMessage: (conversationId: string, message: Message) => void
-  firstMessageDate: Record<string, string>
-  setFirstMessageDate: (conversationId: string, dateString: string) => void
-  updateLastRead: (conversationId: string, userId: string) => Promise<void>
-  getNewMessages: (conversationId: string, oldestLoadedMessageDate: string) => Promise<Message[]>
-
-  reactions: Record<string, ExpandedReaction[]>
-  setReactions: (reactions: ExpandedReaction[]) => void
-  addReaction: (reaction: ExpandedReaction) => void
-  sendReaction: (senderId: string, messageId: string, emoji: string) => Promise<void>
+  }) => Promise<void>
+  updateLastRead: (conversationId: string) => Promise<void>
+  sendReaction: (messageId: string, emoji: string) => Promise<void>
   deleteReaction: (id: string) => Promise<void>
-  removeReaction: (reaction: Reaction) => void
+  archiveConversation: (user: Profile, conversationId: string) => Promise<void>
+  unarchiveConversation: (user: Profile, conversationId: string) => Promise<void>
 
-  saves: ExpandedSave[]
-  setSaves: (saves: ExpandedSave[]) => void
-  addSave: (userId: string, savedBy: string) => Promise<void>
-  removeSave: (id: string) => Promise<void>
+  encryptForConversation: (conversationId: string, data: any) => EthEncryptedData
 
-  archiveConversation: (userId: string, conversationId: string) => Promise<void>
-  unarchiveConversation: (userId: string, conversationId: string) => Promise<void>
+  decryptMessages: (conversationId: string, messages: Message[]) => DecryptedMessage[]
+  decryptReactions: (conversationId: string, reactions: Reaction[]) => DecryptedReaction[]
+
+  getDirectConversation: (otherUserDid: string) => Conversation | null
+  getGroupConversations: () => Promise<Conversation[]>
+  getMembers: (conversationId: string) => ExpandedMembership[]
+  getLastMessageForConversation: (conversationId: string) => Promise<DecryptedMessage | null>
+  getReactionsForMessage: (messageId: string) => Promise<DecryptedReactionWithSender[]>
+  getNumberUnreadMessages: () => Promise<number>
 }
 
 export const createMessageSlice: StateCreator<StoreSlices, [], [], MessageSlice> = (set, get) => ({
-  conversations: {},
-  setConversations: (items: Conversation[]) => {
-    const newItems: Record<string, Conversation> = {}
-    items.forEach((item) => {
-      newItems[item.id] = item
+  messagesSubscriptions: subscriptions,
+
+  subscribeToMessages: () => {
+    const {
+      canvasApp,
+      messagesSubscriptions,
+      updateEncryptionGroups,
+      updateConversations,
+      updateMemberships,
+    } = get()
+    if (!canvasApp) {
+      throw new Error('Canvas not initialized!')
+    }
+
+    // subscribe to encryption groups
+    const encryptionGroupSubscription = canvasApp.db.subscribe('encryption_group', {}, (results) =>
+      updateEncryptionGroups(results as EncryptionGroup[])
+    )
+
+    const conversationSubscription = canvasApp.db.subscribe('conversation', {}, (results) => {
+      updateConversations(results as Conversation[])
     })
 
-    set({ conversations: newItems })
+    const membershipSubscription = canvasApp.db.subscribe('membership', {}, (results) =>
+      updateMemberships(results as Membership[])
+    )
+
+    messagesSubscriptions.current = [
+      encryptionGroupSubscription.id,
+      conversationSubscription.id,
+      membershipSubscription.id,
+    ]
   },
-  updateConversation: (conversation) => {
-    set((state) => ({
-      conversations: { ...state.conversations, [conversation.id]: conversation },
-    }))
+
+  unsubscribeFromMessages: () => {
+    const { canvasApp, messagesSubscriptions } = get()
+    if (!canvasApp) {
+      // canvas app doesn't exist, so we have already unsubscribed
+      messagesSubscriptions.current = []
+      return
+    }
+
+    for (const subscription of messagesSubscriptions.current) {
+      canvasApp?.db.unsubscribe(subscription)
+    }
+
+    messagesSubscriptions.current = []
   },
+
+  encryptionGroupsByConversationId: {},
+  updateEncryptionGroups: (encryptionGroups) => {
+    const encryptionGroupsByConversationId: Record<string, EncryptionGroup> = {}
+    for (const encryptionGroup of encryptionGroups) {
+      encryptionGroupsByConversationId[encryptionGroup.id as string] = encryptionGroup
+    }
+    set({ encryptionGroupsByConversationId })
+  },
+
+  conversationsById: {},
+  updateConversations: (conversations) => {
+    const conversationsById: Record<string, Conversation> = {}
+    for (const conversation of conversations) {
+      conversationsById[conversation.id] = conversation
+    }
+    set({ conversationsById })
+  },
+
+  membershipsByUserId: {},
+  membershipsByConversationAndUserId: {},
+  updateMemberships: (memberships) => {
+    const membershipsByUserId: Record<string, Membership[]> = {}
+    const membershipsByConversationAndUserId: Record<string, Record<string, Membership>> = {}
+    for (const membership of memberships) {
+      membershipsByUserId[membership.user as string] ||= []
+      membershipsByUserId[membership.user as string].push(membership)
+
+      membershipsByConversationAndUserId[membership.conversation as string] ||= {}
+      membershipsByConversationAndUserId[membership.conversation as string][
+        membership.user as string
+      ] = membership
+    }
+    set({ membershipsByUserId, membershipsByConversationAndUserId })
+  },
+
   createConversation: async (
     is_direct: boolean,
-    creatorId: string,
-    otherMemberIds: string[],
+    otherMembers: Profile[],
     title?: string
   ): Promise<string> => {
-    try {
-      const newConversation = await pocketbase.collection('conversations').create({
-        is_direct,
-        title: is_direct ? undefined : title || 'New Group Chat',
-      })
-
-      await pocketbase
-        .collection('memberships')
-        .create({ conversation: newConversation.id, user: creatorId })
-
-      for (const userId of otherMemberIds) {
-        await pocketbase
-          .collection('memberships')
-          .create({ conversation: newConversation.id, user: userId })
-      }
-
-      const newMemberships = await pocketbase
-        .collection('memberships')
-        .getFullList<ExpandedMembership>({
-          filter: `conversation = "${newConversation.id}"`,
-          expand: 'user',
-        })
-
-      set((state) => ({
-        conversations: { ...state.conversations, [newConversation.id]: newConversation },
-        memberships: { ...state.memberships, [newConversation.id]: newMemberships },
-      }))
-
-      return newConversation.id
-    } catch (error) {
-      throw new Error()
+    const { canvasActions, canvasApp, user } = get()
+    if (!canvasActions) {
+      throw new Error('Canvas not logged in!')
     }
-  },
-  addConversation: (conversation) => {
-    set((state) => ({
-      conversations: { ...state.conversations, [conversation.id]: conversation },
-    }))
-  },
-  getDirectConversations: async () => {
-    return await pocketbase.collection<ConversationWithMemberships>('conversations').getFullList({
-      filter: `is_direct = true`,
-      expand: 'memberships_via_conversation.user',
-    })
-  },
-  memberships: {},
-  addMembership: (membership) => {
-    set((state) => {
-      const prev = state.memberships[membership.conversation] || []
-      return {
-        memberships: {
-          ...state.memberships,
-          [membership.conversation]: [...prev, membership],
-        },
-      }
-    })
-  },
-  updateMembership: (membership) => {
-    set((state) => {
-      const prev = state.memberships[membership.conversation] || []
-      return {
-        memberships: {
-          ...state.memberships,
-          [membership.conversation]: prev.map((m) => (m.id === membership.id ? membership : m)),
-        },
-      }
-    })
-  },
-  async createMemberships(userIds, conversationId): Promise<void> {
-    try {
-      for (const userId of userIds) {
-        await pocketbase
-          .collection('memberships')
-          .create({ conversation: conversationId, user: userId })
-      }
-
-      const newMemberships = await pocketbase
-        .collection('memberships')
-        .getFullList<ExpandedMembership>({
-          filter: `conversation = "${conversationId}"`,
-          expand: 'user',
-        })
-
-      set((state) => ({
-        memberships: { ...state.memberships, [conversationId]: newMemberships },
-      }))
-    } catch (error) {
-      console.error(error)
+    if (!canvasApp) {
+      throw new Error('Canvas not initialized!')
     }
-  },
-  setMemberships: (memberships) => {
-    const newItems: Record<string, ExpandedMembership[]> = {}
-    memberships.forEach((item) => {
-      if (newItems[item.conversation]) {
-        newItems[item.conversation].push(item)
-      } else {
-        newItems[item.conversation] = [item]
-      }
-    })
-
-    set({ memberships: newItems })
-  },
-  sendMessage: async (senderId, conversationId, text, parentMessageId, imageUrl) => {
-    try {
-      const message = await pocketbase.collection('messages').create<Message>({
-        conversation: conversationId,
-        text,
-        sender: senderId,
-        replying_to: parentMessageId,
-        image: imageUrl,
-      })
-      const membership = await pocketbase
-        .collection('memberships')
-        .getFirstListItem(`conversation = "${conversationId}" && user = "${senderId}"`)
-      await pocketbase
-        .collection('memberships')
-        .update(membership.id, { last_read: message.created })
-    } catch (error) {
-      console.error(error)
+    if (!user) {
+      throw new Error('Not logged in!')
     }
-  },
 
-  messagesPerConversation: {},
-  oldestLoadedMessageDate: {},
-  setMessagesForConversation: (conversationId: string, messages: Message[]) => {
-    set((state) => {
-      return {
-        messagesPerConversation: { ...state.messagesPerConversation, [conversationId]: messages },
-      }
+    const { result: conversationId } = await canvasActions.createConversation({
+      is_direct,
+      otherMembers: otherMembers.map((member) => member.did),
+      title,
     })
-  },
-  addOlderMessages: (conversationId: string, messages: Message[]) => {
-    set((state) => {
-      const newMessages = messages.filter(
-        (m) => !state.messagesPerConversation[conversationId].some((m2) => m2.id === m.id)
+
+    const members = [...otherMembers, user]
+
+    const groupPrivateKey = ethers.Wallet.createRandom().privateKey
+    const groupPublicKey = getEncryptionPublicKey(groupPrivateKey.slice(2))
+    const groupKeys = (
+      await Promise.all(
+        members.map((member) => canvasApp.db.get<EncryptionKey>('encryption_key', member.did))
       )
-      return {
-        messagesPerConversation: {
-          ...state.messagesPerConversation,
-          [conversationId]: [...state.messagesPerConversation[conversationId], ...newMessages],
-        },
-      }
-    })
-  },
-  addNewMessage: (conversationId: string, message: Message) => {
-    set((state) => {
-      if (state.messagesPerConversation[conversationId].some((m) => m.id === message.id))
-        return state
-      return {
-        messagesPerConversation: {
-          ...state.messagesPerConversation,
-          [conversationId]: [message, ...state.messagesPerConversation[conversationId]],
-        },
-      }
-    })
-  },
-  setOldestLoadedMessageDate: (conversationId: string, dateString: string) => {
-    set((state) => {
-      return {
-        oldestLoadedMessageDate: {
-          ...state.oldestLoadedMessageDate,
-          [conversationId]: dateString,
-        },
-      }
-    })
-  },
-  firstMessageDate: {},
-  setFirstMessageDate: (conversationId: string, dateString: string) => {
-    set((state) => {
-      return { firstMessageDate: { ...state.firstMessageDate, [conversationId]: dateString } }
-    })
-  },
-
-  updateLastRead: async (conversationId: string, userId: string) => {
-    const lastMessage = get().messagesPerConversation[conversationId]
-    const lastReadDate = lastMessage[0].created
-
-    const memberships = get().memberships
-    const ownMembership = memberships[conversationId].filter((m) => m.expand?.user.id === userId)[0]
-    await pocketbase.collection('memberships').update(ownMembership.id, { last_read: lastReadDate })
-  },
-
-  getNewMessages: async (conversationId: string, oldestLoadedMessageDate: string) => {
-    const newMessages = await pocketbase.collection('messages').getList<Message>(0, PAGE_SIZE, {
-      filter: `conversation = "${conversationId}" && created < "${oldestLoadedMessageDate}"`,
-      sort: '-created',
-    })
-    return newMessages.items
-  },
-
-  reactions: {},
-  setReactions: (reactions: ExpandedReaction[]) => {
-    const newItems: Record<string, ExpandedReaction[]> = {}
-    reactions.forEach((item) => {
-      if (newItems[item.message]) {
-        newItems[item.message].push(item)
-      } else {
-        newItems[item.message] = [item]
-      }
-    })
-    set({ reactions: newItems })
-  },
-  addReaction: (reaction: ExpandedReaction) => {
-    set((state) => {
-      if (!state.reactions[reaction.message]) {
-        return {
-          reactions: {
-            ...state.reactions,
-            [reaction.message]: [reaction],
-          },
-        }
-      }
-      return {
-        reactions: {
-          ...state.reactions,
-          [reaction.message]: [...state.reactions[reaction.message], reaction],
-        },
-      }
-    })
-  },
-  sendReaction: async (senderId, messageId, emoji) => {
-    try {
-      await pocketbase.collection('reactions').create({
-        message: messageId,
-        emoji,
-        user: senderId,
+    )
+      .map((result) => result?.publicEncryptionKey)
+      .map((key) => {
+        return encryptSafely({
+          publicKey: key as string,
+          data: groupPrivateKey,
+          version: 'x25519-xsalsa20-poly1305',
+        })
       })
-    } catch (error) {
-      console.error(error)
+
+    await canvasActions.createEncryptionGroup({
+      members: members.map((member) => member.did),
+      groupKeys,
+      groupPublicKey,
+    })
+
+    return conversationId
+  },
+
+  async createMemberships(users, conversationId): Promise<void> {
+    const { canvasActions } = get()
+    if (!canvasActions) {
+      throw new Error('Canvas not logged in!')
     }
+    await canvasActions.createMemberships({
+      conversationId,
+      users: users.map((user) => user.did),
+    })
+  },
+
+  sendMessage: async (sendMessageArgs) => {
+    const { canvasActions, updateLastRead, encryptForConversation } = get()
+    if (!canvasActions) {
+      throw new Error('Canvas not logged in!')
+    }
+
+    const encryptedData = encryptForConversation(sendMessageArgs.conversationId, {
+      text: sendMessageArgs.text,
+      imageUrl: sendMessageArgs.imageUrl,
+      parentMessageId: sendMessageArgs.parentMessageId,
+    })
+
+    // call canvas action to create a message
+    await canvasActions.createMessage({
+      conversation: sendMessageArgs.conversationId,
+      encrypted_data: JSON.stringify(encryptedData),
+    })
+
+    await updateLastRead(sendMessageArgs.conversationId)
+  },
+
+  updateLastRead: async (conversationId: string) => {
+    const { canvasApp, canvasActions, user } = get()
+    if (!canvasApp) {
+      throw new Error('Canvas not initialized!')
+    }
+    if (!canvasActions) {
+      throw new Error('Canvas not logged in!')
+    }
+    if (!user) {
+      throw new Error('Not logged in!')
+    }
+
+    const lastMessage = (
+      await canvasApp.db.query<Message>('message', {
+        where: { conversation: conversationId },
+        orderBy: { created: 'desc' },
+        limit: 1,
+      })
+    )[0]
+
+    const lastReadDate = lastMessage ? lastMessage.created : ''
+    await canvasActions.updateMembershipLastRead(`${user.did}/${conversationId}`, lastReadDate)
+  },
+
+  sendReaction: async (messageId, emoji) => {
+    const { canvasActions, canvasApp, encryptForConversation } = get()
+
+    if (!canvasActions) {
+      throw new Error('Canvas not logged in!')
+    }
+    if (!canvasApp) {
+      throw new Error('Canvas not initialized!')
+    }
+
+    const message = await canvasApp.db.get<Message>('message', messageId)
+    if (!message) {
+      throw new Error(`No message exists for ${messageId}`)
+    }
+
+    const encryptedData = encryptForConversation(message.conversation as string, {
+      emoji,
+    })
+
+    await canvasActions.createReaction({
+      message: messageId,
+      encrypted_data: JSON.stringify(encryptedData),
+    })
   },
   deleteReaction: async (id: string) => {
-    try {
-      await pocketbase.collection('reactions').delete(id)
-    } catch (error) {
-      console.error(error)
-    }
-  },
-  removeReaction: (reaction: Reaction) => {
-    try {
-      set((state) => {
-        const newList = { ...state.reactions }
-        newList[reaction.message] = newList[reaction.message].filter((r) => r.id !== reaction.id)
+    const { canvasActions } = get()
 
-        return {
-          reactions: newList,
-        }
-      })
-    } catch (error) {
-      console.error(error)
+    if (!canvasActions) {
+      throw new Error('Canvas not logged in!')
     }
+
+    await canvasActions.deleteReaction(id)
   },
-  saves: [],
-  setSaves: (saves: ExpandedSave[]) => {
-    set((state) => ({
-      saves: saves,
-    }))
-  },
-  addSave: async (userId: string, savedBy: string) => {
-    try {
-      const id = (
-        await pocketbase.collection('saves').create<Save>({ user: userId, saved_by: savedBy })
-      ).id
-      const save = await pocketbase.collection('saves').getOne<ExpandedSave>(id, { expand: 'user' })
-      set((state) => {
-        if (!state.saves.length) return { saves: [save] }
-        return {
-          saves: state.saves.some((m) => m.id === save.id)
-            ? [...state.saves]
-            : [...state.saves, save],
-        }
-      })
-    } catch (error) {
-      console.error(error)
+
+  archiveConversation: async (user: Profile, conversationId: string) => {
+    const { canvasApp, canvasActions, membershipsByConversationAndUserId } = get()
+    if (!canvasApp) {
+      throw new Error('Canvas not initialized!')
     }
-  },
-  removeSave: async (id: string) => {
-    try {
-      await pocketbase.collection('saves').delete(id)
-      set((state) => {
-        return {
-          saves: state.saves.filter((m) => m.id !== id),
-        }
-      })
-    } catch (error) {
-      console.error(error)
+    if (!canvasActions) {
+      throw new Error('Canvas not logged in!')
     }
-  },
-  archiveConversation: async (userId: string, conversationId: string) => {
-    const membership = get().memberships[conversationId].find((m) => m.expand?.user.id === userId)
+
+    const membership = (membershipsByConversationAndUserId[conversationId] || {})[user.did]
+
     if (membership) {
-      await pocketbase.collection('memberships').update(membership.id, { archived: true })
+      await canvasActions.archiveMembership(membership.id)
     }
   },
-  unarchiveConversation: async (userId: string, conversationId: string) => {
-    const membership = get().memberships[conversationId].find((m) => m.expand?.user.id === userId)
-    if (membership) {
-      await pocketbase.collection('memberships').update(membership.id, { archived: false })
+  unarchiveConversation: async (user: Profile, conversationId: string) => {
+    const { canvasApp, canvasActions, membershipsByConversationAndUserId } = get()
+    if (!canvasApp) {
+      throw new Error('Canvas not initialized!')
     }
+    if (!canvasActions) {
+      throw new Error('Canvas not logged in!')
+    }
+
+    const membership = (membershipsByConversationAndUserId[conversationId] || {})[user.did]
+
+    if (membership) {
+      await canvasActions.unArchiveMembership(membership.id)
+    }
+  },
+
+  encryptForConversation: (conversationId, data) => {
+    const { encryptionGroupsByConversationId } = get()
+
+    const encryptionGroup = encryptionGroupsByConversationId[conversationId]
+
+    if (!encryptionGroup) {
+      throw new Error(`Couldn't find encryption group for ${conversationId}`)
+    }
+
+    return encryptSafely({
+      publicKey: encryptionGroup.key as string,
+      data: JSON.stringify(data),
+      version: 'x25519-xsalsa20-poly1305',
+    })
+  },
+
+  decryptMessages: (conversationId, messages) => {
+    if (messages.length === 0) {
+      return []
+    }
+
+    const { canvasApp, encryptionWallet, user, encryptionGroupsByConversationId } = get()
+    if (!canvasApp) {
+      throw new Error('Canvas not initialized!')
+    }
+
+    if (!encryptionWallet) {
+      throw new Error('No encryption wallet exists for the current user')
+    }
+
+    if (!user) {
+      throw new Error('Not logged in!')
+    }
+
+    // get the encryption group for this conversation
+    const encryptionGroup = encryptionGroupsByConversationId[conversationId]
+    if (!encryptionGroup) {
+      throw new Error(`No encryption group exists for ${conversationId}`)
+    }
+
+    // extract my key from the encryption group
+    const myKey = JSON.parse(encryptionGroup.group_keys)[user.did]
+
+    const groupPrivateKey = decryptSafely({
+      encryptedData: myKey,
+      privateKey: encryptionWallet?.privateKey,
+    })
+
+    const decryptedMessages = []
+    for (const message of messages) {
+      // decrypt the message
+      const decryptedData = decryptSafely({
+        encryptedData: message.encrypted_data as EthEncryptedData,
+        privateKey: groupPrivateKey,
+      })
+
+      const decryptedFields = JSON.parse(decryptedData) as MessageDecryptedData
+      decryptedMessages.push({ ...message, expand: { decryptedData: decryptedFields } })
+    }
+
+    return decryptedMessages
+  },
+
+  decryptReactions: (conversationId, reactions) => {
+    if (reactions.length === 0) {
+      return []
+    }
+
+    const { canvasApp, encryptionWallet, user, encryptionGroupsByConversationId } = get()
+    if (!canvasApp) {
+      throw new Error('Canvas not initialized!')
+    }
+
+    if (!encryptionWallet) {
+      throw new Error('No encryption wallet exists for the current user')
+    }
+
+    if (!user) {
+      throw new Error('Not logged in!')
+    }
+
+    // get the encryption group for this conversation
+    const encryptionGroup = encryptionGroupsByConversationId[conversationId]
+    if (!encryptionGroup) {
+      throw new Error(`No encryption group exists for ${conversationId}`)
+    }
+
+    // extract my key from the encryption group
+    const myKey = JSON.parse(encryptionGroup.group_keys)[user.did]
+
+    const groupPrivateKey = decryptSafely({
+      encryptedData: myKey,
+      privateKey: encryptionWallet?.privateKey,
+    })
+
+    const decryptedReactions = []
+    for (const reaction of reactions) {
+      // decrypt the reaction
+      const decryptedData = decryptSafely({
+        encryptedData: reaction.encrypted_data as EthEncryptedData,
+        privateKey: groupPrivateKey,
+      })
+
+      const decryptedFields = JSON.parse(decryptedData) as ReactionDecryptedData
+      decryptedReactions.push({ ...reaction, expand: { decryptedData: decryptedFields } })
+    }
+
+    return decryptedReactions
+  },
+
+  getDirectConversation: (otherUserDid: string) => {
+    const { user, membershipsByUserId, conversationsById } = get()
+
+    if (!user) {
+      throw new Error('Not logged in!')
+    }
+
+    const myMemberships = membershipsByUserId[user.did] || []
+    const otherUserMemberships = membershipsByUserId[otherUserDid] || []
+
+    const myConversationIds = new Set(myMemberships.map((membership) => membership.conversation))
+    const otherUserConversationIds = new Set(
+      otherUserMemberships.map((membership) => membership.conversation)
+    )
+
+    const sharedConversationIds = myConversationIds.intersection(otherUserConversationIds)
+
+    for (const conversationId of sharedConversationIds) {
+      const conversation = conversationsById[conversationId as string]
+
+      if (conversation?.is_direct) {
+        return conversation
+      }
+    }
+    return null
+  },
+
+  getGroupConversations: async () => {
+    const { canvasApp, user, conversationsById, membershipsByUserId } = get()
+    if (!canvasApp) {
+      throw new Error('Canvas not initialized!')
+    }
+    if (!user) {
+      throw new Error('Not logged in!')
+    }
+
+    const myMemberships = membershipsByUserId[user.did] || []
+
+    const groupConversations = []
+
+    for (const membership of myMemberships) {
+      const conversation = conversationsById[membership.conversation as string]
+
+      if (!conversation) continue
+      if (!conversation.is_direct) {
+        groupConversations.push(conversation)
+      }
+    }
+
+    return groupConversations
+  },
+  getMembers: (conversationId) => {
+    const { membershipsByConversationAndUserId, profilesByUserDid } = get()
+
+    const members: ExpandedMembership[] = []
+    for (const membership of Object.values(membershipsByConversationAndUserId[conversationId])) {
+      const user = profilesByUserDid[membership.user as string]
+      if (!user) continue
+      members.push({ ...membership, expand: { user } })
+    }
+    return members
+  },
+  getLastMessageForConversation: async (conversationId) => {
+    const { canvasApp } = get()
+    if (!canvasApp) {
+      throw new Error('Canvas not initialized!')
+    }
+
+    const messages = await canvasApp.db.query<Message>('message', {
+      where: { conversation: conversationId },
+      orderBy: { created: 'desc' },
+      limit: 1,
+    })
+
+    const decryptedMessages = get().decryptMessages(conversationId, messages)
+
+    return decryptedMessages[0] || null
+  },
+  getReactionsForMessage: async (messageId) => {
+    const { canvasApp, decryptReactions, profilesByUserDid } = get()
+    if (!canvasApp) {
+      throw new Error('Canvas not initialized!')
+    }
+
+    const reactions = await canvasApp.db.query<Reaction>('reaction', {
+      where: { message: messageId },
+    })
+
+    const message = await canvasApp.db.get<Message>('message', messageId)
+
+    const decryptedReactionsWithSenders = []
+    for (const decryptedReaction of decryptReactions(message?.conversation as string, reactions)) {
+      // get the sender
+      const sender = profilesByUserDid[decryptedReaction.sender as string]
+      decryptedReactionsWithSenders.push({
+        ...decryptedReaction,
+        expand: { ...decryptedReaction.expand, sender: sender! },
+      })
+    }
+
+    return decryptedReactionsWithSenders
+  },
+  getNumberUnreadMessages: async () => {
+    const { canvasApp, user, membershipsByUserId } = get()
+    if (!canvasApp) {
+      throw new Error('Canvas not initialized!')
+    }
+    if (!user) {
+      throw new Error('Not logged in!')
+    }
+
+    let unreadMessageCount = 0
+
+    const myMemberships = membershipsByUserId[user.did] || []
+
+    for (const membership of myMemberships) {
+      const countForConversation = await canvasApp.db.count('message', {
+        conversation: membership.conversation,
+        sender: { neq: user.did },
+        created: {
+          lt: membership.last_read,
+        },
+      })
+      unreadMessageCount += countForConversation
+    }
+
+    return unreadMessageCount
   },
 })

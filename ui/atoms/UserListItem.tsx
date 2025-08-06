@@ -44,14 +44,13 @@ export default function UserListItem({
                 textAlign: 'left',
               }}
             >
-              {user.firstName && user.lastName 
+              {user.firstName && user.lastName
                 ? `${user.firstName} ${user.lastName}`
-                : user.firstName 
+                : user.firstName
                 ? user.firstName
                 : user.lastName
                 ? user.lastName
-                : user.userName || user.name || 'Unknown User'
-              }
+                : 'Unknown User'}
             </Text>
             <Text style={{ color: whiteText ? c.surface : c.muted, textAlign: 'left' }}>
               {user.location}

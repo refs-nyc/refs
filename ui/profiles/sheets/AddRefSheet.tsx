@@ -1,5 +1,4 @@
 import { useAppStore } from '@/features/stores'
-import { getProfileItems } from '@/features/stores/items'
 import { ExpandedItem, StagedItemFields } from '@/features/types'
 import { c, s } from '@/features/style'
 import { AddedNewRefConfirmation } from '@/ui/actions/AddedNewRefConfirmation'
@@ -31,16 +30,27 @@ export const AddRefSheet = ({
   // the resulting item
   const [itemData, setItemData] = useState<ExpandedItem | null>(null)
 
-  const { user, moveToBacklog, removeItem, addToProfile, getRefById, addingRefId, setAddingRefId } =
-    useAppStore()
+  const {
+    user,
+    moveToBacklog,
+    removeItem,
+    addToProfile,
+    getRefById,
+    addingRefId,
+    setAddingRefId,
+    getProfileItems,
+  } = useAppStore()
 
   useEffect(() => {
     const getRef = async () => {
       const ref = await getRefById(addingRefId)
+      if (!ref) {
+        return setRefFields(null)
+      }
       setRefFields({
-        title: ref.title!,
-        image: ref.image,
-        url: ref.url,
+        title: ref.title || '',
+        image: ref.image || '',
+        url: ref.url || '',
       })
     }
     getRef()
@@ -106,7 +116,7 @@ export const AddRefSheet = ({
             onAddRefToList={async (fields) => {}}
             onAddRef={async (fields) => {
               // check if the grid is full
-              const gridItems = await getProfileItems(user.userName)
+              const gridItems = await getProfileItems(user)
               if (gridItems && gridItems.length >= 12) {
                 // show a modal to the user that the grid is full
                 setStagedItemFields(fields)

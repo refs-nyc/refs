@@ -1,5 +1,4 @@
 import { useAppStore } from '@/features/stores'
-import { getProfileItems } from '@/features/stores/items'
 import { ExpandedItem, Profile } from '@/features/types'
 import { c } from '@/features/style'
 import BottomSheet, { BottomSheetBackdrop } from '@gorhom/bottom-sheet'
@@ -18,16 +17,18 @@ const ConditionalGridLines = React.memo(() => {
     return null
   }
   return (
-    <View style={{ 
-      position: 'absolute', 
-      top: 0, 
-      left: 0, 
-      right: 0, 
-      bottom: 0, 
-      zIndex: -1,
-      borderRadius: 50,
-      overflow: 'hidden',
-    }}>
+    <View
+      style={{
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        zIndex: -1,
+        borderRadius: 50,
+        overflow: 'hidden',
+      }}
+    >
       <GridLines lineColor={c.grey1} size={20} />
     </View>
   )
@@ -37,17 +38,16 @@ ConditionalGridLines.displayName = 'ConditionalGridLines'
 export const ProfileDetailsSheet = ({
   onChange,
   detailsSheetRef,
-  profileUsername,
+  profile,
   detailsItemId,
   openedFromFeed,
 }: {
-  profileUsername: string
+  profile: Profile
   detailsItemId: string
   onChange: (index: number) => void
   detailsSheetRef: React.RefObject<BottomSheet>
   openedFromFeed: boolean
 }) => {
-  const [profile, setProfile] = useState<Profile | null>(null)
   const [gridItems, setGridItems] = useState<ExpandedItem[]>([])
   const {
     profileRefreshTrigger,
@@ -55,23 +55,21 @@ export const ProfileDetailsSheet = ({
     detailsBackdropAnimatedIndex,
     registerBackdropPress,
     unregisterBackdropPress,
-    getUserByUserName,
+    getProfileItems,
   } = useAppStore()
 
   // Use preloaded data for smooth animation, fallback to fetching if needed
   useEffect(() => {
-    const initializeData = async () => {
-      // Fetch data
-      const profile = await getUserByUserName(profileUsername)
-      const gridItems = await getProfileItems(profile.userName)
-      setProfile(profile)
+    const fetchProfile = async () => {
+      const gridItems = await getProfileItems(profile)
+
       setGridItems(gridItems)
     }
-    initializeData()
-  }, [profileUsername, profileRefreshTrigger, user?.userName])
+    fetchProfile()
+  }, [profile, profileRefreshTrigger])
 
   // if the current user is the item creator, then they have editing rights
-  const editingRights = profile?.id === user?.id
+  const editingRights = profile?.did === user?.did
 
   const snapPoints = ['100%']
 

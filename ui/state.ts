@@ -22,6 +22,8 @@ export type UISlice = {
   setAddRefPrompt: (prompt: string) => void
   stopEditProfile: () => void
   startEditProfile: () => void
+  showMagicSheet: boolean
+  setShowMagicSheet: (showMagicSheet: boolean) => void
   // Background loading state
   isBackgroundLoading: boolean
   setBackgroundLoading: (loading: boolean) => void
@@ -40,7 +42,13 @@ export type UISlice = {
   setSearchMode: (mode: boolean) => void
   setSelectedRefs: (refs: string[]) => void
   setSelectedRefItems: (items: any[]) => void
-  setCachedSearchResults: (results: any[], title: string, subtitle: string, refTitles?: string[], refImages?: string[]) => void
+  setCachedSearchResults: (
+    results: any[],
+    title: string,
+    subtitle: string,
+    refTitles?: string[],
+    refImages?: string[]
+  ) => void
   clearCachedSearchResults: () => void
   setSearchResultsSheetOpen: (open: boolean) => void
   setReturningFromSearchNavigation: (returning: boolean) => void
@@ -99,6 +107,10 @@ export const createUISlice: StateCreator<StoreSlices, [], [], UISlice> = (set) =
       editingProfile: true,
     }))
   },
+  showMagicSheet: false,
+  setShowMagicSheet: (showMagicSheet: boolean) => {
+    set(() => ({ showMagicSheet }))
+  },
   // Search-related state
   searchMode: false,
   selectedRefs: [],
@@ -126,7 +138,13 @@ export const createUISlice: StateCreator<StoreSlices, [], [], UISlice> = (set) =
       selectedRefItems: items,
     }))
   },
-  setCachedSearchResults: (results: any[], title: string, subtitle: string, refTitles?: string[], refImages?: string[]) => {
+  setCachedSearchResults: (
+    results: any[],
+    title: string,
+    subtitle: string,
+    refTitles?: string[],
+    refImages?: string[]
+  ) => {
     set(() => ({
       cachedSearchResults: results,
       cachedSearchTitle: title,

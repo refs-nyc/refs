@@ -23,7 +23,7 @@ import { ShareIntentProvider } from 'expo-share-intent'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { useEffect, useRef } from 'react'
-import { StatusBar, useColorScheme } from 'react-native'
+import { StatusBar, useColorScheme, View } from 'react-native'
 import { Navigation } from '@/ui/navigation/Navigation'
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native'
 import { useFonts } from 'expo-font'
@@ -35,21 +35,15 @@ import * as SystemUI from 'expo-system-ui'
 import { KeyboardProvider } from 'react-native-keyboard-controller'
 
 import { RegisterPushNotifications } from '@/ui/notifications/RegisterPushNotifications'
-import { MessagesInit } from '@/features/messaging/message-loader'
 import { useAppStore } from '@/features/stores'
 import { StartupLoadingIndicator } from '@/ui/atoms/StartupLoadingIndicator'
 
-import { LogBox } from 'react-native'
 import BottomSheet from '@gorhom/bottom-sheet'
 import Saves from '@/features/saves/saves-sheet'
 import Referencers from '@/ui/profiles/sheets/ReferencersSheet'
 import { AddRefSheet } from '@/ui/profiles/sheets/AddRefSheet'
 import { NewRefSheet } from '@/ui/profiles/sheets/NewRefSheet'
-
-// TODO: this error keeps getting thrown whenever the app fast reloads in development
-// I suspect that pocketbase subscribes to updates and then doesn't unsubscribe when the app is being reloaded
-// Ignoring these error messages for now
-LogBox.ignoreLogs(['ClientResponseError 404'])
+import { MagicSheet } from '@/features/magic/MagicSheet'
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -98,14 +92,35 @@ function FontProvider({ children }: { children: React.ReactNode }) {
 }
 
 export default function RootLayout() {
-  const { init } = useAppStore()
+  const {
+    init,
+    connectCanvas,
+    canvasApp,
+    subscribeToUsers,
+    subscribeToMessages,
+    unsubscribeFromMessages,
+    unsubscribeFromUsers,
+  } = useAppStore()
 
   useEffect(() => {
-    // Initialize user store to sync with PocketBase auth - make non-blocking
-    init().catch((error) => {
-      console.error('Failed to initialize app:', error)
-    })
-  }, [init])
+    async function doInit() {
+      await connectCanvas()
+      await init()
+    }
+    doInit()
+  }, [init, connectCanvas])
+
+  useEffect(() => {
+    if (canvasApp) {
+      subscribeToUsers()
+      subscribeToMessages()
+    }
+
+    return () => {
+      unsubscribeFromUsers()
+      unsubscribeFromMessages()
+    }
+  }, [canvasApp])
 
   return (
     <Providers>
@@ -138,7 +153,7 @@ function RootLayoutNav() {
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <StatusBar barStyle={colorScheme === 'dark' ? 'light-content' : 'dark-content'} />
       <RegisterPushNotifications />
-      <MessagesInit />
+
       <Navigation savesBottomSheetRef={savesBottomSheetRef} />
       <StartupLoadingIndicator />
 
@@ -173,7 +188,7 @@ function RootLayoutNav() {
           }}
         />
         <Stack.Screen
-          name="user/[userName]/index"
+          name="user/[did]/index"
           options={{
             title: 'User',
             // presentation: 'modal',
@@ -201,6 +216,8 @@ function RootLayoutNav() {
       <AddRefSheet bottomSheetRef={addRefSheetRef} />
       {/* new ref sheet */}
       <NewRefSheet bottomSheetRef={newRefSheetRef} />
+      {/* magic login sheet */}
+      <MagicSheet />
     </ThemeProvider>
   )
 }

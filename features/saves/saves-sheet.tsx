@@ -2,6 +2,7 @@ import SavesList from '@/features/messaging/saves'
 import { c, s } from '@/features/style'
 import BottomSheet, { BottomSheetBackdrop } from '@gorhom/bottom-sheet'
 import { useCallback } from 'react'
+import { useAppStore } from '../stores'
 
 export default function Saves({
   savesBottomSheetRef,
@@ -12,6 +13,8 @@ export default function Saves({
     (p: any) => <BottomSheetBackdrop {...p} disappearsOnIndex={-1} appearsOnIndex={0} />,
     []
   )
+
+  const { canvasApp, user } = useAppStore()
 
   return (
     <BottomSheet
@@ -25,7 +28,7 @@ export default function Saves({
       handleComponent={null}
       // handleIndicatorStyle={{ width: s.$13, height: s.$075, backgroundColor: c.white }}
     >
-      <SavesList />
+      {canvasApp && user && <SavesList />}
     </BottomSheet>
   )
 }

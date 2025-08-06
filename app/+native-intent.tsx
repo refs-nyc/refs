@@ -1,19 +1,21 @@
 import { getShareExtensionKey } from 'expo-share-intent'
-import { router } from 'expo-router'
-import { pocketbase } from '@/features/pocketbase'
 
 export function redirectSystemPath({ path, initial }: { path: string; initial: string }) {
   let returnValue = '/'
   try {
-    if (path.includes(`dataUrl=${getShareExtensionKey()}`)) {
-      console.debug('[expo-router-native-intent] redirect to ShareIntent screen')
+    // TODO: figure out how to access the current user's authStore value, if it exists
+    // What is this code even for?
 
-      if (!pocketbase.authStore.isValid) returnValue = '/login'
+    // if (path.includes(`dataUrl=${getShareExtensionKey()}`)) {
+    //   console.debug('[expo-router-native-intent] redirect to ShareIntent screen')
 
-      returnValue = `/user/${pocketbase?.authStore?.record?.userName}`
-    } else {
-      returnValue = path
-    }
+    //   if (!pocketbase.authStore.isValid) returnValue = '/login'
+
+    //   returnValue = `/user/${pocketbase?.authStore?.record?.did}`
+    // } else {
+    //   returnValue = path
+    // }
+    returnValue = path
   } catch {
     returnValue = '/'
   }

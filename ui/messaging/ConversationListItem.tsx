@@ -1,5 +1,5 @@
 import { useAppStore } from '@/features/stores'
-import { Conversation } from '@/features/types'
+import { Conversation, DecryptedMessage } from '@/features/types'
 import { s, c } from '@/features/style'
 import { View, Text } from 'react-native'
 import { XStack, YStack } from '../core/Stacks'
@@ -8,33 +8,41 @@ import { formatTimestamp } from '@/features/messaging/utils'
 import { useCalendars } from 'expo-localization'
 import { Pressable } from 'react-native-gesture-handler'
 import { router } from 'expo-router'
+import { useEffect, useState } from 'react'
 
 export default function ConversationListItem({
   conversation,
 }: {
   conversation: Conversation
 }): JSX.Element | null {
-  const { user, memberships, messagesPerConversation } = useAppStore()
+  const { user, getLastMessageForConversation, getMembers } = useAppStore()
 
-  const messages = messagesPerConversation[conversation.id]
+  const [lastMessage, setLastMessage] = useState<DecryptedMessage | null>(null)
+  const conversationMemberships = getMembers(conversation.id)
+
+  useEffect(() => {
+    async function updateMessages() {
+      setLastMessage(await getLastMessageForConversation(conversation.id))
+    }
+    updateMessages()
+  }, [conversation])
 
   const calendars = useCalendars()
   const timeZone = calendars[0].timeZone || 'America/New_York'
 
   if (!user) return null
 
-  const lastMessage = messages[0]
   const time = lastMessage?.created
     ? lastMessage.created.slice(0, lastMessage.created.length - 1)
     : ''
-  const members = memberships[conversation.id]
-    .filter((m) => m.expand?.user && m.expand.user.id !== user.id)
+  const members = conversationMemberships
+    .filter((m) => m.expand?.user && m.expand.user.did !== user.did)
     .map((m) => m.expand!.user)
-  const ownMembership = memberships[conversation.id].filter((m) => m.expand?.user.id === user.id)[0]
+  const ownMembership = conversationMemberships.filter((m) => m.expand?.user.did === user.did)[0]
 
   const lastMessageDate = new Date(lastMessage?.created ? lastMessage.created : '')
-  const lastReadDate = new Date(ownMembership.last_read)
-  const newMessages = lastMessageDate > lastReadDate && lastMessage?.sender !== user?.id
+  const lastReadDate = new Date(ownMembership.last_read!)
+  const hasNewMessages = lastMessageDate > lastReadDate && lastMessage?.sender !== user?.did
 
   let image
   for (const member of members) {
@@ -56,7 +64,7 @@ export default function ConversationListItem({
         }}
       >
         <XStack gap={s.$075} style={{ alignItems: 'center', maxWidth: '80%' }}>
-          {newMessages && (
+          {hasNewMessages && (
             <View
               style={{
                 width: s.$075,
@@ -73,7 +81,7 @@ export default function ConversationListItem({
                 ? members[0].firstName + ' ' + members[0].lastName
                 : conversation.title}
             </Text>
-            <Text>{lastMessage?.text}</Text>
+            <Text>{lastMessage ? lastMessage.expand.decryptedData.text : ''}</Text>
           </YStack>
         </XStack>
         <Text style={{ color: c.muted, margin: s.$05, alignSelf: 'flex-start' }}>

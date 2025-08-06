@@ -23,12 +23,12 @@ export default function SearchResultsScreen({ refIds }: { refIds: string[] }) {
         for (const item of items) {
           const user = item.expand?.creator
           const refId = item.expand?.ref?.id
-          if (!user || !refId || user.id === currentUser?.id) continue
+          if (!user || !refId || user.did === currentUser?.did) continue
 
-          if (!userItems.has(user.id)) {
-            userItems.set(user.id, { user, refs: new Set() })
+          if (!userItems.has(user.did)) {
+            userItems.set(user.did, { user, refs: new Set() })
           }
-          userItems.get(user.id)!.refs.add(refId)
+          userItems.get(user.did)!.refs.add(refId)
         }
 
         const results = Array.from(userItems.values())
@@ -37,12 +37,12 @@ export default function SearchResultsScreen({ refIds }: { refIds: string[] }) {
             return { ...value.user, sharedRefCount: 0 }
           })
 
-        const currentUserRefs = await getAllItemsByCreator(currentUser?.id!)
+        const currentUserRefs = await getAllItemsByCreator(currentUser!)
 
         const currentUserRefIds = [...new Set(currentUserRefs.map((itm) => itm.expand.ref.id))]
 
         for (const user of results) {
-          const userAllRefs = await getAllItemsByCreator(user.id)
+          const userAllRefs = await getAllItemsByCreator(user)
           const userRefIds = [...new Set(userAllRefs.map((itm) => itm.expand.ref.id))]
 
           user.sharedRefCount = currentUserRefIds.filter((id) => userRefIds.includes(id)).length
@@ -75,10 +75,10 @@ export default function SearchResultsScreen({ refIds }: { refIds: string[] }) {
         {results.length ? (
           results.map((result) => (
             <UserListItem
-              key={result.id}
+              key={result.did}
               user={result}
               small={false}
-              onPress={() => router.push(`/user/${result.userName}`)}
+              onPress={() => router.push(`/user/${result.did}`)}
               text={result.sharedRefCount + ' refs shared'}
             />
           ))

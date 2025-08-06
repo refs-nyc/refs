@@ -12,22 +12,11 @@ const { transformer, resolver } = config
 config.transformer = {
   ...transformer,
   babelTransformerPath: require.resolve('react-native-svg-transformer/expo'),
-  // Performance optimizations
-  minifierConfig: {
-    keep_fnames: true,
-    mangle: {
-      keep_fnames: true,
-    },
-  },
 }
 
 config.resolver.unstable_enablePackageExports = true
 
 config.resolver.unstable_conditionNames = ['require', 'import', 'react-native', 'ios', 'default']
-
-// Performance optimizations
-config.resolver.platforms = ['ios', 'android', 'native', 'web']
-config.resolver.sourceExts = ['js', 'jsx', 'json', 'ts', 'tsx', 'svg']
 
 // crypto polyfills
 config.resolver.resolveRequest = (context, moduleName, platform) => {
@@ -58,20 +47,6 @@ config.resolver = {
   ...resolver,
   assetExts: resolver.assetExts.filter((ext) => ext !== 'svg'),
   sourceExts: [...resolver.sourceExts, 'svg'],
-}
-
-// Performance optimizations
-config.server = {
-  ...config.server,
-  enhanceMiddleware: (middleware, server) => {
-    return (req, res, next) => {
-      // Add caching headers for better performance
-      if (req.url && req.url.includes('.bundle')) {
-        res.setHeader('Cache-Control', 'public, max-age=31536000')
-      }
-      return middleware(req, res, next)
-    }
-  },
 }
 
 module.exports = config

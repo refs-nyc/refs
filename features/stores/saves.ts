@@ -5,7 +5,7 @@ import { StoreSlices } from './types'
 export type SavesSlice = {
   saves: ExpandedSave[]
   setSaves: (saves: ExpandedSave[]) => void
-  addSave: (user: Profile, savedBy: Profile) => Promise<Save>
+  addSave: (otherUser: Profile) => Promise<Save>
   removeSave: (id: string) => Promise<void>
 }
 
@@ -16,15 +16,14 @@ export const createSaveSlice: StateCreator<StoreSlices, [], [], SavesSlice> = (s
       saves: saves,
     }))
   },
-  addSave: async (user: Profile, savedBy: Profile) => {
+  addSave: async (otherUser: Profile) => {
     const { canvasActions } = get()
     if (!canvasActions) {
       throw new Error('Canvas not logged in!')
     }
 
     const { result } = await canvasActions.createSave({
-      user: user.did,
-      saved_by: savedBy.did,
+      user: otherUser.did,
     })
 
     return result

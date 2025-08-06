@@ -105,10 +105,12 @@ export default class RefsContract extends Contract<typeof RefsContract.models> {
         // emoji: 'string',
       },
       save: {
-        created: 'string',
         id: 'primary',
+        created: 'string',
         saved_by: '@profile',
         user: '@profile',
+
+        $indexes: ['id'],
       },
     } satisfies ModelSchema
   }
@@ -294,12 +296,13 @@ export default class RefsContract extends Contract<typeof RefsContract.models> {
     })
   }
 
-  async createSave(createSaveParams: { user: string; saved_by: string }) {
+  async createSave(createSaveParams: { user: string }) {
     return await this.db.transaction(async () => {
-      const id = `${this.did}/${this.id}`
+      const id = `${this.did}/${createSaveParams.user}`
       const newSave = {
         id,
         created: new Date(this.timestamp).toISOString(),
+        saved_by: this.did,
         ...createSaveParams,
       }
       await this.db.set('save', newSave)
@@ -309,6 +312,10 @@ export default class RefsContract extends Contract<typeof RefsContract.models> {
 
   async removeSave(saveId: string) {
     await this.db.transaction(async () => {
+      if (saveId.split('/')[0] !== this.did) {
+        throw new Error('Item creator does not match')
+      }
+
       await this.db.delete('save', saveId)
     })
   }

@@ -28,7 +28,6 @@ export default class RefsContract extends Contract<typeof RefsContract.models> {
         promptContext: 'string?',
 
         created: 'string',
-        deleted: 'string?',
         updated: 'string?',
 
         $indexes: ['id'],
@@ -58,7 +57,6 @@ export default class RefsContract extends Contract<typeof RefsContract.models> {
 
         created: 'string?',
         updated: 'string?',
-        deleted: 'string?',
       },
 
       // messaging related features
@@ -100,7 +98,6 @@ export default class RefsContract extends Contract<typeof RefsContract.models> {
       reaction: {
         id: 'primary',
         created: 'string',
-        updated: 'string?',
         message: '@message',
         sender: '@profile',
         encrypted_data: 'json',
@@ -111,7 +108,6 @@ export default class RefsContract extends Contract<typeof RefsContract.models> {
         created: 'string',
         id: 'primary',
         saved_by: '@profile',
-        updated: 'string?',
         user: '@profile',
       },
     } satisfies ModelSchema
@@ -304,7 +300,6 @@ export default class RefsContract extends Contract<typeof RefsContract.models> {
       const newSave = {
         id,
         created: new Date(this.timestamp).toISOString(),
-        updated: null,
         ...createSaveParams,
       }
       await this.db.set('save', newSave)
@@ -406,7 +401,6 @@ export default class RefsContract extends Contract<typeof RefsContract.models> {
         id: `${this.did}/${createReactionArgs.message}`,
         sender: this.did,
         created: new Date(this.timestamp).toISOString(),
-        updated: null,
         ...createReactionArgs,
       })
     })

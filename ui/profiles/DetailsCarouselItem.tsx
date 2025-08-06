@@ -256,7 +256,7 @@ export const DetailsCarouselItem = ({ item, index }: { item: ExpandedItem; index
                   editingRights={editingRights}
                 />
               )}
-              {item.expand?.ref.image || item.image ? (
+              {(item.expand?.ref.image || item.image) && !item.list ? (
                 <Zoomable minScale={0.25} maxScale={3} isPanEnabled={true}>
                   <Animated.View
                     style={[

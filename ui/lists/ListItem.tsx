@@ -15,6 +15,9 @@ export const ListItem = ({
   onRemove,
   onTitlePress,
   showLink = false,
+  titleColor,
+  subtitle,
+  firstItemImage,
 }: {
   r: CompleteRef | ExpandedItem
   backgroundColor?: string
@@ -24,6 +27,9 @@ export const ListItem = ({
   onRemove?: () => void
   onTitlePress?: () => void
   showLink?: boolean
+  titleColor?: string
+  subtitle?: string
+  firstItemImage?: string
 }) => {
   return (
     <View
@@ -36,9 +42,9 @@ export const ListItem = ({
     >
       <XStack gap={s.$09} style={{ justifyContent: 'space-between', alignItems: 'center' }}>
         <XStack gap={s.$09} style={{ justifyContent: 'space-between', alignItems: 'center' }}>
-          {(r as any)?.image || (r as any).expand?.ref?.image ? (
+          {firstItemImage || (r as any)?.image || (r as any).expand?.ref?.image ? (
             <SimplePinataImage
-              originalSource={(r as any).image || (r as any).expand?.ref?.image}
+              originalSource={firstItemImage || (r as any).image || (r as any).expand?.ref?.image}
               imageOptions={{ width: largeImage ? s.$4 : s.$2, height: largeImage ? s.$4 : s.$2 }}
               style={largeImage ? base.largeSquare : base.smallSquare}
               placeholderStyle={[
@@ -54,11 +60,29 @@ export const ListItem = ({
               ]}
             ></View>
           )}
-          <Pressable onPress={onTitlePress}>
-            <Text style={{ color: c.muted, fontWeight: '700' }}>
-              {(r as any)?.title || (r as any)?.expand?.ref?.title}
-            </Text>
-          </Pressable>
+          {onTitlePress ? (
+            <Pressable onPress={onTitlePress}>
+              <Text style={{ color: titleColor || c.muted, fontWeight: '700' }}>
+                {(r as any)?.title || (r as any)?.expand?.ref?.title}
+              </Text>
+              {subtitle && (
+                <Text style={{ color: titleColor || c.muted, fontSize: 12, marginTop: 2 }}>
+                  {subtitle}
+                </Text>
+              )}
+            </Pressable>
+          ) : (
+            <View>
+              <Text style={{ color: titleColor || c.muted, fontWeight: '700' }}>
+                {(r as any)?.title || (r as any)?.expand?.ref?.title}
+              </Text>
+              {subtitle && (
+                <Text style={{ color: titleColor || c.muted, fontSize: 12, marginTop: 2 }}>
+                  {subtitle}
+                </Text>
+              )}
+            </View>
+          )}
         </XStack>
 
         {showLink && r.url && (

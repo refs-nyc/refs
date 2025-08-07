@@ -4,6 +4,7 @@ import { ItemsRecord, RefsRecord } from '../pocketbase/pocketbase-types'
 import { createdSort } from '@/ui/profiles/sorts'
 import type { StoreSlices } from './types'
 import { pocketbase } from '../pocketbase'
+import { edgeFunctionClient } from '../supabase/edge-function-client'
 
 // Helper function to trigger webhook for item changes
 async function triggerItemWebhook(itemId: string, action: 'create' | 'update', itemData: any) {
@@ -90,6 +91,7 @@ export type ItemSlice = {
   getRefById: (id: string) => Promise<CompleteRef>
   getRefsByTitle: (title: string) => Promise<CompleteRef[]>
   getItemById: (id: string) => Promise<ExpandedItem>
+  getItemByIdWithFullExpansion: (id: string) => Promise<ExpandedItem>
   getItemsByRefTitle: (title: string) => Promise<ExpandedItem[]>
   getItemsByRefIds: (refIds: string[]) => Promise<ExpandedItem[]>
   getAllItemsByCreator: (creatorId: string) => Promise<ExpandedItem[]>
@@ -187,13 +189,40 @@ export const createItemSlice: StateCreator<StoreSlices, [], [], ItemSlice> = (se
       expand: 'ref',
     })
 
-    // Temporarily disabled webhook to prevent production crashes
-    // await triggerItemWebhook(newItem.id, 'create', {
-    //   ref: newItem.ref,
-    //   creator: newItem.creator,
-    //   text: newItem.text,
-    //   ref_title: newItem.expand?.ref?.title || 'Unknown',
-    // });
+    // Process the item for 7-string generation and spirit vector
+    try {
+      await triggerItemWebhook(newItem.id, 'create', {
+        ref: newItem.ref,
+        creator: newItem.creator,
+        text: newItem.text,
+        ref_title: newItem.expand?.ref?.title || 'Unknown',
+      })
+    } catch (error) {
+      console.error('Error triggering item webhook:', error)
+      
+      // Fallback: Call Supabase Edge Function directly
+      try {
+        console.log('🔄 Calling Supabase Edge Function directly for item processing...')
+        await edgeFunctionClient.processItem({
+          item_id: newItem.id,
+          ref_id: newItem.ref,
+          creator: newItem.creator,
+          item_text: newItem.text || '',
+          ref_title: newItem.expand?.ref?.title || 'Unknown',
+        })
+        
+        // Also regenerate spirit vector for the user
+        console.log('🔄 Regenerating spirit vector for user...')
+        await edgeFunctionClient.regenerateSpiritVector({
+          user_id: newItem.creator,
+        })
+        
+        console.log('✅ Item processed successfully via Edge Function')
+      } catch (edgeError) {
+        console.error('Error calling Edge Function:', edgeError)
+        // Don't fail the item creation if Edge Function fails
+      }
+    }
 
     return newItem
   },
@@ -348,6 +377,11 @@ export const createItemSlice: StateCreator<StoreSlices, [], [], ItemSlice> = (se
       expand: 'ref,items_via_parent,items_via_parent.ref',
     })
   },
+  getItemByIdWithFullExpansion: async (id: string) => {
+    return await pocketbase.collection('items').getOne<ExpandedItem>(id, {
+      expand: 'ref,creator,items_via_parent,items_via_parent.ref',
+    })
+  },
   getItemsByRefTitle: async (title: string) => {
     return await pocketbase
       .collection<ExpandedItem>('items')
@@ -372,7 +406,7 @@ export const createItemSlice: StateCreator<StoreSlices, [], [], ItemSlice> = (se
   getListsByCreator: async (creatorId: string) => {
     return await pocketbase
       .collection<ExpandedItem>('items')
-      .getFullList({ filter: `list = true && creator = "${creatorId}"`, expand: 'ref' })
+      .getFullList({ filter: `list = true && creator = "${creatorId}"`, expand: 'ref,items_via_parent,items_via_parent.ref' })
   },
 })
 
@@ -401,4 +435,31 @@ export const getBacklogItems = async (userName: string) => {
     sort: '-created',
   })
   return items.items.sort(createdSort)
+}
+
+// Function to automatically move items from backlog to grid when there's space
+export const autoMoveBacklogToGrid = async (userName: string) => {
+  try {
+    // Get current grid items
+    const gridItems = await getProfileItems(userName)
+    const backlogItems = await getBacklogItems(userName)
+    
+    // If grid is full, no need to move anything
+    if (gridItems.length >= 12) {
+      return
+    }
+    
+    // Calculate how many items we can move
+    const availableSlots = 12 - gridItems.length
+    const itemsToMove = backlogItems.slice(0, availableSlots)
+    
+    // Move items from backlog to grid
+    for (const item of itemsToMove) {
+      await pocketbase.collection('items').update(item.id, { backlog: false })
+    }
+    
+    console.log(`Moved ${itemsToMove.length} items from backlog to grid`)
+  } catch (error) {
+    console.error('Error auto-moving backlog items to grid:', error)
+  }
 }

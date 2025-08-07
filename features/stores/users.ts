@@ -160,6 +160,12 @@ export const createUserSlice: StateCreator<StoreSlices, [], [], UserSlice> = (se
 
       set(() => ({
         user: record,
+        // Clear cached search results on register
+        cachedSearchResults: [],
+        cachedSearchTitle: '',
+        cachedSearchSubtitle: '',
+        cachedRefTitles: [],
+        cachedRefImages: [],
       }))
       return record
     } catch (error) {
@@ -178,6 +184,12 @@ export const createUserSlice: StateCreator<StoreSlices, [], [], UserSlice> = (se
       user: response.record,
       // Reset logout button visibility on login
       showLogoutButton: false,
+      // Clear cached search results on login
+      cachedSearchResults: [],
+      cachedSearchTitle: '',
+      cachedSearchSubtitle: '',
+      cachedRefTitles: [],
+      cachedRefImages: [],
     }))
     return response.record
   },
@@ -208,6 +220,12 @@ export const createUserSlice: StateCreator<StoreSlices, [], [], UserSlice> = (se
         user: record,
         // Reset logout button visibility on login
         showLogoutButton: false,
+        // Clear cached search results on login
+        cachedSearchResults: [],
+        cachedSearchTitle: '',
+        cachedSearchSubtitle: '',
+        cachedRefTitles: [],
+        cachedRefImages: [],
       }))
       return record
     } catch (error) {
@@ -238,6 +256,12 @@ export const createUserSlice: StateCreator<StoreSlices, [], [], UserSlice> = (se
       isInitialized: true,
       // Reset logout button visibility on logout
       showLogoutButton: false,
+      // Clear cached search results on logout
+      cachedSearchResults: [],
+      cachedSearchTitle: '',
+      cachedSearchSubtitle: '',
+      cachedRefTitles: [],
+      cachedRefImages: [],
     }))
 
     pocketbase.realtime.unsubscribe()

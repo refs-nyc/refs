@@ -37,6 +37,9 @@ export const UserLists = ({
 
   // Render individual item
   const renderItem = ({ item }: { item: ExpandedItem }) => {
+    const itemCount = item?.expand?.items_via_parent?.length || 0
+    const firstItem = item?.expand?.items_via_parent?.[0]
+    
     return (
       <Pressable
         key={item.id}
@@ -44,7 +47,14 @@ export const UserLists = ({
           onComplete(item)
         }}
       >
-        <ListItem largeImage={true} r={item} backgroundColor={c.olive} />
+        <ListItem 
+          largeImage={true} 
+          r={item} 
+          backgroundColor={c.olive}
+          titleColor={c.surface}
+          subtitle={`${itemCount} ref${itemCount !== 1 ? 's' : ''}`}
+          firstItemImage={firstItem?.image || firstItem?.expand?.ref?.image}
+        />
       </Pressable>
     )
   }

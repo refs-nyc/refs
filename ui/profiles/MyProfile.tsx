@@ -1,5 +1,5 @@
 import { useAppStore } from '@/features/stores'
-import { getBacklogItems, getProfileItems } from '@/features/stores/items'
+import { getBacklogItems, getProfileItems, autoMoveBacklogToGrid } from '@/features/stores/items'
 import type { Profile } from '@/features/types'
 import { ExpandedItem } from '@/features/types'
 import { s, c } from '@/features/style'
@@ -11,7 +11,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import FloatingJaggedButton from '../buttons/FloatingJaggedButton'
 import { Grid } from '../grid/Grid'
 import { PlaceholderGrid } from '../grid/PlaceholderGrid'
-import { Button } from '@/ui'
+import { Button } from '../buttons/Button'
 
 import { Heading } from '../typo/Heading'
 import { ProfileDetailsSheet } from './ProfileDetailsSheet'
@@ -110,6 +110,9 @@ export const MyProfile = ({ userName }: { userName: string }) => {
   const refreshGrid = async (userName: string) => {
     setLoading(true)
     try {
+      // First, auto-move items from backlog to grid if there's space
+      await autoMoveBacklogToGrid(userName)
+      
       // Fetch data in parallel for better performance (non-blocking)
       Promise.all([
         getUserByUserName(userName),
@@ -219,7 +222,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
     if (gridItems.length < 12 && !searchMode && !isSearchResultsSheetOpen) {
       const interval = setInterval(() => {
         setPromptTextIndex(prev => (prev + 1) % 2)
-      }, 3000) // 3 seconds per text
+      }, 4640) // 4.64 seconds per text (20% less visible time)
 
       return () => clearInterval(interval)
     } else {
@@ -291,8 +294,8 @@ export const MyProfile = ({ userName }: { userName: string }) => {
                 </Text>
               ) : (
                 <Animated.Text
-                  entering={FadeIn.duration(600)}
-                  exiting={FadeOut.duration(600)}
+                  entering={FadeIn.duration(800).delay(1800)} // Fade in after 1800ms pause
+                  exiting={FadeOut.duration(800)}
                   key={`prompt-text-${promptTextIndex}`}
                   style={{
                     color: '#B0B0B0',

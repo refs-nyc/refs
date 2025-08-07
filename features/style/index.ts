@@ -194,7 +194,7 @@ export const t = typo
 export const base = StyleSheet.create({
   gridTile: {
     aspectRatio: 1,
-    backgroundColor: c.surface2,
+    backgroundColor: c.surface,
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: s.$075,

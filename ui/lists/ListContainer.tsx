@@ -16,6 +16,14 @@ export const ListContainer = ({
 }) => {
   const { setAddingToList, setCurrentRefId, referencersBottomSheetRef } = useAppStore()
 
+  console.log('🔍 ListContainer render:', {
+    itemId: item.id,
+    isList: item.list,
+    hasItems: item?.expand?.items_via_parent?.length > 0,
+    itemsCount: item?.expand?.items_via_parent?.length,
+    items: item?.expand?.items_via_parent?.map(i => i.expand?.ref?.title)
+  })
+
   return (item?.expand?.items_via_parent ?? []).length > 0 ? (
     <ScrollView style={{ flex: 1, padding: s.$075 }}>
       <YStack gap={s.$075}>

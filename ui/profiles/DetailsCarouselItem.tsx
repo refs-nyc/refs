@@ -134,7 +134,35 @@ export const DetailsCarouselItem = ({ item, index }: { item: ExpandedItem; index
     setAddingRefId,
     referencersBottomSheetRef,
     setCurrentRefId,
+    getItemByIdWithFullExpansion,
   } = useAppStore()
+
+  // Fetch full item data if it's a list and doesn't have items_via_parent
+  useEffect(() => {
+    const fetchFullItemData = async () => {
+      console.log('🔍 Checking if we need to fetch full item data:', {
+        isList: currentItem.list,
+        hasItems: currentItem.expand?.items_via_parent?.length > 0,
+        itemId: currentItem.id
+      })
+      
+      if (currentItem.list && (!currentItem.expand?.items_via_parent || currentItem.expand.items_via_parent.length === 0)) {
+        console.log('🔍 Fetching full item data for list:', currentItem.id)
+        try {
+          const fullItem = await getItemByIdWithFullExpansion(currentItem.id)
+          console.log('🔍 Fetched full item data:', {
+            hasItems: fullItem.expand?.items_via_parent?.length > 0,
+            itemsCount: fullItem.expand?.items_via_parent?.length
+          })
+          setCurrentItem(fullItem)
+        } catch (error) {
+          console.error('Error fetching full item data:', error)
+        }
+      }
+    }
+    
+    fetchFullItemData()
+  }, [currentItem.id, currentItem.list, currentItem.expand?.items_via_parent, getItemByIdWithFullExpansion])
   
   // Lazy load editing state - only initialize when actually editing
   const [isEditingInitialized, setIsEditingInitialized] = useState(false)
@@ -292,7 +320,7 @@ export const DetailsCarouselItem = ({ item, index }: { item: ExpandedItem; index
                   }}
                 >
                   {/* List */}
-                  {item.list && <ListContainer editingRights={!!editingRights} item={item} />}
+                  {currentItem.list && <ListContainer editingRights={!!editingRights} item={currentItem} />}
                 </BottomSheetView>
               )}
             </BottomSheetView>

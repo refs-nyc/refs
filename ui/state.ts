@@ -45,6 +45,9 @@ export type UISlice = {
   setSearchResultsSheetOpen: (open: boolean) => void
   setReturningFromSearchNavigation: (returning: boolean) => void
   setCloseActiveBottomSheet: (closeFunction: (() => void) | null) => void
+  // Logout button visibility
+  showLogoutButton: boolean
+  setShowLogoutButton: (show: boolean) => void
 }
 
 export const createUISlice: StateCreator<StoreSlices, [], [], UISlice> = (set) => ({
@@ -157,6 +160,13 @@ export const createUISlice: StateCreator<StoreSlices, [], [], UISlice> = (set) =
   setCloseActiveBottomSheet: (closeFunction: (() => void) | null) => {
     set(() => ({
       closeActiveBottomSheet: closeFunction,
+    }))
+  },
+  // Logout button visibility
+  showLogoutButton: false,
+  setShowLogoutButton: (show: boolean) => {
+    set(() => ({
+      showLogoutButton: show,
     }))
   },
 })

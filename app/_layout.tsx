@@ -132,7 +132,12 @@ const Providers = ({ children }: { children: React.ReactNode }) => {
 function RootLayoutNav() {
   const savesBottomSheetRef = useRef<BottomSheet>(null)
   const colorScheme = useColorScheme()
-  const { referencersBottomSheetRef, addRefSheetRef, newRefSheetRef } = useAppStore()
+  const { referencersBottomSheetRef, addRefSheetRef, newRefSheetRef, setShowLogoutButton } = useAppStore()
+
+  // Ensure logout button is hidden on app startup
+  useEffect(() => {
+    setShowLogoutButton(false)
+  }, [setShowLogoutButton])
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>

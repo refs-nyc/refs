@@ -174,8 +174,10 @@ export const createUserSlice: StateCreator<StoreSlices, [], [], UserSlice> = (se
     const response = await pocketbase
       .collection<UsersRecord>('users')
       .authWithPassword(email, password)
-    set(() => ({
+    set((state) => ({
       user: response.record,
+      // Reset logout button visibility on login
+      showLogoutButton: false,
     }))
     return response.record
   },
@@ -202,8 +204,10 @@ export const createUserSlice: StateCreator<StoreSlices, [], [], UserSlice> = (se
       // Authenticate with PocketBase
       await pocketbase.collection('users').authWithPassword(record.email, password)
 
-      set(() => ({
+      set((state) => ({
         user: record,
+        // Reset logout button visibility on login
+        showLogoutButton: false,
       }))
       return record
     } catch (error) {
@@ -228,10 +232,12 @@ export const createUserSlice: StateCreator<StoreSlices, [], [], UserSlice> = (se
   //
   //
   logout: () => {
-    set(() => ({
+    set((state) => ({
       user: null,
       stagedUser: {},
       isInitialized: true,
+      // Reset logout button visibility on logout
+      showLogoutButton: false,
     }))
 
     pocketbase.realtime.unsubscribe()

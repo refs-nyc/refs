@@ -177,6 +177,7 @@ export const Grid = ({
   searchMode = false,
   selectedRefs = [],
   setSelectedRefs,
+  hideShuffleButton = false,
 }: {
   onPressItem?: (item?: ExpandedItem) => void
   onLongPressItem?: () => void
@@ -190,6 +191,7 @@ export const Grid = ({
   searchMode?: boolean
   selectedRefs?: string[]
   setSelectedRefs?: (refs: string[]) => void
+  hideShuffleButton?: boolean
 }) => {
   const gridSize = columns * rows
 
@@ -348,7 +350,7 @@ export const Grid = ({
       </GridWrapper>
 
       {/* Shuffle prompts button */}
-      {editingRights && !searchMode && (
+      {editingRights && !searchMode && !hideShuffleButton && items.length < gridSize && (
         <Animated.View style={buttonAnimatedStyle}>
           <Pressable
             onPress={handleShufflePrompts}

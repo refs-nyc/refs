@@ -15,20 +15,21 @@ import Animated, {
 
 const PROMPTS = [
   'Link you shared recently',
-  'Free space',
+  'free space',
   'Place you feel like yourself',
   'Example of perfect design',
-  'Hobby you want to get into',
+  'something you want to do more of',
   'Piece from a museum',
   'Most-rewatched movie',
   'Tradition you love',
   'Meme',
   'Neighborhood spot',
   'What you put on aux',
-  'Halloween pic',
+  'halloween pic',
   'Rabbit Hole',
-  'List of some preferred publications',
-  'To-Read List',
+  'list of preferred publications',
+  'list of important websites',
+  'reading list',
 ]
 
 // Fisher-Yates shuffle function
@@ -202,7 +203,7 @@ export const Grid = ({
   // State for shuffled prompts
   const [shuffledPrompts, setShuffledPrompts] = useState<string[]>([])
   const [isShuffling, setIsShuffling] = useState(false)
-  const [isInitialLoad, setIsInitialLoad] = useState(false) // Start as false
+  const [isInitialLoad, setIsInitialLoad] = useState(editingRights && items.length === 0)
 
   // Animation values
   const buttonScale = useSharedValue(1)
@@ -215,13 +216,17 @@ export const Grid = ({
   // Only trigger initial load animation if this is the first time seeing the grid
   // Enable animation for new users (empty grid with prompts)
   useEffect(() => {
-    console.log('🎬 Grid animation check:', { itemsLength: items.length, isInitialLoad, gridSize })
-    // Enable animation if grid is empty (new user with prompts) and we haven't animated yet
-    if (items.length === 0 && !isInitialLoad) {
-      console.log('🎬 Setting isInitialLoad to true for startup animation')
+    console.log('🎬 Grid animation check:', { itemsLength: items.length, isInitialLoad, gridSize, editingRights })
+    // Only animate for own profile (editingRights) when grid is empty
+    if (editingRights && items.length === 0 && !isInitialLoad) {
+      console.log('🎬 Setting isInitialLoad to true for startup animation (own profile)')
       setIsInitialLoad(true)
     }
-  }, [items.length, isInitialLoad])
+    // Ensure no animation on other profiles
+    if (!editingRights && isInitialLoad) {
+      setIsInitialLoad(false)
+    }
+  }, [items.length, isInitialLoad, editingRights])
 
   // Shuffle prompts function with animation
   const handleShufflePrompts = useCallback(() => {
@@ -340,7 +345,7 @@ export const Grid = ({
                   ? getTileAnimationDelay(i, gridSize - items.length)
                   : getTileAnimationDelay(totalIndex, gridSize)
               }
-              isInitialLoad={isInitialLoad}
+              isInitialLoad={isInitialLoad && shouldShowPrompt}
             >
               <GridTileWrapper
                 type={shouldShowPrompt ? "prompt" : "placeholder"}

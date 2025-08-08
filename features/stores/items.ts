@@ -1,5 +1,4 @@
 import { StateCreator } from 'zustand'
-import { Alert } from 'react-native'
 import { ExpandedItem, CompleteRef, StagedItemFields, StagedRefFields } from '../types'
 import { ItemsRecord, RefsRecord } from '../pocketbase/pocketbase-types'
 import { createdSort } from '@/ui/profiles/sorts'
@@ -226,17 +225,6 @@ export const createItemSlice: StateCreator<StoreSlices, [], [], ItemSlice> = (se
       }
     } catch (error) {
       console.error('Item processing failed:', error)
-      // Non-blocking UI prompt to retry processing
-      Alert.alert('Upload failed', 'We couldn’t process your ref. Try again?', [
-        {
-          text: 'Retry',
-          onPress: () =>
-            processItemViaEdgeFunction(newItem).catch((err) =>
-              console.error('Retry processing failed:', err)
-            ),
-        },
-        { text: 'Cancel', style: 'cancel' },
-      ])
       // Do not throw; item creation in PocketBase succeeded
     }
 

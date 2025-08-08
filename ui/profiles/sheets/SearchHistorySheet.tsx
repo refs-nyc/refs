@@ -78,35 +78,7 @@ export default function SearchHistorySheet({
 
   // Optimized thumbnail component for search history
   const FastThumbnail = ({ source, size = 64 }: { source: string | undefined; size: number }) => {
-    if (!source) {
-      return (
-        <View style={{ 
-          width: size, 
-          height: size, 
-          backgroundColor: "#A6B89F", 
-          borderRadius: size / 2, 
-          alignItems: "center",
-          justifyContent: "center"
-        }}>
-          <Ionicons name="person" size={size * 0.4} color='#fff' />
-        </View>
-      )
-    }
-
-    return (
-      <Image
-        source={source}
-        style={{ 
-          width: size, 
-          height: size, 
-          borderRadius: size / 2,
-          backgroundColor: '#ddd'
-        }}
-        contentFit="cover"
-        cachePolicy="memory-disk"
-        priority="high"
-      />
-    )
+    return <Avatar source={source} size={size} />
   }
 
   return (

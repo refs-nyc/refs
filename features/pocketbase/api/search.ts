@@ -3,9 +3,23 @@ import { searchPeople as supabaseSearchPeople } from '@/features/supabase/search
 import { createClient } from '@supabase/supabase-js'
 
 // Create Supabase client for search history operations
-const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL!
-const supabaseKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY!
-const supabase = createClient(supabaseUrl, supabaseKey)
+const supabaseUrl = process.env.EXPO_PUBLIC_SUPA_URL
+const supabaseKey = process.env.EXPO_PUBLIC_SUPA_KEY
+
+if (!supabaseUrl || !supabaseKey) {
+  console.warn('Missing Supabase credentials - search history not available')
+  // Return a mock client that does nothing
+  const mockSupabase = {
+    from: () => ({ 
+      select: () => ({ eq: () => ({ order: () => ({ limit: async () => ({ data: [], error: null }) }) }) }),
+      insert: async () => ({ data: null, error: new Error('Supabase not configured') }),
+      delete: () => ({ eq: async () => ({ error: new Error('Supabase not configured') }) })
+    })
+  }
+  var supabase = mockSupabase as any
+} else {
+  var supabase = createClient(supabaseUrl, supabaseKey)
+}
 
 export interface SearchRequest {
   item_ids: string[]

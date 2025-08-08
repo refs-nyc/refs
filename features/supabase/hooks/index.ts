@@ -1,8 +1,21 @@
 import { createClient } from '@supabase/supabase-js'
 import type { ItemsRecord, UsersRecord } from '@/features/pocketbase/pocketbase-types'
 
-// Initialize Supabase client
-const supabase = createClient(process.env.EXPO_PUBLIC_SUPA_URL!, process.env.EXPO_PUBLIC_SUPA_KEY!)
+// Initialize Supabase client with error handling
+const supabaseUrl = process.env.EXPO_PUBLIC_SUPA_URL
+const supabaseKey = process.env.EXPO_PUBLIC_SUPA_KEY
+
+if (!supabaseUrl || !supabaseKey) {
+  console.warn('Missing Supabase credentials - hooks will not work')
+  // Return a mock client that does nothing
+  const mockSupabase = {
+    functions: { invoke: async () => ({ error: new Error('Supabase not configured') }) },
+    from: () => ({ upsert: async () => ({ error: new Error('Supabase not configured') }), delete: () => ({ eq: async () => ({ error: new Error('Supabase not configured') }) }) })
+  }
+  var supabase = mockSupabase as any
+} else {
+  var supabase = createClient(supabaseUrl, supabaseKey)
+}
 
 // Hook for when an item is created or updated
 export async function onItemChange(record: ItemsRecord, isNew: boolean, pb: any) {

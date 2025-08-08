@@ -4,7 +4,7 @@ import type { StateCreator } from 'zustand'
 
 export type UserCacheSlice = {
   userProfiles: Record<string, Profile>
-  userProfilePromises: Record<string, Promise<Profile>>
+  userProfilePromises: { [key: string]: Promise<Profile> | null }
   getUserProfile: (userId: string) => Promise<Profile>
   preloadUserProfile: (userId: string) => void
   clearUserCache: () => void
@@ -23,7 +23,7 @@ export const createUserCacheSlice: StateCreator<StoreSlices, [], [], UserCacheSl
     }
 
     // Return existing promise if already fetching
-    if (state.userProfilePromises[userId] !== undefined) {
+    if (state.userProfilePromises[userId]) {
       return state.userProfilePromises[userId]
     }
 
@@ -44,7 +44,7 @@ export const createUserCacheSlice: StateCreator<StoreSlices, [], [], UserCacheSl
           },
           userProfilePromises: {
             ...state.userProfilePromises,
-            [userId]: undefined,
+            [userId]: null,
           },
         }))
         return profile
@@ -54,7 +54,7 @@ export const createUserCacheSlice: StateCreator<StoreSlices, [], [], UserCacheSl
         set((state) => ({
           userProfilePromises: {
             ...state.userProfilePromises,
-            [userId]: undefined,
+            [userId]: null,
           },
         }))
         throw error

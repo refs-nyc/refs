@@ -126,6 +126,7 @@ export const SearchRef = ({
             r={item}
             backgroundColor={c.olive}
             onTitlePress={() => onRefPress(item.id, item)}
+            titleColor={c.surface}
           />
         </Pressable>
         <XStack gap={s.$1}>

@@ -63,9 +63,20 @@ function RotatingImage() {
 export function HomeScreen() {
   const { user } = useAppStore()
 
+  // Handle redirect when user is logged in
+  useEffect(() => {
+    if (user) {
+      const redirectToProfile = () => {
+        router.replace(`/user/${user.userName}`)
+      }
+      // Small delay to prevent navigation errors
+      const timeout = setTimeout(redirectToProfile, 100)
+      return () => clearTimeout(timeout)
+    }
+  }, [user?.userName])
+
   if (user) {
-    // if the user is logged in, show the user's profile
-    return <Feed />
+    return null // Don't render anything while redirecting
   } else {
     // if the user is not logged in, show the home screen
     return (

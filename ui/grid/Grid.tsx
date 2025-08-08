@@ -14,19 +14,21 @@ import Animated, {
 } from 'react-native-reanimated'
 
 const PROMPTS = [
-  'All-time comfort game',
   'Link you shared recently',
-  'Song that always hits',
   'Free space',
   'Place you feel like yourself',
   'Example of perfect design',
   'Hobby you want to get into',
-  'Favorite piece from a museum',
-  'Most rewatched movie',
+  'Piece from a museum',
+  'Most-rewatched movie',
   'Tradition you love',
-  'Meme slot',
+  'Meme',
   'Neighborhood spot',
-  'Art that moved you',
+  'What you put on aux',
+  'Halloween pic',
+  'Rabbit Hole',
+  'List of some preferred publications',
+  'To-Read List',
 ]
 
 // Fisher-Yates shuffle function
@@ -75,8 +77,10 @@ const StartupAnimationTile = ({
   const opacity = useSharedValue(0)
 
   useEffect(() => {
+    console.log('🎬 StartupAnimationTile effect:', { isInitialLoad, delay })
     // Only animate on initial load
     if (!isInitialLoad) {
+      console.log('🎬 Not initial load, setting to final position')
       translateY.value = 0
       scale.value = 1
       opacity.value = 1
@@ -177,6 +181,7 @@ export const Grid = ({
   searchMode = false,
   selectedRefs = [],
   setSelectedRefs,
+  hideShuffleButton = false,
 }: {
   onPressItem?: (item?: ExpandedItem) => void
   onLongPressItem?: () => void
@@ -190,6 +195,7 @@ export const Grid = ({
   searchMode?: boolean
   selectedRefs?: string[]
   setSelectedRefs?: (refs: string[]) => void
+  hideShuffleButton?: boolean
 }) => {
   const gridSize = columns * rows
 
@@ -207,12 +213,15 @@ export const Grid = ({
   }, [])
 
   // Only trigger initial load animation if this is the first time seeing the grid
-  // This should be controlled by the parent component (MyProfile) based on onboarding state
+  // Enable animation for new users (empty grid with prompts)
   useEffect(() => {
-    // For now, we'll disable the animation entirely to prevent the navigation issue
-    // The parent component can pass a prop to enable it when appropriate
-    setIsInitialLoad(false)
-  }, [])
+    console.log('🎬 Grid animation check:', { itemsLength: items.length, isInitialLoad, gridSize })
+    // Enable animation if grid is empty (new user with prompts) and we haven't animated yet
+    if (items.length === 0 && !isInitialLoad) {
+      console.log('🎬 Setting isInitialLoad to true for startup animation')
+      setIsInitialLoad(true)
+    }
+  }, [items.length, isInitialLoad])
 
   // Shuffle prompts function with animation
   const handleShufflePrompts = useCallback(() => {
@@ -348,7 +357,7 @@ export const Grid = ({
       </GridWrapper>
 
       {/* Shuffle prompts button */}
-      {editingRights && !searchMode && (
+      {editingRights && !searchMode && !hideShuffleButton && items.length < gridSize && (
         <Animated.View style={buttonAnimatedStyle}>
           <Pressable
             onPress={handleShufflePrompts}

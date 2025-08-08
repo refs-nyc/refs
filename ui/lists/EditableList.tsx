@@ -6,6 +6,7 @@ import { useRef, useState } from 'react'
 import { Pressable, View } from 'react-native'
 import { SearchRef } from '../actions/SearchRef'
 import { useAppStore } from '@/features/stores'
+import { getProfileItems } from '@/features/stores/items'
 import { ListItem } from './ListItem'
 import { NewListItemButton } from './NewListItemButton'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -19,7 +20,7 @@ export const EditableList = ({
   item: ExpandedItem
   onComplete: () => void
 }) => {
-  const { isAddingToList, removeItem, setIsAddingToList, addToProfile, updateRefTitle } =
+  const { isAddingToList, removeItem, setIsAddingToList, addToProfile, updateRefTitle, triggerProfileRefresh, user } =
     useAppStore()
   const [itemState, setItemState] = useState<ExpandedItem>(item)
   const [title, setTitle] = useState<string>(item.expand.ref.title || '')
@@ -27,11 +28,34 @@ export const EditableList = ({
   const titleRef = useRef<any>(null)
   const insets = useSafeAreaInsets()
 
+  // Function to find the next available list number
+  const getNextListNumber = async (): Promise<number> => {
+    try {
+      const gridItems = await getProfileItems(user?.userName!)
+      const existingLists = gridItems.filter(item => item.list)
+      const listNumbers = existingLists
+        .map(item => {
+          const title = item.expand?.ref?.title || ''
+          const match = title.match(/^My List (\d+)$/)
+          return match ? parseInt(match[1]) : 0
+        })
+        .filter(num => num > 0)
+      
+      if (listNumbers.length === 0) return 1
+      return Math.max(...listNumbers) + 1
+    } catch (error) {
+      console.error('Error getting next list number:', error)
+      return 1
+    }
+  }
+
   const onTitleChange = async (newTitle: string) => {
     titleRef.current?.blur()
     setEditingTitle(false)
     try {
       await updateRefTitle(item.ref, newTitle)
+      // Trigger grid refresh to show the updated title
+      triggerProfileRefresh()
     } catch (error) {
       console.error(error)
     }
@@ -70,9 +94,10 @@ export const EditableList = ({
         height: '90%',
         width: '100%',
         paddingVertical: s.$1,
+        marginTop: -0,
       }}
     >
-      <BottomSheetScrollView style={{ flex: 1, gap: s.$09 }}>
+      <BottomSheetScrollView style={{ flex: 1, gap: s.$09, marginTop: -50 }}>
         <BottomSheetView>
           {/* Title */}
           <XStack style={{ justifyContent: 'space-between', alignItems: 'center' }}>
@@ -99,7 +124,16 @@ export const EditableList = ({
         </BottomSheetView>
         <BottomSheetView style={{ flex: 1 }}>
           {isAddingToList ? (
-            <SearchRef onChooseExistingRef={onRefFound} onAddNewRef={() => {}} noNewRef={true} />
+            <Pressable 
+              style={{ flex: 1 }} 
+              onPress={() => setIsAddingToList(false)}
+            >
+              <SearchRef 
+                onChooseExistingRef={onRefFound} 
+                onAddNewRef={() => {}} 
+                noNewRef={true}
+              />
+            </Pressable>
           ) : (
             <BottomSheetView>
               <NewListItemButton onPress={() => setIsAddingToList(true)} />
@@ -112,6 +146,7 @@ export const EditableList = ({
                     largeImage={true}
                     withRemove={true}
                     backgroundColor={c.olive}
+                    titleColor={c.surface}
                     onRemove={async () => {
                       try {
                         await removeItem(kid.id)
@@ -119,7 +154,7 @@ export const EditableList = ({
                           ...prev,
                           expand: {
                             ...prev.expand,
-                            children:
+                            items_via_parent:
                               prev.expand?.items_via_parent?.filter((e) => e.id !== kid.id) || [],
                           },
                         }))
@@ -137,11 +172,23 @@ export const EditableList = ({
           position: 'absolute',
           left: 0,
           right: 0,
-          bottom: insets.bottom + 10,
+          bottom: insets.bottom + 50,
           paddingHorizontal: 20,
         }}
       >
-        <Button onPress={onComplete} title="Done" variant="whiteInverted" />
+        <Button 
+          onPress={async () => {
+            // If title is empty, auto-generate a title
+            if (!title.trim()) {
+              const nextNumber = await getNextListNumber()
+              const autoTitle = `My List ${nextNumber}`
+              await updateRefTitle(item.ref, autoTitle)
+            }
+            onComplete()
+          }} 
+          title="Done" 
+          variant="whiteInverted" 
+        />
       </View>
     </BottomSheetView>
   )

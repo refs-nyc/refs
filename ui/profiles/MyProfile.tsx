@@ -1,5 +1,5 @@
 import { useAppStore } from '@/features/stores'
-import { getBacklogItems, getProfileItems } from '@/features/stores/items'
+import { getBacklogItems, getProfileItems, autoMoveBacklogToGrid } from '@/features/stores/items'
 import type { Profile } from '@/features/types'
 import { ExpandedItem } from '@/features/types'
 import { s, c } from '@/features/style'
@@ -11,6 +11,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import FloatingJaggedButton from '../buttons/FloatingJaggedButton'
 import { Grid } from '../grid/Grid'
 import { PlaceholderGrid } from '../grid/PlaceholderGrid'
+import { Button } from '../buttons/Button'
 
 import { Heading } from '../typo/Heading'
 import { ProfileDetailsSheet } from './ProfileDetailsSheet'
@@ -54,12 +55,13 @@ export const MyProfile = ({ userName }: { userName: string }) => {
     cachedSearchTitle,
     cachedSearchSubtitle,
     clearCachedSearchResults,
-    returningFromSearchNavigation,
-    setReturningFromSearchNavigation,
     setSearchResultsSheetOpen,
+    logout,
+    showLogoutButton,
   } = useAppStore()
 
   const [removingItem, setRemovingItem] = useState<ExpandedItem | null>(null)
+  const [promptTextIndex, setPromptTextIndex] = useState(0)
 
   // Refs
   const searchResultsSheetRef = useRef<BottomSheet>(null)
@@ -108,6 +110,9 @@ export const MyProfile = ({ userName }: { userName: string }) => {
   const refreshGrid = async (userName: string) => {
     setLoading(true)
     try {
+      // First, auto-move items from backlog to grid if there's space
+      await autoMoveBacklogToGrid(userName)
+      
       // Fetch data in parallel for better performance (non-blocking)
       Promise.all([
         getUserByUserName(userName),
@@ -172,103 +177,25 @@ export const MyProfile = ({ userName }: { userName: string }) => {
     }, 0)
   }, [userName, profileRefreshTrigger])
 
-  // Simple back button restoration logic
+  // Simplified back button restoration logic - just reset sheet state
   useEffect(() => {
-    // Only restore if we're returning from search navigation and have cached results
-    if (returningFromSearchNavigation && cachedSearchResults.length > 0) {
-      console.log('🔍 Returning from search navigation, restoring search context...')
-      console.log('Cached results:', cachedSearchResults.length)
-      
-      // Prevent multiple simultaneous expansions
-      if (isExpandingSheetRef.current) {
-        console.log('⏸️ Sheet expansion already in progress, skipping...')
-        return
+    console.log('🔍 MyProfile restoration effect triggered:', {
+      cachedSearchResultsLength: cachedSearchResults.length,
+      searchMode,
+      isSearchResultsSheetOpen,
+      userName
+    })
+    
+    // If we have cached search results and we're on the profile page, reset sheet state
+    if (cachedSearchResults.length > 0 && !searchMode) {
+      // Reset the sheet open state if it's incorrectly set to true
+      if (isSearchResultsSheetOpen) {
+        console.log('🔍 Resetting incorrect sheet open state')
+        setSearchResultsSheetOpen(false)
       }
-      
-      // Small delay to ensure navigation is complete
-      const timer = setTimeout(() => {
-        if (searchResultsSheetRef.current) {
-          try {
-            console.log('📱 Attempting to expand search results sheet...')
-            isExpandingSheetRef.current = true
-            
-            // First try to ensure the sheet is in a valid state
-            searchResultsSheetRef.current.snapToIndex(0)
-            setTimeout(() => {
-              searchResultsSheetRef.current?.snapToIndex(1)
-              setSearchResultsSheetOpen(true)
-              isExpandingSheetRef.current = false
-              console.log('✅ Successfully expanded search results sheet')
-            }, 100)
-          } catch (error) {
-            console.log('❌ Failed to expand search results sheet:', error)
-            // Fallback: try the expand method
-            try {
-              searchResultsSheetRef.current.expand()
-              setSearchResultsSheetOpen(true)
-              isExpandingSheetRef.current = false
-              console.log('✅ Successfully expanded search results sheet with fallback')
-            } catch (fallbackError) {
-              console.log('❌ Failed to open search results sheet with fallback:', fallbackError)
-              setReturningFromSearchNavigation(false)
-              isExpandingSheetRef.current = false
-            }
-          }
-        } else {
-          console.log('❌ Search results sheet ref is null')
-          setReturningFromSearchNavigation(false)
-          isExpandingSheetRef.current = false
-        }
-      }, 200) // Increased delay to ensure navigation is complete
-      
-      return () => clearTimeout(timer)
-    } else if (returningFromSearchNavigation) {
-      console.log('🔍 Returning from search navigation but no cached results')
-      setReturningFromSearchNavigation(false)
-    } else {
-      console.log('🔍 Not returning from search navigation')
+      // The SearchResultsSheet will auto-open itself when it detects cached results
     }
-  }, [returningFromSearchNavigation, cachedSearchResults.length, userName, setReturningFromSearchNavigation, setSearchResultsSheetOpen])
-
-  // Additional effect to handle navigation back to profile with search context
-  useEffect(() => {
-    // If we have cached search results and we're on the profile page, 
-    // and we're not already in search mode, restore the search context
-    // But don't expand if we're already returning from search navigation
-    if (cachedSearchResults.length > 0 && !searchMode && !isSearchResultsSheetOpen && !returningFromSearchNavigation) {
-      console.log('🔍 Detected cached search results on profile page, restoring...')
-      
-      // Prevent multiple simultaneous expansions
-      if (isExpandingSheetRef.current) {
-        console.log('⏸️ Sheet expansion already in progress, skipping...')
-        return
-      }
-      
-      // Small delay to ensure component is fully mounted
-      const timer = setTimeout(() => {
-        if (searchResultsSheetRef.current) {
-          try {
-            console.log('📱 Attempting to expand search results sheet from cached results...')
-            isExpandingSheetRef.current = true
-            
-            // First try to ensure the sheet is in a valid state
-            searchResultsSheetRef.current.snapToIndex(0)
-            setTimeout(() => {
-              searchResultsSheetRef.current?.snapToIndex(1)
-              setSearchResultsSheetOpen(true)
-              isExpandingSheetRef.current = false
-              console.log('✅ Successfully expanded search results sheet from cached results')
-            }, 100)
-          } catch (error) {
-            console.log('❌ Failed to expand search results sheet from cached results:', error)
-            isExpandingSheetRef.current = false
-          }
-        }
-      }, 300)
-      
-      return () => clearTimeout(timer)
-    }
-  }, [cachedSearchResults.length, searchMode, isSearchResultsSheetOpen, userName, setSearchResultsSheetOpen, returningFromSearchNavigation])
+  }, [cachedSearchResults.length, searchMode, isSearchResultsSheetOpen, userName, setSearchResultsSheetOpen])
 
   // Reset search mode when component unmounts or user navigates away
   useEffect(() => {
@@ -276,9 +203,10 @@ export const MyProfile = ({ userName }: { userName: string }) => {
       // Cleanup: reset search mode when leaving the screen
       // But preserve selectedRefs and cachedSearchResults for back button restoration
       setSearchMode(false)
+      setSearchResultsSheetOpen(false) // Reset sheet open state when leaving
       // Don't clear selectedRefs or cachedSearchResults here - preserve them for back button
     }
-  }, [setSearchMode])
+  }, [setSearchMode, setSearchResultsSheetOpen])
 
   const bottomSheetRef = useRef<BottomSheet>(null)
   const detailsSheetRef = useRef<BottomSheet>(null)
@@ -288,6 +216,19 @@ export const MyProfile = ({ userName }: { userName: string }) => {
 
   // timeout used to stop editing the profile after 10 seconds
   let timeout: ReturnType<typeof setTimeout>
+
+  // Animate prompt text when grid has prompts
+  useEffect(() => {
+    if (gridItems.length < 12 && !searchMode && !isSearchResultsSheetOpen) {
+      const interval = setInterval(() => {
+        setPromptTextIndex(prev => (prev + 1) % 2)
+      }, 4640) // 4.64 seconds per text (20% less visible time)
+
+      return () => clearInterval(interval)
+    } else {
+      setPromptTextIndex(0) // Reset when not showing prompts
+    }
+  }, [gridItems.length, searchMode, isSearchResultsSheetOpen])
 
   return (
     <>
@@ -321,26 +262,57 @@ export const MyProfile = ({ userName }: { userName: string }) => {
                 paddingVertical: s.$1,
                 alignItems: 'center',
                 justifyContent: 'center',
-                marginTop: searchMode ? 14 : 0,
+                marginTop: 7, // Center the text between nav and grid for both modes
                 zIndex: 5, // Above the overlay
               }}
             >
-              <Text
-                style={{
-                  color: gridItems.length < 12 ? '#B0B0B0' : c.muted,
-                  fontSize: s.$09,
-                  fontFamily: 'System',
-                  fontWeight: '400',
-                  textAlign: 'center',
-                  lineHeight: s.$1half,
-                }}
-              >
-                {searchMode || isSearchResultsSheetOpen
-                  ? 'searching at the intersection of...'
-                  : gridItems.length >= 12
-                  ? 'pick some refs, find people in the middle'
-                  : 'These prompts will disappear after you add...\nno one will ever know'}
-              </Text>
+              {searchMode || isSearchResultsSheetOpen ? (
+                <Text
+                  style={{
+                    color: c.muted,
+                    fontSize: s.$09,
+                    fontFamily: 'System',
+                    fontWeight: '400',
+                    textAlign: 'center',
+                    lineHeight: s.$1half,
+                  }}
+                >
+                  searching at the intersection of...
+                </Text>
+              ) : gridItems.length >= 12 ? (
+                <Text
+                  style={{
+                    color: c.muted,
+                    fontSize: s.$09,
+                    fontFamily: 'System',
+                    fontWeight: '400',
+                    textAlign: 'center',
+                    lineHeight: s.$1half,
+                  }}
+                >
+                  pick some refs, find people in the middle
+                </Text>
+              ) : (
+                <Animated.Text
+                  entering={FadeIn.duration(800).delay(1800)} // Fade in after 1800ms pause
+                  exiting={FadeOut.duration(800)}
+                  key={`prompt-text-${promptTextIndex}`}
+                  style={{
+                    color: '#B0B0B0',
+                    fontSize: s.$09,
+                    fontFamily: 'System',
+                    fontWeight: '400',
+                    textAlign: 'center',
+                    lineHeight: s.$1half,
+                    minWidth: 280, // Expanded width to fit text on one line
+                  }}
+                >
+                  {promptTextIndex === 0 
+                    ? 'These prompts will disappear after you add...'
+                    : 'no one will ever know'
+                  }
+                </Animated.Text>
+              )}
             </Animated.View>
 
             <View
@@ -393,26 +365,26 @@ export const MyProfile = ({ userName }: { userName: string }) => {
                   setSelectedRefs={setSelectedRefs}
                 />
               )}
-
-              {/* Floating Search Button (toggle search mode) - positioned relative to grid content */}
-              <FloatingJaggedButton
-                onPress={() => {
-                  // Don't clear selectedRefs if we're returning from search
-                  if (!searchMode) { // Changed from returningFromSearch to searchMode
-                    setSelectedRefs([]) // Clear selected refs when entering search mode
-                  }
-                  clearCachedSearchResults() // Clear cached search results
-                  setSearchMode(true)
-                }}
-                style={{
-                  position: 'absolute',
-                  bottom: insets.bottom - 40, // Moved down by 30px (was -30, now -60)
-                  right: -2, // 10px to the right (24 - 10)
-                  zIndex: 5, // Behind the sheet (zIndex: 100) but above the grid content
-                  opacity: searchMode ? 0 : 1, // Hide with opacity instead of conditional rendering
-                }}
-              />
             </View>
+
+            {/* Floating Search Button (toggle search mode) - positioned absolutely */}
+            <FloatingJaggedButton
+              onPress={() => {
+                // Don't clear selectedRefs if we're returning from search
+                if (!searchMode) { // Changed from returningFromSearch to searchMode
+                  setSelectedRefs([]) // Clear selected refs when entering search mode
+                }
+                clearCachedSearchResults() // Clear cached search results
+                setSearchMode(true)
+              }}
+              style={{
+                position: 'absolute',
+                bottom: -20, // Fixed distance from bottom of screen
+                right: 5, // Fixed distance from right edge of screen
+                zIndex: 5, // Behind the sheet (zIndex: 100) but above the grid content
+                opacity: searchMode ? 0 : 1, // Hide with opacity instead of conditional rendering
+              }}
+            />
           </View>
         )}
 
@@ -501,6 +473,25 @@ export const MyProfile = ({ userName }: { userName: string }) => {
         )}
       </ScrollView>
 
+      {/* Logout button positioned absolutely */}
+      {showLogoutButton && (
+        <View style={{ 
+          position: 'absolute',
+          bottom: 50,
+          left: 0,
+          right: 0,
+          alignItems: 'center',
+          zIndex: 4,
+        }}>
+          <Button
+            style={{ width: 120 }}
+            variant="inlineSmallMuted"
+            title="Log out"
+            onPress={logout}
+          />
+        </View>
+      )}
+
       {profile && (
         <>
           <MyBacklogSheet
@@ -566,9 +557,6 @@ export const MyProfile = ({ userName }: { userName: string }) => {
               onRestoreSearch={async (historyItem) => {
                 try {
                   console.log('🔄 Restoring search from history with refs:', historyItem.ref_ids)
-                  
-                  // Set flag to indicate we're returning from search navigation BEFORE setting cached results
-                  setReturningFromSearchNavigation(true)
                   
                   // Create ref items from history data with images
                   const restoredItems = historyItem.ref_ids.map((refId: string, index: number) => ({

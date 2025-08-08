@@ -67,6 +67,27 @@ export const NewRefSheet = ({
 
   const backlog = addingNewRefTo === 'backlog'
 
+  // Function to find the next available list number
+  const getNextListNumber = async (): Promise<number> => {
+    try {
+      const gridItems = await getProfileItems(user?.userName!)
+      const existingLists = gridItems.filter(item => item.list)
+      const listNumbers = existingLists
+        .map(item => {
+          const title = item.expand?.ref?.title || ''
+          const match = title.match(/^My List (\d+)$/)
+          return match ? parseInt(match[1]) : 0
+        })
+        .filter(num => num > 0)
+      
+      if (listNumbers.length === 0) return 1
+      return Math.max(...listNumbers) + 1
+    } catch (error) {
+      console.error('Error getting next list number:', error)
+      return 1
+    }
+  }
+
   // Two snap points: collapsed and expanded
   const snapPoints = ['70%', '90%']
   // Track if the sheet is open
@@ -188,6 +209,7 @@ export const NewRefSheet = ({
               onAddToBacklog={async () => {
                 const newItem = await addToProfile(existingRefId, stagedItemFields, true)
                 setItemData(newItem)
+                triggerProfileRefresh()
                 setStep('addedToBacklog')
               }}
             />
@@ -231,17 +253,20 @@ export const NewRefSheet = ({
                   setStep('editList')
                 }}
                 onCreateList={async () => {
+                  // Get the next available list number
+                  const nextNumber = await getNextListNumber()
+                  
                   // we should just have one function to create a list, which creates a ref and an item
                   const list = await addToProfile(
                     null,
                     {
-                      title: '',
+                      title: `My List ${nextNumber}`,
                       text: '',
                       url: '',
                       image: '',
                       list: true,
                     },
-                    backlog
+                    false // Always add to grid, not backlog
                   )
 
                   // Add current item to the new list
@@ -253,6 +278,9 @@ export const NewRefSheet = ({
                   // Set the expanded item as current and show edit list
                   setItemData(expandedList)
                   setStep('editList')
+                  
+                  // Trigger grid refresh to show the new list
+                  triggerProfileRefresh()
                 }}
               />
             </View>

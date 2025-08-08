@@ -46,7 +46,7 @@ export default forwardRef<
   const snapPoints = ['25%', '80%']
   const resultsAnimation = useRef(new Animated.Value(0)).current
   const dropdownAnimation = useRef(new Animated.Value(0)).current
-  const { user, moduleBackdropAnimatedIndex, registerBackdropPress, unregisterBackdropPress, setReturningFromSearchNavigation, returningFromSearchNavigation } =
+  const { user, moduleBackdropAnimatedIndex, registerBackdropPress, unregisterBackdropPress } =
     useAppStore()
 
   // Register backdrop press handler
@@ -129,6 +129,13 @@ export default forwardRef<
   // Track if we've already used cached results to prevent infinite loops
   const hasUsedCachedResults = useRef(false)
   const hasAnimatedResults = useRef(false)
+  
+  // Reset flags when component mounts to allow fresh detection of cached results
+  useEffect(() => {
+    console.log('🔍 SearchResultsSheet mounted, resetting flags')
+    hasUsedCachedResults.current = false
+    hasAnimatedResults.current = false
+  }, [])
 
   // Create a stable dependency for selectedRefItems
   const selectedRefItemsKey = useMemo(() => {
@@ -173,9 +180,9 @@ export default forwardRef<
         const cachedResultsKey = cachedSearchResults.map(r => r.id).sort().join(',')
         
         if (currentResultsKey === cachedResultsKey && searchResults.length > 0) {
-          console.log('⏸️ Same results already loaded, skipping...')
+          console.log('⏸️ Same results already loaded, but still opening sheet...')
           hasUsedCachedResults.current = true
-          return
+          // Don't return - still need to open the sheet even if results are the same
         }
         
         setSearchResults(cachedSearchResults)
@@ -195,19 +202,30 @@ export default forwardRef<
         const convertedProfiles = await convertToProfiles(cachedSearchResults)
         setProfiles(convertedProfiles)
         console.log('✅ Successfully loaded cached results into sheet')
+        
+        // Auto-open the sheet when we have cached results
+        if (bottomSheetRef.current) {
+          console.log('📱 Auto-opening sheet with cached results...')
+          // Small delay to ensure BottomSheet is fully initialized
+          setTimeout(() => {
+            if (bottomSheetRef.current) {
+              try {
+                // Try index 1 first (80% open), fallback to index 0 (25% open)
+                bottomSheetRef.current.snapToIndex(1)
+              } catch (error) {
+                console.log('📱 Falling back to index 0 for sheet opening...')
+                bottomSheetRef.current.snapToIndex(0)
+              }
+            }
+          }, 100)
+        }
       }
     }
     
     loadCachedResults()
   }, [cachedSearchResults.length, cachedSearchTitle, cachedSearchSubtitle, isLoading]) // Only depend on length, not the full array
 
-  // Reset the cached results flag when returning from search navigation
-  useEffect(() => {
-    if (returningFromSearchNavigation && cachedSearchResults.length > 0) {
-      console.log('🔄 Resetting cached results flag for navigation return...')
-      hasUsedCachedResults.current = false
-    }
-  }, [returningFromSearchNavigation, cachedSearchResults.length])
+
 
   // Function to restore search from history
   const restoreSearchFromHistory = useCallback(async (historyItem: SearchHistoryRecord) => {
@@ -224,15 +242,14 @@ export default forwardRef<
         setSearchTitle(historyItem.search_title || 'People into')
         setSearchSubtitle(historyItem.search_subtitle || 'Browse, dm, or add to a group')
 
-        // Don't update the cached search results in the global store when restoring from history
-        // This prevents the loadCachedResults useEffect from triggering and causing the dip
-        // setCachedSearchResults(
-        //   historyItem.search_results,
-        //   historyItem.search_title || 'People into',
-        //   historyItem.search_subtitle || 'Browse, dm, or add to a group',
-        //   historyItem.ref_titles || [],
-        //   historyItem.ref_images || []
-        // )
+        // Update the cached search results in the global store for back button navigation
+        setCachedSearchResults(
+          historyItem.search_results,
+          historyItem.search_title || 'People into',
+          historyItem.search_subtitle || 'Browse, dm, or add to a group',
+          historyItem.ref_titles || [],
+          historyItem.ref_images || []
+        )
 
         setIsLoading(false)
         setSearchError(null)
@@ -502,17 +519,15 @@ export default forwardRef<
   }
 
   const handleUserPress = (profile: Profile) => {
-    // Set flag to indicate we're navigating from search results
-    setReturningFromSearchNavigation(true)
-    
     // Navigate to user profile using push
     // The search context is preserved in global state and will be restored on back
     router.push(`/user/${profile.userName}`)
   }
 
   const handleClose = () => {
-    // Clear cached results when closing
-    clearCachedSearchResults()
+    console.log('🔍 SearchResultsSheet handleClose called - preserving cached results')
+    // Don't clear cached results when closing - preserve them for back button navigation
+    // clearCachedSearchResults()
   }
 
   // Function to trigger search - can be called from parent component
@@ -520,6 +535,10 @@ export default forwardRef<
     if (!user || selectedRefItems.length === 0) {
       return
     }
+
+    // Clear cached results when starting a new search
+    console.log('🔍 Clearing cached results for new search')
+    clearCachedSearchResults()
 
     // Reset the flags when explicitly triggering a new search
     hasUsedCachedResults.current = false

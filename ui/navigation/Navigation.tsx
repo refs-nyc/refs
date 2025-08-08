@@ -24,26 +24,30 @@ export const Navigation = ({
     messagesPerConversation,
     conversations,
     memberships,
-    returningFromSearchNavigation,
     cachedSearchResults,
+    setShowLogoutButton,
+    showLogoutButton,
   } = useAppStore()
 
-  const isHomePage = pathname === '/' || pathname === '/index'
+  const isHomePage = pathname === '/' || pathname === '/index' || pathname === `/user/${user?.userName}`
 
   const scaleAnim = useRef(new Animated.Value(1)).current
 
-  // Enhanced back button handler that preserves search context
+  // Simplified back button handler that preserves search context
   const handleBackPress = () => {
-    // Check if we're returning from search navigation and have search context
-    if (returningFromSearchNavigation && cachedSearchResults.length > 0) {
-      // Navigate back to the current user's profile with search context preserved
+    console.log('🔍 Back button pressed, cachedSearchResults.length:', cachedSearchResults.length)
+    
+    // If we have cached search results, navigate back to profile to restore them
+    if (cachedSearchResults.length > 0) {
       const currentUser = user?.userName
       if (currentUser) {
+        console.log('🔍 Navigating to profile with cached results')
         router.push(`/user/${currentUser}`)
         return
       }
     }
     
+    console.log('🔍 No cached results, using default back behavior')
     // Default back behavior
     router.back()
   }
@@ -140,9 +144,13 @@ export const Navigation = ({
                 <Ionicons name="chevron-back" size={18} color={c.grey2} />
               </Pressable>
             )}
-            <Link dismissTo href="/" style={{ paddingLeft: 6 }}>
+            <Pressable 
+              onPress={() => router.push(`/user/${user.userName}`)} 
+              onLongPress={() => setShowLogoutButton(!showLogoutButton)}
+              style={{ paddingLeft: 6 }}
+            >
               <Text style={{ fontSize: 24, fontWeight: 'bold', textAlign: 'left' }}>Refs</Text>
-            </Link>
+            </Pressable>
           </View>
         </View>
         <View style={{ top: 1.5, paddingRight: 17 }}>

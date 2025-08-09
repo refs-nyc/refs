@@ -80,6 +80,7 @@ export type ItemSlice = {
     image?: string
     url?: string
     listTitle?: string
+    refTitle?: string
   }
   editingLink: boolean
   feedRefreshTrigger: number
@@ -102,7 +103,7 @@ export type ItemSlice = {
   ) => Promise<ExpandedItem>
   addItemToList: (listId: string, itemId: string) => Promise<void>
   update: (id?: string) => Promise<ExpandedItem>
-  updateEditedState: (e: Partial<ExpandedItem & { listTitle: string }>) => void
+  updateEditedState: (e: Partial<ExpandedItem & { listTitle: string; refTitle: string }>) => void
   removeItem: (id: string) => Promise<void>
   moveToBacklog: (id: string) => Promise<ItemsRecord>
   triggerFeedRefresh: () => void
@@ -145,6 +146,7 @@ export const createItemSlice: StateCreator<StoreSlices, [], [], ItemSlice> = (se
     image?: string
     url?: string
     listTitle?: string
+    refTitle?: string
   }) =>
     set(() => ({
       ...get().editedState,
@@ -291,6 +293,16 @@ export const createItemSlice: StateCreator<StoreSlices, [], [], ItemSlice> = (se
 
       if (editedState.listTitle && updatedItem.list) {
         await get().updateRefTitle(updatedItem.ref, editedState.listTitle)
+      }
+
+      // Support editing ref title for non-list items as well
+      if (editedState.refTitle) {
+        const ref = await pocketbase
+          .collection('refs')
+          .update(updatedItem.ref, { title: editedState.refTitle })
+        if (updatedItem.expand?.ref) updatedItem.expand.ref = ref
+
+        await get().updateRefTitle(updatedItem.ref, editedState.refTitle)
       }
 
       // Temporarily disabled webhook to prevent production crashes

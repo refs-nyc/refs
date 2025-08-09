@@ -5,6 +5,7 @@ import type { ItemsRecord, UsersRecord } from '@/features/pocketbase/pocketbase-
 const supabaseUrl = process.env.EXPO_PUBLIC_SUPA_URL
 const supabaseKey = process.env.EXPO_PUBLIC_SUPA_KEY
 
+let supabaseClient: any
 if (!supabaseUrl || !supabaseKey) {
   console.warn('Missing Supabase credentials - hooks will not work')
   // Return a mock client that does nothing
@@ -12,9 +13,9 @@ if (!supabaseUrl || !supabaseKey) {
     functions: { invoke: async () => ({ error: new Error('Supabase not configured') }) },
     from: () => ({ upsert: async () => ({ error: new Error('Supabase not configured') }), delete: () => ({ eq: async () => ({ error: new Error('Supabase not configured') }) }) })
   }
-  var supabase = mockSupabase as any
+  supabaseClient = mockSupabase as any
 } else {
-  var supabase = createClient(supabaseUrl, supabaseKey)
+  supabaseClient = createClient(supabaseUrl, supabaseKey)
 }
 
 // Hook for when an item is created or updated
@@ -27,7 +28,7 @@ export async function onItemChange(record: ItemsRecord, isNew: boolean, pb: any)
     const refTitle = refRecord.title || ''
 
     // Call Edge Function to process the item (generate 7-string and embedding)
-    const { data: processData, error: rpcError } = await supabase.functions.invoke('openai', {
+    const { data: processData, error: rpcError } = await supabaseClient.functions.invoke('openai', {
       body: {
         action: 'process_item',
         item_id: record.id,
@@ -42,7 +43,7 @@ export async function onItemChange(record: ItemsRecord, isNew: boolean, pb: any)
       console.error('❌ Error processing item in Supabase RPC:', rpcError)
 
       // Fallback: directly upsert to items table
-      const { error: upsertError } = await supabase.from('items').upsert({
+      const { error: upsertError } = await supabaseClient.from('items').upsert({
         id: record.id,
         ref_id: record.ref!,
         creator: record.creator!,
@@ -70,7 +71,7 @@ export async function onUserItemsChange(userId: string) {
     console.log(`🔄 Regenerating spirit vector for user:`, userId)
 
     // Call Edge Function to regenerate spirit vector
-    const { data: spiritData, error } = await supabase.functions.invoke('openai', {
+    const { data: spiritData, error } = await supabaseClient.functions.invoke('openai', {
       body: {
         action: 'regenerate_spirit_vector',
         user_id: userId,
@@ -93,7 +94,7 @@ export async function onItemDelete(itemId: string, userId: string) {
     console.log(`🗑️ Processing item deletion:`, itemId)
 
     // Delete from Supabase
-    const { error } = await supabase.from('items').delete().eq('id', itemId)
+    const { error } = await supabaseClient.from('items').delete().eq('id', itemId)
 
     if (error) {
       console.error('❌ Error deleting item from Supabase:', error)
@@ -114,7 +115,7 @@ export async function onUserChange(record: UsersRecord, isNew: boolean) {
     console.log(`🔄 Processing user ${isNew ? 'creation' : 'update'}:`, record.id)
 
     // Insert or update user in Supabase
-    const { error } = await supabase.from('users').upsert({
+    const { error } = await supabaseClient.from('users').upsert({
       id: record.id,
       name: record.name || record.userName,
       avatar_url: record.avatar_url || record.image,

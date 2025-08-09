@@ -6,6 +6,7 @@ import { createClient } from '@supabase/supabase-js'
 const supabaseUrl = process.env.EXPO_PUBLIC_SUPA_URL
 const supabaseKey = process.env.EXPO_PUBLIC_SUPA_KEY
 
+let supabaseClient: any
 if (!supabaseUrl || !supabaseKey) {
   console.warn('Missing Supabase credentials - search history not available')
   // Return a mock client that does nothing
@@ -16,9 +17,9 @@ if (!supabaseUrl || !supabaseKey) {
       delete: () => ({ eq: async () => ({ error: new Error('Supabase not configured') }) })
     })
   }
-  var supabase = mockSupabase as any
+  supabaseClient = mockSupabase as any
 } else {
-  var supabase = createClient(supabaseUrl, supabaseKey)
+  supabaseClient = createClient(supabaseUrl, supabaseKey)
 }
 
 export interface SearchRequest {
@@ -88,7 +89,7 @@ export async function searchPeople(request: SearchRequest): Promise<SearchRespon
  */
 export async function getSearchHistory(userId: string): Promise<SearchHistoryRecord[]> {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseClient
       .from('search_history')
       .select('*')
       .eq('user_id', userId)
@@ -118,7 +119,7 @@ export async function saveSearchHistory(
   resultsCount: number
 ): Promise<void> {
   try {
-    const { error } = await supabase
+    const { error } = await supabaseClient
       .from('search_history')
       .insert({
         user_id: userId,
@@ -147,7 +148,7 @@ export async function saveSearchHistory(
  */
 export async function deleteSearchHistory(recordId: string): Promise<void> {
   try {
-    const { error } = await supabase
+    const { error } = await supabaseClient
       .from('search_history')
       .delete()
       .eq('id', recordId)
@@ -164,7 +165,7 @@ export async function deleteSearchHistory(recordId: string): Promise<void> {
 // Health check for Supabase connection
 export async function checkSupabaseHealth(): Promise<boolean> {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseClient
       .from('search_history')
       .select('count')
       .limit(1)

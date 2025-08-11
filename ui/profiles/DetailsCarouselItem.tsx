@@ -402,6 +402,9 @@ export const DetailsCarouselItem = ({ item, index }: { item: ExpandedItem; index
                       multiline={true}
                       onChangeText={async (e) => {
                         setRefTitle(e)
+                        updateEditedState({
+                          refTitle: e,
+                        })
                       }}
                     />
                   ) : (

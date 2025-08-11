@@ -92,14 +92,21 @@ export const NewRefSheet = ({
   const snapPoints = ['70%', '90%']
   // Track if the sheet is open
   const [isSheetOpen, setIsSheetOpen] = useState(false)
+  // Track current sheet index to prevent redundant snap animations
+  const [sheetIndex, setSheetIndex] = useState<number>(-1)
 
   // Track keyboard state
   useEffect(() => {
     const keyboardDidShow = () => {
-      if (isSheetOpen) bottomSheetRef.current?.snapToIndex(1)
+      if (isSheetOpen && sheetIndex !== 1) {
+        bottomSheetRef.current?.snapToIndex(1)
+      }
     }
     const keyboardDidHide = () => {
-      if (isSheetOpen) bottomSheetRef.current?.snapToIndex(0)
+      // Only collapse if we're actually expanded
+      if (isSheetOpen && sheetIndex === 1) {
+        bottomSheetRef.current?.snapToIndex(0)
+      }
     }
     const showSub = Keyboard.addListener('keyboardDidShow', keyboardDidShow)
     const hideSub = Keyboard.addListener('keyboardDidHide', keyboardDidHide)
@@ -107,7 +114,7 @@ export const NewRefSheet = ({
       showSub.remove()
       hideSub.remove()
     }
-  }, [bottomSheetRef, isSheetOpen])
+  }, [bottomSheetRef, isSheetOpen, sheetIndex])
 
   return (
     <BottomSheet
@@ -116,9 +123,11 @@ export const NewRefSheet = ({
       enablePanDownToClose={true}
       snapPoints={snapPoints}
       index={-1}
+      keyboardBehavior="interactive"
       backgroundStyle={{ backgroundColor: c.olive, borderRadius: 50, paddingTop: 0 }}
       onChange={(i: number) => {
         setIsSheetOpen(i !== -1)
+        setSheetIndex(i)
         if (i === -1) {
           Keyboard.dismiss()
           setAddingNewRefTo(null)

@@ -3,9 +3,24 @@ import { searchPeople as supabaseSearchPeople } from '@/features/supabase/search
 import { createClient } from '@supabase/supabase-js'
 
 // Create Supabase client for search history operations
-const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL!
-const supabaseKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY!
-const supabase = createClient(supabaseUrl, supabaseKey)
+const supabaseUrl = process.env.EXPO_PUBLIC_SUPA_URL
+const supabaseKey = process.env.EXPO_PUBLIC_SUPA_KEY
+
+let supabaseClient: any
+if (!supabaseUrl || !supabaseKey) {
+  console.warn('Missing Supabase credentials - search history not available')
+  // Return a mock client that does nothing
+  const mockSupabase = {
+    from: () => ({ 
+      select: () => ({ eq: () => ({ order: () => ({ limit: async () => ({ data: [], error: null }) }) }) }),
+      insert: async () => ({ data: null, error: new Error('Supabase not configured') }),
+      delete: () => ({ eq: async () => ({ error: new Error('Supabase not configured') }) })
+    })
+  }
+  supabaseClient = mockSupabase as any
+} else {
+  supabaseClient = createClient(supabaseUrl, supabaseKey)
+}
 
 export interface SearchRequest {
   item_ids: string[]
@@ -74,7 +89,7 @@ export async function searchPeople(request: SearchRequest): Promise<SearchRespon
  */
 export async function getSearchHistory(userId: string): Promise<SearchHistoryRecord[]> {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseClient
       .from('search_history')
       .select('*')
       .eq('user_id', userId)
@@ -104,7 +119,7 @@ export async function saveSearchHistory(
   resultsCount: number
 ): Promise<void> {
   try {
-    const { error } = await supabase
+    const { error } = await supabaseClient
       .from('search_history')
       .insert({
         user_id: userId,
@@ -133,7 +148,7 @@ export async function saveSearchHistory(
  */
 export async function deleteSearchHistory(recordId: string): Promise<void> {
   try {
-    const { error } = await supabase
+    const { error } = await supabaseClient
       .from('search_history')
       .delete()
       .eq('id', recordId)
@@ -150,7 +165,7 @@ export async function deleteSearchHistory(recordId: string): Promise<void> {
 // Health check for Supabase connection
 export async function checkSupabaseHealth(): Promise<boolean> {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseClient
       .from('search_history')
       .select('count')
       .limit(1)

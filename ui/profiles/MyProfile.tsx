@@ -58,6 +58,8 @@ export const MyProfile = ({ userName }: { userName: string }) => {
     setSearchResultsSheetOpen,
     logout,
     showLogoutButton,
+    hasShownInitialPromptHold,
+    setHasShownInitialPromptHold,
   } = useAppStore()
 
   const [removingItem, setRemovingItem] = useState<ExpandedItem | null>(null)
@@ -219,16 +221,36 @@ export const MyProfile = ({ userName }: { userName: string }) => {
 
   // Animate prompt text when grid has prompts
   useEffect(() => {
-    if (gridItems.length < 12 && !searchMode && !isSearchResultsSheetOpen) {
-      const interval = setInterval(() => {
-        setPromptTextIndex(prev => (prev + 1) % 2)
-      }, 4640) // 4.64 seconds per text (20% less visible time)
+    const promptsActive = gridItems.length < 12 && !searchMode && !isSearchResultsSheetOpen
+    let interval: ReturnType<typeof setInterval> | null = null
+    let initialTimeout: ReturnType<typeof setTimeout> | null = null
 
-      return () => clearInterval(interval)
+    if (promptsActive) {
+      // Always start on the first prompt when active
+      setPromptTextIndex(0)
+
+      const initialHoldMs = hasShownInitialPromptHold ? 0 : 5000
+      if (initialHoldMs > 0) {
+        initialTimeout = setTimeout(() => {
+          setHasShownInitialPromptHold(true)
+          interval = setInterval(() => {
+            setPromptTextIndex((prev) => (prev + 1) % 2)
+          }, 4640)
+        }, initialHoldMs)
+      } else {
+        interval = setInterval(() => {
+          setPromptTextIndex((prev) => (prev + 1) % 2)
+        }, 4640)
+      }
+
+      return () => {
+        if (initialTimeout) clearTimeout(initialTimeout)
+        if (interval) clearInterval(interval)
+      }
     } else {
       setPromptTextIndex(0) // Reset when not showing prompts
     }
-  }, [gridItems.length, searchMode, isSearchResultsSheetOpen])
+  }, [gridItems.length, searchMode, isSearchResultsSheetOpen, hasShownInitialPromptHold, setHasShownInitialPromptHold])
 
   return (
     <>

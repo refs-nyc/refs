@@ -6,9 +6,15 @@ import type { StoreSlices } from './types'
 import { pocketbase } from '../pocketbase'
 import { edgeFunctionClient } from '../supabase/edge-function-client'
 
-// Helper function to trigger webhook for item changes
+const USE_WEBHOOKS = (process.env.EXPO_PUBLIC_USE_WEBHOOKS || '').toLowerCase() === 'true'
+
+// Helper function to trigger webhook for item changes (gated by env flag)
 async function triggerItemWebhook(itemId: string, action: 'create' | 'update', itemData: any) {
   try {
+    if (!USE_WEBHOOKS) {
+      // Webhooks explicitly disabled – skip safely
+      return
+    }
     // Access environment variable inside function to prevent module-level crashes
     const webhookUrl = process.env.EXPO_PUBLIC_WEBHOOK_URL || 'http://localhost:3002'
 
@@ -29,6 +35,22 @@ async function triggerItemWebhook(itemId: string, action: 'create' | 'update', i
     console.error(`❌ Failed to trigger webhook for item ${itemId}:`, error)
     // Don't throw - webhook failure shouldn't break the main flow
   }
+}
+
+async function processItemViaEdgeFunction(newItem: ExpandedItem) {
+  // Fallback: Call Supabase Edge Function directly
+  await edgeFunctionClient.processItem({
+    item_id: newItem.id,
+    ref_id: newItem.ref,
+    creator: newItem.creator,
+    item_text: newItem.text || '',
+    ref_title: newItem.expand?.ref?.title || 'Unknown',
+  })
+
+  // Regenerate spirit vector for the user
+  await edgeFunctionClient.regenerateSpiritVector({
+    user_id: newItem.creator,
+  })
 }
 
 function gridSort(items: ExpandedItem[]): ExpandedItem[] {
@@ -58,6 +80,7 @@ export type ItemSlice = {
     image?: string
     url?: string
     listTitle?: string
+    refTitle?: string
   }
   editingLink: boolean
   feedRefreshTrigger: number
@@ -80,7 +103,7 @@ export type ItemSlice = {
   ) => Promise<ExpandedItem>
   addItemToList: (listId: string, itemId: string) => Promise<void>
   update: (id?: string) => Promise<ExpandedItem>
-  updateEditedState: (e: Partial<ExpandedItem & { listTitle: string }>) => void
+  updateEditedState: (e: Partial<ExpandedItem & { listTitle: string; refTitle: string }>) => void
   removeItem: (id: string) => Promise<void>
   moveToBacklog: (id: string) => Promise<ItemsRecord>
   triggerFeedRefresh: () => void
@@ -123,6 +146,7 @@ export const createItemSlice: StateCreator<StoreSlices, [], [], ItemSlice> = (se
     image?: string
     url?: string
     listTitle?: string
+    refTitle?: string
   }) =>
     set(() => ({
       ...get().editedState,
@@ -191,37 +215,19 @@ export const createItemSlice: StateCreator<StoreSlices, [], [], ItemSlice> = (se
 
     // Process the item for 7-string generation and spirit vector
     try {
-      await triggerItemWebhook(newItem.id, 'create', {
-        ref: newItem.ref,
-        creator: newItem.creator,
-        text: newItem.text,
-        ref_title: newItem.expand?.ref?.title || 'Unknown',
-      })
-    } catch (error) {
-      console.error('Error triggering item webhook:', error)
-      
-      // Fallback: Call Supabase Edge Function directly
-      try {
-        console.log('🔄 Calling Supabase Edge Function directly for item processing...')
-        await edgeFunctionClient.processItem({
-          item_id: newItem.id,
-          ref_id: newItem.ref,
+      if (USE_WEBHOOKS) {
+        await triggerItemWebhook(newItem.id, 'create', {
+          ref: newItem.ref,
           creator: newItem.creator,
-          item_text: newItem.text || '',
+          text: newItem.text,
           ref_title: newItem.expand?.ref?.title || 'Unknown',
         })
-        
-        // Also regenerate spirit vector for the user
-        console.log('🔄 Regenerating spirit vector for user...')
-        await edgeFunctionClient.regenerateSpiritVector({
-          user_id: newItem.creator,
-        })
-        
-        console.log('✅ Item processed successfully via Edge Function')
-      } catch (edgeError) {
-        console.error('Error calling Edge Function:', edgeError)
-        // Don't fail the item creation if Edge Function fails
+      } else {
+        await processItemViaEdgeFunction(newItem)
       }
+    } catch (error) {
+      console.error('Item processing failed:', error)
+      // Do not throw; item creation in PocketBase succeeded
     }
 
     return newItem
@@ -287,6 +293,16 @@ export const createItemSlice: StateCreator<StoreSlices, [], [], ItemSlice> = (se
 
       if (editedState.listTitle && updatedItem.list) {
         await get().updateRefTitle(updatedItem.ref, editedState.listTitle)
+      }
+
+      // Support editing ref title for non-list items as well
+      if (editedState.refTitle) {
+        const ref = await pocketbase
+          .collection('refs')
+          .update(updatedItem.ref, { title: editedState.refTitle })
+        if (updatedItem.expand?.ref) updatedItem.expand.ref = ref
+
+        await get().updateRefTitle(updatedItem.ref, editedState.refTitle)
       }
 
       // Temporarily disabled webhook to prevent production crashes

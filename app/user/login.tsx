@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { useAppStore } from '@/features/stores'
 import { s, c } from '@/features/style'
 import { router } from 'expo-router'
@@ -133,6 +133,7 @@ const LoginStep = () => {
 
 export default function Screen() {
   const carouselRef = useRef<ICarouselInstance>(null)
+  const slides = useMemo(() => [EmailStep, LoginStep], [])
 
   return (
     <View style={{ flex: 1 }}>
@@ -142,7 +143,7 @@ export default function Screen() {
       <Carousel
         loop={false}
         ref={carouselRef}
-        data={[EmailStep, LoginStep]}
+        data={slides}
         width={win.width}
         height={win.height}
         enabled={false}

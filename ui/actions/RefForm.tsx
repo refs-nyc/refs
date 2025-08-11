@@ -55,9 +55,8 @@ export const RefForm = ({
   const [uploadInProgress, setUploadInProgress] = useState(false)
   const [createInProgress, setCreateInProgress] = useState(false)
   const [uploadInitiated, setUploadInitiated] = useState(false)
-  const [location, setLocation] = useState<string>('')
-  const [author, setAuthor] = useState<string>('')
-  const [editingField, setEditingField] = useState<'location' | 'author' | null>(null)
+  const [subtitle, setSubtitle] = useState<string>('')
+  const [editingSubtitle, setEditingSubtitle] = useState<boolean>(false)
 
   // Animation refs
   const titleShake = useRef(new Animated.Value(0)).current
@@ -136,10 +135,12 @@ export const RefForm = ({
       <BottomSheetScrollView
         contentContainerStyle={{
           gap: s.$1,
-          marginTop: s.$2,
+          marginTop: s.$2 - 5,
           marginBottom: s.$2 + 10,
           justifyContent: 'flex-start',
-          alignItems: 'center',
+          // Stretch children to container width so inputs never grow wider
+          // than the sheet and inadvertently shift the whole layout.
+          alignItems: 'stretch',
         }}
       >
         <View
@@ -150,6 +151,12 @@ export const RefForm = ({
             alignItems: 'center',
             justifyContent: 'center',
             backgroundColor: 'transparent',
+            // Subtle outside stroke to indicate the image is editable
+            ...(pinataSource || imageAsset
+              ? { borderWidth: 3.8, borderColor: 'rgba(255,255,255,0.18)' }
+              : {}),
+            // Explicitly center this fixed-width block since container stretches children
+            alignSelf: 'center',
           }}
         >
           <Animated.View
@@ -192,6 +199,9 @@ export const RefForm = ({
                   height: 200,
                   borderRadius: s.$09,
                   overflow: 'hidden',
+                  // Inner subtle stroke for visibility on light images
+                  borderWidth: 1,
+                  borderColor: 'rgba(0,0,0,0.08)',
                 }}
                 onPress={() => setPicking(true)}
                 onLongPress={() => setPicking(true)}
@@ -264,20 +274,19 @@ export const RefForm = ({
           />
         </Animated.View>
 
-        {/* Inline subtitle row for location/author, now directly below title with minimal spacing */}
+        {/* Inline subtitle row (single field), directly below title */}
         <View style={{ width: '100%', alignItems: 'flex-start', marginTop: -17, marginBottom: 2 }}>
-          {/* Only show one: location or author, never both */}
           {canEditRefData ? (
-            editingField === 'location' ? (
+            editingSubtitle ? (
               <TextInput
-                value={location}
-                onChangeText={(t) => t.length <= 150 && setLocation(t)}
-                onBlur={() => setEditingField(null)}
+                value={subtitle}
+                onChangeText={(t) => t.length <= 150 && setSubtitle(t)}
+                onBlur={() => setEditingSubtitle(false)}
                 autoFocus
-                placeholder="Add location"
+                placeholder="Add subtitle (e.g., location or author)"
                 style={{
                   minWidth: 80,
-                  maxWidth: 250,
+                  maxWidth: 280,
                   color: c.surface,
                   fontSize: 18,
                   fontWeight: '600',
@@ -290,34 +299,8 @@ export const RefForm = ({
                 maxLength={150}
                 returnKeyType="done"
               />
-            ) : editingField === 'author' ? (
-              <TextInput
-                value={author}
-                onChangeText={(t) => t.length <= 150 && setAuthor(t)}
-                onBlur={() => setEditingField(null)}
-                autoFocus
-                placeholder="Add author"
-                style={{
-                  minWidth: 80,
-                  maxWidth: 250,
-                  color: c.surface,
-                  fontSize: 18,
-                  fontWeight: '600',
-                  opacity: 0.5,
-                  backgroundColor: 'transparent',
-                  padding: 0,
-                  margin: 0,
-                  textAlign: 'left',
-                }}
-                maxLength={150}
-                returnKeyType="done"
-              />
-            ) : location ? (
-              <Pressable
-                onPress={() => {
-                  setTimeout(() => setEditingField('location'), 0)
-                }}
-              >
+            ) : subtitle ? (
+              <Pressable onPress={() => setEditingSubtitle(true)}>
                 <Text
                   style={{
                     color: c.surface,
@@ -327,85 +310,60 @@ export const RefForm = ({
                     textAlign: 'left',
                   }}
                 >
-                  {location}
-                </Text>
-              </Pressable>
-            ) : author ? (
-              <Pressable
-                onPress={() => {
-                  setTimeout(() => setEditingField('author'), 0)
-                }}
-              >
-                <Text
-                  style={{
-                    color: c.surface,
-                    fontSize: 18,
-                    fontWeight: '600',
-                    opacity: 0.5,
-                    textAlign: 'left',
-                  }}
-                >
-                  {author}
+                  {subtitle}
                 </Text>
               </Pressable>
             ) : (
-              <View style={{ flexDirection: 'row', gap: 16 }}>
-                <Pressable onPress={() => setEditingField('location')}>
-                  <Text
-                    style={{
-                      color: c.surface,
-                      fontSize: 17.6,
-                      opacity: 0.7,
-                      textAlign: 'left',
-                      fontWeight: '600',
-                    }}
-                  >
-                    + location
-                  </Text>
-                </Pressable>
-                <Pressable onPress={() => setEditingField('author')}>
-                  <Text
-                    style={{
-                      color: c.surface,
-                      fontSize: 17.6,
-                      opacity: 0.7,
-                      textAlign: 'left',
-                      fontWeight: '600',
-                    }}
-                  >
-                    + author
-                  </Text>
-                </Pressable>
-              </View>
+              <Pressable onPress={() => setEditingSubtitle(true)}>
+                <Text
+                  style={{
+                    color: c.surface,
+                    fontSize: 17.6,
+                    opacity: 0.7,
+                    textAlign: 'left',
+                    fontWeight: '600',
+                  }}
+                >
+                  + subtitle (eg location or author)
+                </Text>
+              </Pressable>
             )
           ) : (
-            <View
-              style={{ width: '100%', alignItems: 'flex-start', marginTop: -17, marginBottom: 2 }}
-            >
+            <View style={{ width: '100%', alignItems: 'flex-start', marginTop: -17, marginBottom: 2 }}>
               <Heading tag="h2" style={{ color: c.surface }}>
-                {location || author}
+                {subtitle}
               </Heading>
             </View>
           )}
         </View>
 
         {/* Notes */}
-        <TextInput
-          multiline={true}
-          numberOfLines={4}
-          placeholder="Add a caption for your profile"
-          placeholderTextColor={c.muted}
-          onChangeText={setText}
-          style={{
-            backgroundColor: c.white,
-            borderRadius: s.$075,
-            width: '100%',
-            padding: s.$1,
-            minHeight: s.$12,
-            fontSize: 17,
-            fontWeight: '500',
-          }}
-        />
+        <View style={{ width: '100%', alignSelf: 'stretch' }}>
+          <TextInput
+            multiline={true}
+            numberOfLines={4}
+            placeholder="Add a caption for your profile"
+            placeholderTextColor={c.muted}
+            onChangeText={setText}
+            value={text}
+            style={{
+              backgroundColor: c.white,
+              borderRadius: s.$075,
+              width: '100%',
+              maxWidth: '100%',
+              flexShrink: 1,
+              overflow: 'hidden',
+              padding: s.$1,
+              minHeight: s.$12,
+              fontSize: 17,
+              fontWeight: '500',
+            }}
+            scrollEnabled={true}
+            textAlignVertical="top"
+            autoCorrect={true}
+            autoCapitalize="sentences"
+          />
+        </View>
 
         <View
           style={{
@@ -426,10 +384,10 @@ export const RefForm = ({
               if (!validateFields()) {
                 return
               }
-              // Only include meta if location or author is present
+              // Only include meta if subtitle is present
               let meta: string | undefined = undefined
-              if (location || author) {
-                meta = JSON.stringify({ location, author })
+              if (subtitle) {
+                meta = JSON.stringify({ subtitle })
               }
 
               try {
@@ -473,10 +431,10 @@ export const RefForm = ({
                   return
                 }
 
-                // Only include meta if location or author is present
+                // Only include meta if subtitle is present
                 let meta: string | undefined = undefined
-                if (location || author) {
-                  meta = JSON.stringify({ location, author })
+                if (subtitle) {
+                  meta = JSON.stringify({ subtitle })
                 }
 
                 try {

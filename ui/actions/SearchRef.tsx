@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { Pressable, View } from 'react-native'
+import { Pressable, View, Text } from 'react-native'
 import { BottomSheetTextInput as TextInput } from '@gorhom/bottom-sheet'
 import { ListItem } from '@/ui/lists/ListItem'
 import { NewRefListItem } from '@/ui/atoms/NewRefListItem'
@@ -105,7 +105,8 @@ export const SearchRef = ({
   const [uploadInProgress, setUploadInProgress] = useState(false)
   const [uploadInitiated, setUploadInitiated] = useState(false)
   const [imageSearchResults, setImageSearchResults] = useState<string[]>([])
-  const [displayingImagesFor, setDisplayingImagesFor] = useState<string>('') //ref id OR search query
+  const [displayingImagesFor, setDisplayingImagesFor] = useState<string>('') // ref id OR search query
+  const [imageResultsCache, setImageResultsCache] = useState<Record<string, string[]>>({})
 
   const { getRefsByTitle } = useAppStore()
 
@@ -129,7 +130,7 @@ export const SearchRef = ({
             titleColor={c.surface}
           />
         </Pressable>
-        <XStack gap={s.$1}>
+        <XStack gap={s.$1} style={{ paddingLeft: s.$08 }}>
           {imageSearchResults && displayingImagesFor === item.id && (
             <ImageSearchResults
               imageSearchResults={imageSearchResults}
@@ -138,6 +139,11 @@ export const SearchRef = ({
             />
           )}
         </XStack>
+        {imageSearchResults && displayingImagesFor === item.id && (
+          <Text style={{ color: c.surface, opacity: 0.6, fontSize: 12, paddingLeft: s.$08, marginTop: 4 }}>
+            pick a photo
+          </Text>
+        )}
       </View>
     )
   }
@@ -227,8 +233,12 @@ export const SearchRef = ({
   }, [paste])
 
   const onRefPress = async (refId: string, ref?: CompleteRef) => {
-    // if we're already displaying images for this ref, don't do anything
-    if (displayingImagesFor === refId) return
+    // If already showing, toggle closed but cache what we fetched
+    if (displayingImagesFor === refId) {
+      setImageResultsCache((prev) => ({ ...prev, [refId]: imageSearchResults }))
+      setDisplayingImagesFor('')
+      return
+    }
 
     // if the user already uploaded an image from camera roll, just add the ref
     if (imageState) {
@@ -237,6 +247,14 @@ export const SearchRef = ({
       } else {
         onAddNewRef({ title: searchQuery, image: imageState, url: urlState, promptContext: prompt })
       }
+      return
+    }
+
+    // If we have cached results for this id/query, use them immediately
+    const cached = imageResultsCache[refId]
+    if (cached && cached.length > 0) {
+      setImageSearchResults(cached)
+      setDisplayingImagesFor(refId)
       return
     }
 
@@ -257,6 +275,7 @@ export const SearchRef = ({
 
       const resultUrls = results.items.map((item: any) => item.link).slice(0, 3)
       setImageSearchResults(resultUrls)
+      setImageResultsCache((prev) => ({ ...prev, [refId]: resultUrls }))
     } catch (error) {
       console.error(error)
       setImageSearchResults([])
@@ -355,10 +374,20 @@ export const SearchRef = ({
         {/* Option to Create New Ref */}
         {searchQuery !== '' && !noNewRef && !disableNewRef && (
           <>
-            <Pressable onPress={() => onRefPress(searchQuery)}>
+            <Pressable
+              onPress={() => {
+                // Toggle behavior for new-ref row based on current state
+                if (displayingImagesFor === searchQuery) {
+                  setImageResultsCache((prev) => ({ ...prev, [searchQuery]: imageSearchResults }))
+                  setDisplayingImagesFor('')
+                } else {
+                  onRefPress(searchQuery)
+                }
+              }}
+            >
               <NewRefListItem title={searchQuery} image={image || ''} />
             </Pressable>
-            <XStack gap={s.$075}>
+            <XStack gap={s.$075} style={{ paddingLeft: s.$08 }}>
               {imageSearchResults && displayingImagesFor === searchQuery && (
                 <ImageSearchResults
                   imageSearchResults={imageSearchResults}
@@ -374,6 +403,11 @@ export const SearchRef = ({
                 />
               )}
             </XStack>
+            {imageSearchResults && displayingImagesFor === searchQuery && (
+              <Text style={{ color: c.surface, opacity: 0.6, fontSize: 12, paddingLeft: s.$08, marginTop: 4 }}>
+                pick a photo
+              </Text>
+            )}
           </>
         )}
         <YStack

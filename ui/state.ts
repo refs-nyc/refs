@@ -48,6 +48,9 @@ export type UISlice = {
   // Logout button visibility
   showLogoutButton: boolean
   setShowLogoutButton: (show: boolean) => void
+  // Prompt timing control (session-level)
+  hasShownInitialPromptHold: boolean
+  setHasShownInitialPromptHold: (shown: boolean) => void
 }
 
 export const createUISlice: StateCreator<StoreSlices, [], [], UISlice> = (set) => ({
@@ -168,5 +171,10 @@ export const createUISlice: StateCreator<StoreSlices, [], [], UISlice> = (set) =
     set(() => ({
       showLogoutButton: show,
     }))
+  },
+  // Prompt timing control (session-level)
+  hasShownInitialPromptHold: false,
+  setHasShownInitialPromptHold: (shown: boolean) => {
+    set(() => ({ hasShownInitialPromptHold: shown }))
   },
 })

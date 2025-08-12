@@ -45,21 +45,34 @@ export function UnifiedOnboarding() {
         <View style={{ flexDirection: 'column' }}>
           <Animated.Text style={[textStyle, { opacity: o1 }]}>Apps for our photos,</Animated.Text>
           <Animated.Text style={[textStyle, { opacity: o2 }]}>fleeting thoughts,</Animated.Text>
-          <Animated.Text style={[textStyle, { opacity: o3 }]}>restaurants,</Animated.Text>
+          <Animated.Text style={[textStyle, { opacity: o3 }]}>books,</Animated.Text>
           <Animated.Text style={[textStyle, { opacity: o4 }]}>...beers?</Animated.Text>
         </View>
       )
     }
 
-    return [
+      return [
       { content: 'The internet splits us into pieces', durationMs: 3750 },
       { content: <AppsLine />, durationMs: 5000 }, // allow an extra second after beers? appears
       { content: 'and so we only ever see one side of each other', durationMs: 3750 },
       {
+        // Slide 4 now text-only syllabus line (was the mini-syllabus with demo)
+        content: (
+          <Text key="syllabus-text" style={{ color: c.accent, fontFamily: 'Inter-Medium', fontSize: 24 }}>
+            Refs is a place to bring it all together
+          </Text>
+        ),
+        durationMs: 3750,
+      },
+      {
+        // Slide 5 is the mini-syllabus with demo, copy italicized
         content: (
           <View style={{ marginTop: -100 }}>
-            <Text key="intro" style={{ color: c.accent, fontFamily: 'Inter-Medium', fontSize: 24, marginBottom: s.$1 }}>
-              Refs is a place to bring it all together
+            <Text
+              key="intro-italic"
+              style={{ fontStyle: 'italic', color: c.accent, fontFamily: 'Inter-Medium', fontSize: 24, marginBottom: s.$1 }}
+            >
+              A syllabus for people reading you
             </Text>
             <View style={{ alignItems: 'flex-start', paddingTop: s.$075, paddingLeft: 0 }}>
               <View style={{ width: '100%', height: win.width * 0.6, overflow: 'hidden', opacity: 0.95, alignSelf: 'flex-start' }}>
@@ -67,14 +80,6 @@ export function UnifiedOnboarding() {
               </View>
             </View>
           </View>
-        ),
-        durationMs: 3750,
-      },
-      {
-        content: (
-          <Text key="syllabus" style={{ fontStyle: 'italic', color: c.accent, fontFamily: 'Inter-Medium', fontSize: 24 }}>
-            A syllabus for people reading you
-          </Text>
         ),
         durationMs: 3750,
       },

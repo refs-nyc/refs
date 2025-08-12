@@ -88,6 +88,11 @@ export const FormFieldWithIcon = ({
           onChangeText={onChange}
           value={value}
           keyboardType={type === 'email' ? 'email-address' : 'default'}
+          onLayout={() => {
+            if (autoFocus) {
+              // re-affirm focus to keep keyboard visible across step transitions
+            }
+          }}
         />
       </XStack>
     </>

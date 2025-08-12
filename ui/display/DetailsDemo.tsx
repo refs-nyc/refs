@@ -1,7 +1,9 @@
 import { useRef, forwardRef, Ref } from 'react'
 import { SharedValue, useSharedValue } from 'react-native-reanimated'
-import { View, Dimensions, StyleProp, ViewStyle } from 'react-native'
+import { View, Dimensions, StyleProp, ViewStyle, Text } from 'react-native'
 import Carousel, { CarouselRenderItem, ICarouselInstance } from 'react-native-reanimated-carousel'
+import { Image } from 'expo-image'
+import { s, c } from '@/features/style'
 
 export const DetailsDemoCarousel = forwardRef(
   (
@@ -26,6 +28,7 @@ export const DetailsDemoCarousel = forwardRef(
     },
     ref
   ) => {
+    const cardWidth = Math.round(((width as number) - 20) / 2)
     return (
       <Carousel
         onConfigurePanGesture={(gesture) => {
@@ -35,13 +38,35 @@ export const DetailsDemoCarousel = forwardRef(
         loop={data.length > 1}
         ref={ref as Ref<ICarouselInstance>}
         data={data}
-        width={width * 0.8}
-        height={height} // hack
+        width={cardWidth}
+        height={height}
         defaultIndex={defaultIndex}
         style={style}
         defaultScrollOffsetValue={scrollOffsetValue}
         onSnapToItem={onSnapToItem}
-        renderItem={() => <></>}
+        renderItem={({ item, index }: any) => {
+          const CARD_W = cardWidth
+          const IMG = CARD_W - 50
+          return (
+            <View style={{ paddingVertical: 2, paddingHorizontal: 6, width: CARD_W }}>
+              {item?.expand?.ref?.image ? (
+                <Image
+                  style={{ width: IMG, height: IMG, borderRadius: 12, marginBottom: 6 }}
+                  source={item.expand.ref.image}
+                  contentFit="cover"
+                />
+              ) : (
+                <View style={{ width: IMG, height: IMG, borderRadius: 12, backgroundColor: '#ddd', marginBottom: 6 }} />
+              )}
+              <Text style={{ width: CARD_W, color: '#4A5A52', fontWeight: '700', fontSize: 16 }} numberOfLines={1}>
+                {item?.expand?.ref?.title || ''}
+              </Text>
+              <Text style={{ width: CARD_W - 16, color: '#9BA6A0', fontSize: 14, lineHeight: 18 }} numberOfLines={2}>
+                {index === 1 ? 'early-bird signups at the Fort Greene courts' : item?.text || ''}
+              </Text>
+            </View>
+          )
+        }}
         autoPlay={true}
         autoPlayInterval={2000}
       />

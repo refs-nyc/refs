@@ -219,38 +219,42 @@ export const MyProfile = ({ userName }: { userName: string }) => {
   // timeout used to stop editing the profile after 10 seconds
   let timeout: ReturnType<typeof setTimeout>
 
-  // Animate prompt text when grid has prompts
+  // Animate prompt text with explicit schedule: L1 (4s) → pause (2s) → L2 (4s) → pause (2s) → repeat
   useEffect(() => {
-    const promptsActive = gridItems.length < 12 && !searchMode && !isSearchResultsSheetOpen
-    let interval: ReturnType<typeof setInterval> | null = null
-    let initialTimeout: ReturnType<typeof setTimeout> | null = null
+    const promptsActive = gridItems.length < 12 && !searchMode && !isSearchResultsSheetOpen && !loading
+    let t1: ReturnType<typeof setTimeout> | null = null
+    let t2: ReturnType<typeof setTimeout> | null = null
+    let t3: ReturnType<typeof setTimeout> | null = null
+    let t4: ReturnType<typeof setTimeout> | null = null
+
+    const runCycle = () => {
+      // Show line 0
+      setPromptTextIndex(0)
+      // After 4s, pause
+      t1 = setTimeout(() => setPromptTextIndex(-1 as any), 4000)
+      // After pause 2s, show line 1 for 4s
+      t2 = setTimeout(() => setPromptTextIndex(1), 4000 + 2000)
+      // After line 1 duration, pause again
+      t3 = setTimeout(() => setPromptTextIndex(-1 as any), 4000 + 2000 + 4000)
+      // After second pause, loop back to start
+      t4 = setTimeout(runCycle, 4000 + 2000 + 4000 + 2000)
+    }
 
     if (promptsActive) {
-      // Always start on the first prompt when active
-      setPromptTextIndex(0)
-
-      const initialHoldMs = hasShownInitialPromptHold ? 0 : 5000
-      if (initialHoldMs > 0) {
-        initialTimeout = setTimeout(() => {
-          setHasShownInitialPromptHold(true)
-          interval = setInterval(() => {
-            setPromptTextIndex((prev) => (prev + 1) % 2)
-          }, 4640)
-        }, initialHoldMs)
-      } else {
-        interval = setInterval(() => {
-          setPromptTextIndex((prev) => (prev + 1) % 2)
-        }, 4640)
-      }
-
+      // Small grace window so the first line gets its full 4s after any loading spinner disappears
+      const startDelay = 200
+      const startTimer = setTimeout(runCycle, startDelay)
       return () => {
-        if (initialTimeout) clearTimeout(initialTimeout)
-        if (interval) clearInterval(interval)
+        clearTimeout(startTimer)
+        if (t1) clearTimeout(t1)
+        if (t2) clearTimeout(t2)
+        if (t3) clearTimeout(t3)
+        if (t4) clearTimeout(t4)
       }
     } else {
-      setPromptTextIndex(0) // Reset when not showing prompts
+      setPromptTextIndex(0)
     }
-  }, [gridItems.length, searchMode, isSearchResultsSheetOpen, hasShownInitialPromptHold, setHasShownInitialPromptHold])
+  }, [gridItems.length, searchMode, isSearchResultsSheetOpen, loading])
 
   return (
     <>
@@ -316,7 +320,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
                 </Text>
               ) : (
                 <Animated.Text
-                  entering={FadeIn.duration(800).delay(1800)} // Fade in after 1800ms pause
+                  entering={FadeIn.duration(800)}
                   exiting={FadeOut.duration(800)}
                   key={`prompt-text-${promptTextIndex}`}
                   style={{
@@ -326,13 +330,15 @@ export const MyProfile = ({ userName }: { userName: string }) => {
                     fontWeight: '400',
                     textAlign: 'center',
                     lineHeight: s.$1half,
-                    minWidth: 280, // Expanded width to fit text on one line
+                    minWidth: 280,
+                    minHeight: s.$1half, // reserve space during pause
                   }}
                 >
-                  {promptTextIndex === 0 
-                    ? 'These prompts will disappear after you add...'
-                    : 'no one will ever know'
-                  }
+                  {promptTextIndex === 0
+                    ? 'These prompts will disappear after you add'
+                    : promptTextIndex === 1
+                    ? '(no one will know you used them)'
+                    : ''}
                 </Animated.Text>
               )}
             </Animated.View>

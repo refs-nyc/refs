@@ -88,8 +88,8 @@ export const NewRefSheet = ({
     }
   }
 
-  // Two snap points: collapsed and expanded
-  const snapPoints = ['70%', '90%']
+  // Adjust snap points to reduce visible "duck" when switching content
+  const snapPoints = ['69%', '80%']
   // Track if the sheet is open
   const [isSheetOpen, setIsSheetOpen] = useState(false)
   // Track current sheet index to prevent redundant snap animations
@@ -98,15 +98,13 @@ export const NewRefSheet = ({
   // Track keyboard state
   useEffect(() => {
     const keyboardDidShow = () => {
-      if (isSheetOpen && sheetIndex !== 1) {
-        bottomSheetRef.current?.snapToIndex(1)
-      }
+      // Let the sheet settle before moving to avoid jumpiness
+      if (!isSheetOpen) return
+      requestAnimationFrame(() => bottomSheetRef.current?.snapToIndex(1))
     }
     const keyboardDidHide = () => {
-      // Only collapse if we're actually expanded
-      if (isSheetOpen && sheetIndex === 1) {
-        bottomSheetRef.current?.snapToIndex(0)
-      }
+      if (!isSheetOpen) return
+      requestAnimationFrame(() => bottomSheetRef.current?.snapToIndex(0))
     }
     const showSub = Keyboard.addListener('keyboardDidShow', keyboardDidShow)
     const hideSub = Keyboard.addListener('keyboardDidHide', keyboardDidHide)

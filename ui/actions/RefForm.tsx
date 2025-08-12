@@ -25,7 +25,7 @@ const win = Dimensions.get('window')
 type ExistingRefFields = {
   title?: string
   url?: string
-  image?: string
+  image?: string | ImagePickerAsset
   meta?: string
 }
 
@@ -341,7 +341,7 @@ export const RefForm = ({
         <View style={{ width: '100%', alignSelf: 'stretch' }}>
           <TextInput
             multiline={true}
-            numberOfLines={4}
+            numberOfLines={3}
             placeholder="Add a caption for your profile"
             placeholderTextColor={c.muted}
             onChangeText={setText}
@@ -354,7 +354,7 @@ export const RefForm = ({
               flexShrink: 1,
               overflow: 'hidden',
               padding: s.$1,
-              minHeight: s.$12,
+              minHeight: s.$11,
               fontSize: 17,
               fontWeight: '500',
             }}
@@ -412,7 +412,7 @@ export const RefForm = ({
                 borderRadius: s.$4,
                 borderColor: 'white',
                 borderWidth: 1,
-                backgroundColor: 'white',
+                backgroundColor: c.white,
                 paddingVertical: s.$08,
                 paddingHorizontal: s.$2,
               }}
@@ -424,7 +424,7 @@ export const RefForm = ({
             <Button
               title={title ? 'Add Ref' : 'Title required'}
               variant="whiteInverted"
-              style={{ width: '48%', minWidth: 0 }}
+              style={{ width: '48%', minWidth: 0, backgroundColor: c.white }}
               disabled={!(pinataSource && title) || createInProgress}
               onPress={async () => {
                 if (!validateFields()) {

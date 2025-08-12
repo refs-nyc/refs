@@ -69,7 +69,6 @@ const ImageSearchResults = ({
   )
 }
 
-import type { ImagePickerAsset } from 'expo-image-picker'
 export type NewRefFields = {
   title: string
   image?: string | ImagePickerAsset

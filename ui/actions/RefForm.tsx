@@ -25,7 +25,7 @@ const win = Dimensions.get('window')
 type ExistingRefFields = {
   title?: string
   url?: string
-  image?: string
+  image?: string | ImagePickerAsset
   meta?: string
 }
 

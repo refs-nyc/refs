@@ -69,9 +69,10 @@ const ImageSearchResults = ({
   )
 }
 
+import type { ImagePickerAsset } from 'expo-image-picker'
 export type NewRefFields = {
   title: string
-  image?: string
+  image?: string | ImagePickerAsset
   url?: string
   promptContext?: string
 }
@@ -364,6 +365,8 @@ export const SearchRef = ({
               setPicking(false)
               setUploadInProgress(true)
               setUploadInitiated(true)
+              // Immediately proceed to the add form preloaded with this photo
+              onAddNewRef({ title: '', image: a, url: urlState, promptContext: prompt })
             }}
             onCancel={() => {
               setPicking(false)

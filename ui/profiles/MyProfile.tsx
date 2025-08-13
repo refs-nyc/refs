@@ -174,8 +174,17 @@ export const MyProfile = ({ userName }: { userName: string }) => {
     const init = async () => {
       try {
         await refreshGrid(userName)
-        // Delay so spinner/transition has fully cleared
-        setTimeout(() => setFocusReady(true), 2500)
+        // If returning from a search context, render grid immediately behind the sheet
+        const returningFromSearch = cachedSearchResults.length > 0 || isSearchResultsSheetOpen || searchMode
+        if (returningFromSearch) {
+          setFocusReady(true)
+        } else if (justOnboarded) {
+          // Only delay for the first post-registration landing where startup animation will play
+          setTimeout(() => setFocusReady(true), 2500)
+        } else {
+          // Normal login and subsequent visits: no delay
+          setFocusReady(true)
+        }
       } catch (error) {
         console.error('Failed to refresh grid:', error)
       }
@@ -194,6 +203,8 @@ export const MyProfile = ({ userName }: { userName: string }) => {
       if (isSearchResultsSheetOpen) {
         setSearchResultsSheetOpen(false)
       }
+      // Ensure grid renders immediately behind sheet when restoring
+      setFocusReady(true)
       // The SearchResultsSheet will auto-open itself when it detects cached results
     }
   }, [cachedSearchResults.length, searchMode, isSearchResultsSheetOpen, userName, setSearchResultsSheetOpen])

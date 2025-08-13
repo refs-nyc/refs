@@ -6,12 +6,12 @@ import type { StoreSlices } from './types'
 import { pocketbase } from '../pocketbase'
 
 export type UserSlice = {
-  stagedUser: Partial<Profile> & { password?: string }
+  stagedUser: Partial<Profile> & { password?: string; passwordConfirm?: string }
   user: Profile | null
   isInitialized: boolean
   register: () => Promise<ExpandedProfile>
   updateUser: (fields: Partial<Profile>) => Promise<Profile>
-  updateStagedUser: (formFields: Partial<Profile>) => void
+  updateStagedUser: (formFields: Partial<Profile> & { password?: string; passwordConfirm?: string }) => void
   loginWithPassword: (email: string, password: string) => Promise<any>
   getUserByEmail: (email: string) => Promise<Profile>
   getUserByUserName: (userName: string) => Promise<Profile>
@@ -71,7 +71,7 @@ export const createUserSlice: StateCreator<StoreSlices, [], [], UserSlice> = (se
   //
   //
   //
-  updateStagedUser: (formFields: Partial<Profile>) => {
+  updateStagedUser: (formFields: Partial<Profile> & { password?: string; passwordConfirm?: string }) => {
     set((state) => ({
       stagedUser: { ...state.stagedUser, ...formFields },
     }))

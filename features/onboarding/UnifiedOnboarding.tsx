@@ -290,7 +290,7 @@ export function UnifiedOnboarding() {
          onNext={async () => {
            if (step === 'password') {
              // persist staged password early so confirm step can validate reliably
-             useAppStore.getState().updateStagedUser({ password: getValues('password') as any })
+             useAppStore.getState().updateStagedUser({ password: getValues('password') as string })
            }
             if (step === 'firstName') {
               useAppStore.getState().updateStagedUser({ firstName: getValues('firstName') as any })
@@ -315,10 +315,10 @@ export function UnifiedOnboarding() {
              if (!valid) return
              // ensure password stored for register flow
               useAppStore.getState().updateStagedUser({
-                password: getValues('password') as any,
+                password: getValues('password') as string,
                 // PocketBase requires passwordConfirm on user creation
-                passwordConfirm: getValues('confirmPassword') as any,
-              } as any)
+                passwordConfirm: getValues('confirmPassword') as string,
+              })
            }
             if (step === 'photo') {
               const img = getValues('image') as any
@@ -334,7 +334,7 @@ export function UnifiedOnboarding() {
               }
               if (!img) return
               // Classic flow: only stage the image here; other fields were already staged on prior steps
-              useAppStore.getState().updateStagedUser({ image: img } as any)
+              useAppStore.getState().updateStagedUser({ image: img as string })
               try {
                 // prevent Home redirect while onboarding completes
                 setSuppressHomeRedirect(true)

@@ -220,7 +220,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
 
   // Animate prompt text when grid has prompts
   useEffect(() => {
-    const promptsActive = gridItems.length < 12 && !searchMode && !isSearchResultsSheetOpen
+    const promptsActive = gridItems.length < 12 && !searchMode && !isSearchResultsSheetOpen && !loading
     const canShowPromptsNow = promptsActive && (startupAnimationDone || !(gridItems.length === 0))
     let tShow: ReturnType<typeof setTimeout> | null = null
     let tPause: ReturnType<typeof setTimeout> | null = null
@@ -256,7 +256,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
       setShowPrompt(false)
       setPromptTextIndex(0)
     }
-  }, [gridItems.length, searchMode, isSearchResultsSheetOpen, startupAnimationDone])
+  }, [gridItems.length, searchMode, isSearchResultsSheetOpen, startupAnimationDone, loading])
 
   return (
     <>
@@ -320,24 +320,29 @@ export const MyProfile = ({ userName }: { userName: string }) => {
                 >
                   pick some refs, find people in the middle
                 </Text>
-              ) : showPrompt ? (
-                  <Animated.Text
-                    entering={FadeIn.duration(600)}
-                    exiting={FadeOut.duration(600)}
-                    key={`prompt-text-${promptFadeKey}`}
-                    style={{
-                      color: '#B0B0B0',
-                      fontSize: s.$09,
-                      fontFamily: 'System',
-                      fontWeight: '400',
-                      textAlign: 'center',
-                      lineHeight: s.$1half,
-                      minWidth: 280, // Expanded width to fit text on one line
-                    }}
-                  >
-                    {promptTextIndex === 0 ? 'these prompts will disappear after you add' : '(no one will know you used them)'}
-                  </Animated.Text>
-              ) : null}
+              ) : (
+                <Animated.Text
+                  entering={FadeIn.duration(800)}
+                  exiting={FadeOut.duration(800)}
+                  key={`prompt-text-${promptTextIndex}-${promptFadeKey}`}
+                  style={{
+                    color: '#B0B0B0',
+                    fontSize: s.$09,
+                    fontFamily: 'System',
+                    fontWeight: '400',
+                    textAlign: 'center',
+                    lineHeight: s.$1half,
+                    minWidth: 280,
+                    minHeight: s.$1half, // reserve space during pause
+                  }}
+                >
+                  {showPrompt
+                    ? promptTextIndex === 0
+                      ? 'these prompts will disappear after you add'
+                      : '(no one will know you used them)'
+                    : ''}
+                </Animated.Text>
+              )}
             </Animated.View>
 
             <View

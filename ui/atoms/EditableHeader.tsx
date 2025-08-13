@@ -128,13 +128,17 @@ export const EditableHeader = ({
         {addingUrl && (
           <TextInput
             style={{
-              flexShrink: 1,
-              width: '100%',
-              backgroundColor: c.surface,
+              flexGrow: 1,
+              flexBasis: 0,
+              maxWidth: '100%',
+              minWidth: 0,
+              backgroundColor: c.white,
               paddingVertical: s.$08,
               paddingHorizontal: s.$1,
               borderRadius: s.$075,
-              color: c.muted,
+              color: c.black,
+              fontSize: 17,
+              fontWeight: '500',
             }}
             value={url}
             autoFocus={true}
@@ -142,8 +146,11 @@ export const EditableHeader = ({
             autoCapitalize="none"
             autoComplete="off"
             placeholder="Paste url"
+            placeholderTextColor={c.muted}
             onChangeText={setUrl}
             clearButtonMode="while-editing"
+            returnKeyType="done"
+            onSubmitEditing={() => setAddingUrl(false)}
           />
         )}
 

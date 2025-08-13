@@ -229,7 +229,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
   // timeout used to stop editing the profile after 10 seconds
   let timeout: ReturnType<typeof setTimeout>
 
-  // Animate prompt text when grid has prompts
+  // Animate prompt text with explicit schedule: L1 (3s) → pause (2s) → L2 (3s) → pause (2s) → repeat
   useEffect(() => {
     const promptsActive = gridItems.length < 12 && !searchMode && !isSearchResultsSheetOpen && !loading
     const canShowPromptsNow = promptsActive && (startupAnimationDone || !(gridItems.length === 0))

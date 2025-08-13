@@ -60,7 +60,7 @@ export const AddRefSheet = ({
       : step === 'chooseReplaceItemMethod'
       ? '50%'
       : step === 'editNewItem'
-      ? '90%'
+      ? '69%'
       : '30%'
 
   const disappearsOnIndex = -1

@@ -63,7 +63,9 @@ export const FormFieldWithIcon = ({
           <Ionicons size={s.$1} color={c.accent} name="person" />
         ) : type === 'phone' ? (
           <Ionicons size={s.$1} color={c.accent} name="call" />
-        ) : type === 'email' || type === 'userName' ? (
+        ) : type === 'email' ? (
+          <Ionicons size={s.$1} color={c.accent} name="mail" />
+        ) : type === 'userName' ? (
           <Ionicons size={s.$1} color={c.accent} name="at" />
         ) : null}
 
@@ -100,6 +102,7 @@ export const FormFieldWithIcon = ({
 }
 
 export const ErrorView = ({ error }: { error?: GlobalError }) => {
+  if (!error) return null
   return (
     <View
       style={{
@@ -108,7 +111,7 @@ export const ErrorView = ({ error }: { error?: GlobalError }) => {
         justifyContent: 'flex-start',
       }}
     >
-      <SizableText style={styles.errorText}>{error ? error.message : <>&nbsp;</>}</SizableText>
+      <SizableText style={styles.errorText}>{error.message}</SizableText>
     </View>
   )
 }

@@ -78,10 +78,8 @@ const StartupAnimationTile = ({
   const opacity = useSharedValue(0)
 
   useEffect(() => {
-    console.log('🎬 StartupAnimationTile effect:', { isInitialLoad, delay })
     // Only animate on initial load
     if (!isInitialLoad) {
-      console.log('🎬 Not initial load, setting to final position')
       translateY.value = 0
       scale.value = 1
       opacity.value = 1
@@ -183,6 +181,8 @@ export const Grid = ({
   selectedRefs = [],
   setSelectedRefs,
   hideShuffleButton = false,
+  screenFocused = false,
+  onStartupAnimationComplete,
 }: {
   onPressItem?: (item?: ExpandedItem) => void
   onLongPressItem?: () => void
@@ -197,13 +197,15 @@ export const Grid = ({
   selectedRefs?: string[]
   setSelectedRefs?: (refs: string[]) => void
   hideShuffleButton?: boolean
+  screenFocused?: boolean
+  onStartupAnimationComplete?: () => void
 }) => {
   const gridSize = columns * rows
 
   // State for shuffled prompts
   const [shuffledPrompts, setShuffledPrompts] = useState<string[]>([])
   const [isShuffling, setIsShuffling] = useState(false)
-  const [isInitialLoad, setIsInitialLoad] = useState(editingRights && items.length === 0)
+  const [isInitialLoad, setIsInitialLoad] = useState(false)
 
   // Animation values
   const buttonScale = useSharedValue(1)
@@ -216,17 +218,27 @@ export const Grid = ({
   // Only trigger initial load animation if this is the first time seeing the grid
   // Enable animation for new users (empty grid with prompts)
   useEffect(() => {
-    console.log('🎬 Grid animation check:', { itemsLength: items.length, isInitialLoad, gridSize, editingRights })
     // Only animate for own profile (editingRights) when grid is empty
-    if (editingRights && items.length === 0 && !isInitialLoad) {
-      console.log('🎬 Setting isInitialLoad to true for startup animation (own profile)')
+    if (editingRights && items.length === 0 && screenFocused && !isInitialLoad) {
       setIsInitialLoad(true)
     }
     // Ensure no animation on other profiles
     if (!editingRights && isInitialLoad) {
       setIsInitialLoad(false)
     }
-  }, [items.length, isInitialLoad, editingRights])
+  }, [items.length, isInitialLoad, editingRights, screenFocused])
+
+  // Fire a completion callback after the last tile animation is expected to finish
+  useEffect(() => {
+    if (!isInitialLoad) return
+    // Approximate the final tile's start time using delays for a full grid
+    const maxDelayMs = getTileAnimationDelay(gridSize - 1, gridSize)
+    const safetyMs = 400 // cover fade/bounce durations
+    const timer = setTimeout(() => {
+      if (onStartupAnimationComplete) onStartupAnimationComplete()
+    }, maxDelayMs + safetyMs)
+    return () => clearTimeout(timer)
+  }, [isInitialLoad, gridSize, onStartupAnimationComplete])
 
   // Shuffle prompts function with animation
   const handleShufflePrompts = useCallback(() => {

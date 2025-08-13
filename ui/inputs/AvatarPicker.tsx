@@ -1,11 +1,11 @@
 import { useState } from 'react'
-import { Pressable, Dimensions, View } from 'react-native'
+import { Pressable, Dimensions, View, Text } from 'react-native'
 import { YStack } from '@/ui/core/Stacks'
 import { Heading } from '@/ui/typo/Heading'
 import { Picker } from '../inputs/Picker'
 import { PinataImage } from '../images/PinataImage'
 import { Button } from '../buttons/Button'
-import { s } from '../../features/style'
+import { s, c } from '../../features/style'
 import type { ImagePickerAsset } from 'expo-image-picker'
 
 const win = Dimensions.get('window')
@@ -33,12 +33,14 @@ export const AddImage = ({
                 height: 200,
                 justifyContent: 'center',
                 alignItems: 'center',
-                borderColor: 'black',
-                borderWidth: s.$025,
+                borderColor: '#B0B0B0',
+                borderWidth: 2,
+                borderStyle: 'dashed',
                 borderRadius: 1000,
+                backgroundColor: c.surface,
               }}
             >
-              <Heading tag="h1light">+</Heading>
+              <Text style={{ color: '#B0B0B0', fontSize: 28, fontWeight: '600' }}>+</Text>
             </View>
           </Pressable>
         )}
@@ -67,7 +69,7 @@ export const AvatarPicker = ({
 
   return (
     <View style={{ justifyContent: 'center', width: '100%' }}>
-      <YStack gap={s.$1} style={{ justifyContent: 'center', alignItems: 'center' }}>
+      <YStack gap={s.$1} style={{ justifyContent: 'center', alignItems: 'center', transform: [{ translateY: -275 }] }}>
         {imageAsset ? (
           <YStack gap={s.$2} style={{ justifyContent: 'center', alignItems: 'center' }}>
             <PinataImage

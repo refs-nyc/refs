@@ -47,6 +47,12 @@ export function LoopingFadeCarousel({
     Animated.timing(opacity, { toValue: 1, duration: fadeMs, useNativeDriver: true }).start()
 
     let cancelled = false
+    // If we are on the frozen index, do not schedule the next advance
+    if (freezeIndex !== undefined && index === freezeIndex) {
+      return () => {
+        cancelled = true
+      }
+    }
     const tick = () => {
       if (cancelled) return
       Animated.timing(opacity, {
@@ -57,7 +63,6 @@ export function LoopingFadeCarousel({
       }).start(() => {
         const nextIndex = (index + 1) % slides.length
         const spec = slides[nextIndex] as SlideSpec | Slide
-        const nextDuration = ((spec as any)?.durationMs as number | undefined) ?? intervalMs
         setTimeout(() => {
           setIndex(nextIndex)
           Animated.timing(opacity, {
@@ -65,28 +70,18 @@ export function LoopingFadeCarousel({
             duration: fadeMs,
             easing: Easing.inOut(Easing.quad),
             useNativeDriver: true,
-          }).start(() => {
-            if (freezeIndex !== undefined && ((nextIndex) % slides.length) === freezeIndex) {
-              return
-            }
-            setTimeout(tick, nextDuration)
-          })
+          }).start()
         }, pauseMs)
       })
     }
     const currentSpec = slides[index] as SlideSpec | Slide
     const initialDuration = ((currentSpec as any)?.durationMs as number | undefined) ?? intervalMs
-    if (freezeIndex !== undefined && index === freezeIndex) {
-      return () => {
-        cancelled = true
-      }
-    }
     const timer = setTimeout(tick, initialDuration)
     return () => {
       cancelled = true
       clearTimeout(timer)
     }
-  }, [slides, index, intervalMs, fadeMs, opacity])
+  }, [slides, index, intervalMs, fadeMs, opacity, freezeIndex])
 
   return <View style={{ width: '100%' }}>{rendered}</View>
 }

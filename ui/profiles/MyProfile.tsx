@@ -29,6 +29,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
   const [gridItems, setGridItems] = useState<ExpandedItem[]>([])
   const [backlogItems, setBacklogItems] = useState<ExpandedItem[]>([])
   const [loading, setLoading] = useState<boolean>(true)
+  const [focusReady, setFocusReady] = useState(false)
 
 
   const {
@@ -60,10 +61,15 @@ export const MyProfile = ({ userName }: { userName: string }) => {
     showLogoutButton,
     hasShownInitialPromptHold,
     setHasShownInitialPromptHold,
+    justOnboarded,
+    setJustOnboarded,
   } = useAppStore()
 
   const [removingItem, setRemovingItem] = useState<ExpandedItem | null>(null)
   const [promptTextIndex, setPromptTextIndex] = useState(0)
+  const [promptFadeKey, setPromptFadeKey] = useState(0)
+  const [showPrompt, setShowPrompt] = useState(false)
+  const [startupAnimationDone, setStartupAnimationDone] = useState(false)
 
   // Refs
   const searchResultsSheetRef = useRef<BottomSheet>(null)
@@ -168,6 +174,8 @@ export const MyProfile = ({ userName }: { userName: string }) => {
     const init = async () => {
       try {
         await refreshGrid(userName)
+        // Delay so spinner/transition has fully cleared
+        setTimeout(() => setFocusReady(true), 2500)
       } catch (error) {
         console.error('Failed to refresh grid:', error)
       }
@@ -181,18 +189,9 @@ export const MyProfile = ({ userName }: { userName: string }) => {
 
   // Simplified back button restoration logic - just reset sheet state
   useEffect(() => {
-    console.log('🔍 MyProfile restoration effect triggered:', {
-      cachedSearchResultsLength: cachedSearchResults.length,
-      searchMode,
-      isSearchResultsSheetOpen,
-      userName
-    })
-    
     // If we have cached search results and we're on the profile page, reset sheet state
     if (cachedSearchResults.length > 0 && !searchMode) {
-      // Reset the sheet open state if it's incorrectly set to true
       if (isSearchResultsSheetOpen) {
-        console.log('🔍 Resetting incorrect sheet open state')
         setSearchResultsSheetOpen(false)
       }
       // The SearchResultsSheet will auto-open itself when it detects cached results
@@ -222,35 +221,42 @@ export const MyProfile = ({ userName }: { userName: string }) => {
   // Animate prompt text when grid has prompts
   useEffect(() => {
     const promptsActive = gridItems.length < 12 && !searchMode && !isSearchResultsSheetOpen
-    let interval: ReturnType<typeof setInterval> | null = null
-    let initialTimeout: ReturnType<typeof setTimeout> | null = null
+    const canShowPromptsNow = promptsActive && (startupAnimationDone || !(gridItems.length === 0))
+    let tShow: ReturnType<typeof setTimeout> | null = null
+    let tPause: ReturnType<typeof setTimeout> | null = null
 
-    if (promptsActive) {
-      // Always start on the first prompt when active
+    if (canShowPromptsNow) {
       setPromptTextIndex(0)
+      setShowPrompt(true)
+      setPromptFadeKey((k) => k + 1)
 
-      const initialHoldMs = hasShownInitialPromptHold ? 0 : 5000
-      if (initialHoldMs > 0) {
-        initialTimeout = setTimeout(() => {
-          setHasShownInitialPromptHold(true)
-          interval = setInterval(() => {
-            setPromptTextIndex((prev) => (prev + 1) % 2)
-          }, 4640)
-        }, initialHoldMs)
-      } else {
-        interval = setInterval(() => {
-          setPromptTextIndex((prev) => (prev + 1) % 2)
-        }, 4640)
+      const cycle = (idx: number) => {
+        // visible for 3s
+        tShow = setTimeout(() => {
+          // fade out and pause 2s
+          setShowPrompt(false)
+          setPromptFadeKey((k) => k + 1)
+          tPause = setTimeout(() => {
+            const next = idx === 0 ? 1 : 0
+            setPromptTextIndex(next)
+            setShowPrompt(true)
+            setPromptFadeKey((k) => k + 1)
+            cycle(next)
+          }, 2000)
+        }, 3000)
       }
+
+      cycle(0)
 
       return () => {
-        if (initialTimeout) clearTimeout(initialTimeout)
-        if (interval) clearInterval(interval)
+        if (tShow) clearTimeout(tShow)
+        if (tPause) clearTimeout(tPause)
       }
     } else {
-      setPromptTextIndex(0) // Reset when not showing prompts
+      setShowPrompt(false)
+      setPromptTextIndex(0)
     }
-  }, [gridItems.length, searchMode, isSearchResultsSheetOpen, hasShownInitialPromptHold, setHasShownInitialPromptHold])
+  }, [gridItems.length, searchMode, isSearchResultsSheetOpen, startupAnimationDone])
 
   return (
     <>
@@ -314,27 +320,24 @@ export const MyProfile = ({ userName }: { userName: string }) => {
                 >
                   pick some refs, find people in the middle
                 </Text>
-              ) : (
-                <Animated.Text
-                  entering={FadeIn.duration(800).delay(1800)} // Fade in after 1800ms pause
-                  exiting={FadeOut.duration(800)}
-                  key={`prompt-text-${promptTextIndex}`}
-                  style={{
-                    color: '#B0B0B0',
-                    fontSize: s.$09,
-                    fontFamily: 'System',
-                    fontWeight: '400',
-                    textAlign: 'center',
-                    lineHeight: s.$1half,
-                    minWidth: 280, // Expanded width to fit text on one line
-                  }}
-                >
-                  {promptTextIndex === 0 
-                    ? 'These prompts will disappear after you add...'
-                    : 'no one will ever know'
-                  }
-                </Animated.Text>
-              )}
+              ) : showPrompt ? (
+                  <Animated.Text
+                    entering={FadeIn.duration(600)}
+                    exiting={FadeOut.duration(600)}
+                    key={`prompt-text-${promptFadeKey}`}
+                    style={{
+                      color: '#B0B0B0',
+                      fontSize: s.$09,
+                      fontFamily: 'System',
+                      fontWeight: '400',
+                      textAlign: 'center',
+                      lineHeight: s.$1half,
+                      minWidth: 280, // Expanded width to fit text on one line
+                    }}
+                  >
+                    {promptTextIndex === 0 ? 'these prompts will disappear after you add' : '(no one will know you used them)'}
+                  </Animated.Text>
+              ) : null}
             </Animated.View>
 
             <View
@@ -348,11 +351,13 @@ export const MyProfile = ({ userName }: { userName: string }) => {
                 zIndex: 5, // Above the overlay
               }}
             >
-              {loading ? (
-                <PlaceholderGrid columns={3} rows={4} />
+              {loading || !focusReady ? (
+                <View style={{ height: 500 }} />
               ) : (
                 <Grid
                   editingRights={true}
+                  screenFocused={focusReady && !loading}
+                  onStartupAnimationComplete={() => setStartupAnimationDone(true)}
                   onPressItem={(item) => {
                     // Normal mode - open details
                     setDetailsItem(item!)
@@ -578,7 +583,6 @@ export const MyProfile = ({ userName }: { userName: string }) => {
               }}
               onRestoreSearch={async (historyItem) => {
                 try {
-                  console.log('🔄 Restoring search from history with refs:', historyItem.ref_ids)
                   
                   // Create ref items from history data with images
                   const restoredItems = historyItem.ref_ids.map((refId: string, index: number) => ({
@@ -607,7 +611,6 @@ export const MyProfile = ({ userName }: { userName: string }) => {
                   setTimeout(() => {
                     if (searchResultsSheetTriggerRef.current) {
                       searchResultsSheetTriggerRef.current.restoreSearchFromHistory(historyItem)
-                    } else {
                     }
                   }, 100)
                 } catch (error) {

@@ -14,12 +14,14 @@ const EmailStep = ({ carouselRef }: { carouselRef: React.RefObject<ICarouselInst
   const {
     control,
     handleSubmit,
-    formState: { errors, isValid },
+    setError,
+    watch,
+    formState: { errors },
   } = useForm({
     defaultValues: {
       email: '',
     },
-    mode: 'onChange',
+    mode: 'onSubmit',
   })
 
   const { updateStagedUser } = useAppStore()
@@ -28,28 +30,21 @@ const EmailStep = ({ carouselRef }: { carouselRef: React.RefObject<ICarouselInst
     <ProfileStep
       buttonTitle="Next"
       showFullHeightStack={false}
-      onSubmit={handleSubmit(
-        async (values) => {
-          updateStagedUser(values)
-          // Valid?
-          carouselRef.current?.next()
-        },
-        (errors) => {}
-      )}
-      disabled={!isValid}
+      onSubmit={handleSubmit(async (values) => {
+        const email = (values.email || '').trim()
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+        if (!emailRegex.test(email)) {
+          setError('email', { type: 'manual', message: 'Please use a valid email address' })
+          return
+        }
+        updateStagedUser({ email })
+        carouselRef.current?.next()
+      })}
+      disabled={!((watch('email') || '').trim())}
     >
       <Controller
         name="email"
         control={control}
-        rules={{
-          required: 'Email address is required',
-          pattern: {
-            value:
-              /(?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*|"(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\[(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?|[a-z0-9-]*[a-z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\])/,
-            // TODO: better validation message
-            message: 'Email address is invalid',
-          },
-        }}
         render={({ field: { onChange, onBlur, value } }) => (
           <FormFieldWithIcon
             onChange={onChange}

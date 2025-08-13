@@ -135,8 +135,21 @@ export const createUserSlice: StateCreator<StoreSlices, [], [], UserSlice> = (se
   // Requirement: staged user
   //
   register: async () => {
-    // const app = await appPromise
-    const finalUser = { ...get().stagedUser, emailVisibility: true }
+    // Build a clean create payload; avoid leaking system fields like id/created/updated
+    const staged = get().stagedUser as any
+    const finalUser: any = {
+      email: staged?.email,
+      emailVisibility: true,
+      password: staged?.password,
+      passwordConfirm: staged?.passwordConfirm,
+      firstName: staged?.firstName,
+      lastName: staged?.lastName,
+      image: staged?.image,
+      location: staged?.location,
+      lat: staged?.lat,
+      lon: staged?.lon,
+      userName: staged?.userName,
+    }
 
     if (!finalUser) throw Error('No user data')
     if (!finalUser.email) throw Error('User must have email')
@@ -144,10 +157,10 @@ export const createUserSlice: StateCreator<StoreSlices, [], [], UserSlice> = (se
     const userPassword = get().stagedUser.password
     if (!userPassword) throw Error('User must have password')
 
-    // Generate a username
+    // Generate a username (match legacy behavior: lowercase firstName + 4-char suffix)
     if (!finalUser.userName) {
-      const firstNamePart = finalUser.firstName ? finalUser.firstName.toLowerCase() : 'user'
-      const shortUuid = Math.random().toString(36).substring(2, 6)
+      const firstNamePart = finalUser.firstName ? (finalUser.firstName as string).toLowerCase() : 'user'
+      const shortUuid = Math.random().toString(36).substring(2, 6) // 4 chars
       finalUser.userName = `${firstNamePart}-${shortUuid}`
     }
 

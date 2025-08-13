@@ -1,4 +1,4 @@
-import { View, Dimensions, DimensionValue } from 'react-native'
+import { View, Dimensions, DimensionValue, Text } from 'react-native'
 import { useEffect } from 'react'
 import { Button, YStack, Heading } from '../../ui/index'
 import { useAppStore } from '@/features/stores'
@@ -91,7 +91,8 @@ export function HomeScreen() {
       >
         <YStack gap={s.$3}>
           <Heading tag="h1normal" style={{ textAlign: 'center', color: c.black }}>
-            <Heading tag="strong">Refs</Heading> is the phonebook for the internet.
+            <Heading tag="strong">Refs</Heading>
+            <Text style={{ fontFamily: 'Inter', fontWeight: '400' }}>{' is the phonebook for the internet.'}</Text>
           </Heading>
           <YStack style={{ alignItems: 'center' }} gap={s.$05}>
             <Button title="Join" onPress={() => router.push('/onboarding')} />

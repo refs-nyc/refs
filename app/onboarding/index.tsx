@@ -1,6 +1,6 @@
-import { OnboardingScreen } from '@/features/onboarding/onboarding-screen'
+import { UnifiedOnboarding } from '@/features/onboarding/UnifiedOnboarding'
 import { Stack } from 'expo-router'
 
 export default function Screen() {
-  return <OnboardingScreen />
+  return <UnifiedOnboarding />
 }

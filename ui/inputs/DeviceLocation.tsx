@@ -78,6 +78,36 @@ export const DeviceLocation = ({
 
   return (
     <YStack gap={s.$1}>
+      {/* Controls first (above picker) so picker sits neatly above Next button */}
+      <View style={{ alignItems: 'center', justifyContent: 'center' }}>
+        {loadingMessage === '' ? (
+          <XStack gap={s.$025} style={{ alignItems: 'center', justifyContent: 'center', marginBottom: s.$05 }}>
+            <Button
+              onPress={getCurrentLocation}
+              variant="inlineSmallMuted"
+              title="Let us determine your location"
+            />
+          </XStack>
+        ) : (
+          <Heading style={{ textAlign: 'center', marginBottom: s.$05 }} tag="pmuted">
+            {loadingMessage}
+          </Heading>
+        )}
+
+        {loadingMessage && (
+          <XStack gap={s.$025} style={{ alignItems: 'center', justifyContent: 'center', marginBottom: s.$05 }}>
+            <Button
+              onPress={() => {
+                setLoadingMessage('')
+                setDropdownValue(null)
+              }}
+              variant="inlineSmallMuted"
+              title="Reset"
+            />
+          </XStack>
+        )}
+      </View>
+
       <DropDownPicker
         open={open}
         value={dropdownValue}
@@ -90,6 +120,8 @@ export const DeviceLocation = ({
         onSelectItem={async (item) => {
           const name = item.label!
           setLoadingMessage(name)
+          // Immediately notify selection so outer form can enable Next
+          onChange({ lon: 0, lat: 0, location: name })
 
           const l = await getCoordinatesFromNeighborhood(name)
 
@@ -146,33 +178,6 @@ export const DeviceLocation = ({
         flatListProps={{ keyboardShouldPersistTaps: 'always' }}
       />
 
-      <View style={{ height: s.$4, alignItems: 'center', justifyContent: 'center' }}>
-        {loadingMessage === '' ? (
-          <XStack gap={s.$025} style={{ alignItems: 'center', justifyContent: 'center' }}>
-            <Button
-              onPress={getCurrentLocation}
-              variant="inlineSmallMuted"
-              title="Let us determine your location"
-            />
-          </XStack>
-        ) : (
-          <Heading style={{ textAlign: 'center' }} tag="pmuted">
-            {loadingMessage}
-          </Heading>
-        )}
-      </View>
-      {loadingMessage && (
-        <XStack gap={s.$025} style={{ alignItems: 'center', justifyContent: 'center' }}>
-          <Button
-            onPress={() => {
-              setLoadingMessage('')
-              setDropdownValue(null)
-            }}
-            variant="inlineSmallMuted"
-            title="Reset"
-          />
-        </XStack>
-      )}
     </YStack>
   )
 }

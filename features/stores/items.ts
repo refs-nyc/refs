@@ -178,9 +178,10 @@ export const createItemSlice: StateCreator<StoreSlices, [], [], ItemSlice> = (se
       throw new Error('User not found')
     }
 
+    const normalizeTitle = (t?: string) => (t || '').replace(/\s+/g, ' ').trim()
     const createRefArgs = {
       creator: userId,
-      title: refFields.title || '',
+      title: normalizeTitle(refFields.title),
       url: refFields.url || '',
       meta: refFields.meta || '{}',
       image: refFields.image || '',
@@ -346,7 +347,8 @@ export const createItemSlice: StateCreator<StoreSlices, [], [], ItemSlice> = (se
       throw new Error('User not found')
     }
     try {
-      const record = await pocketbase.collection('refs').update(id, { title })
+      const normalizeTitle = (t?: string) => (t || '').replace(/\s+/g, ' ').trim()
+      const record = await pocketbase.collection('refs').update(id, { title: normalizeTitle(title) })
       return record
     } catch (error) {
       console.error(error)
@@ -384,9 +386,16 @@ export const createItemSlice: StateCreator<StoreSlices, [], [], ItemSlice> = (se
     return await pocketbase.collection<CompleteRef>('refs').getOne(id)
   },
   getRefsByTitle: async (title: string) => {
-    return await pocketbase
+    const normalizeTitle = (t?: string) => (t || '').replace(/\s+/g, ' ').trim().toLowerCase()
+    const raw = await pocketbase
       .collection<CompleteRef>('refs')
-      .getFullList({ filter: `title ~ "${title}"` })
+      .getFullList({ filter: `title ~ "${(title || '').trim()}"`, sort: '-updated,-created' })
+    const seen: Record<string, CompleteRef> = {}
+    for (const r of raw) {
+      const key = normalizeTitle((r as any).title)
+      if (!seen[key]) seen[key] = r
+    }
+    return Object.values(seen)
   },
   getItemById: async (id: string) => {
     return await pocketbase.collection('items').getOne<ExpandedItem>(id, {

@@ -1,7 +1,9 @@
 import { useRef, forwardRef, Ref } from 'react'
 import { SharedValue, useSharedValue } from 'react-native-reanimated'
-import { View, Dimensions, StyleProp, ViewStyle } from 'react-native'
+import { View, Dimensions, StyleProp, ViewStyle, Text } from 'react-native'
 import Carousel, { CarouselRenderItem, ICarouselInstance } from 'react-native-reanimated-carousel'
+import { Image } from 'expo-image'
+import { s, c } from '@/features/style'
 
 export const DetailsDemoCarousel = forwardRef(
   (
@@ -26,6 +28,7 @@ export const DetailsDemoCarousel = forwardRef(
     },
     ref
   ) => {
+    const cardWidth = Math.round(((width as number) - 20) / 2)
     return (
       <Carousel
         onConfigurePanGesture={(gesture) => {
@@ -35,15 +38,38 @@ export const DetailsDemoCarousel = forwardRef(
         loop={data.length > 1}
         ref={ref as Ref<ICarouselInstance>}
         data={data}
-        width={width * 0.8}
-        height={height} // hack
+        width={cardWidth}
+        height={height}
         defaultIndex={defaultIndex}
         style={style}
         defaultScrollOffsetValue={scrollOffsetValue}
         onSnapToItem={onSnapToItem}
-        renderItem={() => <></>}
-        autoPlay={true}
-        autoPlayInterval={2000}
+        // revert to default swipe behavior; smooth continuous scroll handled by autoPlayInterval
+        renderItem={({ item, index }: any) => {
+          const CARD_W = cardWidth
+          const IMG = CARD_W - 50
+          return (
+            <View style={{ paddingVertical: 2, paddingHorizontal: 6, width: CARD_W }}>
+              {item?.expand?.ref?.image ? (
+                <Image
+                  style={{ width: IMG, height: IMG, borderRadius: 12, marginBottom: 6 }}
+                  source={item.expand.ref.image}
+                  contentFit="cover"
+                />
+              ) : (
+                <View style={{ width: IMG, height: IMG, borderRadius: 12, backgroundColor: '#ddd', marginBottom: 6 }} />
+              )}
+              <Text style={{ width: CARD_W, color: '#4A5A52', fontWeight: '700', fontSize: 16 }} numberOfLines={2}>
+                {item?.expand?.ref?.title || ''}
+              </Text>
+              <Text style={{ width: CARD_W - 16, color: '#9BA6A0', fontSize: 14, lineHeight: 18 }} numberOfLines={3}>
+                {index === 1 ? 'early-bird signups at the Fort Greene courts' : item?.text || ''}
+              </Text>
+            </View>
+          )
+        }}
+         autoPlay={true}
+         autoPlayInterval={1650}
       />
     )
   }
@@ -51,8 +77,9 @@ export const DetailsDemoCarousel = forwardRef(
 
 const win = Dimensions.get('window')
 
-export const DetailsDemo = () => {
+export const DetailsDemo = ({ onCycleComplete, scale = 1 }: { onCycleComplete?: () => void; scale?: number }) => {
   const ref = useRef(null)
+  const snapCountRef = useRef(0)
   const scrollOffsetValue = useSharedValue(0)
   const items = [
     {
@@ -91,7 +118,7 @@ export const DetailsDemo = () => {
     <View
       pointerEvents="none"
       style={{
-        height: win.width + 50,
+        height: (win.width + 50) * scale,
         overflow: 'hidden',
         left: 0,
       }}
@@ -102,13 +129,22 @@ export const DetailsDemo = () => {
           return <></>
           // renderItem({ item, editingRights: false })
         }}
-        height={800}
+        height={800 * scale}
         width={win.width}
         style={{ overflow: 'visible' }}
         ref={ref}
         defaultIndex={1}
         scrollOffsetValue={scrollOffsetValue}
-        onSnapToItem={() => {}}
+        onSnapToItem={(i) => {
+          // Consider a cycle when we wrap back to defaultIndex (1 -> 2 -> 0 -> 1 wrap)
+          // We detect wrap by previous index being the last item and current being 0
+          const total = items.length
+          const prev = (snapCountRef.current % total)
+          snapCountRef.current = prev + 1
+          if (onCycleComplete && i === 0 && prev === total - 1) {
+            onCycleComplete()
+          }
+        }}
       />
     </View>
   )

@@ -29,6 +29,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
   const [gridItems, setGridItems] = useState<ExpandedItem[]>([])
   const [backlogItems, setBacklogItems] = useState<ExpandedItem[]>([])
   const [loading, setLoading] = useState<boolean>(true)
+  const [focusReady, setFocusReady] = useState(false)
 
 
   const {
@@ -60,10 +61,15 @@ export const MyProfile = ({ userName }: { userName: string }) => {
     showLogoutButton,
     hasShownInitialPromptHold,
     setHasShownInitialPromptHold,
+    justOnboarded,
+    setJustOnboarded,
   } = useAppStore()
 
   const [removingItem, setRemovingItem] = useState<ExpandedItem | null>(null)
   const [promptTextIndex, setPromptTextIndex] = useState(0)
+  const [promptFadeKey, setPromptFadeKey] = useState(0)
+  const [showPrompt, setShowPrompt] = useState(false)
+  const [startupAnimationDone, setStartupAnimationDone] = useState(false)
 
   // Refs
   const searchResultsSheetRef = useRef<BottomSheet>(null)
@@ -168,6 +174,17 @@ export const MyProfile = ({ userName }: { userName: string }) => {
     const init = async () => {
       try {
         await refreshGrid(userName)
+        // If returning from a search context, render grid immediately behind the sheet
+        const returningFromSearch = cachedSearchResults.length > 0 || isSearchResultsSheetOpen || searchMode
+        if (returningFromSearch) {
+          setFocusReady(true)
+        } else if (justOnboarded) {
+          // Only delay for the first post-registration landing where startup animation will play
+          setTimeout(() => setFocusReady(true), 2500)
+        } else {
+          // Normal login and subsequent visits: no delay
+          setFocusReady(true)
+        }
       } catch (error) {
         console.error('Failed to refresh grid:', error)
       }
@@ -181,20 +198,13 @@ export const MyProfile = ({ userName }: { userName: string }) => {
 
   // Simplified back button restoration logic - just reset sheet state
   useEffect(() => {
-    console.log('🔍 MyProfile restoration effect triggered:', {
-      cachedSearchResultsLength: cachedSearchResults.length,
-      searchMode,
-      isSearchResultsSheetOpen,
-      userName
-    })
-    
     // If we have cached search results and we're on the profile page, reset sheet state
     if (cachedSearchResults.length > 0 && !searchMode) {
-      // Reset the sheet open state if it's incorrectly set to true
       if (isSearchResultsSheetOpen) {
-        console.log('🔍 Resetting incorrect sheet open state')
         setSearchResultsSheetOpen(false)
       }
+      // Ensure grid renders immediately behind sheet when restoring
+      setFocusReady(true)
       // The SearchResultsSheet will auto-open itself when it detects cached results
     }
   }, [cachedSearchResults.length, searchMode, isSearchResultsSheetOpen, userName, setSearchResultsSheetOpen])
@@ -219,42 +229,45 @@ export const MyProfile = ({ userName }: { userName: string }) => {
   // timeout used to stop editing the profile after 10 seconds
   let timeout: ReturnType<typeof setTimeout>
 
-  // Animate prompt text with explicit schedule: L1 (4s) → pause (2s) → L2 (4s) → pause (2s) → repeat
+  // Animate prompt text with explicit schedule: L1 (3s) → pause (2s) → L2 (3s) → pause (2s) → repeat
   useEffect(() => {
     const promptsActive = gridItems.length < 12 && !searchMode && !isSearchResultsSheetOpen && !loading
-    let t1: ReturnType<typeof setTimeout> | null = null
-    let t2: ReturnType<typeof setTimeout> | null = null
-    let t3: ReturnType<typeof setTimeout> | null = null
-    let t4: ReturnType<typeof setTimeout> | null = null
+    const canShowPromptsNow = promptsActive && (startupAnimationDone || !(gridItems.length === 0))
+    let tShow: ReturnType<typeof setTimeout> | null = null
+    let tPause: ReturnType<typeof setTimeout> | null = null
 
-    const runCycle = () => {
-      // Show line 0
+    if (canShowPromptsNow) {
       setPromptTextIndex(0)
-      // After 4s, pause
-      t1 = setTimeout(() => setPromptTextIndex(-1 as any), 4000)
-      // After pause 2s, show line 1 for 4s
-      t2 = setTimeout(() => setPromptTextIndex(1), 4000 + 2000)
-      // After line 1 duration, pause again
-      t3 = setTimeout(() => setPromptTextIndex(-1 as any), 4000 + 2000 + 4000)
-      // After second pause, loop back to start
-      t4 = setTimeout(runCycle, 4000 + 2000 + 4000 + 2000)
-    }
+      setShowPrompt(true)
+      setPromptFadeKey((k) => k + 1)
 
-    if (promptsActive) {
-      // Small grace window so the first line gets its full 4s after any loading spinner disappears
-      const startDelay = 200
-      const startTimer = setTimeout(runCycle, startDelay)
+      const cycle = (idx: number) => {
+        // visible for 3s
+        tShow = setTimeout(() => {
+          // fade out and pause 2s
+          setShowPrompt(false)
+          setPromptFadeKey((k) => k + 1)
+          tPause = setTimeout(() => {
+            const next = idx === 0 ? 1 : 0
+            setPromptTextIndex(next)
+            setShowPrompt(true)
+            setPromptFadeKey((k) => k + 1)
+            cycle(next)
+          }, 2000)
+        }, 3000)
+      }
+
+      cycle(0)
+
       return () => {
-        clearTimeout(startTimer)
-        if (t1) clearTimeout(t1)
-        if (t2) clearTimeout(t2)
-        if (t3) clearTimeout(t3)
-        if (t4) clearTimeout(t4)
+        if (tShow) clearTimeout(tShow)
+        if (tPause) clearTimeout(tPause)
       }
     } else {
+      setShowPrompt(false)
       setPromptTextIndex(0)
     }
-  }, [gridItems.length, searchMode, isSearchResultsSheetOpen, loading])
+  }, [gridItems.length, searchMode, isSearchResultsSheetOpen, startupAnimationDone, loading])
 
   return (
     <>
@@ -322,7 +335,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
                 <Animated.Text
                   entering={FadeIn.duration(800)}
                   exiting={FadeOut.duration(800)}
-                  key={`prompt-text-${promptTextIndex}`}
+                  key={`prompt-text-${promptTextIndex}-${promptFadeKey}`}
                   style={{
                     color: '#B0B0B0',
                     fontSize: s.$09,
@@ -334,10 +347,10 @@ export const MyProfile = ({ userName }: { userName: string }) => {
                     minHeight: s.$1half, // reserve space during pause
                   }}
                 >
-                  {promptTextIndex === 0
-                    ? 'These prompts will disappear after you add'
-                    : promptTextIndex === 1
-                    ? '(no one will know you used them)'
+                  {showPrompt
+                    ? promptTextIndex === 0
+                      ? 'these prompts will disappear after you add'
+                      : '(no one will know you used them)'
                     : ''}
                 </Animated.Text>
               )}
@@ -354,11 +367,13 @@ export const MyProfile = ({ userName }: { userName: string }) => {
                 zIndex: 5, // Above the overlay
               }}
             >
-              {loading ? (
-                <PlaceholderGrid columns={3} rows={4} />
+              {loading || !focusReady ? (
+                <View style={{ height: 500 }} />
               ) : (
                 <Grid
                   editingRights={true}
+                  screenFocused={focusReady && !loading}
+                  onStartupAnimationComplete={() => setStartupAnimationDone(true)}
                   onPressItem={(item) => {
                     // Normal mode - open details
                     setDetailsItem(item!)
@@ -584,7 +599,6 @@ export const MyProfile = ({ userName }: { userName: string }) => {
               }}
               onRestoreSearch={async (historyItem) => {
                 try {
-                  console.log('🔄 Restoring search from history with refs:', historyItem.ref_ids)
                   
                   // Create ref items from history data with images
                   const restoredItems = historyItem.ref_ids.map((refId: string, index: number) => ({
@@ -613,7 +627,6 @@ export const MyProfile = ({ userName }: { userName: string }) => {
                   setTimeout(() => {
                     if (searchResultsSheetTriggerRef.current) {
                       searchResultsSheetTriggerRef.current.restoreSearchFromHistory(historyItem)
-                    } else {
                     }
                   }, 100)
                 } catch (error) {

@@ -51,6 +51,11 @@ export type UISlice = {
   // Prompt timing control (session-level)
   hasShownInitialPromptHold: boolean
   setHasShownInitialPromptHold: (shown: boolean) => void
+  // Onboarding + navigation coordination
+  suppressHomeRedirect: boolean
+  setSuppressHomeRedirect: (v: boolean) => void
+  justOnboarded: boolean
+  setJustOnboarded: (v: boolean) => void
 }
 
 export const createUISlice: StateCreator<StoreSlices, [], [], UISlice> = (set) => ({
@@ -177,4 +182,9 @@ export const createUISlice: StateCreator<StoreSlices, [], [], UISlice> = (set) =
   setHasShownInitialPromptHold: (shown: boolean) => {
     set(() => ({ hasShownInitialPromptHold: shown }))
   },
+  // Onboarding + navigation coordination
+  suppressHomeRedirect: false,
+  setSuppressHomeRedirect: (v: boolean) => set(() => ({ suppressHomeRedirect: v })),
+  justOnboarded: false,
+  setJustOnboarded: (v: boolean) => set(() => ({ justOnboarded: v })),
 })

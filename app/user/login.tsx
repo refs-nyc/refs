@@ -58,6 +58,7 @@ const LoginStep = () => {
         } catch (e) {
           console.error('error while performing Magic SMS verification:', e)
           setShowMagicSheet(false)
+          setLoginInProgress(false)
         }
       })}
       disabled={!isValid || !canvasApp || loginInProgress}

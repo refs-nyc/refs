@@ -260,13 +260,24 @@ export function UnifiedOnboarding() {
                   trackColor={{ false: c.surface, true: c.accent2 }}
                   thumbColor={c.white}
                   ios_backgroundColor={c.surface}
-                  onValueChange={async () => {
-                    const token = await registerForPushNotificationsAsync()
-                    if (token && user) {
-                      try { await updateUser({ pushToken: token }) } catch {}
+                  onValueChange={async (val) => {
+                    // Optimistically toggle UI
+                    setPushAccepted(val)
+                    if (val) {
+                      const token = await registerForPushNotificationsAsync()
+                      if (token && user) {
+                        try {
+                          await updateUser({ pushToken: token })
+                        } catch {}
+                      }
+                    } else {
+                      // Optional: clear token server-side if user turns it off here
+                      try {
+                        if (user) await updateUser({ pushToken: '' as any })
+                      } catch {}
                     }
                   }}
-                  value={false}
+                  value={pushAccepted}
                 />
                 <Text style={{ fontFamily: 'System', fontWeight: '400', fontSize: 14, color: '#B0B0B0', opacity: 0.5, marginTop: s.$1 }}>(you can turn these off anytime)</Text>
               </View>
@@ -339,6 +350,8 @@ export function UnifiedOnboarding() {
                 // prevent Home redirect while onboarding completes
                 setSuppressHomeRedirect(true)
                 await register()
+                // Mark for startup animation gating on first entry to grid
+                setJustOnboarded(true)
               } catch (e: any) {
                 const storeState = useAppStore.getState()
                 const staged = storeState.stagedUser as any

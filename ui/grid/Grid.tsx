@@ -183,6 +183,7 @@ export const Grid = ({
   hideShuffleButton = false,
   screenFocused = false,
   onStartupAnimationComplete,
+  shouldAnimateStartup = false,
 }: {
   onPressItem?: (item?: ExpandedItem) => void
   onLongPressItem?: () => void
@@ -199,6 +200,7 @@ export const Grid = ({
   hideShuffleButton?: boolean
   screenFocused?: boolean
   onStartupAnimationComplete?: () => void
+  shouldAnimateStartup?: boolean
 }) => {
   const gridSize = columns * rows
 
@@ -215,18 +217,16 @@ export const Grid = ({
     setShuffledPrompts(shuffleArray(PROMPTS))
   }, [])
 
-  // Only trigger initial load animation if this is the first time seeing the grid
-  // Enable animation for new users (empty grid with prompts)
+  // Only trigger initial load animation when explicitly requested by parent
   useEffect(() => {
-    // Only animate for own profile (editingRights) when grid is empty
-    if (editingRights && items.length === 0 && screenFocused && !isInitialLoad) {
+    if (shouldAnimateStartup && editingRights && items.length === 0 && screenFocused && !isInitialLoad) {
       setIsInitialLoad(true)
     }
     // Ensure no animation on other profiles
     if (!editingRights && isInitialLoad) {
       setIsInitialLoad(false)
     }
-  }, [items.length, isInitialLoad, editingRights, screenFocused])
+  }, [items.length, isInitialLoad, editingRights, screenFocused, shouldAnimateStartup])
 
   // Fire a completion callback after the last tile animation is expected to finish
   useEffect(() => {

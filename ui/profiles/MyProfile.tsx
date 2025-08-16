@@ -181,6 +181,8 @@ export const MyProfile = ({ userName }: { userName: string }) => {
         } else if (justOnboarded) {
           // Only delay for the first post-registration landing where startup animation will play
           setTimeout(() => setFocusReady(true), 2500)
+          // Reset flag so subsequent visits don't delay
+          setJustOnboarded(false)
         } else {
           // Normal login and subsequent visits: no delay
           setFocusReady(true)
@@ -316,7 +318,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
                     lineHeight: s.$1half,
                   }}
                 >
-                  searching at the intersection of...
+                  pick some refs, see who's at the intersection
                 </Text>
               ) : gridItems.length >= 12 ? (
                 <Text
@@ -373,6 +375,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
                 <Grid
                   editingRights={true}
                   screenFocused={focusReady && !loading}
+                  shouldAnimateStartup={justOnboarded}
                   onStartupAnimationComplete={() => setStartupAnimationDone(true)}
                   onPressItem={(item) => {
                     // Normal mode - open details

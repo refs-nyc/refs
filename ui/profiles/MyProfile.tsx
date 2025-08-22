@@ -310,7 +310,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
               {searchMode || isSearchResultsSheetOpen ? (
                 <Text
                   style={{
-                    color: c.muted,
+                    color: c.prompt,
                     fontSize: s.$09,
                     fontFamily: 'System',
                     fontWeight: '400',
@@ -318,12 +318,12 @@ export const MyProfile = ({ userName }: { userName: string }) => {
                     lineHeight: s.$1half,
                   }}
                 >
-                  pick some refs, see who's at the intersection
+                  What did you get into today?
                 </Text>
               ) : gridItems.length >= 12 ? (
                 <Text
                   style={{
-                    color: c.muted,
+                    color: c.prompt,
                     fontSize: s.$09,
                     fontFamily: 'System',
                     fontWeight: '400',
@@ -331,7 +331,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
                     lineHeight: s.$1half,
                   }}
                 >
-                  pick some refs, find people in the middle
+                  What did you get into today?
                 </Text>
               ) : (
                 <Animated.Text
@@ -339,7 +339,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
                   exiting={FadeOut.duration(800)}
                   key={`prompt-text-${promptTextIndex}-${promptFadeKey}`}
                   style={{
-                    color: '#B0B0B0',
+                    color: c.prompt,
                     fontSize: s.$09,
                     fontFamily: 'System',
                     fontWeight: '400',
@@ -415,13 +415,12 @@ export const MyProfile = ({ userName }: { userName: string }) => {
 
             {/* Floating Search Button (toggle search mode) - positioned absolutely */}
             <FloatingJaggedButton
+              icon="plus"
               onPress={() => {
-                // Don't clear selectedRefs if we're returning from search
-                if (!searchMode) { // Changed from returningFromSearch to searchMode
-                  setSelectedRefs([]) // Clear selected refs when entering search mode
-                }
-                clearCachedSearchResults() // Clear cached search results
-                setSearchMode(true)
+                // Open AddRef flow like a prompt tile
+                setAddingNewRefTo('grid')
+                try { useAppStore.getState().setAddRefPrompt('') } catch {}
+                newRefSheetRef.current?.snapToIndex(1)
               }}
               style={{
                 position: 'absolute',

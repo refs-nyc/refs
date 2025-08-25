@@ -19,6 +19,13 @@ export function UserProfileScreen({ userName }: { userName: string }) {
     scrollRef.current?.scrollTo({ x: homePagerIndex * width, y: 0, animated: false })
   }, [homePagerIndex, width])
 
+  // Always default to My Profile (index 0) when opening own profile
+  useEffect(() => {
+    if (user?.userName === userName && homePagerIndex !== 0) {
+      setHomePagerIndex(0)
+    }
+  }, [user?.userName, userName])
+
   // If we navigated back from a directory-tapped profile, force pager to Directories
   useEffect(() => {
     if (returnToDirectories) {
@@ -32,7 +39,7 @@ export function UserProfileScreen({ userName }: { userName: string }) {
       <View
         style={{
           position: 'absolute',
-          bottom: 16,
+          bottom: 24,
           left: 0,
           right: 0,
           alignItems: 'center',
@@ -62,8 +69,9 @@ export function UserProfileScreen({ userName }: { userName: string }) {
   }
 
   return (
-    <View style={{ flex: 1 }}>
+    <View style={{ flex: 1, backgroundColor: c.surface }}>
       <ScrollView
+        style={{ backgroundColor: c.surface }}
         ref={scrollRef}
         horizontal
         pagingEnabled
@@ -74,10 +82,10 @@ export function UserProfileScreen({ userName }: { userName: string }) {
           if (next !== homePagerIndex) setHomePagerIndex(next)
         }}
       >
-        <View style={{ width }}>
+        <View style={{ width, backgroundColor: c.surface }}>
           <Profile userName={userName} />
         </View>
-        <View style={{ width }}>
+        <View style={{ width, backgroundColor: c.surface }}>
           <CommunitiesFeedScreen />
         </View>
       </ScrollView>

@@ -235,10 +235,10 @@ export const DetailsCarouselItem = ({ item, index }: { item: ExpandedItem; index
     <View
       style={{
         width: win.width,
-        height: win.height * 0.8,
+        height: win.height * 0.9,
         gap: s.$1,
         justifyContent: 'flex-start',
-        overflow: 'hidden',
+        overflow: 'visible',
       }}
       key={currentItem.id}
     >
@@ -289,7 +289,7 @@ export const DetailsCarouselItem = ({ item, index }: { item: ExpandedItem; index
                   editingRights={editingRights}
                 />
               )}
-              {item.expand?.ref.image || item.image ? (
+              {(currentItem.expand?.ref?.image || currentItem.image) ? (
                 <Zoomable minScale={0.25} maxScale={3} isPanEnabled={true}>
                   <Animated.View
                     style={[
@@ -307,7 +307,7 @@ export const DetailsCarouselItem = ({ item, index }: { item: ExpandedItem; index
                         style={[
                           { flex: 1, aspectRatio: 1, overflow: 'hidden', borderRadius: s.$075 },
                         ]}
-                        source={item.image || item.expand?.ref.image}
+                        source={currentItem.image || currentItem.expand?.ref?.image}
                       />
                     </BottomSheetView>
                   </Animated.View>
@@ -549,7 +549,7 @@ export const DetailsCarouselItem = ({ item, index }: { item: ExpandedItem; index
             width: '75%',
             alignSelf: 'center',
             position: 'absolute',
-            bottom: -25,
+            bottom: 55,
           }}
         >
           <Button

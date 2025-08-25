@@ -56,6 +56,12 @@ export type UISlice = {
   setSuppressHomeRedirect: (v: boolean) => void
   justOnboarded: boolean
   setJustOnboarded: (v: boolean) => void
+  // Home pager (MyProfile <-> Directories)
+  homePagerIndex: number
+  setHomePagerIndex: (i: number) => void
+  // Navigation hint: if true, back should return to directories
+  returnToDirectories: boolean
+  setReturnToDirectories: (v: boolean) => void
 }
 
 export const createUISlice: StateCreator<StoreSlices, [], [], UISlice> = (set) => ({
@@ -187,4 +193,9 @@ export const createUISlice: StateCreator<StoreSlices, [], [], UISlice> = (set) =
   setSuppressHomeRedirect: (v: boolean) => set(() => ({ suppressHomeRedirect: v })),
   justOnboarded: false,
   setJustOnboarded: (v: boolean) => set(() => ({ justOnboarded: v })),
+  // Home pager (MyProfile <-> Directories)
+  homePagerIndex: 0,
+  setHomePagerIndex: (i: number) => set(() => ({ homePagerIndex: i })),
+  returnToDirectories: false,
+  setReturnToDirectories: (v: boolean) => set(() => ({ returnToDirectories: v })),
 })

@@ -14,6 +14,7 @@ import BottomSheet, { BottomSheetBackdrop, BottomSheetView } from '@gorhom/botto
 import { useState, useEffect, useRef } from 'react'
 import { View, Platform, Keyboard } from 'react-native'
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated'
+import { Collections } from '@/features/pocketbase/pocketbase-types'
 
 export type NewRefStep =
   | 'search'
@@ -89,7 +90,7 @@ export const NewRefSheet = ({
   }
 
   // Adjust snap points to reduce visible "duck" when switching content
-  const snapPoints = ['69%', '80%']
+  const snapPoints = ['75%', '85%']
   // Track if the sheet is open
   const [isSheetOpen, setIsSheetOpen] = useState(false)
   // Track current sheet index to prevent redundant snap animations
@@ -98,12 +99,12 @@ export const NewRefSheet = ({
   // Track keyboard state
   useEffect(() => {
     const keyboardDidShow = () => {
-      // Let the sheet settle before moving to avoid jumpiness
-      if (!isSheetOpen) return
+      // Don't snap again if already at the right height
+      if (!isSheetOpen || sheetIndex === 1) return
       requestAnimationFrame(() => bottomSheetRef.current?.snapToIndex(1))
     }
     const keyboardDidHide = () => {
-      if (!isSheetOpen) return
+      if (!isSheetOpen || sheetIndex === 0) return
       requestAnimationFrame(() => bottomSheetRef.current?.snapToIndex(0))
     }
     const showSub = Keyboard.addListener('keyboardDidShow', keyboardDidShow)
@@ -180,21 +181,63 @@ export const NewRefSheet = ({
               onAddRef={async (itemFields) => {
                 // Merge promptContext from refFields if present
                 const mergedFields = { ...itemFields, promptContext: refFields?.promptContext }
+                
                 if (!backlog) {
-                  // check if the grid is full
-                  const gridItems = await getProfileItems(user?.userName!)
-                  if (gridItems.length >= 12) {
+                  // Use cached grid count instead of database query
+                  const { gridItemCount } = useAppStore.getState()
+                  if (gridItemCount >= 12) {
                     setStagedItemFields(mergedFields)
                     setStep('selectItemToReplace')
                     return
                   }
                 }
 
-                const newItem = await addToProfile(existingRefId, mergedFields, backlog)
-                setItemData(newItem)
-                // finish the flow
-                triggerProfileRefresh()
-                setStep('addedToGrid')
+                // Create optimistic item immediately
+                const optimisticItem: ExpandedItem = {
+                  id: `temp-${Date.now()}`, collectionId: Collections.Items, collectionName: Collections.Items,
+                  creator: user?.id || '', ref: existingRefId || 'temp-ref', image: itemFields.image || '',
+                  url: itemFields.url || '', text: itemFields.text || '', list: itemFields.list || false,
+                  parent: itemFields.parent || '', backlog, order: 0,
+                  created: new Date().toISOString(), updated: new Date().toISOString(),
+                  promptContext: mergedFields.promptContext || '',
+                  expand: { 
+                    ref: { 
+                      id: existingRefId || 'temp-ref', 
+                      title: itemFields.title || '', 
+                      image: itemFields.image || '', // Use same image source
+                      url: itemFields.url || '',
+                      meta: '{}',
+                      creator: user?.id || '',
+                      created: new Date().toISOString(),
+                      updated: new Date().toISOString()
+                    }, 
+                    creator: null as any, 
+                    items_via_parent: [] as any 
+                  }
+                }
+
+                // Add optimistic item to grid immediately
+                const { addOptimisticItem } = useAppStore.getState()
+                addOptimisticItem(optimisticItem)
+
+                // Close the sheet immediately to show the animation
+                bottomSheetRef.current?.close()
+                
+                // Background database operations
+                ;(async () => {
+                  try {
+                    const newItem = await addToProfile(existingRefId, mergedFields, backlog)
+                    
+                    // Don't replace optimistic item - let it stay until grid refresh
+                    // This prevents the flash from the replacement process
+                    setItemData(newItem)
+                  } catch (error) {
+                    console.error('Failed to add item to profile:', error)
+                    // Remove optimistic item on failure
+                    const { removeOptimisticItem } = useAppStore.getState()
+                    removeOptimisticItem(optimisticItem.id)
+                  }
+                })()
               }}
               onAddRefToList={async (itemFields) => {
                 const mergedFields = { ...itemFields, promptContext: refFields?.promptContext }

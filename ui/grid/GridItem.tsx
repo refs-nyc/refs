@@ -4,6 +4,7 @@ import { GridTileImage } from './GridTileImage'
 import { GridTileType } from '@/features/types'
 import { Heading } from '../typo/Heading'
 import { s, c } from '@/features/style'
+import { useAppStore } from '@/features/stores'
 
 export const GridItem = ({
   item,
@@ -17,6 +18,8 @@ export const GridItem = ({
   onPress?: () => {}
 }) => {
   const image = item.image || item.expand.ref?.image
+  const { uploadingItems } = useAppStore()
+  const processing = uploadingItems?.has?.(item.id)
   return (
     <>
       {item && (
@@ -25,7 +28,7 @@ export const GridItem = ({
             // No image: leave tile background visible, we still draw the bottom title card
             <View style={{ flex: 1 }} />
           ) : (
-            <GridTileImage key={item.id} source={image} />
+            <GridTileImage key={item.id} source={image} processing={!!processing} />
           )}
         </>
       )}
@@ -58,7 +61,7 @@ export const GridItem = ({
           <Text
             numberOfLines={1}
             ellipsizeMode="tail"
-            style={{ color: '#B0B0B0', fontSize: 14, textAlign: 'left', fontWeight: '500' }}
+            style={{ color: c.muted, fontSize: 14, textAlign: 'left', fontWeight: '500' }}
           >
             {item?.expand?.ref?.title || item?.title || ''}
           </Text>

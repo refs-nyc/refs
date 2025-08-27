@@ -28,9 +28,12 @@ export const MyProfile = ({ userName }: { userName: string }) => {
   const [profile, setProfile] = useState<Profile>()
   const [gridItems, setGridItems] = useState<ExpandedItem[]>([])
   const [backlogItems, setBacklogItems] = useState<ExpandedItem[]>([])
-  const [loading, setLoading] = useState<boolean>(true)
+  const [loading, setLoading] = useState(true)
   const [focusReady, setFocusReady] = useState(false)
+  const [removingItem, setRemovingItem] = useState<ExpandedItem | null>(null)
 
+  // Get optimistic items from store
+  const { optimisticItems } = useAppStore()
 
   const {
     user,
@@ -65,7 +68,17 @@ export const MyProfile = ({ userName }: { userName: string }) => {
     setJustOnboarded,
   } = useAppStore()
 
-  const [removingItem, setRemovingItem] = useState<ExpandedItem | null>(null)
+  // Merge optimistic items with grid items for immediate display
+  const displayGridItems = useMemo(() => {
+    const optimisticItemsArray = Array.from(optimisticItems.values())
+    // Filter out any optimistic items that might have been replaced
+    const filteredOptimisticItems = optimisticItemsArray.filter(item => 
+      !gridItems.some(gridItem => gridItem.id === item.id)
+    )
+    // Use a stable reference to prevent unnecessary re-renders
+    return [...gridItems, ...filteredOptimisticItems]
+  }, [gridItems, optimisticItems, profileRefreshTrigger]) // Restored profileRefreshTrigger for other cases
+
   const [promptTextIndex, setPromptTextIndex] = useState(0)
   const [promptFadeKey, setPromptFadeKey] = useState(0)
   const [showPrompt, setShowPrompt] = useState(false)
@@ -131,6 +144,8 @@ export const MyProfile = ({ userName }: { userName: string }) => {
           setProfile(profile)
           setGridItems(gridItems)
           setBacklogItems(backlogItems as ExpandedItem[])
+          // Update cached grid count
+          useAppStore.getState().setGridItemCount(gridItems.length)
           setLoading(false)
         })
         .catch((error) => {
@@ -147,9 +162,33 @@ export const MyProfile = ({ userName }: { userName: string }) => {
     if (!removingItem) return
     try {
       removeRefSheetRef.current?.close()
-      const updatedRecord = await moveToBacklog(removingItem?.id)
+      
+      const { optimisticItems, removeOptimisticItem, decrementGridItemCount } = useAppStore.getState()
+      
+      // Check if this is an optimistic item
+      const isOptimistic = removingItem.id.startsWith('temp-') || optimisticItems.has(removingItem.id)
+      
+      if (isOptimistic) {
+        // Remove from optimistic items immediately
+        removeOptimisticItem(removingItem.id)
+        decrementGridItemCount()
+      } else {
+        // For real items, remove from local grid immediately
+        setGridItems(prev => prev.filter(item => item.id !== removingItem.id))
+        decrementGridItemCount()
+        
+        // Background database operation
+        ;(async () => {
+          try {
+            await moveToBacklog(removingItem.id)
+          } catch (error) {
+            console.error('Failed to move item to backlog:', error)
+            // Could revert by refreshing grid if needed
+          }
+        })()
+      }
+      
       setRemovingItem(null)
-      await refreshGrid(userName)
     } catch (error) {
       console.error(error)
     }
@@ -158,9 +197,33 @@ export const MyProfile = ({ userName }: { userName: string }) => {
   const handleRemoveFromProfile = async () => {
     if (!removingItem) return
     removeRefSheetRef.current?.close()
-    await removeItem(removingItem.id)
+    
+    const { optimisticItems, removeOptimisticItem, decrementGridItemCount } = useAppStore.getState()
+    
+    // Check if this is an optimistic item
+    const isOptimistic = removingItem.id.startsWith('temp-') || optimisticItems.has(removingItem.id)
+    
+    if (isOptimistic) {
+      // Remove from optimistic items immediately
+      removeOptimisticItem(removingItem.id)
+      decrementGridItemCount()
+    } else {
+      // For real items, remove from local grid immediately
+      setGridItems(prev => prev.filter(item => item.id !== removingItem.id))
+      decrementGridItemCount()
+      
+      // Background database operation
+      ;(async () => {
+        try {
+          await removeItem(removingItem.id)
+        } catch (error) {
+          console.error('Failed to remove item:', error)
+          // Could revert by refreshing grid if needed
+        }
+      })()
+    }
+    
     setRemovingItem(null)
-    await refreshGrid(userName)
   }
 
   useEffect(() => {
@@ -404,7 +467,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
                     newRefSheetRef.current?.snapToIndex(1)
                   }}
                   columns={3}
-                  items={gridItems}
+                  items={displayGridItems}
                   rows={4}
                   searchMode={searchMode}
                   selectedRefs={selectedRefs}
@@ -424,7 +487,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
               }}
               style={{
                 position: 'absolute',
-                bottom: -20, // Fixed distance from bottom of screen
+                bottom: -40, // Moved up 10px from -30
                 right: 5, // Fixed distance from right edge of screen
                 zIndex: 5, // Behind the sheet (zIndex: 100) but above the grid content
                 opacity: searchMode ? 0 : 1, // Hide with opacity instead of conditional rendering

@@ -2,7 +2,7 @@ import { GridWrapper } from './GridWrapper'
 import { GridItem } from './GridItem'
 import { GridTileWrapper } from './GridTileWrapper'
 import { ExpandedItem } from '@/features/types'
-import { useState, useCallback, useMemo, useEffect } from 'react'
+import { useState, useCallback, useMemo, useEffect, useRef } from 'react'
 import { Text, View, Pressable } from 'react-native'
 import { c } from '@/features/style'
 import Animated, {
@@ -86,8 +86,6 @@ const StartupAnimationTile = ({
       return
     }
 
-
-
     // Reset animation values
     translateY.value = -60
     scale.value = 0.9
@@ -98,70 +96,79 @@ const StartupAnimationTile = ({
 
     // Animate after delay
     const timer = setTimeout(() => {
-      // Slam down with spring animation (gentler for fast tiles)
-      translateY.value = withSpring(0, {
-        damping: isFastTile ? 20 : 15,
-        stiffness: isFastTile ? 200 : 250,
-        mass: isFastTile ? 1.0 : 0.9,
-      })
-
-      // Scale up with bounce (gentler for fast tiles)
-      scale.value = withSpring(1, {
-        damping: isFastTile ? 22 : 18,
-        stiffness: isFastTile ? 300 : 350,
-        mass: isFastTile ? 0.8 : 0.7,
-      })
-
-      // Fade in quickly
+      // Fade in
       opacity.value = withTiming(1, { duration: 200 })
 
-      // After slam, add the bounce-back effect (much more subtle for fast tiles)
-      setTimeout(
-        () => {
-          const bounceHeight = isFastTile ? -2 : -3
-          const bounceScale = isFastTile ? 0.995 : 0.99
+      // Drop and scale animation
+      translateY.value = withSpring(0, {
+        damping: 15,
+        stiffness: 150,
+        mass: 0.8,
+      })
 
-          // Bounce back up slightly and shrink
-          translateY.value = withSpring(bounceHeight, {
-            damping: isFastTile ? 35 : 30,
-            stiffness: isFastTile ? 200 : 250,
-            mass: isFastTile ? 0.6 : 0.5,
-          })
-          scale.value = withSpring(bounceScale, {
-            damping: isFastTile ? 35 : 30,
-            stiffness: isFastTile ? 200 : 250,
-            mass: isFastTile ? 0.6 : 0.5,
-          })
-
-          // Then settle back to normal (smoother for fast tiles)
-          setTimeout(
-            () => {
-              translateY.value = withSpring(0, {
-                damping: isFastTile ? 30 : 25,
-                stiffness: isFastTile ? 150 : 200,
-                mass: isFastTile ? 0.8 : 0.7,
-              })
-              scale.value = withSpring(1, {
-                damping: isFastTile ? 30 : 25,
-                stiffness: isFastTile ? 150 : 200,
-                mass: isFastTile ? 0.8 : 0.7,
-              })
-            },
-            isFastTile ? 80 : 120
-          )
-        },
-        isFastTile ? 150 : 200
-      )
+      scale.value = withSpring(1, {
+        damping: 15,
+        stiffness: 150,
+        mass: 0.8,
+      })
     }, delay)
 
     return () => clearTimeout(timer)
   }, [isInitialLoad, delay])
 
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [
+      { translateY: translateY.value },
+      { scale: scale.value },
+    ],
+    opacity: opacity.value,
+  }))
 
+  return <Animated.View style={animatedStyle}>{children}</Animated.View>
+}
+
+// Custom rise-and-settle animation for newly added items
+const NewItemAnimationTile = ({
+  children,
+  isNewItem,
+  itemId,
+}: {
+  children: React.ReactNode
+  isNewItem: boolean
+  itemId: string
+}) => {
+  const translateY = useSharedValue(0)
+  const scale = useSharedValue(1)
+  const hasAnimated = useRef(false)
+
+  useEffect(() => {
+    if (isNewItem && !hasAnimated.current) {
+      hasAnimated.current = true
+      
+      // Start with a more exaggerated rise
+      translateY.value = -40
+      scale.value = 1.15
+      
+      // Settle back to normal position with slower timing
+      translateY.value = withSpring(0, {
+        damping: 10,
+        stiffness: 120,
+        mass: 1.2,
+      })
+      
+      scale.value = withSpring(1, {
+        damping: 10,
+        stiffness: 120,
+        mass: 1.2,
+      })
+    }
+  }, [isNewItem, itemId])
 
   const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ translateY: translateY.value }, { scale: scale.value }],
-    opacity: opacity.value,
+    transform: [
+      { translateY: translateY.value },
+      { scale: scale.value },
+    ],
   }))
 
   return <Animated.View style={animatedStyle}>{children}</Animated.View>
@@ -208,6 +215,8 @@ export const Grid = ({
   const [shuffledPrompts, setShuffledPrompts] = useState<string[]>([])
   const [isShuffling, setIsShuffling] = useState(false)
   const [isInitialLoad, setIsInitialLoad] = useState(false)
+  // Track newly added items for animation
+  const [newlyAddedItems, setNewlyAddedItems] = useState<Set<string>>(new Set())
 
   // Animation values
   const buttonScale = useSharedValue(1)
@@ -216,6 +225,25 @@ export const Grid = ({
   useEffect(() => {
     setShuffledPrompts(shuffleArray(PROMPTS))
   }, [])
+
+  // Track newly added items
+  useEffect(() => {
+    const currentItemIds = new Set(items.map(item => item.id))
+    const previousItemIds = new Set(Array.from(newlyAddedItems))
+    
+    // Find items that are new (not in the previous set)
+    const newItems = currentItemIds.size > previousItemIds.size ? 
+      Array.from(currentItemIds).filter(id => !previousItemIds.has(id)) : []
+    
+    if (newItems.length > 0) {
+      setNewlyAddedItems(new Set(newItems))
+      
+      // Clear the animation after it completes - extended duration for slower animation
+      setTimeout(() => {
+        setNewlyAddedItems(new Set())
+      }, 1500) // Extended from 1000ms to 1500ms for slower animation
+    }
+  }, [items])
 
   // Only trigger initial load animation when explicitly requested by parent
   useEffect(() => {
@@ -288,6 +316,14 @@ export const Grid = ({
   // Memoize the selected refs set for O(1) lookup
   const selectedRefsSet = useMemo(() => new Set(selectedRefs), [selectedRefs])
 
+  // Create stable callbacks for grid items to avoid hooks violation
+  const createItemCallbacks = useCallback((item: any) => ({
+    onPress: () => handleGridItemPress(item),
+    onRemove: () => {
+      if (onRemoveItem) onRemoveItem(item)
+    }
+  }), [handleGridItemPress, onRemoveItem])
+
   // Button animation style
   const buttonAnimatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: buttonScale.value }],
@@ -298,45 +334,48 @@ export const Grid = ({
       <GridWrapper columns={columns} rows={rows}>
         {items.map((item, i) => {
           const isSelected = searchMode && selectedRefsSet.has(item.id)
+          const isNewItem = newlyAddedItems.has(item.id)
+          const callbacks = createItemCallbacks(item)
+          
           return (
             <StartupAnimationTile
-              key={item.id}
+              key={`${item.id}-${i}`} // Stable key to prevent grid bouncing
               delay={getTileAnimationDelay(i, items.length)}
               isInitialLoad={isInitialLoad}
             >
-              <GridTileWrapper
-                id={item.id}
-                onPress={useCallback(() => handleGridItemPress(item), [handleGridItemPress, item])}
-                onLongPress={onLongPressItem}
-                onRemove={useCallback(() => {
-                  if (onRemoveItem) onRemoveItem(item)
-                }, [onRemoveItem, item])}
-                type={item.list ? 'list' : item.expand.ref?.image || item.image ? 'image' : 'text'}
-                tileStyle={
-                  searchMode
-                    ? {
-                        opacity: isSelected ? 1 : 0.25,
-                      }
-                    : {}
-                }
-              >
-                <GridItem item={item} i={i} />
-                {searchMode && isSelected && (
-                  <View
-                    style={{
-                      position: 'absolute',
-                      top: -2.5,
-                      left: -2.5,
-                      right: -2.5,
-                      bottom: -2.5,
-                      borderWidth: 5,
-                      borderColor: '#A3C9A8',
-                      borderRadius: 8 + 2.5,
-                      pointerEvents: 'none',
-                    }}
-                  />
-                )}
-              </GridTileWrapper>
+              <NewItemAnimationTile isNewItem={isNewItem} itemId={item.id}>
+                <GridTileWrapper
+                  id={item.id}
+                  onPress={callbacks.onPress}
+                  onLongPress={onLongPressItem}
+                  onRemove={callbacks.onRemove}
+                  type={item.list ? 'list' : item.expand.ref?.image || item.image ? 'image' : 'text'}
+                  tileStyle={
+                    searchMode
+                      ? {
+                          opacity: isSelected ? 1 : 0.25,
+                        }
+                      : {}
+                  }
+                >
+                  <GridItem item={item} i={i} />
+                  {searchMode && isSelected && (
+                    <View
+                      style={{
+                        position: 'absolute',
+                        top: -2.5,
+                        left: -2.5,
+                        right: -2.5,
+                        bottom: -2.5,
+                        borderWidth: 5,
+                        borderColor: '#A3C9A8',
+                        borderRadius: 8 + 2.5,
+                        pointerEvents: 'none',
+                      }}
+                    />
+                  )}
+                </GridTileWrapper>
+              </NewItemAnimationTile>
             </StartupAnimationTile>
           )
         })}

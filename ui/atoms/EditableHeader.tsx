@@ -33,6 +33,13 @@ export const EditableHeader = ({
   const [editing, setEditing] = useState(false)
   const [addingUrl, setAddingUrl] = useState(false)
 
+  // Auto-focus when there's a pre-populated image but no title
+  useEffect(() => {
+    if (image && !title && canEditRefData) {
+      setEditing(true)
+    }
+  }, [image, title, canEditRefData])
+
   const analyseUrl = async (u: string) => {
     // pass the link directly
     getLinkPreview(u).then((data) => {

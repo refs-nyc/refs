@@ -210,7 +210,7 @@ export const Navigation = ({
         <View style={{ display: 'flex', flexDirection: 'row', paddingRight: 6 }}>
           <Pressable onPress={() => router.push('/messages')}>
             <View style={{ top: -3 }}>
-              <MessageIcon width={30} />
+              <MessageIcon width={36} />
             </View>
             <View
               style={{

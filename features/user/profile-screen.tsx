@@ -32,7 +32,7 @@ export function UserProfileScreen({ userName }: { userName: string }) {
       <View
         style={{
           position: 'absolute',
-          bottom: 16,
+          bottom: 30, // Moved up 80px total from 16
           left: 0,
           right: 0,
           alignItems: 'center',

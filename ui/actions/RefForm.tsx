@@ -88,14 +88,23 @@ export const RefForm = ({
   }, [existingRefFields])
 
   const handleImageSuccess = (imageUrl: string) => {
-    setUploadInProgress(false)
-    // Set pinataSource immediately to update UI
-    setPinataSource(imageUrl)
-
+    // For background uploads, we get called with local URI immediately
+    // Don't update pinataSource to prevent flashing - keep using local URI
+    if (!imageUrl.startsWith('http')) {
+      // Local URI - set it as the source
+      setPinataSource(imageUrl)
+    }
+    // For Pinata URLs (background uploads), don't update pinataSource to prevent flash
+    
     // Prefetch image in background as optimization, but don't block UI updates
     Image.prefetch(imageUrl).catch((err) => {
       console.error('Failed to prefetch image:', err)
     })
+  }
+
+  const handleImageFail = () => {
+    console.error('Upload failed')
+    setUploadInProgress(false)
   }
 
   // Reset uploadInitiated when both required fields are available
@@ -186,10 +195,9 @@ export const RefForm = ({
                 asset={imageAsset}
                 onReplace={() => setPicking(true)}
                 onSuccess={handleImageSuccess}
-                onFail={() => {
-                  console.error('Upload failed')
-                  setUploadInProgress(false)
-                }}
+                onFail={handleImageFail}
+                size={200}
+                allowBackgroundUpload={true}
               />
             ) : pinataSource ? (
               <TouchableOpacity
@@ -235,7 +243,8 @@ export const RefForm = ({
             onSuccess={(a: ImagePickerAsset) => {
               setImageAsset(a)
               setPicking(false)
-              setUploadInProgress(true)
+              // Don't set uploadInProgress to true for background uploads
+              // The image will be available immediately via local URI
               setUploadInitiated(true)
             }}
             onCancel={() => setPicking(false)}
@@ -401,7 +410,7 @@ export const RefForm = ({
             }}
           />
 
-          {createInProgress || uploadInProgress || (uploadInitiated && !pinataSource) ? (
+          {createInProgress || (uploadInProgress && !pinataSource) ? (
             <Pressable
               style={{
                 width: '48%',

@@ -797,7 +797,7 @@ export default forwardRef<
           <View
             style={{
               position: 'absolute',
-              bottom: -10,
+              bottom: -20, // Moved up 10px from -10
               left: 0,
               right: 0,
               backgroundColor: c.olive,

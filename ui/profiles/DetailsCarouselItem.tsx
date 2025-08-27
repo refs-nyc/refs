@@ -549,7 +549,7 @@ export const DetailsCarouselItem = ({ item, index }: { item: ExpandedItem; index
             width: '75%',
             alignSelf: 'center',
             position: 'absolute',
-            bottom: -25,
+            bottom: -35, // Moved up 10px from -25
           }}
         >
           <Button

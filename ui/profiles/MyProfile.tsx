@@ -461,7 +461,8 @@ export const MyProfile = ({ userName }: { userName: string }) => {
                     if (prompt) useAppStore.getState().setAddRefPrompt(prompt)
                     newRefSheetRef.current?.snapToIndex(1)
                   }}
-                  onAddItemWithPrompt={(prompt: string) => {
+                  onAddItemWithPrompt={(prompt: string, photoPath?: boolean) => {
+                    // All prompts now go through the same flow - NewRefSheet handles photo prompts
                     setAddingNewRefTo('grid')
                     useAppStore.getState().setAddRefPrompt(prompt)
                     newRefSheetRef.current?.snapToIndex(1)
@@ -487,7 +488,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
               }}
               style={{
                 position: 'absolute',
-                bottom: -40, // Moved up 10px from -30
+                bottom: -30, // Moved up 10px from -40
                 right: 5, // Fixed distance from right edge of screen
                 zIndex: 5, // Behind the sheet (zIndex: 100) but above the grid content
                 opacity: searchMode ? 0 : 1, // Hide with opacity instead of conditional rendering

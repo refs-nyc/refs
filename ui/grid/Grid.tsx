@@ -14,26 +14,25 @@ import Animated, {
 } from 'react-native-reanimated'
 
 const PROMPTS = [
-  'Link you shared recently',
-  'free space',
-  'Place you feel like yourself',
-  'Example of perfect design',
-  'something you want to do more of',
-  'Piece from a museum',
-  'Most-rewatched movie',
-  'Tradition you love',
-  'Meme',
-  'Neighborhood spot',
-  'What you put on aux',
-  'halloween pic',
-  'Rabbit Hole',
-  'list of preferred publications',
-  'list of important websites',
-  'reading list',
+  { text: 'Link you shared recently', photoPath: false },
+  { text: 'free space', photoPath: false },
+  { text: 'Place you feel like yourself', photoPath: false },
+  { text: 'Example of perfect design', photoPath: false },
+  { text: 'something you want to do more of', photoPath: false },
+  { text: 'Piece from a museum', photoPath: true },
+  { text: 'Most-rewatched movie', photoPath: false },
+  { text: 'Tradition you love', photoPath: true },
+  { text: 'Meme', photoPath: true },
+  { text: 'Neighborhood spot', photoPath: false },
+  { text: 'What you put on aux', photoPath: false },
+  { text: 'halloween pic', photoPath: true },
+  { text: 'Rabbit Hole', photoPath: false },
+  { text: 'a preferred publication', photoPath: false },
+  { text: 'something on your reading list', photoPath: false },
 ]
 
 // Fisher-Yates shuffle function
-const shuffleArray = (array: string[]) => {
+const shuffleArray = (array: any[]) => {
   const shuffled = [...array]
   for (let i = shuffled.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1))
@@ -195,7 +194,7 @@ export const Grid = ({
   onPressItem?: (item?: ExpandedItem) => void
   onLongPressItem?: () => void
   onAddItem?: () => void
-  onAddItemWithPrompt?: (prompt: string) => void
+  onAddItemWithPrompt?: (prompt: string, photoPath?: boolean) => void
   onRemoveItem?: (item: ExpandedItem) => void
   columns: number
   rows: number
@@ -223,7 +222,7 @@ export const Grid = ({
 
   // Initialize with random prompts on mount
   useEffect(() => {
-    setShuffledPrompts(shuffleArray(PROMPTS))
+    setShuffledPrompts(shuffleArray(PROMPTS.map(p => p.text)))
   }, [])
 
   // Track newly added items
@@ -283,7 +282,7 @@ export const Grid = ({
     // Shuffle after a brief delay to allow fade out
     setTimeout(() => {
       // Create a new shuffled array but preserve the same length
-      const newShuffledPrompts = shuffleArray([...PROMPTS])
+      const newShuffledPrompts = shuffleArray(PROMPTS.map(p => p.text))
       setShuffledPrompts(newShuffledPrompts)
       setIsShuffling(false)
     }, 300) // Increased delay for smoother animation
@@ -382,7 +381,8 @@ export const Grid = ({
 
         {/* Prompt placeholders for empty slots */}
         {Array.from({ length: gridSize - items.length }).map((_, i) => {
-          const prompt = shuffledPrompts[i % shuffledPrompts.length] || PROMPTS[i % PROMPTS.length]
+          const promptIndex = i % PROMPTS.length
+          const prompt = PROMPTS[promptIndex]
           const totalIndex = items.length + i
           
           // Only show prompt squares on own profile when grid isn't full
@@ -400,11 +400,11 @@ export const Grid = ({
             >
               <GridTileWrapper
                 type={shouldShowPrompt ? "prompt" : "placeholder"}
-                onPress={() => shouldShowPrompt && onAddItemWithPrompt && onAddItemWithPrompt(prompt)}
+                onPress={() => shouldShowPrompt && onAddItemWithPrompt && onAddItemWithPrompt(prompt.text, prompt.photoPath)}
                 isShuffling={isShuffling}
               >
                 <Text style={{ fontSize: 14 }}>
-                  {shouldShowPrompt ? prompt : ''}
+                  {shouldShowPrompt ? prompt.text : ''}
                 </Text>
               </GridTileWrapper>
             </StartupAnimationTile>

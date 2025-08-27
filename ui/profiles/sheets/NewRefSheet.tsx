@@ -15,6 +15,15 @@ import { useState, useEffect, useRef } from 'react'
 import { View, Platform, Keyboard } from 'react-native'
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated'
 import { Collections } from '@/features/pocketbase/pocketbase-types'
+import * as ImagePicker from 'expo-image-picker'
+
+// Photo prompts that should trigger direct photo picker
+const PHOTO_PROMPTS = [
+  'Piece from a museum',
+  'Tradition you love', 
+  'Meme',
+  'halloween pic'
+]
 
 export type NewRefStep =
   | 'search'
@@ -114,6 +123,52 @@ export const NewRefSheet = ({
       hideSub.remove()
     }
   }, [bottomSheetRef, isSheetOpen, sheetIndex])
+
+  // Handle photo prompts - trigger photo picker directly
+  useEffect(() => {
+    if (isOpen && addRefPrompt && PHOTO_PROMPTS.includes(addRefPrompt)) {
+      const triggerPhotoPicker = async () => {
+        try {
+          // Request permissions
+          const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync()
+          if (status !== 'granted') {
+            console.log('Permission to access camera roll was denied')
+            return
+          }
+
+          // Launch image picker
+          const result = await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            allowsEditing: true,
+            aspect: [1, 1],
+            quality: 0.8,
+          })
+
+          if (!result.canceled && result.assets && result.assets[0]) {
+            const selectedImage = result.assets[0]
+            
+            // Set the image directly in refFields and skip to add step
+            setRefFields({ 
+              title: '', 
+              image: selectedImage.uri, 
+              url: '',
+              promptContext: addRefPrompt 
+            })
+            setStep('add')
+          } else {
+            // User cancelled - close the sheet
+            bottomSheetRef.current?.close()
+          }
+        } catch (error) {
+          console.error('Error picking image:', error)
+          bottomSheetRef.current?.close()
+        }
+      }
+
+      // Trigger photo picker immediately
+      triggerPhotoPicker()
+    }
+  }, [isOpen, addRefPrompt, bottomSheetRef])
 
   return (
     <BottomSheet

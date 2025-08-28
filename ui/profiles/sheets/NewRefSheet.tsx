@@ -181,8 +181,6 @@ export const NewRefSheet = ({
     if (step === 'add') {
       // Don't snap to 85% if caption is focused - let caption focus effect handle it
       if (captionFocused) return
-      // Don't snap to 85% if we're at 67% (keyboard dismissed)
-      if (sheetIndex === 0) return
       // Don't snap to 85% if we're not in a state where we should be at 85%
       // Only snap to 85% when initially opening the add step or transitioning from search
       if (sheetIndex !== -1 && sheetIndex !== 1) return

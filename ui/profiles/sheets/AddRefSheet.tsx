@@ -99,7 +99,7 @@ export const AddRefSheet = ({
       {!refFields || !user ? (
         <></>
       ) : step === 'editNewItem' ? (
-        <View style={{ padding: s.$3, paddingTop: s.$3 + 8 }}>
+        <View style={{ padding: s.$3, paddingTop: s.$3 - 12 }}>
           <RefForm
             existingRefFields={refFields}
             canEditRefData={false}

@@ -43,22 +43,17 @@ const CircleCheckmark = () => (
 
 // Chain link icon component
 const ChainLinkIcon = () => (
-  <Svg width="23" height="26" viewBox="0 0 23 26" fill="none">
-    <Defs>
-      <Filter id="filter0_d_2988_18504" x="0.102539" y="0.24707" width="21.916" height="24.916" filterUnits="userSpaceOnUse">
-        <FeFlood floodOpacity="0" result="BackgroundImageFix"/>
-        <FeColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
-        <FeOffset dy="3"/>
-        <FeComposite in2="hardAlpha" operator="out"/>
-        <FeColorMatrix type="matrix" values="0 0 0 0 0.588235 0 0 0 0 0.568627 0 0 0 0 0.568627 0 0 0 0.25 0"/>
-        <FeBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_2988_18504"/>
-        <FeBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_2988_18504" result="shape"/>
-      </Filter>
-    </Defs>
-    <G filter="url(#filter0_d_2988_18504)">
+  <View style={{
+    shadowColor: '#969191',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.4,
+    shadowRadius: 0,
+    elevation: 3,
+  }}>
+    <Svg width="23" height="26" viewBox="0 0 23 26" fill="none">
       <Path d="M12.9856 16.9807L10.4188 19.5475C9.39762 20.5686 8.01266 21.1423 6.56856 21.1423C5.12445 21.1423 3.7395 20.5686 2.71836 19.5475C1.69722 18.5263 1.12356 17.1414 1.12356 15.6973C1.12356 14.2532 1.69722 12.8682 2.71836 11.8471L5.28516 9.28027M9.13535 5.43008L11.7022 2.86328C12.7233 1.84214 14.1082 1.26847 15.5523 1.26847C16.9965 1.26847 18.3814 1.84214 19.4025 2.86328C20.4237 3.88441 20.9973 5.26937 20.9973 6.71347C20.9973 8.15758 20.4237 9.54253 19.4025 10.5637L16.8357 13.1305M7.34221 14.9236L14.8589 7.40691" stroke={c.surface} strokeWidth="2.04188" strokeLinecap="round" strokeLinejoin="round"/>
-    </G>
-  </Svg>
+    </Svg>
+  </View>
 )
 
 type ExistingRefFields = {
@@ -332,7 +327,7 @@ export const RefForm = ({
             marginBottom: 0,
             flexDirection: 'row',
             alignItems: 'center',
-            gap: s.$075,
+            gap: 5,
             transform: [
               {
                 translateX: titleShake.interpolate({
@@ -444,7 +439,6 @@ export const RefForm = ({
               }}
             >
               <View style={{ 
-                opacity: url ? 0.5 : 0.7,
                 zIndex: 9999,
                 elevation: 9999,
                 position: 'relative',
@@ -458,10 +452,39 @@ export const RefForm = ({
 
         {/* Notes */}
         <View style={{ width: '100%', alignSelf: 'stretch' }}>
+          {!text && (
+            <View style={{
+              position: 'absolute',
+              top: s.$1,
+              left: s.$1,
+              right: s.$1,
+              zIndex: 1,
+              pointerEvents: 'none',
+            }}>
+              <Text style={{
+                color: c.muted,
+                fontSize: 17,
+                fontWeight: '500',
+                lineHeight: 20,
+              }}>
+                Add a caption
+              </Text>
+              <View style={{ height: 8 }} />
+              <Text style={{
+                color: c.muted,
+                fontSize: 17,
+                fontWeight: '500',
+                lineHeight: 20,
+                opacity: 0.33,
+              }}>
+                (it helps people find you)
+              </Text>
+            </View>
+          )}
           <TextInput
             multiline={true}
             numberOfLines={3}
-            placeholder="Add a caption for your profile"
+            placeholder=""
             placeholderTextColor={c.muted}
             onChangeText={setText}
             value={text}
@@ -471,7 +494,6 @@ export const RefForm = ({
               width: '100%',
               maxWidth: '100%',
               flexShrink: 1,
-              overflow: 'hidden',
               padding: s.$1,
               minHeight: s.$11,
               fontSize: 17,
@@ -502,7 +524,7 @@ export const RefForm = ({
             justifyContent: 'space-between',
           }}
         >
-          <Button
+          {/* <Button
             title="Add to list"
             variant="whiteOutline"
             style={{ width: '48%', minWidth: 0 }}
@@ -524,12 +546,12 @@ export const RefForm = ({
                 setCreateInProgress(false)
               }
             }}
-          />
+          /> */}
 
           {createInProgress || (uploadInProgress && !pinataSource) ? (
             <Pressable
               style={{
-                width: '48%',
+                width: '100%',
                 minWidth: 0,
                 height: 48,
                 alignItems: 'center',
@@ -549,7 +571,7 @@ export const RefForm = ({
             <Button
               title={title ? 'Add Ref' : 'Title required'}
               variant="whiteInverted"
-              style={{ width: '48%', minWidth: 0, backgroundColor: c.white }}
+              style={{ width: '100%', minWidth: 0, backgroundColor: c.white }}
               disabled={!(pinataSource && title) || createInProgress}
               onPress={async () => {
                 if (!validateFields()) {

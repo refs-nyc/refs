@@ -94,7 +94,7 @@ export const RefForm = ({
   const [createInProgress, setCreateInProgress] = useState(false)
   const [uploadInitiated, setUploadInitiated] = useState(false)
   const [editingUrl, setEditingUrl] = useState<boolean>(false)
-  const [activeField, setActiveField] = useState<'title' | 'link' | 'caption' | null>('title')
+  const [activeField, setActiveField] = useState<'title' | 'link' | 'caption' | null>(canEditRefData ? 'title' : null)
   const captionInputRef = useRef<any>(null)
   const urlInputRef = useRef<any>(null)
 

@@ -106,6 +106,8 @@ export const NewRefSheet = ({
   const [manualTransition, setManualTransition] = useState<boolean>(false)
   // Track if keyboard is currently visible
   const [keyboardVisible, setKeyboardVisible] = useState<boolean>(false)
+  // Track if we're transitioning to add step to prevent keyboard hide interference
+  const [transitioningToAdd, setTransitioningToAdd] = useState<boolean>(false)
 
 
   // Track keyboard state
@@ -144,6 +146,12 @@ export const NewRefSheet = ({
       // Don't run if we're manually handling a transition
       if (manualTransition) {
         console.log('🔽 KEYBOARD HIDE - Blocked by manualTransition flag')
+        return
+      }
+      
+      // Don't run if we're transitioning to add step
+      if (transitioningToAdd) {
+        console.log('🔽 KEYBOARD HIDE - Blocked by transitioningToAdd flag')
         return
       }
       
@@ -187,6 +195,13 @@ export const NewRefSheet = ({
     }
     if (step === 'add') {
       console.log('📊 ADD STEP EFFECT - step=add, sheetIndex:', sheetIndex, 'captionFocused:', captionFocused)
+      // Set flag to prevent keyboard hide interference during transition
+      setTransitioningToAdd(true)
+      // Clear flag after transition completes
+      setTimeout(() => {
+        setTransitioningToAdd(false)
+      }, 500)
+      
       // Don't snap to 85% if caption is focused - let caption focus effect handle it
       if (captionFocused) {
         console.log('📊 ADD STEP EFFECT - Caption focused, skipping')
@@ -202,6 +217,9 @@ export const NewRefSheet = ({
       // For non-photo prompts transitioning from search, the keyboard is already up
       // so we need to snap to 85% and let the keyboard behavior handle the final position
       console.log('📊 ADD STEP EFFECT - Snapping to index 2 (85%)')
+      // Snap immediately to prevent any intermediate positions
+      bottomSheetRef.current?.snapToIndex(2) // 85%
+      // Also use requestAnimationFrame as backup
       requestAnimationFrame(() => {
         bottomSheetRef.current?.snapToIndex(2) // 85%
         // For non-photo prompts transitioning from search with keyboard up, ensure we stay at 85%

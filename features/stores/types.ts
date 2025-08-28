@@ -1,10 +1,74 @@
-import type { UISlice } from '@/ui/state'
 import type { BackdropSlice } from './backdrop'
 import type { ImageSlice } from './images'
 import type { ItemSlice } from './items'
 import type { MessageSlice } from './messages'
 import type { UserSlice } from './users'
 import type { UserCacheSlice } from './userCache'
+import { Item } from '@/features/types'
+import BottomSheet from '@gorhom/bottom-sheet'
+import React from 'react'
+
+export type UISlice = {
+  editingProfile: boolean
+  addingToList: string
+  addingItem: Item | null
+  referencersBottomSheetRef: React.RefObject<BottomSheet>
+  currentRefId: string
+  addRefSheetRef: React.RefObject<BottomSheet>
+  addingRefId: string
+  newRefSheetRef: React.RefObject<BottomSheet>
+  addingNewRefTo: null | 'grid' | 'backlog'
+  addRefPrompt: string
+  selectedPhoto: string | null
+  setAddingNewRefTo: (newState: null | 'grid' | 'backlog') => void
+  setAddingRefId: (id: string) => void
+  setCurrentRefId: (id: string) => void
+  setAddingToList: (newState: string) => void
+  setAddRefPrompt: (prompt: string) => void
+  setSelectedPhoto: (photo: string | null) => void
+  stopEditProfile: () => void
+  startEditProfile: () => void
+  // Background loading state
+  isBackgroundLoading: boolean
+  setBackgroundLoading: (loading: boolean) => void
+  // Search-related state
+  searchMode: boolean
+  selectedRefs: string[]
+  selectedRefItems: any[]
+  cachedSearchResults: any[]
+  cachedSearchTitle: string
+  cachedSearchSubtitle: string
+  cachedRefTitles: string[]
+  cachedRefImages: string[]
+  closeActiveBottomSheet: (() => void) | null
+  isSearchResultsSheetOpen: boolean
+  returningFromSearchNavigation: boolean // Track when returning from search navigation
+  setSearchMode: (mode: boolean) => void
+  setSelectedRefs: (refs: string[]) => void
+  setSelectedRefItems: (items: any[]) => void
+  setCachedSearchResults: (results: any[], title: string, subtitle: string, refTitles?: string[], refImages?: string[]) => void
+  clearCachedSearchResults: () => void
+  setSearchResultsSheetOpen: (open: boolean) => void
+  setReturningFromSearchNavigation: (returning: boolean) => void
+  setCloseActiveBottomSheet: (closeFunction: (() => void) | null) => void
+  // Logout button visibility
+  showLogoutButton: boolean
+  setShowLogoutButton: (show: boolean) => void
+  // Prompt timing control (session-level)
+  hasShownInitialPromptHold: boolean
+  setHasShownInitialPromptHold: (shown: boolean) => void
+  // Onboarding + navigation coordination
+  suppressHomeRedirect: boolean
+  setSuppressHomeRedirect: (v: boolean) => void
+  justOnboarded: boolean
+  setJustOnboarded: (v: boolean) => void
+  // Home pager (MyProfile <-> Directories)
+  homePagerIndex: number
+  setHomePagerIndex: (i: number) => void
+  // Navigation hint: if true, back should return to directories
+  returnToDirectories: boolean
+  setReturnToDirectories: (v: boolean) => void
+}
 
 export type StoreSlices = BackdropSlice &
   ImageSlice &

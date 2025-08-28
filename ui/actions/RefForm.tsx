@@ -7,6 +7,8 @@ import {
   Text,
   Pressable,
   ActivityIndicator,
+  Keyboard,
+  TouchableWithoutFeedback,
 } from 'react-native'
 import { BottomSheetScrollView, BottomSheetTextInput as TextInput } from '@gorhom/bottom-sheet'
 import { Heading } from '@/ui/typo/Heading'
@@ -19,8 +21,24 @@ import type { ImagePickerAsset } from 'expo-image-picker'
 import { c, s } from '@/features/style'
 import { StagedItemFields } from '@/features/types'
 import { DismissKeyboard } from '../atoms/DismissKeyboard'
+import { Ionicons } from '@expo/vector-icons'
 
 const win = Dimensions.get('window')
+
+// Custom circle checkmark component
+const CircleCheckmark = () => (
+  <View style={{ 
+    width: 28, 
+    height: 28, 
+    borderRadius: 14, 
+    backgroundColor: c.surface, 
+    justifyContent: 'center', 
+    alignItems: 'center',
+    opacity: 0.5 
+  }}>
+    <Ionicons name="checkmark" size={16} color={c.accent} />
+  </View>
+)
 
 type ExistingRefFields = {
   title?: string
@@ -36,6 +54,7 @@ export const RefForm = ({
   onAddRefToList,
   pickerOpen = false,
   canEditRefData = true,
+  onCaptionFocus,
 }: {
   existingRefFields: ExistingRefFields | null
   placeholder?: string
@@ -44,6 +63,7 @@ export const RefForm = ({
   pickerOpen?: boolean
   backlog?: boolean
   canEditRefData?: boolean
+  onCaptionFocus?: (focused: boolean) => void
 }) => {
   // Separate state for each field to prevent unnecessary re-renders
   const [title, setTitle] = useState<string>(existingRefFields?.title || '')
@@ -55,8 +75,8 @@ export const RefForm = ({
   const [uploadInProgress, setUploadInProgress] = useState(false)
   const [createInProgress, setCreateInProgress] = useState(false)
   const [uploadInitiated, setUploadInitiated] = useState(false)
-  const [subtitle, setSubtitle] = useState<string>('')
-  const [editingSubtitle, setEditingSubtitle] = useState<boolean>(false)
+  const [editingUrl, setEditingUrl] = useState<boolean>(false)
+  const [activeField, setActiveField] = useState<'title' | 'link' | 'caption' | null>(null)
 
   // Animation refs
   const titleShake = useRef(new Animated.Value(0)).current
@@ -114,6 +134,8 @@ export const RefForm = ({
     }
   }, [uploadInitiated, pinataSource, title])
 
+
+
   // Shake animation function
   const triggerShake = (anim: Animated.Value) => {
     anim.setValue(0)
@@ -140,18 +162,18 @@ export const RefForm = ({
   }
 
   return (
-    <DismissKeyboard>
-      <BottomSheetScrollView
-        contentContainerStyle={{
-          gap: s.$1,
-          marginTop: s.$2 - 5,
-          marginBottom: s.$2 + 10,
-          justifyContent: 'flex-start',
-          // Stretch children to container width so inputs never grow wider
-          // than the sheet and inadvertently shift the whole layout.
-          alignItems: 'stretch',
-        }}
-      >
+    <BottomSheetScrollView
+      showsVerticalScrollIndicator={false}
+      contentContainerStyle={{
+        gap: s.$1,
+        marginTop: s.$2 - 5,
+        marginBottom: s.$2 + 10,
+        justifyContent: 'flex-start',
+        // Stretch children to container width so inputs never grow wider
+        // than the sheet and inadvertently shift the whole layout.
+        alignItems: 'stretch',
+      }}
+    >
         <View
           style={{
             width: 207.6, // 200 + 2*3.8 for border
@@ -211,13 +233,22 @@ export const RefForm = ({
                   borderWidth: 1,
                   borderColor: 'rgba(0,0,0,0.08)',
                 }}
-                onPress={() => setPicking(true)}
+                onPress={() => {
+                  setPicking(true)
+                  Keyboard.dismiss()
+                }}
                 onLongPress={() => setPicking(true)}
               >
                 <Image style={{ flex: 1 }} source={pinataSource} placeholder={pinataSource} />
               </TouchableOpacity>
             ) : (
-              <TouchableOpacity style={{ flex: 1 }} onPress={() => setPicking(true)}>
+              <TouchableOpacity 
+                style={{ flex: 1 }} 
+                onPress={() => {
+                  setPicking(true)
+                  Keyboard.dismiss()
+                }}
+              >
                 <View
                   style={{
                     flex: 1,
@@ -280,67 +311,58 @@ export const RefForm = ({
             title={title}
             url={url || ''}
             image={pinataSource}
+            withUrl={false}
+            onActiveFieldChange={setActiveField}
+            isActive={activeField === 'title'}
           />
         </Animated.View>
 
         {/* Inline subtitle row (single field), directly below title */}
         <View style={{ width: '100%', alignItems: 'flex-start', marginTop: -17, marginBottom: 2 }}>
           {canEditRefData ? (
-            editingSubtitle ? (
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: s.$075, width: '100%' }}>
               <TextInput
-                value={subtitle}
-                onChangeText={(t) => t.length <= 150 && setSubtitle(t)}
-                onBlur={() => setEditingSubtitle(false)}
-                autoFocus
-                placeholder="Add subtitle (e.g., location or author)"
+                value={url}
+                onChangeText={(t) => t.length <= 150 && setUrl(t)}
+                placeholder="+ add a link"
+                placeholderTextColor={`${c.surface}80`}
+                onFocus={() => {
+                  setEditingUrl(true)
+                  setActiveField('link')
+                }}
+                onBlur={() => {
+                  if (!url || url.trim() === '') {
+                    setEditingUrl(false)
+                    setActiveField(null)
+                  }
+                }}
                 style={{
                   minWidth: 80,
                   maxWidth: 280,
                   color: c.surface,
-                  fontSize: 18,
+                  fontSize: url ? 18 : 17.6,
                   fontWeight: '600',
-                  opacity: 0.5,
+                  opacity: url ? 0.5 : 0.7,
                   backgroundColor: 'transparent',
                   padding: 0,
                   margin: 0,
                   textAlign: 'left',
+                  flex: 1,
                 }}
                 maxLength={150}
                 returnKeyType="done"
+                onSubmitEditing={() => setEditingUrl(false)}
               />
-            ) : subtitle ? (
-              <Pressable onPress={() => setEditingSubtitle(true)}>
-                <Text
-                  style={{
-                    color: c.surface,
-                    fontSize: 18,
-                    fontWeight: '600',
-                    opacity: 0.5,
-                    textAlign: 'left',
-                  }}
-                >
-                  {subtitle}
-                </Text>
-              </Pressable>
-            ) : (
-              <Pressable onPress={() => setEditingSubtitle(true)}>
-                <Text
-                  style={{
-                    color: c.surface,
-                    fontSize: 17.6,
-                    opacity: 0.7,
-                    textAlign: 'left',
-                    fontWeight: '600',
-                  }}
-                >
-                  + subtitle (eg location or author)
-                </Text>
-              </Pressable>
-            )
+              {activeField === 'link' && (
+                <Pressable onPress={() => setEditingUrl(false)}>
+                  <CircleCheckmark />
+                </Pressable>
+              )}
+            </View>
           ) : (
             <View style={{ width: '100%', alignItems: 'flex-start', marginTop: -17, marginBottom: 2 }}>
               <Heading tag="h2" style={{ color: c.surface }}>
-                {subtitle}
+                {url}
               </Heading>
             </View>
           )}
@@ -371,6 +393,13 @@ export const RefForm = ({
             textAlignVertical="top"
             autoCorrect={true}
             autoCapitalize="sentences"
+            onFocus={() => {
+              setActiveField('caption')
+              // Snap to 100% when caption is focused to give full access to buttons
+              // This will be handled by the parent BottomSheet's keyboardBehavior
+              onCaptionFocus?.(true)
+            }}
+            blurOnSubmit={false}
           />
         </View>
 
@@ -393,15 +422,10 @@ export const RefForm = ({
               if (!validateFields()) {
                 return
               }
-              // Only include meta if subtitle is present
-              let meta: string | undefined = undefined
-              if (subtitle) {
-                meta = JSON.stringify({ subtitle })
-              }
 
               try {
                 setCreateInProgress(true)
-                await onAddRefToList({ title, text, url, image: pinataSource, meta })
+                await onAddRefToList({ title, text, url: url, image: pinataSource })
               } catch (e) {
                 console.error(e)
               } finally {
@@ -440,15 +464,9 @@ export const RefForm = ({
                   return
                 }
 
-                // Only include meta if subtitle is present
-                let meta: string | undefined = undefined
-                if (subtitle) {
-                  meta = JSON.stringify({ subtitle })
-                }
-
                 try {
                   setCreateInProgress(true)
-                  await onAddRef({ title, text, url, image: pinataSource, meta })
+                  await onAddRef({ title, text, url: url, image: pinataSource })
                 } catch (e) {
                   console.error(e)
                 } finally {
@@ -459,6 +477,5 @@ export const RefForm = ({
           )}
         </View>
       </BottomSheetScrollView>
-    </DismissKeyboard>
   )
 }

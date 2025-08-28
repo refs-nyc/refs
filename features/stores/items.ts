@@ -5,7 +5,6 @@ import { createdSort } from '@/ui/profiles/sorts'
 import type { StoreSlices } from './types'
 import { pocketbase } from '../pocketbase'
 import { edgeFunctionClient } from '../supabase/edge-function-client'
-import { useAppStore } from './index'
 
 const USE_WEBHOOKS = (process.env.EXPO_PUBLIC_USE_WEBHOOKS || '').toLowerCase() === 'true'
 
@@ -590,10 +589,6 @@ export const autoMoveBacklogToGrid = async (userName: string) => {
     for (const item of itemsToMove) {
       await pocketbase.collection('items').update(item.id, { backlog: false })
     }
-    
-    // Update cached grid count
-    const { setGridItemCount } = useAppStore.getState()
-    setGridItemCount(gridItems.length + itemsToMove.length)
     
     console.log(`Moved ${itemsToMove.length} items from backlog to grid`)
   } catch (error) {

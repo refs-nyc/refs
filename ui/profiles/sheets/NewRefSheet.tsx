@@ -15,15 +15,6 @@ import { useState, useEffect, useRef } from 'react'
 import { View, Platform, Keyboard } from 'react-native'
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated'
 import { Collections } from '@/features/pocketbase/pocketbase-types'
-import * as ImagePicker from 'expo-image-picker'
-
-// Photo prompts that should trigger direct photo picker
-const PHOTO_PROMPTS = [
-  'Piece from a museum',
-  'Tradition you love', 
-  'Meme',
-  'halloween pic'
-]
 
 export type NewRefStep =
   | 'search'
@@ -99,21 +90,36 @@ export const NewRefSheet = ({
   }
 
   // Adjust snap points to reduce visible "duck" when switching content
-  const snapPoints = ['75%', '85%']
+  const snapPoints = ['80%', '85%', '100%', '110%']
   // Track if the sheet is open
   const [isSheetOpen, setIsSheetOpen] = useState(false)
   // Track current sheet index to prevent redundant snap animations
   const [sheetIndex, setSheetIndex] = useState<number>(-1)
+  
+  // Track caption focus for keyboard handling
+  const [captionFocused, setCaptionFocused] = useState<boolean>(false)
+  // Track if this is a photo prompt to prevent auto-snapping to 100%
+  const [photoPromptActive, setPhotoPromptActive] = useState<boolean>(false)
 
   // Track keyboard state
   useEffect(() => {
     const keyboardDidShow = () => {
       // Don't snap again if already at the right height
-      if (!isSheetOpen || sheetIndex === 1) return
-      requestAnimationFrame(() => bottomSheetRef.current?.snapToIndex(1))
+      if (!isSheetOpen) return
+      
+      // Don't auto-snap to 100% for photo prompts - let user control it
+      if (photoPromptActive) return
+      
+      // Use 120% snap point for caption, 85% for other fields
+      const targetIndex = captionFocused ? 3 : 1
+      if (sheetIndex === targetIndex) return
+      
+      requestAnimationFrame(() => bottomSheetRef.current?.snapToIndex(targetIndex))
     }
     const keyboardDidHide = () => {
-      if (!isSheetOpen || sheetIndex === 0) return
+      if (!isSheetOpen) return
+      
+      // When keyboard is dismissed, snap to 80% (default position)
       requestAnimationFrame(() => bottomSheetRef.current?.snapToIndex(0))
     }
     const showSub = Keyboard.addListener('keyboardDidShow', keyboardDidShow)
@@ -122,53 +128,62 @@ export const NewRefSheet = ({
       showSub.remove()
       hideSub.remove()
     }
-  }, [bottomSheetRef, isSheetOpen, sheetIndex])
+  }, [bottomSheetRef, isSheetOpen, sheetIndex, captionFocused, photoPromptActive])
 
-  // Handle photo prompts - trigger photo picker directly
+  // Handle photo prompts - use selectedPhoto from store if available
   useEffect(() => {
-    if (isOpen && addRefPrompt && PHOTO_PROMPTS.includes(addRefPrompt)) {
-      const triggerPhotoPicker = async () => {
-        try {
-          // Request permissions
-          const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync()
-          if (status !== 'granted') {
-            console.log('Permission to access camera roll was denied')
-            return
-          }
-
-          // Launch image picker
-          const result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ImagePicker.MediaTypeOptions.Images,
-            allowsEditing: true,
-            aspect: [1, 1],
-            quality: 0.8,
+    if (isOpen && addRefPrompt) {
+      // Check if this is a photo prompt
+      const photoPrompts = ['Piece from a museum', 'Tradition you love', 'Meme', 'halloween pic']
+      
+      if (photoPrompts.includes(addRefPrompt)) {
+        // Check if photo is already available from MyProfile
+        const { selectedPhoto } = useAppStore.getState()
+        
+        if (selectedPhoto) {
+          // Photo was already selected in MyProfile - use it directly
+          setPhotoPromptActive(true)
+          setRefFields({ 
+            title: '', 
+            image: selectedPhoto, 
+            url: '',
+            promptContext: addRefPrompt 
           })
-
-          if (!result.canceled && result.assets && result.assets[0]) {
-            const selectedImage = result.assets[0]
-            
-            // Set the image directly in refFields and skip to add step
-            setRefFields({ 
-              title: '', 
-              image: selectedImage.uri, 
-              url: '',
-              promptContext: addRefPrompt 
-            })
-            setStep('add')
-          } else {
-            // User cancelled - close the sheet
-            bottomSheetRef.current?.close()
+          setStep('add')
+          useAppStore.getState().setSelectedPhoto(null)
+          
+          // Ensure sheet opens at 67% (index 0) for photo prompts
+          setTimeout(() => {
+            bottomSheetRef.current?.snapToIndex(0)
+          }, 50)
+        } else {
+          // Photo not available yet - wait for it
+          const checkForPhoto = () => {
+            const { selectedPhoto: currentPhoto } = useAppStore.getState()
+            if (currentPhoto) {
+              setPhotoPromptActive(true)
+              setRefFields({ 
+                title: '', 
+                image: currentPhoto, 
+                url: '',
+                promptContext: addRefPrompt 
+              })
+              setStep('add')
+              useAppStore.getState().setSelectedPhoto(null)
+              
+              setTimeout(() => {
+                bottomSheetRef.current?.snapToIndex(0)
+              }, 50)
+            } else {
+              // Check again in 50ms
+              setTimeout(checkForPhoto, 50)
+            }
           }
-        } catch (error) {
-          console.error('Error picking image:', error)
-          bottomSheetRef.current?.close()
+          checkForPhoto()
         }
       }
-
-      // Trigger photo picker immediately
-      triggerPhotoPicker()
     }
-  }, [isOpen, addRefPrompt, bottomSheetRef])
+  }, [isOpen, addRefPrompt])
 
   return (
     <BottomSheet
@@ -177,7 +192,7 @@ export const NewRefSheet = ({
       enablePanDownToClose={true}
       snapPoints={snapPoints}
       index={-1}
-      keyboardBehavior="interactive"
+      keyboardBehavior={captionFocused ? "extend" : "interactive"}
       backgroundStyle={{ backgroundColor: c.olive, borderRadius: 50, paddingTop: 0 }}
       onChange={(i: number) => {
         setIsSheetOpen(i !== -1)
@@ -191,6 +206,7 @@ export const NewRefSheet = ({
           setItemToReplace(null)
           setExistingRefId(null)
           setRefFields(null)
+          setPhotoPromptActive(false)
         }
       }}
       handleComponent={null}
@@ -230,9 +246,11 @@ export const NewRefSheet = ({
 
           {step === 'add' && (
             <RefForm
+              key={`ref-form-${refFields?.image || 'no-image'}-${addRefPrompt || 'no-prompt'}`}
               existingRefFields={refFields}
               pickerOpen={false}
               canEditRefData={true}
+              onCaptionFocus={(focused) => setCaptionFocused(focused)}
               onAddRef={async (itemFields) => {
                 // Merge promptContext from refFields if present
                 const mergedFields = { ...itemFields, promptContext: refFields?.promptContext }

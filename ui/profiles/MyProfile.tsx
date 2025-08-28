@@ -3,11 +3,12 @@ import { getBacklogItems, getProfileItems, autoMoveBacklogToGrid } from '@/featu
 import type { Profile } from '@/features/types'
 import { ExpandedItem } from '@/features/types'
 import { s, c } from '@/features/style'
-import BottomSheet from '@gorhom/bottom-sheet'
+import BottomSheet, { BottomSheetBackdrop, BottomSheetView } from '@gorhom/bottom-sheet'
 import { useShareIntentContext } from 'expo-share-intent'
-import { useEffect, useRef, useState, useMemo } from 'react'
-import { ScrollView, View, Text, Pressable } from 'react-native'
+import { useEffect, useRef, useState, useMemo, useCallback } from 'react'
+import { ScrollView, View, Text, Pressable, Keyboard } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import * as ImagePicker from 'expo-image-picker'
 import FloatingJaggedButton from '../buttons/FloatingJaggedButton'
 import { Grid } from '../grid/Grid'
 import { PlaceholderGrid } from '../grid/PlaceholderGrid'
@@ -19,7 +20,9 @@ import { MyBacklogSheet } from './sheets/MyBacklogSheet'
 import { RemoveRefSheet } from './sheets/RemoveRefSheet'
 import SearchModeBottomSheet from './sheets/SearchModeBottomSheet'
 import SearchResultsSheet, { SearchResultsSheetRef } from './sheets/SearchResultsSheet'
+import { RefForm } from '../actions/RefForm'
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated'
+import { Collections } from '@/features/pocketbase/pocketbase-types'
 
 export const MyProfile = ({ userName }: { userName: string }) => {
   const { hasShareIntent } = useShareIntentContext()
@@ -66,6 +69,12 @@ export const MyProfile = ({ userName }: { userName: string }) => {
     setHasShownInitialPromptHold,
     justOnboarded,
     setJustOnboarded,
+    addToProfile,
+    addOptimisticItem,
+    removeOptimisticItem,
+    detailsBackdropAnimatedIndex,
+    registerBackdropPress,
+    unregisterBackdropPress,
   } = useAppStore()
 
   // Merge optimistic items with grid items for immediate display
@@ -83,11 +92,68 @@ export const MyProfile = ({ userName }: { userName: string }) => {
   const [promptFadeKey, setPromptFadeKey] = useState(0)
   const [showPrompt, setShowPrompt] = useState(false)
   const [startupAnimationDone, setStartupAnimationDone] = useState(false)
+  
+  // Direct photo form state
+  const [showDirectPhotoForm, setShowDirectPhotoForm] = useState(false)
+  const [directPhotoRefFields, setDirectPhotoRefFields] = useState<{
+    title: string
+    image: string
+    url: string
+    promptContext: string
+  } | null>(null)
+
+
+
+  // Register backdrop press for direct photo form
+  useEffect(() => {
+    if (showDirectPhotoForm) {
+      const key = registerBackdropPress(() => {
+        setShowDirectPhotoForm(false)
+        setDirectPhotoRefFields(null)
+      })
+      return () => {
+        unregisterBackdropPress(key)
+      }
+    }
+  }, [showDirectPhotoForm])
+
+  // Simple keyboard dismissal - snap to 67% when keyboard is not showing
+  useEffect(() => {
+    if (!showDirectPhotoForm) return
+    
+    const keyboardDidHide = () => {
+      console.log('Keyboard dismissed - snapping to 67% (index 0)')
+      if (photoRefFormRef.current) {
+        photoRefFormRef.current.snapToIndex(0)
+      }
+    }
+    
+    const hideSubscription = Keyboard.addListener('keyboardDidHide', keyboardDidHide)
+    
+    return () => {
+      hideSubscription?.remove()
+    }
+  }, [showDirectPhotoForm])
+
+
+
+
+
+
+
+
+
+  // Render backdrop for direct photo form
+  const renderDirectPhotoBackdrop = useCallback(
+    (p: any) => <BottomSheetBackdrop {...p} disappearsOnIndex={-1} appearsOnIndex={0} />,
+    []
+  )
 
   // Refs
   const searchResultsSheetRef = useRef<BottomSheet>(null)
   const isExpandingSheetRef = useRef(false) // Track if we're already expanding the sheet
   const searchResultsSheetTriggerRef = useRef<SearchResultsSheetRef>(null)
+  const photoRefFormRef = useRef<BottomSheet>(null)
 
   // Simple cache to avoid refetching the same data
   const lastFetchedUserName = useRef<string>('')
@@ -334,6 +400,40 @@ export const MyProfile = ({ userName }: { userName: string }) => {
     }
   }, [gridItems.length, searchMode, isSearchResultsSheetOpen, startupAnimationDone, loading])
 
+  // Direct photo picker flow - bypasses NewRefSheet entirely
+  const triggerDirectPhotoPicker = async (prompt: string) => {
+    try {
+      // Request permissions
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync()
+      if (status !== 'granted') {
+        return
+      }
+
+      // Launch image picker
+      const result = await ImagePicker.launchImageLibraryAsync({
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+      })
+
+      if (!result.canceled && result.assets && result.assets[0]) {
+        const selectedImage = result.assets[0]
+        
+        // Open direct photo form - no NewRefSheet involved
+        setShowDirectPhotoForm(true)
+        setDirectPhotoRefFields({
+          title: '',
+          image: selectedImage.uri,
+          url: '',
+          promptContext: prompt
+        })
+
+      }
+    } catch (error) {
+      console.error('Error picking image:', error)
+    }
+  }
+
   return (
     <>
       <ScrollView
@@ -462,10 +562,15 @@ export const MyProfile = ({ userName }: { userName: string }) => {
                     newRefSheetRef.current?.snapToIndex(1)
                   }}
                   onAddItemWithPrompt={(prompt: string, photoPath?: boolean) => {
-                    // All prompts now go through the same flow - NewRefSheet handles photo prompts
-                    setAddingNewRefTo('grid')
-                    useAppStore.getState().setAddRefPrompt(prompt)
-                    newRefSheetRef.current?.snapToIndex(1)
+                    if (photoPath) {
+                      // Direct photo picker flow - bypass NewRefSheet entirely
+                      triggerDirectPhotoPicker(prompt)
+                    } else {
+                      // Normal search flow through NewRefSheet
+                      setAddingNewRefTo('grid')
+                      useAppStore.getState().setAddRefPrompt(prompt)
+                      newRefSheetRef.current?.snapToIndex(1)
+                    }
                   }}
                   columns={3}
                   items={displayGridItems}
@@ -642,6 +747,138 @@ export const MyProfile = ({ userName }: { userName: string }) => {
             selectedRefItems={finalSelectedRefItems}
           />
 
+          {/* Direct Photo Form - bypasses NewRefSheet entirely */}
+          {showDirectPhotoForm && directPhotoRefFields && (
+            <BottomSheet
+
+              ref={photoRefFormRef}
+              snapPoints={['80%', '85%', '100%', '110%']}
+              index={0}
+              enablePanDownToClose={true}
+
+
+
+
+
+                            backgroundStyle={{ backgroundColor: c.olive, borderRadius: 50, paddingTop: 0 }}
+              animatedIndex={detailsBackdropAnimatedIndex}
+              backdropComponent={(p) => (
+                <BottomSheetBackdrop
+                  {...p}
+                  disappearsOnIndex={-1}
+                  appearsOnIndex={0}
+                  pressBehavior={'close'}
+                />
+              )}
+              handleComponent={null}
+              enableDynamicSizing={false}
+              enableOverDrag={false}
+              onChange={(i: number) => {
+                console.log('PhotoRefForm onChange - index:', i)
+                if (i === -1) {
+                  console.log('PhotoRefForm closed - resetting backdrop')
+                  Keyboard.dismiss()
+                  setShowDirectPhotoForm(false)
+                  setDirectPhotoRefFields(null)
+                  // Ensure backdrop animated index is reset
+                  if (detailsBackdropAnimatedIndex) {
+                    detailsBackdropAnimatedIndex.value = -1
+                  }
+                }
+              }}
+            >
+              <BottomSheetView
+                style={{
+                  paddingHorizontal: s.$2,
+                  paddingTop: 8,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <RefForm
+                  key={`direct-photo-form-${directPhotoRefFields.image}`}
+                  existingRefFields={directPhotoRefFields}
+                  pickerOpen={false}
+                  canEditRefData={true}
+                  
+
+                  onAddRef={async (itemFields) => {
+                    // Merge promptContext from directPhotoRefFields if present
+                    // Ensure title is not empty - use prompt context as fallback
+                    const mergedFields = { 
+                      ...itemFields, 
+                      promptContext: directPhotoRefFields.promptContext,
+                      title: itemFields.title || directPhotoRefFields.promptContext || 'Untitled'
+                    }
+                    
+                    // Create optimistic item immediately
+                    const optimisticItem: ExpandedItem = {
+                      id: `temp-${Date.now()}`, collectionId: Collections.Items, collectionName: Collections.Items,
+                      creator: user?.id || '', ref: 'temp-ref', image: itemFields.image || '',
+                      url: itemFields.url || '', text: itemFields.text || '', list: itemFields.list || false,
+                      parent: itemFields.parent || '', backlog: false, order: 0,
+                      created: new Date().toISOString(), updated: new Date().toISOString(),
+                      promptContext: mergedFields.promptContext || '',
+                      expand: { 
+                        ref: { 
+                          id: 'temp-ref', 
+                          title: itemFields.title || '', 
+                          image: itemFields.image || '',
+                          url: itemFields.url || '',
+                          meta: '{}',
+                          creator: user?.id || '',
+                          created: new Date().toISOString(),
+                          updated: new Date().toISOString()
+                        }, 
+                        creator: null as any, 
+                        items_via_parent: [] as any 
+                      }
+                    }
+
+                    // Add optimistic item to grid immediately
+                    addOptimisticItem(optimisticItem)
+
+                    // Close the sheet immediately and reset backdrop
+                    Keyboard.dismiss()
+                    setShowDirectPhotoForm(false)
+                    setDirectPhotoRefFields(null)
+                    if (detailsBackdropAnimatedIndex) {
+                      detailsBackdropAnimatedIndex.value = -1
+                    }
+                    
+                    // Background database operations
+                    ;(async () => {
+                      try {
+                        await addToProfile(null, mergedFields, false)
+                      } catch (error) {
+                        console.error('Failed to add item to profile:', error)
+                        // Remove optimistic item on failure
+                        removeOptimisticItem(optimisticItem.id)
+                      }
+                    })()
+                  }}
+                  onAddRefToList={async (itemFields) => {
+                    // Merge promptContext from directPhotoRefFields if present
+                    // Ensure title is not empty - use prompt context as fallback
+                    const mergedFields = { 
+                      ...itemFields, 
+                      promptContext: directPhotoRefFields.promptContext,
+                      title: itemFields.title || directPhotoRefFields.promptContext || 'Untitled'
+                    }
+                    const newItem = await addToProfile(null, mergedFields, false)
+                    Keyboard.dismiss()
+                    setShowDirectPhotoForm(false)
+                    setDirectPhotoRefFields(null)
+                    if (detailsBackdropAnimatedIndex) {
+                      detailsBackdropAnimatedIndex.value = -1
+                    }
+                  }}
+                  backlog={false}
+                />
+              </BottomSheetView>
+            </BottomSheet>
+          )}
+
           {/* Search Bottom Sheet (only in search mode, always rendered last) */}
           {searchMode && (
             <SearchModeBottomSheet
@@ -670,8 +907,8 @@ export const MyProfile = ({ userName }: { userName: string }) => {
                   const restoredItems = historyItem.ref_ids.map((refId: string, index: number) => ({
                     id: refId,
                     ref: refId,
-                    image: historyItem.ref_images?.[index] || '',
                     title: historyItem.ref_titles?.[index] || refId,
+                    image: historyItem.ref_images?.[index] || '',
                     expand: {
                       ref: {
                         id: refId,

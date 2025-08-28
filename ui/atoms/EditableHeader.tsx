@@ -1,12 +1,27 @@
 import { useState, useEffect } from 'react'
-import { Pressable } from 'react-native'
+import { Pressable, View } from 'react-native'
 import { BottomSheetTextInput as TextInput } from '@gorhom/bottom-sheet'
 import { XStack } from '@/ui/core/Stacks'
 import { Heading } from '@/ui/typo/Heading'
 import Ionicons from '@expo/vector-icons/Ionicons'
-import { s, c, t } from '@/features/style'
+import { c, s, t } from '@/features/style'
 import * as Clipboard from 'expo-clipboard'
 import { getLinkPreview } from 'link-preview-js'
+
+// Custom circle checkmark component
+const CircleCheckmark = () => (
+  <View style={{ 
+    width: 28, 
+    height: 28, 
+    borderRadius: 14, 
+    backgroundColor: c.surface, 
+    justifyContent: 'center', 
+    alignItems: 'center',
+    opacity: 0.5 
+  }}>
+    <Ionicons name="checkmark" size={16} color={c.accent} />
+  </View>
+)
 
 export const EditableHeader = ({
   canEditRefData,
@@ -18,6 +33,8 @@ export const EditableHeader = ({
   setImage,
   placeholder = '',
   withUrl = true,
+  onActiveFieldChange,
+  isActive = false,
 }: {
   canEditRefData: boolean
   title: string
@@ -28,6 +45,8 @@ export const EditableHeader = ({
   setImage: (str: string) => void
   placeholder: string
   withUrl?: boolean
+  onActiveFieldChange?: (field: 'title' | 'link' | 'caption' | null) => void
+  isActive?: boolean
 }) => {
   const [hasUrl, setHasUrl] = useState(false)
   const [editing, setEditing] = useState(false)
@@ -98,7 +117,7 @@ export const EditableHeader = ({
                   textAlign: 'left',
                   color: c.surface,
                   fontSize: 24,
-                  opacity: title ? 1 : 0.7,
+                  opacity: title ? 1 : 0.5,
                 }}
               >
                 {title || placeholder}
@@ -122,13 +141,12 @@ export const EditableHeader = ({
             autoFocus={true}
             value={title == placeholder ? '' : title}
             placeholder={placeholder}
+            placeholderTextColor={`${c.surface}80`}
             onChangeText={(e) => {
               setTitle(e)
             }}
             multiline={true}
-            onBlur={() => {
-              setEditing(false)
-            }}
+            onFocus={() => onActiveFieldChange?.('title')}
           ></TextInput>
         )}
 
@@ -164,7 +182,7 @@ export const EditableHeader = ({
         <XStack
           style={{
             alignItems: 'center',
-            paddingTop: s.$025,
+            paddingTop: s.$025 - 5,
           }}
           gap={s.$09}
         >
@@ -174,7 +192,7 @@ export const EditableHeader = ({
                 setEditing(false)
               }}
             >
-              <Ionicons size={28} name="checkbox-outline" color={c.surface2} />
+              {isActive ? <CircleCheckmark /> : null}
             </Pressable>
           ) : (
             !addingUrl &&

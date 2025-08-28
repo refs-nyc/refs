@@ -430,11 +430,8 @@ export const RefForm = ({
             // Default state - show chain link icon
             <TouchableWithoutFeedback
               onPress={() => {
-                // Dismiss keyboard first to prevent it from popping back up
-                Keyboard.dismiss()
-                // Reset caption focus state to prevent keyboardDidShow from snapping to 110%
-                onCaptionFocus?.(false)
-                // Then set active field to link
+                console.log('🔗 LINK ICON CLICK - Processing click')
+                // Set active field to link - let keyboard behavior handle itself
                 setActiveField('link')
               }}
             >

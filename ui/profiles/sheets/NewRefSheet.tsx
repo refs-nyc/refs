@@ -104,12 +104,17 @@ export const NewRefSheet = ({
   const [keyboardDismissing, setKeyboardDismissing] = useState<boolean>(false)
   // Track if we're manually handling a transition to prevent keyboard hide conflicts
   const [manualTransition, setManualTransition] = useState<boolean>(false)
+  // Track if keyboard is currently visible
+  const [keyboardVisible, setKeyboardVisible] = useState<boolean>(false)
+
 
   // Track keyboard state
   useEffect(() => {
     const keyboardDidShow = () => {
       // Don't snap again if already at the right height
       if (!isSheetOpen) return
+      
+      setKeyboardVisible(true)
 
       // During search step, always show at 80% (index 1)
       if (step === 'search') {
@@ -126,6 +131,8 @@ export const NewRefSheet = ({
     }
     const keyboardDidHide = () => {
       if (!isSheetOpen) return
+      
+      setKeyboardVisible(false)
       
       // Don't run if we're manually handling a transition
       if (manualTransition) {
@@ -177,12 +184,24 @@ export const NewRefSheet = ({
       // Don't snap to 85% if we're at 67% (keyboard dismissed)
       if (sheetIndex === 0) return
       // Don't snap to 85% if we're not in a state where we should be at 85%
-      // Only snap to 85% when initially opening the add step
-      if (sheetIndex !== -1) return
+      // Only snap to 85% when initially opening the add step or transitioning from search
+      if (sheetIndex !== -1 && sheetIndex !== 1) return
+      
+      // For non-photo prompts transitioning from search, the keyboard is already up
+      // so we need to snap to 85% and let the keyboard behavior handle the final position
       console.log('📊 ADD STEP EFFECT - Snapping to index 2 (85%)')
-      requestAnimationFrame(() => bottomSheetRef.current?.snapToIndex(2)) // 85%
+      requestAnimationFrame(() => {
+        bottomSheetRef.current?.snapToIndex(2) // 85%
+        // For non-photo prompts transitioning from search with keyboard up, ensure we stay at 85%
+        if (sheetIndex === 1 && keyboardVisible) {
+          // We're transitioning from search with keyboard up, so force the position
+          setTimeout(() => {
+            bottomSheetRef.current?.snapToIndex(2) // 85%
+          }, 100)
+        }
+      })
     }
-  }, [step, isSheetOpen, bottomSheetRef, captionFocused, sheetIndex, keyboardDismissing])
+  }, [step, isSheetOpen, bottomSheetRef, captionFocused, sheetIndex, keyboardDismissing, keyboardVisible])
 
   // Safety: whenever we are NOT on the add step, guarantee caption-focused state is false
   // so search or other steps never adopt caption behavior.
@@ -335,6 +354,11 @@ export const NewRefSheet = ({
                 // If caption loses focus, immediately snap to 67%
                 if (!focused) {
                   console.log('📝 CAPTION BLUR - Immediately snapping to 67%')
+                  // Don't snap to 67% if we're at 110% and keyboard is still up (just switching focus)
+                  if (sheetIndex === 4 && keyboardVisible) {
+                    console.log('📝 CAPTION BLUR - Staying at 110% (keyboard still up)')
+                    return
+                  }
                   setManualTransition(true)
                   requestAnimationFrame(() => {
                     bottomSheetRef.current?.snapToIndex(0) // 67%

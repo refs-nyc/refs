@@ -22,6 +22,7 @@ import { c, s } from '@/features/style'
 import { StagedItemFields } from '@/features/types'
 import { DismissKeyboard } from '../atoms/DismissKeyboard'
 import { Ionicons } from '@expo/vector-icons'
+import { Svg, Path, Defs, Filter, FeFlood, FeColorMatrix, FeOffset, FeComposite, FeBlend, G } from 'react-native-svg'
 
 const win = Dimensions.get('window')
 
@@ -40,6 +41,26 @@ const CircleCheckmark = () => (
   </View>
 )
 
+// Chain link icon component
+const ChainLinkIcon = () => (
+  <Svg width="23" height="26" viewBox="0 0 23 26" fill="none">
+    <Defs>
+      <Filter id="filter0_d_2988_18504" x="0.102539" y="0.24707" width="21.916" height="24.916" filterUnits="userSpaceOnUse">
+        <FeFlood floodOpacity="0" result="BackgroundImageFix"/>
+        <FeColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
+        <FeOffset dy="3"/>
+        <FeComposite in2="hardAlpha" operator="out"/>
+        <FeColorMatrix type="matrix" values="0 0 0 0 0.588235 0 0 0 0 0.568627 0 0 0 0 0.568627 0 0 0 0.25 0"/>
+        <FeBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_2988_18504"/>
+        <FeBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_2988_18504" result="shape"/>
+      </Filter>
+    </Defs>
+    <G filter="url(#filter0_d_2988_18504)">
+      <Path d="M12.9856 16.9807L10.4188 19.5475C9.39762 20.5686 8.01266 21.1423 6.56856 21.1423C5.12445 21.1423 3.7395 20.5686 2.71836 19.5475C1.69722 18.5263 1.12356 17.1414 1.12356 15.6973C1.12356 14.2532 1.69722 12.8682 2.71836 11.8471L5.28516 9.28027M9.13535 5.43008L11.7022 2.86328C12.7233 1.84214 14.1082 1.26847 15.5523 1.26847C16.9965 1.26847 18.3814 1.84214 19.4025 2.86328C20.4237 3.88441 20.9973 5.26937 20.9973 6.71347C20.9973 8.15758 20.4237 9.54253 19.4025 10.5637L16.8357 13.1305M7.34221 14.9236L14.8589 7.40691" stroke={c.surface} strokeWidth="2.04188" strokeLinecap="round" strokeLinejoin="round"/>
+    </G>
+  </Svg>
+)
+
 type ExistingRefFields = {
   title?: string
   url?: string
@@ -55,6 +76,7 @@ export const RefForm = ({
   pickerOpen = false,
   canEditRefData = true,
   onCaptionFocus,
+  onManualTransition,
 }: {
   existingRefFields: ExistingRefFields | null
   placeholder?: string
@@ -64,6 +86,7 @@ export const RefForm = ({
   backlog?: boolean
   canEditRefData?: boolean
   onCaptionFocus?: (focused: boolean) => void
+  onManualTransition?: () => void
 }) => {
   // Separate state for each field to prevent unnecessary re-renders
   const [title, setTitle] = useState<string>(existingRefFields?.title || '')
@@ -76,7 +99,27 @@ export const RefForm = ({
   const [createInProgress, setCreateInProgress] = useState(false)
   const [uploadInitiated, setUploadInitiated] = useState(false)
   const [editingUrl, setEditingUrl] = useState<boolean>(false)
-  const [activeField, setActiveField] = useState<'title' | 'link' | 'caption' | null>(null)
+  const [activeField, setActiveField] = useState<'title' | 'link' | 'caption' | null>('title')
+  const captionInputRef = useRef<any>(null)
+  const urlInputRef = useRef<any>(null)
+
+  // Auto-focus caption when activeField becomes 'caption'
+  useEffect(() => {
+    if (activeField === 'caption') {
+      setTimeout(() => {
+        captionInputRef.current?.focus()
+      }, 100)
+    }
+  }, [activeField])
+
+  // Auto-focus URL input when activeField becomes 'link'
+  useEffect(() => {
+    if (activeField === 'link') {
+      setTimeout(() => {
+        urlInputRef.current?.focus()
+      }, 100)
+    }
+  }, [activeField])
 
   // Animation refs
   const titleShake = useRef(new Animated.Value(0)).current
@@ -162,9 +205,10 @@ export const RefForm = ({
   }
 
   return (
-    <BottomSheetScrollView
-      showsVerticalScrollIndicator={false}
-      contentContainerStyle={{
+          <BottomSheetScrollView
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        contentContainerStyle={{
         gap: s.$1,
         marginTop: s.$2 - 5,
         marginBottom: s.$2 + 10,
@@ -286,6 +330,9 @@ export const RefForm = ({
           style={{
             width: '100%',
             marginBottom: 0,
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: s.$075,
             transform: [
               {
                 translateX: titleShake.interpolate({
@@ -301,44 +348,18 @@ export const RefForm = ({
               },
             ],
           }}
+          pointerEvents="box-none"
         >
-          <EditableHeader
-            canEditRefData={canEditRefData}
-            setTitle={setTitle}
-            setUrl={setUrl}
-            setImage={setPinataSource}
-            placeholder={placeholder}
-            title={title}
-            url={url || ''}
-            image={pinataSource}
-            withUrl={false}
-            onActiveFieldChange={setActiveField}
-            isActive={activeField === 'title'}
-          />
-        </Animated.View>
-
-        {/* Inline subtitle row (single field), directly below title */}
-        <View style={{ width: '100%', alignItems: 'flex-start', marginTop: -17, marginBottom: 2 }}>
-          {canEditRefData ? (
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: s.$075, width: '100%' }}>
+          {/* Title/URL input area with smooth animation */}
+          <Animated.View style={{ flex: 1 }}>
+            {activeField === 'link' ? (
               <TextInput
+                ref={urlInputRef}
                 value={url}
                 onChangeText={(t) => t.length <= 150 && setUrl(t)}
-                placeholder="+ add a link"
+                placeholder="type link here"
                 placeholderTextColor={`${c.surface}80`}
-                onFocus={() => {
-                  setEditingUrl(true)
-                  setActiveField('link')
-                }}
-                onBlur={() => {
-                  if (!url || url.trim() === '') {
-                    setEditingUrl(false)
-                    setActiveField(null)
-                  }
-                }}
                 style={{
-                  minWidth: 80,
-                  maxWidth: 280,
                   color: c.surface,
                   fontSize: url ? 18 : 17.6,
                   fontWeight: '600',
@@ -347,26 +368,93 @@ export const RefForm = ({
                   padding: 0,
                   margin: 0,
                   textAlign: 'left',
-                  flex: 1,
                 }}
                 maxLength={150}
                 returnKeyType="done"
-                onSubmitEditing={() => setEditingUrl(false)}
+                onSubmitEditing={() => {
+                  setActiveField('caption')
+                  // Focus the caption field to encourage typing
+                }}
+                onBlur={() => {
+                  // When URL editing loses focus (keyboard dismissed), return to normal state
+                  setActiveField(null)
+                  // Trigger manual transition to snap to 67%
+                  onManualTransition?.()
+                }}
               />
-              {activeField === 'link' && (
-                <Pressable onPress={() => setEditingUrl(false)}>
-                  <CircleCheckmark />
-                </Pressable>
-              )}
-            </View>
+            ) : (
+              <EditableHeader
+                canEditRefData={canEditRefData}
+                setTitle={setTitle}
+                setUrl={setUrl}
+                setImage={setPinataSource}
+                placeholder={placeholder}
+                title={title}
+                url={url || ''}
+                image={pinataSource}
+                withUrl={false}
+                onActiveFieldChange={setActiveField}
+                isActive={activeField === 'title'}
+                hideEditIcon={true}
+                forceNotEditing={false}
+                onManualTransition={onManualTransition}
+              />
+            )}
+          </Animated.View>
+
+          {/* Link icon or checkbox */}
+          {activeField === 'link' ? (
+            <TouchableWithoutFeedback
+              onPress={() => {
+                console.log('Link checkbox clicked, setting activeField to null')
+                // Trigger manual transition to snap to 67% (this sets manualTransition flag)
+                onManualTransition?.()
+                // Immediately change state to return to normal view
+                setActiveField(null)
+                // Dismiss keyboard after setting the flag
+                Keyboard.dismiss()
+                // Prevent caption from auto-focusing
+                setTimeout(() => {
+                  captionInputRef.current?.blur()
+                }, 50)
+              }}
+            >
+              <View style={{ 
+                zIndex: 9999,
+                elevation: 9999,
+                position: 'relative',
+                padding: 15,
+              }}>
+                <CircleCheckmark />
+              </View>
+            </TouchableWithoutFeedback>
+          ) : activeField === 'title' ? (
+            // Don't show anything when title is being edited - EditableHeader handles its own checkbox
+            null
           ) : (
-            <View style={{ width: '100%', alignItems: 'flex-start', marginTop: -17, marginBottom: 2 }}>
-              <Heading tag="h2" style={{ color: c.surface }}>
-                {url}
-              </Heading>
-            </View>
+            // Default state - show chain link icon
+            <TouchableWithoutFeedback
+              onPress={() => {
+                // Dismiss keyboard first to prevent it from popping back up
+                Keyboard.dismiss()
+                // Reset caption focus state to prevent keyboardDidShow from snapping to 110%
+                onCaptionFocus?.(false)
+                // Then set active field to link
+                setActiveField('link')
+              }}
+            >
+              <View style={{ 
+                opacity: url ? 0.5 : 0.7,
+                zIndex: 9999,
+                elevation: 9999,
+                position: 'relative',
+                padding: 15,
+              }}>
+                <ChainLinkIcon />
+              </View>
+            </TouchableWithoutFeedback>
           )}
-        </View>
+        </Animated.View>
 
         {/* Notes */}
         <View style={{ width: '100%', alignSelf: 'stretch' }}>
@@ -398,6 +486,10 @@ export const RefForm = ({
               // Snap to 100% when caption is focused to give full access to buttons
               // This will be handled by the parent BottomSheet's keyboardBehavior
               onCaptionFocus?.(true)
+            }}
+            onBlur={() => {
+              // Reset caption focus state when caption loses focus
+              onCaptionFocus?.(false)
             }}
             blurOnSubmit={false}
           />

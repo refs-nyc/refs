@@ -12,7 +12,7 @@ import { EditableList } from '@/ui/lists/EditableList'
 
 import BottomSheet, { BottomSheetBackdrop, BottomSheetView } from '@gorhom/bottom-sheet'
 import { useState, useEffect, useRef } from 'react'
-import { View, Platform, Keyboard } from 'react-native'
+import { View, Platform, Keyboard, Dimensions } from 'react-native'
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated'
 import { Collections } from '@/features/pocketbase/pocketbase-types'
 
@@ -100,6 +100,10 @@ export const NewRefSheet = ({
   const [captionFocused, setCaptionFocused] = useState<boolean>(false)
   // Track if this is a photo prompt to prevent auto-snapping to 100%
   const [photoPromptActive, setPhotoPromptActive] = useState<boolean>(false)
+  // Track if keyboard is being dismissed to prevent other snap effects
+  const [keyboardDismissing, setKeyboardDismissing] = useState<boolean>(false)
+  // Track if we're manually handling a transition to prevent keyboard hide conflicts
+  const [manualTransition, setManualTransition] = useState<boolean>(false)
 
   // Track keyboard state
   useEffect(() => {
@@ -107,23 +111,49 @@ export const NewRefSheet = ({
       // Don't snap again if already at the right height
       if (!isSheetOpen) return
 
-      // During search step, always show at 80% (index 0)
+      // During search step, always show at 80% (index 1)
       if (step === 'search') {
         requestAnimationFrame(() => bottomSheetRef.current?.snapToIndex(1)) // 80%
         return
       }
 
-      // Use 120% snap point for caption, 85% for other fields (add step)
-      const targetIndex = captionFocused ? 4 : 2
-      if (sheetIndex === targetIndex) return
-
-      requestAnimationFrame(() => bottomSheetRef.current?.snapToIndex(targetIndex))
+      // For add step, only snap if caption is focused (to 110%), otherwise let the add step effect handle it
+      if (step === 'add' && captionFocused) {
+        const targetIndex = 4 // 110%
+        if (sheetIndex === targetIndex) return
+        requestAnimationFrame(() => bottomSheetRef.current?.snapToIndex(targetIndex))
+      }
     }
     const keyboardDidHide = () => {
       if (!isSheetOpen) return
       
-      // When keyboard is dismissed, snap to 80% (default position)
-      requestAnimationFrame(() => bottomSheetRef.current?.snapToIndex(0))
+      // Don't run if we're manually handling a transition
+      if (manualTransition) {
+        console.log('🔽 KEYBOARD HIDE - Blocked by manualTransition flag')
+        return
+      }
+      
+      console.log('🔽 KEYBOARD HIDE - Setting keyboardDismissing=true')
+      // Set flag to prevent other snap effects
+      setKeyboardDismissing(true)
+      
+      // Reset caption focus state when keyboard is dismissed
+      if (captionFocused) {
+        console.log('🔽 KEYBOARD HIDE - Resetting captionFocused to false')
+        setCaptionFocused(false)
+      }
+      
+      // When keyboard is dismissed, snap directly to 67% (default position)
+      console.log('🔽 KEYBOARD HIDE - Snapping to index 0 (67%)')
+      requestAnimationFrame(() => {
+        bottomSheetRef.current?.snapToIndex(0) // 67%
+      })
+      
+      // Clear the flag after a delay
+      setTimeout(() => {
+        console.log('🔽 KEYBOARD HIDE - Clearing keyboardDismissing flag')
+        setKeyboardDismissing(false)
+      }, 200)
     }
     const showSub = Keyboard.addListener('keyboardDidShow', keyboardDidShow)
     const hideSub = Keyboard.addListener('keyboardDidHide', keyboardDidHide)
@@ -131,18 +161,28 @@ export const NewRefSheet = ({
       showSub.remove()
       hideSub.remove()
     }
-  }, [bottomSheetRef, isSheetOpen, sheetIndex, captionFocused, photoPromptActive, step])
+  }, [bottomSheetRef, isSheetOpen, sheetIndex, captionFocused, photoPromptActive, step, manualTransition])
 
   // When transitioning to the add step (e.g., after selecting from camera roll),
   // ensure the sheet is visible at 85% immediately, independent of keyboard events.
   useEffect(() => {
     if (!isSheetOpen) return
+    if (keyboardDismissing) {
+      console.log('🚫 ADD STEP EFFECT - Blocked by keyboardDismissing flag')
+      return // Don't run when keyboard is being dismissed
+    }
     if (step === 'add') {
-      // Ensure we start from non-caption state to avoid jumping to 110%
-      if (captionFocused) setCaptionFocused(false)
+      // Don't snap to 85% if caption is focused - let caption focus effect handle it
+      if (captionFocused) return
+      // Don't snap to 85% if we're at 67% (keyboard dismissed)
+      if (sheetIndex === 0) return
+      // Don't snap to 85% if we're not in a state where we should be at 85%
+      // Only snap to 85% when initially opening the add step
+      if (sheetIndex !== -1) return
+      console.log('📊 ADD STEP EFFECT - Snapping to index 2 (85%)')
       requestAnimationFrame(() => bottomSheetRef.current?.snapToIndex(2)) // 85%
     }
-  }, [step, isSheetOpen, bottomSheetRef, captionFocused])
+  }, [step, isSheetOpen, bottomSheetRef, captionFocused, sheetIndex, keyboardDismissing])
 
   // Safety: whenever we are NOT on the add step, guarantee caption-focused state is false
   // so search or other steps never adopt caption behavior.
@@ -152,15 +192,22 @@ export const NewRefSheet = ({
     }
   }, [step, captionFocused])
 
-  // React to caption focus changes directly. KeyboardBehavior may not re-run when
-  // switching fields with the keyboard already open, so explicitly snap.
+  // React to caption focus changes directly. Only snap to 110% when caption becomes focused
   useEffect(() => {
     if (!isSheetOpen) return
+    if (keyboardDismissing) {
+      console.log('🚫 CAPTION FOCUS EFFECT - Blocked by keyboardDismissing flag')
+      return // Don't run when keyboard is being dismissed
+    }
     if (step !== 'add') return
+    if (!captionFocused) return // Only run when caption becomes focused, not when it loses focus
+    
+    console.log('📝 CAPTION FOCUS EFFECT - Snapping to index 4 (110%)')
+    // Snap to 110% when caption is focused
     requestAnimationFrame(() =>
-      bottomSheetRef.current?.snapToIndex(captionFocused ? 4 : 2)
+      bottomSheetRef.current?.snapToIndex(4) // 110%
     )
-  }, [captionFocused, step, isSheetOpen, bottomSheetRef])
+  }, [captionFocused, step, isSheetOpen, bottomSheetRef, sheetIndex, keyboardDismissing])
 
   // Handle photo prompts - use selectedPhoto from store if available
   useEffect(() => {
@@ -224,7 +271,7 @@ export const NewRefSheet = ({
       enablePanDownToClose={true}
       snapPoints={snapPoints}
       index={-1}
-      keyboardBehavior={captionFocused ? "extend" : "interactive"}
+      keyboardBehavior="interactive"
       backgroundStyle={{ backgroundColor: c.olive, borderRadius: 50, paddingTop: 0 }}
       onChange={(i: number) => {
         setIsSheetOpen(i !== -1)
@@ -283,7 +330,32 @@ export const NewRefSheet = ({
               placeholder={addRefPrompt || 'Add a title'}
               pickerOpen={false}
               canEditRefData={true}
-              onCaptionFocus={(focused) => setCaptionFocused(focused)}
+              onCaptionFocus={(focused) => {
+                setCaptionFocused(focused)
+                // If caption loses focus, immediately snap to 67%
+                if (!focused) {
+                  console.log('📝 CAPTION BLUR - Immediately snapping to 67%')
+                  setManualTransition(true)
+                  requestAnimationFrame(() => {
+                    bottomSheetRef.current?.snapToIndex(0) // 67%
+                    // Clear manual transition flag after a longer delay to ensure keyboard hide completes
+                    setTimeout(() => {
+                      setManualTransition(false)
+                    }, 300)
+                  })
+                }
+              }}
+              onManualTransition={() => {
+                console.log('🔄 MANUAL TRANSITION - Setting flag and snapping to 67%')
+                setManualTransition(true)
+                requestAnimationFrame(() => {
+                  bottomSheetRef.current?.snapToIndex(0) // 67%
+                  // Clear manual transition flag after a longer delay to ensure keyboard hide completes
+                  setTimeout(() => {
+                    setManualTransition(false)
+                  }, 300)
+                })
+              }}
               onAddRef={async (itemFields) => {
                 // Merge promptContext from refFields if present
                 const mergedFields = { ...itemFields, promptContext: refFields?.promptContext }

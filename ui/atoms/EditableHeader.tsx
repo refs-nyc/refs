@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Pressable, View } from 'react-native'
+import { Pressable, View, TouchableWithoutFeedback } from 'react-native'
 import { BottomSheetTextInput as TextInput } from '@gorhom/bottom-sheet'
 import { XStack } from '@/ui/core/Stacks'
 import { Heading } from '@/ui/typo/Heading'
@@ -35,6 +35,9 @@ export const EditableHeader = ({
   withUrl = true,
   onActiveFieldChange,
   isActive = false,
+  hideEditIcon = false,
+  forceNotEditing = false,
+  onManualTransition,
 }: {
   canEditRefData: boolean
   title: string
@@ -47,10 +50,20 @@ export const EditableHeader = ({
   withUrl?: boolean
   onActiveFieldChange?: (field: 'title' | 'link' | 'caption' | null) => void
   isActive?: boolean
+  hideEditIcon?: boolean
+  forceNotEditing?: boolean
+  onManualTransition?: () => void
 }) => {
   const [hasUrl, setHasUrl] = useState(false)
   const [editing, setEditing] = useState(false)
   const [addingUrl, setAddingUrl] = useState(false)
+
+  // Auto-start editing when isActive is true
+  useEffect(() => {
+    if (isActive && !editing) {
+      setEditing(true)
+    }
+  }, [isActive, editing])
 
   // Auto-focus when there's a pre-populated image but no title
   useEffect(() => {
@@ -97,7 +110,7 @@ export const EditableHeader = ({
           // backgroundColor: 'green',
         }}
       >
-        {!editing && !addingUrl && (
+        {(!editing || forceNotEditing) && !addingUrl && (
           <XStack
             gap={s.$08}
             style={{
@@ -125,7 +138,7 @@ export const EditableHeader = ({
             </Pressable>
           </XStack>
         )}
-        {!addingUrl && editing && (
+        {!addingUrl && editing && !forceNotEditing && (
           <TextInput
             style={[
               t.h2,
@@ -138,7 +151,6 @@ export const EditableHeader = ({
                 fontSize: 24,
               },
             ]}
-            autoFocus={true}
             value={title == placeholder ? '' : title}
             placeholder={placeholder}
             placeholderTextColor={`${c.surface}80`}
@@ -147,6 +159,12 @@ export const EditableHeader = ({
             }}
             multiline={true}
             onFocus={() => onActiveFieldChange?.('title')}
+            onBlur={() => {
+              // When title editing loses focus (keyboard dismissed), return to normal state
+              onActiveFieldChange?.(null)
+              // Trigger manual transition to snap to 67%
+              onManualTransition?.()
+            }}
           ></TextInput>
         )}
 
@@ -187,16 +205,28 @@ export const EditableHeader = ({
           gap={s.$09}
         >
           {editing ? (
-            <Pressable
+            <TouchableWithoutFeedback
               onPress={() => {
                 setEditing(false)
+                // Trigger manual transition to snap to 67%
+                onManualTransition?.()
+                // When title editing is complete, move to caption field
+                onActiveFieldChange?.('caption')
               }}
             >
-              {isActive ? <CircleCheckmark /> : null}
-            </Pressable>
+              <View style={{
+                zIndex: 9999,
+                elevation: 9999,
+                position: 'relative',
+                padding: 15,
+              }}>
+                {isActive ? <CircleCheckmark /> : null}
+              </View>
+            </TouchableWithoutFeedback>
           ) : (
             !addingUrl &&
-            canEditRefData && (
+            canEditRefData &&
+            !hideEditIcon && (
               <Pressable
                 style={{
                   width: 28,

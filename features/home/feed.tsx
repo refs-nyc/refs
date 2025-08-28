@@ -183,7 +183,7 @@ export const Feed = () => {
                 gap={0}
                 style={{
                   flex: 1,
-                  paddingBottom: s.$12,
+                  paddingBottom: s.$6, // Reduced by 75px (from s.$12 to s.$6)
                 }}
               >
                 {items.map((item) => (

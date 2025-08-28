@@ -14,6 +14,7 @@ import BottomSheet, { BottomSheetBackdrop, BottomSheetView } from '@gorhom/botto
 import { useState, useEffect, useRef } from 'react'
 import { View, Platform, Keyboard } from 'react-native'
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated'
+import { Collections } from '@/features/pocketbase/pocketbase-types'
 
 export type NewRefStep =
   | 'search'
@@ -89,21 +90,39 @@ export const NewRefSheet = ({
   }
 
   // Adjust snap points to reduce visible "duck" when switching content
-  const snapPoints = ['69%', '80%']
+  const snapPoints = ['67%', '80%', '85%', '100%', '110%']
   // Track if the sheet is open
   const [isSheetOpen, setIsSheetOpen] = useState(false)
   // Track current sheet index to prevent redundant snap animations
   const [sheetIndex, setSheetIndex] = useState<number>(-1)
+  
+  // Track caption focus for keyboard handling
+  const [captionFocused, setCaptionFocused] = useState<boolean>(false)
+  // Track if this is a photo prompt to prevent auto-snapping to 100%
+  const [photoPromptActive, setPhotoPromptActive] = useState<boolean>(false)
 
   // Track keyboard state
   useEffect(() => {
     const keyboardDidShow = () => {
-      // Let the sheet settle before moving to avoid jumpiness
+      // Don't snap again if already at the right height
       if (!isSheetOpen) return
-      requestAnimationFrame(() => bottomSheetRef.current?.snapToIndex(1))
+
+      // During search step, always show at 80% (index 0)
+      if (step === 'search') {
+        requestAnimationFrame(() => bottomSheetRef.current?.snapToIndex(1)) // 80%
+        return
+      }
+
+      // Use 120% snap point for caption, 85% for other fields (add step)
+      const targetIndex = captionFocused ? 4 : 2
+      if (sheetIndex === targetIndex) return
+
+      requestAnimationFrame(() => bottomSheetRef.current?.snapToIndex(targetIndex))
     }
     const keyboardDidHide = () => {
       if (!isSheetOpen) return
+      
+      // When keyboard is dismissed, snap to 80% (default position)
       requestAnimationFrame(() => bottomSheetRef.current?.snapToIndex(0))
     }
     const showSub = Keyboard.addListener('keyboardDidShow', keyboardDidShow)
@@ -112,7 +131,91 @@ export const NewRefSheet = ({
       showSub.remove()
       hideSub.remove()
     }
-  }, [bottomSheetRef, isSheetOpen, sheetIndex])
+  }, [bottomSheetRef, isSheetOpen, sheetIndex, captionFocused, photoPromptActive, step])
+
+  // When transitioning to the add step (e.g., after selecting from camera roll),
+  // ensure the sheet is visible at 85% immediately, independent of keyboard events.
+  useEffect(() => {
+    if (!isSheetOpen) return
+    if (step === 'add') {
+      // Ensure we start from non-caption state to avoid jumping to 110%
+      if (captionFocused) setCaptionFocused(false)
+      requestAnimationFrame(() => bottomSheetRef.current?.snapToIndex(2)) // 85%
+    }
+  }, [step, isSheetOpen, bottomSheetRef, captionFocused])
+
+  // Safety: whenever we are NOT on the add step, guarantee caption-focused state is false
+  // so search or other steps never adopt caption behavior.
+  useEffect(() => {
+    if (step !== 'add' && captionFocused) {
+      setCaptionFocused(false)
+    }
+  }, [step, captionFocused])
+
+  // React to caption focus changes directly. KeyboardBehavior may not re-run when
+  // switching fields with the keyboard already open, so explicitly snap.
+  useEffect(() => {
+    if (!isSheetOpen) return
+    if (step !== 'add') return
+    requestAnimationFrame(() =>
+      bottomSheetRef.current?.snapToIndex(captionFocused ? 4 : 2)
+    )
+  }, [captionFocused, step, isSheetOpen, bottomSheetRef])
+
+  // Handle photo prompts - use selectedPhoto from store if available
+  useEffect(() => {
+    if (isOpen && addRefPrompt) {
+      // Check if this is a photo prompt
+      const photoPrompts = ['Piece from a museum', 'Tradition you love', 'Meme', 'halloween pic']
+      
+      if (photoPrompts.includes(addRefPrompt)) {
+        // Check if photo is already available from MyProfile
+        const { selectedPhoto } = useAppStore.getState()
+        
+        if (selectedPhoto) {
+          // Photo was already selected in MyProfile - use it directly
+          setPhotoPromptActive(true)
+          setRefFields({ 
+            title: '', 
+            image: selectedPhoto, 
+            url: '',
+            promptContext: addRefPrompt 
+          })
+          setStep('add')
+          useAppStore.getState().setSelectedPhoto(null)
+          
+          // Open at 85% (index 2) for photo prompts to match add-step behavior
+          setTimeout(() => {
+            bottomSheetRef.current?.snapToIndex(2)
+          }, 50)
+        } else {
+          // Photo not available yet - wait for it
+          const checkForPhoto = () => {
+            const { selectedPhoto: currentPhoto } = useAppStore.getState()
+            if (currentPhoto) {
+              setPhotoPromptActive(true)
+              setRefFields({ 
+                title: '', 
+                image: currentPhoto, 
+                url: '',
+                promptContext: addRefPrompt 
+              })
+              setStep('add')
+              useAppStore.getState().setSelectedPhoto(null)
+              
+              setTimeout(() => {
+                bottomSheetRef.current?.snapToIndex(2)
+              }, 50)
+            } else {
+              // Check again in 50ms
+              setTimeout(checkForPhoto, 50)
+            }
+          }
+          checkForPhoto()
+        }
+      }
+    }
+  }, [isOpen, addRefPrompt])
 
   return (
     <BottomSheet
@@ -121,7 +224,7 @@ export const NewRefSheet = ({
       enablePanDownToClose={true}
       snapPoints={snapPoints}
       index={-1}
-      keyboardBehavior="interactive"
+      keyboardBehavior={captionFocused ? "extend" : "interactive"}
       backgroundStyle={{ backgroundColor: c.olive, borderRadius: 50, paddingTop: 0 }}
       onChange={(i: number) => {
         setIsSheetOpen(i !== -1)
@@ -135,6 +238,7 @@ export const NewRefSheet = ({
           setItemToReplace(null)
           setExistingRefId(null)
           setRefFields(null)
+          setPhotoPromptActive(false)
         }
       }}
       handleComponent={null}
@@ -174,27 +278,72 @@ export const NewRefSheet = ({
 
           {step === 'add' && (
             <RefForm
+              key={`ref-form-${refFields?.image || 'no-image'}-${addRefPrompt || 'no-prompt'}`}
               existingRefFields={refFields}
+              placeholder={addRefPrompt || 'Add a title'}
               pickerOpen={false}
               canEditRefData={true}
+              onCaptionFocus={(focused) => setCaptionFocused(focused)}
               onAddRef={async (itemFields) => {
                 // Merge promptContext from refFields if present
                 const mergedFields = { ...itemFields, promptContext: refFields?.promptContext }
+                
                 if (!backlog) {
-                  // check if the grid is full
-                  const gridItems = await getProfileItems(user?.userName!)
-                  if (gridItems.length >= 12) {
+                  // Use cached grid count instead of database query
+                  const { gridItemCount } = useAppStore.getState()
+                  if (gridItemCount >= 12) {
                     setStagedItemFields(mergedFields)
                     setStep('selectItemToReplace')
                     return
                   }
                 }
 
-                const newItem = await addToProfile(existingRefId, mergedFields, backlog)
-                setItemData(newItem)
-                // finish the flow
-                triggerProfileRefresh()
-                setStep('addedToGrid')
+                // Create optimistic item immediately
+                const optimisticItem: ExpandedItem = {
+                  id: `temp-${Date.now()}`, collectionId: Collections.Items, collectionName: Collections.Items,
+                  creator: user?.id || '', ref: existingRefId || 'temp-ref', image: itemFields.image || '',
+                  url: itemFields.url || '', text: itemFields.text || '', list: itemFields.list || false,
+                  parent: itemFields.parent || '', backlog, order: 0,
+                  created: new Date().toISOString(), updated: new Date().toISOString(),
+                  promptContext: mergedFields.promptContext || '',
+                  expand: { 
+                    ref: { 
+                      id: existingRefId || 'temp-ref', 
+                      title: itemFields.title || '', 
+                      image: itemFields.image || '', // Use same image source
+                      url: itemFields.url || '',
+                      meta: '{}',
+                      creator: user?.id || '',
+                      created: new Date().toISOString(),
+                      updated: new Date().toISOString()
+                    }, 
+                    creator: null as any, 
+                    items_via_parent: [] as any 
+                  }
+                }
+
+                // Add optimistic item to grid immediately
+                const { addOptimisticItem } = useAppStore.getState()
+                addOptimisticItem(optimisticItem)
+
+                // Close the sheet immediately to show the animation
+                bottomSheetRef.current?.close()
+                
+                // Background database operations
+                ;(async () => {
+                  try {
+                    const newItem = await addToProfile(existingRefId, mergedFields, backlog)
+                    
+                    // Don't replace optimistic item - let it stay until grid refresh
+                    // This prevents the flash from the replacement process
+                    setItemData(newItem)
+                  } catch (error) {
+                    console.error('Failed to add item to profile:', error)
+                    // Remove optimistic item on failure
+                    const { removeOptimisticItem } = useAppStore.getState()
+                    removeOptimisticItem(optimisticItem.id)
+                  }
+                })()
               }}
               onAddRefToList={async (itemFields) => {
                 const mergedFields = { ...itemFields, promptContext: refFields?.promptContext }

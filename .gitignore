@@ -61,4 +61,4 @@ docs/.vitepress/dist
 
 # AI Agent files (not part of build)
 agent.readme.md
-agent.readme.md.backup
+agent.readme.md.backupagent.readme.md

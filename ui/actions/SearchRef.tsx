@@ -337,6 +337,7 @@ export const SearchRef = ({
                 setUploadInProgress(false)
                 setImageAsset(null)
               }}
+              allowBackgroundUpload={true}
             />
           )}
         </View>

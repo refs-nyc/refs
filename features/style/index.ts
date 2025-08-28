@@ -19,6 +19,8 @@ export const c = {
   grey2: '#787676',
   muted: '#787676',
   muted2: '#414040',
+  // Prompt text grey (helper text)
+  prompt: '#B0B0B0',
   // Rare
   none: 'transparent',
   red: '#f00',

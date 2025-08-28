@@ -122,11 +122,18 @@ export const NewRefSheet = ({
         return
       }
 
-      // For add step, only snap if caption is focused (to 110%), otherwise let the add step effect handle it
-      if (step === 'add' && captionFocused) {
-        const targetIndex = 4 // 110%
-        if (sheetIndex === targetIndex) return
-        requestAnimationFrame(() => bottomSheetRef.current?.snapToIndex(targetIndex))
+      // For add step, snap to 110% if caption is focused, otherwise snap to 85%
+      if (step === 'add') {
+        if (captionFocused) {
+          const targetIndex = 4 // 110%
+          if (sheetIndex === targetIndex) return
+          requestAnimationFrame(() => bottomSheetRef.current?.snapToIndex(targetIndex))
+        } else {
+          // For add step without caption focused, snap to 85%
+          const targetIndex = 2 // 85%
+          if (sheetIndex === targetIndex) return
+          requestAnimationFrame(() => bottomSheetRef.current?.snapToIndex(targetIndex))
+        }
       }
     }
     const keyboardDidHide = () => {
@@ -179,11 +186,18 @@ export const NewRefSheet = ({
       return // Don't run when keyboard is being dismissed
     }
     if (step === 'add') {
+      console.log('📊 ADD STEP EFFECT - step=add, sheetIndex:', sheetIndex, 'captionFocused:', captionFocused)
       // Don't snap to 85% if caption is focused - let caption focus effect handle it
-      if (captionFocused) return
+      if (captionFocused) {
+        console.log('📊 ADD STEP EFFECT - Caption focused, skipping')
+        return
+      }
       // Don't snap to 85% if we're not in a state where we should be at 85%
       // Only snap to 85% when initially opening the add step or transitioning from search
-      if (sheetIndex !== -1 && sheetIndex !== 1) return
+      if (sheetIndex !== -1 && sheetIndex !== 1) {
+        console.log('📊 ADD STEP EFFECT - Wrong sheetIndex:', sheetIndex, 'skipping')
+        return
+      }
       
       // For non-photo prompts transitioning from search, the keyboard is already up
       // so we need to snap to 85% and let the keyboard behavior handle the final position
@@ -291,6 +305,7 @@ export const NewRefSheet = ({
       keyboardBehavior="interactive"
       backgroundStyle={{ backgroundColor: c.olive, borderRadius: 50, paddingTop: 0 }}
       onChange={(i: number) => {
+        console.log('📱 SHEET CHANGE - index:', i, 'step:', step)
         setIsSheetOpen(i !== -1)
         setSheetIndex(i)
         if (i === -1) {

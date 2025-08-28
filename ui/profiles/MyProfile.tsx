@@ -110,12 +110,16 @@ export const MyProfile = ({ userName }: { userName: string }) => {
       const key = registerBackdropPress(() => {
         setShowDirectPhotoForm(false)
         setDirectPhotoRefFields(null)
+        // Ensure backdrop animated index is reset when closed via backdrop press
+        if (detailsBackdropAnimatedIndex) {
+          detailsBackdropAnimatedIndex.value = -1
+        }
       })
       return () => {
         unregisterBackdropPress(key)
       }
     }
-  }, [showDirectPhotoForm])
+  }, [showDirectPhotoForm, detailsBackdropAnimatedIndex])
 
   // Simple keyboard dismissal - snap to 67% when keyboard is not showing
   useEffect(() => {
@@ -400,7 +404,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
     }
   }, [gridItems.length, searchMode, isSearchResultsSheetOpen, startupAnimationDone, loading])
 
-  // Direct photo picker flow - bypasses NewRefSheet entirely
+  // Direct photo picker flow - route into existing NewRefSheet with pre-populated photo
   const triggerDirectPhotoPicker = async (prompt: string) => {
     try {
       // Request permissions
@@ -418,16 +422,12 @@ export const MyProfile = ({ userName }: { userName: string }) => {
 
       if (!result.canceled && result.assets && result.assets[0]) {
         const selectedImage = result.assets[0]
-        
-        // Open direct photo form - no NewRefSheet involved
-        setShowDirectPhotoForm(true)
-        setDirectPhotoRefFields({
-          title: '',
-          image: selectedImage.uri,
-          url: '',
-          promptContext: prompt
-        })
-
+        // Populate store so NewRefSheet picks it up as a photo prompt
+        try { useAppStore.getState().setSelectedPhoto(selectedImage.uri) } catch {}
+        try { useAppStore.getState().setAddRefPrompt(prompt) } catch {}
+        // Open NewRefSheet directly at search-results height; it will switch to add step
+        setAddingNewRefTo('grid')
+        newRefSheetRef.current?.snapToIndex(1)
       }
     } catch (error) {
       console.error('Error picking image:', error)

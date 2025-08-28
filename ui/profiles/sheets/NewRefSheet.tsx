@@ -248,6 +248,7 @@ export const NewRefSheet = ({
             <RefForm
               key={`ref-form-${refFields?.image || 'no-image'}-${addRefPrompt || 'no-prompt'}`}
               existingRefFields={refFields}
+              placeholder={addRefPrompt || 'Add a title'}
               pickerOpen={false}
               canEditRefData={true}
               onCaptionFocus={(focused) => setCaptionFocused(focused)}

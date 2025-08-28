@@ -151,6 +151,7 @@ export const EditableHeader = ({
                 fontSize: 24,
               },
             ]}
+            autoFocus={isActive}
             value={title == placeholder ? '' : title}
             placeholder={placeholder}
             placeholderTextColor={`${c.surface}80`}

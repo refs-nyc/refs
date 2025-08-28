@@ -90,7 +90,7 @@ export const NewRefSheet = ({
   }
 
   // Adjust snap points to reduce visible "duck" when switching content
-  const snapPoints = ['80%', '85%', '100%', '110%']
+  const snapPoints = ['67%', '80%', '85%', '100%', '110%']
   // Track if the sheet is open
   const [isSheetOpen, setIsSheetOpen] = useState(false)
   // Track current sheet index to prevent redundant snap animations
@@ -106,14 +106,17 @@ export const NewRefSheet = ({
     const keyboardDidShow = () => {
       // Don't snap again if already at the right height
       if (!isSheetOpen) return
-      
-      // Don't auto-snap to 100% for photo prompts - let user control it
-      if (photoPromptActive) return
-      
-      // Use 120% snap point for caption, 85% for other fields
-      const targetIndex = captionFocused ? 3 : 1
+
+      // During search step, always show at 80% (index 0)
+      if (step === 'search') {
+        requestAnimationFrame(() => bottomSheetRef.current?.snapToIndex(1)) // 80%
+        return
+      }
+
+      // Use 120% snap point for caption, 85% for other fields (add step)
+      const targetIndex = captionFocused ? 4 : 2
       if (sheetIndex === targetIndex) return
-      
+
       requestAnimationFrame(() => bottomSheetRef.current?.snapToIndex(targetIndex))
     }
     const keyboardDidHide = () => {
@@ -128,7 +131,36 @@ export const NewRefSheet = ({
       showSub.remove()
       hideSub.remove()
     }
-  }, [bottomSheetRef, isSheetOpen, sheetIndex, captionFocused, photoPromptActive])
+  }, [bottomSheetRef, isSheetOpen, sheetIndex, captionFocused, photoPromptActive, step])
+
+  // When transitioning to the add step (e.g., after selecting from camera roll),
+  // ensure the sheet is visible at 85% immediately, independent of keyboard events.
+  useEffect(() => {
+    if (!isSheetOpen) return
+    if (step === 'add') {
+      // Ensure we start from non-caption state to avoid jumping to 110%
+      if (captionFocused) setCaptionFocused(false)
+      requestAnimationFrame(() => bottomSheetRef.current?.snapToIndex(2)) // 85%
+    }
+  }, [step, isSheetOpen, bottomSheetRef, captionFocused])
+
+  // Safety: whenever we are NOT on the add step, guarantee caption-focused state is false
+  // so search or other steps never adopt caption behavior.
+  useEffect(() => {
+    if (step !== 'add' && captionFocused) {
+      setCaptionFocused(false)
+    }
+  }, [step, captionFocused])
+
+  // React to caption focus changes directly. KeyboardBehavior may not re-run when
+  // switching fields with the keyboard already open, so explicitly snap.
+  useEffect(() => {
+    if (!isSheetOpen) return
+    if (step !== 'add') return
+    requestAnimationFrame(() =>
+      bottomSheetRef.current?.snapToIndex(captionFocused ? 4 : 2)
+    )
+  }, [captionFocused, step, isSheetOpen, bottomSheetRef])
 
   // Handle photo prompts - use selectedPhoto from store if available
   useEffect(() => {
@@ -152,9 +184,9 @@ export const NewRefSheet = ({
           setStep('add')
           useAppStore.getState().setSelectedPhoto(null)
           
-          // Ensure sheet opens at 67% (index 0) for photo prompts
+          // Open at 85% (index 2) for photo prompts to match add-step behavior
           setTimeout(() => {
-            bottomSheetRef.current?.snapToIndex(0)
+            bottomSheetRef.current?.snapToIndex(2)
           }, 50)
         } else {
           // Photo not available yet - wait for it
@@ -172,7 +204,7 @@ export const NewRefSheet = ({
               useAppStore.getState().setSelectedPhoto(null)
               
               setTimeout(() => {
-                bottomSheetRef.current?.snapToIndex(0)
+                bottomSheetRef.current?.snapToIndex(2)
               }, 50)
             } else {
               // Check again in 50ms

@@ -40,26 +40,50 @@ export const PinataImage = ({
   const pulseAnim = useRef(new Animated.Value(1)).current
   const fadeAnim = useRef(new Animated.Value(0)).current
 
+  // Track a single in-flight upload to avoid duplicate attempts
+  const isUploadingRef = useRef(false)
+  // Track if we've already auto-retried on reconnect to avoid loops
+  const didReconnectRetryRef = useRef(false)
+
+  const withTimeout = async <T,>(promise: Promise<T>, ms: number): Promise<T> => {
+    return new Promise<T>((resolve, reject) => {
+      const timer = setTimeout(() => reject(new Error('upload-timeout')), ms)
+      promise
+        .then((v) => {
+          clearTimeout(timer)
+          resolve(v)
+        })
+        .catch((e) => {
+          clearTimeout(timer)
+          reject(e)
+        })
+    })
+  }
+
   const handleLongpress = () => {
     if (source || pinataSource) onReplace()
   }
 
   const handleRetry = async () => {
     if (typeof asset === 'string' || retrying) return
+    if (isUploadingRef.current) return
     
     setRetrying(true)
     setUploadFailed(false)
+    isUploadingRef.current = true
     
     try {
-      const url = await pinataUpload(asset)
+      const url = await withTimeout(pinataUpload(asset), 25000)
       setPinataSource(url)
       onSuccess(url)
       setRetrying(false)
+      didReconnectRetryRef.current = false
     } catch (error) {
-      console.error('Retry upload failed:', error)
+      console.warn('Retry upload failed:', error)
       setUploadFailed(true)
       setRetrying(false)
     }
+    isUploadingRef.current = false
   }
 
   // Start pulsing animation when loading
@@ -114,20 +138,24 @@ export const PinataImage = ({
         
         // Start background upload
         ;(async () => {
+          if (isUploadingRef.current) return
+          isUploadingRef.current = true
           try {
-            const url = await pinataUpload(asset)
-            // Don't update pinataSource to avoid re-render flash
-            // The parent component can handle the URL update if needed
+            const url = await withTimeout(pinataUpload(asset), 25000)
+            // Don't update pinataSource here to avoid visual flash; parent may react to onSuccess elsewhere
+            setPinataSource(url)
+            setUploadFailed(false)
           } catch (error) {
-            console.error('Background upload failed:', error)
+            console.warn('Background upload failed:', error)
             setUploadFailed(true)
           }
+          isUploadingRef.current = false
         })()
       } else {
         // Traditional blocking upload
         try {
           setLoading(true)
-          const url = await pinataUpload(asset)
+          const url = await withTimeout(pinataUpload(asset), 30000)
           setPinataSource(url)
           onSuccess(url)
 
@@ -140,7 +168,7 @@ export const PinataImage = ({
             setLoading(false)
           })
         } catch (error) {
-          console.error(error)
+          console.warn('Upload failed:', error)
           setLoading(false)
           setUploadFailed(true)
           onFail()
@@ -151,6 +179,17 @@ export const PinataImage = ({
     // Always run when asset changes and we're connected
     if (isConnected) load()
   }, [asset, isConnected, allowBackgroundUpload])
+
+  // Auto-retry once on reconnect if a background upload previously failed
+  useEffect(() => {
+    if (!allowBackgroundUpload) return
+    if (uploadFailed && isConnected && !isUploadingRef.current && !didReconnectRetryRef.current) {
+      didReconnectRetryRef.current = true
+      // Attempt a single automatic retry
+      // Reuse handleRetry if possible; falls back to background code path timing
+      handleRetry()
+    }
+  }, [isConnected, uploadFailed, allowBackgroundUpload])
 
   const displaySource = source // Always use local source to prevent flashing
 

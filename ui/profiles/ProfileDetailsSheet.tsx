@@ -50,7 +50,7 @@ export const ProfileDetailsSheet = ({
   const [profile, setProfile] = useState<Profile | null>(null)
   const [gridItems, setGridItems] = useState<ExpandedItem[]>([])
   const {
-    profileRefreshTrigger,
+
     user,
     detailsBackdropAnimatedIndex,
     registerBackdropPress,
@@ -68,7 +68,7 @@ export const ProfileDetailsSheet = ({
       setGridItems(gridItems)
     }
     initializeData()
-  }, [profileUsername, profileRefreshTrigger, user?.userName])
+  }, [profileUsername, user?.userName])
 
   // if the current user is the item creator, then they have editing rights
   const editingRights = profile?.id === user?.id

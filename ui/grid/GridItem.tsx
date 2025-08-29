@@ -5,6 +5,7 @@ import { GridTileType } from '@/features/types'
 import { Heading } from '../typo/Heading'
 import { s, c } from '@/features/style'
 import { useAppStore } from '@/features/stores'
+import { useMemo } from 'react'
 
 export const GridItem = ({
   item,
@@ -17,7 +18,10 @@ export const GridItem = ({
   i: number
   onPress?: () => {}
 }) => {
-  const image = item.image || item.expand.ref?.image
+  const image = useMemo(() => {
+    const imageSource = item.image || item.expand.ref?.image
+    return imageSource
+  }, [item.image, item.expand.ref?.image])
   const { uploadingItems } = useAppStore()
   const processing = uploadingItems?.has?.(item.id)
   return (

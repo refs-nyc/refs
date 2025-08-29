@@ -163,40 +163,48 @@ export const createItemSlice: StateCreator<StoreSlices, [], [], ItemSlice> = (se
   decrementGridItemCount: () => set((state) => ({ gridItemCount: Math.max(0, state.gridItemCount - 1) })),
   addOptimisticItem: (item: ExpandedItem) =>
     set((state) => {
+      console.log('➕ ADDING OPTIMISTIC ITEM:', item.id)
+      // Only update if the item doesn't already exist or is different
+      const existingItem = state.optimisticItems.get(item.id)
+      if (existingItem && JSON.stringify(existingItem) === JSON.stringify(item)) {
+        console.log('➕ OPTIMISTIC ITEM ALREADY EXISTS, NO CHANGE')
+        return state // No change needed
+      }
       const next = new Map(state.optimisticItems)
       next.set(item.id, item)
+      console.log('➕ OPTIMISTIC ITEM ADDED, NEW MAP SIZE:', next.size)
       return { optimisticItems: next }
     }),
   replaceOptimisticItem: (tempId: string, realItem: ExpandedItem) =>
     set((state) => {
+      console.log('🔄 REPLACING OPTIMISTIC ITEM:', tempId, '->', realItem.id)
       const next = new Map(state.optimisticItems)
-      const optimisticItem = next.get(tempId)
       
-      if (optimisticItem) {
-        // Preserve the image source from the optimistic item to prevent flashing
-        const itemWithPreservedImage = {
-          ...realItem,
-          image: optimisticItem.image, // Keep the same image source
-          expand: {
-            ...realItem.expand,
-            ref: {
-              ...realItem.expand?.ref,
-              image: optimisticItem.expand?.ref?.image || optimisticItem.image, // Keep the same image source
-            }
-          }
-        }
-        
-        next.delete(tempId)
-        next.set(realItem.id, itemWithPreservedImage)
-      } else {
-        next.delete(tempId)
-        next.set(realItem.id, realItem)
+      // Preserve the image from the optimistic item if the real item doesn't have one
+      const optimisticItem = next.get(tempId)
+      const itemWithPreservedImage = optimisticItem && !realItem.image && optimisticItem.image
+        ? { ...realItem, image: optimisticItem.image }
+        : realItem
+      
+      // Only update if the item is different
+      const existingItem = next.get(realItem.id)
+      if (existingItem && JSON.stringify(existingItem) === JSON.stringify(itemWithPreservedImage)) {
+        console.log('🔄 OPTIMISTIC ITEM REPLACEMENT - NO CHANGE NEEDED')
+        return state // No change needed
       }
       
+      next.delete(tempId)
+      next.set(realItem.id, itemWithPreservedImage)
+      console.log('🔄 OPTIMISTIC ITEM REPLACED, NEW MAP SIZE:', next.size)
       return { optimisticItems: next }
     }),
   removeOptimisticItem: (tempId: string) =>
     set((state) => {
+      // Only update if the item exists
+      if (!state.optimisticItems.has(tempId)) {
+        return state // No change needed
+      }
+      
       const next = new Map(state.optimisticItems)
       next.delete(tempId)
       return { optimisticItems: next }

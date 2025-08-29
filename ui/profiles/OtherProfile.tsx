@@ -20,7 +20,7 @@ export const OtherProfile = ({ userName }: { userName: string }) => {
   const [backlogItems, setBacklogItems] = useState<ExpandedItem[]>([])
   const [loading, setLoading] = useState<boolean>(true)
 
-  const { profileRefreshTrigger, user, stopEditing, getUserByUserName } = useAppStore()
+  const { user, stopEditing, getUserByUserName } = useAppStore()
 
   const refreshGrid = async (userName: string) => {
     setLoading(true)
@@ -49,7 +49,7 @@ export const OtherProfile = ({ userName }: { userName: string }) => {
       }
     }
     init()
-  }, [userName, profileRefreshTrigger])
+  }, [userName])
 
   const bottomSheetRef = useRef<BottomSheet>(null)
   const detailsSheetRef = useRef<BottomSheet>(null)
@@ -89,6 +89,7 @@ export const OtherProfile = ({ userName }: { userName: string }) => {
                   columns={3}
                   items={gridItems}
                   rows={4}
+                  editingRights={false}
                   onPressItem={(item) => {
                     setDetailsItem(item!)
                     detailsSheetRef.current?.snapToIndex(0)

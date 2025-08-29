@@ -142,23 +142,24 @@ const NewItemAnimationTile = ({
 
   useEffect(() => {
     if (isNewItem && !hasAnimated.current) {
+      console.log('🎬 ANIMATING NEW ITEM:', itemId)
       hasAnimated.current = true
       
       // Start with a more exaggerated rise
-      translateY.value = -40
-      scale.value = 1.15
+      translateY.value = -50
+      scale.value = 1.2
       
       // Settle back to normal position with slower timing
       translateY.value = withSpring(0, {
-        damping: 10,
+        damping: 8,
         stiffness: 120,
-        mass: 1.2,
+        mass: 0.8,
       })
       
       scale.value = withSpring(1, {
-        damping: 10,
+        damping: 8,
         stiffness: 120,
-        mass: 1.2,
+        mass: 0.8,
       })
     }
   }, [isNewItem, itemId])
@@ -190,6 +191,7 @@ export const Grid = ({
   screenFocused = false,
   onStartupAnimationComplete,
   shouldAnimateStartup = false,
+  newlyAddedItemId = null,
 }: {
   onPressItem?: (item?: ExpandedItem) => void
   onLongPressItem?: () => void
@@ -207,6 +209,7 @@ export const Grid = ({
   screenFocused?: boolean
   onStartupAnimationComplete?: () => void
   shouldAnimateStartup?: boolean
+  newlyAddedItemId?: string | null
 }) => {
   const gridSize = columns * rows
 
@@ -333,7 +336,7 @@ export const Grid = ({
       <GridWrapper columns={columns} rows={rows}>
         {items.map((item, i) => {
           const isSelected = searchMode && selectedRefsSet.has(item.id)
-          const isNewItem = newlyAddedItems.has(item.id)
+          const isNewItem = newlyAddedItemId === item.id
           const callbacks = createItemCallbacks(item)
           
           return (

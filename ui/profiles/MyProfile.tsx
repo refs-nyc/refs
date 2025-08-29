@@ -42,7 +42,6 @@ export const MyProfile = ({ userName }: { userName: string }) => {
     user,
     getUserByUserName,
     moveToBacklog,
-    profileRefreshTrigger,
     removeItem,
     startEditProfile,
     stopEditProfile,
@@ -76,22 +75,69 @@ export const MyProfile = ({ userName }: { userName: string }) => {
     registerBackdropPress,
     unregisterBackdropPress,
   } = useAppStore()
-
-  // Merge optimistic items with grid items for immediate display
+  
+  // Combine grid items with optimistic items for display
   const displayGridItems = useMemo(() => {
-    const optimisticItemsArray = Array.from(optimisticItems.values())
-    // Filter out any optimistic items that might have been replaced
-    const filteredOptimisticItems = optimisticItemsArray.filter(item => 
-      !gridItems.some(gridItem => gridItem.id === item.id)
+    // Create a Set of existing grid item IDs for O(1) lookup
+    const gridItemIds = new Set(gridItems.map(item => item.id))
+    
+    // Filter out optimistic items that already exist in grid items
+    const filteredOptimisticItems = Array.from(optimisticItems.values()).filter(optimisticItem =>
+      !gridItemIds.has(optimisticItem.id)
     )
+    
     // Use a stable reference to prevent unnecessary re-renders
-    return [...gridItems, ...filteredOptimisticItems]
-  }, [gridItems, optimisticItems, profileRefreshTrigger]) // Restored profileRefreshTrigger for other cases
+    const result = [...gridItems, ...filteredOptimisticItems]
+    return result
+  }, [gridItems, optimisticItems])
+
+  // Track newly added optimistic items for animation
+  useEffect(() => {
+    // Only run if we have optimistic items
+    if (optimisticItems.size === 0) return
+    
+    const optimisticItemsArray = Array.from(optimisticItems.values())
+    
+    // Find optimistic items that aren't in the grid items AND haven't been animated yet
+    const newOptimisticItems = optimisticItemsArray.filter(item => 
+      !gridItems.some(gridItem => gridItem.id === item.id) && 
+      !animatedItemsRef.current.has(item.id)
+    )
+    
+    console.log('🔍 NEW OPTIMISTIC ITEMS FOUND:', newOptimisticItems.length, 'IDs:', newOptimisticItems.map(item => item.id))
+    
+    if (newOptimisticItems.length > 0) {
+      const newItemId = newOptimisticItems[0].id
+      
+      // Mark this item as animated
+      animatedItemsRef.current.add(newItemId)
+      
+      // Set the first new optimistic item as the newly added item
+      setNewlyAddedItemId(newItemId)
+      console.log('🎯 SETTING NEWLY ADDED ITEM ID:', newItemId)
+      
+      // Clear the animation after 1.5 seconds AND remove the optimistic item from store
+      const timer = setTimeout(() => {
+        setNewlyAddedItemId(null)
+        console.log('🎯 CLEARING NEWLY ADDED ITEM ID')
+        
+        // Remove the optimistic item from the store to prevent re-animation
+        removeOptimisticItem(newItemId)
+        console.log('🗑️ REMOVED OPTIMISTIC ITEM FROM STORE:', newItemId)
+      }, 1500)
+      
+      return () => clearTimeout(timer)
+    }
+  }, [optimisticItems.size, gridItems.length]) // Only depend on sizes, not the actual objects
 
   const [promptTextIndex, setPromptTextIndex] = useState(0)
   const [promptFadeKey, setPromptFadeKey] = useState(0)
   const [showPrompt, setShowPrompt] = useState(false)
   const [startupAnimationDone, setStartupAnimationDone] = useState(false)
+  const [newlyAddedItemId, setNewlyAddedItemId] = useState<string | null>(null)
+  
+  // Track which items have already been animated to prevent re-animation on grid refresh
+  const animatedItemsRef = useRef<Set<string>>(new Set())
   
   // Direct photo form state
   const [showDirectPhotoForm, setShowDirectPhotoForm] = useState(false)
@@ -126,7 +172,6 @@ export const MyProfile = ({ userName }: { userName: string }) => {
     if (!showDirectPhotoForm) return
     
     const keyboardDidHide = () => {
-      console.log('Keyboard dismissed - snapping to 67% (index 0)')
       if (photoRefFormRef.current) {
         photoRefFormRef.current.snapToIndex(0)
       }
@@ -329,7 +374,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
     setTimeout(() => {
       init()
     }, 0)
-  }, [userName, profileRefreshTrigger])
+  }, [userName])
 
   // Simplified back button restoration logic - just reset sheet state
   useEffect(() => {
@@ -365,44 +410,44 @@ export const MyProfile = ({ userName }: { userName: string }) => {
   let timeout: ReturnType<typeof setTimeout>
 
   // Animate prompt text with explicit schedule: L1 (3s) → pause (2s) → L2 (3s) → pause (2s) → repeat
-  useEffect(() => {
-    const promptsActive = gridItems.length < 12 && !searchMode && !isSearchResultsSheetOpen && !loading
-    const canShowPromptsNow = promptsActive && (startupAnimationDone || !(gridItems.length === 0))
-    let tShow: ReturnType<typeof setTimeout> | null = null
-    let tPause: ReturnType<typeof setTimeout> | null = null
+  // useEffect(() => {
+  //   const promptsActive = gridItems.length < 12 && !searchMode && !isSearchResultsSheetOpen && !loading
+  //   const canShowPromptsNow = promptsActive && (startupAnimationDone || !(gridItems.length === 0))
+  //   let tShow: ReturnType<typeof setTimeout> | null = null
+  //   let tPause: ReturnType<typeof setTimeout> | null = null
 
-    if (canShowPromptsNow) {
-      setPromptTextIndex(0)
-      setShowPrompt(true)
-      setPromptFadeKey((k) => k + 1)
+  //   if (canShowPromptsNow) {
+  //     setPromptTextIndex(0)
+  //     setShowPrompt(true)
+  //     setPromptFadeKey((k) => k + 1)
 
-      const cycle = (idx: number) => {
-        // visible for 3s
-        tShow = setTimeout(() => {
-          // fade out and pause 2s
-          setShowPrompt(false)
-          setPromptFadeKey((k) => k + 1)
-          tPause = setTimeout(() => {
-            const next = idx === 0 ? 1 : 0
-            setPromptTextIndex(next)
-            setShowPrompt(true)
-            setPromptFadeKey((k) => k + 1)
-            cycle(next)
-          }, 2000)
-        }, 3000)
-      }
+  //     const cycle = (idx: number) => {
+  //       // visible for 3s
+  //       tShow = setTimeout(() => {
+  //         // fade out and pause 2s
+  //         setShowPrompt(false)
+  //         setPromptFadeKey((k) => k + 1)
+  //         tPause = setTimeout(() => {
+  //           const next = idx === 0 ? 1 : 0
+  //           setPromptTextIndex(next)
+  //           setShowPrompt(true)
+  //           setPromptFadeKey((k) => k + 1)
+  //           cycle(next)
+  //         }, 2000)
+  //       }, 3000)
+  //     }
 
-      cycle(0)
+  //     cycle(0)
 
-      return () => {
-        if (tShow) clearTimeout(tShow)
-        if (tPause) clearTimeout(tPause)
-      }
-    } else {
-      setShowPrompt(false)
-      setPromptTextIndex(0)
-    }
-  }, [gridItems.length, searchMode, isSearchResultsSheetOpen, startupAnimationDone, loading])
+  //     return () => {
+  //       if (tShow) clearTimeout(tShow)
+  //       if (tPause) clearTimeout(tPause)
+  //     }
+  //   } else {
+  //     setShowPrompt(false)
+  //     setPromptTextIndex(0)
+  //   }
+  // }, [gridItems.length, searchMode, isSearchResultsSheetOpen, startupAnimationDone, loading])
 
   // Direct photo picker flow - route into existing NewRefSheet with pre-populated photo
   const triggerDirectPhotoPicker = async (prompt: string) => {
@@ -578,6 +623,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
                   searchMode={searchMode}
                   selectedRefs={selectedRefs}
                   setSelectedRefs={setSelectedRefs}
+                  newlyAddedItemId={newlyAddedItemId}
                 />
               )}
             </View>
@@ -774,9 +820,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
               enableDynamicSizing={false}
               enableOverDrag={false}
               onChange={(i: number) => {
-                console.log('PhotoRefForm onChange - index:', i)
                 if (i === -1) {
-                  console.log('PhotoRefForm closed - resetting backdrop')
                   Keyboard.dismiss()
                   setShowDirectPhotoForm(false)
                   setDirectPhotoRefFields(null)

@@ -22,10 +22,11 @@ export function UserProfileScreen({ userName }: { userName: string }) {
   // If we navigated back from a directory-tapped profile, force pager to Directories
   useEffect(() => {
     if (returnToDirectories) {
+      console.log('🔄 RETURN TO DIRECTORIES - Setting pager to index 1')
       setHomePagerIndex(1)
       setReturnToDirectories(false)
     }
-  }, [returnToDirectories])
+  }, [returnToDirectories, setHomePagerIndex, setReturnToDirectories])
 
   const Dots = useMemo(() => {
     return (

@@ -182,8 +182,14 @@ export const Navigation = ({
         </View>
         <View style={{ top: 1.5, paddingRight: 17 }}>
           <Pressable onPress={() => {
-            setHomePagerIndex(0) // Ensure we land on grid view
+            console.log('👤 AVATAR CLICK - Clearing returnToDirectories and setting pager to 0')
+            setReturnToDirectories(false) // Clear any directory return flags
+            setHomePagerIndex(0) // Always go to grid view
             router.push(`/user/${user.userName}`)
+            // Force set pager index again after navigation
+            setTimeout(() => {
+              setHomePagerIndex(0)
+            }, 100)
           }}>
             <Avatar source={user.image} size={30} />
           </Pressable>

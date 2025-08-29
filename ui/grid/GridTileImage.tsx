@@ -6,23 +6,10 @@ import { useSharedValue, useAnimatedStyle, withTiming } from 'react-native-reani
 import { useEffect } from 'react'
 
 export const GridTileImage = ({ source, processing = false }: { source: string; processing?: boolean }) => {
-  const opacity = useSharedValue(1)
-  
-  // Fade transition when source changes
-  useEffect(() => {
-    opacity.value = withTiming(0.8, { duration: 150 }, () => {
-      opacity.value = withTiming(1, { duration: 300 })
-    })
-  }, [source])
-
-  const animatedStyle = useAnimatedStyle(() => ({
-    opacity: opacity.value,
-  }))
-
   return (
     <View style={{ width: '100%', height: '100%' }}>
       <Image
-        style={[{ borderRadius: s.$075, width: '100%', height: '100%' }, animatedStyle]}
+        style={[{ borderRadius: s.$075, width: '100%', height: '100%' }]}
         source={source}
         contentFit="cover"
       />

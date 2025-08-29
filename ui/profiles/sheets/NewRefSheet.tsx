@@ -329,7 +329,7 @@ export const NewRefSheet = ({
       enablePanDownToClose={true}
       snapPoints={snapPoints}
       index={-1}
-      keyboardBehavior="interactive"
+      keyboardBehavior="fillParent"
       backgroundStyle={{ backgroundColor: c.olive, borderRadius: 50, paddingTop: 0 }}
       onChange={(i: number) => {
         console.log('📱 SHEET CHANGE - index:', i, 'step:', step)
@@ -391,6 +391,7 @@ export const NewRefSheet = ({
               pickerOpen={false}
               canEditRefData={true}
               onCaptionFocus={(focused) => {
+                console.log('📝 CAPTION FOCUS CHANGE - focused:', focused)
                 setCaptionFocused(focused)
                 // If caption loses focus, immediately snap to 67%
                 if (!focused) {
@@ -424,9 +425,11 @@ export const NewRefSheet = ({
               onLinkIconClick={() => {
                 console.log('🔗 LINK ICON TRANSITION - Setting transitioningToLink flag')
                 setTransitioningToLink(true)
+                // Clear flag after transition completes
                 setTimeout(() => {
+                  console.log('🔗 LINK ICON TRANSITION - Clearing transitioningToLink flag')
                   setTransitioningToLink(false)
-                }, 300)
+                }, 500)
               }}
               onAddRef={async (itemFields) => {
                 // Merge promptContext from refFields if present

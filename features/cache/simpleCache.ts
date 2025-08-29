@@ -5,6 +5,8 @@ const CACHE_TTLS = {
   profile: 15 * 60 * 1000,        // 15 minutes
   grid_items: 3 * 60 * 1000,      // 3 minutes
   backlog_items: 3 * 60 * 1000,   // 3 minutes
+  feed_items: 8 * 60 * 1000,      // 8 minutes
+  directory_users: 10 * 60 * 1000, // 10 minutes
 } as const
 
 type CacheKey = keyof typeof CACHE_TTLS

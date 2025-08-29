@@ -12,6 +12,7 @@ import { Avatar } from '@/ui/atoms/Avatar'
 import { SimplePinataImage } from '@/ui/images/SimplePinataImage'
 import { ProfileDetailsSheet } from '@/ui/profiles/ProfileDetailsSheet'
 import BottomSheet from '@gorhom/bottom-sheet'
+import { simpleCache } from '@/features/cache/simpleCache'
 
 const win = Dimensions.get('window')
 
@@ -154,8 +155,23 @@ export const Feed = () => {
 
   const fetchFeedItems = async () => {
     try {
-      const items = await getFeedItems()
-      setItems(items)
+      // Check cache first (read-only, safe operation)
+      const cachedItems = await simpleCache.get('feed_items')
+      
+      if (cachedItems) {
+        console.log('📖 Using cached feed items')
+        setItems(cachedItems as ExpandedItem[])
+        return
+      }
+      
+      // Fetch fresh data
+      const freshItems = await getFeedItems()
+      setItems(freshItems)
+      
+      // Cache the fresh data (silent operation)
+      simpleCache.set('feed_items', freshItems).catch(error => {
+        console.warn('Cache write failed:', error)
+      })
     } catch (error) {
       console.error('Error fetching feed items:', error)
     }

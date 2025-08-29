@@ -229,7 +229,13 @@ export const createItemSlice: StateCreator<StoreSlices, [], [], ItemSlice> = (se
       ...get().editedState,
       editedState,
     })),
-  triggerFeedRefresh: () => set((state) => ({ feedRefreshTrigger: state.feedRefreshTrigger + 1 })),
+  triggerFeedRefresh: () => {
+    set((state) => ({ feedRefreshTrigger: state.feedRefreshTrigger + 1 }))
+    // Clear feed cache when items change
+    simpleCache.set('feed_items', null).catch(error => {
+      console.warn('Feed cache clear failed:', error)
+    })
+  },
   triggerProfileRefresh: () =>
     set((state) => ({ profileRefreshTrigger: state.profileRefreshTrigger + 1 })),
   addToProfile: async (refId: string | null, itemFields: StagedItemFields, backlog: boolean) => {

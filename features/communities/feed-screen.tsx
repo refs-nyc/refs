@@ -5,6 +5,7 @@ import { router } from 'expo-router'
 import { Image } from 'expo-image'
 import { pocketbase } from '@/features/pocketbase'
 import { useAppStore } from '@/features/stores'
+import { simpleCache } from '@/features/cache/simpleCache'
 
 type FeedUser = {
   id: string
@@ -60,7 +61,22 @@ export function CommunitiesFeedScreen() {
   const fetchPage = useCallback(async (targetPage: number) => {
     if (isLoading || !hasMore) return
     setIsLoading(true)
+    
     try {
+      // Check cache for first page only
+      if (targetPage === 1) {
+        const cachedUsers = await simpleCache.get('directory_users')
+        if (cachedUsers) {
+          console.log('📖 Using cached directory users')
+          const filteredMapped = (cachedUsers as any[]).filter(u => u.userName !== user?.userName)
+          setUsers(filteredMapped)
+          setHasMore(true) // Assume there are more pages
+          setPage(1)
+          setIsLoading(false)
+          return
+        }
+      }
+      
       const pb = getPB()
       const res = await pb.collection('users').getList(targetPage, perPage, {
         fields: 'id,userName,firstName,lastName,name,location,image,avatar_url',
@@ -102,6 +118,13 @@ export function CommunitiesFeedScreen() {
       setUsers((prev) => (targetPage === 1 ? filteredMapped : [...prev, ...filteredMapped]))
       setHasMore(res.page < res.totalPages)
       setPage(res.page)
+      
+      // Cache first page data (silent operation)
+      if (targetPage === 1) {
+        simpleCache.set('directory_users', filteredMapped).catch(error => {
+          console.warn('Directory cache write failed:', error)
+        })
+      }
     } catch (e) {
       setHasMore(false)
     } finally {

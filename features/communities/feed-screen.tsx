@@ -23,7 +23,7 @@ export function CommunitiesFeedScreen() {
   const [hasMore, setHasMore] = useState(true)
   const perPage = 30
   const pbRef = useRef<typeof pocketbase | null>(null)
-  const { setHomePagerIndex, setReturnToDirectories } = useAppStore()
+  const { setHomePagerIndex, setReturnToDirectories, user } = useAppStore()
 
   const getPB = () => {
     if (!pbRef.current) pbRef.current = pocketbase
@@ -97,7 +97,9 @@ export function CommunitiesFeedScreen() {
       }
 
       const mapped = mapUsersWithItems(res.items, byCreator)
-      setUsers((prev) => (targetPage === 1 ? mapped : [...prev, ...mapped]))
+      // Filter out the current user from the directory list
+      const filteredMapped = mapped.filter(u => u.userName !== user?.userName)
+      setUsers((prev) => (targetPage === 1 ? filteredMapped : [...prev, ...filteredMapped]))
       setHasMore(res.page < res.totalPages)
       setPage(res.page)
     } catch (e) {

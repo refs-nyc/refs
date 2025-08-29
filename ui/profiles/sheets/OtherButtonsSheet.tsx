@@ -46,10 +46,10 @@ export const OtherButtonsSheet = ({
       keyboardBehavior="interactive"
     >
       <XStack style={{ paddingTop: s.$2, justifyContent: 'center' }} gap={12}>
-        <View style={{ height: s.$4, width: s.$10 }}>
+        <View style={{ height: s.$4, flex: 1 }}>
           <DMButton profile={profile} style={{ paddingHorizontal: s.$0 }} />
         </View>
-        <View style={{ height: s.$4, width: s.$10 }}>
+        <View style={{ height: s.$4, flex: 1 }}>
           <Pressable
             onPress={saveId ? () => removeSave(saveId) : () => addSave(profile.id, user?.id!)}
             style={[
@@ -77,17 +77,6 @@ export const OtherButtonsSheet = ({
               <Text style={{ fontSize: 16.5 }}>{saveId ? 'Saved' : 'Save'}</Text>
             </Heading>
           </Pressable>
-        </View>
-
-        <View style={{ height: s.$4, width: s.$10 }}>
-          <Button
-            onPress={() => {
-              openBacklogSheet()
-            }}
-            variant="whiteOutline"
-            title="Backlog"
-            style={{ paddingHorizontal: s.$0 }}
-          />
         </View>
       </XStack>
     </BottomSheet>

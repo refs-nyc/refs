@@ -181,9 +181,12 @@ export const Navigation = ({
           </View>
         </View>
         <View style={{ top: 1.5, paddingRight: 17 }}>
-          <Link href={`/user/${user.userName}`}>
+          <Pressable onPress={() => {
+            setHomePagerIndex(0) // Ensure we land on grid view
+            router.push(`/user/${user.userName}`)
+          }}>
             <Avatar source={user.image} size={30} />
-          </Link>
+          </Pressable>
         </View>
         <View style={{ display: 'flex', flexDirection: 'row', paddingRight: 18 }}>
           <Pressable onPress={() => savesBottomSheetRef.current?.expand()}>

@@ -592,6 +592,7 @@ export const RefForm = ({
 
                 try {
                   setCreateInProgress(true)
+                  // Call onAddRef which will handle the submission
                   await onAddRef({ title, text, url: url, image: pinataSource })
                 } catch (e) {
                   console.error(e)

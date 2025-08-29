@@ -114,6 +114,10 @@ export const NewRefSheet = ({
   const [transitioningToField, setTransitioningToField] = useState<boolean>(false)
   // Track if sheet is closing to prevent keyboardDidHide interference
   const [sheetClosing, setSheetClosing] = useState<boolean>(false)
+  // Track if we're transitioning from camera roll to prevent add step effect interference
+  const [transitioningFromCameraRoll, setTransitioningFromCameraRoll] = useState<boolean>(false)
+  // Track if we're submitting a ref to prevent any effects from interfering
+  const [submittingRef, setSubmittingRef] = useState<boolean>(false)
 
 
   // Track keyboard state
@@ -130,9 +134,21 @@ export const NewRefSheet = ({
       setKeyboardVisible(true)
       console.log('⌨️ KEYBOARD SHOW - step:', step, 'captionFocused:', captionFocused, 'sheetIndex:', sheetIndex, 'transitioningToField:', transitioningToField)
 
+      // Don't run if we're submitting a ref
+      if (submittingRef) {
+        console.log('⌨️ KEYBOARD SHOW - Blocked by submittingRef flag')
+        return
+      }
+
       // Don't run if we're transitioning to field editing
       if (transitioningToField) {
         console.log('⌨️ KEYBOARD SHOW - Blocked by transitioningToField flag')
+        return
+      }
+
+      // Don't run if we're transitioning from camera roll
+      if (transitioningFromCameraRoll) {
+        console.log('⌨️ KEYBOARD SHOW - Blocked by transitioningFromCameraRoll flag')
         return
       }
 
@@ -163,6 +179,12 @@ export const NewRefSheet = ({
       
       setKeyboardVisible(false)
       
+      // Don't run if we're submitting a ref
+      if (submittingRef) {
+        console.log('⌨️ KEYBOARD HIDE - Blocked by submittingRef flag')
+        return
+      }
+      
       // Don't run if we're manually handling a transition
       if (manualTransition) {
         return
@@ -170,6 +192,12 @@ export const NewRefSheet = ({
       
       // Don't run if keyboard is being dismissed
       if (keyboardDismissing) {
+        return
+      }
+
+      // Don't run if we're transitioning from camera roll
+      if (transitioningFromCameraRoll) {
+        console.log('⌨️ KEYBOARD HIDE - Blocked by transitioningFromCameraRoll flag')
         return
       }
       
@@ -185,7 +213,7 @@ export const NewRefSheet = ({
       showSub.remove()
       hideSub.remove()
     }
-  }, [bottomSheetRef, isSheetOpen, sheetIndex, captionFocused, step, manualTransition, keyboardDismissing])
+  }, [bottomSheetRef, isSheetOpen, sheetIndex, captionFocused, step, manualTransition, keyboardDismissing, submittingRef, transitioningFromCameraRoll])
 
   // When transitioning to the add step (e.g., after selecting from camera roll),
   // ensure the sheet is visible at 85% immediately, independent of keyboard events.
@@ -194,6 +222,16 @@ export const NewRefSheet = ({
     if (keyboardDismissing) {
       console.log('🚫 ADD STEP EFFECT - Blocked by keyboardDismissing flag')
       return // Don't run when keyboard is being dismissed
+    }
+    if (submittingRef) {
+      console.log('🚫 ADD STEP EFFECT - Blocked by submittingRef flag (submittingRef:', submittingRef, ')')
+      return // Don't run when submitting a ref
+    }
+    // Don't run the add step effect if we're transitioning from camera roll
+    // This prevents the unwanted snap to 110% then back to 85%
+    if (transitioningFromCameraRoll || (refFields?.image && !addRefPrompt)) {
+      console.log('🚫 ADD STEP EFFECT - Blocked by camera roll transition')
+      return
     }
     if (step === 'add') {
       console.log('📊 ADD STEP EFFECT - step=add, sheetIndex:', sheetIndex, 'captionFocused:', captionFocused)
@@ -215,6 +253,7 @@ export const NewRefSheet = ({
         console.log('📊 ADD STEP EFFECT - Wrong sheetIndex:', sheetIndex, 'skipping')
         return
       }
+
       
       // For non-photo prompts transitioning from search, the keyboard is already up
       // so we need to snap to 85% and let the keyboard behavior handle the final position
@@ -233,7 +272,7 @@ export const NewRefSheet = ({
         }
       })
     }
-  }, [step, isSheetOpen, bottomSheetRef, captionFocused, sheetIndex, keyboardDismissing, keyboardVisible])
+  }, [step, isSheetOpen, bottomSheetRef, captionFocused, sheetIndex, keyboardDismissing, keyboardVisible, transitioningFromCameraRoll, submittingRef])
 
   // Safety: whenever we are NOT on the add step, guarantee caption-focused state is false
   // so search or other steps never adopt caption behavior.
@@ -250,6 +289,10 @@ export const NewRefSheet = ({
       console.log('🚫 CAPTION FOCUS EFFECT - Blocked by keyboardDismissing flag')
       return // Don't run when keyboard is being dismissed
     }
+    if (submittingRef) {
+      console.log('🚫 CAPTION FOCUS EFFECT - Blocked by submittingRef flag')
+      return // Don't run when submitting a ref
+    }
     if (transitioningToLink) {
       console.log('🚫 CAPTION FOCUS EFFECT - Blocked by transitioningToLink flag')
       return // Don't run when transitioning to link editing
@@ -262,10 +305,14 @@ export const NewRefSheet = ({
     requestAnimationFrame(() =>
       bottomSheetRef.current?.snapToIndex(4) // 110%
     )
-  }, [captionFocused, step, isSheetOpen, bottomSheetRef, sheetIndex, keyboardDismissing, transitioningToLink])
+  }, [captionFocused, step, isSheetOpen, bottomSheetRef, sheetIndex, keyboardDismissing, transitioningToLink, submittingRef])
 
   // Handle photo prompts - use selectedPhoto from store if available
   useEffect(() => {
+    if (submittingRef) {
+      console.log('🚫 PHOTO PROMPT EFFECT - Blocked by submittingRef flag (submittingRef:', submittingRef, ')')
+      return // Don't run when submitting a ref
+    }
     if (isOpen && addRefPrompt) {
       // Check if this is a photo prompt
       const photoPrompts = ['Piece from a museum', 'Tradition you love', 'Meme', 'halloween pic']
@@ -317,7 +364,7 @@ export const NewRefSheet = ({
         }
       }
     }
-  }, [isOpen, addRefPrompt])
+  }, [isOpen, addRefPrompt, submittingRef])
 
   return (
     <BottomSheet
@@ -340,9 +387,7 @@ export const NewRefSheet = ({
           setCaptionFocused(false)
           setTransitioningToField(false)
           setTransitioningToAdd(false)
-
-          // Simple, immediate keyboard dismissal
-          Keyboard.dismiss()
+          setSubmittingRef(false)
 
           setAddingNewRefTo(null)
           setStep('search')
@@ -384,7 +429,17 @@ export const NewRefSheet = ({
               prompt={addRefPrompt}
               onAddNewRef={(fields) => {
                 setRefFields(fields)
+                // Set flag to prevent add step effect interference
+                setTransitioningFromCameraRoll(true)
                 setStep('add')
+                // Snap to 85% immediately for camera roll transitions
+                setTimeout(() => {
+                  bottomSheetRef.current?.snapToIndex(2) // 85%
+                }, 50)
+                // Clear flag after transition completes - longer delay to ensure effect doesn't run
+                setTimeout(() => {
+                  setTransitioningFromCameraRoll(false)
+                }, 1000)
               }}
               onChooseExistingRef={(r, newImage) => {
                 setExistingRefId(r.id)
@@ -407,6 +462,11 @@ export const NewRefSheet = ({
                 // If caption loses focus, immediately snap to 67%
                 if (!focused) {
                   console.log('📝 CAPTION BLUR - Immediately snapping to 67%')
+                  // Don't snap to 67% if we're submitting a ref
+                  if (submittingRef) {
+                    console.log('📝 CAPTION BLUR - Blocked by submittingRef flag')
+                    return
+                  }
                   // Don't snap to 67% if we're transitioning to link editing
                   if (transitioningToLink) {
                     console.log('📝 CAPTION BLUR - Blocked by transitioningToLink flag')
@@ -461,6 +521,15 @@ export const NewRefSheet = ({
 
 
               onAddRef={async (itemFields) => {
+                console.log('🚀 ON ADD REF CALLED - Setting submittingRef flag')
+                // Set flag to prevent any effects from interfering during submission
+                setSubmittingRef(true)
+                
+                // Force a synchronous state update
+                requestAnimationFrame(() => {
+                  console.log('🚀 ON ADD REF - Flag should be set now')
+                })
+                
                 // Merge promptContext from refFields if present
                 const mergedFields = { ...itemFields, promptContext: refFields?.promptContext }
                 
@@ -502,8 +571,28 @@ export const NewRefSheet = ({
                 const { addOptimisticItem } = useAppStore.getState()
                 addOptimisticItem(optimisticItem)
 
-                // Close the sheet immediately to show the animation
-                bottomSheetRef.current?.close()
+                // Dismiss keyboard first, then close the sheet
+                Keyboard.dismiss()
+                
+                // Force close the sheet with multiple approaches
+                setTimeout(() => {
+                  console.log('🚀 FORCING SHEET CLOSE - trying multiple methods')
+                  // Try close() first
+                  bottomSheetRef.current?.close()
+                  // Also try snapToIndex(-1) as backup
+                  setTimeout(() => {
+                    bottomSheetRef.current?.snapToIndex(-1)
+                  }, 50)
+                  // Also try setting state directly
+                  setTimeout(() => {
+                    setIsSheetOpen(false)
+                  }, 100)
+                }, 200)
+                
+                // Clear the submitting flag after a longer delay to ensure all effects are done
+                setTimeout(() => {
+                  setSubmittingRef(false)
+                }, 1000)
                 
                 // Background database operations
                 ;(async () => {

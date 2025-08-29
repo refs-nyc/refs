@@ -72,6 +72,7 @@ export const RefForm = ({
   canEditRefData = true,
   onCaptionFocus,
   onManualTransition,
+  onLinkIconClick,
 }: {
   existingRefFields: ExistingRefFields | null
   placeholder?: string
@@ -82,6 +83,7 @@ export const RefForm = ({
   canEditRefData?: boolean
   onCaptionFocus?: (focused: boolean) => void
   onManualTransition?: () => void
+  onLinkIconClick?: () => void
 }) => {
   // Separate state for each field to prevent unnecessary re-renders
   const [title, setTitle] = useState<string>(existingRefFields?.title || '')
@@ -433,6 +435,8 @@ export const RefForm = ({
             <TouchableWithoutFeedback
               onPress={() => {
                 console.log('🔗 LINK ICON CLICK - Processing click, current activeField:', activeField)
+                // Notify parent about transition to prevent unwanted snaps
+                onLinkIconClick?.()
                 // Set active field to link - let keyboard behavior handle itself
                 setActiveField('link')
               }}

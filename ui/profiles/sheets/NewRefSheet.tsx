@@ -108,6 +108,8 @@ export const NewRefSheet = ({
   const [keyboardVisible, setKeyboardVisible] = useState<boolean>(false)
   // Track if we're transitioning to add step to prevent keyboard hide interference
   const [transitioningToAdd, setTransitioningToAdd] = useState<boolean>(false)
+  // Track if we're transitioning to link editing to prevent unwanted snaps
+  const [transitioningToLink, setTransitioningToLink] = useState<boolean>(false)
 
 
   // Track keyboard state
@@ -251,6 +253,10 @@ export const NewRefSheet = ({
       console.log('🚫 CAPTION FOCUS EFFECT - Blocked by keyboardDismissing flag')
       return // Don't run when keyboard is being dismissed
     }
+    if (transitioningToLink) {
+      console.log('🚫 CAPTION FOCUS EFFECT - Blocked by transitioningToLink flag')
+      return // Don't run when transitioning to link editing
+    }
     if (step !== 'add') return
     if (!captionFocused) return // Only run when caption becomes focused, not when it loses focus
     
@@ -259,7 +265,7 @@ export const NewRefSheet = ({
     requestAnimationFrame(() =>
       bottomSheetRef.current?.snapToIndex(4) // 110%
     )
-  }, [captionFocused, step, isSheetOpen, bottomSheetRef, sheetIndex, keyboardDismissing])
+  }, [captionFocused, step, isSheetOpen, bottomSheetRef, sheetIndex, keyboardDismissing, transitioningToLink])
 
   // Handle photo prompts - use selectedPhoto from store if available
   useEffect(() => {
@@ -330,6 +336,7 @@ export const NewRefSheet = ({
         setIsSheetOpen(i !== -1)
         setSheetIndex(i)
         if (i === -1) {
+          // Dismiss keyboard immediately when sheet closes
           Keyboard.dismiss()
           setAddingNewRefTo(null)
           setStep('search')
@@ -413,6 +420,13 @@ export const NewRefSheet = ({
                     setManualTransition(false)
                   }, 300)
                 })
+              }}
+              onLinkIconClick={() => {
+                console.log('🔗 LINK ICON TRANSITION - Setting transitioningToLink flag')
+                setTransitioningToLink(true)
+                setTimeout(() => {
+                  setTransitioningToLink(false)
+                }, 300)
               }}
               onAddRef={async (itemFields) => {
                 // Merge promptContext from refFields if present

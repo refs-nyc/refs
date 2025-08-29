@@ -117,6 +117,7 @@ export const NewRefSheet = ({
       if (!isSheetOpen) return
       
       setKeyboardVisible(true)
+      console.log('⌨️ KEYBOARD SHOW - step:', step, 'captionFocused:', captionFocused, 'sheetIndex:', sheetIndex)
 
       // During search step, always show at 80% (index 1)
       if (step === 'search') {
@@ -127,10 +128,12 @@ export const NewRefSheet = ({
       // For add step, snap to 110% if caption is focused, otherwise snap to 85%
       if (step === 'add') {
         if (captionFocused) {
+          console.log('⌨️ KEYBOARD SHOW - Caption focused, snapping to 110%')
           const targetIndex = 4 // 110%
           if (sheetIndex === targetIndex) return
           requestAnimationFrame(() => bottomSheetRef.current?.snapToIndex(targetIndex))
         } else {
+          console.log('⌨️ KEYBOARD SHOW - No caption focus, snapping to 85%')
           // For add step without caption focused, snap to 85%
           const targetIndex = 2 // 85%
           if (sheetIndex === targetIndex) return

@@ -109,7 +109,9 @@ export const RefForm = ({
 
   // Auto-focus URL input when activeField becomes 'link'
   useEffect(() => {
+    console.log('🔄 ACTIVE FIELD CHANGE - activeField:', activeField)
     if (activeField === 'link') {
+      console.log('🔗 FOCUSING URL INPUT')
       setTimeout(() => {
         urlInputRef.current?.focus()
       }, 100)
@@ -430,7 +432,7 @@ export const RefForm = ({
             // Default state - show chain link icon
             <TouchableWithoutFeedback
               onPress={() => {
-                console.log('🔗 LINK ICON CLICK - Processing click')
+                console.log('🔗 LINK ICON CLICK - Processing click, current activeField:', activeField)
                 // Set active field to link - let keyboard behavior handle itself
                 setActiveField('link')
               }}

@@ -5,6 +5,7 @@ import { createdSort } from '@/ui/profiles/sorts'
 import type { StoreSlices } from './types'
 import { pocketbase } from '../pocketbase'
 import { edgeFunctionClient } from '../supabase/edge-function-client'
+import { simpleCache } from '@/features/cache/simpleCache'
 
 const USE_WEBHOOKS = (process.env.EXPO_PUBLIC_USE_WEBHOOKS || '').toLowerCase() === 'true'
 
@@ -251,6 +252,14 @@ export const createItemSlice: StateCreator<StoreSlices, [], [], ItemSlice> = (se
 
     get().triggerFeedRefresh()
 
+    // Clear cache for this user (silent operation)
+    const userId = pocketbase.authStore.record?.id
+    if (userId) {
+      simpleCache.clearUser(userId).catch(error => {
+        console.warn('Cache clear failed:', error)
+      })
+    }
+
     return newItem
   },
   createRef: async (refFields: StagedRefFields) => {
@@ -347,6 +356,11 @@ export const createItemSlice: StateCreator<StoreSlices, [], [], ItemSlice> = (se
     }
 
     get().triggerFeedRefresh()
+
+    // Clear cache for this user (silent operation)
+    simpleCache.clearUser(userId).catch(error => {
+      console.warn('Cache clear failed:', error)
+    })
   },
   addItemToList: async (listId: string, itemId: string) => {
     try {

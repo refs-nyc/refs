@@ -45,40 +45,40 @@ export const OtherButtonsSheet = ({
       )}
       keyboardBehavior="interactive"
     >
-      <XStack style={{ paddingTop: s.$2, justifyContent: 'center' }} gap={12}>
-        <View style={{ height: s.$4, flex: 1 }}>
-          <DMButton profile={profile} style={{ paddingHorizontal: s.$0 }} />
-        </View>
-        <View style={{ height: s.$4, flex: 1 }}>
-          <Pressable
-            onPress={saveId ? () => removeSave(saveId) : () => addSave(profile.id, user?.id!)}
-            style={[
-              {
-                alignItems: 'center',
-                justifyContent: 'center',
-                borderRadius: s.$4,
-                paddingVertical: 10,
-                paddingHorizontal: s.$2,
-                minWidth: s.$8,
-                borderColor: c.white,
-                borderWidth: 1,
-                backgroundColor: 'transparent',
-                height: 47,
-              },
-              saveId ? styles.saved : {},
-            ]}
-          >
-            <Heading
-              tag="h3"
-              style={{
-                color: c.white,
-              }}
+      <View style={{ paddingTop: s.$2, alignItems: 'center' }}>
+        <XStack style={{ width: '85%' }} gap={12}>
+          <View style={{ height: s.$4, flex: 1 }}>
+            <DMButton profile={profile} style={{ paddingHorizontal: s.$0 }} />
+          </View>
+          <View style={{ height: s.$4, flex: 1 }}>
+            <Pressable
+              onPress={saveId ? () => removeSave(saveId) : () => addSave(profile.id, user?.id!)}
+              style={[
+                {
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  borderRadius: s.$4,
+                  paddingVertical: 10,
+                  paddingHorizontal: s.$2,
+                  minWidth: s.$8,
+                  backgroundColor: '#92A18D',
+                  height: 47,
+                },
+                saveId ? styles.saved : {},
+              ]}
             >
-              <Text style={{ fontSize: 16.5 }}>{saveId ? 'Saved' : 'Save'}</Text>
-            </Heading>
-          </Pressable>
-        </View>
-      </XStack>
+              <Heading
+                tag="h3"
+                style={{
+                  color: c.white,
+                }}
+              >
+                <Text style={{ fontSize: 16.5 }}>{saveId ? 'Saved' : 'Save'}</Text>
+              </Heading>
+            </Pressable>
+          </View>
+        </XStack>
+      </View>
     </BottomSheet>
   )
 }

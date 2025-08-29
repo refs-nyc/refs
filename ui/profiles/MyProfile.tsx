@@ -23,6 +23,8 @@ import SearchResultsSheet, { SearchResultsSheetRef } from './sheets/SearchResult
 import { RefForm } from '../actions/RefForm'
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated'
 import { Collections } from '@/features/pocketbase/pocketbase-types'
+import { pocketbase } from '@/features/pocketbase'
+import { simpleCache } from '@/features/cache/simpleCache'
 
 export const MyProfile = ({ userName }: { userName: string }) => {
   const { hasShareIntent } = useShareIntentContext()
@@ -116,19 +118,38 @@ export const MyProfile = ({ userName }: { userName: string }) => {
       setNewlyAddedItemId(newItemId)
       console.log('🎯 SETTING NEWLY ADDED ITEM ID:', newItemId)
       
-      // Clear the animation after 1.5 seconds AND remove the optimistic item from store
+      // Clear the animation after 1.5 seconds but DON'T remove optimistic item yet
       const timer = setTimeout(() => {
         setNewlyAddedItemId(null)
         console.log('🎯 CLEARING NEWLY ADDED ITEM ID')
         
-        // Remove the optimistic item from the store to prevent re-animation
-        removeOptimisticItem(newItemId)
-        console.log('🗑️ REMOVED OPTIMISTIC ITEM FROM STORE:', newItemId)
+        // Don't remove optimistic item here - let it stay until real item is confirmed
+        // removeOptimisticItem(newItemId)
+        // console.log('🗑️ REMOVED OPTIMISTIC ITEM FROM STORE:', newItemId)
       }, 1500)
       
       return () => clearTimeout(timer)
     }
   }, [optimisticItems.size, gridItems.length]) // Only depend on sizes, not the actual objects
+
+  // Remove optimistic items when real items are confirmed
+  useEffect(() => {
+    if (optimisticItems.size === 0 || gridItems.length === 0) return
+    
+    const optimisticItemsArray = Array.from(optimisticItems.values())
+    const gridItemIds = new Set(gridItems.map(item => item.id))
+    
+    // Find optimistic items that now have real counterparts
+    const confirmedOptimisticItems = optimisticItemsArray.filter(item => 
+      gridItemIds.has(item.id)
+    )
+    
+    // Remove confirmed optimistic items
+    confirmedOptimisticItems.forEach(item => {
+      console.log('✅ REMOVING CONFIRMED OPTIMISTIC ITEM:', item.id)
+      removeOptimisticItem(item.id)
+    })
+  }, [gridItems, optimisticItems.size])
 
   const [promptTextIndex, setPromptTextIndex] = useState(0)
   const [promptFadeKey, setPromptFadeKey] = useState(0)
@@ -249,24 +270,54 @@ export const MyProfile = ({ userName }: { userName: string }) => {
       // First, auto-move items from backlog to grid if there's space
       await autoMoveBacklogToGrid(userName)
       
-      // Fetch data in parallel for better performance (non-blocking)
-      Promise.all([
+      // Get user ID for cache keys
+      const user = await pocketbase.collection('users').getFirstListItem(`userName = "${userName}"`)
+      const userId = user.id
+      
+      // Check cache first (read-only, safe operation)
+      const [cachedProfile, cachedGridItems, cachedBacklogItems] = await Promise.all([
+        simpleCache.get('profile', userId),
+        simpleCache.get('grid_items', userId),
+        simpleCache.get('backlog_items', userId)
+      ])
+      
+      // Use cached data if available
+      if (cachedProfile && cachedGridItems && cachedBacklogItems) {
+        console.log('📖 Using cached profile data')
+        setProfile(cachedProfile as Profile)
+        setGridItems(cachedGridItems as ExpandedItem[])
+        setBacklogItems(cachedBacklogItems as ExpandedItem[])
+        setLoading(false)
+        
+        // Update cached grid count
+        useAppStore.getState().setGridItemCount((cachedGridItems as ExpandedItem[]).length)
+        return
+      }
+      
+      // Fetch fresh data in parallel
+      const [profile, gridItems, backlogItems] = await Promise.all([
         getUserByUserName(userName),
         getProfileItems(userName),
         getBacklogItems(userName),
       ])
-        .then(([profile, gridItems, backlogItems]) => {
-          setProfile(profile)
-          setGridItems(gridItems)
-          setBacklogItems(backlogItems as ExpandedItem[])
-          // Update cached grid count
-          useAppStore.getState().setGridItemCount(gridItems.length)
-          setLoading(false)
-        })
-        .catch((error) => {
-          console.error('Failed to refresh grid:', error)
-          setLoading(false)
-        })
+      
+      setProfile(profile)
+      setGridItems(gridItems)
+      setBacklogItems(backlogItems as ExpandedItem[])
+      
+      // Update cached grid count
+      useAppStore.getState().setGridItemCount(gridItems.length)
+      
+      // Cache the fresh data (silent operation, doesn't affect UI)
+      Promise.all([
+        simpleCache.set('profile', profile, userId),
+        simpleCache.set('grid_items', gridItems, userId),
+        simpleCache.set('backlog_items', backlogItems, userId)
+      ]).catch(error => {
+        console.warn('Cache write failed:', error)
+      })
+      
+      setLoading(false)
     } catch (error) {
       console.error('Failed to refresh grid:', error)
       setLoading(false)
@@ -410,44 +461,44 @@ export const MyProfile = ({ userName }: { userName: string }) => {
   let timeout: ReturnType<typeof setTimeout>
 
   // Animate prompt text with explicit schedule: L1 (3s) → pause (2s) → L2 (3s) → pause (2s) → repeat
-  // useEffect(() => {
-  //   const promptsActive = gridItems.length < 12 && !searchMode && !isSearchResultsSheetOpen && !loading
-  //   const canShowPromptsNow = promptsActive && (startupAnimationDone || !(gridItems.length === 0))
-  //   let tShow: ReturnType<typeof setTimeout> | null = null
-  //   let tPause: ReturnType<typeof setTimeout> | null = null
+  useEffect(() => {
+    const promptsActive = gridItems.length < 12 && !searchMode && !isSearchResultsSheetOpen && !loading
+    const canShowPromptsNow = promptsActive && (startupAnimationDone || !(gridItems.length === 0))
+    let tShow: ReturnType<typeof setTimeout> | null = null
+    let tPause: ReturnType<typeof setTimeout> | null = null
 
-  //   if (canShowPromptsNow) {
-  //     setPromptTextIndex(0)
-  //     setShowPrompt(true)
-  //     setPromptFadeKey((k) => k + 1)
+    if (canShowPromptsNow) {
+      setPromptTextIndex(0)
+      setShowPrompt(true)
+      setPromptFadeKey((k) => k + 1)
 
-  //     const cycle = (idx: number) => {
-  //       // visible for 3s
-  //       tShow = setTimeout(() => {
-  //         // fade out and pause 2s
-  //         setShowPrompt(false)
-  //         setPromptFadeKey((k) => k + 1)
-  //         tPause = setTimeout(() => {
-  //           const next = idx === 0 ? 1 : 0
-  //           setPromptTextIndex(next)
-  //           setShowPrompt(true)
-  //           setPromptFadeKey((k) => k + 1)
-  //           cycle(next)
-  //         }, 2000)
-  //       }, 3000)
-  //     }
+      const cycle = (idx: number) => {
+        // visible for 3s
+        tShow = setTimeout(() => {
+          // fade out and pause 2s
+          setShowPrompt(false)
+          setPromptFadeKey((k) => k + 1)
+          tPause = setTimeout(() => {
+            const next = idx === 0 ? 1 : 0
+            setPromptTextIndex(next)
+            setShowPrompt(true)
+            setPromptFadeKey((k) => k + 1)
+            cycle(next)
+          }, 2000)
+        }, 3000)
+      }
 
-  //     cycle(0)
+      cycle(0)
 
-  //     return () => {
-  //       if (tShow) clearTimeout(tShow)
-  //       if (tPause) clearTimeout(tPause)
-  //     }
-  //   } else {
-  //     setShowPrompt(false)
-  //     setPromptTextIndex(0)
-  //   }
-  // }, [gridItems.length, searchMode, isSearchResultsSheetOpen, startupAnimationDone, loading])
+      return () => {
+        if (tShow) clearTimeout(tShow)
+        if (tPause) clearTimeout(tPause)
+      }
+    } else {
+      setShowPrompt(false)
+      setPromptTextIndex(0)
+    }
+  }, [gridItems.length, searchMode, isSearchResultsSheetOpen, startupAnimationDone, loading])
 
   // Direct photo picker flow - route into existing NewRefSheet with pre-populated photo
   const triggerDirectPhotoPicker = async (prompt: string) => {

@@ -180,7 +180,7 @@ export function CommunitiesFeedScreen() {
       </View>
       {/* Surface2 backdrop containing only results, inset 10px from screen edges with 10px inner padding and rounded shoulders; lifted above dots */}
       <View style={{ flex: 1, backgroundColor: c.surface2, marginHorizontal: 10, borderRadius: s.$1, overflow: 'hidden', marginBottom: 115, marginTop: 10 }}>
-        <View style={{ flex: 1, paddingHorizontal: 10, paddingTop: 10, paddingBottom: 10 }}>
+        <View style={{ flex: 1, paddingHorizontal: 5, paddingTop: 10, paddingBottom: 10 }}>
         <FlatList
           style={{ flex: 1 }}
           contentContainerStyle={{ paddingTop: 0, paddingBottom: 0 }}

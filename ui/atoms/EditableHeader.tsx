@@ -38,6 +38,7 @@ export const EditableHeader = ({
   hideEditIcon = false,
   forceNotEditing = false,
   onManualTransition,
+  onFieldEditStart,
 }: {
   canEditRefData: boolean
   title: string
@@ -53,6 +54,7 @@ export const EditableHeader = ({
   hideEditIcon?: boolean
   forceNotEditing?: boolean
   onManualTransition?: () => void
+  onFieldEditStart?: () => void
 }) => {
   const [hasUrl, setHasUrl] = useState(false)
   const [editing, setEditing] = useState(false)
@@ -159,7 +161,10 @@ export const EditableHeader = ({
               setTitle(e)
             }}
             multiline={true}
-            onFocus={() => onActiveFieldChange?.('title')}
+            onFocus={() => {
+              onActiveFieldChange?.('title')
+              onFieldEditStart?.()
+            }}
             onBlur={() => {
               // When title editing loses focus (keyboard dismissed), return to normal state
               onActiveFieldChange?.(null)

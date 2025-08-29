@@ -73,6 +73,7 @@ export const RefForm = ({
   onCaptionFocus,
   onManualTransition,
   onLinkIconClick,
+  onFieldEditStart,
 }: {
   existingRefFields: ExistingRefFields | null
   placeholder?: string
@@ -84,6 +85,7 @@ export const RefForm = ({
   onCaptionFocus?: (focused: boolean) => void
   onManualTransition?: () => void
   onLinkIconClick?: () => void
+  onFieldEditStart?: () => void
 }) => {
   // Separate state for each field to prevent unnecessary re-renders
   const [title, setTitle] = useState<string>(existingRefFields?.title || '')
@@ -97,6 +99,7 @@ export const RefForm = ({
   const [uploadInitiated, setUploadInitiated] = useState(false)
   const [editingUrl, setEditingUrl] = useState<boolean>(false)
   const [activeField, setActiveField] = useState<'title' | 'link' | 'caption' | null>(canEditRefData ? 'title' : null)
+  const [hasAttemptedAddWithoutTitle, setHasAttemptedAddWithoutTitle] = useState<boolean>(false)
   const captionInputRef = useRef<any>(null)
   const urlInputRef = useRef<any>(null)
 
@@ -356,7 +359,7 @@ export const RefForm = ({
                 ref={urlInputRef}
                 value={url}
                 onChangeText={(t) => t.length <= 150 && setUrl(t)}
-                placeholder="type link here"
+                placeholder="Paste link here"
                 placeholderTextColor={`${c.surface}80`}
                 style={{
                   color: c.surface,
@@ -397,6 +400,7 @@ export const RefForm = ({
                 hideEditIcon={true}
                 forceNotEditing={false}
                 onManualTransition={onManualTransition}
+                onFieldEditStart={onFieldEditStart}
               />
             )}
           </Animated.View>
@@ -437,6 +441,7 @@ export const RefForm = ({
                 console.log('🔗 LINK ICON CLICK - Processing click, current activeField:', activeField)
                 // Notify parent about transition to prevent unwanted snaps
                 onLinkIconClick?.()
+                onFieldEditStart?.()
                 // Set active field to link - let keyboard behavior handle itself
                 setActiveField('link')
               }}
@@ -470,18 +475,9 @@ export const RefForm = ({
                 fontWeight: '500',
                 lineHeight: 20,
               }}>
-                Add a caption
+                What do you like about it?
               </Text>
-              <View style={{ height: 8 }} />
-              <Text style={{
-                color: c.muted,
-                fontSize: 17,
-                fontWeight: '500',
-                lineHeight: 20,
-                opacity: 0.33,
-              }}>
-                (it helps people find you)
-              </Text>
+
             </View>
           )}
           <TextInput
@@ -513,7 +509,8 @@ export const RefForm = ({
               onCaptionFocus?.(true)
             }}
             onBlur={() => {
-              // Reset caption focus state when caption loses focus
+              // Reset caption focus state when caption loses focus - this should trigger immediate snap
+              console.log('📝 CAPTION ONBLUR - Calling onCaptionFocus(false)')
               onCaptionFocus?.(false)
             }}
             blurOnSubmit={false}
@@ -572,11 +569,23 @@ export const RefForm = ({
             </Pressable>
           ) : (
             <Button
-              title={title ? 'Add Ref' : 'Title required'}
+              title={hasAttemptedAddWithoutTitle && (!title || title.trim() === '' || title === placeholder) ? 'Title required' : 'Add Ref'}
+
               variant="whiteInverted"
-              style={{ width: '100%', minWidth: 0, backgroundColor: c.white }}
-              disabled={!(pinataSource && title) || createInProgress}
+              style={{ 
+                width: '100%', 
+                minWidth: 0, 
+                backgroundColor: c.white,
+                opacity: hasAttemptedAddWithoutTitle && (!title || title.trim() === '' || title === placeholder) ? 0.5 : 1
+              }}
+              disabled={!(pinataSource && title && title.trim() !== '' && title !== placeholder) || createInProgress}
               onPress={async () => {
+                // Check if user is trying to add without a title
+                if (!title || title.trim() === '' || title === placeholder) {
+                  setHasAttemptedAddWithoutTitle(true)
+                  return
+                }
+
                 if (!validateFields()) {
                   return
                 }

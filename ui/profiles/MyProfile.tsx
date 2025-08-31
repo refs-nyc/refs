@@ -3,11 +3,12 @@ import { getBacklogItems, getProfileItems, autoMoveBacklogToGrid } from '@/featu
 import type { Profile } from '@/features/types'
 import { ExpandedItem } from '@/features/types'
 import { s, c } from '@/features/style'
-import BottomSheet from '@gorhom/bottom-sheet'
+import BottomSheet, { BottomSheetBackdrop, BottomSheetView } from '@gorhom/bottom-sheet'
 import { useShareIntentContext } from 'expo-share-intent'
-import { useEffect, useRef, useState, useMemo } from 'react'
-import { ScrollView, View, Text, Pressable } from 'react-native'
+import { useEffect, useRef, useState, useMemo, useCallback } from 'react'
+import { ScrollView, View, Text, Pressable, Keyboard } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import * as ImagePicker from 'expo-image-picker'
 import FloatingJaggedButton from '../buttons/FloatingJaggedButton'
 import { Grid } from '../grid/Grid'
 import { PlaceholderGrid } from '../grid/PlaceholderGrid'
@@ -19,7 +20,11 @@ import { MyBacklogSheet } from './sheets/MyBacklogSheet'
 import { RemoveRefSheet } from './sheets/RemoveRefSheet'
 import SearchModeBottomSheet from './sheets/SearchModeBottomSheet'
 import SearchResultsSheet, { SearchResultsSheetRef } from './sheets/SearchResultsSheet'
+import { RefForm } from '../actions/RefForm'
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated'
+import { Collections } from '@/features/pocketbase/pocketbase-types'
+import { pocketbase } from '@/features/pocketbase'
+import { simpleCache } from '@/features/cache/simpleCache'
 
 export const MyProfile = ({ userName }: { userName: string }) => {
   const { hasShareIntent } = useShareIntentContext()
@@ -28,15 +33,17 @@ export const MyProfile = ({ userName }: { userName: string }) => {
   const [profile, setProfile] = useState<Profile>()
   const [gridItems, setGridItems] = useState<ExpandedItem[]>([])
   const [backlogItems, setBacklogItems] = useState<ExpandedItem[]>([])
-  const [loading, setLoading] = useState<boolean>(true)
+  const [loading, setLoading] = useState(true)
   const [focusReady, setFocusReady] = useState(false)
+  const [removingItem, setRemovingItem] = useState<ExpandedItem | null>(null)
 
+  // Get optimistic items from store
+  const { optimisticItems } = useAppStore()
 
   const {
     user,
     getUserByUserName,
     moveToBacklog,
-    profileRefreshTrigger,
     removeItem,
     startEditProfile,
     stopEditProfile,
@@ -63,18 +70,160 @@ export const MyProfile = ({ userName }: { userName: string }) => {
     setHasShownInitialPromptHold,
     justOnboarded,
     setJustOnboarded,
+    addToProfile,
+    addOptimisticItem,
+    removeOptimisticItem,
+    detailsBackdropAnimatedIndex,
+    registerBackdropPress,
+    unregisterBackdropPress,
   } = useAppStore()
+  
+  // Combine grid items with optimistic items for display
+  const displayGridItems = useMemo(() => {
+    // Create a Set of existing grid item IDs for O(1) lookup
+    const gridItemIds = new Set(gridItems.map(item => item.id))
+    
+    // Filter out optimistic items that already exist in grid items
+    const filteredOptimisticItems = Array.from(optimisticItems.values()).filter(optimisticItem =>
+      !gridItemIds.has(optimisticItem.id)
+    )
+    
+    // Use a stable reference to prevent unnecessary re-renders
+    const result = [...gridItems, ...filteredOptimisticItems]
+    return result
+  }, [gridItems, optimisticItems])
 
-  const [removingItem, setRemovingItem] = useState<ExpandedItem | null>(null)
+  // Track newly added optimistic items for animation
+  useEffect(() => {
+    // Only run if we have optimistic items
+    if (optimisticItems.size === 0) return
+    
+    const optimisticItemsArray = Array.from(optimisticItems.values())
+    
+    // Find optimistic items that aren't in the grid items AND haven't been animated yet
+    const newOptimisticItems = optimisticItemsArray.filter(item => 
+      !gridItems.some(gridItem => gridItem.id === item.id) && 
+      !animatedItemsRef.current.has(item.id)
+    )
+    
+    console.log('🔍 NEW OPTIMISTIC ITEMS FOUND:', newOptimisticItems.length, 'IDs:', newOptimisticItems.map(item => item.id))
+    
+    if (newOptimisticItems.length > 0) {
+      const newItemId = newOptimisticItems[0].id
+      
+      // Mark this item as animated
+      animatedItemsRef.current.add(newItemId)
+      
+      // Set the first new optimistic item as the newly added item
+      setNewlyAddedItemId(newItemId)
+      console.log('🎯 SETTING NEWLY ADDED ITEM ID:', newItemId)
+      
+      // Clear the animation after 1.5 seconds but DON'T remove optimistic item yet
+      const timer = setTimeout(() => {
+        setNewlyAddedItemId(null)
+        console.log('🎯 CLEARING NEWLY ADDED ITEM ID')
+        
+        // Don't remove optimistic item here - let it stay until real item is confirmed
+        // removeOptimisticItem(newItemId)
+        // console.log('🗑️ REMOVED OPTIMISTIC ITEM FROM STORE:', newItemId)
+      }, 1500)
+      
+      return () => clearTimeout(timer)
+    }
+  }, [optimisticItems.size, gridItems.length]) // Only depend on sizes, not the actual objects
+
+  // Remove optimistic items when real items are confirmed
+  useEffect(() => {
+    if (optimisticItems.size === 0 || gridItems.length === 0) return
+    
+    const optimisticItemsArray = Array.from(optimisticItems.values())
+    const gridItemIds = new Set(gridItems.map(item => item.id))
+    
+    // Find optimistic items that now have real counterparts
+    const confirmedOptimisticItems = optimisticItemsArray.filter(item => 
+      gridItemIds.has(item.id)
+    )
+    
+    // Remove confirmed optimistic items
+    confirmedOptimisticItems.forEach(item => {
+      console.log('✅ REMOVING CONFIRMED OPTIMISTIC ITEM:', item.id)
+      removeOptimisticItem(item.id)
+    })
+  }, [gridItems, optimisticItems.size])
+
   const [promptTextIndex, setPromptTextIndex] = useState(0)
   const [promptFadeKey, setPromptFadeKey] = useState(0)
   const [showPrompt, setShowPrompt] = useState(false)
   const [startupAnimationDone, setStartupAnimationDone] = useState(false)
+  const [newlyAddedItemId, setNewlyAddedItemId] = useState<string | null>(null)
+  
+  // Track which items have already been animated to prevent re-animation on grid refresh
+  const animatedItemsRef = useRef<Set<string>>(new Set())
+  
+  // Direct photo form state
+  const [showDirectPhotoForm, setShowDirectPhotoForm] = useState(false)
+  const [directPhotoRefFields, setDirectPhotoRefFields] = useState<{
+    title: string
+    image: string
+    url: string
+    promptContext: string
+  } | null>(null)
+
+
+
+  // Register backdrop press for direct photo form
+  useEffect(() => {
+    if (showDirectPhotoForm) {
+      const key = registerBackdropPress(() => {
+        setShowDirectPhotoForm(false)
+        setDirectPhotoRefFields(null)
+        // Ensure backdrop animated index is reset when closed via backdrop press
+        if (detailsBackdropAnimatedIndex) {
+          detailsBackdropAnimatedIndex.value = -1
+        }
+      })
+      return () => {
+        unregisterBackdropPress(key)
+      }
+    }
+  }, [showDirectPhotoForm, detailsBackdropAnimatedIndex])
+
+  // Simple keyboard dismissal - snap to 67% when keyboard is not showing
+  useEffect(() => {
+    if (!showDirectPhotoForm) return
+    
+    const keyboardDidHide = () => {
+      if (photoRefFormRef.current) {
+        photoRefFormRef.current.snapToIndex(0)
+      }
+    }
+    
+    const hideSubscription = Keyboard.addListener('keyboardDidHide', keyboardDidHide)
+    
+    return () => {
+      hideSubscription?.remove()
+    }
+  }, [showDirectPhotoForm])
+
+
+
+
+
+
+
+
+
+  // Render backdrop for direct photo form
+  const renderDirectPhotoBackdrop = useCallback(
+    (p: any) => <BottomSheetBackdrop {...p} disappearsOnIndex={-1} appearsOnIndex={0} />,
+    []
+  )
 
   // Refs
   const searchResultsSheetRef = useRef<BottomSheet>(null)
   const isExpandingSheetRef = useRef(false) // Track if we're already expanding the sheet
   const searchResultsSheetTriggerRef = useRef<SearchResultsSheetRef>(null)
+  const photoRefFormRef = useRef<BottomSheet>(null)
 
   // Simple cache to avoid refetching the same data
   const lastFetchedUserName = useRef<string>('')
@@ -121,22 +270,54 @@ export const MyProfile = ({ userName }: { userName: string }) => {
       // First, auto-move items from backlog to grid if there's space
       await autoMoveBacklogToGrid(userName)
       
-      // Fetch data in parallel for better performance (non-blocking)
-      Promise.all([
+      // Get user ID for cache keys
+      const user = await pocketbase.collection('users').getFirstListItem(`userName = "${userName}"`)
+      const userId = user.id
+      
+      // Check cache first (read-only, safe operation)
+      const [cachedProfile, cachedGridItems, cachedBacklogItems] = await Promise.all([
+        simpleCache.get('profile', userId),
+        simpleCache.get('grid_items', userId),
+        simpleCache.get('backlog_items', userId)
+      ])
+      
+      // Use cached data if available
+      if (cachedProfile && cachedGridItems && cachedBacklogItems) {
+        console.log('📖 Using cached profile data')
+        setProfile(cachedProfile as Profile)
+        setGridItems(cachedGridItems as ExpandedItem[])
+        setBacklogItems(cachedBacklogItems as ExpandedItem[])
+        setLoading(false)
+        
+        // Update cached grid count
+        useAppStore.getState().setGridItemCount((cachedGridItems as ExpandedItem[]).length)
+        return
+      }
+      
+      // Fetch fresh data in parallel
+      const [profile, gridItems, backlogItems] = await Promise.all([
         getUserByUserName(userName),
         getProfileItems(userName),
         getBacklogItems(userName),
       ])
-        .then(([profile, gridItems, backlogItems]) => {
-          setProfile(profile)
-          setGridItems(gridItems)
-          setBacklogItems(backlogItems as ExpandedItem[])
-          setLoading(false)
-        })
-        .catch((error) => {
-          console.error('Failed to refresh grid:', error)
-          setLoading(false)
-        })
+      
+      setProfile(profile)
+      setGridItems(gridItems)
+      setBacklogItems(backlogItems as ExpandedItem[])
+      
+      // Update cached grid count
+      useAppStore.getState().setGridItemCount(gridItems.length)
+      
+      // Cache the fresh data (silent operation, doesn't affect UI)
+      Promise.all([
+        simpleCache.set('profile', profile, userId),
+        simpleCache.set('grid_items', gridItems, userId),
+        simpleCache.set('backlog_items', backlogItems, userId)
+      ]).catch(error => {
+        console.warn('Cache write failed:', error)
+      })
+      
+      setLoading(false)
     } catch (error) {
       console.error('Failed to refresh grid:', error)
       setLoading(false)
@@ -147,9 +328,33 @@ export const MyProfile = ({ userName }: { userName: string }) => {
     if (!removingItem) return
     try {
       removeRefSheetRef.current?.close()
-      const updatedRecord = await moveToBacklog(removingItem?.id)
+      
+      const { optimisticItems, removeOptimisticItem, decrementGridItemCount } = useAppStore.getState()
+      
+      // Check if this is an optimistic item
+      const isOptimistic = removingItem.id.startsWith('temp-') || optimisticItems.has(removingItem.id)
+      
+      if (isOptimistic) {
+        // Remove from optimistic items immediately
+        removeOptimisticItem(removingItem.id)
+        decrementGridItemCount()
+      } else {
+        // For real items, remove from local grid immediately
+        setGridItems(prev => prev.filter(item => item.id !== removingItem.id))
+        decrementGridItemCount()
+        
+        // Background database operation
+        ;(async () => {
+          try {
+            await moveToBacklog(removingItem.id)
+          } catch (error) {
+            console.error('Failed to move item to backlog:', error)
+            // Could revert by refreshing grid if needed
+          }
+        })()
+      }
+      
       setRemovingItem(null)
-      await refreshGrid(userName)
     } catch (error) {
       console.error(error)
     }
@@ -158,9 +363,33 @@ export const MyProfile = ({ userName }: { userName: string }) => {
   const handleRemoveFromProfile = async () => {
     if (!removingItem) return
     removeRefSheetRef.current?.close()
-    await removeItem(removingItem.id)
+    
+    const { optimisticItems, removeOptimisticItem, decrementGridItemCount } = useAppStore.getState()
+    
+    // Check if this is an optimistic item
+    const isOptimistic = removingItem.id.startsWith('temp-') || optimisticItems.has(removingItem.id)
+    
+    if (isOptimistic) {
+      // Remove from optimistic items immediately
+      removeOptimisticItem(removingItem.id)
+      decrementGridItemCount()
+    } else {
+      // For real items, remove from local grid immediately
+      setGridItems(prev => prev.filter(item => item.id !== removingItem.id))
+      decrementGridItemCount()
+      
+      // Background database operation
+      ;(async () => {
+        try {
+          await removeItem(removingItem.id)
+        } catch (error) {
+          console.error('Failed to remove item:', error)
+          // Could revert by refreshing grid if needed
+        }
+      })()
+    }
+    
     setRemovingItem(null)
-    await refreshGrid(userName)
   }
 
   useEffect(() => {
@@ -196,7 +425,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
     setTimeout(() => {
       init()
     }, 0)
-  }, [userName, profileRefreshTrigger])
+  }, [userName])
 
   // Simplified back button restoration logic - just reset sheet state
   useEffect(() => {
@@ -271,6 +500,36 @@ export const MyProfile = ({ userName }: { userName: string }) => {
     }
   }, [gridItems.length, searchMode, isSearchResultsSheetOpen, startupAnimationDone, loading])
 
+  // Direct photo picker flow - route into existing NewRefSheet with pre-populated photo
+  const triggerDirectPhotoPicker = async (prompt: string) => {
+    try {
+      // Request permissions
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync()
+      if (status !== 'granted') {
+        return
+      }
+
+      // Launch image picker
+      const result = await ImagePicker.launchImageLibraryAsync({
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+      })
+
+      if (!result.canceled && result.assets && result.assets[0]) {
+        const selectedImage = result.assets[0]
+        // Populate store so NewRefSheet picks it up as a photo prompt
+        try { useAppStore.getState().setSelectedPhoto(selectedImage.uri) } catch {}
+        try { useAppStore.getState().setAddRefPrompt(prompt) } catch {}
+        // Open NewRefSheet directly at search-results height; it will switch to add step
+        setAddingNewRefTo('grid')
+        newRefSheetRef.current?.snapToIndex(1)
+      }
+    } catch (error) {
+      console.error('Error picking image:', error)
+    }
+  }
+
   return (
     <>
       <ScrollView
@@ -310,7 +569,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
               {searchMode || isSearchResultsSheetOpen ? (
                 <Text
                   style={{
-                    color: c.muted,
+                    color: c.prompt,
                     fontSize: s.$09,
                     fontFamily: 'System',
                     fontWeight: '400',
@@ -318,12 +577,12 @@ export const MyProfile = ({ userName }: { userName: string }) => {
                     lineHeight: s.$1half,
                   }}
                 >
-                  pick some refs, see who's at the intersection
+                  What did you get into today?
                 </Text>
               ) : gridItems.length >= 12 ? (
                 <Text
                   style={{
-                    color: c.muted,
+                    color: c.prompt,
                     fontSize: s.$09,
                     fontFamily: 'System',
                     fontWeight: '400',
@@ -331,7 +590,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
                     lineHeight: s.$1half,
                   }}
                 >
-                  pick some refs, find people in the middle
+                  What did you get into today?
                 </Text>
               ) : (
                 <Animated.Text
@@ -339,7 +598,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
                   exiting={FadeOut.duration(800)}
                   key={`prompt-text-${promptTextIndex}-${promptFadeKey}`}
                   style={{
-                    color: '#B0B0B0',
+                    color: c.prompt,
                     fontSize: s.$09,
                     fontFamily: 'System',
                     fontWeight: '400',
@@ -398,34 +657,40 @@ export const MyProfile = ({ userName }: { userName: string }) => {
                     if (prompt) useAppStore.getState().setAddRefPrompt(prompt)
                     newRefSheetRef.current?.snapToIndex(1)
                   }}
-                  onAddItemWithPrompt={(prompt: string) => {
-                    setAddingNewRefTo('grid')
-                    useAppStore.getState().setAddRefPrompt(prompt)
-                    newRefSheetRef.current?.snapToIndex(1)
+                  onAddItemWithPrompt={(prompt: string, photoPath?: boolean) => {
+                    if (photoPath) {
+                      // Direct photo picker flow - bypass NewRefSheet entirely
+                      triggerDirectPhotoPicker(prompt)
+                    } else {
+                      // Normal search flow through NewRefSheet
+                      setAddingNewRefTo('grid')
+                      useAppStore.getState().setAddRefPrompt(prompt)
+                      newRefSheetRef.current?.snapToIndex(1)
+                    }
                   }}
                   columns={3}
-                  items={gridItems}
+                  items={displayGridItems}
                   rows={4}
                   searchMode={searchMode}
                   selectedRefs={selectedRefs}
                   setSelectedRefs={setSelectedRefs}
+                  newlyAddedItemId={newlyAddedItemId}
                 />
               )}
             </View>
 
             {/* Floating Search Button (toggle search mode) - positioned absolutely */}
             <FloatingJaggedButton
+              icon="plus"
               onPress={() => {
-                // Don't clear selectedRefs if we're returning from search
-                if (!searchMode) { // Changed from returningFromSearch to searchMode
-                  setSelectedRefs([]) // Clear selected refs when entering search mode
-                }
-                clearCachedSearchResults() // Clear cached search results
-                setSearchMode(true)
+                // Open AddRef flow like a prompt tile
+                setAddingNewRefTo('grid')
+                try { useAppStore.getState().setAddRefPrompt('') } catch {}
+                newRefSheetRef.current?.snapToIndex(1)
               }}
               style={{
                 position: 'absolute',
-                bottom: -20, // Fixed distance from bottom of screen
+                bottom: -30, // Moved up 10px from -40
                 right: 5, // Fixed distance from right edge of screen
                 zIndex: 5, // Behind the sheet (zIndex: 100) but above the grid content
                 opacity: searchMode ? 0 : 1, // Hide with opacity instead of conditional rendering
@@ -579,6 +844,136 @@ export const MyProfile = ({ userName }: { userName: string }) => {
             selectedRefItems={finalSelectedRefItems}
           />
 
+          {/* Direct Photo Form - bypasses NewRefSheet entirely */}
+          {showDirectPhotoForm && directPhotoRefFields && (
+            <BottomSheet
+
+              ref={photoRefFormRef}
+              snapPoints={['80%', '85%', '100%', '110%']}
+              index={0}
+              enablePanDownToClose={true}
+
+
+
+
+
+                            backgroundStyle={{ backgroundColor: c.olive, borderRadius: 50, paddingTop: 0 }}
+              animatedIndex={detailsBackdropAnimatedIndex}
+              backdropComponent={(p) => (
+                <BottomSheetBackdrop
+                  {...p}
+                  disappearsOnIndex={-1}
+                  appearsOnIndex={0}
+                  pressBehavior={'close'}
+                />
+              )}
+              handleComponent={null}
+              enableDynamicSizing={false}
+              enableOverDrag={false}
+              onChange={(i: number) => {
+                if (i === -1) {
+                  Keyboard.dismiss()
+                  setShowDirectPhotoForm(false)
+                  setDirectPhotoRefFields(null)
+                  // Ensure backdrop animated index is reset
+                  if (detailsBackdropAnimatedIndex) {
+                    detailsBackdropAnimatedIndex.value = -1
+                  }
+                }
+              }}
+            >
+              <BottomSheetView
+                style={{
+                  paddingHorizontal: s.$2,
+                  paddingTop: 8,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <RefForm
+                  key={`direct-photo-form-${directPhotoRefFields.image}`}
+                  existingRefFields={directPhotoRefFields}
+                  pickerOpen={false}
+                  canEditRefData={true}
+                  
+
+                  onAddRef={async (itemFields) => {
+                    // Merge promptContext from directPhotoRefFields if present
+                    // Ensure title is not empty - use prompt context as fallback
+                    const mergedFields = { 
+                      ...itemFields, 
+                      promptContext: directPhotoRefFields.promptContext,
+                      title: itemFields.title || directPhotoRefFields.promptContext || 'Untitled'
+                    }
+                    
+                    // Create optimistic item immediately
+                    const optimisticItem: ExpandedItem = {
+                      id: `temp-${Date.now()}`, collectionId: Collections.Items, collectionName: Collections.Items,
+                      creator: user?.id || '', ref: 'temp-ref', image: itemFields.image || '',
+                      url: itemFields.url || '', text: itemFields.text || '', list: itemFields.list || false,
+                      parent: itemFields.parent || '', backlog: false, order: 0,
+                      created: new Date().toISOString(), updated: new Date().toISOString(),
+                      promptContext: mergedFields.promptContext || '',
+                      expand: { 
+                        ref: { 
+                          id: 'temp-ref', 
+                          title: itemFields.title || '', 
+                          image: itemFields.image || '',
+                          url: itemFields.url || '',
+                          meta: '{}',
+                          creator: user?.id || '',
+                          created: new Date().toISOString(),
+                          updated: new Date().toISOString()
+                        }, 
+                        creator: null as any, 
+                        items_via_parent: [] as any 
+                      }
+                    }
+
+                    // Add optimistic item to grid immediately
+                    addOptimisticItem(optimisticItem)
+
+                    // Close the sheet immediately and reset backdrop
+                    Keyboard.dismiss()
+                    setShowDirectPhotoForm(false)
+                    setDirectPhotoRefFields(null)
+                    if (detailsBackdropAnimatedIndex) {
+                      detailsBackdropAnimatedIndex.value = -1
+                    }
+                    
+                    // Background database operations
+                    ;(async () => {
+                      try {
+                        await addToProfile(null, mergedFields, false)
+                      } catch (error) {
+                        console.error('Failed to add item to profile:', error)
+                        // Remove optimistic item on failure
+                        removeOptimisticItem(optimisticItem.id)
+                      }
+                    })()
+                  }}
+                  onAddRefToList={async (itemFields) => {
+                    // Merge promptContext from directPhotoRefFields if present
+                    // Ensure title is not empty - use prompt context as fallback
+                    const mergedFields = { 
+                      ...itemFields, 
+                      promptContext: directPhotoRefFields.promptContext,
+                      title: itemFields.title || directPhotoRefFields.promptContext || 'Untitled'
+                    }
+                    const newItem = await addToProfile(null, mergedFields, false)
+                    Keyboard.dismiss()
+                    setShowDirectPhotoForm(false)
+                    setDirectPhotoRefFields(null)
+                    if (detailsBackdropAnimatedIndex) {
+                      detailsBackdropAnimatedIndex.value = -1
+                    }
+                  }}
+                  backlog={false}
+                />
+              </BottomSheetView>
+            </BottomSheet>
+          )}
+
           {/* Search Bottom Sheet (only in search mode, always rendered last) */}
           {searchMode && (
             <SearchModeBottomSheet
@@ -607,8 +1002,8 @@ export const MyProfile = ({ userName }: { userName: string }) => {
                   const restoredItems = historyItem.ref_ids.map((refId: string, index: number) => ({
                     id: refId,
                     ref: refId,
-                    image: historyItem.ref_images?.[index] || '',
                     title: historyItem.ref_titles?.[index] || refId,
+                    image: historyItem.ref_images?.[index] || '',
                     expand: {
                       ref: {
                         id: refId,

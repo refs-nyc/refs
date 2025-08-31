@@ -1,62 +1,8 @@
-import type { StoreSlices } from '@/features/stores/types'
+import type { StoreSlices, UISlice } from '@/features/stores/types'
 import { Item } from '@/features/types'
 import BottomSheet from '@gorhom/bottom-sheet'
 import React from 'react'
 import type { StateCreator } from 'zustand'
-
-export type UISlice = {
-  editingProfile: boolean
-  addingToList: string
-  addingItem: Item | null
-  referencersBottomSheetRef: React.RefObject<BottomSheet>
-  currentRefId: string
-  addRefSheetRef: React.RefObject<BottomSheet>
-  addingRefId: string
-  newRefSheetRef: React.RefObject<BottomSheet>
-  addingNewRefTo: null | 'grid' | 'backlog'
-  addRefPrompt: string
-  setAddingNewRefTo: (newState: null | 'grid' | 'backlog') => void
-  setAddingRefId: (id: string) => void
-  setCurrentRefId: (id: string) => void
-  setAddingToList: (newState: string) => void
-  setAddRefPrompt: (prompt: string) => void
-  stopEditProfile: () => void
-  startEditProfile: () => void
-  // Background loading state
-  isBackgroundLoading: boolean
-  setBackgroundLoading: (loading: boolean) => void
-  // Search-related state
-  searchMode: boolean
-  selectedRefs: string[]
-  selectedRefItems: any[]
-  cachedSearchResults: any[]
-  cachedSearchTitle: string
-  cachedSearchSubtitle: string
-  cachedRefTitles: string[]
-  cachedRefImages: string[]
-  closeActiveBottomSheet: (() => void) | null
-  isSearchResultsSheetOpen: boolean
-  returningFromSearchNavigation: boolean // Track when returning from search navigation
-  setSearchMode: (mode: boolean) => void
-  setSelectedRefs: (refs: string[]) => void
-  setSelectedRefItems: (items: any[]) => void
-  setCachedSearchResults: (results: any[], title: string, subtitle: string, refTitles?: string[], refImages?: string[]) => void
-  clearCachedSearchResults: () => void
-  setSearchResultsSheetOpen: (open: boolean) => void
-  setReturningFromSearchNavigation: (returning: boolean) => void
-  setCloseActiveBottomSheet: (closeFunction: (() => void) | null) => void
-  // Logout button visibility
-  showLogoutButton: boolean
-  setShowLogoutButton: (show: boolean) => void
-  // Prompt timing control (session-level)
-  hasShownInitialPromptHold: boolean
-  setHasShownInitialPromptHold: (shown: boolean) => void
-  // Onboarding + navigation coordination
-  suppressHomeRedirect: boolean
-  setSuppressHomeRedirect: (v: boolean) => void
-  justOnboarded: boolean
-  setJustOnboarded: (v: boolean) => void
-}
 
 export const createUISlice: StateCreator<StoreSlices, [], [], UISlice> = (set) => ({
   addingToList: '',
@@ -68,6 +14,7 @@ export const createUISlice: StateCreator<StoreSlices, [], [], UISlice> = (set) =
   newRefSheetRef: React.createRef(),
   addingNewRefTo: null,
   addRefPrompt: '',
+  selectedPhoto: null,
   isBackgroundLoading: false,
   setBackgroundLoading: (loading: boolean) => {
     set(() => ({
@@ -97,6 +44,11 @@ export const createUISlice: StateCreator<StoreSlices, [], [], UISlice> = (set) =
   setAddRefPrompt: (prompt: string) => {
     set(() => ({
       addRefPrompt: prompt,
+    }))
+  },
+  setSelectedPhoto: (photo: string | null) => {
+    set(() => ({
+      selectedPhoto: photo,
     }))
   },
   editingProfile: false,
@@ -187,4 +139,9 @@ export const createUISlice: StateCreator<StoreSlices, [], [], UISlice> = (set) =
   setSuppressHomeRedirect: (v: boolean) => set(() => ({ suppressHomeRedirect: v })),
   justOnboarded: false,
   setJustOnboarded: (v: boolean) => set(() => ({ justOnboarded: v })),
+  // Home pager (MyProfile <-> Directories)
+  homePagerIndex: 0,
+  setHomePagerIndex: (i: number) => set(() => ({ homePagerIndex: i })),
+  returnToDirectories: false,
+  setReturnToDirectories: (v: boolean) => set(() => ({ returnToDirectories: v })),
 })

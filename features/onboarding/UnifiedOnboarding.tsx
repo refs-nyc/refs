@@ -27,7 +27,7 @@ type StepId =
   | 'notifications'
 
 export function UnifiedOnboarding() {
-  const { updateStagedUser, register, updateUser, user, getUserByEmail, setJustOnboarded, setSuppressHomeRedirect } = useAppStore() as any
+  const { updateStagedUser, register, updateUser, user, getUserByEmail, setJustOnboarded, setSuppressHomeRedirect, setHomePagerIndex } = useAppStore() as any
   const [step, setStep] = useState<StepId>('firstName')
   const form = useForm({ mode: 'onSubmit', shouldUnregister: false })
   const { control, handleSubmit, formState, getValues, trigger, setValue, watch } = form
@@ -45,13 +45,8 @@ export function UnifiedOnboarding() {
 
   useEffect(() => {
     if (step === 'photo') {
-      photoTextOpacity.setValue(0)
-      photoPickerOpacity.setValue(0)
-      Animated.timing(photoTextOpacity, { toValue: 1, duration: 350, useNativeDriver: true }).start(() => {
-        setTimeout(() => {
-          Animated.timing(photoPickerOpacity, { toValue: 1, duration: 700, useNativeDriver: true }).start()
-        }, 750)
-      })
+      photoTextOpacity.setValue(1)
+      photoPickerOpacity.setValue(1)
     } else {
       photoTextOpacity.setValue(0)
       photoPickerOpacity.setValue(0)
@@ -60,13 +55,8 @@ export function UnifiedOnboarding() {
 
   useEffect(() => {
     if (step === 'notifications') {
-      notifTextOpacity.setValue(0)
-      notifContentOpacity.setValue(0)
-      Animated.timing(notifTextOpacity, { toValue: 1, duration: 350, useNativeDriver: true }).start(() => {
-        setTimeout(() => {
-          Animated.timing(notifContentOpacity, { toValue: 1, duration: 700, useNativeDriver: true }).start()
-        }, 750)
-      })
+      notifTextOpacity.setValue(1)
+      notifContentOpacity.setValue(1)
     } else {
       notifTextOpacity.setValue(0)
       notifContentOpacity.setValue(0)
@@ -368,6 +358,7 @@ export function UnifiedOnboarding() {
               // Single-screen onboarding: go straight to grid
               animateTo('next')
               if (user?.userName) {
+                setHomePagerIndex(0) // Ensure we land on grid view
                 router.replace(`/user/${user.userName}`)
               } else {
                 router.replace('/')

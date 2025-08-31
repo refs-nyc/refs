@@ -1,12 +1,27 @@
 import { useState, useEffect } from 'react'
-import { Pressable } from 'react-native'
+import { Pressable, View, TouchableWithoutFeedback } from 'react-native'
 import { BottomSheetTextInput as TextInput } from '@gorhom/bottom-sheet'
 import { XStack } from '@/ui/core/Stacks'
 import { Heading } from '@/ui/typo/Heading'
 import Ionicons from '@expo/vector-icons/Ionicons'
-import { s, c, t } from '@/features/style'
+import { c, s, t } from '@/features/style'
 import * as Clipboard from 'expo-clipboard'
 import { getLinkPreview } from 'link-preview-js'
+
+// Custom circle checkmark component
+const CircleCheckmark = () => (
+  <View style={{ 
+    width: 28, 
+    height: 28, 
+    borderRadius: 14, 
+    backgroundColor: c.surface, 
+    justifyContent: 'center', 
+    alignItems: 'center',
+    opacity: 0.5 
+  }}>
+    <Ionicons name="checkmark" size={16} color={c.accent} />
+  </View>
+)
 
 export const EditableHeader = ({
   canEditRefData,
@@ -18,6 +33,12 @@ export const EditableHeader = ({
   setImage,
   placeholder = '',
   withUrl = true,
+  onActiveFieldChange,
+  isActive = false,
+  hideEditIcon = false,
+  forceNotEditing = false,
+  onManualTransition,
+  onFieldEditStart,
 }: {
   canEditRefData: boolean
   title: string
@@ -28,10 +49,30 @@ export const EditableHeader = ({
   setImage: (str: string) => void
   placeholder: string
   withUrl?: boolean
+  onActiveFieldChange?: (field: 'title' | 'link' | 'caption' | null) => void
+  isActive?: boolean
+  hideEditIcon?: boolean
+  forceNotEditing?: boolean
+  onManualTransition?: () => void
+  onFieldEditStart?: () => void
 }) => {
   const [hasUrl, setHasUrl] = useState(false)
   const [editing, setEditing] = useState(false)
   const [addingUrl, setAddingUrl] = useState(false)
+
+  // Auto-start editing when isActive is true
+  useEffect(() => {
+    if (isActive && !editing) {
+      setEditing(true)
+    }
+  }, [isActive, editing])
+
+  // Auto-focus when there's a pre-populated image but no title
+  useEffect(() => {
+    if (image && !title && canEditRefData) {
+      setEditing(true)
+    }
+  }, [image, title, canEditRefData])
 
   const analyseUrl = async (u: string) => {
     // pass the link directly
@@ -71,7 +112,7 @@ export const EditableHeader = ({
           // backgroundColor: 'green',
         }}
       >
-        {!editing && !addingUrl && (
+        {(!editing || forceNotEditing) && !addingUrl && (
           <XStack
             gap={s.$08}
             style={{
@@ -91,7 +132,7 @@ export const EditableHeader = ({
                   textAlign: 'left',
                   color: c.surface,
                   fontSize: 24,
-                  opacity: title ? 1 : 0.7,
+                  opacity: title ? 1 : 0.5,
                 }}
               >
                 {title || placeholder}
@@ -99,7 +140,7 @@ export const EditableHeader = ({
             </Pressable>
           </XStack>
         )}
-        {!addingUrl && editing && (
+        {!addingUrl && editing && !forceNotEditing && (
           <TextInput
             style={[
               t.h2,
@@ -112,15 +153,23 @@ export const EditableHeader = ({
                 fontSize: 24,
               },
             ]}
-            autoFocus={true}
+            autoFocus={isActive}
             value={title == placeholder ? '' : title}
             placeholder={placeholder}
+            placeholderTextColor={`${c.surface}80`}
             onChangeText={(e) => {
               setTitle(e)
             }}
             multiline={true}
+            onFocus={() => {
+              onActiveFieldChange?.('title')
+              onFieldEditStart?.()
+            }}
             onBlur={() => {
-              setEditing(false)
+              // When title editing loses focus (keyboard dismissed), return to normal state
+              onActiveFieldChange?.(null)
+              // Trigger manual transition to snap to 67%
+              onManualTransition?.()
             }}
           ></TextInput>
         )}
@@ -157,21 +206,33 @@ export const EditableHeader = ({
         <XStack
           style={{
             alignItems: 'center',
-            paddingTop: s.$025,
+            paddingTop: s.$025 - 5,
           }}
           gap={s.$09}
         >
           {editing ? (
-            <Pressable
+            <TouchableWithoutFeedback
               onPress={() => {
                 setEditing(false)
+                // Trigger manual transition to snap to 67%
+                onManualTransition?.()
+                // When title editing is complete, move to caption field
+                onActiveFieldChange?.('caption')
               }}
             >
-              <Ionicons size={28} name="checkbox-outline" color={c.surface2} />
-            </Pressable>
+              <View style={{
+                zIndex: 9999,
+                elevation: 9999,
+                position: 'relative',
+                padding: 15,
+              }}>
+                {isActive ? <CircleCheckmark /> : null}
+              </View>
+            </TouchableWithoutFeedback>
           ) : (
             !addingUrl &&
-            canEditRefData && (
+            canEditRefData &&
+            !hideEditIcon && (
               <Pressable
                 style={{
                   width: 28,

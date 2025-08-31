@@ -7,6 +7,8 @@ import {
   Text,
   Pressable,
   ActivityIndicator,
+  Keyboard,
+  TouchableWithoutFeedback,
 } from 'react-native'
 import { BottomSheetScrollView, BottomSheetTextInput as TextInput } from '@gorhom/bottom-sheet'
 import { Heading } from '@/ui/typo/Heading'
@@ -19,8 +21,40 @@ import type { ImagePickerAsset } from 'expo-image-picker'
 import { c, s } from '@/features/style'
 import { StagedItemFields } from '@/features/types'
 import { DismissKeyboard } from '../atoms/DismissKeyboard'
+import { Ionicons } from '@expo/vector-icons'
+import { Svg, Path, Defs, Filter, FeFlood, FeColorMatrix, FeOffset, FeComposite, FeBlend, G } from 'react-native-svg'
 
 const win = Dimensions.get('window')
+
+// Custom circle checkmark component
+const CircleCheckmark = () => (
+  <View style={{ 
+    width: 28, 
+    height: 28, 
+    borderRadius: 14, 
+    backgroundColor: c.surface, 
+    justifyContent: 'center', 
+    alignItems: 'center',
+    opacity: 0.5 
+  }}>
+    <Ionicons name="checkmark" size={16} color={c.accent} />
+  </View>
+)
+
+// Chain link icon component
+const ChainLinkIcon = () => (
+  <View style={{
+    shadowColor: '#969191',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.4,
+    shadowRadius: 0,
+    elevation: 3,
+  }}>
+    <Svg width="23" height="26" viewBox="0 0 23 26" fill="none">
+      <Path d="M12.9856 16.9807L10.4188 19.5475C9.39762 20.5686 8.01266 21.1423 6.56856 21.1423C5.12445 21.1423 3.7395 20.5686 2.71836 19.5475C1.69722 18.5263 1.12356 17.1414 1.12356 15.6973C1.12356 14.2532 1.69722 12.8682 2.71836 11.8471L5.28516 9.28027M9.13535 5.43008L11.7022 2.86328C12.7233 1.84214 14.1082 1.26847 15.5523 1.26847C16.9965 1.26847 18.3814 1.84214 19.4025 2.86328C20.4237 3.88441 20.9973 5.26937 20.9973 6.71347C20.9973 8.15758 20.4237 9.54253 19.4025 10.5637L16.8357 13.1305M7.34221 14.9236L14.8589 7.40691" stroke={c.surface} strokeWidth="2.04188" strokeLinecap="round" strokeLinejoin="round"/>
+    </Svg>
+  </View>
+)
 
 type ExistingRefFields = {
   title?: string
@@ -36,6 +70,10 @@ export const RefForm = ({
   onAddRefToList,
   pickerOpen = false,
   canEditRefData = true,
+  onCaptionFocus,
+  onManualTransition,
+  onLinkIconClick,
+  onFieldEditStart,
 }: {
   existingRefFields: ExistingRefFields | null
   placeholder?: string
@@ -44,6 +82,10 @@ export const RefForm = ({
   pickerOpen?: boolean
   backlog?: boolean
   canEditRefData?: boolean
+  onCaptionFocus?: (focused: boolean) => void
+  onManualTransition?: () => void
+  onLinkIconClick?: () => void
+  onFieldEditStart?: () => void
 }) => {
   // Separate state for each field to prevent unnecessary re-renders
   const [title, setTitle] = useState<string>(existingRefFields?.title || '')
@@ -55,8 +97,31 @@ export const RefForm = ({
   const [uploadInProgress, setUploadInProgress] = useState(false)
   const [createInProgress, setCreateInProgress] = useState(false)
   const [uploadInitiated, setUploadInitiated] = useState(false)
-  const [subtitle, setSubtitle] = useState<string>('')
-  const [editingSubtitle, setEditingSubtitle] = useState<boolean>(false)
+  const [editingUrl, setEditingUrl] = useState<boolean>(false)
+  const [activeField, setActiveField] = useState<'title' | 'link' | 'caption' | null>(canEditRefData ? 'title' : null)
+  const [hasAttemptedAddWithoutTitle, setHasAttemptedAddWithoutTitle] = useState<boolean>(false)
+  const captionInputRef = useRef<any>(null)
+  const urlInputRef = useRef<any>(null)
+
+  // Auto-focus caption when activeField becomes 'caption'
+  useEffect(() => {
+    if (activeField === 'caption') {
+      setTimeout(() => {
+        captionInputRef.current?.focus()
+      }, 100)
+    }
+  }, [activeField])
+
+  // Auto-focus URL input when activeField becomes 'link'
+  useEffect(() => {
+    console.log('🔄 ACTIVE FIELD CHANGE - activeField:', activeField)
+    if (activeField === 'link') {
+      console.log('🔗 FOCUSING URL INPUT')
+      setTimeout(() => {
+        urlInputRef.current?.focus()
+      }, 100)
+    }
+  }, [activeField])
 
   // Animation refs
   const titleShake = useRef(new Animated.Value(0)).current
@@ -88,14 +153,23 @@ export const RefForm = ({
   }, [existingRefFields])
 
   const handleImageSuccess = (imageUrl: string) => {
-    setUploadInProgress(false)
-    // Set pinataSource immediately to update UI
-    setPinataSource(imageUrl)
-
+    // For background uploads, we get called with local URI immediately
+    // Don't update pinataSource to prevent flashing - keep using local URI
+    if (!imageUrl.startsWith('http')) {
+      // Local URI - set it as the source
+      setPinataSource(imageUrl)
+    }
+    // For Pinata URLs (background uploads), don't update pinataSource to prevent flash
+    
     // Prefetch image in background as optimization, but don't block UI updates
     Image.prefetch(imageUrl).catch((err) => {
       console.error('Failed to prefetch image:', err)
     })
+  }
+
+  const handleImageFail = () => {
+    console.error('Upload failed')
+    setUploadInProgress(false)
   }
 
   // Reset uploadInitiated when both required fields are available
@@ -104,6 +178,8 @@ export const RefForm = ({
       setUploadInitiated(false)
     }
   }, [uploadInitiated, pinataSource, title])
+
+
 
   // Shake animation function
   const triggerShake = (anim: Animated.Value) => {
@@ -131,18 +207,19 @@ export const RefForm = ({
   }
 
   return (
-    <DismissKeyboard>
-      <BottomSheetScrollView
+          <BottomSheetScrollView
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
         contentContainerStyle={{
-          gap: s.$1,
-          marginTop: s.$2 - 5,
-          marginBottom: s.$2 + 10,
-          justifyContent: 'flex-start',
-          // Stretch children to container width so inputs never grow wider
-          // than the sheet and inadvertently shift the whole layout.
-          alignItems: 'stretch',
-        }}
-      >
+        gap: s.$1,
+        marginTop: s.$2 - 5,
+        marginBottom: s.$2 + 10,
+        justifyContent: 'flex-start',
+        // Stretch children to container width so inputs never grow wider
+        // than the sheet and inadvertently shift the whole layout.
+        alignItems: 'stretch',
+      }}
+    >
         <View
           style={{
             width: 207.6, // 200 + 2*3.8 for border
@@ -186,10 +263,9 @@ export const RefForm = ({
                 asset={imageAsset}
                 onReplace={() => setPicking(true)}
                 onSuccess={handleImageSuccess}
-                onFail={() => {
-                  console.error('Upload failed')
-                  setUploadInProgress(false)
-                }}
+                onFail={handleImageFail}
+                size={200}
+                allowBackgroundUpload={true}
               />
             ) : pinataSource ? (
               <TouchableOpacity
@@ -203,13 +279,22 @@ export const RefForm = ({
                   borderWidth: 1,
                   borderColor: 'rgba(0,0,0,0.08)',
                 }}
-                onPress={() => setPicking(true)}
+                onPress={() => {
+                  setPicking(true)
+                  Keyboard.dismiss()
+                }}
                 onLongPress={() => setPicking(true)}
               >
                 <Image style={{ flex: 1 }} source={pinataSource} placeholder={pinataSource} />
               </TouchableOpacity>
             ) : (
-              <TouchableOpacity style={{ flex: 1 }} onPress={() => setPicking(true)}>
+              <TouchableOpacity 
+                style={{ flex: 1 }} 
+                onPress={() => {
+                  setPicking(true)
+                  Keyboard.dismiss()
+                }}
+              >
                 <View
                   style={{
                     flex: 1,
@@ -235,7 +320,8 @@ export const RefForm = ({
             onSuccess={(a: ImagePickerAsset) => {
               setImageAsset(a)
               setPicking(false)
-              setUploadInProgress(true)
+              // Don't set uploadInProgress to true for background uploads
+              // The image will be available immediately via local URI
               setUploadInitiated(true)
             }}
             onCancel={() => setPicking(false)}
@@ -246,6 +332,9 @@ export const RefForm = ({
           style={{
             width: '100%',
             marginBottom: 0,
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 5,
             transform: [
               {
                 translateX: titleShake.interpolate({
@@ -261,36 +350,22 @@ export const RefForm = ({
               },
             ],
           }}
+          pointerEvents="box-none"
         >
-          <EditableHeader
-            canEditRefData={canEditRefData}
-            setTitle={setTitle}
-            setUrl={setUrl}
-            setImage={setPinataSource}
-            placeholder={placeholder}
-            title={title}
-            url={url || ''}
-            image={pinataSource}
-          />
-        </Animated.View>
-
-        {/* Inline subtitle row (single field), directly below title */}
-        <View style={{ width: '100%', alignItems: 'flex-start', marginTop: -17, marginBottom: 2 }}>
-          {canEditRefData ? (
-            editingSubtitle ? (
+          {/* Title/URL input area with smooth animation */}
+          <Animated.View style={{ flex: 1 }}>
+            {activeField === 'link' ? (
               <TextInput
-                value={subtitle}
-                onChangeText={(t) => t.length <= 150 && setSubtitle(t)}
-                onBlur={() => setEditingSubtitle(false)}
-                autoFocus
-                placeholder="Add subtitle (e.g., location or author)"
+                ref={urlInputRef}
+                value={url}
+                onChangeText={(t) => t.length <= 150 && setUrl(t)}
+                placeholder="Paste link here"
+                placeholderTextColor={`${c.surface}80`}
                 style={{
-                  minWidth: 80,
-                  maxWidth: 280,
                   color: c.surface,
-                  fontSize: 18,
+                  fontSize: url ? 18 : 17.6,
                   fontWeight: '600',
-                  opacity: 0.5,
+                  opacity: url ? 0.5 : 0.7,
                   backgroundColor: 'transparent',
                   padding: 0,
                   margin: 0,
@@ -298,51 +373,117 @@ export const RefForm = ({
                 }}
                 maxLength={150}
                 returnKeyType="done"
+                onSubmitEditing={() => {
+                  setActiveField('caption')
+                  // Focus the caption field to encourage typing
+                }}
+                onBlur={() => {
+                  // When URL editing loses focus (keyboard dismissed), return to normal state
+                  setActiveField(null)
+                  // Trigger manual transition to snap to 67%
+                  onManualTransition?.()
+                }}
               />
-            ) : subtitle ? (
-              <Pressable onPress={() => setEditingSubtitle(true)}>
-                <Text
-                  style={{
-                    color: c.surface,
-                    fontSize: 18,
-                    fontWeight: '600',
-                    opacity: 0.5,
-                    textAlign: 'left',
-                  }}
-                >
-                  {subtitle}
-                </Text>
-              </Pressable>
             ) : (
-              <Pressable onPress={() => setEditingSubtitle(true)}>
-                <Text
-                  style={{
-                    color: c.surface,
-                    fontSize: 17.6,
-                    opacity: 0.7,
-                    textAlign: 'left',
-                    fontWeight: '600',
-                  }}
-                >
-                  + subtitle (eg location or author)
-                </Text>
-              </Pressable>
-            )
+              <EditableHeader
+                canEditRefData={canEditRefData}
+                setTitle={setTitle}
+                setUrl={setUrl}
+                setImage={setPinataSource}
+                placeholder={placeholder}
+                title={title}
+                url={url || ''}
+                image={pinataSource}
+                withUrl={false}
+                onActiveFieldChange={setActiveField}
+                isActive={activeField === 'title'}
+                hideEditIcon={true}
+                forceNotEditing={false}
+                onManualTransition={onManualTransition}
+                onFieldEditStart={onFieldEditStart}
+              />
+            )}
+          </Animated.View>
+
+          {/* Link icon or checkbox */}
+          {activeField === 'link' ? (
+            <TouchableWithoutFeedback
+              onPress={() => {
+                console.log('Link checkbox clicked, setting activeField to null')
+                // Trigger manual transition to snap to 67% (this sets manualTransition flag)
+                onManualTransition?.()
+                // Immediately change state to return to normal view
+                setActiveField(null)
+                // Dismiss keyboard after setting the flag
+                Keyboard.dismiss()
+                // Prevent caption from auto-focusing
+                setTimeout(() => {
+                  captionInputRef.current?.blur()
+                }, 50)
+              }}
+            >
+              <View style={{ 
+                zIndex: 9999,
+                elevation: 9999,
+                position: 'relative',
+                padding: 15,
+              }}>
+                <CircleCheckmark />
+              </View>
+            </TouchableWithoutFeedback>
+          ) : activeField === 'title' ? (
+            // Don't show anything when title is being edited - EditableHeader handles its own checkbox
+            null
           ) : (
-            <View style={{ width: '100%', alignItems: 'flex-start', marginTop: -17, marginBottom: 2 }}>
-              <Heading tag="h2" style={{ color: c.surface }}>
-                {subtitle}
-              </Heading>
-            </View>
+            // Default state - show chain link icon
+            <TouchableWithoutFeedback
+              onPress={() => {
+                console.log('🔗 LINK ICON CLICK - Processing click, current activeField:', activeField)
+                // Notify parent about transition to prevent unwanted snaps
+                onLinkIconClick?.()
+                onFieldEditStart?.()
+                // Set active field to link - let keyboard behavior handle itself
+                setActiveField('link')
+              }}
+            >
+              <View style={{ 
+                zIndex: 9999,
+                elevation: 9999,
+                position: 'relative',
+                padding: 15,
+              }}>
+                <ChainLinkIcon />
+              </View>
+            </TouchableWithoutFeedback>
           )}
-        </View>
+        </Animated.View>
 
         {/* Notes */}
         <View style={{ width: '100%', alignSelf: 'stretch' }}>
+          {!text && (
+            <View style={{
+              position: 'absolute',
+              top: s.$1,
+              left: s.$1,
+              right: s.$1,
+              zIndex: 1,
+              pointerEvents: 'none',
+            }}>
+              <Text style={{
+                color: c.muted,
+                fontSize: 17,
+                fontWeight: '500',
+                lineHeight: 20,
+              }}>
+                What do you like about it?
+              </Text>
+
+            </View>
+          )}
           <TextInput
             multiline={true}
             numberOfLines={3}
-            placeholder="Add a caption for your profile"
+            placeholder=""
             placeholderTextColor={c.muted}
             onChangeText={setText}
             value={text}
@@ -352,7 +493,6 @@ export const RefForm = ({
               width: '100%',
               maxWidth: '100%',
               flexShrink: 1,
-              overflow: 'hidden',
               padding: s.$1,
               minHeight: s.$11,
               fontSize: 17,
@@ -362,6 +502,18 @@ export const RefForm = ({
             textAlignVertical="top"
             autoCorrect={true}
             autoCapitalize="sentences"
+            onFocus={() => {
+              setActiveField('caption')
+              // Snap to 100% when caption is focused to give full access to buttons
+              // This will be handled by the parent BottomSheet's keyboardBehavior
+              onCaptionFocus?.(true)
+            }}
+            onBlur={() => {
+              // Reset caption focus state when caption loses focus - this should trigger immediate snap
+              console.log('📝 CAPTION ONBLUR - Calling onCaptionFocus(false)')
+              onCaptionFocus?.(false)
+            }}
+            blurOnSubmit={false}
           />
         </View>
 
@@ -372,7 +524,7 @@ export const RefForm = ({
             justifyContent: 'space-between',
           }}
         >
-          <Button
+          {/* <Button
             title="Add to list"
             variant="whiteOutline"
             style={{ width: '48%', minWidth: 0 }}
@@ -384,27 +536,22 @@ export const RefForm = ({
               if (!validateFields()) {
                 return
               }
-              // Only include meta if subtitle is present
-              let meta: string | undefined = undefined
-              if (subtitle) {
-                meta = JSON.stringify({ subtitle })
-              }
 
               try {
                 setCreateInProgress(true)
-                await onAddRefToList({ title, text, url, image: pinataSource, meta })
+                await onAddRefToList({ title, text, url: url, image: pinataSource })
               } catch (e) {
                 console.error(e)
               } finally {
                 setCreateInProgress(false)
               }
             }}
-          />
+          /> */}
 
-          {createInProgress || uploadInProgress || (uploadInitiated && !pinataSource) ? (
+          {createInProgress || (uploadInProgress && !pinataSource) ? (
             <Pressable
               style={{
-                width: '48%',
+                width: '100%',
                 minWidth: 0,
                 height: 48,
                 alignItems: 'center',
@@ -422,24 +569,31 @@ export const RefForm = ({
             </Pressable>
           ) : (
             <Button
-              title={title ? 'Add Ref' : 'Title required'}
+              title={hasAttemptedAddWithoutTitle && (!title || title.trim() === '' || title === placeholder) ? 'Title required' : 'Add Ref'}
+
               variant="whiteInverted"
-              style={{ width: '48%', minWidth: 0, backgroundColor: c.white }}
-              disabled={!(pinataSource && title) || createInProgress}
+              style={{ 
+                width: '100%', 
+                minWidth: 0, 
+                backgroundColor: c.white,
+                opacity: hasAttemptedAddWithoutTitle && (!title || title.trim() === '' || title === placeholder) ? 0.5 : 1
+              }}
+              disabled={!(pinataSource && title && title.trim() !== '' && title !== placeholder) || createInProgress}
               onPress={async () => {
+                // Check if user is trying to add without a title
+                if (!title || title.trim() === '' || title === placeholder) {
+                  setHasAttemptedAddWithoutTitle(true)
+                  return
+                }
+
                 if (!validateFields()) {
                   return
                 }
 
-                // Only include meta if subtitle is present
-                let meta: string | undefined = undefined
-                if (subtitle) {
-                  meta = JSON.stringify({ subtitle })
-                }
-
                 try {
                   setCreateInProgress(true)
-                  await onAddRef({ title, text, url, image: pinataSource, meta })
+                  // Call onAddRef which will handle the submission
+                  await onAddRef({ title, text, url: url, image: pinataSource })
                 } catch (e) {
                   console.error(e)
                 } finally {
@@ -450,6 +604,5 @@ export const RefForm = ({
           )}
         </View>
       </BottomSheetScrollView>
-    </DismissKeyboard>
   )
 }

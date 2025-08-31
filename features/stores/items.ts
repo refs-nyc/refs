@@ -5,6 +5,7 @@ import { createdSort } from '@/ui/profiles/sorts'
 import type { StoreSlices } from './types'
 import { pocketbase } from '../pocketbase'
 import { edgeFunctionClient } from '../supabase/edge-function-client'
+import { simpleCache } from '@/features/cache/simpleCache'
 
 const USE_WEBHOOKS = (process.env.EXPO_PUBLIC_USE_WEBHOOKS || '').toLowerCase() === 'true'
 
@@ -85,6 +86,20 @@ export type ItemSlice = {
   editingLink: boolean
   feedRefreshTrigger: number
   profileRefreshTrigger: number
+  // Track client-side background processing state for newly created items
+  uploadingItems: Set<string>
+  addUploadingItem: (itemId: string) => void
+  removeUploadingItem: (itemId: string) => void
+  // Cache grid count to avoid database queries
+  gridItemCount: number
+  setGridItemCount: (count: number) => void
+  incrementGridItemCount: () => void
+  decrementGridItemCount: () => void
+  // Optimistic item management
+  optimisticItems: Map<string, ExpandedItem>
+  addOptimisticItem: (item: ExpandedItem) => void
+  replaceOptimisticItem: (tempId: string, realItem: ExpandedItem) => void
+  removeOptimisticItem: (tempId: string) => void
   setEditingLink: (newValue: boolean) => void
   startEditing: (id: string) => void
   setIsAddingToList: (newValue: boolean) => void
@@ -133,6 +148,68 @@ export const createItemSlice: StateCreator<StoreSlices, [], [], ItemSlice> = (se
   editingLink: false,
   feedRefreshTrigger: 0,
   profileRefreshTrigger: 0,
+  uploadingItems: new Set<string>(),
+  gridItemCount: 0, // Initialize to 0, will be set when profile loads
+  optimisticItems: new Map<string, ExpandedItem>(),
+  addUploadingItem: (itemId: string) =>
+    set((state) => ({ uploadingItems: new Set([...state.uploadingItems, itemId]) })),
+  removeUploadingItem: (itemId: string) =>
+    set((state) => {
+      const next = new Set(state.uploadingItems)
+      next.delete(itemId)
+      return { uploadingItems: next }
+    }),
+  setGridItemCount: (count: number) => set(() => ({ gridItemCount: count })),
+  incrementGridItemCount: () => set((state) => ({ gridItemCount: state.gridItemCount + 1 })),
+  decrementGridItemCount: () => set((state) => ({ gridItemCount: Math.max(0, state.gridItemCount - 1) })),
+  addOptimisticItem: (item: ExpandedItem) =>
+    set((state) => {
+      console.log('➕ ADDING OPTIMISTIC ITEM:', item.id)
+      // Only update if the item doesn't already exist or is different
+      const existingItem = state.optimisticItems.get(item.id)
+      if (existingItem && JSON.stringify(existingItem) === JSON.stringify(item)) {
+        console.log('➕ OPTIMISTIC ITEM ALREADY EXISTS, NO CHANGE')
+        return state // No change needed
+      }
+      const next = new Map(state.optimisticItems)
+      next.set(item.id, item)
+      console.log('➕ OPTIMISTIC ITEM ADDED, NEW MAP SIZE:', next.size)
+      return { optimisticItems: next }
+    }),
+  replaceOptimisticItem: (tempId: string, realItem: ExpandedItem) =>
+    set((state) => {
+      console.log('🔄 REPLACING OPTIMISTIC ITEM:', tempId, '->', realItem.id)
+      const next = new Map(state.optimisticItems)
+      
+      // Preserve the image from the optimistic item if the real item doesn't have one
+      const optimisticItem = next.get(tempId)
+      const itemWithPreservedImage = optimisticItem && !realItem.image && optimisticItem.image
+        ? { ...realItem, image: optimisticItem.image }
+        : realItem
+      
+      // Only update if the item is different
+      const existingItem = next.get(realItem.id)
+      if (existingItem && JSON.stringify(existingItem) === JSON.stringify(itemWithPreservedImage)) {
+        console.log('🔄 OPTIMISTIC ITEM REPLACEMENT - NO CHANGE NEEDED')
+        return state // No change needed
+      }
+      
+      next.delete(tempId)
+      next.set(realItem.id, itemWithPreservedImage)
+      console.log('🔄 OPTIMISTIC ITEM REPLACED, NEW MAP SIZE:', next.size)
+      return { optimisticItems: next }
+    }),
+  removeOptimisticItem: (tempId: string) =>
+    set((state) => {
+      // Only update if the item exists
+      if (!state.optimisticItems.has(tempId)) {
+        return state // No change needed
+      }
+      
+      const next = new Map(state.optimisticItems)
+      next.delete(tempId)
+      return { optimisticItems: next }
+    }),
   setEditingLink: (newValue: boolean) => set(() => ({ editingLink: newValue })),
   startEditing: (id: string) => set(() => ({ editing: id })),
   setIsAddingToList: (newValue: boolean) => set(() => ({ isAddingToList: newValue })),
@@ -152,7 +229,13 @@ export const createItemSlice: StateCreator<StoreSlices, [], [], ItemSlice> = (se
       ...get().editedState,
       editedState,
     })),
-  triggerFeedRefresh: () => set((state) => ({ feedRefreshTrigger: state.feedRefreshTrigger + 1 })),
+  triggerFeedRefresh: () => {
+    set((state) => ({ feedRefreshTrigger: state.feedRefreshTrigger + 1 }))
+    // Clear feed cache when items change
+    simpleCache.set('feed_items', null).catch(error => {
+      console.warn('Feed cache clear failed:', error)
+    })
+  },
   triggerProfileRefresh: () =>
     set((state) => ({ profileRefreshTrigger: state.profileRefreshTrigger + 1 })),
   addToProfile: async (refId: string | null, itemFields: StagedItemFields, backlog: boolean) => {
@@ -168,7 +251,20 @@ export const createItemSlice: StateCreator<StoreSlices, [], [], ItemSlice> = (se
     }
     const newItem = await get().createItem(linkedRefId, itemFields, backlog)
 
+    // Update cached grid count if adding to grid (not backlog)
+    if (!backlog) {
+      get().incrementGridItemCount()
+    }
+
     get().triggerFeedRefresh()
+
+    // Clear cache for this user (silent operation)
+    const userId = pocketbase.authStore.record?.id
+    if (userId) {
+      simpleCache.clearUser(userId).catch(error => {
+        console.warn('Cache clear failed:', error)
+      })
+    }
 
     return newItem
   },
@@ -214,22 +310,23 @@ export const createItemSlice: StateCreator<StoreSlices, [], [], ItemSlice> = (se
       expand: 'ref',
     })
 
-    // Process the item for 7-string generation and spirit vector
-    try {
-      if (USE_WEBHOOKS) {
-        await triggerItemWebhook(newItem.id, 'create', {
-          ref: newItem.ref,
-          creator: newItem.creator,
-          text: newItem.text,
-          ref_title: newItem.expand?.ref?.title || 'Unknown',
-        })
-      } else {
-        await processItemViaEdgeFunction(newItem)
+    // Kick off background processing (non-blocking) without showing processing indicator
+    ;(async () => {
+      try {
+        if (USE_WEBHOOKS) {
+          await triggerItemWebhook(newItem.id, 'create', {
+            ref: newItem.ref,
+            creator: newItem.creator,
+            text: newItem.text,
+            ref_title: newItem.expand?.ref?.title || 'Unknown',
+          })
+        } else {
+          await processItemViaEdgeFunction(newItem)
+        }
+      } catch (error) {
+        console.error('Item processing failed (background):', error)
       }
-    } catch (error) {
-      console.error('Item processing failed:', error)
-      // Do not throw; item creation in PocketBase succeeded
-    }
+    })()
 
     return newItem
   },
@@ -238,6 +335,13 @@ export const createItemSlice: StateCreator<StoreSlices, [], [], ItemSlice> = (se
     const userId = pocketbase.authStore.record?.id
     if (!userId) {
       throw new Error('User not found')
+    }
+
+    // Check if this is an optimistic item (temp ID)
+    if (id.startsWith('temp-')) {
+      // Optimistic item - just remove it from optimistic items
+      get().removeOptimisticItem(id)
+      return
     }
 
     const item = await pocketbase.collection('items').getOne(id)
@@ -252,7 +356,17 @@ export const createItemSlice: StateCreator<StoreSlices, [], [], ItemSlice> = (se
     }
     await pocketbase.collection('items').delete(id)
 
+    // Update cached grid count if item was in grid (not backlog)
+    if (!item.backlog) {
+      get().decrementGridItemCount()
+    }
+
     get().triggerFeedRefresh()
+
+    // Clear cache for this user (silent operation)
+    simpleCache.clearUser(userId).catch(error => {
+      console.warn('Cache clear failed:', error)
+    })
   },
   addItemToList: async (listId: string, itemId: string) => {
     try {
@@ -306,13 +420,24 @@ export const createItemSlice: StateCreator<StoreSlices, [], [], ItemSlice> = (se
         await get().updateRefTitle(updatedItem.ref, editedState.refTitle)
       }
 
-      // Temporarily disabled webhook to prevent production crashes
-      // await triggerItemWebhook(updatedItem.id, 'update', {
-      //   ref: updatedItem.ref,
-      //   creator: updatedItem.creator,
-      //   text: updatedItem.text,
-      //   ref_title: updatedItem.expand?.ref?.title || 'Unknown',
-      // });
+      // Kick off background processing (non-blocking) for edge functions
+      ;(async () => {
+        try {
+          if (USE_WEBHOOKS) {
+            await triggerItemWebhook(updatedItem.id, 'update', {
+              ref: updatedItem.ref,
+              creator: updatedItem.creator,
+              text: updatedItem.text,
+              ref_title: updatedItem.expand?.ref?.title || 'Unknown',
+            })
+          } else {
+            await processItemViaEdgeFunction(updatedItem)
+          }
+        } catch (error) {
+          console.error('Background update processing failed:', error)
+          // Don't throw - background processing failure shouldn't break the main flow
+        }
+      })()
 
       // Trigger feed refresh since updates might affect feed visibility
       get().triggerFeedRefresh()
@@ -330,7 +455,17 @@ export const createItemSlice: StateCreator<StoreSlices, [], [], ItemSlice> = (se
         throw new Error('User not found')
       }
 
+      // Check if this is an optimistic item (temp ID)
+      if (id.startsWith('temp-')) {
+        // Optimistic item - just remove it from optimistic items
+        get().removeOptimisticItem(id)
+        return null as any
+      }
+
       const record = await pocketbase.collection<ItemsRecord>('items').update(id, { backlog: true })
+
+      // Update cached grid count since item is moving from grid to backlog
+      get().decrementGridItemCount()
 
       // Trigger feed refresh since backlog items don't appear in the feed
       get().triggerFeedRefresh()

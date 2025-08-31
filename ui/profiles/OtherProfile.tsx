@@ -13,6 +13,8 @@ import { ProfileDetailsSheet } from './ProfileDetailsSheet'
 import { ProfileHeader } from './ProfileHeader'
 import { OtherBacklogSheet } from './sheets/OtherBacklogSheet'
 import { OtherButtonsSheet } from './sheets/OtherButtonsSheet'
+import { simpleCache } from '@/features/cache/simpleCache'
+import { pocketbase } from '@/features/pocketbase'
 
 export const OtherProfile = ({ userName }: { userName: string }) => {
   const [profile, setProfile] = useState<Profile>()
@@ -20,22 +22,55 @@ export const OtherProfile = ({ userName }: { userName: string }) => {
   const [backlogItems, setBacklogItems] = useState<ExpandedItem[]>([])
   const [loading, setLoading] = useState<boolean>(true)
 
-  const { profileRefreshTrigger, user, stopEditing, getUserByUserName } = useAppStore()
+  const { user, stopEditing, getUserByUserName } = useAppStore()
 
   const refreshGrid = async (userName: string) => {
     setLoading(true)
     try {
-      const profile = await getUserByUserName(userName)
+      // Get user ID for cache keys
+      const user = await pocketbase.collection('users').getFirstListItem(`userName = "${userName}"`)
+      const userId = user.id
+      
+      // Check cache first (read-only, safe operation)
+      const [cachedProfile, cachedGridItems, cachedBacklogItems] = await Promise.all([
+        simpleCache.get('profile', userId),
+        simpleCache.get('grid_items', userId),
+        simpleCache.get('backlog_items', userId)
+      ])
+      
+      // Use cached data if available
+      if (cachedProfile && cachedGridItems && cachedBacklogItems) {
+        console.log('📖 Using cached other profile data')
+        setProfile(cachedProfile as Profile)
+        setGridItems(cachedGridItems as ExpandedItem[])
+        setBacklogItems(cachedBacklogItems as ExpandedItem[])
+        setLoading(false)
+        return
+      }
+      
+      // Fetch fresh data
+      const [profile, gridItems, backlogItems] = await Promise.all([
+        getUserByUserName(userName),
+        getProfileItems(userName),
+        getBacklogItems(userName),
+      ])
+      
       setProfile(profile)
-
-      const gridItems = await getProfileItems(userName)
       setGridItems(gridItems)
-
-      const backlogItems = await getBacklogItems(userName)
       setBacklogItems(backlogItems as ExpandedItem[])
+      
+      // Cache the fresh data (silent operation)
+      Promise.all([
+        simpleCache.set('profile', profile, userId),
+        simpleCache.set('grid_items', gridItems, userId),
+        simpleCache.set('backlog_items', backlogItems, userId)
+      ]).catch(error => {
+        console.warn('Cache write failed:', error)
+      })
+      
+      setLoading(false)
     } catch (error) {
       console.error(error)
-    } finally {
       setLoading(false)
     }
   }
@@ -49,7 +84,7 @@ export const OtherProfile = ({ userName }: { userName: string }) => {
       }
     }
     init()
-  }, [userName, profileRefreshTrigger])
+  }, [userName])
 
   const bottomSheetRef = useRef<BottomSheet>(null)
   const detailsSheetRef = useRef<BottomSheet>(null)
@@ -89,6 +124,7 @@ export const OtherProfile = ({ userName }: { userName: string }) => {
                   columns={3}
                   items={gridItems}
                   rows={4}
+                  editingRights={false}
                   onPressItem={(item) => {
                     setDetailsItem(item!)
                     detailsSheetRef.current?.snapToIndex(0)

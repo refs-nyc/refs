@@ -27,16 +27,29 @@ export const Navigation = ({
     cachedSearchResults,
     setShowLogoutButton,
     showLogoutButton,
+    returnToDirectories,
+    setReturnToDirectories,
+    setHomePagerIndex,
   } = useAppStore()
 
   const isHomePage = pathname === '/' || pathname === '/index' || pathname === `/user/${user?.userName}`
 
   const scaleAnim = useRef(new Animated.Value(1)).current
 
-  // Simplified back button handler that preserves search context
+  // Back button handler with robust fallbacks for directories and no-stack cases
   const handleBackPress = () => {
     console.log('🔍 Back button pressed, cachedSearchResults.length:', cachedSearchResults.length)
     
+    // If returning from Directories -> user profile, jump back into Directories view
+    if (returnToDirectories) {
+      setReturnToDirectories?.(false)
+      setHomePagerIndex?.(1)
+      if (user?.userName) {
+        router.replace(`/user/${user.userName}`)
+        return
+      }
+    }
+
     // If we have cached search results, navigate back to profile to restore them
     if (cachedSearchResults.length > 0) {
       const currentUser = user?.userName
@@ -47,9 +60,23 @@ export const Navigation = ({
       }
     }
     
-    console.log('🔍 No cached results, using default back behavior')
-    // Default back behavior
-    router.back()
+   console.log('🔍 No cached results, using default back behavior')
+   // Prefer native back if possible; otherwise, fallback to profile route and ensure pager index
+   try {
+     // @ts-ignore router.canGoBack exists in expo-router v3
+     const canGoBack = typeof (router as any).canGoBack === 'function' ? (router as any).canGoBack() : false
+     if (canGoBack) {
+       router.back()
+       return
+     }
+   } catch {}
+
+   if (user?.userName) {
+     setHomePagerIndex?.(returnToDirectories ? 1 : 0)
+     setReturnToDirectories?.(false)
+     router.replace(`/user/${user.userName}`)
+     return
+   }
   }
 
   const animateBadge = () => {
@@ -154,9 +181,18 @@ export const Navigation = ({
           </View>
         </View>
         <View style={{ top: 1.5, paddingRight: 17 }}>
-          <Link href={`/user/${user.userName}`}>
+          <Pressable onPress={() => {
+            console.log('👤 AVATAR CLICK - Clearing returnToDirectories and setting pager to 0')
+            setReturnToDirectories(false) // Clear any directory return flags
+            setHomePagerIndex(0) // Always go to grid view
+            router.push(`/user/${user.userName}`)
+            // Force set pager index again after navigation
+            setTimeout(() => {
+              setHomePagerIndex(0)
+            }, 100)
+          }}>
             <Avatar source={user.image} size={30} />
-          </Link>
+          </Pressable>
         </View>
         <View style={{ display: 'flex', flexDirection: 'row', paddingRight: 18 }}>
           <Pressable onPress={() => savesBottomSheetRef.current?.expand()}>
@@ -183,7 +219,7 @@ export const Navigation = ({
         <View style={{ display: 'flex', flexDirection: 'row', paddingRight: 6 }}>
           <Pressable onPress={() => router.push('/messages')}>
             <View style={{ top: -3 }}>
-              <MessageIcon width={30} />
+              <MessageIcon width={36} />
             </View>
             <View
               style={{

@@ -70,12 +70,12 @@ export const Navigation = ({
        return
      }
    } catch {}
-
+ 
    if (user?.userName) {
-     setHomePagerIndex?.(returnToDirectories ? 1 : 0)
-     setReturnToDirectories?.(false)
-     router.replace(`/user/${user.userName}`)
-     return
+    setHomePagerIndex?.(1)
+    setReturnToDirectories?.(false)
+    router.replace(`/user/${user.userName}`)
+    return
    }
   }
 

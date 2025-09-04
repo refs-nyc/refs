@@ -1,20 +1,122 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react'
-import { View, Text, Pressable, FlatList, ListRenderItem } from 'react-native'
+import React, { useCallback, useEffect, useRef, useState, useMemo } from 'react'
+import { View, Text, Pressable, FlatList, ListRenderItem, InteractionManager } from 'react-native'
 import { s, c, t } from '@/features/style'
 import { router } from 'expo-router'
 import { Image } from 'expo-image'
 import { pocketbase } from '@/features/pocketbase'
 import { useAppStore } from '@/features/stores'
 import { simpleCache } from '@/features/cache/simpleCache'
+import Svg, { Circle } from 'react-native-svg'
+import AsyncStorage from '@react-native-async-storage/async-storage'
 
 type FeedUser = {
   id: string
-  userName?: string
+  userName: string
   name: string
-  neighborhood?: string
-  avatar_url?: string
-  topRefs?: string[]
+  neighborhood: string
+  avatar_url: string
+  topRefs: string[]
+  _latest?: number
 }
+
+// Memoized row component to prevent unnecessary re-renders
+const DirectoryRow = React.memo(({ u, onPress }: { u: FeedUser; onPress: () => void }) => {
+  // Pre-compute thumbnails to avoid array operations during render
+  const thumbnails = useMemo(() => {
+    return (u.topRefs || []).slice(0, 3)
+  }, [u.topRefs])
+  
+  return (
+    <Pressable
+      key={u.id}
+      style={{
+        backgroundColor: c.surface,
+        borderRadius: s.$1,
+        paddingVertical: (s.$1 as number) + 5, // Added 5px padding for taller entries
+        paddingHorizontal: s.$08,
+        marginBottom: s.$075,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        height: 90, // Increased height to accommodate extra padding (80 + 10)
+      }}
+      onPress={onPress}
+    >
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 }}>
+        {u.avatar_url ? (
+          <Image
+            source={u.avatar_url}
+            style={{
+              width: 60,
+              height: 60,
+              borderRadius: 30,
+              backgroundColor: c.surface2,
+            }}
+            contentFit={'cover'}
+            cachePolicy="memory-disk"
+            transition={0}
+            priority="high"
+          />
+        ) : (
+          <View
+            style={{
+              width: 60,
+              height: 60,
+              borderRadius: 30,
+              backgroundColor: c.surface2,
+              justifyContent: 'center',
+              alignItems: 'center',
+            }}
+          >
+            <Svg width={24} height={24} viewBox="0 0 24 24">
+              <Circle cx="12" cy="12" r="10" fill="none" stroke={c.muted} strokeWidth="2" />
+              <Circle cx="8" cy="8" r="2" fill={c.muted} />
+              <Circle cx="16" cy="8" r="2" fill={c.muted} />
+              <Circle cx="8" cy="16" r="2" fill={c.muted} />
+              <Circle cx="16" cy="16" r="2" fill={c.muted} />
+            </Svg>
+          </View>
+        )}
+        <View style={{ flex: 1, marginLeft: 5, gap: 4 }}>
+          <Text style={[t.psemi, { fontSize: (s.$09 as number) + 4 }]} numberOfLines={1} ellipsizeMode="tail">
+            {u.name}
+          </Text>
+          <Text style={[t.smallmuted, { opacity: 0.6 }]} numberOfLines={1} ellipsizeMode="tail">
+            {u.neighborhood || 'Neighborhood'}
+          </Text>
+        </View>
+      </View>
+
+      <View style={{ flexDirection: 'row', gap: 6, marginLeft: s.$08 }}>
+        {thumbnails.map((src, idx) => (
+          <Image
+            key={`${u.id}-thumb-${idx}`}
+            source={src}
+            style={{
+              width: 30,
+              height: 30,
+              borderRadius: 6,
+              backgroundColor: c.surface2,
+            }}
+            contentFit={'cover'}
+            cachePolicy="memory-disk"
+            transition={0}
+            priority="low"
+          />
+        ))}
+      </View>
+    </Pressable>
+  )
+}, (prevProps, nextProps) => {
+  // Simple comparison - only re-render if user ID changes
+  // This prevents unnecessary re-renders during scroll
+  return prevProps.u.id === nextProps.u.id
+})
+
+DirectoryRow.displayName = 'DirectoryRow'
+
+// Ensure we only schedule profile preloading once per app session
+let hasScheduledProfilePreload = false
 
 export function CommunitiesFeedScreen() {
   // Directories screen: paginated list of all users
@@ -22,9 +124,19 @@ export function CommunitiesFeedScreen() {
   const [page, setPage] = useState(1)
   const [isLoading, setIsLoading] = useState(false)
   const [hasMore, setHasMore] = useState(true)
-  const perPage = 30
+  const [hasInitialData, setHasInitialData] = useState(false)
+  const perPage = 50 // Increased from 30 to show more entries
   const pbRef = useRef<typeof pocketbase | null>(null)
   const { setHomePagerIndex, setReturnToDirectories, user } = useAppStore()
+  
+  // Performance monitoring
+  const renderCount = useRef(0)
+  renderCount.current++
+  
+  // Log render performance every 10 renders
+  if (renderCount.current % 10 === 0) {
+    console.log(`🔄 Directory rendered ${renderCount.current} times, users: ${users.length}`)
+  }
 
   const getPB = () => {
     if (!pbRef.current) pbRef.current = pocketbase
@@ -53,10 +165,17 @@ export function CommunitiesFeedScreen() {
         _latest: latest,
       } as any)
     }
-    // Sort by most recently active (latest item)
-    result.sort((a, b) => (b._latest || 0) - (a._latest || 0))
+    // Remove expensive sort operation - let the database handle sorting
+    // result.sort((a, b) => (b._latest || 0) - (a._latest || 0))
     return result as FeedUser[]
   }, [])
+
+  // Memoize the processed users to prevent recalculation during scroll
+  const processedUsers = useMemo(() => {
+    // Simply return the users array - no processing needed
+    // This should be a pure pass-through for cached data
+    return users
+  }, [users]) // Depend on the actual array since we're not processing it
 
   const fetchPage = useCallback(async (targetPage: number) => {
     if (isLoading || !hasMore) return
@@ -68,8 +187,7 @@ export function CommunitiesFeedScreen() {
         const cachedUsers = await simpleCache.get('directory_users')
         if (cachedUsers) {
           console.log('📖 Using cached directory users')
-          const filteredMapped = (cachedUsers as any[]).filter(u => u.userName !== user?.userName)
-          setUsers(filteredMapped)
+          setUsers(cachedUsers as any[])
           setHasMore(true) // Assume there are more pages
           setPage(1)
           setIsLoading(false)
@@ -100,6 +218,7 @@ export function CommunitiesFeedScreen() {
         sort: '-created',
       })
 
+      // Process data immediately instead of deferring with InteractionManager
       // Group items by creator
       const byCreator = new Map<string, any[]>()
       for (const it of itemsRes.items as any[]) {
@@ -115,11 +234,151 @@ export function CommunitiesFeedScreen() {
       const mapped = mapUsersWithItems(res.items, byCreator)
       // Filter out the current user from the directory list
       const filteredMapped = mapped.filter(u => u.userName !== user?.userName)
-      setUsers((prev) => (targetPage === 1 ? filteredMapped : [...prev, ...filteredMapped]))
-      setHasMore(res.page < res.totalPages)
+      
+      // Pre-load profile data for all users in the directory (deferred)
+      const preloadProfiles = async () => {
+        try {
+          // Build a set of cached profile IDs by key prefix (avoid JSON parsing)
+          const cachedIds = new Set<string>()
+          try {
+            const allKeys = await AsyncStorage.getAllKeys()
+            for (const key of allKeys) {
+              if (key.startsWith('simple_cache_profile_')) {
+                const id = key.slice('simple_cache_profile_'.length)
+                if (id) cachedIds.add(id)
+              }
+            }
+          } catch {}
+
+          // Only pre-load profiles that aren't already cached (by id)
+          const usersToPreload = filteredMapped.filter(u => !cachedIds.has(u.id))
+          
+          if (usersToPreload.length === 0) {
+            console.log('✅ All profiles already cached, skipping pre-loading')
+            return
+          }
+          
+          console.log(`🚀 Pre-loading ${usersToPreload.length} uncached profiles`)
+          
+          // Start with just the first 3 uncached users to make them instantly available
+          const immediateUsers = usersToPreload.slice(0, 3)
+          
+          // Pre-load these users immediately and synchronously
+          for (const userData of immediateUsers) {
+            if (userData.userName) {
+              try {
+                const [profile, gridItems, backlogItems] = await Promise.all([
+                  pocketbase.collection('users').getFirstListItem(`userName = "${userData.userName}"`),
+                  pocketbase.collection('items').getList(1, 50, {
+                    filter: pocketbase.filter(
+                      'creator.userName = {:userName} && backlog = false && parent = null',
+                      { userName: userData.userName }
+                    ),
+                    expand: 'ref, creator',
+                    sort: '-created',
+                  }),
+                  pocketbase.collection('items').getList(1, 50, {
+                    filter: pocketbase.filter(
+                      'creator.userName = {:userName} && backlog = true && parent = null',
+                      { userName: userData.userName }
+                    ),
+                    expand: 'ref',
+                    sort: '-created',
+                  })
+                ])
+                
+                // Cache the pre-loaded data immediately
+                const userId = profile.id
+                // Embed userId in profile data for easy access in OtherProfile
+                const profileWithUserId = { ...profile, _cachedUserId: userId }
+                
+                await Promise.all([
+                  simpleCache.set('profile', profileWithUserId, userId),
+                  simpleCache.set('grid_items', gridItems.items, userId),
+                  simpleCache.set('backlog_items', backlogItems.items, userId)
+                ])
+                
+                console.log(`🚀 Pre-loaded profile for ${userData.userName}`)
+              } catch (error) {
+                console.warn(`Profile pre-load failed for ${userData.userName}:`, error)
+              }
+            }
+          }
+          
+          // Pre-load the rest of the uncached profiles in the background
+          if (usersToPreload.length > 3) {
+            const remainingUsers = usersToPreload.slice(3)
+            
+            // Defer background pre-loading to idle frames to avoid jank
+            setTimeout(async () => {
+              for (const userData of remainingUsers) {
+                if (userData.userName) {
+                  try {
+                    const [profile, gridItems, backlogItems] = await Promise.allSettled([
+                      pocketbase.collection('users').getFirstListItem(`userName = "${userData.userName}"`),
+                      pocketbase.collection('items').getList(1, 50, {
+                        filter: pocketbase.filter(
+                          'creator.userName = {:userName} && backlog = false && parent = null',
+                          { userName: userData.userName }
+                        ),
+                        expand: 'ref, creator',
+                        sort: '-created',
+                      }),
+                      pocketbase.collection('items').getList(1, 50, {
+                        filter: pocketbase.filter(
+                          'creator.userName = {:userName} && backlog = true && parent = null',
+                          { userName: userData.userName }
+                        ),
+                        expand: 'ref',
+                        sort: '-created',
+                      })
+                    ])
+                    
+                    if (profile.status === 'fulfilled' && gridItems.status === 'fulfilled' && backlogItems.status === 'fulfilled') {
+                      const userId = profile.value.id
+                      // Embed userId in profile data for easy access in OtherProfile
+                      const profileWithUserId = { ...profile.value, _cachedUserId: userId }
+                      
+                      Promise.allSettled([
+                        simpleCache.set('profile', profileWithUserId, userId),
+                        simpleCache.set('grid_items', gridItems.value.items, userId),
+                        simpleCache.set('backlog_items', backlogItems.value.items, userId)
+                      ]).catch(error => {
+                        console.warn('Profile pre-load cache failed:', error)
+                      })
+                    }
+                  } catch (error) {
+                    console.warn('Background profile pre-load failed:', error)
+                  }
+                }
+              }
+            }, 1000)
+          }
+        } catch (error) {
+          console.warn('Profile pre-loading failed:', error)
+        }
+      }
+      
+      // Schedule pre-loading after interactions and only once per session
+      if (!hasScheduledProfilePreload) {
+        hasScheduledProfilePreload = true
+        InteractionManager.runAfterInteractions(() => {
+          // Small delay to ensure scroll/gesture handlers are idle
+          setTimeout(() => { preloadProfiles() }, 0)
+        })
+      }
+      
+      const newUsers = targetPage === 1 ? filteredMapped : [...users, ...filteredMapped]
+      setUsers(newUsers)
+      setHasMore(res.page < res.totalPages && newUsers.length < 50)
       setPage(res.page)
       
-      // Cache first page data (silent operation)
+      // Set initial data flag when we successfully fetch data
+      if (targetPage === 1) {
+        setHasInitialData(true)
+      }
+      
+      // Cache first page data for quick access (silent operation)
       if (targetPage === 1) {
         simpleCache.set('directory_users', filteredMapped).catch(error => {
           console.warn('Directory cache write failed:', error)
@@ -130,68 +389,52 @@ export function CommunitiesFeedScreen() {
     } finally {
       setIsLoading(false)
     }
-  }, [hasMore, isLoading, mapUsersWithItems])
+  }, [hasMore, isLoading, user, mapUsersWithItems, users])
 
   useEffect(() => {
     // Ensure returning back lands on Directories view
     setHomePagerIndex(1)
+    
+    // Only check cache/fetch if we don't have initial data
+    if (!hasInitialData) {
+      // Check cache first before fetching
+      const checkCacheAndFetch = async () => {
+        const cachedUsers = await simpleCache.get('directory_users')
+        if (cachedUsers && Array.isArray(cachedUsers) && cachedUsers.length > 0) {
+          console.log('📖 Using cached directory users')
+          setUsers(cachedUsers as FeedUser[])
+          setHasMore(true)
+          setPage(1)
+          setHasInitialData(true)
+          // Don't fetch if we have cached data
+          return
+        }
+        // Only fetch if no cached data
     fetchPage(1)
-  }, [])
-
-  const renderItem: ListRenderItem<FeedUser> = ({ item: u }) => (
-    <Pressable
-      key={u.id}
-      style={{
-        backgroundColor: c.surface,
-        borderRadius: s.$1,
-        paddingVertical: (s.$1 as number) + 0,
-        paddingHorizontal: s.$08,
-        marginBottom: s.$075,
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-      }}
+      }
       
-      onPress={() => {
-        if (u.userName) {
+      checkCacheAndFetch()
+    }
+  }, []) // Run only once on mount, removed hasInitialData dependency
+
+  // Memoize the onPress callback to prevent recreation on every render
+  const handleUserPress = useCallback((userName: string) => {
+    if (userName) {
           // Ensure back returns to directories view
           setReturnToDirectories?.(true)
-          router.push(`/user/${u.userName}`)
-        }
-      }}
-    >
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 }}>
-        <Image
-          source={u.avatar_url || 'https://i.pravatar.cc/100'}
-          style={{ width: 60, height: 60, borderRadius: 30, backgroundColor: c.surface }}
-          contentFit={'cover'}
-          cachePolicy="memory-disk"
-          priority="low"
-        />
-        <View style={{ flex: 1, marginLeft: 5, gap: 4 }}>
-          <Text style={[t.psemi, { fontSize: (s.$09 as number) + 4 }]} numberOfLines={1} ellipsizeMode="tail">
-            {u.name}
-          </Text>
-          <Text style={[t.smallmuted, { opacity: 0.6 }]} numberOfLines={1} ellipsizeMode="tail">
-            {u.neighborhood || 'Neighborhood'}
-          </Text>
-        </View>
-      </View>
+      // Use push to preserve native back swipe gesture
+      router.push(`/user/${userName}`)
+    }
+  }, [setReturnToDirectories])
 
-      <View style={{ flexDirection: 'row', gap: 6, marginLeft: s.$08 }}>
-        {(u.topRefs || []).slice(0, 3).map((src, idx) => (
-          <Image
-            key={idx}
-            source={src}
-            style={{ width: 30, height: 30, borderRadius: 6, backgroundColor: c.surface }}
-            contentFit={'cover'}
-            cachePolicy="memory-disk"
-            priority="low"
-          />
-        ))}
-      </View>
-    </Pressable>
-  )
+  const renderItem = useCallback(({ item, index }: { item: FeedUser; index: number }) => {
+    return (
+      <DirectoryRow 
+        u={item} 
+        onPress={() => handleUserPress(item.userName)} 
+      />
+    )
+  }, [handleUserPress])
 
   return (
     <View style={{ flex: 1, backgroundColor: c.surface }}>
@@ -207,17 +450,26 @@ export function CommunitiesFeedScreen() {
         <FlatList
           style={{ flex: 1 }}
           contentContainerStyle={{ paddingTop: 0, paddingBottom: 0 }}
-          data={users}
+          data={processedUsers}
           keyExtractor={(u) => u.id}
           renderItem={renderItem}
-          initialNumToRender={20}
-          windowSize={5}
-          onEndReachedThreshold={0.4}
-          onEndReached={() => {
-            if (!isLoading && hasMore) fetchPage(page + 1)
-          }}
-          removeClippedSubviews={true}
+          initialNumToRender={10}
+          maxToRenderPerBatch={5}
+          windowSize={10}
+          removeClippedSubviews={false}
           showsVerticalScrollIndicator={false}
+          scrollEventThrottle={16}
+          getItemLayout={(data, index) => ({
+            length: 90, // Updated height for each row (60px avatar + 30px padding)
+            offset: 90 * index,
+            index,
+          })}
+          updateCellsBatchingPeriod={50}
+          disableVirtualization={false}
+          maintainVisibleContentPosition={{
+            minIndexForVisible: 0,
+            autoscrollToTopThreshold: 10,
+          }}
         />
         </View>
       </View>

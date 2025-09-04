@@ -168,12 +168,12 @@ export const Feed = () => {
       const freshItems = await getFeedItems()
       setItems(freshItems)
       
-      // Cache the fresh data (silent operation)
+      // Cache the fresh data
       simpleCache.set('feed_items', freshItems).catch(error => {
-        console.warn('Cache write failed:', error)
+        console.warn('Feed cache write failed:', error)
       })
     } catch (error) {
-      console.error('Error fetching feed items:', error)
+      console.error('Failed to refresh feed:', error)
     }
   }
 

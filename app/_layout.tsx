@@ -38,6 +38,7 @@ import { RegisterPushNotifications } from '@/ui/notifications/RegisterPushNotifi
 import { MessagesInit } from '@/features/messaging/message-loader'
 import { useAppStore } from '@/features/stores'
 import { StartupLoadingIndicator } from '@/ui/atoms/StartupLoadingIndicator'
+import { DirectoryKeepAlive } from '@/ui/navigation/DirectoryKeepAlive'
 
 import { LogBox } from 'react-native'
 import BottomSheet from '@gorhom/bottom-sheet'
@@ -119,7 +120,7 @@ const Providers = ({ children }: { children: React.ReactNode }) => {
   return (
     <ShareIntentProvider>
       <SafeAreaProvider>
-        <GestureHandlerRootView>
+        <GestureHandlerRootView style={{ flex: 1, backgroundColor: c.surface }}>
           <KeyboardProvider>
             <FontProvider>{children}</FontProvider>
           </KeyboardProvider>
@@ -145,6 +146,8 @@ function RootLayoutNav() {
       <RegisterPushNotifications />
       <MessagesInit />
       <Navigation savesBottomSheetRef={savesBottomSheetRef} />
+      {/* Keep directory mounted to preserve images and scroll state across navigations */}
+      <DirectoryKeepAlive />
       <StartupLoadingIndicator />
 
       <Stack

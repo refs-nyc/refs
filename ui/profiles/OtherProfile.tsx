@@ -15,6 +15,7 @@ import { OtherBacklogSheet } from './sheets/OtherBacklogSheet'
 import { OtherButtonsSheet } from './sheets/OtherButtonsSheet'
 import { simpleCache } from '@/features/cache/simpleCache'
 import { pocketbase } from '@/features/pocketbase'
+import AsyncStorage from '@react-native-async-storage/async-storage'
 
 export const OtherProfile = ({ userName }: { userName: string }) => {
   const [profile, setProfile] = useState<Profile>()
@@ -27,43 +28,96 @@ export const OtherProfile = ({ userName }: { userName: string }) => {
   const refreshGrid = async (userName: string) => {
     setLoading(true)
     try {
+      // First, try to get cached profile data to extract userId
+      // This avoids the database query if we have cached data
+      let cachedProfile: any = null
+      let cachedGridItems: any = null
+      let cachedBacklogItems: any = null
+      
+      // Try to find cached data by checking if we have any cached profiles
+      // We'll use a simple approach: try to get profile data without userId first
+      const allKeys = await AsyncStorage.getAllKeys()
+      const profileKeys = allKeys.filter(key => key.includes('simple_cache_profile_'))
+      
+      if (profileKeys.length > 0) {
+        // We have some cached profiles, let's check if any match our userName
+        for (const key of profileKeys) {
+          try {
+            const cached = await AsyncStorage.getItem(key)
+            if (cached) {
+              const entry = JSON.parse(cached)
+              const profile = entry.data
+              if (profile.userName === userName && profile._cachedUserId) {
+                // Found a cached profile for this user with userId embedded
+                const userId = profile._cachedUserId
+                console.log(`📖 Found cached profile for ${userName} with userId ${userId}`)
+                
+                // Now we can access the cache using the userId
+                const results = await Promise.all([
+                  simpleCache.get('profile', userId),
+                  simpleCache.get('grid_items', userId),
+                  simpleCache.get('backlog_items', userId)
+                ])
+                
+                cachedProfile = results[0]
+                cachedGridItems = results[1]
+                cachedBacklogItems = results[2]
+                
+                if (cachedProfile && cachedGridItems && cachedBacklogItems) {
+                  console.log('📖 Using cached other profile data')
+                  setProfile(cachedProfile as Profile)
+                  setGridItems(cachedGridItems as ExpandedItem[])
+                  setBacklogItems(cachedBacklogItems as ExpandedItem[])
+                  setLoading(false)
+                  return
+                }
+                break
+              }
+            }
+          } catch (error) {
+            console.warn('Error checking cached profile:', error)
+          }
+        }
+      }
+      
+      // If we didn't find cached data, fall back to the original approach
       // Get user ID for cache keys
       const user = await pocketbase.collection('users').getFirstListItem(`userName = "${userName}"`)
       const userId = user.id
       
       // Check cache first (read-only, safe operation)
-      const [cachedProfile, cachedGridItems, cachedBacklogItems] = await Promise.all([
+      const [profile, gridItems, backlogItems] = await Promise.all([
         simpleCache.get('profile', userId),
         simpleCache.get('grid_items', userId),
         simpleCache.get('backlog_items', userId)
       ])
       
       // Use cached data if available
-      if (cachedProfile && cachedGridItems && cachedBacklogItems) {
+      if (profile && gridItems && backlogItems) {
         console.log('📖 Using cached other profile data')
-        setProfile(cachedProfile as Profile)
-        setGridItems(cachedGridItems as ExpandedItem[])
-        setBacklogItems(cachedBacklogItems as ExpandedItem[])
+        setProfile(profile as Profile)
+        setGridItems(gridItems as ExpandedItem[])
+        setBacklogItems(backlogItems as ExpandedItem[])
         setLoading(false)
         return
       }
       
       // Fetch fresh data
-      const [profile, gridItems, backlogItems] = await Promise.all([
+      const [freshProfile, freshGridItems, freshBacklogItems] = await Promise.all([
         getUserByUserName(userName),
         getProfileItems(userName),
         getBacklogItems(userName),
       ])
       
-      setProfile(profile)
-      setGridItems(gridItems)
-      setBacklogItems(backlogItems as ExpandedItem[])
+      setProfile(freshProfile)
+      setGridItems(freshGridItems)
+      setBacklogItems(freshBacklogItems as ExpandedItem[])
       
-      // Cache the fresh data (silent operation)
+      // Cache the fresh data
       Promise.all([
-        simpleCache.set('profile', profile, userId),
-        simpleCache.set('grid_items', gridItems, userId),
-        simpleCache.set('backlog_items', backlogItems, userId)
+        simpleCache.set('profile', freshProfile, userId),
+        simpleCache.set('grid_items', freshGridItems, userId),
+        simpleCache.set('backlog_items', freshBacklogItems, userId)
       ]).catch(error => {
         console.warn('Cache write failed:', error)
       })
@@ -78,13 +132,14 @@ export const OtherProfile = ({ userName }: { userName: string }) => {
   useEffect(() => {
     const init = async () => {
       try {
+        // Only run heavy database operations when component is active
         await refreshGrid(userName)
       } catch (error) {
         console.error(error)
       }
     }
     init()
-  }, [userName])
+  }, [userName]) // Removed isActiveTab dependency
 
   const bottomSheetRef = useRef<BottomSheet>(null)
   const detailsSheetRef = useRef<BottomSheet>(null)
@@ -129,6 +184,7 @@ export const OtherProfile = ({ userName }: { userName: string }) => {
                     setDetailsItem(item!)
                     detailsSheetRef.current?.snapToIndex(0)
                   }}
+                  isOffscreen={false} // OtherProfile is always visible when mounted
                 />
               )}
             </View>

@@ -136,7 +136,6 @@ const NewItemAnimationTile = ({
   isNewItem: boolean
   itemId: string
 }) => {
-  const translateY = useSharedValue(0)
   const scale = useSharedValue(1)
   const hasAnimated = useRef(false)
 
@@ -145,30 +144,25 @@ const NewItemAnimationTile = ({
       console.log('🎬 ANIMATING NEW ITEM:', itemId)
       hasAnimated.current = true
       
-      // Start with a more exaggerated rise
-      translateY.value = -50
-      scale.value = 1.2
-      
-      // Settle back to normal position with slower timing
-      translateY.value = withSpring(0, {
-        damping: 8,
-        stiffness: 120,
+      // Simplified animation: just a quick scale up and down
+      scale.value = withSpring(1.1, {
+        damping: 15,
+        stiffness: 150,
         mass: 0.8,
       })
       
-      scale.value = withSpring(1, {
-        damping: 8,
-        stiffness: 120,
-        mass: 0.8,
-      })
+      setTimeout(() => {
+        scale.value = withSpring(1, {
+          damping: 15,
+          stiffness: 150,
+          mass: 0.8,
+        })
+      }, 300)
     }
   }, [isNewItem, itemId])
 
   const animatedStyle = useAnimatedStyle(() => ({
-    transform: [
-      { translateY: translateY.value },
-      { scale: scale.value },
-    ],
+    transform: [{ scale: scale.value }],
   }))
 
   return <Animated.View style={animatedStyle}>{children}</Animated.View>
@@ -178,11 +172,11 @@ export const Grid = ({
   onPressItem,
   onLongPressItem,
   onAddItem,
-  onAddItemWithPrompt,
   onRemoveItem,
-  columns = 3,
-  rows = 3,
+  onAddItemWithPrompt,
   items,
+  columns = 3,
+  rows = 4,
   editingRights = false,
   searchMode = false,
   selectedRefs = [],
@@ -192,6 +186,7 @@ export const Grid = ({
   onStartupAnimationComplete,
   shouldAnimateStartup = false,
   newlyAddedItemId = null,
+  isOffscreen = false,
 }: {
   onPressItem?: (item?: ExpandedItem) => void
   onLongPressItem?: () => void
@@ -210,6 +205,7 @@ export const Grid = ({
   onStartupAnimationComplete?: () => void
   shouldAnimateStartup?: boolean
   newlyAddedItemId?: string | null
+  isOffscreen?: boolean
 }) => {
   const gridSize = columns * rows
 
@@ -217,8 +213,6 @@ export const Grid = ({
   const [shuffledPrompts, setShuffledPrompts] = useState<string[]>([])
   const [isShuffling, setIsShuffling] = useState(false)
   const [isInitialLoad, setIsInitialLoad] = useState(false)
-  // Track newly added items for animation
-  const [newlyAddedItems, setNewlyAddedItems] = useState<Set<string>>(new Set())
 
   // Animation values
   const buttonScale = useSharedValue(1)
@@ -228,27 +222,13 @@ export const Grid = ({
     setShuffledPrompts(shuffleArray(PROMPTS.map(p => p.text)))
   }, [])
 
-  // Track newly added items
-  useEffect(() => {
-    const currentItemIds = new Set(items.map(item => item.id))
-    const previousItemIds = new Set(Array.from(newlyAddedItems))
-    
-    // Find items that are new (not in the previous set)
-    const newItems = currentItemIds.size > previousItemIds.size ? 
-      Array.from(currentItemIds).filter(id => !previousItemIds.has(id)) : []
-    
-    if (newItems.length > 0) {
-      setNewlyAddedItems(new Set(newItems))
-      
-      // Clear the animation after it completes - extended duration for slower animation
-      setTimeout(() => {
-        setNewlyAddedItems(new Set())
-      }, 1500) // Extended from 1000ms to 1500ms for slower animation
-    }
-  }, [items])
+  // (removed) internal newly-added tracking; parent provides newlyAddedItemId
 
   // Only trigger initial load animation when explicitly requested by parent
   useEffect(() => {
+    // Freeze animations when offscreen to improve performance
+    if (isOffscreen) return
+    
     if (shouldAnimateStartup && editingRights && items.length === 0 && screenFocused && !isInitialLoad) {
       setIsInitialLoad(true)
     }
@@ -256,11 +236,13 @@ export const Grid = ({
     if (!editingRights && isInitialLoad) {
       setIsInitialLoad(false)
     }
-  }, [items.length, isInitialLoad, editingRights, screenFocused, shouldAnimateStartup])
+  }, [items.length, isInitialLoad, editingRights, screenFocused, shouldAnimateStartup, isOffscreen])
 
   // Fire a completion callback after the last tile animation is expected to finish
   useEffect(() => {
-    if (!isInitialLoad) return
+    // Freeze animations when offscreen to improve performance
+    if (isOffscreen || !isInitialLoad) return
+    
     // Approximate the final tile's start time using delays for a full grid
     const maxDelayMs = getTileAnimationDelay(gridSize - 1, gridSize)
     const safetyMs = 400 // cover fade/bounce durations
@@ -268,11 +250,12 @@ export const Grid = ({
       if (onStartupAnimationComplete) onStartupAnimationComplete()
     }, maxDelayMs + safetyMs)
     return () => clearTimeout(timer)
-  }, [isInitialLoad, gridSize, onStartupAnimationComplete])
+  }, [isInitialLoad, gridSize, onStartupAnimationComplete, isOffscreen])
 
   // Shuffle prompts function with animation
   const handleShufflePrompts = useCallback(() => {
-    if (isShuffling) return // Prevent multiple rapid clicks
+    // Freeze animations when offscreen to improve performance
+    if (isOffscreen || isShuffling) return
 
     setIsShuffling(true)
 
@@ -289,7 +272,7 @@ export const Grid = ({
       setShuffledPrompts(newShuffledPrompts)
       setIsShuffling(false)
     }, 300) // Increased delay for smoother animation
-  }, [isShuffling, buttonScale])
+  }, [isShuffling, buttonScale, isOffscreen])
 
   const handleGridItemPress = useCallback(
     (item: any) => {
@@ -341,7 +324,7 @@ export const Grid = ({
           
           return (
             <StartupAnimationTile
-              key={`${item.id}-${i}`} // Stable key to prevent grid bouncing
+              key={item.id}
               delay={getTileAnimationDelay(i, items.length)}
               isInitialLoad={isInitialLoad}
             >
@@ -443,3 +426,5 @@ export const Grid = ({
     </View>
   )
 }
+
+Grid.displayName = 'Grid'

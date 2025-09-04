@@ -19,10 +19,12 @@ export const GridItem = ({
   onPress?: () => {}
 }) => {
   const image = useMemo(() => {
-    const imageSource = item.image || item.expand.ref?.image
-    return imageSource
-  }, [item.image, item.expand.ref?.image])
-  const { uploadingItems } = useAppStore()
+    // Prioritize direct image property, fallback to expand.ref.image
+    return item.image || item.expand?.ref?.image || null
+  }, [item.image, item.expand?.ref?.image])
+  
+  // Only subscribe to uploadingItems to prevent unnecessary re-renders
+  const uploadingItems = useAppStore(state => state.uploadingItems)
   const processing = uploadingItems?.has?.(item.id)
   return (
     <>
@@ -74,3 +76,5 @@ export const GridItem = ({
     </>
   )
 }
+
+GridItem.displayName = 'GridItem'

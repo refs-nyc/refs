@@ -68,12 +68,9 @@ const DirectoryRow = React.memo(({ u, onPress }: { u: FeedUser; onPress: () => v
               alignItems: 'center',
             }}
           >
-            <Svg width={24} height={24} viewBox="0 0 24 24">
-              <Circle cx="12" cy="12" r="10" fill="none" stroke={c.muted} strokeWidth="2" />
-              <Circle cx="8" cy="8" r="2" fill={c.muted} />
-              <Circle cx="16" cy="8" r="2" fill={c.muted} />
-              <Circle cx="8" cy="16" r="2" fill={c.muted} />
-              <Circle cx="16" cy="16" r="2" fill={c.muted} />
+            <Svg width={32} height={20} viewBox="0 0 64 40">
+              <Circle cx="24" cy="20" r="16" fill="none" stroke={c.muted} strokeWidth="2" />
+              <Circle cx="40" cy="20" r="16" fill="none" stroke={c.muted} strokeWidth="2" />
             </Svg>
           </View>
         )}
@@ -370,7 +367,8 @@ export function CommunitiesFeedScreen() {
       
       const newUsers = targetPage === 1 ? filteredMapped : [...users, ...filteredMapped]
       setUsers(newUsers)
-      setHasMore(res.page < res.totalPages && newUsers.length < 50)
+      // Allow loading all pages; don't artificially cap at 50
+      setHasMore(res.page < res.totalPages)
       setPage(res.page)
       
       // Set initial data flag when we successfully fetch data
@@ -394,28 +392,97 @@ export function CommunitiesFeedScreen() {
   useEffect(() => {
     // Ensure returning back lands on Directories view
     setHomePagerIndex(1)
-    
-    // Only check cache/fetch if we don't have initial data
-    if (!hasInitialData) {
-      // Check cache first before fetching
-      const checkCacheAndFetch = async () => {
+
+    let mounted = true
+
+    const loadAllPages = async () => {
+      try {
         const cachedUsers = await simpleCache.get('directory_users')
-        if (cachedUsers && Array.isArray(cachedUsers) && cachedUsers.length > 0) {
+        if (mounted && cachedUsers && Array.isArray(cachedUsers) && cachedUsers.length > 0) {
           console.log('📖 Using cached directory users')
           setUsers(cachedUsers as FeedUser[])
-          setHasMore(true)
-          setPage(1)
           setHasInitialData(true)
-          // Don't fetch if we have cached data
-          return
         }
-        // Only fetch if no cached data
-    fetchPage(1)
+
+        // Fetch all pages to surface all users with at least 1 ref
+        const pb = getPB()
+        let current = 1
+        let totalPages = 1
+        const aggregated: FeedUser[] = []
+
+        while (current <= totalPages) {
+          const res = await pb.collection('users').getList(current, perPage, {
+            fields: 'id,userName,firstName,lastName,name,location,image,avatar_url',
+            sort: '-created',
+          })
+
+          totalPages = res.totalPages
+
+          const userIds = res.items.map((u: any) => u.id)
+          if (userIds.length > 0) {
+            const orFilter = userIds.map((id: string) => `creator = "${id}"`).join(' || ')
+            const perPageItems = Math.max(3 * userIds.length, 60)
+            const itemsRes = await pb.collection('items').getList(1, perPageItems, {
+              filter: `(${orFilter}) && backlog = false && list = false && parent = null`,
+              fields: 'id,image,creator,created,expand.ref(image)',
+              expand: 'ref',
+              sort: '-created',
+            })
+
+            const byCreator = new Map<string, any[]>()
+            for (const it of itemsRes.items as any[]) {
+              const creatorId = it.creator
+              if (!creatorId) continue
+              const arr = byCreator.get(creatorId) || []
+              if (arr.length < 3) {
+                arr.push(it)
+                byCreator.set(creatorId, arr)
+              }
+            }
+
+            const mapped = mapUsersWithItems(res.items, byCreator).filter(u => u.userName !== user?.userName)
+
+            // Deduplicate by id as we aggregate
+            const seen = new Set(aggregated.map(u => u.id))
+            for (const u of mapped) {
+              if (!seen.has(u.id)) {
+                aggregated.push(u)
+                seen.add(u.id)
+              }
+            }
+
+            if (mounted) {
+              setUsers(prev => {
+                const prevSeen = new Set(prev.map(p => p.id))
+                const appended = mapped.filter(m => !prevSeen.has(m.id))
+                return prev.length === 0 ? mapped : [...prev, ...appended]
+              })
+              setHasInitialData(true)
+            }
+          }
+
+          current += 1
+          // Yield to UI thread to avoid jank between pages
+          await new Promise((r) => setTimeout(r, 0))
+        }
+
+        // Cache the complete directory list
+        simpleCache.set('directory_users', aggregated).catch(() => {})
+        if (mounted) {
+          setHasMore(false)
+          setPage(totalPages)
+        }
+      } catch (e) {
+        // Fallback to first page if loop fails
+        if (mounted) {
+          fetchPage(1)
+        }
       }
-      
-      checkCacheAndFetch()
     }
-  }, []) // Run only once on mount, removed hasInitialData dependency
+
+    loadAllPages()
+    return () => { mounted = false }
+  }, [])
 
   // Memoize the onPress callback to prevent recreation on every render
   const handleUserPress = useCallback((userName: string) => {

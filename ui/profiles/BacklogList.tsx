@@ -1,14 +1,37 @@
+import React from 'react'
 import { ExpandedItem } from '@/features/types'
-import { NativeScrollEvent, NativeSyntheticEvent, Text, TextInput, View } from 'react-native'
+import { NativeScrollEvent, NativeSyntheticEvent, Text, TextInput, View, FlatList, ListRenderItem } from 'react-native'
 import { c, s } from '@/features/style'
 import Animated, { FadeIn } from 'react-native-reanimated'
 import { YStack } from '../core/Stacks'
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo, useCallback } from 'react'
 import { useCalendars } from 'expo-localization'
 import { DateTime } from 'luxon'
 import SwipeableBacklogItem from './SwipeableBacklogItem'
 import { useAppStore } from '@/features/stores'
+
+// Memoized row component to prevent unnecessary re-renders
+const BacklogItemRow = React.memo(({ item, onActionPress, enabled }: {
+  item: ExpandedItem
+  onActionPress: () => void
+  enabled: boolean
+}) => (
+  <SwipeableBacklogItem
+    key={item.id}
+    item={item}
+    onActionPress={onActionPress}
+    enabled={enabled}
+  />
+))
+
+BacklogItemRow.displayName = 'BacklogItemRow'
+
+// Section data structure for FlatList
+type SectionData = {
+  title: string
+  data: ExpandedItem[]
+}
 
 export default function BacklogList({
   items: itemsInit,
@@ -77,7 +100,27 @@ export default function BacklogList({
     return groups
   }
 
-  const groups = groupByDate(items)
+  // Memoize grouped data to prevent recalculation on every render
+  const groupedData = useMemo(() => {
+    const groups = groupByDate(items)
+    const sections: SectionData[] = []
+    
+    groups.forEach((group, index) => {
+      if (group.length > 0) {
+        const filteredGroup = group.filter(item =>
+          item.expand?.ref?.title?.toLowerCase().includes(searchTerm.toLowerCase())
+        )
+        if (filteredGroup.length > 0) {
+          sections.push({
+            title: groupnames[index],
+            data: filteredGroup
+          })
+        }
+      }
+    })
+    
+    return sections
+  }, [items, searchTerm, timeZone])
 
   function onScroll(e: NativeSyntheticEvent<NativeScrollEvent>) {
     if (!hasScrolled && e.nativeEvent.contentOffset.y > 150) {
@@ -92,17 +135,39 @@ export default function BacklogList({
     setSearchTerm(searchTerm)
   }
 
-  async function onRemoveFromBacklog(i: ExpandedItem): Promise<void> {
+  // Memoize callback to prevent recreation on every render
+  const onRemoveFromBacklog = useCallback(async (i: ExpandedItem): Promise<void> => {
     try {
       await removeItem(i.id)
       setItems(items.filter((item) => item.id !== i.id))
     } catch (error) {
       console.error(error)
     }
-  }
+  }, [removeItem, items])
+
+  // Memoize render item function
+  const renderItem: ListRenderItem<ExpandedItem> = useCallback(({ item }) => (
+    <BacklogItemRow
+      item={item}
+      onActionPress={() => onRemoveFromBacklog(item)}
+      enabled={ownProfile}
+    />
+  ), [onRemoveFromBacklog, ownProfile])
+
+  // Memoize section header renderer
+  const renderSectionHeader = useCallback(({ section }: { section: SectionData }) => (
+    <View style={{ paddingVertical: s.$05, paddingHorizontal: s.$075 }}>
+      <Text style={{ color: c.surface, fontSize: s.$1, paddingBottom: s.$05 }}>
+        {section.title}
+      </Text>
+    </View>
+  ), [])
+
+  // Memoize key extractor
+  const keyExtractor = useCallback((item: ExpandedItem) => item.id, [])
 
   return (
-    <BottomSheetScrollView style={{ backgroundColor: c.olive }} onScroll={onScroll}>
+    <View style={{ backgroundColor: c.olive, flex: 1 }}>
       <Animated.View entering={FadeIn.duration(500)}>
         {showSearch && (
           <TextInput
@@ -125,30 +190,37 @@ export default function BacklogList({
             onChangeText={onSearchTermChange}
           />
         )}
-        <YStack gap={s.$1} style={{ paddingHorizontal: s.$1, paddingBottom: s.$10 }}>
-          {groups.map((g, i) =>
-            !g.length ? null : (
-              <View key={i} style={{ paddingVertical: s.$05, paddingHorizontal: s.$075 }}>
-                <Text style={{ color: c.surface, fontSize: s.$1, paddingBottom: s.$05 }}>
-                  {groupnames[i]}
-                </Text>
-                {g
-                  .filter((i) =>
-                    i.expand?.ref?.title?.toLowerCase().includes(searchTerm.toLowerCase())
-                  )
-                  .map((i) => (
-                    <SwipeableBacklogItem
-                      key={i.id}
-                      item={i}
-                      onActionPress={() => onRemoveFromBacklog(i)}
-                      enabled={ownProfile}
-                    />
-                  ))}
-              </View>
-            )
+        
+        <FlatList
+          data={groupedData}
+          renderItem={({ item: section }) => (
+            <View>
+              {renderSectionHeader({ section })}
+              <FlatList
+                data={section.data}
+                renderItem={renderItem}
+                keyExtractor={keyExtractor}
+                scrollEnabled={false}
+                showsVerticalScrollIndicator={false}
+                removeClippedSubviews={true}
+                initialNumToRender={5}
+                maxToRenderPerBatch={10}
+                windowSize={5}
+                style={{ paddingHorizontal: s.$1 }}
+              />
+            </View>
           )}
-        </YStack>
+          keyExtractor={(section) => section.title}
+          onScroll={onScroll}
+          scrollEventThrottle={16}
+          showsVerticalScrollIndicator={false}
+          removeClippedSubviews={true}
+          initialNumToRender={3}
+          maxToRenderPerBatch={5}
+          windowSize={7}
+          style={{ paddingHorizontal: s.$1, paddingBottom: s.$10 }}
+        />
       </Animated.View>
-    </BottomSheetScrollView>
+    </View>
   )
 }

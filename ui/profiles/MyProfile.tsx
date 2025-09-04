@@ -80,6 +80,11 @@ export const MyProfile = ({ userName }: { userName: string }) => {
   
   // Combine grid items with optimistic items for display
   const displayGridItems = useMemo(() => {
+    // Early return if no optimistic items
+    if (optimisticItems.size === 0) {
+      return gridItems
+    }
+    
     // Create a Set of existing grid item IDs for O(1) lookup
     const gridItemIds = new Set(gridItems.map(item => item.id))
     
@@ -88,10 +93,14 @@ export const MyProfile = ({ userName }: { userName: string }) => {
       !gridItemIds.has(optimisticItem.id)
     )
     
+    // Only create new array if we actually have optimistic items to add
+    if (filteredOptimisticItems.length === 0) {
+      return gridItems
+    }
+    
     // Use a stable reference to prevent unnecessary re-renders
-    const result = [...gridItems, ...filteredOptimisticItems]
-    return result
-  }, [gridItems, optimisticItems])
+    return [...gridItems, ...filteredOptimisticItems]
+  }, [gridItems, optimisticItems.size]) // Only depend on size, not the actual objects
 
   // Track newly added optimistic items for animation
   useEffect(() => {
@@ -150,6 +159,21 @@ export const MyProfile = ({ userName }: { userName: string }) => {
       removeOptimisticItem(item.id)
     })
   }, [gridItems, optimisticItems.size])
+
+  // Cleanup optimistic items when component unmounts to prevent re-animation
+  useEffect(() => {
+    return () => {
+      // When component unmounts, clear any remaining optimistic items
+      const optimisticItemsArray = Array.from(optimisticItems.values())
+      optimisticItemsArray.forEach(item => {
+        console.log('🧹 CLEANUP: Removing optimistic item on unmount:', item.id)
+        removeOptimisticItem(item.id)
+      })
+      
+      // Also clear any animation state
+      setNewlyAddedItemId(null)
+    }
+  }, [optimisticItems.size])
 
   const [promptTextIndex, setPromptTextIndex] = useState(0)
   const [promptFadeKey, setPromptFadeKey] = useState(0)
@@ -266,11 +290,9 @@ export const MyProfile = ({ userName }: { userName: string }) => {
 
   const refreshGrid = async (userName: string) => {
     setLoading(true)
+    
     try {
-      // First, auto-move items from backlog to grid if there's space
-      await autoMoveBacklogToGrid(userName)
-      
-      // Get user ID for cache keys
+      // Start with cache check immediately (fastest path)
       const user = await pocketbase.collection('users').getFirstListItem(`userName = "${userName}"`)
       const userId = user.id
       
@@ -281,7 +303,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
         simpleCache.get('backlog_items', userId)
       ])
       
-      // Use cached data if available
+      // Use cached data if available (fastest path)
       if (cachedProfile && cachedGridItems && cachedBacklogItems) {
         console.log('📖 Using cached profile data')
         setProfile(cachedProfile as Profile)
@@ -291,33 +313,56 @@ export const MyProfile = ({ userName }: { userName: string }) => {
         
         // Update cached grid count
         useAppStore.getState().setGridItemCount((cachedGridItems as ExpandedItem[]).length)
+        
+        // Only run autoMoveBacklogToGrid for own profile
+        if (userName === useAppStore.getState().user?.userName) {
+          Promise.all([
+            autoMoveBacklogToGrid(userName)
+          ]).catch(error => {
+            console.warn('Background operations failed:', error)
+          })
+        }
+        
         return
       }
       
-      // Fetch fresh data in parallel
+      // Cache miss - fetch fresh data in parallel
       const [profile, gridItems, backlogItems] = await Promise.all([
         getUserByUserName(userName),
         getProfileItems(userName),
         getBacklogItems(userName),
       ])
       
+      // Update state immediately
       setProfile(profile)
       setGridItems(gridItems)
       setBacklogItems(backlogItems as ExpandedItem[])
+      setLoading(false)
       
       // Update cached grid count
       useAppStore.getState().setGridItemCount(gridItems.length)
       
-      // Cache the fresh data (silent operation, doesn't affect UI)
-      Promise.all([
-        simpleCache.set('profile', profile, userId),
-        simpleCache.set('grid_items', gridItems, userId),
-        simpleCache.set('backlog_items', backlogItems, userId)
-      ]).catch(error => {
-        console.warn('Cache write failed:', error)
-      })
+      // Only run autoMoveBacklogToGrid for own profile
+      if (userName === useAppStore.getState().user?.userName) {
+        Promise.all([
+          autoMoveBacklogToGrid(userName),
+          simpleCache.set('profile', profile, userId),
+          simpleCache.set('grid_items', gridItems, userId),
+          simpleCache.set('backlog_items', backlogItems, userId)
+        ]).catch(error => {
+          console.warn('Background operations failed:', error)
+        })
+      } else {
+        // For other profiles, just cache
+        Promise.all([
+          simpleCache.set('profile', profile, userId),
+          simpleCache.set('grid_items', gridItems, userId),
+          simpleCache.set('backlog_items', backlogItems, userId)
+        ]).catch(error => {
+          console.warn('Background operations failed:', error)
+        })
+      }
       
-      setLoading(false)
     } catch (error) {
       console.error('Failed to refresh grid:', error)
       setLoading(false)
@@ -402,29 +447,32 @@ export const MyProfile = ({ userName }: { userName: string }) => {
   useEffect(() => {
     const init = async () => {
       try {
+        // Set focus ready immediately for faster perceived loading
+        setFocusReady(true)
+        
         await refreshGrid(userName)
-        // If returning from a search context, render grid immediately behind the sheet
+        
+        // If returning from a search context, grid is already ready
         const returningFromSearch = cachedSearchResults.length > 0 || isSearchResultsSheetOpen || searchMode
         if (returningFromSearch) {
-          setFocusReady(true)
+          // Already set above
         } else if (justOnboarded) {
           // Only delay for the first post-registration landing where startup animation will play
           setTimeout(() => setFocusReady(true), 2500)
           // Reset flag so subsequent visits don't delay
           setJustOnboarded(false)
         } else {
-          // Normal login and subsequent visits: no delay
-          setFocusReady(true)
+          // Already set above for normal visits
         }
       } catch (error) {
         console.error('Failed to refresh grid:', error)
+        // Even if there's an error, set focus ready to show something
+        setFocusReady(true)
       }
     }
 
-    // Make initialization non-blocking
-    setTimeout(() => {
-      init()
-    }, 0)
+    // Initialize immediately without setTimeout
+    init()
   }, [userName])
 
   // Simplified back button restoration logic - just reset sheet state

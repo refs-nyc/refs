@@ -12,6 +12,9 @@ export const GridTileImage = ({ source, processing = false }: { source: string; 
         style={[{ borderRadius: s.$075, width: '100%', height: '100%' }]}
         source={source}
         contentFit="cover"
+        priority="low"
+        transition={200}
+        cachePolicy="memory-disk"
       />
       {processing && (
         <View
@@ -31,3 +34,5 @@ export const GridTileImage = ({ source, processing = false }: { source: string; 
     </View>
   )
 }
+
+GridTileImage.displayName = 'GridTileImage'

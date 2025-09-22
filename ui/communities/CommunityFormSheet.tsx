@@ -1,0 +1,184 @@
+import BottomSheet, { BottomSheetBackdrop } from '@gorhom/bottom-sheet'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
+import { View, Text, Dimensions } from 'react-native'
+import { BottomSheetTextInput, BottomSheetScrollView } from '@gorhom/bottom-sheet'
+import { c, s } from '@/features/style'
+import { useAppStore } from '@/features/stores'
+import type { ExpandedItem } from '@/features/types'
+import { TapGestureHandler } from 'react-native-gesture-handler'
+
+export type CommunityKind = 'interest' | 'event'
+
+export function CommunityFormSheet({
+  bottomSheetRef,
+  onAdded,
+}: {
+  bottomSheetRef: React.RefObject<BottomSheet>
+  onAdded?: (item: ExpandedItem) => void
+}) {
+  const { createRef, createItem } = useAppStore()
+  const { detailsBackdropAnimatedIndex, registerBackdropPress, unregisterBackdropPress } = useAppStore()
+
+  const [isOpen, setIsOpen] = useState(false)
+  // Simplify: interest-only for now
+  const [kind, setKind] = useState<CommunityKind>('interest')
+  const [interestText, setInterestText] = useState('')
+  // const [eventText, setEventText] = useState('')
+  const [text, setText] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+  const backdropKeyRef = useRef<string | null>(null)
+  const hasFocusedOnOpenRef = useRef(false)
+
+  const inputRef = useRef<any>(null)
+
+  // Standardized snap like other sheets (fixed percent, no dynamic resize)
+  const snapPoints = useMemo(() => ['85%'], [])
+
+  const headerText = 'Type anything'
+  const subtitleText = 'Whatever you want to connect with people over.'
+
+  // Initialize visible text on open
+  useEffect(() => {
+    if (!isOpen) return
+    setText(interestText)
+    // Ensure Add button is enabled on fresh open
+    setSubmitting(false)
+    // Register global backdrop press to close this sheet (enables nav bar tap-to-dismiss)
+    try {
+      backdropKeyRef.current = registerBackdropPress(() => bottomSheetRef.current?.close())
+    } catch {}
+    return () => {
+      if (backdropKeyRef.current) {
+        try { unregisterBackdropPress(backdropKeyRef.current) } catch {}
+        backdropKeyRef.current = null
+      }
+    }
+  }, [isOpen])
+
+  // Toggle disabled for now (interest-only)
+  const switchKind = (_k: CommunityKind) => {}
+
+  const handleSubmit = async () => {
+    const t = (text || '').replace(/\s+/g, ' ').trim()
+    if (!t || submitting) return
+    try {
+      setSubmitting(true)
+      const meta = JSON.stringify({ community: 'edge-patagonia', kind })
+      const newRef = await createRef({ title: t, url: '', image: '', meta })
+      // Do NOT create a user item – community interests are global and shouldn't appear on the user's grid
+      const syntheticItem: any = {
+        id: `temp-${newRef.id}`,
+        ref: newRef.id,
+        image: '',
+        url: '',
+        text: '',
+        list: false,
+        backlog: false,
+        created: (newRef as any).created,
+        updated: (newRef as any).updated,
+        expand: { ref: newRef },
+      }
+      onAdded?.(syntheticItem)
+      setInterestText('')
+      setText('')
+      setKind('interest')
+      bottomSheetRef.current?.close()
+      setIsOpen(false)
+    } catch (e) {
+      setSubmitting(false)
+    }
+  }
+
+  // const Toggle = () => null
+
+  return (
+    <BottomSheet
+      ref={bottomSheetRef}
+      index={-1}
+      snapPoints={snapPoints}
+      enablePanDownToClose={true}
+      backgroundStyle={{ backgroundColor: c.surface, borderRadius: 50 }}
+      onChange={(i) => {
+        const open = i !== -1
+        setIsOpen(open)
+        if (open) {
+          hasFocusedOnOpenRef.current = false
+          // Focus input only when opening, to avoid keyboard on app load
+          if (!hasFocusedOnOpenRef.current) {
+            hasFocusedOnOpenRef.current = true
+            requestAnimationFrame(() => inputRef.current?.focus())
+          }
+        } else {
+          // Force-hide global backdrop immediately to avoid post-close touch delay
+          try {
+            if (detailsBackdropAnimatedIndex) {
+              ;(detailsBackdropAnimatedIndex as any).value = -1
+            }
+          } catch {}
+          // Unregister backdrop handler on close
+          if (backdropKeyRef.current) {
+            try { unregisterBackdropPress(backdropKeyRef.current) } catch {}
+            backdropKeyRef.current = null
+          }
+          try { inputRef.current?.blur() } catch {}
+          try { require('react-native').Keyboard.dismiss() } catch {}
+        }
+      }}
+      onAnimate={undefined}
+      animatedIndex={detailsBackdropAnimatedIndex}
+      handleComponent={null}
+      backdropComponent={(p) => (
+        <BottomSheetBackdrop {...p} disappearsOnIndex={-1} appearsOnIndex={0} pressBehavior={'close'} />
+      )}
+      enableDynamicSizing={false}
+      keyboardBehavior="extend"
+      keyboardBlurBehavior="none"
+      enableContentPanningGesture={true}
+    >
+      <BottomSheetScrollView
+        keyboardShouldPersistTaps="always"
+        keyboardDismissMode="none"
+        contentContainerStyle={{ paddingHorizontal: s.$2, paddingTop: 24, paddingBottom: 90, position: 'relative' }}
+      >
+        {/* Toggle removed for now */}
+        <View style={{ height: 8 }} />
+
+        {/* Title and subtitle */}
+        <View style={{ paddingHorizontal: s.$1, marginBottom: s.$1, marginLeft: -15 }}>
+          <BottomSheetTextInput
+            ref={inputRef}
+            value={text}
+            onChangeText={setText}
+            placeholder={headerText}
+            placeholderTextColor={c.prompt}
+            style={{ color: c.muted2, fontSize: 32, fontWeight: '700', paddingVertical: 10 }}
+            autoFocus={false}
+            blurOnSubmit={false}
+            returnKeyType="done"
+            onSubmitEditing={handleSubmit}
+          />
+          <Text style={{ color: c.muted, opacity: 0.7, fontSize: s.$09, marginTop: 6 }}>{subtitleText}</Text>
+        </View>
+      </BottomSheetScrollView>
+
+      {/* Add button (absolute for stable position) - sibling to scroll view to avoid clipping */}
+      <View style={{ position: 'absolute', left: s.$1, right: s.$1, top: 235, zIndex: 30 }} pointerEvents="auto">
+        <TapGestureHandler onActivated={() => (!submitting && text.trim() ? handleSubmit() : null)}>
+          <View
+            style={{
+              backgroundColor: c.accent,
+              borderRadius: 48,
+              paddingVertical: 14,
+              alignItems: 'center',
+              opacity: !text.trim() || submitting ? 0.6 : 1,
+            }}
+            onTouchEnd={() => (!submitting && text.trim() ? handleSubmit() : null)}
+            hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+          >
+            <Text style={{ color: 'white', fontSize: 20, fontWeight: '600' }}>Add</Text>
+          </View>
+        </TapGestureHandler>
+      </View>
+    </BottomSheet>
+  )
+}

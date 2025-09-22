@@ -591,6 +591,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
           minHeight: '100%',
         }}
         showsVerticalScrollIndicator={false}
+        scrollEnabled={false}
       >
         {profile && (
           <View
@@ -719,370 +720,396 @@ export const MyProfile = ({ userName }: { userName: string }) => {
                   columns={3}
                   items={displayGridItems}
                   rows={4}
+                  rowGap={(s.$075 as number) + 5}
                   searchMode={searchMode}
                   selectedRefs={selectedRefs}
                   setSelectedRefs={setSelectedRefs}
                   newlyAddedItemId={newlyAddedItemId}
                 />
               )}
+
+              {/* Floating Search Button pinned to grid wrapper */}
+              <FloatingJaggedButton
+                icon="plus"
+                onPress={() => {
+                  setAddingNewRefTo('grid')
+                  try { useAppStore.getState().setAddRefPrompt('') } catch {}
+                  newRefSheetRef.current?.snapToIndex(1)
+                }}
+                style={{
+                  position: 'absolute',
+                  bottom: s.$075,
+                  right: s.$075,
+                  zIndex: 5,
+                  opacity: searchMode ? 0 : 1,
+                }}
+              />
             </View>
 
-            {/* Floating Search Button (toggle search mode) - positioned absolutely */}
-            <FloatingJaggedButton
-              icon="plus"
-              onPress={() => {
-                // Open AddRef flow like a prompt tile
-                setAddingNewRefTo('grid')
-                try { useAppStore.getState().setAddRefPrompt('') } catch {}
-                newRefSheetRef.current?.snapToIndex(1)
-              }}
-              style={{
-                position: 'absolute',
-                bottom: -30, // Moved up 10px from -40
-                right: 5, // Fixed distance from right edge of screen
-                zIndex: 5, // Behind the sheet (zIndex: 100) but above the grid content
-                opacity: searchMode ? 0 : 1, // Hide with opacity instead of conditional rendering
-              }}
+            {/* Backlog header below grid (temporarily disabled) */}
+            {false && (
+              <View
+                style={{
+                  marginTop: 660,
+                  paddingVertical: s.$1,
+                  alignItems: 'flex-start',
+                  justifyContent: 'center',
+                  paddingLeft: s.$1 + 6,
+                }}
+              >
+                <Text
+                  style={{
+                    color: c.prompt,
+                    fontSize: s.$09,
+                    fontFamily: 'System',
+                    fontWeight: '700',
+                    textAlign: 'left',
+                    lineHeight: s.$1half,
+                  }}
+                >
+                  Backlog
+                </Text>
+              </View>
+            )}
+
+            {!user && <Heading tag="h1">Profile for {userName} not found</Heading>}
+
+            {/* Multiple pressable areas to dismiss search mode - avoiding the grid */}
+            {searchMode && (
+              <>
+                {/* Top area above grid */}
+                <Pressable
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    height: 90, // Up to where grid starts
+                    backgroundColor: 'transparent',
+                    zIndex: 1,
+                  }}
+                  onPress={() => {
+                    setSearchMode(false)
+                    // Don't clear selectedRefs if we're returning from search
+                    if (!searchMode) { // Changed from returningFromSearch to searchMode
+                      setSelectedRefs([])
+                    }
+                  }}
+                />
+                {/* Left area beside grid */}
+                <Pressable
+                  style={{
+                    position: 'absolute',
+                    top: 90,
+                    left: 0,
+                    width: 16, // s.$08
+                    bottom: 0,
+                    backgroundColor: 'transparent',
+                    zIndex: 1,
+                  }}
+                  onPress={() => {
+                    setSearchMode(false)
+                    // Don't clear selectedRefs if we're returning from search
+                    if (!searchMode) { // Changed from returningFromSearch to searchMode
+                      setSelectedRefs([])
+                    }
+                  }}
+                />
+                {/* Right area beside grid */}
+                <Pressable
+                  style={{
+                    position: 'absolute',
+                    top: 90,
+                    right: 0,
+                    width: 16, // s.$08
+                    bottom: 0,
+                    backgroundColor: 'transparent',
+                    zIndex: 1,
+                  }}
+                  onPress={() => {
+                    setSearchMode(false)
+                    // Don't clear selectedRefs if we're returning from search
+                    if (!searchMode) { // Changed from returningFromSearch to searchMode
+                      setSelectedRefs([])
+                    }
+                  }}
+                />
+                {/* Bottom area below grid */}
+                <Pressable
+                  style={{
+                    position: 'absolute',
+                    top: 590, // 90 + 500 (grid height)
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    backgroundColor: 'transparent',
+                    zIndex: 1,
+                  }}
+                  onPress={() => {
+                    setSearchMode(false)
+                    // Don't clear selectedRefs if we're returning from search
+                    if (!searchMode) { // Changed from returningFromSearch to searchMode
+                      setSelectedRefs([])
+                    }
+                  }}
+                />
+              </>
+            )}
+          </View>
+        )}
+
+        {/* Logout button positioned absolutely */}
+        {showLogoutButton && (
+          <View style={{ 
+            position: 'absolute',
+            bottom: 50,
+            left: 0,
+            right: 0,
+            alignItems: 'center',
+            zIndex: 4,
+          }}>
+            <Button
+              style={{ width: 120 }}
+              variant="inlineSmallMuted"
+              title="Log out"
+              onPress={logout}
             />
           </View>
         )}
 
-        {!user && <Heading tag="h1">Profile for {userName} not found</Heading>}
-
-        {/* Multiple pressable areas to dismiss search mode - avoiding the grid */}
-        {searchMode && (
+        {profile && (
           <>
-            {/* Top area above grid */}
-            <Pressable
-              style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                right: 0,
-                height: 90, // Up to where grid starts
-                backgroundColor: 'transparent',
-                zIndex: 1,
-              }}
-              onPress={() => {
-                setSearchMode(false)
-                // Don't clear selectedRefs if we're returning from search
-                if (!searchMode) { // Changed from returningFromSearch to searchMode
-                  setSelectedRefs([])
-                }
+            <MyBacklogSheet
+              backlogItems={backlogItems}
+              profile={profile}
+              user={user}
+              openAddtoBacklog={() => {
+                setAddingNewRefTo('backlog')
+                newRefSheetRef.current?.snapToIndex(1)
               }}
             />
-            {/* Left area beside grid */}
-            <Pressable
-              style={{
-                position: 'absolute',
-                top: 90,
-                left: 0,
-                width: 16, // s.$08
-                bottom: 0,
-                backgroundColor: 'transparent',
-                zIndex: 1,
-              }}
-              onPress={() => {
-                setSearchMode(false)
-                // Don't clear selectedRefs if we're returning from search
-                if (!searchMode) { // Changed from returningFromSearch to searchMode
-                  setSelectedRefs([])
-                }
-              }}
+            <RemoveRefSheet
+              bottomSheetRef={removeRefSheetRef}
+              handleMoveToBacklog={handleMoveToBacklog}
+              handleRemoveFromProfile={handleRemoveFromProfile}
+              item={removingItem}
             />
-            {/* Right area beside grid */}
-            <Pressable
-              style={{
-                position: 'absolute',
-                top: 90,
-                right: 0,
-                width: 16, // s.$08
-                bottom: 0,
-                backgroundColor: 'transparent',
-                zIndex: 1,
-              }}
-              onPress={() => {
-                setSearchMode(false)
-                // Don't clear selectedRefs if we're returning from search
-                if (!searchMode) { // Changed from returningFromSearch to searchMode
-                  setSelectedRefs([])
-                }
-              }}
+            {detailsItem && (
+              <ProfileDetailsSheet
+                profileUsername={profile.userName}
+                detailsItemId={detailsItem.id}
+                onChange={(index: number) => {
+                  if (index === -1) {
+                    // Reset editing mode when carousel closes
+                    stopEditing()
+                    setDetailsItem(null)
+                  }
+                }}
+                openedFromFeed={false}
+                detailsSheetRef={detailsSheetRef}
+              />
+            )}
+
+            {/* Search Results Sheet - render after FloatingJaggedButton so it appears above */}
+            <SearchResultsSheet
+              ref={searchResultsSheetTriggerRef}
+              bottomSheetRef={searchResultsSheetRef}
+              selectedRefs={selectedRefs}
+              selectedRefItems={finalSelectedRefItems}
             />
-            {/* Bottom area below grid */}
-            <Pressable
-              style={{
-                position: 'absolute',
-                top: 590, // 90 + 500 (grid height)
-                left: 0,
-                right: 0,
-                bottom: 0,
-                backgroundColor: 'transparent',
-                zIndex: 1,
-              }}
-              onPress={() => {
-                setSearchMode(false)
-                // Don't clear selectedRefs if we're returning from search
-                if (!searchMode) { // Changed from returningFromSearch to searchMode
-                  setSelectedRefs([])
-                }
-              }}
-            />
-          </>
-        )}
-      </ScrollView>
 
-      {/* Logout button positioned absolutely */}
-      {showLogoutButton && (
-        <View style={{ 
-          position: 'absolute',
-          bottom: 50,
-          left: 0,
-          right: 0,
-          alignItems: 'center',
-          zIndex: 4,
-        }}>
-          <Button
-            style={{ width: 120 }}
-            variant="inlineSmallMuted"
-            title="Log out"
-            onPress={logout}
-          />
-        </View>
-      )}
+            {/* Direct Photo Form - bypasses NewRefSheet entirely */}
+            {showDirectPhotoForm && directPhotoRefFields && (
+              <BottomSheet
 
-      {profile && (
-        <>
-          <MyBacklogSheet
-            backlogItems={backlogItems}
-            profile={profile}
-            user={user}
-            openAddtoBacklog={() => {
-              setAddingNewRefTo('backlog')
-              newRefSheetRef.current?.snapToIndex(1)
-            }}
-          />
-          <RemoveRefSheet
-            bottomSheetRef={removeRefSheetRef}
-            handleMoveToBacklog={handleMoveToBacklog}
-            handleRemoveFromProfile={handleRemoveFromProfile}
-            item={removingItem}
-          />
-          {detailsItem && (
-            <ProfileDetailsSheet
-              profileUsername={profile.userName}
-              detailsItemId={detailsItem.id}
-              onChange={(index: number) => {
-                if (index === -1) {
-                  // Reset editing mode when carousel closes
-                  stopEditing()
-                  setDetailsItem(null)
-                }
-              }}
-              openedFromFeed={false}
-              detailsSheetRef={detailsSheetRef}
-            />
-          )}
-
-          {/* Search Results Sheet - render after FloatingJaggedButton so it appears above */}
-          <SearchResultsSheet
-            ref={searchResultsSheetTriggerRef}
-            bottomSheetRef={searchResultsSheetRef}
-            selectedRefs={selectedRefs}
-            selectedRefItems={finalSelectedRefItems}
-          />
-
-          {/* Direct Photo Form - bypasses NewRefSheet entirely */}
-          {showDirectPhotoForm && directPhotoRefFields && (
-            <BottomSheet
-
-              ref={photoRefFormRef}
-              snapPoints={['80%', '85%', '100%', '110%']}
-              index={0}
-              enablePanDownToClose={true}
+                ref={photoRefFormRef}
+                snapPoints={['80%', '85%', '100%', '110%']}
+                index={0}
+                enablePanDownToClose={true}
 
 
 
 
 
                             backgroundStyle={{ backgroundColor: c.olive, borderRadius: 50, paddingTop: 0 }}
-              animatedIndex={detailsBackdropAnimatedIndex}
-              backdropComponent={(p) => (
-                <BottomSheetBackdrop
-                  {...p}
-                  disappearsOnIndex={-1}
-                  appearsOnIndex={0}
-                  pressBehavior={'close'}
-                />
-              )}
-              handleComponent={null}
-              enableDynamicSizing={false}
-              enableOverDrag={false}
-              onChange={(i: number) => {
-                if (i === -1) {
-                  Keyboard.dismiss()
-                  setShowDirectPhotoForm(false)
-                  setDirectPhotoRefFields(null)
-                  // Ensure backdrop animated index is reset
-                  if (detailsBackdropAnimatedIndex) {
-                    detailsBackdropAnimatedIndex.value = -1
+                animatedIndex={detailsBackdropAnimatedIndex}
+                backdropComponent={(p) => (
+                  <BottomSheetBackdrop
+                    {...p}
+                    disappearsOnIndex={-1}
+                    appearsOnIndex={0}
+                    pressBehavior={'close'}
+                  />
+                )}
+                handleComponent={null}
+                enableDynamicSizing={false}
+                enableOverDrag={false}
+                onChange={(i: number) => {
+                  if (i === -1) {
+                    Keyboard.dismiss()
+                    setShowDirectPhotoForm(false)
+                    setDirectPhotoRefFields(null)
+                    // Ensure backdrop animated index is reset
+                    if (detailsBackdropAnimatedIndex) {
+                      detailsBackdropAnimatedIndex.value = -1
+                    }
                   }
-                }
-              }}
-            >
-              <BottomSheetView
-                style={{
-                  paddingHorizontal: s.$2,
-                  paddingTop: 8,
-                  alignItems: 'center',
-                  justifyContent: 'center',
                 }}
               >
-                <RefForm
-                  key={`direct-photo-form-${directPhotoRefFields.image}`}
-                  existingRefFields={directPhotoRefFields}
-                  pickerOpen={false}
-                  canEditRefData={true}
-                  
-
-                  onAddRef={async (itemFields) => {
-                    // Merge promptContext from directPhotoRefFields if present
-                    // Ensure title is not empty - use prompt context as fallback
-                    const mergedFields = { 
-                      ...itemFields, 
-                      promptContext: directPhotoRefFields.promptContext,
-                      title: itemFields.title || directPhotoRefFields.promptContext || 'Untitled'
-                    }
-                    
-                    // Create optimistic item immediately
-                    const optimisticItem: ExpandedItem = {
-                      id: `temp-${Date.now()}`, collectionId: Collections.Items, collectionName: Collections.Items,
-                      creator: user?.id || '', ref: 'temp-ref', image: itemFields.image || '',
-                      url: itemFields.url || '', text: itemFields.text || '', list: itemFields.list || false,
-                      parent: itemFields.parent || '', backlog: false, order: 0,
-                      created: new Date().toISOString(), updated: new Date().toISOString(),
-                      promptContext: mergedFields.promptContext || '',
-                      expand: { 
-                        ref: { 
-                          id: 'temp-ref', 
-                          title: itemFields.title || '', 
-                          image: itemFields.image || '',
-                          url: itemFields.url || '',
-                          meta: '{}',
-                          creator: user?.id || '',
-                          created: new Date().toISOString(),
-                          updated: new Date().toISOString()
-                        }, 
-                        creator: null as any, 
-                        items_via_parent: [] as any 
-                      }
-                    }
-
-                    // Add optimistic item to grid immediately
-                    addOptimisticItem(optimisticItem)
-
-                    // Close the sheet immediately and reset backdrop
-                    Keyboard.dismiss()
-                    setShowDirectPhotoForm(false)
-                    setDirectPhotoRefFields(null)
-                    if (detailsBackdropAnimatedIndex) {
-                      detailsBackdropAnimatedIndex.value = -1
-                    }
-                    
-                    // Background database operations
-                    ;(async () => {
-                      try {
-                        await addToProfile(null, mergedFields, false)
-                      } catch (error) {
-                        console.error('Failed to add item to profile:', error)
-                        // Remove optimistic item on failure
-                        removeOptimisticItem(optimisticItem.id)
-                      }
-                    })()
+                <BottomSheetView
+                  style={{
+                    paddingHorizontal: s.$2,
+                    paddingTop: 8,
+                    alignItems: 'center',
+                    justifyContent: 'center',
                   }}
-                  onAddRefToList={async (itemFields) => {
-                    // Merge promptContext from directPhotoRefFields if present
-                    // Ensure title is not empty - use prompt context as fallback
-                    const mergedFields = { 
-                      ...itemFields, 
-                      promptContext: directPhotoRefFields.promptContext,
-                      title: itemFields.title || directPhotoRefFields.promptContext || 'Untitled'
-                    }
-                    const newItem = await addToProfile(null, mergedFields, false)
-                    Keyboard.dismiss()
-                    setShowDirectPhotoForm(false)
-                    setDirectPhotoRefFields(null)
-                    if (detailsBackdropAnimatedIndex) {
-                      detailsBackdropAnimatedIndex.value = -1
-                    }
-                  }}
-                  backlog={false}
-                />
-              </BottomSheetView>
-            </BottomSheet>
-          )}
+                >
+                  <RefForm
+                    key={`direct-photo-form-${directPhotoRefFields.image}`}
+                    existingRefFields={directPhotoRefFields}
+                    pickerOpen={false}
+                    canEditRefData={true}
+                    
 
-          {/* Search Bottom Sheet (only in search mode, always rendered last) */}
-          {searchMode && (
-            <SearchModeBottomSheet
-              open={false} // start minimized when searchMode is true
-              onClose={() => setSearchMode(false)}
-              selectedRefs={selectedRefs}
-              selectedRefItems={selectedRefItems}
-              onSearch={() => {
-                // Clear restored ref items for new searches
+                    onAddRef={async (itemFields) => {
+                      // Merge promptContext from directPhotoRefFields if present
+                      // Ensure title is not empty - use prompt context as fallback
+                      const mergedFields = { 
+                        ...itemFields, 
+                        promptContext: directPhotoRefFields.promptContext,
+                        title: itemFields.title || directPhotoRefFields.promptContext || 'Untitled'
+                      }
+                      
+                      // Create optimistic item immediately
+                      const optimisticItem: ExpandedItem = {
+                        id: `temp-${Date.now()}`, collectionId: Collections.Items, collectionName: Collections.Items,
+                        creator: user?.id || '', ref: 'temp-ref', image: itemFields.image || '',
+                        url: itemFields.url || '', text: itemFields.text || '', list: itemFields.list || false,
+                        parent: itemFields.parent || '', backlog: false, order: 0,
+                        created: new Date().toISOString(), updated: new Date().toISOString(),
+                        promptContext: mergedFields.promptContext || '',
+                        expand: { 
+                          ref: { 
+                            id: 'temp-ref', 
+                            title: itemFields.title || '', 
+                            image: itemFields.image || '',
+                            url: itemFields.url || '',
+                            meta: '{}',
+                            creator: user?.id || '',
+                            created: new Date().toISOString(),
+                            updated: new Date().toISOString()
+                          }, 
+                          creator: null as any, 
+                          items_via_parent: [] as any 
+                        }
+                      }
+
+                      // Add optimistic item to grid immediately
+                      addOptimisticItem(optimisticItem)
+
+                      // Close the sheet immediately and reset backdrop
+                      Keyboard.dismiss()
+                      setShowDirectPhotoForm(false)
+                      setDirectPhotoRefFields(null)
+                      if (detailsBackdropAnimatedIndex) {
+                        detailsBackdropAnimatedIndex.value = -1
+                      }
+                      
+                      // Background database operations
+                      ;(async () => {
+                        try {
+                          await addToProfile(null, mergedFields, false)
+                        } catch (error) {
+                          console.error('Failed to add item to profile:', error)
+                          // Remove optimistic item on failure
+                          removeOptimisticItem(optimisticItem.id)
+                        }
+                      })()
+                    }}
+                    onAddRefToList={async (itemFields) => {
+                      // Merge promptContext from directPhotoRefFields if present
+                      // Ensure title is not empty - use prompt context as fallback
+                      const mergedFields = { 
+                        ...itemFields, 
+                        promptContext: directPhotoRefFields.promptContext,
+                        title: itemFields.title || directPhotoRefFields.promptContext || 'Untitled'
+                      }
+                      const newItem = await addToProfile(null, mergedFields, false)
+                      Keyboard.dismiss()
+                      setShowDirectPhotoForm(false)
+                      setDirectPhotoRefFields(null)
+                      if (detailsBackdropAnimatedIndex) {
+                        detailsBackdropAnimatedIndex.value = -1
+                      }
+                    }}
+                    backlog={false}
+                  />
+                </BottomSheetView>
+              </BottomSheet>
+            )}
+
+            {/* Search Bottom Sheet (only in search mode, always rendered last) */}
+            {searchMode && (
+              <SearchModeBottomSheet
+                open={false} // start minimized when searchMode is true
+                onClose={() => setSearchMode(false)}
+                selectedRefs={selectedRefs}
+                selectedRefItems={selectedRefItems}
+                onSearch={() => {
+                  // Clear restored ref items for new searches
         
-                setGlobalSelectedRefItems([]) // Also clear global state
-                searchResultsSheetRef.current?.snapToIndex(1)
-                setSearchMode(false) // Exit search mode when opening search results
-                // Trigger the search after a small delay to ensure the sheet is open
-                setTimeout(() => {
-                  if (searchResultsSheetTriggerRef.current) {
-                    searchResultsSheetTriggerRef.current.triggerSearch()
-                  } else {
-                  }
-                }, 300) // Increased delay to ensure sheet is fully open
-              }}
-              onRestoreSearch={async (historyItem) => {
-                try {
-                  
-                  // Create ref items from history data with images
-                  const restoredItems = historyItem.ref_ids.map((refId: string, index: number) => ({
-                    id: refId,
-                    ref: refId,
-                    title: historyItem.ref_titles?.[index] || refId,
-                    image: historyItem.ref_images?.[index] || '',
-                    expand: {
-                      ref: {
-                        id: refId,
-                        title: historyItem.ref_titles?.[index] || refId,
-                        image: historyItem.ref_images?.[index] || '',
-                      },
-                    },
-                  }))
-
-                  // Set the selected refs and items so the SearchResultsSheet doesn't show validation error
-                  setSelectedRefs(historyItem.ref_ids)
-                  setGlobalSelectedRefItems(restoredItems)
-
-                  // Open the search results sheet immediately
+                  setGlobalSelectedRefItems([]) // Also clear global state
                   searchResultsSheetRef.current?.snapToIndex(1)
-                  setSearchMode(false)
-
-                  // Use the cached search results from history AFTER setting the flag
+                  setSearchMode(false) // Exit search mode when opening search results
+                  // Trigger the search after a small delay to ensure the sheet is open
                   setTimeout(() => {
                     if (searchResultsSheetTriggerRef.current) {
-                      searchResultsSheetTriggerRef.current.restoreSearchFromHistory(historyItem)
+                      searchResultsSheetTriggerRef.current.triggerSearch()
+                    } else {
                     }
-                  }, 100)
-                } catch (error) {
-                  console.error('❌ Error restoring search from history:', error)
-                }
-              }}
-            />
-          )}
-        </>
-      )}
+                  }, 300) // Increased delay to ensure sheet is fully open
+                }}
+                onRestoreSearch={async (historyItem) => {
+                  try {
+                    
+                    // Create ref items from history data with images
+                    const restoredItems = historyItem.ref_ids.map((refId: string, index: number) => ({
+                      id: refId,
+                      ref: refId,
+                      title: historyItem.ref_titles?.[index] || refId,
+                      image: historyItem.ref_images?.[index] || '',
+                      expand: {
+                        ref: {
+                          id: refId,
+                          title: historyItem.ref_titles?.[index] || refId,
+                          image: historyItem.ref_images?.[index] || '',
+                        },
+                      },
+                    }))
+
+                    // Set the selected refs and items so the SearchResultsSheet doesn't show validation error
+                    setSelectedRefs(historyItem.ref_ids)
+                    setGlobalSelectedRefItems(restoredItems)
+
+                    // Open the search results sheet immediately
+                    searchResultsSheetRef.current?.snapToIndex(1)
+                    setSearchMode(false)
+
+                    // Use the cached search results from history AFTER setting the flag
+                    setTimeout(() => {
+                      if (searchResultsSheetTriggerRef.current) {
+                        searchResultsSheetTriggerRef.current.restoreSearchFromHistory(historyItem)
+                      }
+                    }, 100)
+                  } catch (error) {
+                    console.error('❌ Error restoring search from history:', error)
+                  }
+                }}
+              />
+            )}
+          </>
+        )}
+      </ScrollView>
     </>
   )
 }

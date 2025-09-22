@@ -178,6 +178,7 @@ export const Grid = ({
   columns = 3,
   rows = 4,
   editingRights = false,
+  autoRows = false,
   searchMode = false,
   selectedRefs = [],
   setSelectedRefs,
@@ -187,6 +188,10 @@ export const Grid = ({
   shouldAnimateStartup = false,
   newlyAddedItemId = null,
   isOffscreen = false,
+  topRightActionForItem,
+  onTopRightActionPress,
+  rowJustify = 'flex-start',
+  rowGap,
 }: {
   onPressItem?: (item?: ExpandedItem) => void
   onLongPressItem?: () => void
@@ -197,6 +202,7 @@ export const Grid = ({
   rows: number
   items: any[]
   editingRights?: boolean
+  autoRows?: boolean
   searchMode?: boolean
   selectedRefs?: string[]
   setSelectedRefs?: (refs: string[]) => void
@@ -206,6 +212,10 @@ export const Grid = ({
   shouldAnimateStartup?: boolean
   newlyAddedItemId?: string | null
   isOffscreen?: boolean
+  topRightActionForItem?: (item: any) => React.ReactNode
+  onTopRightActionPress?: (item: any) => void
+  rowJustify?: 'flex-start' | 'center' | 'space-between' | 'space-around' | 'space-evenly'
+  rowGap?: number
 }) => {
   const gridSize = columns * rows
 
@@ -316,7 +326,7 @@ export const Grid = ({
 
   return (
     <View style={{ marginTop: 10 }}>
-      <GridWrapper columns={columns} rows={rows}>
+      <GridWrapper columns={columns} rows={rows} autoRows={autoRows} rowJustify={rowJustify} rowGap={rowGap}>
         {items.map((item, i) => {
           const isSelected = searchMode && selectedRefsSet.has(item.id)
           const isNewItem = newlyAddedItemId === item.id
@@ -334,7 +344,11 @@ export const Grid = ({
                   onPress={callbacks.onPress}
                   onLongPress={onLongPressItem}
                   onRemove={callbacks.onRemove}
-                  type={item.list ? 'list' : item.expand.ref?.image || item.image ? 'image' : 'text'}
+                  type={item.__promptKind ? 'prompt' : item.list ? 'list' : item.expand.ref?.image || item.image ? 'image' : 'text'}
+                  promptBorderColor={item.__promptKind === 'event' ? c.olive : '#B0B0B0'}
+                  promptTextColor={item.__promptKind === 'event' ? c.olive : '#B0B0B0'}
+                  topRightAction={topRightActionForItem ? topRightActionForItem(item) : undefined}
+                  onTopRightActionPress={() => onTopRightActionPress && onTopRightActionPress(item)}
                   tileStyle={
                     searchMode
                       ? {
@@ -343,7 +357,9 @@ export const Grid = ({
                       : {}
                   }
                 >
-                  <GridItem item={item} i={i} />
+                  {item.__promptKind
+                    ? (item?.expand?.ref?.title || item?.title || '')
+                    : <GridItem item={item} i={i} />}
                   {searchMode && isSelected && (
                     <View
                       style={{
@@ -365,8 +381,8 @@ export const Grid = ({
           )
         })}
 
-        {/* Prompt placeholders for empty slots */}
-        {Array.from({ length: gridSize - items.length }).map((_, i) => {
+        {/* Prompt placeholders for empty slots (skip when autoRows to avoid forcing min grid size) */}
+        {!autoRows && Array.from({ length: gridSize - items.length }).map((_, i) => {
           const promptIndex = i % PROMPTS.length
           const prompt = PROMPTS[promptIndex]
           const totalIndex = items.length + i

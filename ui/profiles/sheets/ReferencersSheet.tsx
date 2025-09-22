@@ -45,7 +45,18 @@ export default function Referencers({
         }
 
         setUsers(users)
-        setRefData(items[0]?.expand?.ref || {})
+        const primaryRef = items[0]?.expand?.ref
+        if (primaryRef) {
+          setRefData(primaryRef)
+        } else {
+          // Fallback: fetch the ref directly so we always have a title even when no items exist yet
+          try {
+            const refRecord = await pocketbase.collection('refs').getOne(currentRefId)
+            setRefData(refRecord || {})
+          } catch (e) {
+            setRefData({})
+          }
+        }
       } catch (error) {
         console.error('ReferencersSheet: Error loading users for ref', currentRefId, ':', error)
         setUsers([])

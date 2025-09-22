@@ -1,13 +1,32 @@
 import React, { useCallback, useEffect, useRef, useState, useMemo } from 'react'
-import { View, Text, Pressable, FlatList, ListRenderItem, InteractionManager } from 'react-native'
+import { View, Text, Pressable, FlatList, ListRenderItem, InteractionManager, Dimensions, ScrollView } from 'react-native'
+import Animated, { FadeIn, FadeOut } from 'react-native-reanimated'
 import { s, c, t } from '@/features/style'
 import { router } from 'expo-router'
+import { Grid } from '@/ui/grid/Grid'
+// import { Button } from '@/ui/buttons/Button'
+// import BottomSheet from '@gorhom/bottom-sheet'
+// import { CommunityFormSheet } from '@/ui/communities/CommunityFormSheet'
 import { Image } from 'expo-image'
 import { pocketbase } from '@/features/pocketbase'
 import { useAppStore } from '@/features/stores'
 import { simpleCache } from '@/features/cache/simpleCache'
 import Svg, { Circle } from 'react-native-svg'
 import AsyncStorage from '@react-native-async-storage/async-storage'
+// Listen for interests added from the CommunityInterestsScreen and update chips instantly
+if (typeof globalThis !== 'undefined' && (globalThis as any).addEventListener) {
+  try {
+    (globalThis as any).removeEventListener?.('refs:new-interest', () => {})
+    ;(globalThis as any).addEventListener('refs:new-interest', (e: any) => {
+      try {
+        const detail = e?.detail
+        if (!detail?.id) return
+        // This handler will be overridden in the component scope via pocketbase subscription too
+        // Kept here as a safety no-op; component adds PB-based handler below
+      } catch {}
+    })
+  } catch {}
+}
 
 type FeedUser = {
   id: string
@@ -20,11 +39,25 @@ type FeedUser = {
 }
 
 // Memoized row component to prevent unnecessary re-renders
-const DirectoryRow = React.memo(({ u, onPress }: { u: FeedUser; onPress: () => void }) => {
-  // Pre-compute thumbnails to avoid array operations during render
-  const thumbnails = useMemo(() => {
-    return (u.topRefs || []).slice(0, 3)
-  }, [u.topRefs])
+const DirectoryRow = React.memo(({ u, onPress, userInterestMap, refTitleMap, currentUserId }: { u: FeedUser; onPress: () => void; userInterestMap: Map<string, Set<string>>; refTitleMap: Map<string, string>; currentUserId?: string }) => {
+  // Compute overlap with current user (by ref ids in this community)
+  const overlapLabel = useMemo(() => {
+    if (!currentUserId) return null
+    const mine = userInterestMap.get(currentUserId)
+    const theirs = userInterestMap.get(u.id)
+    if (!mine || !theirs || mine.size === 0 || theirs.size === 0) return null
+    let first: string | null = null
+    let count = 0
+    for (const id of theirs) {
+      if (mine.has(id)) {
+        if (first == null) first = refTitleMap.get(id) || null
+        count += 1
+      }
+    }
+    if (count === 0) return null
+    const suffix = count > 1 ? ` +${count - 1}` : ''
+    return `${first || `${count} shared`}${suffix}`
+  }, [currentUserId, userInterestMap, refTitleMap, u.id])
   
   return (
     <Pressable
@@ -32,13 +65,13 @@ const DirectoryRow = React.memo(({ u, onPress }: { u: FeedUser; onPress: () => v
       style={{
         backgroundColor: c.surface,
         borderRadius: s.$1,
-        paddingVertical: (s.$1 as number) + 5, // Added 5px padding for taller entries
+        paddingVertical: s.$1,
         paddingHorizontal: s.$08,
         marginBottom: s.$075,
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        height: 90, // Increased height to accommodate extra padding (80 + 10)
+        height: 80,
       }}
       onPress={onPress}
     >
@@ -84,23 +117,21 @@ const DirectoryRow = React.memo(({ u, onPress }: { u: FeedUser; onPress: () => v
         </View>
       </View>
 
-      <View style={{ flexDirection: 'row', gap: 6, marginLeft: s.$08 }}>
-        {thumbnails.map((src, idx) => (
-          <Image
-            key={`${u.id}-thumb-${idx}`}
-            source={src}
-            style={{
-              width: 30,
-              height: 30,
-              borderRadius: 6,
-              backgroundColor: c.surface2,
-            }}
-            contentFit={'cover'}
-            cachePolicy="memory-disk"
-            transition={0}
-            priority="low"
-          />
-        ))}
+      <View style={{ flexDirection: 'row', marginLeft: s.$08 }}>
+        {overlapLabel && (
+          <View style={{
+            borderWidth: 1.5,
+            borderColor: 'rgba(176,176,176,0.5)',
+            borderRadius: 14,
+            paddingHorizontal: 8,
+            paddingVertical: 4,
+            backgroundColor: 'transparent',
+          }}>
+            <Text style={{ color: c.prompt, opacity: 0.5, fontSize: (s.$09 as number) - 2, fontWeight: '700' }} numberOfLines={1}>
+              {overlapLabel}
+            </Text>
+          </View>
+        )}
       </View>
     </Pressable>
   )
@@ -115,9 +146,20 @@ DirectoryRow.displayName = 'DirectoryRow'
 // Ensure we only schedule profile preloading once per app session
 let hasScheduledProfilePreload = false
 
-export function CommunitiesFeedScreen() {
+const win = Dimensions.get('window')
+const BASE_DIRECTORY_LIST_HEIGHT = Math.max(360, Math.min(560, win.height - 220))
+const DIRECTORY_LIST_HEIGHT = Math.max(200, BASE_DIRECTORY_LIST_HEIGHT - 50)
+
+export function CommunitiesFeedScreen({ showHeader = true, aboveListComponent, hideInterestChips = false }: { showHeader?: boolean; aboveListComponent?: React.ReactNode; hideInterestChips?: boolean }) {
   // Directories screen: paginated list of all users
   const [users, setUsers] = useState<FeedUser[]>([])
+  // const [communityItems, setCommunityItems] = useState<any[]>([])
+  // const communityFormRef = useRef<BottomSheet>(null)
+  const [outerScrollEnabled, setOuterScrollEnabled] = useState(true)
+  const [topInterests, setTopInterests] = useState<{ refId: string; title: string; count: number; created?: string }[]>([])
+  const [selectedInterests, setSelectedInterests] = useState<string[]>([])
+  const [userInterestMap, setUserInterestMap] = useState<Map<string, Set<string>>>(new Map())
+  const [refTitleMap, setRefTitleMap] = useState<Map<string, string>>(new Map())
   const [page, setPage] = useState(1)
   const [isLoading, setIsLoading] = useState(false)
   const [hasMore, setHasMore] = useState(true)
@@ -173,6 +215,19 @@ export function CommunitiesFeedScreen() {
     // This should be a pure pass-through for cached data
     return users
   }, [users]) // Depend on the actual array since we're not processing it
+
+  // Directory list filtered by selected interest chips (AND match)
+  const displayedUsers = useMemo(() => {
+    if (selectedInterests.length === 0) return processedUsers
+    return processedUsers.filter((u) => {
+      const set = userInterestMap.get(u.id)
+      if (!set) return false
+      for (let i = 0; i < selectedInterests.length; i++) {
+        if (!set.has(selectedInterests[i])) return false
+      }
+      return true
+    })
+  }, [processedUsers, selectedInterests, userInterestMap])
 
   const fetchPage = useCallback(async (targetPage: number) => {
     if (isLoading || !hasMore) return
@@ -475,7 +530,7 @@ export function CommunitiesFeedScreen() {
       } catch (e) {
         // Fallback to first page if loop fails
         if (mounted) {
-          fetchPage(1)
+    fetchPage(1)
         }
       }
     }
@@ -483,6 +538,83 @@ export function CommunitiesFeedScreen() {
     loadAllPages()
     return () => { mounted = false }
   }, [])
+
+  // Load popular interests and user->interest map for filtering
+  useEffect(() => {
+    let mounted = true
+    const COMMUNITY = 'edge-patagonia'
+    ;(async () => {
+      try {
+        const items = await pocketbase.collection('items').getFullList({
+          filter: pocketbase.filter('ref.meta ~ {:community} && backlog = false && parent = null', { community: COMMUNITY }),
+          expand: 'ref,creator',
+          sort: '-created',
+        })
+        if (!mounted) return
+        const countByRef = new Map<string, { ref: any; count: number }>()
+        const map = new Map<string, Set<string>>()
+        for (const it of items as any[]) {
+          const ref = it.expand?.ref
+          const creator = it.expand?.creator || { id: it.creator }
+          if (!ref || !creator?.id) continue
+          const refId = ref.id
+          const entry = countByRef.get(refId) || { ref, count: 0 }
+          entry.count += 1
+          countByRef.set(refId, entry)
+          const set = map.get(creator.id) || new Set<string>()
+          set.add(refId)
+          map.set(creator.id, set)
+        }
+        const list = Array.from(countByRef.values()).map(({ ref, count }) => ({
+          refId: ref.id,
+          title: ref.title,
+          count,
+          created: ref.created,
+        }))
+        list.sort((a, b) => (b.count - a.count) || (b.created || '').localeCompare(a.created || ''))
+        setTopInterests(list.slice(0, 30))
+        setUserInterestMap(map)
+        // Build quick title map for overlap labeling
+        const titleMap = new Map<string, string>()
+        for (const { ref } of countByRef.values()) {
+          titleMap.set(ref.id, ref.title)
+        }
+        setRefTitleMap(titleMap)
+      } catch (e) {
+        console.warn('Failed to load interest ticker', e)
+      }
+    })()
+    return () => { mounted = false }
+  }, [])
+
+  const toggleChip = useCallback((refId: string) => {
+    setSelectedInterests((prev) => (prev.includes(refId) ? prev.filter((id) => id !== refId) : [...prev, refId]))
+  }, [])
+
+  // Accept live additions of interests (chips) from CommunityInterestsScreen via event
+  useEffect(() => {
+    let mounted = true
+    const COMMUNITY = 'edge-patagonia'
+    const handler = async (e: any) => {
+      try {
+        const r = e?.record
+        if (!r || typeof r?.meta !== 'string' || !r.meta.includes(COMMUNITY)) return
+        // Add to topInterests if not present
+        setTopInterests((prev) => {
+          if (prev.some((ti) => ti.refId === r.id)) return prev
+          const entry = { refId: r.id, title: r.title, count: 0, created: r.created }
+          const next = [entry, ...prev]
+          return next.slice(0, 30)
+        })
+      } catch {}
+    }
+    ;(async () => {
+      try { await pocketbase.collection('refs').subscribe('*', handler) } catch {}
+    })()
+    return () => { try { pocketbase.collection('refs').unsubscribe('*') } catch {} }
+  }, [])
+
+  // Community interests grid removed from this screen
 
   // Memoize the onPress callback to prevent recreation on every render
   const handleUserPress = useCallback((userName: string) => {
@@ -494,52 +626,93 @@ export function CommunitiesFeedScreen() {
     }
   }, [setReturnToDirectories])
 
+  // Community tile press handler not used in this screen
+
   const renderItem = useCallback(({ item, index }: { item: FeedUser; index: number }) => {
     return (
       <DirectoryRow 
         u={item} 
         onPress={() => handleUserPress(item.userName)} 
+        userInterestMap={userInterestMap}
+        refTitleMap={refTitleMap}
+        currentUserId={user?.id}
       />
     )
   }, [handleUserPress])
 
   return (
     <View style={{ flex: 1, backgroundColor: c.surface }}>
-      {/* Header sits outside the surface2 backdrop */}
-      <View style={{ paddingVertical: s.$1, alignItems: 'flex-start', justifyContent: 'center', marginTop: 7, paddingLeft: s.$1 + 6 }}>
+      {showHeader && (
+        // Header: independent from list scroll; surface background
+        <View style={{ paddingVertical: s.$1, alignItems: 'flex-start', justifyContent: 'center', marginTop: 7, paddingLeft: s.$1 + 6, marginBottom: -5 }}>
+          <Text style={{ color: c.prompt, fontSize: (s.$09 as number) + 4, fontFamily: 'System', fontWeight: '700', textAlign: 'left', lineHeight: s.$1half }}>
+            Directory
+          </Text>
         <Text style={{ color: c.prompt, fontSize: s.$09, fontFamily: 'System', fontWeight: '400', textAlign: 'left', lineHeight: s.$1half }}>
-          viewing <Text style={{ fontWeight: '700' }}>Edge Patagonia</Text>
+            Edge Patagonia
         </Text>
       </View>
-      {/* Surface2 backdrop containing only results, inset 10px from screen edges with 10px inner padding and rounded shoulders; lifted above dots */}
-      <View style={{ flex: 1, backgroundColor: c.surface2, marginHorizontal: 10, borderRadius: s.$1, overflow: 'hidden', marginBottom: 115, marginTop: 10 }}>
-        <View style={{ flex: 1, paddingHorizontal: 5, paddingTop: 10, paddingBottom: 10 }}>
-        <FlatList
-          style={{ flex: 1 }}
-          contentContainerStyle={{ paddingTop: 0, paddingBottom: 0 }}
-          data={processedUsers}
-          keyExtractor={(u) => u.id}
-          renderItem={renderItem}
-          initialNumToRender={10}
-          maxToRenderPerBatch={5}
-          windowSize={10}
-          removeClippedSubviews={false}
-          showsVerticalScrollIndicator={false}
-          scrollEventThrottle={16}
-          getItemLayout={(data, index) => ({
-            length: 90, // Updated height for each row (60px avatar + 30px padding)
-            offset: 90 * index,
-            index,
-          })}
-          updateCellsBatchingPeriod={50}
-          disableVirtualization={false}
-          maintainVisibleContentPosition={{
-            minIndexForVisible: 0,
-            autoscrollToTopThreshold: 10,
-          }}
-        />
-        </View>
-      </View>
+      )}
+
+            {/* Ticker filter chips (popular interests) as subheader under viewing */}
+            {hideInterestChips ? null : (
+              <View style={{ paddingLeft: s.$1 + 6, paddingTop: 0, paddingBottom: 24, marginTop: 0 }}>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingRight: s.$1 }}>
+                  {topInterests.map((ti) => {
+                    const selected = selectedInterests.includes(ti.refId)
+                    return (
+                      <Pressable
+                        key={ti.refId}
+                        onPress={() => toggleChip(ti.refId)}
+                        style={{
+                          marginRight: 8,
+                          borderWidth: 1.5,
+                          borderColor: selected ? c.prompt : 'rgba(176,176,176,0.5)',
+                          borderRadius: 14,
+                          paddingHorizontal: 8,
+                          paddingVertical: 4,
+                          backgroundColor: selected ? c.prompt : 'transparent',
+                        }}
+                      >
+                        <Text style={{ color: selected ? c.surface : c.prompt, opacity: selected ? 1 : 0.5, fontSize: (s.$09 as number) - 2 }} numberOfLines={1}>
+                          {ti.title}
+                        </Text>
+                      </Pressable>
+                    )
+                  })}
+                </ScrollView>
+              </View>
+            )}
+
+            {/* Optional menu directly above the directory list */}
+            {aboveListComponent ? (
+              <View style={{ paddingHorizontal: s.$1 + 6, marginBottom: 10 }}>
+                {aboveListComponent}
+              </View>
+            ) : null}
+
+            {/* Natural scrolling list without surface2 backdrop */}
+            <Animated.View entering={FadeIn.duration(120)} exiting={FadeOut.duration(120)} key={`list-${selectedInterests.join(',')}-${displayedUsers.length}`}> 
+              <FlatList
+                contentContainerStyle={{ paddingHorizontal: s.$1 + 6, paddingTop: 5, paddingBottom: 150 }}
+                data={displayedUsers}
+                keyExtractor={(u) => u.id}
+                renderItem={renderItem}
+                initialNumToRender={10}
+                maxToRenderPerBatch={5}
+                windowSize={10}
+                removeClippedSubviews={false}
+                showsVerticalScrollIndicator={false}
+                alwaysBounceVertical={true}
+                bounces={true}
+                nestedScrollEnabled={true}
+                scrollEnabled={true}
+                scrollEventThrottle={16}
+                getItemLayout={(data, index) => ({ length: 90, offset: 90 * index, index })}
+                updateCellsBatchingPeriod={50}
+                disableVirtualization={false}
+              />
+            </Animated.View>
     </View>
   )
 }

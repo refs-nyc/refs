@@ -1,17 +1,18 @@
 import { useAppStore } from '@/features/stores'
 import { Message } from '@/features/types'
 import { c, s } from '@/features/style'
-import { Heading, Sheet, XStack } from '@/ui'
+import { Sheet, XStack } from '@/ui'
 import { Avatar, AvatarStack } from '@/ui/atoms/Avatar'
 import { AvatarPicker } from '@/ui/inputs/AvatarPicker'
 import MessageBubble from '@/ui/messaging/MessageBubble'
 import MessageInput from '@/ui/messaging/MessageInput'
-import { Link } from 'expo-router'
+import { Link, router } from 'expo-router'
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { FlatList, useWindowDimensions, View } from 'react-native'
-import { KeyboardAvoidingView } from 'react-native-keyboard-controller'
+import { FlatList, Keyboard, Platform, Pressable, Text, useWindowDimensions, View } from 'react-native'
+import Ionicons from '@expo/vector-icons/Ionicons'
 import EmojiPicker from 'rn-emoji-keyboard'
 import { randomColors } from './utils'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 export function MessagesScreen({ conversationId }: { conversationId: string }) {
   const {
@@ -36,6 +37,9 @@ export function MessagesScreen({ conversationId }: { conversationId: string }) {
   const [imageUrl, setImageUrl] = useState<string>('')
   const [showEmojiPicker, setShowEmojiPicker] = useState<boolean>(false)
   const windowHeight = useWindowDimensions().height
+  const insets = useSafeAreaInsets()
+  const [keyboardVisible, setKeyboardVisible] = useState(false)
+  const [keyboardHeight, setKeyboardHeight] = useState(0)
 
   const conversation = conversations[conversationId]
   const members = memberships[conversationId].filter((m) => m.expand?.user.id !== user?.id)
@@ -58,6 +62,39 @@ export function MessagesScreen({ conversationId }: { conversationId: string }) {
     if (!user) return
     updateLastRead(conversationId, user.id)
   }, [])
+
+  useEffect(() => {
+    const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow'
+    const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide'
+
+    const handleShow = (e: any) => {
+      setKeyboardVisible(true)
+      setKeyboardHeight(e?.endCoordinates?.height ?? 0)
+    }
+    const handleHide = () => {
+      setKeyboardVisible(false)
+      setKeyboardHeight(0)
+    }
+
+    const showSub = Keyboard.addListener(showEvent, handleShow)
+    const hideSub = Keyboard.addListener(hideEvent, handleHide)
+
+    return () => {
+      showSub.remove()
+      hideSub.remove()
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!conversationMessages.length) return
+    requestAnimationFrame(() => {
+      try {
+        flatListRef.current?.scrollToOffset({ offset: 0, animated: false })
+      } catch {}
+    })
+  }, [conversationId, conversationMessages.length])
+
+  const bottomOffset = keyboardVisible ? keyboardHeight + 3 : insets.bottom + 15
 
   if (!user) return null
 
@@ -141,53 +178,53 @@ export function MessagesScreen({ conversationId }: { conversationId: string }) {
     <View
       style={{
         justifyContent: 'flex-start',
-        // window height minus the height of the navigation element
         height: windowHeight - 120,
         backgroundColor: c.surface,
-        paddingHorizontal: s.$075,
       }}
     >
-      <XStack
-        gap={s.$1}
+      <View
         style={{
-          alignItems: 'center',
-          paddingBottom: 0,
-          paddingLeft: s.$1,
-          zIndex: 1,
-          paddingTop: s.$1,
+          paddingHorizontal: s.$1 + 6,
+          paddingTop: Math.max(8, insets.top - 40),
+          paddingBottom: s.$075,
+          marginTop: -30,
         }}
       >
-        <Heading
-          tag="h2semi"
-          style={{ width: conversation.is_direct ? undefined : '60%' }}
-          numberOfLines={2}
-        >
-          {conversation.is_direct
-            ? members[0].expand?.user.firstName + ' ' + members[0].expand?.user.lastName
-            : conversation.title}
-        </Heading>
-        {conversation.is_direct ? (
-          <Link href={`/user/${members[0].expand?.user.userName}`}>
-            <Avatar source={members[0].expand?.user.image} size={s.$4} />
-          </Link>
-        ) : (
-          <XStack style={{ flex: 1, justifyContent: 'flex-end' }}>
+        <XStack style={{ alignItems: 'center', justifyContent: 'space-between' }}>
+          <Pressable
+            onPress={() => router.back()}
+            style={{ paddingRight: s.$075, paddingVertical: s.$05 }}
+          >
+            <Ionicons name="chevron-back" size={18} color={c.muted} />
+          </Pressable>
+          <View style={{ flex: 1, paddingHorizontal: s.$075 }}>
+            <Text
+              style={{
+                color: c.prompt,
+                fontSize: (s.$09 as number) + 4,
+                fontFamily: 'System',
+                fontWeight: '700',
+                lineHeight: s.$1half,
+              }}
+              numberOfLines={2}
+            >
+              {conversation.is_direct
+                ? `${members[0].expand?.user.firstName ?? ''} ${members[0].expand?.user.lastName ?? ''}`.trim()
+                : conversation.title}
+            </Text>
+          </View>
+          {conversation.is_direct ? (
+            <Pressable onPress={() => router.push(`/user/${members[0].expand?.user.userName}`)}>
+              <Avatar source={members[0].expand?.user.image} size={s.$4} />
+            </Pressable>
+          ) : (
             <Link href={`/messages/${conversationId}/member-list`}>
               <AvatarStack sources={members.map((m) => m.expand?.user.image)} size={s.$3} />
             </Link>
-          </XStack>
-        )}
-      </XStack>
-      <KeyboardAvoidingView
-        keyboardVerticalOffset={100}
-        style={{
-          paddingHorizontal: s.$075,
-          flex: 1,
-          display: 'flex',
-          paddingBottom: s.$1,
-        }}
-        behavior={'height'}
-      >
+          )}
+        </XStack>
+      </View>
+      <View style={{ flex: 1 }}>
         <FlatList
           ref={flatListRef}
           data={conversationMessages}
@@ -195,8 +232,12 @@ export function MessagesScreen({ conversationId }: { conversationId: string }) {
           inverted
           onEndReached={loadMoreMessages}
           onEndReachedThreshold={0.1}
+          showsVerticalScrollIndicator={false}
+          style={{ flex: 1 }}
           contentContainerStyle={{
-            minHeight: '90%',
+            paddingHorizontal: s.$075,
+            paddingTop: s.$075,
+            paddingBottom: bottomOffset + 80,
             justifyContent: 'flex-end',
           }}
         />
@@ -213,24 +254,27 @@ export function MessagesScreen({ conversationId }: { conversationId: string }) {
             </AvatarPicker>
           </Sheet>
         )}
-        <MessageInput
-          onMessageSubmit={onMessageSubmit}
-          setMessage={setMessage}
-          message={message}
-          parentMessage={replying ? highlightedMessage : undefined}
-          parentMessageSender={
-            replying
-              ? members.find((m) => m.expand?.user.id === highlightedMessage?.sender)?.expand
-                  ?.user || user
-              : undefined
-          }
-          onReplyClose={() => {
-            setReplying(false), setHighlightedMessageId('')
-          }}
-          allowAttachment={true}
-          onAttachmentPress={onAttachmentPress}
-          disabled={attachmentOpen && !imageUrl}
-        />
+        <View style={{ paddingHorizontal: s.$075, marginBottom: bottomOffset }}>
+          <MessageInput
+            onMessageSubmit={onMessageSubmit}
+            setMessage={setMessage}
+            message={message}
+            parentMessage={replying ? highlightedMessage : undefined}
+            parentMessageSender={
+              replying
+                ? members.find((m) => m.expand?.user.id === highlightedMessage?.sender)?.expand
+                    ?.user || user
+                : undefined
+            }
+            onReplyClose={() => {
+              setReplying(false), setHighlightedMessageId('')
+            }}
+            allowAttachment={true}
+            onAttachmentPress={onAttachmentPress}
+            disabled={attachmentOpen && !imageUrl}
+            compact
+          />
+        </View>
         {showEmojiPicker && highlightedMessage && (
           <EmojiPicker
             open={true}
@@ -246,7 +290,7 @@ export function MessagesScreen({ conversationId }: { conversationId: string }) {
             }}
           />
         )}
-      </KeyboardAvoidingView>
+      </View>
     </View>
   )
 }

@@ -17,6 +17,12 @@ export const Navigation = ({
   savesBottomSheetRef: React.RefObject<BottomSheet>
 }) => {
   const pathname = usePathname()
+  const segments = pathname.split('/').filter(Boolean)
+  const inMessageThread =
+    segments[0] === 'messages' &&
+    segments.length >= 2 &&
+    segments[1] !== 'archive' &&
+    segments[1] !== 'new-gc'
 
   const {
     user,
@@ -141,8 +147,13 @@ export const Navigation = ({
 
   if (!user) return null
 
+  const hideNav = inMessageThread
+
   return (
-    <View style={{ display: 'flex', flexDirection: 'row', paddingLeft: 2 }}>
+    <View
+      style={{ display: 'flex', flexDirection: 'row', paddingLeft: 2, opacity: hideNav ? 0 : 1 }}
+      pointerEvents={hideNav ? 'none' : 'auto'}
+    >
       <NavigationBackdrop />
       <View
         style={{

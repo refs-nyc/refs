@@ -68,10 +68,10 @@ export default function MessageBubble({
       >
         <View
           style={{
-            backgroundColor: isMe ? c.accent2 : c.surface2,
+            backgroundColor: 'rgba(176,176,176,0.1)',
             padding: s.$08,
             marginVertical: s.$05,
-            borderRadius: s.$075,
+            borderRadius: 15,
             width: '100%',
           }}
         >

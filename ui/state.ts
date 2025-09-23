@@ -1,5 +1,5 @@
 import type { StoreSlices, UISlice } from '@/features/stores/types'
-import { Item } from '@/features/types'
+import { Item, Profile } from '@/features/types'
 import BottomSheet from '@gorhom/bottom-sheet'
 import React from 'react'
 import type { StateCreator } from 'zustand'
@@ -144,4 +144,24 @@ export const createUISlice: StateCreator<StoreSlices, [], [], UISlice> = (set) =
   setHomePagerIndex: (i: number) => set(() => ({ homePagerIndex: i })),
   returnToDirectories: false,
   setReturnToDirectories: (v: boolean) => set(() => ({ returnToDirectories: v })),
+  dmComposerTarget: null,
+  dmComposerInitialConversationId: null,
+  dmComposerOnSuccess: null,
+  openDMComposer: (
+    target: Profile,
+    options?: { onSuccess?: (target: Profile) => void; conversationId?: string }
+  ) => {
+    set(() => ({
+      dmComposerTarget: target,
+      dmComposerInitialConversationId: options?.conversationId ?? null,
+      dmComposerOnSuccess: options?.onSuccess ?? null,
+    }))
+  },
+  closeDMComposer: () => {
+    set(() => ({
+      dmComposerTarget: null,
+      dmComposerInitialConversationId: null,
+      dmComposerOnSuccess: null,
+    }))
+  },
 })

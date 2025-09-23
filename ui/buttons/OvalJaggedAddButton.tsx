@@ -12,7 +12,19 @@ const STAR_CENTER_Y = 47.5
 const SHADOW_OFFSET_X = -1
 const SHADOW_OFFSET_Y = 1.84
 
-export function OvalJaggedAddButton({ onPress, style }: { onPress?: () => void; style?: ViewStyle }) {
+type OvalJaggedAddButtonProps = {
+  onPress?: () => void
+  style?: ViewStyle
+  label?: string
+  textOffsetX?: number
+}
+
+export function OvalJaggedAddButton({
+  onPress,
+  style,
+  label = 'Add',
+  textOffsetX = -3,
+}: OvalJaggedAddButtonProps) {
   const scale = useRef(new Animated.Value(1)).current
 
   const handlePressIn = () => {
@@ -37,7 +49,7 @@ export function OvalJaggedAddButton({ onPress, style }: { onPress?: () => void; 
     >
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel="Add a new interest"
+        accessibilityLabel={label}
         onPressIn={handlePressIn}
         onPressOut={handlePressOut}
         onPress={onPress}
@@ -81,14 +93,14 @@ export function OvalJaggedAddButton({ onPress, style }: { onPress?: () => void; 
           </G>
 
           <SvgText
-            x={STAR_CENTER_X - 3}
+            x={STAR_CENTER_X + textOffsetX}
             y={STAR_CENTER_Y + 4}
             fill={c.surface}
             fontSize={19}
             fontWeight="700"
             textAnchor="middle"
           >
-            Add
+            {label}
           </SvgText>
         </Svg>
       </Pressable>

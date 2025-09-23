@@ -9,11 +9,16 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 import { supabase } from '@/features/supabase/client'
 import Animated, { FadeIn, FadeOut, useSharedValue, useAnimatedStyle, withTiming, interpolate, Extrapolation } from 'react-native-reanimated'
 import { Animated as RNAnimated, Pressable as RNPressable } from 'react-native'
+import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg'
 import { CommunitiesFeedScreen as DirectoryScreen } from '@/features/communities/feed-screen'
 import { OvalJaggedAddButton } from '@/ui/buttons/OvalJaggedAddButton'
 
 const win = Dimensions.get('window')
 const BADGE_OVERHANG = 8
+const PEOPLE_BUTTON_TOP = -5
+const PEOPLE_BUTTON_RIGHT = -5
+const PEOPLE_TABS_GAP_TO_BUTTON = 20
+const PEOPLE_TABS_FADE_WIDTH = 88
 
 // Ensure each FlatList cell allows overflow so badges can overhang
 const VisibleCell = (props: any) => {
@@ -34,6 +39,7 @@ export function CommunityInterestsScreen() {
   // Subscriptions (local interim): map of refId -> true (persisted per-user via AsyncStorage)
   const [subscriptions, setSubscriptions] = useState<Map<string, boolean>>(new Map())
   const [lastPillRefId, setLastPillRefId] = useState<string | null>(null)
+  const [peopleButtonWidth, setPeopleButtonWidth] = useState<number>(0)
   // Simple scale refs for press feedback per-item
   const scaleRefs = useRef<Record<string, any>>({}).current
   const [newlyAddedId, setNewlyAddedId] = useState<string | null>(null)
@@ -91,14 +97,32 @@ export function CommunityInterestsScreen() {
 
     const load = async () => {
       try {
-        const refs = await pocketbase.collection('refs').getFullList({
-          filter: pocketbase.filter('meta ~ {:community}', { community: COMMUNITY }),
-          sort: '-created',
-        })
+        const sb: any = (supabase as any).client
+        const [refs, countRows] = await Promise.all([
+          pocketbase.collection('refs').getFullList({
+            filter: pocketbase.filter('meta ~ {:community}', { community: COMMUNITY }),
+            sort: '-created',
+          }),
+          sb
+            ? sb
+                .from('community_subscriptions')
+                .select('ref_id')
+                .eq('community', COMMUNITY)
+            : Promise.resolve({ data: [] }),
+        ])
+
         if (!mounted) return
+
+        const counts = new Map<string, number>()
+        const rows = (countRows as any)?.data || []
+        for (const row of rows) {
+          const id = row.ref_id
+          counts.set(id, (counts.get(id) || 0) + 1)
+        }
+        setSubscriptionCounts(counts)
+
         const mapped = refs.map(mapRefToItem)
         setCommunityItems(mapped)
-        // Default view shows all community interests when no filter selected
         setFilteredItems(mapped)
       } catch (e) {
         console.warn('Failed to load community refs', e)
@@ -170,27 +194,8 @@ export function CommunityInterestsScreen() {
       }
     })()
 
-    // Load subscription counts for all interests in this community (best-effort)
-    ;(async () => {
-      try {
-        const sb: any = (supabase as any).client
-        if (!sb) return
-        const resp = await sb
-          .from('community_subscriptions')
-          .select('ref_id')
-          .eq('community', 'edge-patagonia')
-        const rows = resp?.data || []
-        const counts = new Map<string, number>()
-        for (const row of rows) {
-          const id = row.ref_id
-          counts.set(id, (counts.get(id) || 0) + 1)
-        }
-        setSubscriptionCounts(counts)
-      } catch {}
-    })()
-
     return () => { if (typeof unsub === 'function') try { unsub() } catch {}; mounted = false }
-  }, [filterTab, user?.id, communityItems.length])
+  }, [user?.id])
 
   // Keep filteredItems in sync with current data and filter selection
   useEffect(() => {
@@ -362,24 +367,43 @@ export function CommunityInterestsScreen() {
     const [activeTab, setActiveTab] = useState<string>('All')
     const tabs = ['All', 'bio', 'crypto', 'tennis', 'new cities']
     return (
-      <View style={{ paddingTop: 28, marginBottom: 10, overflow: 'hidden' }}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-          <View style={{ flexDirection: 'row' }}>
-            {tabs.map((label, idx) => {
-              const active = label === activeTab
-              return (
-                <Pressable
-                  key={label}
-                  onPress={() => setActiveTab(label)}
-                  style={{ marginRight: idx < tabs.length - 1 ? 16 : 0 }}
-                  hitSlop={8}
-                >
-                  <Text style={{ color: c.prompt, opacity: active ? 1 : 0.5, fontSize: s.$09, textDecorationLine: active ? 'underline' : 'none' }}>{label}</Text>
-                </Pressable>
-              )
-            })}
-          </View>
-        </ScrollView>
+      <View style={{ paddingTop: 28, marginBottom: 10 }}>
+        <View style={{ position: 'relative', overflow: 'hidden' }}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+            <View style={{ flexDirection: 'row' }}>
+              {tabs.map((label, idx) => {
+                const active = label === activeTab
+                const isLast = idx === tabs.length - 1
+                return (
+                  <Pressable
+                    key={label}
+                    onPress={() => setActiveTab(label)}
+                    style={{ marginRight: isLast ? 0 : 16 }}
+                    hitSlop={8}
+                  >
+                    <Text style={{ color: c.prompt, opacity: active ? 1 : 0.5, fontSize: s.$09, textDecorationLine: active ? 'underline' : 'none' }}>{label}</Text>
+                  </Pressable>
+                )
+              })}
+              <View style={{ width: peopleButtonWidth + PEOPLE_TABS_GAP_TO_BUTTON }} />
+            </View>
+          </ScrollView>
+          <Svg
+            pointerEvents="none"
+            style={{ position: 'absolute', top: 0, right: 0, height: '100%' }}
+            width={PEOPLE_TABS_FADE_WIDTH}
+            height="100%"
+          >
+            <Defs>
+              <LinearGradient id="peopleTabsFade" x1="0" y1="0" x2="1" y2="0">
+                <Stop offset="0" stopColor={c.surface} stopOpacity={0} />
+                <Stop offset="0.6" stopColor={c.surface} stopOpacity={0.6} />
+                <Stop offset="1" stopColor={c.surface} stopOpacity={1} />
+              </LinearGradient>
+            </Defs>
+            <Rect x={0} y={0} width={PEOPLE_TABS_FADE_WIDTH} height="100%" fill="url(#peopleTabsFade)" />
+          </Svg>
+        </View>
       </View>
     )
   }
@@ -522,6 +546,19 @@ export function CommunityInterestsScreen() {
           <View style={{ flex: 1 }}>
             <DirectoryScreen showHeader={false} hideInterestChips={true} aboveListComponent={<PeopleTabs />} />
           </View>
+          {filterTab === 'people' && (
+            <View
+              style={{ position: 'absolute', top: PEOPLE_BUTTON_TOP, right: PEOPLE_BUTTON_RIGHT, zIndex: 10 }}
+              onLayout={(e) => {
+                const width = e.nativeEvent.layout.width
+                if (width && Math.abs(width - peopleButtonWidth) > 1) {
+                  setPeopleButtonWidth(width)
+                }
+              }}
+            >
+              <OvalJaggedAddButton label="Search" textOffsetX={-1} onPress={() => {}} />
+            </View>
+          )}
         </Animated.View>
       </View>
 

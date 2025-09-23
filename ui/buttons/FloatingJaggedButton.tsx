@@ -43,19 +43,19 @@ export default function FloatingJaggedButton({
         {/* Main button circle with border */}
         <Circle cx={45} cy={45.5} r={40} fill={c.surface} stroke={c.accent} strokeWidth={5.15} />
         {/* Combined jagged shape drop shadow, Y offset 0.5 */}
-        <G transform="translate(45 45.5) scale(1.44) translate(-44.5 -42.5) translate(0 0.5)">
+        <G transform="translate(45 45.5) scale(1.44) translate(-44.5 -41.25) translate(0 0.5)">
           {outlinePaths.map((p, i) => (
             <Path key={i} d={p.d} fill="rgba(0,0,0,0.25)" />
           ))}
         </G>
         {/* Surface2 outline (larger), 25% scale up, same center as accent shape */}
-        <G transform="translate(45 45.5) scale(1.44) translate(-44.5 -42.5)">
+        <G transform="translate(45 45.5) scale(1.44) translate(-44.5 -41.25)">
           {outlinePaths.map((p, i) => (
             <Path key={i} d={p.d} fill={p.fill} />
           ))}
         </G>
         {/* Accent jagged shape, 10% larger, better centered */}
-        <G transform="translate(45 45.5) scale(1.265) translate(-44.5 -42.5)">
+        <G transform="translate(45 45.5) scale(1.265) translate(-44.5 -41.25)">
           {jaggedPaths.map((p, i) => (
             <Path key={i} d={p.d} fill={p.fill} />
           ))}

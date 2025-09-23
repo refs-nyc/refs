@@ -1,4 +1,3 @@
-import { Heading, XStack } from '@/ui'
 import { View, DimensionValue, Pressable, Text } from 'react-native'
 import { c, s } from '../style'
 import { useAppStore } from '@/features/stores'
@@ -6,8 +5,6 @@ import SwipeableConversation from '@/ui/messaging/SwipeableConversation'
 import { router } from 'expo-router'
 import { Conversation } from '@/features/types'
 import ConversationList from '@/ui/messaging/ConversationList'
-import { Ionicons } from '@expo/vector-icons'
-import { Link } from 'expo-router'
 
 export function ConversationsScreen() {
   const { conversations, memberships, messagesPerConversation, user, archiveConversation } =
@@ -16,13 +13,16 @@ export function ConversationsScreen() {
   const activeConversations = []
   for (const conversationId in conversations) {
     const conversation = conversations[conversationId]
-    const membership = memberships[conversationId].find((m) => m.expand?.user.id === user?.id)
-    if (membership && !membership.archived) activeConversations.push(conversation)
+    const conversationMemberships = memberships[conversationId] || []
+    const membership = conversationMemberships.find((m) => m.expand?.user.id === user?.id)
+    const hasMessages = (messagesPerConversation[conversationId] || []).length > 0
+    if (membership && !membership.archived && hasMessages) activeConversations.push(conversation)
   }
 
   const getLastMessageDate = (conversation: Conversation) => {
-    const lastMessage = messagesPerConversation[conversation.id][0]
-    return new Date(lastMessage?.created ? lastMessage.created : '').getTime()
+    const conversationMessages = messagesPerConversation[conversation.id] || []
+    const lastMessage = conversationMessages[0]
+    return lastMessage?.created ? new Date(lastMessage.created).getTime() : 0
   }
 
   activeConversations.sort((a, b) => getLastMessageDate(b) - getLastMessageDate(a))
@@ -41,38 +41,58 @@ export function ConversationsScreen() {
         flex: 1,
         justifyContent: 'flex-start',
         height: s.full as DimensionValue,
+        backgroundColor: c.surface,
       }}
     >
-      <XStack
-        gap={s.$1}
+      <View
         style={{
-          alignItems: 'center',
-          paddingBottom: s.$1,
-          paddingLeft: s.$1,
-          paddingTop: s.$1,
+          paddingVertical: s.$1,
+          justifyContent: 'center',
+          marginTop: 7,
+          paddingLeft: s.$1 + 6,
+          paddingRight: s.$1 + 6,
+          marginBottom: s.$075,
         }}
       >
         <View
           style={{
-            display: 'flex',
             flexDirection: 'row',
-            alignItems: 'baseline',
-            gap: 8,
-            paddingRight: s.$2,
+            alignItems: 'center',
+            justifyContent: 'space-between',
           }}
         >
-          <View style={{ flex: 1 }}>
-            <Heading tag="h2semi">Messages</Heading>
-          </View>
+          <Text
+            style={{
+              color: c.prompt,
+              fontSize: (s.$09 as number) + 4,
+              fontFamily: 'System',
+              fontWeight: '700',
+              textAlign: 'left',
+              lineHeight: s.$1half,
+            }}
+          >
+            Messages
+          </Text>
           <Pressable
             onPress={() => {
               router.push('/messages/archive')
             }}
+            style={{ paddingVertical: s.$05, paddingHorizontal: s.$05 }}
           >
-            <Text>Archive</Text>
+            <Text
+              style={{
+                color: c.prompt,
+                fontSize: s.$09,
+                fontFamily: 'System',
+                fontWeight: '400',
+                lineHeight: s.$1half,
+              }}
+            >
+              Archive
+            </Text>
           </Pressable>
         </View>
-      </XStack>
+      </View>
       <ConversationList>
         {activeConversations.map((i) => (
           <SwipeableConversation key={i.id} conversation={i} onArchive={() => onArchive(i)} />

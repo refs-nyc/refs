@@ -198,6 +198,16 @@ export const createMessageSlice: StateCreator<StoreSlices, [], [], MessageSlice>
         replying_to: parentMessageId,
         image: imageUrl,
       })
+      set((state) => {
+        const current = state.messagesPerConversation[conversationId] || []
+        const alreadyExists = current.some((m) => m.id === message.id)
+        return {
+          messagesPerConversation: {
+            ...state.messagesPerConversation,
+            [conversationId]: alreadyExists ? current : [message, ...current],
+          },
+        }
+      })
       const membership = await pocketbase
         .collection('memberships')
         .getFirstListItem(`conversation = "${conversationId}" && user = "${senderId}"`)
@@ -261,12 +271,23 @@ export const createMessageSlice: StateCreator<StoreSlices, [], [], MessageSlice>
   },
 
   updateLastRead: async (conversationId: string, userId: string) => {
-    const lastMessage = get().messagesPerConversation[conversationId]
-    const lastReadDate = lastMessage[0].created
+    try {
+      const messagesForConversation = get().messagesPerConversation[conversationId]
+      if (!Array.isArray(messagesForConversation) || messagesForConversation.length === 0) return
 
-    const memberships = get().memberships
-    const ownMembership = memberships[conversationId].filter((m) => m.expand?.user.id === userId)[0]
-    await pocketbase.collection('memberships').update(ownMembership.id, { last_read: lastReadDate })
+      const lastReadDate = messagesForConversation[0]?.created
+      if (!lastReadDate) return
+
+      const membershipsForConversation = get().memberships[conversationId]
+      if (!Array.isArray(membershipsForConversation) || membershipsForConversation.length === 0) return
+
+      const ownMembership = membershipsForConversation.find((m) => m.expand?.user.id === userId)
+      if (!ownMembership?.id) return
+
+      await pocketbase.collection('memberships').update(ownMembership.id, { last_read: lastReadDate })
+    } catch (error) {
+      console.warn('updateLastRead failed', { conversationId, userId, error })
+    }
   },
 
   getNewMessages: async (conversationId: string, oldestLoadedMessageDate: string) => {

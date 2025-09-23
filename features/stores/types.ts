@@ -4,7 +4,7 @@ import type { ItemSlice } from './items'
 import type { MessageSlice } from './messages'
 import type { UserSlice } from './users'
 import type { UserCacheSlice } from './userCache'
-import { Item } from '@/features/types'
+import { Item, Profile } from '@/features/types'
 import BottomSheet from '@gorhom/bottom-sheet'
 import React from 'react'
 
@@ -68,6 +68,11 @@ export type UISlice = {
   // Navigation hint: if true, back should return to directories
   returnToDirectories: boolean
   setReturnToDirectories: (v: boolean) => void
+  dmComposerTarget: Profile | null
+  dmComposerInitialConversationId: string | null
+  dmComposerOnSuccess: ((target: Profile) => void) | null
+  openDMComposer: (target: Profile, options?: { onSuccess?: (target: Profile) => void; conversationId?: string }) => void
+  closeDMComposer: () => void
 }
 
 export type StoreSlices = BackdropSlice &

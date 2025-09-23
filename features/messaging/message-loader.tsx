@@ -63,7 +63,7 @@ export function MessagesInit() {
           setTimeout(() => {
             batch.forEach((conversation) => {
               loadInitialMessages(conversation).catch((error) => {
-                console.error('Failed to load messages for conversation:', conversation.id, error)
+                console.warn('Failed to load messages for conversation:', conversation.id, error)
               })
             })
           }, i * 200) // Increased delay to 200ms for better responsiveness
@@ -256,13 +256,16 @@ export function MessagesInit() {
     if (messages.items.length) {
       const oldestMessage = messages.items[messages.items.length - 1]
       setOldestLoadedMessageDate(conversation.id, oldestMessage.created!)
+      try {
+        const firstMessage = await pocketbase
+          .collection('messages')
+          .getFirstListItem<Message>(`conversation = "${conversation.id}"`, {
+            sort: 'created',
+          })
+        setFirstMessageDate(conversation.id, firstMessage.created!)
+      } catch (error) {
+        console.warn('Failed to fetch first message for conversation', conversation.id, error)
+      }
     }
-
-    const firstMessage = await pocketbase
-      .collection('messages')
-      .getFirstListItem<Message>(`conversation = "${conversation.id}"`, {
-        sort: 'created',
-      })
-    setFirstMessageDate(conversation.id, firstMessage.created!)
   }
 }

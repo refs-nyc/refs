@@ -146,14 +146,10 @@ export const Navigation = ({
   }, [messagesPerConversation, memberships, user?.id, conversations])
 
   if (!user) return null
-
-  const hideNav = inMessageThread
+  if (inMessageThread) return null
 
   return (
-    <View
-      style={{ display: 'flex', flexDirection: 'row', paddingLeft: 2, opacity: hideNav ? 0 : 1 }}
-      pointerEvents={hideNav ? 'none' : 'auto'}
-    >
+    <View style={{ display: 'flex', flexDirection: 'row', paddingLeft: 2 }}>
       <NavigationBackdrop />
       <View
         style={{

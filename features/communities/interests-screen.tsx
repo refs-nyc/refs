@@ -1,5 +1,5 @@
-import React, { useEffect, useRef, useState, useCallback } from 'react'
-import { View, Text, Dimensions, Pressable, FlatList, ScrollView } from 'react-native'
+import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react'
+import { View, Text, Dimensions, Pressable, FlatList, ScrollView, RefreshControl } from 'react-native'
 import { s, c } from '@/features/style'
 import { pocketbase } from '@/features/pocketbase'
 import BottomSheet from '@gorhom/bottom-sheet'
@@ -12,13 +12,23 @@ import { Animated as RNAnimated, Pressable as RNPressable } from 'react-native'
 import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg'
 import { CommunitiesFeedScreen as DirectoryScreen } from '@/features/communities/feed-screen'
 import { OvalJaggedAddButton } from '@/ui/buttons/OvalJaggedAddButton'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { Avatar } from '@/ui/atoms/Avatar'
+import { SimplePinataImage } from '@/ui/images/SimplePinataImage'
+import { SearchLoadingSpinner } from '@/ui/atoms/SearchLoadingSpinner'
 
 const win = Dimensions.get('window')
 const BADGE_OVERHANG = 8
-const PEOPLE_BUTTON_TOP = -5
-const PEOPLE_BUTTON_RIGHT = -5
+const JAGGED_BUTTON_SAFE_PADDING = 120
+const JAGGED_BUTTON_HALF_HEIGHT = 48
+const JAGGED_BUTTON_RIGHT_OFFSET = -12
+const TABS_TO_LIST_SPACING = 12
+const COMMUNITY_SLUG = 'edge-patagonia'
+const PEOPLE_SECTION_TOP_PADDING = 12
 const PEOPLE_TABS_GAP_TO_BUTTON = 20
-const PEOPLE_TABS_FADE_WIDTH = 88
+const PEOPLE_TABS_FADE_WIDTH = 74
+const PEOPLE_TAB_LABELS = ['All', 'Bio', 'Crypto', 'Longevity', 'Outdoors', 'New Cities']
+const DIRECTORY_LIST_LEFT_PADDING = ((s.$1 as number) + 6) - (s.$08 as number)
 
 // Ensure each FlatList cell allows overflow so badges can overhang
 const VisibleCell = (props: any) => {
@@ -39,7 +49,6 @@ export function CommunityInterestsScreen() {
   // Subscriptions (local interim): map of refId -> true (persisted per-user via AsyncStorage)
   const [subscriptions, setSubscriptions] = useState<Map<string, boolean>>(new Map())
   const [lastPillRefId, setLastPillRefId] = useState<string | null>(null)
-  const [peopleButtonWidth, setPeopleButtonWidth] = useState<number>(0)
   // Simple scale refs for press feedback per-item
   const scaleRefs = useRef<Record<string, any>>({}).current
   const [newlyAddedId, setNewlyAddedId] = useState<string | null>(null)

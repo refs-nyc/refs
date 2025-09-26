@@ -180,6 +180,162 @@ export const MyProfile = ({ userName }: { userName: string }) => {
   const [showPrompt, setShowPrompt] = useState(false)
   const [startupAnimationDone, setStartupAnimationDone] = useState(false)
   const [newlyAddedItemId, setNewlyAddedItemId] = useState<string | null>(null)
+
+  const hasProfile = Boolean(profile)
+
+  const headerContent = hasProfile ? (
+    searchMode || isSearchResultsSheetOpen ? (
+      <Text
+        style={{
+          color: c.prompt,
+          fontSize: s.$09,
+          fontFamily: 'System',
+          fontWeight: '400',
+          textAlign: 'center',
+          lineHeight: s.$1half,
+        }}
+      >
+        What did you get into today?
+      </Text>
+    ) : gridItems.length >= 12 ? (
+      <Text
+        style={{
+          color: c.prompt,
+          fontSize: s.$09,
+          fontFamily: 'System',
+          fontWeight: '400',
+          textAlign: 'center',
+          lineHeight: s.$1half,
+        }}
+      >
+        What did you get into today?
+      </Text>
+    ) : (
+      <Animated.Text
+        entering={FadeIn.duration(800)}
+        exiting={FadeOut.duration(800)}
+        key={`prompt-text-${promptTextIndex}-${promptFadeKey}`}
+        style={{
+          color: c.prompt,
+          fontSize: s.$09,
+          fontFamily: 'System',
+          fontWeight: '400',
+          textAlign: 'center',
+          lineHeight: s.$1half,
+          minWidth: 280,
+          minHeight: s.$1half,
+        }}
+      >
+        {showPrompt
+          ? promptTextIndex === 0
+            ? 'these prompts will disappear after you add'
+            : '(no one will know you used them)'
+          : ''}
+      </Animated.Text>
+    )
+  ) : (
+    <Text
+      style={{
+        color: c.prompt,
+        fontSize: s.$09,
+        fontFamily: 'System',
+        fontWeight: '400',
+        textAlign: 'center',
+        lineHeight: s.$1half,
+      }}
+    >
+      Loading your grid…
+    </Text>
+  )
+
+  const gridContent = hasProfile ? (
+    <Grid
+      editingRights={true}
+      screenFocused={focusReady && !loading}
+      shouldAnimateStartup={justOnboarded}
+      onStartupAnimationComplete={() => setStartupAnimationDone(true)}
+      onPressItem={(item) => {
+        setDetailsItem(item!)
+        detailsSheetRef.current?.snapToIndex(0)
+      }}
+      onLongPressItem={() => {
+        clearTimeout(timeout)
+        timeout = setTimeout(() => {
+          stopEditProfile()
+        }, 10000)
+        startEditProfile()
+      }}
+      onRemoveItem={(item) => {
+        setRemovingItem(item)
+        removeRefSheetRef.current?.expand()
+      }}
+      onAddItem={(prompt?: string) => {
+        setAddingNewRefTo('grid')
+        if (prompt) useAppStore.getState().setAddRefPrompt(prompt)
+        newRefSheetRef.current?.snapToIndex(1)
+      }}
+      onAddItemWithPrompt={(prompt: string, photoPath?: boolean) => {
+        if (photoPath) {
+          triggerDirectPhotoPicker(prompt)
+        } else {
+          setAddingNewRefTo('grid')
+          useAppStore.getState().setAddRefPrompt(prompt)
+          newRefSheetRef.current?.snapToIndex(1)
+        }
+      }}
+      columns={3}
+      items={displayGridItems}
+      rows={4}
+      rowGap={(s.$075 as number) + 5}
+      searchMode={searchMode}
+      selectedRefs={selectedRefs}
+      setSelectedRefs={setSelectedRefs}
+      newlyAddedItemId={newlyAddedItemId}
+    />
+  ) : (
+    <PlaceholderGrid columns={3} rows={4} rowGap={(s.$075 as number) + 5} />
+  )
+
+  const searchDismissOverlays = hasProfile && searchMode ? (
+    <>
+      <Pressable
+        style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 90, backgroundColor: 'transparent', zIndex: 1 }}
+        onPress={() => {
+          setSearchMode(false)
+          if (!searchMode) {
+            setSelectedRefs([])
+          }
+        }}
+      />
+      <Pressable
+        style={{ position: 'absolute', top: 90, left: 0, width: 16, bottom: 0, backgroundColor: 'transparent', zIndex: 1 }}
+        onPress={() => {
+          setSearchMode(false)
+          if (!searchMode) {
+            setSelectedRefs([])
+          }
+        }}
+      />
+      <Pressable
+        style={{ position: 'absolute', top: 90, right: 0, width: 16, bottom: 0, backgroundColor: 'transparent', zIndex: 1 }}
+        onPress={() => {
+          setSearchMode(false)
+          if (!searchMode) {
+            setSelectedRefs([])
+          }
+        }}
+      />
+      <Pressable
+        style={{ position: 'absolute', top: 590, left: 0, right: 0, bottom: 0, backgroundColor: 'transparent', zIndex: 1 }}
+        onPress={() => {
+          setSearchMode(false)
+          if (!searchMode) {
+            setSelectedRefs([])
+          }
+        }}
+      />
+    </>
+  ) : null
   
   // Track which items have already been animated to prevent re-animation on grid refresh
   const animatedItemsRef = useRef<Set<string>>(new Set())
@@ -581,7 +737,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
   return (
     <>
       <ScrollView
-        style={{ flex: 1 }}
+        style={{ flex: 1, backgroundColor: c.surface }}
         contentContainerStyle={{
           justifyContent: 'center',
           alignItems: 'center',
@@ -593,281 +749,76 @@ export const MyProfile = ({ userName }: { userName: string }) => {
         showsVerticalScrollIndicator={false}
         scrollEnabled={false}
       >
-        {profile && (
-          <View
+        <View
+          style={{
+            flex: 1,
+            width: '100%',
+            marginHorizontal: s.$1half,
+            backgroundColor: c.surface,
+          }}
+        >
+          <Animated.View
+            entering={FadeIn.duration(400).delay(100)}
+            exiting={FadeOut.duration(300)}
+            key={`${searchMode}-${gridItems.length}-${hasProfile ? 'ready' : 'loading'}`}
             style={{
-              flex: 1,
-              width: '100%',
-              marginHorizontal: s.$1half,
+              paddingHorizontal: 10,
+              paddingVertical: s.$1,
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginTop: 7,
+              zIndex: 5,
             }}
           >
-            {/* Custom header text based on grid state */}
-            <Animated.View
-              entering={FadeIn.duration(400).delay(100)}
-              exiting={FadeOut.duration(300)}
-              key={`${searchMode}-${gridItems.length}`}
-              style={{
-                paddingHorizontal: 10,
-                paddingVertical: s.$1,
-                alignItems: 'center',
-                justifyContent: 'center',
-                marginTop: 7, // Center the text between nav and grid for both modes
-                zIndex: 5, // Above the overlay
-              }}
-            >
-              {searchMode || isSearchResultsSheetOpen ? (
-                <Text
-                  style={{
-                    color: c.prompt,
-                    fontSize: s.$09,
-                    fontFamily: 'System',
-                    fontWeight: '400',
-                    textAlign: 'center',
-                    lineHeight: s.$1half,
-                  }}
-                >
-                  What did you get into today?
-                </Text>
-              ) : gridItems.length >= 12 ? (
-                <Text
-                  style={{
-                    color: c.prompt,
-                    fontSize: s.$09,
-                    fontFamily: 'System',
-                    fontWeight: '400',
-                    textAlign: 'center',
-                    lineHeight: s.$1half,
-                  }}
-                >
-                  What did you get into today?
-                </Text>
-              ) : (
-                <Animated.Text
-                  entering={FadeIn.duration(800)}
-                  exiting={FadeOut.duration(800)}
-                  key={`prompt-text-${promptTextIndex}-${promptFadeKey}`}
-                  style={{
-                    color: c.prompt,
-                    fontSize: s.$09,
-                    fontFamily: 'System',
-                    fontWeight: '400',
-                    textAlign: 'center',
-                    lineHeight: s.$1half,
-                    minWidth: 280,
-                    minHeight: s.$1half, // reserve space during pause
-                  }}
-                >
-                  {showPrompt
-                    ? promptTextIndex === 0
-                      ? 'these prompts will disappear after you add'
-                      : '(no one will know you used them)'
-                    : ''}
-                </Animated.Text>
-              )}
-            </Animated.View>
+            {headerContent}
+          </Animated.View>
 
-            <View
+          <View
+            style={{
+              gap: s.$2,
+              minHeight: 500,
+              position: 'absolute',
+              top: 90,
+              left: 0,
+              right: 0,
+              zIndex: 5,
+            }}
+          >
+            {gridContent}
+
+            <FloatingJaggedButton
+              icon="plus"
+              onPress={() => {
+                setAddingNewRefTo('grid')
+                try { useAppStore.getState().setAddRefPrompt('') } catch {}
+                newRefSheetRef.current?.snapToIndex(1)
+              }}
               style={{
-                gap: s.$2,
-                minHeight: 500,
                 position: 'absolute',
-                top: 90,
-                left: 0,
-                right: 0,
-                zIndex: 5, // Above the overlay
+                bottom: s.$075,
+                right: s.$075,
+                zIndex: 5,
+                opacity: hasProfile && !searchMode ? 1 : 0,
               }}
-            >
-              {loading || !focusReady ? (
-                <View style={{ height: 500 }} />
-              ) : (
-                <Grid
-                  editingRights={true}
-                  screenFocused={focusReady && !loading}
-                  shouldAnimateStartup={justOnboarded}
-                  onStartupAnimationComplete={() => setStartupAnimationDone(true)}
-                  onPressItem={(item) => {
-                    // Normal mode - open details
-                    setDetailsItem(item!)
-                    detailsSheetRef.current?.snapToIndex(0)
-                  }}
-                  onLongPressItem={() => {
-                    clearTimeout(timeout)
-                    timeout = setTimeout(() => {
-                      stopEditProfile()
-                    }, 10000)
-                    startEditProfile()
-                  }}
-                  onRemoveItem={(item) => {
-                    setRemovingItem(item)
-                    removeRefSheetRef.current?.expand()
-                  }}
-                  onAddItem={(prompt?: string) => {
-                    setAddingNewRefTo('grid')
-                    if (prompt) useAppStore.getState().setAddRefPrompt(prompt)
-                    newRefSheetRef.current?.snapToIndex(1)
-                  }}
-                  onAddItemWithPrompt={(prompt: string, photoPath?: boolean) => {
-                    if (photoPath) {
-                      // Direct photo picker flow - bypass NewRefSheet entirely
-                      triggerDirectPhotoPicker(prompt)
-                    } else {
-                      // Normal search flow through NewRefSheet
-                      setAddingNewRefTo('grid')
-                      useAppStore.getState().setAddRefPrompt(prompt)
-                      newRefSheetRef.current?.snapToIndex(1)
-                    }
-                  }}
-                  columns={3}
-                  items={displayGridItems}
-                  rows={4}
-                  rowGap={(s.$075 as number) + 5}
-                  searchMode={searchMode}
-                  selectedRefs={selectedRefs}
-                  setSelectedRefs={setSelectedRefs}
-                  newlyAddedItemId={newlyAddedItemId}
-                />
-              )}
-
-              {/* Floating Search Button pinned to grid wrapper */}
-              <FloatingJaggedButton
-                icon="plus"
-                onPress={() => {
-                  setAddingNewRefTo('grid')
-                  try { useAppStore.getState().setAddRefPrompt('') } catch {}
-                  newRefSheetRef.current?.snapToIndex(1)
-                }}
-                style={{
-                  position: 'absolute',
-                  bottom: s.$075,
-                  right: s.$075,
-                  zIndex: 5,
-                  opacity: searchMode ? 0 : 1,
-                }}
-              />
-            </View>
-
-            {/* Backlog header below grid (temporarily disabled) */}
-            {false && (
-              <View
-                style={{
-                  marginTop: 660,
-                  paddingVertical: s.$1,
-                  alignItems: 'flex-start',
-                  justifyContent: 'center',
-                  paddingLeft: s.$1 + 6,
-                }}
-              >
-                <Text
-                  style={{
-                    color: c.prompt,
-                    fontSize: s.$09,
-                    fontFamily: 'System',
-                    fontWeight: '700',
-                    textAlign: 'left',
-                    lineHeight: s.$1half,
-                  }}
-                >
-                  Backlog
-                </Text>
-              </View>
-            )}
-
-            {!user && <Heading tag="h1">Profile for {userName} not found</Heading>}
-
-            {/* Multiple pressable areas to dismiss search mode - avoiding the grid */}
-            {searchMode && (
-              <>
-                {/* Top area above grid */}
-                <Pressable
-                  style={{
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    height: 90, // Up to where grid starts
-                    backgroundColor: 'transparent',
-                    zIndex: 1,
-                  }}
-                  onPress={() => {
-                    setSearchMode(false)
-                    // Don't clear selectedRefs if we're returning from search
-                    if (!searchMode) { // Changed from returningFromSearch to searchMode
-                      setSelectedRefs([])
-                    }
-                  }}
-                />
-                {/* Left area beside grid */}
-                <Pressable
-                  style={{
-                    position: 'absolute',
-                    top: 90,
-                    left: 0,
-                    width: 16, // s.$08
-                    bottom: 0,
-                    backgroundColor: 'transparent',
-                    zIndex: 1,
-                  }}
-                  onPress={() => {
-                    setSearchMode(false)
-                    // Don't clear selectedRefs if we're returning from search
-                    if (!searchMode) { // Changed from returningFromSearch to searchMode
-                      setSelectedRefs([])
-                    }
-                  }}
-                />
-                {/* Right area beside grid */}
-                <Pressable
-                  style={{
-                    position: 'absolute',
-                    top: 90,
-                    right: 0,
-                    width: 16, // s.$08
-                    bottom: 0,
-                    backgroundColor: 'transparent',
-                    zIndex: 1,
-                  }}
-                  onPress={() => {
-                    setSearchMode(false)
-                    // Don't clear selectedRefs if we're returning from search
-                    if (!searchMode) { // Changed from returningFromSearch to searchMode
-                      setSelectedRefs([])
-                    }
-                  }}
-                />
-                {/* Bottom area below grid */}
-                <Pressable
-                  style={{
-                    position: 'absolute',
-                    top: 590, // 90 + 500 (grid height)
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    backgroundColor: 'transparent',
-                    zIndex: 1,
-                  }}
-                  onPress={() => {
-                    setSearchMode(false)
-                    // Don't clear selectedRefs if we're returning from search
-                    if (!searchMode) { // Changed from returningFromSearch to searchMode
-                      setSelectedRefs([])
-                    }
-                  }}
-                />
-              </>
-            )}
+            />
           </View>
-        )}
 
-        {/* Logout button positioned absolutely */}
+          {hasProfile && !user && <Heading tag="h1">Profile for {userName} not found</Heading>}
+
+          {searchDismissOverlays}
+        </View>
+
         {showLogoutButton && (
-          <View style={{ 
-            position: 'absolute',
-            bottom: 50,
-            left: 0,
-            right: 0,
-            alignItems: 'center',
-            zIndex: 4,
-          }}>
+          <View
+            style={{
+              position: 'absolute',
+              bottom: 50,
+              left: 0,
+              right: 0,
+              alignItems: 'center',
+              zIndex: 4,
+            }}
+          >
             <Button
               style={{ width: 120 }}
               variant="inlineSmallMuted"

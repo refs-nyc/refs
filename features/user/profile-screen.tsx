@@ -1,5 +1,5 @@
 import { Profile } from '@/ui'
-import React, { useEffect, useMemo, useRef } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { Dimensions, View, ScrollView } from 'react-native'
 import Svg, { Path, G } from 'react-native-svg'
 import { useAppStore } from '@/features/stores'
@@ -8,6 +8,7 @@ import { WantToMeetScreen } from '@/features/communities/want-to-meet-screen'
 import { c } from '@/features/style'
 import { Gesture, GestureDetector } from 'react-native-gesture-handler'
 import Animated, { useSharedValue, useAnimatedStyle, withSpring, runOnJS } from 'react-native-reanimated'
+import { InteractionManager } from 'react-native'
 
 export function UserProfileScreen({ userName }: { userName: string }) {
   if (!userName) {
@@ -20,6 +21,20 @@ export function UserProfileScreen({ userName }: { userName: string }) {
   // Pager gesture setup (hooks must always be called in the same order)
   const translateX = useSharedValue(0)
   const isDragging = useSharedValue(false)
+  const [secondaryTabsReady, setSecondaryTabsReady] = useState(false)
+
+  useEffect(() => {
+    let cancelled = false
+    const handle = InteractionManager.runAfterInteractions(() => {
+      if (!cancelled) {
+        setSecondaryTabsReady(true)
+      }
+    })
+    return () => {
+      cancelled = true
+      handle.cancel()
+    }
+  }, [])
 
   // Update translateX when homePagerIndex changes
   const hasInitialized = useRef(false)
@@ -267,14 +282,14 @@ export function UserProfileScreen({ userName }: { userName: string }) {
     <View style={{ flex: 1 }}>
       <GestureDetector gesture={panGesture}>
         <Animated.View style={[{ flex: 1, flexDirection: 'row' }, animatedStyle]}>
-          <View style={{ width, overflow: 'hidden' }}>
+          <View style={{ width, overflow: 'hidden', backgroundColor: c.surface }}>
             <Profile userName={userName} />
           </View>
-          <View style={{ width, overflow: 'hidden' }}>
-            <CommunityInterestsScreen />
+          <View style={{ width, overflow: 'hidden', backgroundColor: c.surface }}>
+            {secondaryTabsReady ? <CommunityInterestsScreen /> : null}
           </View>
-          <View style={{ width, overflow: 'hidden' }}>
-            <WantToMeetScreen />
+          <View style={{ width, overflow: 'hidden', backgroundColor: c.surface }}>
+            {secondaryTabsReady ? <WantToMeetScreen /> : null}
           </View>
         </Animated.View>
       </GestureDetector>

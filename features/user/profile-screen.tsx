@@ -1,6 +1,6 @@
 import { Profile } from '@/ui'
-import React, { useEffect, useMemo, useRef, useState } from 'react'
-import { Dimensions, View, ScrollView } from 'react-native'
+import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { Dimensions, View, StyleSheet } from 'react-native'
 import Svg, { Path, G } from 'react-native-svg'
 import { useAppStore } from '@/features/stores'
 import { CommunityInterestsScreen } from '@/features/communities/interests-screen'
@@ -8,47 +8,85 @@ import { WantToMeetScreen } from '@/features/communities/want-to-meet-screen'
 import { c } from '@/features/style'
 import { Gesture, GestureDetector } from 'react-native-gesture-handler'
 import Animated, { useSharedValue, useAnimatedStyle, withSpring, runOnJS } from 'react-native-reanimated'
-import { InteractionManager } from 'react-native'
 
 export function UserProfileScreen({ userName }: { userName: string }) {
   if (!userName) {
     return null
   }
 
-  const { homePagerIndex, setHomePagerIndex, user, returnToDirectories, setReturnToDirectories, moduleBackdropAnimatedIndex, detailsBackdropAnimatedIndex, otherProfileBackdropAnimatedIndex, removeRefSheetBackdropAnimatedIndex } = useAppStore()
+  const { homePagerIndex, setHomePagerIndex, user, returnToDirectories, setReturnToDirectories, moduleBackdropAnimatedIndex, detailsBackdropAnimatedIndex, otherProfileBackdropAnimatedIndex, removeRefSheetBackdropAnimatedIndex, myProfileReady } = useAppStore()
   const { width } = Dimensions.get('window')
 
   // Pager gesture setup (hooks must always be called in the same order)
   const translateX = useSharedValue(0)
   const isDragging = useSharedValue(false)
-  const [secondaryTabsReady, setSecondaryTabsReady] = useState(false)
+  const hasSyncedInitialIndex = useRef(false)
+  const initialPagerIndex = useRef(homePagerIndex)
+  const hasInitialized = useRef(false)
+  const ownProfile = user?.userName === userName
+  const [secondaryTabsReady, setSecondaryTabsReady] = useState(() => (!ownProfile ? true : false))
 
   useEffect(() => {
-    let cancelled = false
-    const handle = InteractionManager.runAfterInteractions(() => {
-      if (!cancelled) {
-        setSecondaryTabsReady(true)
-      }
-    })
-    return () => {
-      cancelled = true
-      handle.cancel()
+    hasSyncedInitialIndex.current = false
+    hasInitialized.current = false
+    if (ownProfile) {
+      setSecondaryTabsReady(false)
+    } else {
+      setSecondaryTabsReady(true)
     }
-  }, [])
+  }, [userName, ownProfile])
+
+  useEffect(() => {
+    if (!ownProfile || secondaryTabsReady) return
+    if (myProfileReady) {
+      setSecondaryTabsReady(true)
+      return
+    }
+    const timer = setTimeout(() => {
+      setSecondaryTabsReady(true)
+    }, 600)
+    return () => clearTimeout(timer)
+  }, [ownProfile, secondaryTabsReady, myProfileReady])
+
+  useLayoutEffect(() => {
+    if (!userName) return
+    const isOwnProfile = user?.userName === userName
+
+    if (!hasSyncedInitialIndex.current) {
+      hasSyncedInitialIndex.current = true
+      if (isOwnProfile) {
+        initialPagerIndex.current = 0
+        translateX.value = 0
+        if (homePagerIndex !== 0) {
+          setHomePagerIndex(0)
+        }
+      } else {
+        initialPagerIndex.current = homePagerIndex
+        translateX.value = -homePagerIndex * width
+      }
+      return
+    }
+
+    if (!isOwnProfile) {
+      initialPagerIndex.current = homePagerIndex
+      translateX.value = -homePagerIndex * width
+    }
+  }, [user?.userName, userName, homePagerIndex, width, translateX])
 
   // Update translateX when homePagerIndex changes
-  const hasInitialized = useRef(false)
   useEffect(() => {
     if (!hasInitialized.current) {
-      // Avoid initial spring on mount to prevent bounce when returning to directories
-      translateX.value = -homePagerIndex * width
+      // Avoid initial spring on mount; respect the forced initial index
+      translateX.value = -initialPagerIndex.current * width
       hasInitialized.current = true
+      initialPagerIndex.current = homePagerIndex
       return
     }
     translateX.value = withSpring(-homePagerIndex * width, {
       damping: 20,
       stiffness: 200,
     })
+    initialPagerIndex.current = homePagerIndex
   }, [homePagerIndex, width])
 
   // Gesture handling for horizontal swipes (will only be attached on own profile)
@@ -188,11 +226,10 @@ export function UserProfileScreen({ userName }: { userName: string }) {
   // If we navigated back from a directory-tapped profile, force pager to Directories
   useEffect(() => {
     if (returnToDirectories) {
-      console.log('🔄 RETURN TO DIRECTORIES - Setting pager to index 1')
       setHomePagerIndex(1)
       setReturnToDirectories(false)
     }
-  }, [returnToDirectories, setHomePagerIndex, setReturnToDirectories])
+  }, [returnToDirectories, setHomePagerIndex, setReturnToDirectories, homePagerIndex, userName])
 
   // Define Dots component before conditional returns to prevent hook ordering issues
   const Dots = useMemo(() => {
@@ -278,6 +315,8 @@ export function UserProfileScreen({ userName }: { userName: string }) {
     return <Profile userName={userName} />
   }
 
+  const secondaryReady = !ownProfile || secondaryTabsReady
+
   return (
     <View style={{ flex: 1 }}>
       <GestureDetector gesture={panGesture}>
@@ -286,14 +325,17 @@ export function UserProfileScreen({ userName }: { userName: string }) {
             <Profile userName={userName} />
           </View>
           <View style={{ width, overflow: 'hidden', backgroundColor: c.surface }}>
-            {secondaryTabsReady ? <CommunityInterestsScreen /> : null}
+            {secondaryReady ? <CommunityInterestsScreen /> : null}
           </View>
           <View style={{ width, overflow: 'hidden', backgroundColor: c.surface }}>
-            {secondaryTabsReady ? <WantToMeetScreen /> : null}
+            {secondaryReady ? <WantToMeetScreen /> : null}
           </View>
         </Animated.View>
       </GestureDetector>
       {Dots}
+      {ownProfile && !myProfileReady && (
+        <View pointerEvents="none" style={[StyleSheet.absoluteFillObject, { backgroundColor: c.surface }]} />
+      )}
     </View>
   )
 }

@@ -694,7 +694,7 @@ export function CommunitiesFeedScreen({ showHeader = true, aboveListComponent, h
             {/* Natural scrolling list without surface2 backdrop */}
             <Animated.View entering={FadeIn.duration(120)} exiting={FadeOut.duration(120)} key={`list-${selectedInterests.join(',')}-${displayedUsers.length}`}> 
               <FlatList
-                contentContainerStyle={{ paddingHorizontal: s.$1 + 6, paddingTop: 5, paddingBottom: 150 }}
+                contentContainerStyle={{ paddingLeft: (s.$1 as number) + 6, paddingRight: (s.$1 as number) + 6, paddingTop: 5, paddingBottom: 150 }}
                 data={displayedUsers}
                 keyExtractor={(u) => u.id}
                 renderItem={renderItem}
@@ -716,4 +716,3 @@ export function CommunitiesFeedScreen({ showHeader = true, aboveListComponent, h
     </View>
   )
 }
-

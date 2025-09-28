@@ -1,10 +1,11 @@
 import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react'
-import { View, Text, Dimensions, Pressable, FlatList, ScrollView, RefreshControl } from 'react-native'
+import { View, Text, Dimensions, Pressable, FlatList, ScrollView, RefreshControl, InteractionManager } from 'react-native'
 import { s, c } from '@/features/style'
 import { pocketbase } from '@/features/pocketbase'
 import BottomSheet from '@gorhom/bottom-sheet'
 import { CommunityFormSheet } from '@/ui/communities/CommunityFormSheet'
 import { useAppStore } from '@/features/stores'
+import type { ReferencersContext } from '@/features/stores/types'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { supabase } from '@/features/supabase/client'
 import Animated, { FadeIn, FadeOut, useSharedValue, useAnimatedStyle, withTiming, interpolate, Extrapolation } from 'react-native-reanimated'
@@ -12,23 +13,17 @@ import { Animated as RNAnimated, Pressable as RNPressable } from 'react-native'
 import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg'
 import { CommunitiesFeedScreen as DirectoryScreen } from '@/features/communities/feed-screen'
 import { OvalJaggedAddButton } from '@/ui/buttons/OvalJaggedAddButton'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Avatar } from '@/ui/atoms/Avatar'
 import { SimplePinataImage } from '@/ui/images/SimplePinataImage'
 import { SearchLoadingSpinner } from '@/ui/atoms/SearchLoadingSpinner'
 
 const win = Dimensions.get('window')
 const BADGE_OVERHANG = 8
-const JAGGED_BUTTON_SAFE_PADDING = 120
-const JAGGED_BUTTON_HALF_HEIGHT = 48
-const JAGGED_BUTTON_RIGHT_OFFSET = -12
-const TABS_TO_LIST_SPACING = 12
 const COMMUNITY_SLUG = 'edge-patagonia'
-const PEOPLE_SECTION_TOP_PADDING = 12
-const PEOPLE_TABS_GAP_TO_BUTTON = 20
-const PEOPLE_TABS_FADE_WIDTH = 74
-const PEOPLE_TAB_LABELS = ['All', 'Bio', 'Crypto', 'Longevity', 'Outdoors', 'New Cities']
-const DIRECTORY_LIST_LEFT_PADDING = ((s.$1 as number) + 6) - (s.$08 as number)
+const PEOPLE_TABS_FADE_WIDTH = 60
+const PEOPLE_SEARCH_BUTTON_RIGHT_OFFSET = -10
+const PEOPLE_SEARCH_BUTTON_TOP = -6
+const PEOPLE_SEARCH_CONTENT_PADDING = 85
 
 // Ensure each FlatList cell allows overflow so badges can overhang
 const VisibleCell = (props: any) => {
@@ -45,7 +40,7 @@ export function CommunityInterestsScreen() {
   const [subscriptionCounts, setSubscriptionCounts] = useState<Map<string, number>>(new Map())
   const [rowWidths, setRowWidths] = useState<Record<string, number>>({})
   const communityFormRef = useRef<BottomSheet>(null)
-  const { user, setCurrentRefId, referencersBottomSheetRef } = useAppStore()
+  const { user, setCurrentRefId, referencersBottomSheetRef, setReferencersContext } = useAppStore()
   // Subscriptions (local interim): map of refId -> true (persisted per-user via AsyncStorage)
   const [subscriptions, setSubscriptions] = useState<Map<string, boolean>>(new Map())
   const [lastPillRefId, setLastPillRefId] = useState<string | null>(null)
@@ -86,7 +81,7 @@ export function CommunityInterestsScreen() {
 
   useEffect(() => {
     let unsub: any | null = null
-    let mounted = true
+    let cancelled = false
     const COMMUNITY = 'edge-patagonia'
 
     const mapRefToItem = (r: any) => ({
@@ -104,41 +99,8 @@ export function CommunityInterestsScreen() {
       __emphasized: typeof r?.meta === 'string' && r.meta.includes('"emphasized":true'),
     })
 
-    const load = async () => {
-      try {
-        const sb: any = (supabase as any).client
-        const [refs, countRows] = await Promise.all([
-          pocketbase.collection('refs').getFullList({
-            filter: pocketbase.filter('meta ~ {:community}', { community: COMMUNITY }),
-            sort: '-created',
-          }),
-          sb
-            ? sb
-                .from('community_subscriptions')
-                .select('ref_id')
-                .eq('community', COMMUNITY)
-            : Promise.resolve({ data: [] }),
-        ])
-
-        if (!mounted) return
-
-        const counts = new Map<string, number>()
-        const rows = (countRows as any)?.data || []
-        for (const row of rows) {
-          const id = row.ref_id
-          counts.set(id, (counts.get(id) || 0) + 1)
-        }
-        setSubscriptionCounts(counts)
-
-        const mapped = refs.map(mapRefToItem)
-        setCommunityItems(mapped)
-        setFilteredItems(mapped)
-      } catch (e) {
-        console.warn('Failed to load community refs', e)
-      }
-    }
-
     const handleEvent = (e: any) => {
+      if (cancelled) return
       try {
         const r = e.record
         const isCommunity = typeof r?.meta === 'string' && r.meta.includes(COMMUNITY)
@@ -159,51 +121,89 @@ export function CommunityInterestsScreen() {
       } catch {}
     }
 
-    load()
-    ;(async () => {
-      try { unsub = await pocketbase.collection('refs').subscribe('*', handleEvent) } catch {}
-    })()
-    // Load current user's subscriptions (local-only for now)
-    ;(async () => {
+    const loadUserSubscriptions = async () => {
       try {
         if (!user?.id) return
         const key = `community_subs:${user.id}:edge-patagonia`
-        // Prefer Supabase
         const sb: any = (supabase as any).client
-        let data: any = null
-        let error: any = null
+        let refIds: string[] | null = null
         if (sb) {
           const resp = await sb
             .from('community_subscriptions')
             .select('ref_id')
             .eq('user_id', user.id)
             .eq('community', 'edge-patagonia')
-          data = resp.data
-          error = resp.error
+          if (!resp.error && Array.isArray(resp.data)) {
+            refIds = resp.data.map((r: any) => r.ref_id)
+            await AsyncStorage.setItem(key, JSON.stringify(refIds))
+          }
         }
-        let refIds: string[] | null = null
-        if (!error && Array.isArray(data)) {
-          refIds = data.map((r: any) => r.ref_id)
-          // Cache locally
-          await AsyncStorage.setItem(key, JSON.stringify(refIds))
-        }
-        // Fallback to local cache
         if (!refIds) {
           const raw = await AsyncStorage.getItem(key)
           if (raw) refIds = JSON.parse(raw)
         }
-        if (!mounted) return
+        if (cancelled) return
         if (Array.isArray(refIds)) {
           const map = new Map<string, boolean>()
           for (const id of refIds) map.set(id, true)
           setSubscriptions(map)
         }
       } catch (e) {
-        console.warn('Subscriptions load failed:', e)
+        if (__DEV__) console.warn('Subscriptions load failed:', e)
       }
-    })()
+    }
 
-    return () => { if (typeof unsub === 'function') try { unsub() } catch {}; mounted = false }
+    const load = async () => {
+      try {
+        const sb: any = (supabase as any).client
+        const [refs, countRows] = await Promise.all([
+          pocketbase.collection('refs').getFullList({
+            filter: pocketbase.filter('meta ~ {:community}', { community: COMMUNITY }),
+            sort: '-created',
+          }),
+          sb
+            ? sb
+                .from('community_subscriptions')
+                .select('ref_id')
+                .eq('community', COMMUNITY)
+            : Promise.resolve({ data: [] }),
+        ])
+
+        if (cancelled) return
+
+        const counts = new Map<string, number>()
+        const rows = (countRows as any)?.data || []
+        for (const row of rows) {
+          const id = row.ref_id
+          counts.set(id, (counts.get(id) || 0) + 1)
+        }
+        setSubscriptionCounts(counts)
+
+        const mapped = refs.map(mapRefToItem)
+        setCommunityItems(mapped)
+        setFilteredItems(mapped)
+      } catch (e) {
+        console.warn('Failed to load community refs', e)
+      }
+    }
+
+    const task = InteractionManager.runAfterInteractions(async () => {
+      await load()
+      if (cancelled) return
+      try {
+        unsub = await pocketbase.collection('refs').subscribe('*', handleEvent)
+      } catch {}
+      if (cancelled) return
+      await loadUserSubscriptions()
+    })
+
+    return () => {
+      cancelled = true
+      task.cancel()
+      if (typeof unsub === 'function') {
+        try { unsub() } catch {}
+      }
+    }
   }, [user?.id])
 
   // Keep filteredItems in sync with current data and filter selection
@@ -222,71 +222,92 @@ export function CommunityInterestsScreen() {
   }, [communityItems, filterTab, subscriptions, contentTab, subscriptionCounts])
 
   // Toggle subscription
-  const toggleSubscription = useCallback(async (item: any) => {
-    const refId = item?.ref || item?.id
-    if (!refId || !user?.id) return
-    const key = `community_subs:${user.id}:edge-patagonia`
-    setSubscriptions((prev) => {
-      const next = new Map(prev)
-      if (next.has(refId)) {
-        next.delete(refId)
-        setJustAddedTitle(`unsubscribed ${item?.expand?.ref?.title || item?.title || ''}`)
-      } else {
-        next.set(refId, true)
-        setJustAddedTitle(`added ${item?.expand?.ref?.title || item?.title || ''}`)
-      }
-      setLastPillRefId(refId)
-      // Persist
-      const arr = Array.from(next.keys())
-      AsyncStorage.setItem(key, JSON.stringify(arr)).catch(() => {})
-      // Try Supabase (best-effort; ignore failures)
-      ;(async () => {
-        try {
-          const sb: any = (supabase as any).client
-          if (!sb) return
-          if (next.has(refId)) {
-            await sb
-              .from('community_subscriptions')
-              .upsert({ user_id: user.id, ref_id: refId, community: 'edge-patagonia' }, { onConflict: 'user_id,ref_id' })
-          } else {
-            await sb
-              .from('community_subscriptions')
-              .delete()
-              .match({ user_id: user.id, ref_id: refId })
-          }
-        } catch {}
-      })()
-      // Recalculate filter if needed
-      if (contentTab === 'mine') {
-        const mine = communityItems.filter((it) => next.has(it.ref || it.id))
-        setFilteredItems(mine)
-      } else {
-        const rest = communityItems.filter((it) => !next.has(it.ref || it.id))
-        setFilteredItems(rest)
-      }
-      const isAdded = !prev.has(refId)
-      const duration = isAdded ? 2500 : 1500
-      setTimeout(() => setJustAddedTitle(null), duration)
-      // Optimistically adjust counts
-      setSubscriptionCounts((prevCounts) => {
-        const nextCounts = new Map(prevCounts)
-        const current = nextCounts.get(refId) || 0
-        nextCounts.set(refId, Math.max(0, current + (isAdded ? 1 : -1)))
-        return nextCounts
+  const toggleSubscription = useCallback(
+    async (item: any, options?: { forceSubscribe?: boolean }) => {
+      const refId = item?.ref || item?.id
+      if (!refId || !user?.id) return
+      const key = `community_subs:${user.id}:edge-patagonia`
+      const { forceSubscribe } = options ?? {}
+      setSubscriptions((prev) => {
+        const isSubscribed = prev.has(refId)
+        const shouldSubscribe = forceSubscribe ? true : !isSubscribed
+        if (shouldSubscribe === isSubscribed) {
+          return prev
+        }
+
+        const next = new Map(prev)
+        if (shouldSubscribe) {
+          next.set(refId, true)
+        } else {
+          next.delete(refId)
+        }
+
+        const title = item?.expand?.ref?.title || item?.title || ''
+        setJustAddedTitle(`${shouldSubscribe ? 'added' : 'unsubscribed'} ${title}`)
+        setLastPillRefId(refId)
+
+        const arr = Array.from(next.keys())
+        AsyncStorage.setItem(key, JSON.stringify(arr)).catch(() => {})
+
+        ;(async () => {
+          try {
+            const sb: any = (supabase as any).client
+            if (!sb) return
+            if (shouldSubscribe) {
+              await sb
+                .from('community_subscriptions')
+                .upsert({ user_id: user.id, ref_id: refId, community: 'edge-patagonia' }, { onConflict: 'user_id,ref_id' })
+            } else {
+              await sb
+                .from('community_subscriptions')
+                .delete()
+                .match({ user_id: user.id, ref_id: refId })
+            }
+          } catch {}
+        })()
+
+        if (contentTab === 'mine') {
+          const mine = communityItems.filter((it) => next.has(it.ref || it.id))
+          setFilteredItems(mine)
+        } else {
+          const rest = communityItems.filter((it) => !next.has(it.ref || it.id))
+          setFilteredItems(rest)
+        }
+
+        const duration = shouldSubscribe ? 2500 : 1500
+        setTimeout(() => setJustAddedTitle(null), duration)
+
+        setSubscriptionCounts((prevCounts) => {
+          const nextCounts = new Map(prevCounts)
+          const current = nextCounts.get(refId) || 0
+          const delta = shouldSubscribe ? 1 : -1
+          nextCounts.set(refId, Math.max(0, current + delta))
+          return nextCounts
+        })
+
+        return next
       })
-      return next
-    })
-  }, [subscriptions, user?.id, contentTab, communityItems])
+    },
+    [user?.id, contentTab, communityItems]
+  )
 
   // Open referencers sheet
-  const openReferencers = useCallback((item: any) => {
-    const refId = item?.ref || item?.id
-    if (!refId) return
-    try {
-      setCurrentRefId(refId)
-    } catch {}
-    try { referencersBottomSheetRef.current?.expand() } catch {}
-  }, [setCurrentRefId, referencersBottomSheetRef])
+  const openReferencers = useCallback(
+    (item: any, context: ReferencersContext = null) => {
+      const refId = item?.ref || item?.id
+      if (!refId) return
+      try {
+        setCurrentRefId(refId)
+      } catch {}
+      try {
+        setReferencersContext(context)
+      } catch {}
+      try {
+        referencersBottomSheetRef.current?.expand()
+      } catch {}
+    },
+    [setCurrentRefId, referencersBottomSheetRef, setReferencersContext]
+  )
 
   // Filter tabs: Corkboard vs People (Mine removed since it's below)
   const FilterTabs = () => (
@@ -372,13 +393,17 @@ export function CommunityInterestsScreen() {
   }
 
   // People tabs (UI only for parity)
-  const PeopleTabs = () => {
+  const PeopleTabs = ({ showSearchButton }: { showSearchButton: boolean }) => {
     const [activeTab, setActiveTab] = useState<string>('All')
-    const tabs = ['All', 'bio', 'crypto', 'tennis', 'new cities']
+    const tabs = ['All', 'Bio', 'Crypto', 'Longevity', 'Tennis', 'New Cities']
     return (
       <View style={{ paddingTop: 28, marginBottom: 10 }}>
-        <View style={{ position: 'relative', overflow: 'hidden' }}>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+        <View style={{ position: 'relative', overflow: 'hidden', paddingLeft: s.$1 + 6 }}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{ paddingRight: showSearchButton ? PEOPLE_SEARCH_CONTENT_PADDING : 0 }}
+          >
             <View style={{ flexDirection: 'row' }}>
               {tabs.map((label, idx) => {
                 const active = label === activeTab
@@ -394,12 +419,11 @@ export function CommunityInterestsScreen() {
                   </Pressable>
                 )
               })}
-              <View style={{ width: peopleButtonWidth + PEOPLE_TABS_GAP_TO_BUTTON }} />
             </View>
           </ScrollView>
           <Svg
             pointerEvents="none"
-            style={{ position: 'absolute', top: 0, right: 0, height: '100%' }}
+            style={{ position: 'absolute', top: 0, right: (showSearchButton ? PEOPLE_SEARCH_CONTENT_PADDING - 20 : 0) + 5, height: '100%' }}
             width={PEOPLE_TABS_FADE_WIDTH}
             height="100%"
           >
@@ -455,6 +479,17 @@ export function CommunityInterestsScreen() {
             showsVerticalScrollIndicator={false}
             removeClippedSubviews={false}
             CellRendererComponent={VisibleCell as any}
+            ListEmptyComponent={
+              contentTab === 'mine'
+                ? () => (
+                    <View style={{ paddingVertical: s.$2, alignItems: 'center', paddingHorizontal: s.$1 }}>
+                      <Text style={{ color: c.grey2, textAlign: 'center', fontWeight: '600' }}>
+                        You haven't subscribed to any community interests!
+                      </Text>
+                    </View>
+                  )
+                : undefined
+            }
             renderItem={({ item, index }) => {
               const refId = item?.ref || item?.id
               const count = subscriptionCounts.get(refId) || 0
@@ -486,7 +521,10 @@ export function CommunityInterestsScreen() {
                       if (isMineView) {
                         openReferencers(item)
                       } else {
-                        toggleSubscription(item)
+                        openReferencers(item, {
+                          type: 'community',
+                          onAdd: () => toggleSubscription(item, { forceSubscribe: true }),
+                        })
                       }
                     }}
                     style={{
@@ -542,7 +580,7 @@ export function CommunityInterestsScreen() {
           />
         </Animated.View>
 
-        {filterTab !== 'people' && (
+        {filterTab !== 'people' && contentTab !== 'mine' && (
           <Animated.View
             style={[frontStyle, { position: 'absolute', top: 12, right: -5, zIndex: 6 }]}
           >
@@ -553,19 +591,20 @@ export function CommunityInterestsScreen() {
         {/* BACK: People/Directory placeholder */}
         <Animated.View style={[{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }, backStyle]} pointerEvents={filterTab === 'people' ? 'auto' as any : 'none' as any}>
           <View style={{ flex: 1 }}>
-            <DirectoryScreen showHeader={false} hideInterestChips={true} aboveListComponent={<PeopleTabs />} />
+            <DirectoryScreen
+              showHeader={false}
+              hideInterestChips={true}
+              aboveListComponent={<PeopleTabs showSearchButton={filterTab === 'people'} />}
+            />
           </View>
           {filterTab === 'people' && (
             <View
-              style={{ position: 'absolute', top: PEOPLE_BUTTON_TOP, right: PEOPLE_BUTTON_RIGHT, zIndex: 10 }}
-              onLayout={(e) => {
-                const width = e.nativeEvent.layout.width
-                if (width && Math.abs(width - peopleButtonWidth) > 1) {
-                  setPeopleButtonWidth(width)
-                }
-              }}
+              pointerEvents="box-none"
+              style={{ position: 'absolute', top: PEOPLE_SEARCH_BUTTON_TOP, right: PEOPLE_SEARCH_BUTTON_RIGHT_OFFSET, zIndex: 12 }}
             >
-              <OvalJaggedAddButton label="Search" textOffsetX={-1} onPress={() => {}} />
+              <View pointerEvents="auto">
+                <OvalJaggedAddButton label="Search" textOffsetX={-1} onPress={() => {}} />
+              </View>
             </View>
           )}
         </Animated.View>
@@ -642,7 +681,10 @@ export function CommunityInterestsScreen() {
             onPress={() => {
               const isAdded = justAddedTitle.startsWith('added ')
               if (isAdded && lastPillRefId) {
-                try { setCurrentRefId(lastPillRefId) } catch {}
+                try {
+                  setCurrentRefId(lastPillRefId)
+                  setReferencersContext(null)
+                } catch {}
                 try { referencersBottomSheetRef.current?.expand() } catch {}
               }
             }}

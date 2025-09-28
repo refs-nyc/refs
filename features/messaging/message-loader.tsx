@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { InteractionManager } from 'react-native'
 import { pocketbase } from '@/features/pocketbase'
 import { useAppStore } from '@/features/stores'
 import { PAGE_SIZE } from '@/features/stores/messages'
@@ -77,11 +78,24 @@ export function MessagesInit() {
       }
     }
 
-    // Use a longer delay to prioritize UI responsiveness
-    setTimeout(() => {
-      getConversations()
-    }, 1000) // Increased from 0ms to 1000ms to prioritize UI responsiveness
-  }, [user])
+    let cancelled = false
+    let timeout: ReturnType<typeof setTimeout> | null = null
+
+    const handle = InteractionManager.runAfterInteractions(() => {
+      if (cancelled) return
+      timeout = setTimeout(() => {
+        if (!cancelled) {
+          void getConversations()
+        }
+      }, 1000)
+    })
+
+    return () => {
+      cancelled = true
+      if (timeout) clearTimeout(timeout)
+      handle.cancel()
+    }
+  }, [user?.id])
 
   //load reactions - make non-blocking and more lazy
   useEffect(() => {
@@ -100,11 +114,24 @@ export function MessagesInit() {
       }
     }
 
-    // Increased delay to prioritize UI responsiveness
-    setTimeout(() => {
-      getReactions()
-    }, 1500) // Increased from 10ms to 1500ms to prioritize UI responsiveness
-  }, [user])
+    let cancelled = false
+    let timeout: ReturnType<typeof setTimeout> | null = null
+
+    const handle = InteractionManager.runAfterInteractions(() => {
+      if (cancelled) return
+      timeout = setTimeout(() => {
+        if (!cancelled) {
+          void getReactions()
+        }
+      }, 1500)
+    })
+
+    return () => {
+      cancelled = true
+      if (timeout) clearTimeout(timeout)
+      handle.cancel()
+    }
+  }, [user?.id])
 
   // load saves - make non-blocking and more lazy
   useEffect(() => {
@@ -123,17 +150,30 @@ export function MessagesInit() {
       }
     }
 
-    // Increased delay to prioritize UI responsiveness
-    setTimeout(() => {
-      getSaves()
-    }, 2000) // Increased from 20ms to 2000ms to prioritize UI responsiveness
-  }, [user])
+    let cancelled = false
+    let timeout: ReturnType<typeof setTimeout> | null = null
+
+    const handle = InteractionManager.runAfterInteractions(() => {
+      if (cancelled) return
+      timeout = setTimeout(() => {
+        if (!cancelled) {
+          void getSaves()
+        }
+      }, 2000)
+    })
+
+    return () => {
+      cancelled = true
+      if (timeout) clearTimeout(timeout)
+      handle.cancel()
+    }
+  }, [user?.id])
 
     // load memberships - make non-blocking and more lazy
   useEffect(() => {
     if (!user) return
 
-        const getMemberships = async () => {
+    const getMemberships = async () => {
       try {
         const memberships = await pocketbase
           .collection('memberships')
@@ -148,11 +188,24 @@ export function MessagesInit() {
       }
     }
 
-    // Increased delay to prioritize UI responsiveness
-    setTimeout(() => {
-      getMemberships()
-    }, 2500) // Increased from 30ms to 2500ms to prioritize UI responsiveness
-  }, [user])
+    let cancelled = false
+    let timeout: ReturnType<typeof setTimeout> | null = null
+
+    const handle = InteractionManager.runAfterInteractions(() => {
+      if (cancelled) return
+      timeout = setTimeout(() => {
+        if (!cancelled) {
+          void getMemberships()
+        }
+      }, 2500)
+    })
+
+    return () => {
+      cancelled = true
+      if (timeout) clearTimeout(timeout)
+      handle.cancel()
+    }
+  }, [user?.id])
 
   // Stop background loading when all operations are complete
   useEffect(() => {

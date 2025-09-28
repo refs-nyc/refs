@@ -38,7 +38,6 @@ import { RegisterPushNotifications } from '@/ui/notifications/RegisterPushNotifi
 import { MessagesInit } from '@/features/messaging/message-loader'
 import { DirectMessageComposer } from '@/features/messaging/DirectMessageComposer'
 import { useAppStore } from '@/features/stores'
-import { StartupLoadingIndicator } from '@/ui/atoms/StartupLoadingIndicator'
 import { DirectoryKeepAlive } from '@/ui/navigation/DirectoryKeepAlive'
 
 import { LogBox } from 'react-native'
@@ -149,7 +148,6 @@ function RootLayoutNav() {
       <Navigation savesBottomSheetRef={savesBottomSheetRef} />
       {/* Keep directory mounted to preserve images and scroll state across navigations */}
       <DirectoryKeepAlive />
-      <StartupLoadingIndicator />
 
       <Stack
         screenOptions={{
@@ -186,7 +184,7 @@ function RootLayoutNav() {
           options={{
             title: 'User',
             // presentation: 'modal',
-            animation: 'slide_from_left',
+            animation: 'none',
             gestureEnabled: true,
             gestureDirection: 'horizontal',
             headerShown: false,

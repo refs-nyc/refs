@@ -9,6 +9,7 @@ export const createUISlice: StateCreator<StoreSlices, [], [], UISlice> = (set) =
   addingItem: null,
   referencersBottomSheetRef: React.createRef(),
   currentRefId: '',
+  referencersContext: null,
   addRefSheetRef: React.createRef(),
   addingRefId: '',
   newRefSheetRef: React.createRef(),
@@ -29,6 +30,11 @@ export const createUISlice: StateCreator<StoreSlices, [], [], UISlice> = (set) =
   setAddingRefId: (id: string) => {
     set(() => ({
       addingRefId: id,
+    }))
+  },
+  setReferencersContext: (ctx) => {
+    set(() => ({
+      referencersContext: ctx,
     }))
   },
   setAddingToList: (newState: string) => {
@@ -141,7 +147,16 @@ export const createUISlice: StateCreator<StoreSlices, [], [], UISlice> = (set) =
   setJustOnboarded: (v: boolean) => set(() => ({ justOnboarded: v })),
   // Home pager (MyProfile <-> Directories)
   homePagerIndex: 0,
-  setHomePagerIndex: (i: number) => set(() => ({ homePagerIndex: i })),
+  pendingHomePagerIndex: null,
+  queueHomePagerIndex: (i: number) => {
+    set(() => ({ pendingHomePagerIndex: i }))
+  },
+  clearPendingHomePagerIndex: () => {
+    set(() => ({ pendingHomePagerIndex: null }))
+  },
+  setHomePagerIndex: (i: number) => {
+    set(() => ({ homePagerIndex: i, pendingHomePagerIndex: null }))
+  },
   returnToDirectories: false,
   setReturnToDirectories: (v: boolean) => set(() => ({ returnToDirectories: v })),
   dmComposerTarget: null,

@@ -3,8 +3,9 @@ import { View, Text, ScrollView, Pressable } from 'react-native'
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useAppStore } from '@/features/stores'
-import SwipeableUser from '@/ui/atoms/SwipeableUser'
+import UserListItem from '@/ui/atoms/UserListItem'
 import { s, c } from '@/features/style'
+import { Ionicons } from '@expo/vector-icons'
 
 export function WantToMeetScreen() {
   const { saves, removeSave, user, openDMComposer } = useAppStore()
@@ -58,23 +59,58 @@ export function WantToMeetScreen() {
       {/* Saved list */}
       <View style={{ flex: 1, paddingHorizontal: s.$1 + 6 }}>
         <ScrollView contentContainerStyle={{ paddingTop: s.$075, paddingBottom: s.$10 }}>
-          {savedUsers.map((u: any, idx: number) => (
-            <View key={u.id} style={{ marginBottom: idx === savedUsers.length - 1 ? 0 : s.$075 }}>
-              <SwipeableUser
-                onActionPress={async () => {
-                  try {
-                    const match = saves.find((s) => s.user === u.id || s.expand?.user?.id === u.id)
-                    if (!match?.id) return
-                    await removeSave(match.id)
-                  } catch (e) {}
-                }}
-                user={u}
-                backgroundColor={selected[u.id] ? c.olive : c.surface2}
-                whiteText={!!selected[u.id]}
-                onPress={() => setSelected((prev) => ({ ...prev, [u.id]: !prev[u.id] }))}
-              />
-            </View>
-          ))}
+          {savedUsers.map((u: any, idx: number) => {
+            const isSelected = !!selected[u.id]
+            const matchingSave = saves.find((s) => s.user === u.id || s.expand?.user?.id === u.id)
+
+            return (
+              <View key={u.id} style={{ marginBottom: idx === savedUsers.length - 1 ? 0 : s.$075, position: 'relative' }}>
+                <UserListItem
+                  user={u}
+                  onPress={() => setSelected((prev) => ({ ...prev, [u.id]: !prev[u.id] }))}
+                  small={true}
+                  whiteText={isSelected}
+                  style={{
+                    backgroundColor: isSelected ? c.olive : c.surface2,
+                    paddingRight: isSelected ? (s.$3 as number) : undefined,
+                  }}
+                />
+                {isSelected && matchingSave?.id && (
+                  <Pressable
+                    onPress={async (event) => {
+                      event.stopPropagation()
+                      try {
+                        await removeSave(matchingSave.id)
+                      } catch (e) {}
+                    }}
+                    style={{
+                      position: 'absolute',
+                      right: -4,
+                      top: -8,
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                      padding: 4,
+                    }}
+                  >
+                    <View
+                      style={{
+                        width: s.$2 as number,
+                        height: s.$2 as number,
+                        borderRadius: (s.$2 as number) / 2,
+                        backgroundColor: c.surface,
+                        borderWidth: 1,
+                        borderColor: c.surface,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      <Ionicons name="close" size={s.$1 as number} color={c.grey1} />
+                    </View>
+                  </Pressable>
+                )}
+              </View>
+            )
+          })}
           {savedUsers.length === 0 && (
             <View style={{ alignItems: 'center', paddingVertical: s.$3 }}>
               <Text style={{ color: c.muted }}>No saved users yet.</Text>

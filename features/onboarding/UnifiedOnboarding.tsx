@@ -27,7 +27,7 @@ type StepId =
   | 'notifications'
 
 export function UnifiedOnboarding() {
-  const { updateStagedUser, register, updateUser, user, getUserByEmail, setJustOnboarded, setSuppressHomeRedirect, setHomePagerIndex } = useAppStore() as any
+  const { updateStagedUser, register, updateUser, user, getUserByEmail, setJustOnboarded, setSuppressHomeRedirect, queueHomePagerIndex } = useAppStore() as any
   const [step, setStep] = useState<StepId>('firstName')
   const form = useForm({ mode: 'onSubmit', shouldUnregister: false })
   const { control, handleSubmit, formState, getValues, trigger, setValue, watch } = form
@@ -358,7 +358,7 @@ export function UnifiedOnboarding() {
               // Single-screen onboarding: go straight to grid
               animateTo('next')
               if (user?.userName) {
-                setHomePagerIndex(0) // Ensure we land on grid view
+                queueHomePagerIndex(0) // Ensure we land on grid view
                 router.replace(`/user/${user.userName}`)
               } else {
                 router.replace('/')
@@ -498,4 +498,3 @@ export function UnifiedOnboarding() {
     </View>
   )
 }
-

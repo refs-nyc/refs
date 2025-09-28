@@ -1,4 +1,4 @@
-import { Link, router, usePathname } from 'expo-router'
+import { router, usePathname } from 'expo-router'
 import { Text, View, Pressable, Animated } from 'react-native'
 import { Avatar } from '../atoms/Avatar'
 import { c, s } from '@/features/style'
@@ -10,6 +10,7 @@ import Svg, { Path } from 'react-native-svg'
 import MessageIcon from '@/assets/icons/message.svg'
 import { Ionicons } from '@expo/vector-icons'
 import BottomSheet from '@gorhom/bottom-sheet'
+import { useNavigation } from '@react-navigation/native'
 
 export const Navigation = ({
   savesBottomSheetRef,
@@ -35,12 +36,13 @@ export const Navigation = ({
     showLogoutButton,
     returnToDirectories,
     setReturnToDirectories,
-    setHomePagerIndex,
+    queueHomePagerIndex,
   } = useAppStore()
 
   const isHomePage = pathname === '/' || pathname === '/index' || pathname === `/user/${user?.userName}`
 
   const scaleAnim = useRef(new Animated.Value(1)).current
+  const navigation = useNavigation<any>()
 
   // Back button handler with robust fallbacks for directories and no-stack cases
   const handleBackPress = () => {
@@ -49,7 +51,7 @@ export const Navigation = ({
     // If returning from Directories -> user profile, jump back into Directories view
     if (returnToDirectories) {
       setReturnToDirectories?.(false)
-      setHomePagerIndex?.(1)
+      queueHomePagerIndex?.(1)
       if (user?.userName) {
         router.replace(`/user/${user.userName}`)
         return
@@ -66,23 +68,19 @@ export const Navigation = ({
       }
     }
     
-   console.log('🔍 No cached results, using default back behavior')
-   // Prefer native back if possible; otherwise, fallback to profile route and ensure pager index
-   try {
-     // @ts-ignore router.canGoBack exists in expo-router v3
-     const canGoBack = typeof (router as any).canGoBack === 'function' ? (router as any).canGoBack() : false
-     if (canGoBack) {
-       router.back()
-       return
-     }
-   } catch {}
- 
-   if (user?.userName) {
-    setHomePagerIndex?.(1)
-    setReturnToDirectories?.(false)
-    router.replace(`/user/${user.userName}`)
-    return
-   }
+    console.log('🔍 No cached results, using default back behavior')
+    // Prefer native/stack back if possible; otherwise, fallback to profile route
+    if (navigation?.canGoBack?.()) {
+      navigation.goBack()
+      return
+    }
+
+    if (user?.userName) {
+      queueHomePagerIndex?.(0)
+      setReturnToDirectories?.(false)
+      router.replace(`/user/${user.userName}`)
+      return
+    }
   }
 
   const animateBadge = () => {
@@ -213,20 +211,10 @@ export const Navigation = ({
           </Pressable>
         </View>
         <View style={{ display: 'flex', flexDirection: 'row', paddingRight: 6 }}>
-          <Pressable onPress={() => router.push('/messages')}>
-            <View style={{ top: -3 }}>
+          <Pressable onPress={() => { if (!pathname.startsWith('/messages')) router.push('/messages') }}>
+            <View style={{ top: -3, position: 'relative' }}>
               <MessageIcon width={36} />
-            </View>
-            <View
-              style={{
-                position: 'absolute',
-                height: '85%',
-                width: '100%',
-                justifyContent: 'center',
-                alignItems: 'center',
-              }}
-            >
-              <View style={{ bottom: 2, right: -10, zIndex: 1 }}>
+              <View style={{ position: 'absolute', top: -6, right: -6, zIndex: 1 }}>
                 {newMessages > 0 && <Badge count={newMessages} color="#7e8f78" />}
               </View>
             </View>

@@ -1,6 +1,6 @@
 import { Profile } from '@/ui'
 import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import { Dimensions, View, StyleSheet } from 'react-native'
+import { Dimensions, View } from 'react-native'
 import Svg, { Path, G } from 'react-native-svg'
 import { useAppStore } from '@/features/stores'
 import { CommunityInterestsScreen } from '@/features/communities/interests-screen'
@@ -14,64 +14,86 @@ export function UserProfileScreen({ userName }: { userName: string }) {
     return null
   }
 
-  const { homePagerIndex, setHomePagerIndex, user, returnToDirectories, setReturnToDirectories, moduleBackdropAnimatedIndex, detailsBackdropAnimatedIndex, otherProfileBackdropAnimatedIndex, removeRefSheetBackdropAnimatedIndex, myProfileReady } = useAppStore()
+  const {
+    homePagerIndex,
+    setHomePagerIndex,
+    pendingHomePagerIndex,
+    clearPendingHomePagerIndex,
+    user,
+    returnToDirectories,
+    setReturnToDirectories,
+    moduleBackdropAnimatedIndex,
+    detailsBackdropAnimatedIndex,
+    otherProfileBackdropAnimatedIndex,
+    removeRefSheetBackdropAnimatedIndex,
+  } = useAppStore()
   const { width } = Dimensions.get('window')
 
+  const initialIndex = pendingHomePagerIndex ?? homePagerIndex
+
   // Pager gesture setup (hooks must always be called in the same order)
-  const translateX = useSharedValue(0)
+  const translateX = useSharedValue(-initialIndex * width)
   const isDragging = useSharedValue(false)
   const hasSyncedInitialIndex = useRef(false)
-  const initialPagerIndex = useRef(homePagerIndex)
+  const initialPagerIndex = useRef(initialIndex)
   const hasInitialized = useRef(false)
-  const ownProfile = user?.userName === userName
-  const [secondaryTabsReady, setSecondaryTabsReady] = useState(() => (!ownProfile ? true : false))
+  const hasForcedDefaultIndex = useRef(false)
+  if (!user) {
+    return null
+  }
 
+  const ownProfile = user.userName === userName
   useEffect(() => {
     hasSyncedInitialIndex.current = false
     hasInitialized.current = false
-    if (ownProfile) {
-      setSecondaryTabsReady(false)
-    } else {
-      setSecondaryTabsReady(true)
-    }
-  }, [userName, ownProfile])
+    hasForcedDefaultIndex.current = false
+  }, [userName])
 
   useEffect(() => {
-    if (!ownProfile || secondaryTabsReady) return
-    if (myProfileReady) {
-      setSecondaryTabsReady(true)
-      return
+    if (!ownProfile) return
+    if (returnToDirectories) return
+    if (hasForcedDefaultIndex.current) return
+
+    // Ensure we start on the grid when landing on our profile by default
+    initialPagerIndex.current = 0
+    translateX.value = 0
+    if (homePagerIndex !== 0) {
+      setHomePagerIndex(0)
     }
-    const timer = setTimeout(() => {
-      setSecondaryTabsReady(true)
-    }, 600)
-    return () => clearTimeout(timer)
-  }, [ownProfile, secondaryTabsReady, myProfileReady])
+    hasForcedDefaultIndex.current = true
+  }, [ownProfile, returnToDirectories, homePagerIndex, setHomePagerIndex, translateX])
+
+  useEffect(() => {
+    if (pendingHomePagerIndex == null) return
+
+    const target = pendingHomePagerIndex
+    if (target !== homePagerIndex) {
+      initialPagerIndex.current = target
+      translateX.value = -target * width
+      setHomePagerIndex(target)
+    }
+    clearPendingHomePagerIndex()
+  }, [pendingHomePagerIndex, homePagerIndex, setHomePagerIndex, clearPendingHomePagerIndex, width, translateX])
 
   useLayoutEffect(() => {
-    if (!userName) return
-    const isOwnProfile = user?.userName === userName
+    const effectiveIndex = pendingHomePagerIndex ?? homePagerIndex
 
     if (!hasSyncedInitialIndex.current) {
       hasSyncedInitialIndex.current = true
-      if (isOwnProfile) {
-        initialPagerIndex.current = 0
-        translateX.value = 0
-        if (homePagerIndex !== 0) {
-          setHomePagerIndex(0)
-        }
-      } else {
-        initialPagerIndex.current = homePagerIndex
-        translateX.value = -homePagerIndex * width
+      initialPagerIndex.current = effectiveIndex
+      translateX.value = -effectiveIndex * width
+      if (pendingHomePagerIndex != null && pendingHomePagerIndex !== homePagerIndex) {
+        setHomePagerIndex(pendingHomePagerIndex)
+        clearPendingHomePagerIndex()
       }
       return
     }
 
-    if (!isOwnProfile) {
-      initialPagerIndex.current = homePagerIndex
-      translateX.value = -homePagerIndex * width
+    if (!ownProfile) {
+      initialPagerIndex.current = effectiveIndex
+      translateX.value = -effectiveIndex * width
     }
-  }, [user?.userName, userName, homePagerIndex, width, translateX])
+  }, [ownProfile, homePagerIndex, pendingHomePagerIndex, setHomePagerIndex, clearPendingHomePagerIndex, width, translateX])
 
   // Update translateX when homePagerIndex changes
   useEffect(() => {
@@ -225,11 +247,11 @@ export function UserProfileScreen({ userName }: { userName: string }) {
 
   // If we navigated back from a directory-tapped profile, force pager to Directories
   useEffect(() => {
-    if (returnToDirectories) {
-      setHomePagerIndex(1)
+    if (!returnToDirectories) return
+    if (homePagerIndex === 1) {
       setReturnToDirectories(false)
     }
-  }, [returnToDirectories, setHomePagerIndex, setReturnToDirectories, homePagerIndex, userName])
+  }, [returnToDirectories, homePagerIndex, setReturnToDirectories])
 
   // Define Dots component before conditional returns to prevent hook ordering issues
   const Dots = useMemo(() => {
@@ -311,11 +333,9 @@ export function UserProfileScreen({ userName }: { userName: string }) {
   }, [homePagerIndex])
 
   // Other users render normally; own profile renders pager (both pages stay mounted)
-  if (user?.userName !== userName) {
+  if (!ownProfile) {
     return <Profile userName={userName} />
   }
-
-  const secondaryReady = !ownProfile || secondaryTabsReady
 
   return (
     <View style={{ flex: 1 }}>
@@ -325,17 +345,14 @@ export function UserProfileScreen({ userName }: { userName: string }) {
             <Profile userName={userName} />
           </View>
           <View style={{ width, overflow: 'hidden', backgroundColor: c.surface }}>
-            {secondaryReady ? <CommunityInterestsScreen /> : null}
+            <CommunityInterestsScreen />
           </View>
           <View style={{ width, overflow: 'hidden', backgroundColor: c.surface }}>
-            {secondaryReady ? <WantToMeetScreen /> : null}
+            <WantToMeetScreen />
           </View>
         </Animated.View>
       </GestureDetector>
       {Dots}
-      {ownProfile && !myProfileReady && (
-        <View pointerEvents="none" style={[StyleSheet.absoluteFillObject, { backgroundColor: c.surface }]} />
-      )}
     </View>
   )
 }

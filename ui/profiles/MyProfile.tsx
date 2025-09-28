@@ -6,12 +6,12 @@ import { s, c } from '@/features/style'
 import BottomSheet, { BottomSheetBackdrop, BottomSheetView } from '@gorhom/bottom-sheet'
 import { useShareIntentContext } from 'expo-share-intent'
 import { useEffect, useRef, useState, useMemo, useCallback } from 'react'
-import { ScrollView, View, Text, Pressable, Keyboard } from 'react-native'
+import { ScrollView, View, Text, Pressable, Keyboard, InteractionManager } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import * as ImagePicker from 'expo-image-picker'
 import FloatingJaggedButton from '../buttons/FloatingJaggedButton'
+import { DEFAULT_TILE_SIZE } from '../grid/GridTile'
 import { Grid } from '../grid/Grid'
-import { PlaceholderGrid } from '../grid/PlaceholderGrid'
 import { Button } from '../buttons/Button'
 
 import { Heading } from '../typo/Heading'
@@ -23,25 +23,32 @@ import SearchResultsSheet, { SearchResultsSheetRef } from './sheets/SearchResult
 import { RefForm } from '../actions/RefForm'
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated'
 import { Collections } from '@/features/pocketbase/pocketbase-types'
-import { pocketbase } from '@/features/pocketbase'
 import { simpleCache } from '@/features/cache/simpleCache'
+
+const profileMemoryCache = new Map<string, {
+  profile: Profile
+  gridItems: ExpandedItem[]
+  backlogItems: ExpandedItem[]
+  timestamp: number
+}>()
 
 export const MyProfile = ({ userName }: { userName: string }) => {
   const { hasShareIntent } = useShareIntentContext()
   const insets = useSafeAreaInsets()
 
-  const [profile, setProfile] = useState<Profile>()
-  const [gridItems, setGridItems] = useState<ExpandedItem[]>([])
-  const [backlogItems, setBacklogItems] = useState<ExpandedItem[]>([])
-  const [loading, setLoading] = useState(true)
-  const [focusReady, setFocusReady] = useState(false)
+  const cachedEntry = profileMemoryCache.get(userName)
+
+  const [profile, setProfile] = useState<Profile | undefined>(cachedEntry?.profile)
+  const [gridItems, setGridItems] = useState<ExpandedItem[]>(cachedEntry?.gridItems ?? [])
+  const [backlogItems, setBacklogItems] = useState<ExpandedItem[]>(cachedEntry?.backlogItems ?? [])
+  const [loading, setLoading] = useState(!cachedEntry)
+  const [focusReady, setFocusReady] = useState(Boolean(cachedEntry))
   const [removingItem, setRemovingItem] = useState<ExpandedItem | null>(null)
 
   // Get optimistic items from store
-  const { optimisticItems } = useAppStore()
+  const { optimisticItems, user } = useAppStore()
 
   const {
-    user,
     getUserByUserName,
     moveToBacklog,
     removeItem,
@@ -77,7 +84,10 @@ export const MyProfile = ({ userName }: { userName: string }) => {
     registerBackdropPress,
     unregisterBackdropPress,
   } = useAppStore()
-  
+  const ownProfile = user?.userName === userName
+  const effectiveProfile = profile ?? (ownProfile ? (user ?? undefined) : undefined)
+  const hasProfile = Boolean(effectiveProfile)
+
   // Combine grid items with optimistic items for display
   const displayGridItems = useMemo(() => {
     // Early return if no optimistic items
@@ -115,8 +125,6 @@ export const MyProfile = ({ userName }: { userName: string }) => {
       !animatedItemsRef.current.has(item.id)
     )
     
-    console.log('🔍 NEW OPTIMISTIC ITEMS FOUND:', newOptimisticItems.length, 'IDs:', newOptimisticItems.map(item => item.id))
-    
     if (newOptimisticItems.length > 0) {
       const newItemId = newOptimisticItems[0].id
       
@@ -125,12 +133,10 @@ export const MyProfile = ({ userName }: { userName: string }) => {
       
       // Set the first new optimistic item as the newly added item
       setNewlyAddedItemId(newItemId)
-      console.log('🎯 SETTING NEWLY ADDED ITEM ID:', newItemId)
       
       // Clear the animation after 1.5 seconds but DON'T remove optimistic item yet
       const timer = setTimeout(() => {
         setNewlyAddedItemId(null)
-        console.log('🎯 CLEARING NEWLY ADDED ITEM ID')
         
         // Don't remove optimistic item here - let it stay until real item is confirmed
         // removeOptimisticItem(newItemId)
@@ -155,7 +161,6 @@ export const MyProfile = ({ userName }: { userName: string }) => {
     
     // Remove confirmed optimistic items
     confirmedOptimisticItems.forEach(item => {
-      console.log('✅ REMOVING CONFIRMED OPTIMISTIC ITEM:', item.id)
       removeOptimisticItem(item.id)
     })
   }, [gridItems, optimisticItems.size])
@@ -166,7 +171,6 @@ export const MyProfile = ({ userName }: { userName: string }) => {
       // When component unmounts, clear any remaining optimistic items
       const optimisticItemsArray = Array.from(optimisticItems.values())
       optimisticItemsArray.forEach(item => {
-        console.log('🧹 CLEANUP: Removing optimistic item on unmount:', item.id)
         removeOptimisticItem(item.id)
       })
       
@@ -180,8 +184,9 @@ export const MyProfile = ({ userName }: { userName: string }) => {
   const [showPrompt, setShowPrompt] = useState(false)
   const [startupAnimationDone, setStartupAnimationDone] = useState(false)
   const [newlyAddedItemId, setNewlyAddedItemId] = useState<string | null>(null)
-
-  const hasProfile = Boolean(profile)
+  const GRID_ROWS = 4
+  const GRID_ROW_GAP = (s.$075 as number) + 5
+  const GRID_HEIGHT = GRID_ROWS * DEFAULT_TILE_SIZE + (GRID_ROWS - 1) * GRID_ROW_GAP
 
   const headerContent = hasProfile ? (
     searchMode || isSearchResultsSheetOpen ? (
@@ -234,24 +239,13 @@ export const MyProfile = ({ userName }: { userName: string }) => {
       </Animated.Text>
     )
   ) : (
-    <Text
-      style={{
-        color: c.prompt,
-        fontSize: s.$09,
-        fontFamily: 'System',
-        fontWeight: '400',
-        textAlign: 'center',
-        lineHeight: s.$1half,
-      }}
-    >
-      Loading your grid…
-    </Text>
+    null
   )
 
   const gridContent = hasProfile ? (
     <Grid
       editingRights={true}
-      screenFocused={focusReady && !loading}
+      screenFocused={focusReady}
       shouldAnimateStartup={justOnboarded}
       onStartupAnimationComplete={() => setStartupAnimationDone(true)}
       onPressItem={(item) => {
@@ -292,9 +286,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
       setSelectedRefs={setSelectedRefs}
       newlyAddedItemId={newlyAddedItemId}
     />
-  ) : (
-    <PlaceholderGrid columns={3} rows={4} rowGap={(s.$075 as number) + 5} />
-  )
+  ) : null
 
   const searchDismissOverlays = hasProfile && searchMode ? (
     <>
@@ -406,9 +398,6 @@ export const MyProfile = ({ userName }: { userName: string }) => {
   const photoRefFormRef = useRef<BottomSheet>(null)
 
   // Simple cache to avoid refetching the same data
-  const lastFetchedUserName = useRef<string>('')
-  const lastFetchedTrigger = useRef<number>(0)
-
   // Memoized grid items map for O(1) lookup
   const gridItemsMap = useMemo(() => new Map(gridItems.map((item) => [item.id, item])), [gridItems])
 
@@ -445,84 +434,100 @@ export const MyProfile = ({ userName }: { userName: string }) => {
 
 
   const refreshGrid = async (userName: string) => {
-    setLoading(true)
-    
-    try {
-      // Start with cache check immediately (fastest path)
-      const user = await pocketbase.collection('users').getFirstListItem(`userName = "${userName}"`)
-      const userId = user.id
-      
-      // Check cache first (read-only, safe operation)
+    const hadMemory = profileMemoryCache.has(userName)
+    if (!hadMemory) {
+      setLoading(true)
+    }
+
+    const storeState = useAppStore.getState()
+    const storeUser = storeState.user
+    const cacheUserId = storeUser?.userName === userName ? storeUser.id : undefined
+
+    const memoryCached = profileMemoryCache.get(userName)
+    if (memoryCached) {
+      setProfile(memoryCached.profile)
+      setGridItems(memoryCached.gridItems)
+      setBacklogItems(memoryCached.backlogItems)
+      setLoading(false)
+      storeState.setGridItemCount(memoryCached.gridItems.length)
+    }
+
+    const hydrateFromCache = async (userId?: string) => {
+      if (!userId) return false
+
       const [cachedProfile, cachedGridItems, cachedBacklogItems] = await Promise.all([
         simpleCache.get('profile', userId),
         simpleCache.get('grid_items', userId),
-        simpleCache.get('backlog_items', userId)
+        simpleCache.get('backlog_items', userId),
       ])
-      
-      // Use cached data if available (fastest path)
-      if (cachedProfile && cachedGridItems && cachedBacklogItems) {
-        console.log('📖 Using cached profile data')
-        setProfile(cachedProfile as Profile)
-        setGridItems(cachedGridItems as ExpandedItem[])
-        setBacklogItems(cachedBacklogItems as ExpandedItem[])
+
+      if (!cachedProfile || !cachedGridItems || !cachedBacklogItems) {
+        return false
+      }
+
+      setProfile(cachedProfile as Profile)
+      setGridItems(cachedGridItems as ExpandedItem[])
+      setBacklogItems(cachedBacklogItems as ExpandedItem[])
+      setLoading(false)
+      storeState.setGridItemCount((cachedGridItems as ExpandedItem[]).length)
+      profileMemoryCache.set(userName, {
+        profile: cachedProfile as Profile,
+        gridItems: cachedGridItems as ExpandedItem[],
+        backlogItems: cachedBacklogItems as ExpandedItem[],
+        timestamp: Date.now(),
+      })
+      return true
+    }
+
+    const cacheHydrated = await hydrateFromCache(cacheUserId)
+
+
+    const fetchFreshData = async () => {
+      try {
+        const profileRecord = await getUserByUserName(userName)
+        const [gridItemsRecord, backlogItemsRecord] = await Promise.all([
+          getProfileItems(userName),
+          getBacklogItems(userName),
+        ])
+
+        setProfile(profileRecord)
+        setGridItems(gridItemsRecord)
+        setBacklogItems(backlogItemsRecord as ExpandedItem[])
         setLoading(false)
-        
-        // Update cached grid count
-        useAppStore.getState().setGridItemCount((cachedGridItems as ExpandedItem[]).length)
-        
-        // Only run autoMoveBacklogToGrid for own profile
+        useAppStore.getState().setGridItemCount(gridItemsRecord.length)
+
+        profileMemoryCache.set(userName, {
+          profile: profileRecord,
+          gridItems: gridItemsRecord,
+          backlogItems: backlogItemsRecord as ExpandedItem[],
+          timestamp: Date.now(),
+        })
+
+        const userId = profileRecord.id
+        const cacheUpdates = [
+          simpleCache.set('profile', profileRecord, userId),
+          simpleCache.set('grid_items', gridItemsRecord, userId),
+          simpleCache.set('backlog_items', backlogItemsRecord, userId),
+        ]
+
+        void Promise.all(cacheUpdates).catch((error) => {
+          console.warn('Cache write failed:', error)
+        })
+
         if (userName === useAppStore.getState().user?.userName) {
-          Promise.all([
-            autoMoveBacklogToGrid(userName)
-          ]).catch(error => {
+          void autoMoveBacklogToGrid(userName, gridItemsRecord, backlogItemsRecord as ExpandedItem[]).catch((error) => {
             console.warn('Background operations failed:', error)
           })
         }
-        
-        return
+      } catch (error) {
+        console.error('Failed to refresh grid:', error)
+        if (!cacheHydrated) {
+          setLoading(false)
+        }
       }
-      
-      // Cache miss - fetch fresh data in parallel
-      const [profile, gridItems, backlogItems] = await Promise.all([
-        getUserByUserName(userName),
-        getProfileItems(userName),
-        getBacklogItems(userName),
-      ])
-      
-      // Update state immediately
-      setProfile(profile)
-      setGridItems(gridItems)
-      setBacklogItems(backlogItems as ExpandedItem[])
-      setLoading(false)
-      
-      // Update cached grid count
-      useAppStore.getState().setGridItemCount(gridItems.length)
-      
-      // Only run autoMoveBacklogToGrid for own profile
-      if (userName === useAppStore.getState().user?.userName) {
-        Promise.all([
-          autoMoveBacklogToGrid(userName),
-          simpleCache.set('profile', profile, userId),
-          simpleCache.set('grid_items', gridItems, userId),
-          simpleCache.set('backlog_items', backlogItems, userId)
-        ]).catch(error => {
-          console.warn('Background operations failed:', error)
-        })
-      } else {
-        // For other profiles, just cache
-        Promise.all([
-          simpleCache.set('profile', profile, userId),
-          simpleCache.set('grid_items', gridItems, userId),
-          simpleCache.set('backlog_items', backlogItems, userId)
-        ]).catch(error => {
-          console.warn('Background operations failed:', error)
-        })
-      }
-      
-    } catch (error) {
-      console.error('Failed to refresh grid:', error)
-      setLoading(false)
     }
+
+    void fetchFreshData()
   }
 
   const handleMoveToBacklog = async () => {
@@ -601,35 +606,48 @@ export const MyProfile = ({ userName }: { userName: string }) => {
   }, [hasShareIntent])
 
   useEffect(() => {
+    if (!effectiveProfile?.userName) return
+    profileMemoryCache.set(effectiveProfile.userName, {
+      profile: effectiveProfile,
+      gridItems,
+      backlogItems,
+      timestamp: Date.now(),
+    })
+  }, [effectiveProfile?.userName, gridItems, backlogItems])
+
+  useEffect(() => {
+    let cancelled = false
+    // Make gesture controls available immediately
+    setFocusReady(true)
+
     const init = async () => {
       try {
-        // Set focus ready immediately for faster perceived loading
-        setFocusReady(true)
-        
         await refreshGrid(userName)
-        
-        // If returning from a search context, grid is already ready
+
         const returningFromSearch = cachedSearchResults.length > 0 || isSearchResultsSheetOpen || searchMode
         if (returningFromSearch) {
-          // Already set above
-        } else if (justOnboarded) {
-          // Only delay for the first post-registration landing where startup animation will play
+          return
+        }
+        if (justOnboarded) {
           setTimeout(() => setFocusReady(true), 2500)
-          // Reset flag so subsequent visits don't delay
           setJustOnboarded(false)
-        } else {
-          // Already set above for normal visits
         }
       } catch (error) {
         console.error('Failed to refresh grid:', error)
-        // Even if there's an error, set focus ready to show something
-        setFocusReady(true)
       }
     }
 
-    // Initialize immediately without setTimeout
-    init()
-  }, [userName])
+    const handle = InteractionManager.runAfterInteractions(() => {
+      if (!cancelled) {
+        void init()
+      }
+    })
+
+    return () => {
+      cancelled = true
+      handle.cancel()
+    }
+  }, [userName, cachedSearchResults.length, isSearchResultsSheetOpen, searchMode, justOnboarded, setJustOnboarded])
 
   // Simplified back button restoration logic - just reset sheet state
   useEffect(() => {
@@ -775,8 +793,6 @@ export const MyProfile = ({ userName }: { userName: string }) => {
 
           <View
             style={{
-              gap: s.$2,
-              minHeight: 500,
               position: 'absolute',
               top: 90,
               left: 0,
@@ -786,24 +802,35 @@ export const MyProfile = ({ userName }: { userName: string }) => {
           >
             {gridContent}
 
-            <FloatingJaggedButton
-              icon="plus"
-              onPress={() => {
-                setAddingNewRefTo('grid')
-                try { useAppStore.getState().setAddRefPrompt('') } catch {}
-                newRefSheetRef.current?.snapToIndex(1)
-              }}
+            <View
+              pointerEvents="box-none"
               style={{
                 position: 'absolute',
-                bottom: s.$075,
-                right: s.$075,
-                zIndex: 5,
-                opacity: hasProfile && !searchMode ? 1 : 0,
+                top: 0,
+                left: 0,
+                right: 0,
+                height: GRID_HEIGHT,
               }}
-            />
+            >
+              <FloatingJaggedButton
+                icon="plus"
+                onPress={() => {
+                  setAddingNewRefTo('grid')
+                  try { useAppStore.getState().setAddRefPrompt('') } catch {}
+                  newRefSheetRef.current?.snapToIndex(1)
+                }}
+                style={{
+                  position: 'absolute',
+                  right: s.$075,
+                  bottom: s.$075-65,
+                  zIndex: 5,
+                  opacity: hasProfile && !searchMode ? 1 : 0,
+                }}
+              />
+            </View>
           </View>
 
-          {hasProfile && !user && <Heading tag="h1">Profile for {userName} not found</Heading>}
+          {hasProfile && !effectiveProfile && <Heading tag="h1">Profile for {userName} not found</Heading>}
 
           {searchDismissOverlays}
         </View>
@@ -828,11 +855,11 @@ export const MyProfile = ({ userName }: { userName: string }) => {
           </View>
         )}
 
-        {profile && (
+        {effectiveProfile && (
           <>
             <MyBacklogSheet
               backlogItems={backlogItems}
-              profile={profile}
+              profile={effectiveProfile}
               user={user}
               openAddtoBacklog={() => {
                 setAddingNewRefTo('backlog')
@@ -847,7 +874,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
             />
             {detailsItem && (
               <ProfileDetailsSheet
-                profileUsername={profile.userName}
+                profileUsername={effectiveProfile.userName}
                 detailsItemId={detailsItem.id}
                 onChange={(index: number) => {
                   if (index === -1) {

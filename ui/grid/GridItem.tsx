@@ -75,7 +75,7 @@ export const GridItem = ({
           <Text
             numberOfLines={1}
             ellipsizeMode="tail"
-            style={{ color: c.muted, fontSize: 14, textAlign: 'left', fontWeight: '500' }}
+            style={{ color: c.grey2, fontSize: 14, textAlign: 'left', fontWeight: '500' }}
           >
             {item?.expand?.ref?.title || item?.title || ''}
           </Text>

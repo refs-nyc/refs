@@ -20,7 +20,14 @@ export default function Referencers({
   const [users, setUsers] = useState<any[]>([])
   const [refData, setRefData] = useState<any>({})
   const [isLoading, setIsLoading] = useState(false)
-  const { getItemsByRefIds, addRefSheetRef, setAddingRefId, currentRefId } = useAppStore()
+  const {
+    getItemsByRefIds,
+    addRefSheetRef,
+    setAddingRefId,
+    currentRefId,
+    referencersContext,
+    setReferencersContext,
+  } = useAppStore()
 
   useEffect(() => {
     const getUsers = async () => {
@@ -83,6 +90,11 @@ export default function Referencers({
       snapPoints={['80%']}
       backgroundStyle={{ backgroundColor: c.surface, borderRadius: s.$4 }}
       handleIndicatorStyle={{ backgroundColor: 'transparent' }}
+      onChange={(index) => {
+        if (index === -1) {
+          setReferencersContext(null)
+        }
+      }}
     >
       <View style={{ paddingHorizontal: s.$3, paddingVertical: s.$1, height: '100%' }}>
         <View style={{ flexDirection: 'row', alignItems: 'flex-start', paddingBottom: s.$1 }}>
@@ -146,12 +158,17 @@ export default function Referencers({
             style={{ paddingTop: s.$2, paddingBottom: s.$2, width: '100%' }}
             textStyle={{ fontSize: s.$1, fontWeight: 800 }}
             onPress={() => {
-              // open a dialog for adding this ref to your profile
-              setAddingRefId(currentRefId)
-              addRefSheetRef.current?.expand()
+              if (referencersContext?.type === 'community') {
+                referencersContext.onAdd?.()
+                setReferencersContext(null)
+                referencersBottomSheetRef.current?.close()
+              } else {
+                setAddingRefId(currentRefId)
+                addRefSheetRef.current?.expand()
+              }
             }}
             variant="raised"
-            title="Add Ref +"
+            title={referencersContext?.type === 'community' ? 'Subscribe' : 'Add Ref +'}
           />
         </View>
       </View>

@@ -166,17 +166,7 @@ export function CommunitiesFeedScreen({ showHeader = true, aboveListComponent, h
   const [hasInitialData, setHasInitialData] = useState(false)
   const perPage = 50 // Increased from 30 to show more entries
   const pbRef = useRef<typeof pocketbase | null>(null)
-  const { setHomePagerIndex, setReturnToDirectories, user } = useAppStore()
-  
-  // Performance monitoring
-  const renderCount = useRef(0)
-  renderCount.current++
-  
-  // Log render performance every 10 renders
-  if (renderCount.current % 10 === 0) {
-    console.log(`🔄 Directory rendered ${renderCount.current} times, users: ${users.length}`)
-  }
-
+  const { setReturnToDirectories, user } = useAppStore()
   const getPB = () => {
     if (!pbRef.current) pbRef.current = pocketbase
     return pbRef.current
@@ -445,9 +435,6 @@ export function CommunitiesFeedScreen({ showHeader = true, aboveListComponent, h
   }, [hasMore, isLoading, user, mapUsersWithItems, users])
 
   useEffect(() => {
-    // Ensure returning back lands on Directories view
-    setHomePagerIndex(1)
-
     let mounted = true
 
     const loadAllPages = async () => {
@@ -535,9 +522,16 @@ export function CommunitiesFeedScreen({ showHeader = true, aboveListComponent, h
       }
     }
 
-    loadAllPages()
-    return () => { mounted = false }
-  }, [])
+    const handle = InteractionManager.runAfterInteractions(() => {
+      if (!mounted) return
+      void loadAllPages()
+    })
+
+    return () => {
+      mounted = false
+      handle.cancel()
+    }
+  }, [mapUsersWithItems, perPage, user?.userName])
 
   // Load popular interests and user->interest map for filtering
   useEffect(() => {

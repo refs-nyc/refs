@@ -558,7 +558,15 @@ export function CommunityInterestsScreen() {
                       const isOwner = item?.expand?.ref?.creator === user?.id
                       if (isOwner) {
                         // delete the interest entirely
-                        try { ;(async () => { await pocketbase.collection('refs').delete(item.ref || item.id) })() } catch {}
+                        const refToDelete = item.ref || item.id
+                        if (refToDelete) {
+                          void pocketbase
+                            .collection('refs')
+                            .delete(refToDelete)
+                            .catch((error) => {
+                              console.warn('Failed to delete community ref', error)
+                            })
+                        }
                       } else {
                         toggleSubscription(item)
                       }

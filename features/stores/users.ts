@@ -34,7 +34,11 @@ export const createUserSlice: StateCreator<StoreSlices, [], [], UserSlice> = (se
       // Mark as initialized immediately to allow UI to be responsive
       set(() => ({
         isInitialized: true,
+        homePagerIndex: 0,
+        returnToDirectories: false,
       }))
+      try { get().queueHomePagerIndex?.(0) } catch {}
+
 
       // If PocketBase has a valid auth store, sync it with our store
       if (pocketbase.authStore.isValid && pocketbase.authStore.record) {
@@ -46,26 +50,38 @@ export const createUserSlice: StateCreator<StoreSlices, [], [], UserSlice> = (se
 
           set(() => ({
             user: record,
+            homePagerIndex: 0,
+            returnToDirectories: false,
           }))
+          try { get().queueHomePagerIndex?.(0) } catch {}
         } catch (error) {
           console.error('Failed to sync user state:', error)
           // If we can't get the user record, clear the auth store
           pocketbase.authStore.clear()
           set(() => ({
             user: null,
+            homePagerIndex: 0,
+            returnToDirectories: false,
           }))
+          try { get().queueHomePagerIndex?.(0) } catch {}
         }
       } else {
         // No valid auth, mark as initialized with no user
         set(() => ({
           user: null,
+          homePagerIndex: 0,
+          returnToDirectories: false,
         }))
+        try { get().queueHomePagerIndex?.(0) } catch {}
       }
     } catch (error) {
       console.error('Init error:', error)
       set(() => ({
         user: null,
+        homePagerIndex: 0,
+        returnToDirectories: false,
       }))
+      try { get().queueHomePagerIndex?.(0) } catch {}
     }
   },
   //

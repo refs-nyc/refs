@@ -8,6 +8,13 @@ import { Item, Profile } from '@/features/types'
 import BottomSheet from '@gorhom/bottom-sheet'
 import React from 'react'
 
+export type ReferencersContext =
+  | {
+      type: 'community'
+      onAdd?: () => void
+    }
+  | null
+
 export type UISlice = {
   editingProfile: boolean
   addingToList: string
@@ -19,10 +26,12 @@ export type UISlice = {
   newRefSheetRef: React.RefObject<BottomSheet>
   addingNewRefTo: null | 'grid' | 'backlog'
   addRefPrompt: string
+  referencersContext: ReferencersContext
   selectedPhoto: string | null
   setAddingNewRefTo: (newState: null | 'grid' | 'backlog') => void
   setAddingRefId: (id: string) => void
   setCurrentRefId: (id: string) => void
+  setReferencersContext: (ctx: ReferencersContext) => void
   setAddingToList: (newState: string) => void
   setAddRefPrompt: (prompt: string) => void
   setSelectedPhoto: (photo: string | null) => void
@@ -65,6 +74,9 @@ export type UISlice = {
   // Home pager (MyProfile <-> Directories)
   homePagerIndex: number
   setHomePagerIndex: (i: number) => void
+  pendingHomePagerIndex: number | null
+  queueHomePagerIndex: (i: number) => void
+  clearPendingHomePagerIndex: () => void
   // Navigation hint: if true, back should return to directories
   returnToDirectories: boolean
   setReturnToDirectories: (v: boolean) => void

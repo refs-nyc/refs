@@ -25,6 +25,24 @@ const PEOPLE_SEARCH_BUTTON_RIGHT_OFFSET = -10
 const PEOPLE_SEARCH_BUTTON_TOP = -6
 const PEOPLE_SEARCH_CONTENT_PADDING = 85
 
+type CommunityCacheState = {
+  items: any[]
+  filtered: any[]
+  filterTab: 'popular' | 'people' | null
+  contentTab: 'all' | 'new' | 'mine'
+  subscriptions: Array<[string, boolean]>
+  subscriptionCounts: Array<[string, number]>
+}
+
+const communityCache: CommunityCacheState = {
+  items: [],
+  filtered: [],
+  filterTab: null,
+  contentTab: 'all',
+  subscriptions: [],
+  subscriptionCounts: [],
+}
+
 // Ensure each FlatList cell allows overflow so badges can overhang
 const VisibleCell = (props: any) => {
   const { style, ...rest } = props as any
@@ -40,16 +58,24 @@ export function CommunityInterestsScreen() {
     directoriesFilterTab,
     setDirectoriesFilterTab,
   } = useAppStore()
-  const [communityItems, setCommunityItems] = useState<any[]>([])
-  const [filteredItems, setFilteredItems] = useState<any[]>([])
-  const [filterTab, setFilterTab] = useState<'popular' | 'people' | null>(directoriesFilterTab ?? 'popular')
-  const [contentTab, setContentTab] = useState<'all' | 'new' | 'mine'>('all')
+  const initialFilterTab =
+    communityCache.filterTab !== null ? communityCache.filterTab : directoriesFilterTab ?? 'popular'
+  const [communityItems, setCommunityItems] = useState<any[]>(() => communityCache.items)
+  const [filteredItems, setFilteredItems] = useState<any[]>(() =>
+    communityCache.filtered.length ? communityCache.filtered : communityCache.items
+  )
+  const [filterTab, setFilterTab] = useState<'popular' | 'people' | null>(initialFilterTab)
+  const [contentTab, setContentTab] = useState<'all' | 'new' | 'mine'>(communityCache.contentTab)
   const [justAddedTitle, setJustAddedTitle] = useState<string | null>(null)
-  const [subscriptionCounts, setSubscriptionCounts] = useState<Map<string, number>>(new Map())
+  const [subscriptionCounts, setSubscriptionCounts] = useState<Map<string, number>>(
+    () => new Map(communityCache.subscriptionCounts)
+  )
   const [rowWidths, setRowWidths] = useState<Record<string, number>>({})
   const communityFormRef = useRef<BottomSheet>(null)
   // Subscriptions (local interim): map of refId -> true (persisted per-user via AsyncStorage)
-  const [subscriptions, setSubscriptions] = useState<Map<string, boolean>>(new Map())
+  const [subscriptions, setSubscriptions] = useState<Map<string, boolean>>(
+    () => new Map(communityCache.subscriptions)
+  )
   const [lastPillRefId, setLastPillRefId] = useState<string | null>(null)
   // Simple scale refs for press feedback per-item
   const scaleRefs = useRef<Record<string, any>>({}).current
@@ -65,6 +91,30 @@ export function CommunityInterestsScreen() {
   useEffect(() => {
     flipProgress.value = withTiming(filterTab === 'people' ? 1 : 0, { duration: 260 })
   }, [filterTab])
+
+  useEffect(() => {
+    communityCache.items = communityItems
+  }, [communityItems])
+
+  useEffect(() => {
+    communityCache.filtered = filteredItems
+  }, [filteredItems])
+
+  useEffect(() => {
+    communityCache.filterTab = filterTab
+  }, [filterTab])
+
+  useEffect(() => {
+    communityCache.contentTab = contentTab
+  }, [contentTab])
+
+  useEffect(() => {
+    communityCache.subscriptions = Array.from(subscriptions.entries())
+  }, [subscriptions])
+
+  useEffect(() => {
+    communityCache.subscriptionCounts = Array.from(subscriptionCounts.entries())
+  }, [subscriptionCounts])
 
   useEffect(() => {
     if (!directoriesFilterTab) return

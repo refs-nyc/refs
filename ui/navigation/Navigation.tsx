@@ -28,15 +28,14 @@ export const Navigation = ({
   const {
     user,
     saves,
-    messagesPerConversation,
-    conversations,
-    memberships,
     cachedSearchResults,
     setShowLogoutButton,
     showLogoutButton,
     returnToDirectories,
     setReturnToDirectories,
     queueHomePagerIndex,
+    homePagerIndex,
+    conversationUnreadCounts,
   } = useAppStore()
 
   const isHomePage = pathname === '/' || pathname === '/index' || pathname === `/user/${user?.userName}`
@@ -50,7 +49,6 @@ export const Navigation = ({
     
     // If returning from Directories -> user profile, jump back into Directories view
     if (returnToDirectories) {
-      setReturnToDirectories?.(false)
       queueHomePagerIndex?.(1)
       if (user?.userName) {
         router.replace(`/user/${user.userName}`)
@@ -69,6 +67,13 @@ export const Navigation = ({
     }
     
     console.log('🔍 No cached results, using default back behavior')
+
+    const routerCanGoBack = typeof (router as any).canGoBack === 'function' ? (router as any).canGoBack() : false
+    if (routerCanGoBack) {
+      router.back()
+      return
+    }
+
     // Prefer native/stack back if possible; otherwise, fallback to profile route
     if (navigation?.canGoBack?.()) {
       navigation.goBack()
@@ -76,8 +81,11 @@ export const Navigation = ({
     }
 
     if (user?.userName) {
-      queueHomePagerIndex?.(0)
-      setReturnToDirectories?.(false)
+      const fallbackIndex = returnToDirectories ? 1 : 0
+      queueHomePagerIndex?.(fallbackIndex)
+      if (!returnToDirectories) {
+        setReturnToDirectories?.(false)
+      }
       router.replace(`/user/${user.userName}`)
       return
     }
@@ -105,43 +113,9 @@ export const Navigation = ({
   }, [saves.length])
 
   const newMessages = useMemo(() => {
-    if (!user?.id || !messagesPerConversation || Object.keys(memberships).length === 0) {
-      return 0
-    }
-
-    const userId = user.id
-    let totalNewMessages = 0
-
-    // Use more efficient iteration
-    const conversationIds = Object.keys(conversations)
-    for (let i = 0; i < conversationIds.length; i++) {
-      const conversationId = conversationIds[i]
-      const membership = memberships[conversationId]?.find((m) => m.expand?.user.id === userId)
-
-      if (!membership || membership?.archived) continue
-
-      const conversationMessages = messagesPerConversation[conversationId]
-      if (!conversationMessages) continue
-
-      const lastRead = membership?.last_read
-      if (lastRead) {
-        const lastReadDate = new Date(lastRead)
-        // Use more efficient filtering
-        let unreadCount = 0
-        for (let j = 0; j < conversationMessages.length; j++) {
-          const message = conversationMessages[j]
-          if (new Date(message.created!) > lastReadDate && message.sender !== userId) {
-            unreadCount++
-          }
-        }
-        totalNewMessages += unreadCount
-      } else {
-        totalNewMessages += conversationMessages.length
-      }
-    }
-
-    return totalNewMessages
-  }, [messagesPerConversation, memberships, user?.id, conversations])
+    if (!user?.id) return 0
+    return Object.values(conversationUnreadCounts).reduce((total, count) => total + count, 0)
+  }, [conversationUnreadCounts, user?.id])
 
   if (!user) return null
   if (inMessageThread) return null

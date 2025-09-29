@@ -192,6 +192,7 @@ export const Grid = ({
   onTopRightActionPress,
   rowJustify = 'flex-start',
   rowGap,
+  showPrompts = true,
 }: {
   onPressItem?: (item?: ExpandedItem) => void
   onLongPressItem?: () => void
@@ -216,6 +217,7 @@ export const Grid = ({
   onTopRightActionPress?: (item: any) => void
   rowJustify?: 'flex-start' | 'center' | 'space-between' | 'space-around' | 'space-evenly'
   rowGap?: number
+  showPrompts?: boolean
 }) => {
   const gridSize = columns * rows
 
@@ -382,7 +384,7 @@ export const Grid = ({
         })}
 
         {/* Prompt placeholders for empty slots (skip when autoRows to avoid forcing min grid size) */}
-        {!autoRows && Array.from({ length: gridSize - items.length }).map((_, i) => {
+        {!autoRows && showPrompts && Array.from({ length: gridSize - items.length }).map((_, i) => {
           const promptIndex = i % PROMPTS.length
           const prompt = PROMPTS[promptIndex]
           const totalIndex = items.length + i
@@ -415,7 +417,7 @@ export const Grid = ({
       </GridWrapper>
 
       {/* Shuffle prompts button */}
-      {editingRights && !searchMode && !hideShuffleButton && items.length < gridSize && (
+      {editingRights && !searchMode && !hideShuffleButton && showPrompts && items.length < gridSize && (
         <Animated.View style={buttonAnimatedStyle}>
           <Pressable
             onPress={handleShufflePrompts}

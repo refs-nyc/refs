@@ -36,6 +36,8 @@ export function MessagesScreen({ conversationId }: { conversationId: string }) {
     firstMessageDate,
     updateLastRead,
     getNewMessages,
+    loadConversationMessages,
+    conversationHydration,
   } = useAppStore()
 
   const flatListRef = useRef<FlatList<Message>>(null)
@@ -61,8 +63,17 @@ export function MessagesScreen({ conversationId }: { conversationId: string }) {
   if (!conversation || !user) return null
 
   const members = memberships[conversationId].filter((m) => m.expand?.user.id !== user.id)
-  const conversationMessages = messagesPerConversation[conversationId]
+  const conversationMessages = messagesPerConversation[conversationId] || []
   const highlightedMessage = conversationMessages.find((m) => m.id === highlightedMessageId)
+  const hydrationState = conversationHydration[conversationId]
+
+  useEffect(() => {
+    if (hydrationState !== 'hydrated') {
+      loadConversationMessages(conversationId).catch((error) => {
+        console.error('Failed to hydrate conversation', error)
+      })
+    }
+  }, [conversationId, hydrationState, loadConversationMessages])
 
   const colorMap = useMemo(() => {
     const colors = randomColors(members.length)
@@ -73,8 +84,9 @@ export function MessagesScreen({ conversationId }: { conversationId: string }) {
   }, [members.length])
 
   useEffect(() => {
+    if (!conversationMessages.length) return
     updateLastRead(conversationId, user.id)
-  }, [conversationId, updateLastRead, user.id])
+  }, [conversationId, conversationMessages.length, updateLastRead, user.id])
 
   useEffect(() => {
     const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow'
@@ -140,13 +152,23 @@ export function MessagesScreen({ conversationId }: { conversationId: string }) {
   }
 
   const loadMoreMessages = async () => {
-    if (oldestLoadedMessageDate[conversationId] === firstMessageDate[conversationId]) return
-    const newMessages = await getNewMessages(
-      conversationId,
-      oldestLoadedMessageDate[conversationId]
-    )
+    const oldestLoaded = oldestLoadedMessageDate[conversationId]
+    const firstLoaded = firstMessageDate[conversationId]
+
+    if (!oldestLoaded || !firstLoaded) {
+      await loadConversationMessages(conversationId, { force: true }).catch((error) => {
+        console.error('Failed to load messages', error)
+      })
+      return
+    }
+
+    if (oldestLoaded === firstLoaded) return
+
+    const newMessages = await getNewMessages(conversationId, oldestLoaded)
     const oldestMessage = newMessages[newMessages.length - 1]
-    setOldestLoadedMessageDate(conversationId, oldestMessage.created!)
+    if (oldestMessage?.created) {
+      setOldestLoadedMessageDate(conversationId, oldestMessage.created)
+    }
     addOlderMessages(conversationId, newMessages)
   }
 

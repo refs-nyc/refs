@@ -21,7 +21,8 @@ import { RemoveRefSheet } from './sheets/RemoveRefSheet'
 import SearchModeBottomSheet from './sheets/SearchModeBottomSheet'
 import SearchResultsSheet, { SearchResultsSheetRef } from './sheets/SearchResultsSheet'
 import { RefForm } from '../actions/RefForm'
-import Animated, { FadeIn, FadeOut } from 'react-native-reanimated'
+import Animated, { FadeIn, FadeOut, Easing } from 'react-native-reanimated'
+import { Animated as RNAnimated, Easing as RNEasing } from 'react-native'
 import { Collections } from '@/features/pocketbase/pocketbase-types'
 import { simpleCache } from '@/features/cache/simpleCache'
 
@@ -31,6 +32,8 @@ const profileMemoryCache = new Map<string, {
   backlogItems: ExpandedItem[]
   timestamp: number
 }>()
+
+const gridAnimationHistory = new Set<string>()
 
 export const MyProfile = ({ userName }: { userName: string }) => {
   const { hasShareIntent } = useShareIntentContext()
@@ -42,6 +45,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
   const [gridItems, setGridItems] = useState<ExpandedItem[]>(cachedEntry?.gridItems ?? [])
   const [backlogItems, setBacklogItems] = useState<ExpandedItem[]>(cachedEntry?.backlogItems ?? [])
   const [loading, setLoading] = useState(!cachedEntry)
+  const [gridHydrated, setGridHydrated] = useState(Boolean(cachedEntry?.gridItems?.length))
   const [focusReady, setFocusReady] = useState(Boolean(cachedEntry))
   const [removingItem, setRemovingItem] = useState<ExpandedItem | null>(null)
 
@@ -242,50 +246,93 @@ export const MyProfile = ({ userName }: { userName: string }) => {
     null
   )
 
-  const gridContent = hasProfile ? (
-    <Grid
-      editingRights={true}
-      screenFocused={focusReady}
-      shouldAnimateStartup={justOnboarded}
-      onStartupAnimationComplete={() => setStartupAnimationDone(true)}
-      onPressItem={(item) => {
-        setDetailsItem(item!)
-        detailsSheetRef.current?.snapToIndex(0)
+  const showGrid = hasProfile && gridHydrated
+
+  const hasAnimatedBefore = gridAnimationHistory.has(userName)
+  const gridFade = useRef(new RNAnimated.Value(hasAnimatedBefore ? 1 : 0)).current
+  const gridScale = useRef(new RNAnimated.Value(hasAnimatedBefore ? 1 : 0.96)).current
+  const gridAnimationPlayedRef = useRef(hasAnimatedBefore)
+
+  useEffect(() => {
+    if (!showGrid) return
+
+    if (gridAnimationPlayedRef.current) {
+      gridFade.setValue(1)
+      gridScale.setValue(1)
+      return
+    }
+
+    gridAnimationPlayedRef.current = true
+    gridAnimationHistory.add(userName)
+    RNAnimated.parallel([
+      RNAnimated.timing(gridFade, {
+        toValue: 1,
+        duration: 520,
+        easing: RNEasing.out(RNEasing.cubic),
+        useNativeDriver: true,
+      }),
+      RNAnimated.timing(gridScale, {
+        toValue: 1,
+        duration: 520,
+        easing: RNEasing.out(RNEasing.cubic),
+        useNativeDriver: true,
+      }),
+    ]).start()
+  }, [showGrid, gridFade, gridScale, userName])
+
+  const gridContent = showGrid ? (
+    <RNAnimated.View
+      style={{
+        width: '100%',
+        opacity: gridFade,
+        transform: [{ scale: gridScale }],
       }}
-      onLongPressItem={() => {
-        clearTimeout(timeout)
-        timeout = setTimeout(() => {
-          stopEditProfile()
-        }, 10000)
-        startEditProfile()
-      }}
-      onRemoveItem={(item) => {
-        setRemovingItem(item)
-        removeRefSheetRef.current?.expand()
-      }}
-      onAddItem={(prompt?: string) => {
-        setAddingNewRefTo('grid')
-        if (prompt) useAppStore.getState().setAddRefPrompt(prompt)
-        newRefSheetRef.current?.snapToIndex(1)
-      }}
-      onAddItemWithPrompt={(prompt: string, photoPath?: boolean) => {
-        if (photoPath) {
-          triggerDirectPhotoPicker(prompt)
-        } else {
+    >
+      <Grid
+        editingRights={true}
+        screenFocused={focusReady && !loading}
+        shouldAnimateStartup={justOnboarded}
+        onStartupAnimationComplete={() => setStartupAnimationDone(true)}
+        onPressItem={(item) => {
+          setDetailsItem(item!)
+          detailsSheetRef.current?.snapToIndex(0)
+        }}
+        onLongPressItem={() => {
+          clearTimeout(timeout)
+          timeout = setTimeout(() => {
+            stopEditProfile()
+          }, 10000)
+          startEditProfile()
+        }}
+        onRemoveItem={(item) => {
+          setRemovingItem(item)
+          removeRefSheetRef.current?.expand()
+        }}
+        onAddItem={(prompt?: string) => {
           setAddingNewRefTo('grid')
-          useAppStore.getState().setAddRefPrompt(prompt)
+          if (prompt) useAppStore.getState().setAddRefPrompt(prompt)
           newRefSheetRef.current?.snapToIndex(1)
-        }
-      }}
-      columns={3}
-      items={displayGridItems}
-      rows={4}
-      rowGap={(s.$075 as number) + 5}
-      searchMode={searchMode}
-      selectedRefs={selectedRefs}
-      setSelectedRefs={setSelectedRefs}
-      newlyAddedItemId={newlyAddedItemId}
-    />
+        }}
+        onAddItemWithPrompt={(prompt: string, photoPath?: boolean) => {
+          if (photoPath) {
+            triggerDirectPhotoPicker(prompt)
+          } else {
+            setAddingNewRefTo('grid')
+            useAppStore.getState().setAddRefPrompt(prompt)
+            newRefSheetRef.current?.snapToIndex(1)
+          }
+        }}
+        columns={3}
+        items={displayGridItems}
+        rows={4}
+        rowGap={(s.$075 as number) + 5}
+        searchMode={searchMode}
+        selectedRefs={selectedRefs}
+        setSelectedRefs={setSelectedRefs}
+        newlyAddedItemId={newlyAddedItemId}
+        showPrompts={true}
+      />
+    </RNAnimated.View>
   ) : null
 
   const searchDismissOverlays = hasProfile && searchMode ? (
@@ -399,6 +446,10 @@ export const MyProfile = ({ userName }: { userName: string }) => {
 
   // Simple cache to avoid refetching the same data
   // Memoized grid items map for O(1) lookup
+  const markGridReady = useCallback(() => {
+    requestAnimationFrame(() => setGridHydrated(true))
+  }, [])
+
   const gridItemsMap = useMemo(() => new Map(gridItems.map((item) => [item.id, item])), [gridItems])
 
   // Memoized selectedRefItems computation for better performance
@@ -437,6 +488,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
     const hadMemory = profileMemoryCache.has(userName)
     if (!hadMemory) {
       setLoading(true)
+      setGridHydrated(false)
     }
 
     const storeState = useAppStore.getState()
@@ -450,6 +502,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
       setBacklogItems(memoryCached.backlogItems)
       setLoading(false)
       storeState.setGridItemCount(memoryCached.gridItems.length)
+      markGridReady()
     }
 
     const hydrateFromCache = async (userId?: string) => {
@@ -469,6 +522,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
       setGridItems(cachedGridItems as ExpandedItem[])
       setBacklogItems(cachedBacklogItems as ExpandedItem[])
       setLoading(false)
+      markGridReady()
       storeState.setGridItemCount((cachedGridItems as ExpandedItem[]).length)
       profileMemoryCache.set(userName, {
         profile: cachedProfile as Profile,
@@ -494,6 +548,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
         setGridItems(gridItemsRecord)
         setBacklogItems(backlogItemsRecord as ExpandedItem[])
         setLoading(false)
+        markGridReady()
         useAppStore.getState().setGridItemCount(gridItemsRecord.length)
 
         profileMemoryCache.set(userName, {
@@ -523,6 +578,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
         console.error('Failed to refresh grid:', error)
         if (!cacheHydrated) {
           setLoading(false)
+          markGridReady()
         }
       }
     }
@@ -800,7 +856,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
               zIndex: 5,
             }}
           >
-            {gridContent}
+            {gridContent || <View style={{ height: GRID_HEIGHT }} />}
 
             <View
               pointerEvents="box-none"

@@ -42,6 +42,7 @@ export type MessageSlice = {
   ) => Promise<void>
   messagesPerConversation: Record<string, Message[]>
   setMessagesForConversation: (conversationId: string, messages: Message[]) => void
+  setConversationPreview: (conversationId: string, message: Message | null, unreadCount: number) => void
   oldestLoadedMessageDate: Record<string, string>
   setOldestLoadedMessageDate: (conversationId: string, dateString: string) => void
   addOlderMessages: (conversationId: string, messages: Message[]) => void
@@ -50,6 +51,13 @@ export type MessageSlice = {
   setFirstMessageDate: (conversationId: string, dateString: string) => void
   updateLastRead: (conversationId: string, userId: string) => Promise<void>
   getNewMessages: (conversationId: string, oldestLoadedMessageDate: string) => Promise<Message[]>
+  conversationHydration: Record<string, 'preview' | 'hydrated'>
+  conversationLoading: Record<string, boolean>
+  loadConversationMessages: (conversationId: string, options?: { force?: boolean }) => Promise<void>
+  conversationUnreadCounts: Record<string, number>
+  setConversationUnreadCount: (conversationId: string, count: number) => void
+  incrementConversationUnreadCount: (conversationId: string, amount?: number) => void
+  resetConversationUnreadCount: (conversationId: string) => void
 
   reactions: Record<string, ExpandedReaction[]>
   setReactions: (reactions: ExpandedReaction[]) => void
@@ -69,6 +77,9 @@ export type MessageSlice = {
 
 export const createMessageSlice: StateCreator<StoreSlices, [], [], MessageSlice> = (set, get) => ({
   conversations: {},
+  conversationHydration: {},
+  conversationLoading: {},
+  conversationUnreadCounts: {},
   setConversations: (items: Conversation[]) => {
     const newItems: Record<string, Conversation> = {}
     items.forEach((item) => {
@@ -198,16 +209,28 @@ export const createMessageSlice: StateCreator<StoreSlices, [], [], MessageSlice>
         replying_to: parentMessageId,
         image: imageUrl,
       })
+
       set((state) => {
         const current = state.messagesPerConversation[conversationId] || []
         const alreadyExists = current.some((m) => m.id === message.id)
+        const nextMessages = alreadyExists ? current : [message, ...current]
+
         return {
           messagesPerConversation: {
             ...state.messagesPerConversation,
-            [conversationId]: alreadyExists ? current : [message, ...current],
+            [conversationId]: nextMessages,
+          },
+          conversationHydration: {
+            ...state.conversationHydration,
+            [conversationId]: nextMessages.length > 1 ? 'hydrated' : (state.conversationHydration[conversationId] ?? 'preview'),
+          },
+          conversationUnreadCounts: {
+            ...state.conversationUnreadCounts,
+            [conversationId]: 0,
           },
         }
       })
+
       const membership = await pocketbase
         .collection('memberships')
         .getFirstListItem(`conversation = "${conversationId}" && user = "${senderId}"`)
@@ -221,55 +244,142 @@ export const createMessageSlice: StateCreator<StoreSlices, [], [], MessageSlice>
 
   messagesPerConversation: {},
   oldestLoadedMessageDate: {},
+  firstMessageDate: {},
   setMessagesForConversation: (conversationId: string, messages: Message[]) => {
-    set((state) => {
-      return {
-        messagesPerConversation: { ...state.messagesPerConversation, [conversationId]: messages },
-      }
-    })
+    set((state) => ({
+      messagesPerConversation: { ...state.messagesPerConversation, [conversationId]: messages },
+      conversationHydration: { ...state.conversationHydration, [conversationId]: 'hydrated' },
+    }))
+  },
+  setConversationPreview: (conversationId: string, message: Message | null, unreadCount: number) => {
+    set((state) => ({
+      messagesPerConversation: {
+        ...state.messagesPerConversation,
+        [conversationId]: message ? [message] : [],
+      },
+      conversationHydration: {
+        ...state.conversationHydration,
+        [conversationId]: 'preview',
+      },
+      conversationUnreadCounts: {
+        ...state.conversationUnreadCounts,
+        [conversationId]: unreadCount,
+      },
+    }))
   },
   addOlderMessages: (conversationId: string, messages: Message[]) => {
     set((state) => {
-      const newMessages = messages.filter(
-        (m) => !state.messagesPerConversation[conversationId].some((m2) => m2.id === m.id)
-      )
+      const existing = state.messagesPerConversation[conversationId] || []
+      const newMessages = messages.filter((m) => !existing.some((m2) => m2.id === m.id))
       return {
         messagesPerConversation: {
           ...state.messagesPerConversation,
-          [conversationId]: [...state.messagesPerConversation[conversationId], ...newMessages],
+          [conversationId]: [...existing, ...newMessages],
         },
       }
     })
   },
   addNewMessage: (conversationId: string, message: Message) => {
+    const currentUserId = get().user?.id
     set((state) => {
-      if (state.messagesPerConversation[conversationId].some((m) => m.id === message.id))
+      const existing = state.messagesPerConversation[conversationId] || []
+      if (existing.some((m) => m.id === message.id)) {
         return state
+      }
+      const nextMessages = [message, ...existing]
+      const nextUnread = message.sender === currentUserId
+        ? 0
+        : (state.conversationUnreadCounts[conversationId] || 0) + 1
+
       return {
         messagesPerConversation: {
           ...state.messagesPerConversation,
-          [conversationId]: [message, ...state.messagesPerConversation[conversationId]],
+          [conversationId]: nextMessages,
+        },
+        conversationHydration: {
+          ...state.conversationHydration,
+          [conversationId]: nextMessages.length > 1 ? 'hydrated' : (state.conversationHydration[conversationId] ?? 'preview'),
+        },
+        conversationUnreadCounts: {
+          ...state.conversationUnreadCounts,
+          [conversationId]: nextUnread,
         },
       }
     })
   },
   setOldestLoadedMessageDate: (conversationId: string, dateString: string) => {
-    set((state) => {
-      return {
-        oldestLoadedMessageDate: {
-          ...state.oldestLoadedMessageDate,
-          [conversationId]: dateString,
-        },
-      }
-    })
+    set((state) => ({
+      oldestLoadedMessageDate: {
+        ...state.oldestLoadedMessageDate,
+        [conversationId]: dateString,
+      },
+    }))
   },
-  firstMessageDate: {},
   setFirstMessageDate: (conversationId: string, dateString: string) => {
-    set((state) => {
-      return { firstMessageDate: { ...state.firstMessageDate, [conversationId]: dateString } }
-    })
+    set((state) => ({
+      firstMessageDate: { ...state.firstMessageDate, [conversationId]: dateString },
+    }))
   },
+  loadConversationMessages: async (conversationId: string, options?: { force?: boolean }) => {
+    const { force } = options || {}
+    const { conversationHydration, conversationLoading } = get()
+    if (!force && conversationHydration[conversationId] === 'hydrated') return
+    if (conversationLoading[conversationId]) return
 
+    set((state) => ({
+      conversationLoading: { ...state.conversationLoading, [conversationId]: true },
+    }))
+
+    try {
+      const page = await pocketbase.collection('messages').getList<Message>(1, PAGE_SIZE, {
+        filter: `conversation = "${conversationId}"`,
+        sort: '-created',
+      })
+
+      const items = page.items || []
+      const oldest = items[items.length - 1]?.created
+      let firstMessageDate = oldest || ''
+
+      if ((page.totalItems ?? items.length) > items.length) {
+        const lastPage = Math.max(page.totalPages ?? 1, 1)
+        const oldestResponse = await pocketbase.collection('messages').getList<Message>(lastPage, 1, {
+          filter: `conversation = "${conversationId}"`,
+          sort: 'created',
+        })
+        firstMessageDate = oldestResponse.items[0]?.created || firstMessageDate
+      }
+
+      set((state) => ({
+        messagesPerConversation: {
+          ...state.messagesPerConversation,
+          [conversationId]: items,
+        },
+        conversationHydration: {
+          ...state.conversationHydration,
+          [conversationId]: 'hydrated',
+        },
+        conversationLoading: {
+          ...state.conversationLoading,
+          [conversationId]: false,
+        },
+        oldestLoadedMessageDate: oldest
+          ? { ...state.oldestLoadedMessageDate, [conversationId]: oldest }
+          : state.oldestLoadedMessageDate,
+        firstMessageDate: firstMessageDate
+          ? { ...state.firstMessageDate, [conversationId]: firstMessageDate }
+          : state.firstMessageDate,
+      }))
+    } catch (error) {
+      console.error('loadConversationMessages failed', error)
+      set((state) => ({
+        conversationLoading: {
+          ...state.conversationLoading,
+          [conversationId]: false,
+        },
+      }))
+      throw error
+    }
+  },
   updateLastRead: async (conversationId: string, userId: string) => {
     try {
       const messagesForConversation = get().messagesPerConversation[conversationId]
@@ -285,13 +395,40 @@ export const createMessageSlice: StateCreator<StoreSlices, [], [], MessageSlice>
       if (!ownMembership?.id) return
 
       await pocketbase.collection('memberships').update(ownMembership.id, { last_read: lastReadDate })
+
+      set((state) => ({
+        conversationUnreadCounts: {
+          ...state.conversationUnreadCounts,
+          [conversationId]: 0,
+        },
+      }))
     } catch (error) {
       console.warn('updateLastRead failed', { conversationId, userId, error })
     }
   },
-
+  setConversationUnreadCount: (conversationId: string, count: number) => {
+    set((state) => ({
+      conversationUnreadCounts: { ...state.conversationUnreadCounts, [conversationId]: Math.max(0, count) },
+    }))
+  },
+  incrementConversationUnreadCount: (conversationId: string, amount = 1) => {
+    set((state) => {
+      const current = state.conversationUnreadCounts[conversationId] || 0
+      return {
+        conversationUnreadCounts: {
+          ...state.conversationUnreadCounts,
+          [conversationId]: Math.max(0, current + amount),
+        },
+      }
+    })
+  },
+  resetConversationUnreadCount: (conversationId: string) => {
+    set((state) => ({
+      conversationUnreadCounts: { ...state.conversationUnreadCounts, [conversationId]: 0 },
+    }))
+  },
   getNewMessages: async (conversationId: string, oldestLoadedMessageDate: string) => {
-    const newMessages = await pocketbase.collection('messages').getList<Message>(0, PAGE_SIZE, {
+    const newMessages = await pocketbase.collection('messages').getList<Message>(1, PAGE_SIZE, {
       filter: `conversation = "${conversationId}" && created < "${oldestLoadedMessageDate}"`,
       sort: '-created',
     })

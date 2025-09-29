@@ -97,6 +97,9 @@ const ProfileLabel = ({ profile }: { profile: Profile }) => {
   return (
     <Pressable
       onPress={() => {
+        try {
+          useAppStore.getState().setProfileNavIntent({ targetPagerIndex: 0, source: 'other' })
+        } catch {}
         router.replace(`/user/${profile.userName}`)
       }}
     >

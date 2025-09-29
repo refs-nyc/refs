@@ -13,6 +13,7 @@ import FloatingJaggedButton from '../buttons/FloatingJaggedButton'
 import { DEFAULT_TILE_SIZE } from '../grid/GridTile'
 import { Grid } from '../grid/Grid'
 import { Button } from '../buttons/Button'
+import Ionicons from '@expo/vector-icons/Ionicons'
 
 import { Heading } from '../typo/Heading'
 import { ProfileDetailsSheet } from './ProfileDetailsSheet'
@@ -34,6 +35,58 @@ const profileMemoryCache = new Map<string, {
 }>()
 
 const gridAnimationHistory = new Set<string>()
+
+type PromptSuggestion = {
+  text: string
+  photoPath?: boolean
+}
+
+const PROMPT_SUGGESTIONS: PromptSuggestion[] = [
+  { text: 'Link you shared recently' },
+  { text: 'free space' },
+  { text: 'Place you feel like yourself' },
+  { text: 'Example of perfect design' },
+  { text: 'something you want to do more of' },
+  { text: 'Piece from a museum', photoPath: true },
+  { text: 'Most-rewatched movie' },
+  { text: 'Tradition you love', photoPath: true },
+  { text: 'Meme', photoPath: true },
+  { text: 'Neighborhood spot' },
+  { text: 'What you put on aux' },
+  { text: 'halloween pic', photoPath: true },
+  { text: 'Rabbit Hole' },
+  { text: 'a preferred publication' },
+  { text: 'something on your reading list' },
+]
+
+const PROMPT_BATCH_SIZE = 6
+
+const shufflePromptList = (source: PromptSuggestion[]) => {
+  const shuffled = [...source]
+  for (let i = shuffled.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1))
+    ;[shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]
+  }
+  return shuffled
+}
+
+const createPromptBatch = (size = PROMPT_BATCH_SIZE, excludeTexts?: Set<string>) => {
+  const skip = excludeTexts ? new Set(excludeTexts) : new Set<string>()
+  const shuffled = shufflePromptList(PROMPT_SUGGESTIONS)
+  const batch: PromptSuggestion[] = []
+
+  for (const suggestion of shuffled) {
+    if (skip.has(suggestion.text)) continue
+    batch.push(suggestion)
+    skip.add(suggestion.text)
+    if (batch.length === size) break
+  }
+
+  return batch
+}
+
+const PROMPT_CARD_BACKGROUNDS = [c.white, c.surface, c.surface2, c.accent2]
+const PROMPT_CARD_ROTATIONS = [-2.25, -0.5, 1, 2.75]
 
 export const MyProfile = ({ userName }: { userName: string }) => {
   const { hasShareIntent } = useShareIntentContext()
@@ -188,9 +241,12 @@ export const MyProfile = ({ userName }: { userName: string }) => {
   const [showPrompt, setShowPrompt] = useState(false)
   const [startupAnimationDone, setStartupAnimationDone] = useState(false)
   const [newlyAddedItemId, setNewlyAddedItemId] = useState<string | null>(null)
+  const [promptSuggestions, setPromptSuggestions] = useState<PromptSuggestion[]>(() => createPromptBatch())
   const GRID_ROWS = 4
+  const GRID_COLUMNS = 3
   const GRID_ROW_GAP = (s.$075 as number) + 5
   const GRID_HEIGHT = GRID_ROWS * DEFAULT_TILE_SIZE + (GRID_ROWS - 1) * GRID_ROW_GAP
+  const GRID_CAPACITY = GRID_ROWS * GRID_COLUMNS
 
   const headerContent = hasProfile ? (
     searchMode || isSearchResultsSheetOpen ? (
@@ -247,6 +303,23 @@ export const MyProfile = ({ userName }: { userName: string }) => {
   )
 
   const showGrid = hasProfile && gridHydrated
+  const allowPromptPlaceholders =
+    showGrid &&
+    !searchMode &&
+    !isSearchResultsSheetOpen &&
+    !loading &&
+    displayGridItems.length < GRID_CAPACITY
+  const showPromptChips =
+    ownProfile &&
+    showGrid &&
+    !searchMode &&
+    !isSearchResultsSheetOpen &&
+    !loading &&
+    displayGridItems.length < GRID_CAPACITY
+
+  const handleShufflePromptSuggestions = useCallback(() => {
+    setPromptSuggestions(createPromptBatch())
+  }, [])
 
   const hasAnimatedBefore = gridAnimationHistory.has(userName)
   const gridFade = useRef(new RNAnimated.Value(hasAnimatedBefore ? 1 : 0)).current
@@ -322,15 +395,15 @@ export const MyProfile = ({ userName }: { userName: string }) => {
             newRefSheetRef.current?.snapToIndex(1)
           }
         }}
-        columns={3}
+        columns={GRID_COLUMNS}
         items={displayGridItems}
-        rows={4}
+        rows={GRID_ROWS}
         rowGap={(s.$075 as number) + 5}
         searchMode={searchMode}
         selectedRefs={selectedRefs}
         setSelectedRefs={setSelectedRefs}
         newlyAddedItemId={newlyAddedItemId}
-        showPrompts={true}
+        showPrompts={allowPromptPlaceholders}
       />
     </RNAnimated.View>
   ) : null
@@ -656,7 +729,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
 
   useEffect(() => {
     if (hasShareIntent) {
-      setAddingNewRefTo(gridItems.length < 12 ? 'grid' : 'backlog')
+      setAddingNewRefTo(displayGridItems.length < GRID_CAPACITY ? 'grid' : 'backlog')
       bottomSheetRef.current?.snapToIndex(1)
     }
   }, [hasShareIntent])
@@ -740,8 +813,8 @@ export const MyProfile = ({ userName }: { userName: string }) => {
 
   // Animate prompt text with explicit schedule: L1 (3s) → pause (2s) → L2 (3s) → pause (2s) → repeat
   useEffect(() => {
-    const promptsActive = gridItems.length < 12 && !searchMode && !isSearchResultsSheetOpen && !loading
-    const canShowPromptsNow = promptsActive && (startupAnimationDone || !(gridItems.length === 0))
+    const promptsActive = displayGridItems.length < GRID_CAPACITY && !searchMode && !isSearchResultsSheetOpen && !loading
+    const canShowPromptsNow = promptsActive && (startupAnimationDone || !(displayGridItems.length === 0))
     let tShow: ReturnType<typeof setTimeout> | null = null
     let tPause: ReturnType<typeof setTimeout> | null = null
 
@@ -776,18 +849,16 @@ export const MyProfile = ({ userName }: { userName: string }) => {
       setShowPrompt(false)
       setPromptTextIndex(0)
     }
-  }, [gridItems.length, searchMode, isSearchResultsSheetOpen, startupAnimationDone, loading])
+  }, [displayGridItems.length, searchMode, isSearchResultsSheetOpen, startupAnimationDone, loading])
 
   // Direct photo picker flow - route into existing NewRefSheet with pre-populated photo
-  const triggerDirectPhotoPicker = async (prompt: string) => {
+  const triggerDirectPhotoPicker = useCallback(async (prompt: string) => {
     try {
-      // Request permissions
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync()
       if (status !== 'granted') {
         return
       }
 
-      // Launch image picker
       const result = await ImagePicker.launchImageLibraryAsync({
         allowsEditing: true,
         aspect: [1, 1],
@@ -796,17 +867,152 @@ export const MyProfile = ({ userName }: { userName: string }) => {
 
       if (!result.canceled && result.assets && result.assets[0]) {
         const selectedImage = result.assets[0]
-        // Populate store so NewRefSheet picks it up as a photo prompt
         try { useAppStore.getState().setSelectedPhoto(selectedImage.uri) } catch {}
         try { useAppStore.getState().setAddRefPrompt(prompt) } catch {}
-        // Open NewRefSheet directly at search-results height; it will switch to add step
         setAddingNewRefTo('grid')
         newRefSheetRef.current?.snapToIndex(1)
       }
     } catch (error) {
       console.error('Error picking image:', error)
     }
-  }
+  }, [setAddingNewRefTo])
+
+  const handlePromptChipPress = useCallback((prompt: PromptSuggestion) => {
+    setPromptSuggestions((current) => {
+      const remainder = current.filter((item) => item.text !== prompt.text)
+      const needed = PROMPT_BATCH_SIZE - remainder.length
+      if (needed <= 0) {
+        return remainder
+      }
+
+      const exclude = new Set(remainder.map((item) => item.text))
+      const replacements = createPromptBatch(needed, exclude)
+      return [...remainder, ...replacements]
+    })
+
+    if (prompt.photoPath) {
+      void triggerDirectPhotoPicker(prompt.text)
+      return
+    }
+
+    setAddingNewRefTo('grid')
+    try { useAppStore.getState().setAddRefPrompt(prompt.text) } catch {}
+    newRefSheetRef.current?.snapToIndex(1)
+  }, [triggerDirectPhotoPicker, setAddingNewRefTo])
+
+  const promptChipSection = showPromptChips && promptSuggestions.length > 0 ? (
+    <Animated.View
+      entering={FadeIn.duration(300).delay(120)}
+      style={{
+        marginTop: GRID_HEIGHT + s.$1,
+        paddingHorizontal: s.$1half,
+        paddingBottom: s.$1half,
+        zIndex: 4,
+      }}
+    >
+      <View
+        style={{
+          backgroundColor: c.surface2,
+          borderRadius: 26,
+          paddingVertical: s.$1,
+          paddingHorizontal: s.$1half,
+          borderWidth: 1,
+          borderColor: 'rgba(0,0,0,0.05)',
+          shadowColor: '#000',
+          shadowOpacity: 0.08,
+          shadowRadius: 12,
+          shadowOffset: { width: 0, height: 6 },
+          elevation: 3,
+        }}
+      >
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            marginBottom: s.$075,
+          }}
+        >
+          <Text style={{ color: c.muted2, fontSize: 14, fontWeight: '600' }}>
+            Need a spark? Tap to pin one.
+          </Text>
+          <Pressable
+            onPress={handleShufflePromptSuggestions}
+            hitSlop={10}
+            style={({ pressed }) => ({
+              flexDirection: 'row',
+              alignItems: 'center',
+              opacity: pressed ? 0.6 : 1,
+            })}
+          >
+            <Ionicons name="shuffle-outline" size={16} color={c.muted2} style={{ marginRight: 4 }} />
+            <Text style={{ color: c.muted2, fontSize: 13, fontWeight: '500' }}>Shuffle</Text>
+          </Pressable>
+        </View>
+
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: -6 }}>
+          {promptSuggestions.map((suggestion, index) => {
+            const backgroundColor = PROMPT_CARD_BACKGROUNDS[index % PROMPT_CARD_BACKGROUNDS.length]
+            const rotation = PROMPT_CARD_ROTATIONS[index % PROMPT_CARD_ROTATIONS.length]
+
+            return (
+              <Pressable
+                key={`${suggestion.text}-${index}`}
+                onPress={() => handlePromptChipPress(suggestion)}
+                style={({ pressed }) => ({
+                  marginHorizontal: 6,
+                  marginVertical: 6,
+                  paddingVertical: 10,
+                  paddingHorizontal: 18,
+                  borderRadius: 999,
+                  minWidth: 120,
+                  backgroundColor,
+                  borderWidth: 1,
+                  borderColor: 'rgba(0,0,0,0.05)',
+                  shadowColor: '#000',
+                  shadowOpacity: pressed ? 0.1 : 0.15,
+                  shadowRadius: pressed ? 5 : 8,
+                  shadowOffset: { width: 0, height: pressed ? 2 : 4 },
+                  elevation: pressed ? 2 : 4,
+                  transform: [{ rotate: `${rotation}deg` }, { scale: pressed ? 0.97 : 1 }],
+                })}
+              >
+                <View
+                  style={{
+                    position: 'absolute',
+                    top: -6,
+                    left: '50%',
+                    marginLeft: -6,
+                    width: 12,
+                    height: 12,
+                    borderRadius: 6,
+                    backgroundColor: c.olive,
+                    opacity: 0.6,
+                    shadowColor: '#6b5f49',
+                    shadowOpacity: 0.25,
+                    shadowRadius: 3,
+                    shadowOffset: { width: 0, height: 1 },
+                    elevation: 1,
+                  }}
+                />
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
+                  <Ionicons
+                    name={suggestion.photoPath ? 'camera-outline' : 'bulb-outline'}
+                    size={15}
+                    color={c.muted2}
+                    style={{ marginRight: 6 }}
+                  />
+                  <Text style={{ color: c.muted2, fontSize: 14, fontWeight: '600', textAlign: 'center', flexShrink: 1 }}>
+                    {suggestion.text}
+                  </Text>
+                </View>
+              </Pressable>
+            )
+          })}
+        </View>
+      </View>
+    </Animated.View>
+  ) : null
 
   return (
     <>
@@ -884,6 +1090,8 @@ export const MyProfile = ({ userName }: { userName: string }) => {
                 }}
               />
             </View>
+
+            {promptChipSection}
           </View>
 
           {hasProfile && !effectiveProfile && <Heading tag="h1">Profile for {userName} not found</Heading>}

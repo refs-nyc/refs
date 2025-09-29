@@ -8,6 +8,12 @@ import { Item, Profile } from '@/features/types'
 import BottomSheet from '@gorhom/bottom-sheet'
 import React from 'react'
 
+export type ProfileNavIntent = {
+  targetPagerIndex: 0 | 1 | 2
+  directoryFilter?: 'popular' | 'people'
+  source?: 'directory' | 'wantToMeet' | 'messages' | 'other'
+}
+
 export type ReferencersContext =
   | {
       type: 'community'
@@ -74,12 +80,11 @@ export type UISlice = {
   // Home pager (MyProfile <-> Directories)
   homePagerIndex: number
   setHomePagerIndex: (i: number) => void
-  pendingHomePagerIndex: number | null
-  queueHomePagerIndex: (i: number) => void
-  clearPendingHomePagerIndex: () => void
-  // Navigation hint: if true, back should return to directories
-  returnToDirectories: boolean
-  setReturnToDirectories: (v: boolean) => void
+  profileNavIntent: ProfileNavIntent | null
+  setProfileNavIntent: (intent: ProfileNavIntent | null) => void
+  consumeProfileNavIntent: () => ProfileNavIntent | null
+  directoriesFilterTab: 'popular' | 'people'
+  setDirectoriesFilterTab: (tab: 'popular' | 'people') => void
   dmComposerTarget: Profile | null
   dmComposerInitialConversationId: string | null
   dmComposerOnSuccess: ((target: Profile) => void) | null

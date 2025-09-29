@@ -1,10 +1,10 @@
-import type { StoreSlices, UISlice } from '@/features/stores/types'
+import type { StoreSlices, UISlice, ProfileNavIntent } from '@/features/stores/types'
 import { Item, Profile } from '@/features/types'
 import BottomSheet from '@gorhom/bottom-sheet'
 import React from 'react'
 import type { StateCreator } from 'zustand'
 
-export const createUISlice: StateCreator<StoreSlices, [], [], UISlice> = (set) => ({
+export const createUISlice: StateCreator<StoreSlices, [], [], UISlice> = (set, get) => ({
   addingToList: '',
   addingItem: null,
   referencersBottomSheetRef: React.createRef(),
@@ -147,18 +147,18 @@ export const createUISlice: StateCreator<StoreSlices, [], [], UISlice> = (set) =
   setJustOnboarded: (v: boolean) => set(() => ({ justOnboarded: v })),
   // Home pager (MyProfile <-> Directories)
   homePagerIndex: 0,
-  pendingHomePagerIndex: null,
-  queueHomePagerIndex: (i: number) => {
-    set(() => ({ pendingHomePagerIndex: i }))
-  },
-  clearPendingHomePagerIndex: () => {
-    set(() => ({ pendingHomePagerIndex: null }))
-  },
   setHomePagerIndex: (i: number) => {
-    set(() => ({ homePagerIndex: i, pendingHomePagerIndex: null }))
+    set(() => ({ homePagerIndex: i }))
   },
-  returnToDirectories: false,
-  setReturnToDirectories: (v: boolean) => set(() => ({ returnToDirectories: v })),
+  profileNavIntent: null,
+  setProfileNavIntent: (intent: ProfileNavIntent | null) => set(() => ({ profileNavIntent: intent })),
+  consumeProfileNavIntent: (): ProfileNavIntent | null => {
+    const intent = get().profileNavIntent
+    set(() => ({ profileNavIntent: null }))
+    return intent
+  },
+  directoriesFilterTab: 'popular',
+  setDirectoriesFilterTab: (tab: 'popular' | 'people') => set(() => ({ directoriesFilterTab: tab })),
   dmComposerTarget: null,
   dmComposerInitialConversationId: null,
   dmComposerOnSuccess: null,

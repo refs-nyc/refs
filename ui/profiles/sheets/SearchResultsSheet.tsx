@@ -116,6 +116,7 @@ export default forwardRef<
     cachedSearchSubtitle,
     setCachedSearchResults,
     clearCachedSearchResults,
+    setProfileNavIntent,
   } = useAppStore()
 
   // Search state
@@ -521,6 +522,7 @@ export default forwardRef<
   const handleUserPress = (profile: Profile) => {
     // Navigate to user profile using push
     // The search context is preserved in global state and will be restored on back
+    setProfileNavIntent({ targetPagerIndex: 0, source: 'other' })
     router.push(`/user/${profile.userName}`)
   }
 

@@ -1,5 +1,5 @@
 import { Profile } from '@/ui'
-import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import React, { useEffect, useMemo, useRef } from 'react'
 import { Dimensions, View } from 'react-native'
 import Svg, { Path, G } from 'react-native-svg'
 import { useAppStore } from '@/features/stores'
@@ -17,11 +17,11 @@ export function UserProfileScreen({ userName }: { userName: string }) {
   const {
     homePagerIndex,
     setHomePagerIndex,
-    pendingHomePagerIndex,
-    clearPendingHomePagerIndex,
     user,
-    returnToDirectories,
-    setReturnToDirectories,
+    profileNavIntent,
+    consumeProfileNavIntent,
+    directoriesFilterTab,
+    setDirectoriesFilterTab,
     moduleBackdropAnimatedIndex,
     detailsBackdropAnimatedIndex,
     otherProfileBackdropAnimatedIndex,
@@ -29,87 +29,57 @@ export function UserProfileScreen({ userName }: { userName: string }) {
   } = useAppStore()
   const { width } = Dimensions.get('window')
 
-  const initialIndex = pendingHomePagerIndex ?? homePagerIndex
-
   // Pager gesture setup (hooks must always be called in the same order)
-  const translateX = useSharedValue(-initialIndex * width)
+  const translateX = useSharedValue(-homePagerIndex * width)
   const isDragging = useSharedValue(false)
-  const hasSyncedInitialIndex = useRef(false)
-  const initialPagerIndex = useRef(initialIndex)
-  const hasInitialized = useRef(false)
-  const hasForcedDefaultIndex = useRef(false)
+  const skipNextAnimation = useRef(true)
+  const hasCommittedDefault = useRef(false)
   if (!user) {
     return null
   }
 
   const ownProfile = user.userName === userName
   useEffect(() => {
-    hasSyncedInitialIndex.current = false
-    hasInitialized.current = false
-    hasForcedDefaultIndex.current = false
+    skipNextAnimation.current = true
+    hasCommittedDefault.current = false
   }, [userName])
 
   useEffect(() => {
     if (!ownProfile) return
-    if (returnToDirectories) return
-    if (hasForcedDefaultIndex.current) return
 
-    // Ensure we start on the grid when landing on our profile by default
-    initialPagerIndex.current = 0
-    translateX.value = 0
-    if (homePagerIndex !== 0) {
-      setHomePagerIndex(0)
-    }
-    hasForcedDefaultIndex.current = true
-  }, [ownProfile, returnToDirectories, homePagerIndex, setHomePagerIndex, translateX])
-
-  useEffect(() => {
-    if (pendingHomePagerIndex == null) return
-
-    const target = pendingHomePagerIndex
-    if (target !== homePagerIndex) {
-      initialPagerIndex.current = target
-      translateX.value = -target * width
-      setHomePagerIndex(target)
-    }
-    clearPendingHomePagerIndex()
-  }, [pendingHomePagerIndex, homePagerIndex, setHomePagerIndex, clearPendingHomePagerIndex, width, translateX])
-
-  useLayoutEffect(() => {
-    const effectiveIndex = pendingHomePagerIndex ?? homePagerIndex
-
-    if (!hasSyncedInitialIndex.current) {
-      hasSyncedInitialIndex.current = true
-      initialPagerIndex.current = effectiveIndex
-      translateX.value = -effectiveIndex * width
-      if (pendingHomePagerIndex != null && pendingHomePagerIndex !== homePagerIndex) {
-        setHomePagerIndex(pendingHomePagerIndex)
-        clearPendingHomePagerIndex()
+    if (profileNavIntent) {
+      const intent = consumeProfileNavIntent()
+      if (intent) {
+        if (intent.directoryFilter) {
+          setDirectoriesFilterTab(intent.directoryFilter)
+        }
+        skipNextAnimation.current = true
+        hasCommittedDefault.current = true
+        translateX.value = -intent.targetPagerIndex * width
+        setHomePagerIndex(intent.targetPagerIndex)
+        return
       }
-      return
     }
 
-    if (!ownProfile) {
-      initialPagerIndex.current = effectiveIndex
-      translateX.value = -effectiveIndex * width
+    if (!hasCommittedDefault.current) {
+      hasCommittedDefault.current = true
+      skipNextAnimation.current = true
+      translateX.value = -homePagerIndex * width
     }
-  }, [ownProfile, homePagerIndex, pendingHomePagerIndex, setHomePagerIndex, clearPendingHomePagerIndex, width, translateX])
+  }, [ownProfile, profileNavIntent, consumeProfileNavIntent, setHomePagerIndex, width, translateX, homePagerIndex, setDirectoriesFilterTab])
 
   // Update translateX when homePagerIndex changes
   useEffect(() => {
-    if (!hasInitialized.current) {
-      // Avoid initial spring on mount; respect the forced initial index
-      translateX.value = -initialPagerIndex.current * width
-      hasInitialized.current = true
-      initialPagerIndex.current = homePagerIndex
+    if (skipNextAnimation.current) {
+      translateX.value = -homePagerIndex * width
+      skipNextAnimation.current = false
       return
     }
     translateX.value = withSpring(-homePagerIndex * width, {
       damping: 20,
       stiffness: 200,
     })
-    initialPagerIndex.current = homePagerIndex
-  }, [homePagerIndex, width])
+  }, [homePagerIndex, width, translateX])
 
   // Gesture handling for horizontal swipes (will only be attached on own profile)
   const panGesture = Gesture.Pan()
@@ -244,14 +214,6 @@ export function UserProfileScreen({ userName }: { userName: string }) {
     
     preloadData()
   }, [userName, user?.userName]) // Only run once when component mounts
-
-  // If we navigated back from a directory-tapped profile, force pager to Directories
-  useEffect(() => {
-    if (!returnToDirectories) return
-    if (homePagerIndex === 1) {
-      setReturnToDirectories(false)
-    }
-  }, [returnToDirectories, homePagerIndex, setReturnToDirectories])
 
   // Define Dots component before conditional returns to prevent hook ordering issues
   const Dots = useMemo(() => {

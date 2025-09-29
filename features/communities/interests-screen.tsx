@@ -32,15 +32,22 @@ const VisibleCell = (props: any) => {
 }
 
 export function CommunityInterestsScreen() {
+  const {
+    user,
+    setCurrentRefId,
+    referencersBottomSheetRef,
+    setReferencersContext,
+    directoriesFilterTab,
+    setDirectoriesFilterTab,
+  } = useAppStore()
   const [communityItems, setCommunityItems] = useState<any[]>([])
   const [filteredItems, setFilteredItems] = useState<any[]>([])
-  const [filterTab, setFilterTab] = useState<'popular' | 'people' | null>('popular')
+  const [filterTab, setFilterTab] = useState<'popular' | 'people' | null>(directoriesFilterTab ?? 'popular')
   const [contentTab, setContentTab] = useState<'all' | 'new' | 'mine'>('all')
   const [justAddedTitle, setJustAddedTitle] = useState<string | null>(null)
   const [subscriptionCounts, setSubscriptionCounts] = useState<Map<string, number>>(new Map())
   const [rowWidths, setRowWidths] = useState<Record<string, number>>({})
   const communityFormRef = useRef<BottomSheet>(null)
-  const { user, setCurrentRefId, referencersBottomSheetRef, setReferencersContext } = useAppStore()
   // Subscriptions (local interim): map of refId -> true (persisted per-user via AsyncStorage)
   const [subscriptions, setSubscriptions] = useState<Map<string, boolean>>(new Map())
   const [lastPillRefId, setLastPillRefId] = useState<string | null>(null)
@@ -58,6 +65,16 @@ export function CommunityInterestsScreen() {
   useEffect(() => {
     flipProgress.value = withTiming(filterTab === 'people' ? 1 : 0, { duration: 260 })
   }, [filterTab])
+
+  useEffect(() => {
+    if (!directoriesFilterTab) return
+    setFilterTab((prev) => (prev === directoriesFilterTab ? prev : directoriesFilterTab))
+  }, [directoriesFilterTab])
+
+  useEffect(() => {
+    if (!filterTab) return
+    setDirectoriesFilterTab(filterTab)
+  }, [filterTab, setDirectoriesFilterTab])
 
   const frontStyle = useAnimatedStyle(() => {
     return {

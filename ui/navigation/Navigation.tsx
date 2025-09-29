@@ -31,10 +31,9 @@ export const Navigation = ({
     cachedSearchResults,
     setShowLogoutButton,
     showLogoutButton,
-    returnToDirectories,
-    setReturnToDirectories,
-    queueHomePagerIndex,
     homePagerIndex,
+    directoriesFilterTab,
+    setProfileNavIntent,
     conversationUnreadCounts,
   } = useAppStore()
 
@@ -45,47 +44,32 @@ export const Navigation = ({
 
   // Back button handler with robust fallbacks for directories and no-stack cases
   const handleBackPress = () => {
-    console.log('🔍 Back button pressed, cachedSearchResults.length:', cachedSearchResults.length)
-    
-    // If returning from Directories -> user profile, jump back into Directories view
-    if (returnToDirectories) {
-      queueHomePagerIndex?.(1)
-      if (user?.userName) {
-        router.replace(`/user/${user.userName}`)
-        return
-      }
-    }
+    const routerCanGoBack = typeof (router as any).canGoBack === 'function' ? (router as any).canGoBack() : false
+    const navCanGoBack = navigation?.canGoBack?.() ?? false
 
     // If we have cached search results, navigate back to profile to restore them
-    if (cachedSearchResults.length > 0) {
-      const currentUser = user?.userName
-      if (currentUser) {
-        console.log('🔍 Navigating to profile with cached results')
-        router.push(`/user/${currentUser}`)
-        return
-      }
-    }
-    
-    console.log('🔍 No cached results, using default back behavior')
-
-    const routerCanGoBack = typeof (router as any).canGoBack === 'function' ? (router as any).canGoBack() : false
-    if (routerCanGoBack) {
-      router.back()
+    if (cachedSearchResults.length > 0 && user?.userName) {
+      setProfileNavIntent({ targetPagerIndex: 0, source: 'other' })
+      router.push(`/user/${user.userName}`)
       return
     }
 
-    // Prefer native/stack back if possible; otherwise, fallback to profile route
-    if (navigation?.canGoBack?.()) {
-      navigation.goBack()
+    if (routerCanGoBack || navCanGoBack) {
+      if (routerCanGoBack) {
+        router.back()
+      } else {
+        navigation.goBack()
+      }
       return
     }
 
     if (user?.userName) {
-      const fallbackIndex = returnToDirectories ? 1 : 0
-      queueHomePagerIndex?.(fallbackIndex)
-      if (!returnToDirectories) {
-        setReturnToDirectories?.(false)
-      }
+      const fallbackIndex = homePagerIndex ?? 0
+      setProfileNavIntent({
+        targetPagerIndex: fallbackIndex as 0 | 1 | 2,
+        directoryFilter: fallbackIndex === 1 ? directoriesFilterTab : undefined,
+        source: 'back-fallback',
+      })
       router.replace(`/user/${user.userName}`)
       return
     }
@@ -150,8 +134,17 @@ export const Navigation = ({
                 <Ionicons name="chevron-back" size={18} color={c.grey2} />
               </Pressable>
             )}
-            <Pressable 
-              onPress={() => router.push(`/user/${user.userName}`)} 
+            <Pressable
+              onPress={() => {
+                if (!user?.userName) return
+                const targetIndex = homePagerIndex ?? 0
+                setProfileNavIntent({
+                  targetPagerIndex: targetIndex as 0 | 1 | 2,
+                  directoryFilter: targetIndex === 1 ? directoriesFilterTab : undefined,
+                  source: 'other',
+                })
+                router.push(`/user/${user.userName}`)
+              }}
               onLongPress={() => setShowLogoutButton(!showLogoutButton)}
               style={{ paddingLeft: 6 }}
             >
@@ -185,7 +178,12 @@ export const Navigation = ({
           </Pressable>
         </View>
         <View style={{ display: 'flex', flexDirection: 'row', paddingRight: 6 }}>
-          <Pressable onPress={() => { if (!pathname.startsWith('/messages')) router.push('/messages') }}>
+          <Pressable
+            onPress={() => {
+              if (pathname.startsWith('/messages')) return
+              router.push('/messages')
+            }}
+          >
             <View style={{ top: -3, position: 'relative' }}>
               <MessageIcon width={36} />
               <View style={{ position: 'absolute', top: -6, right: -6, zIndex: 1 }}>

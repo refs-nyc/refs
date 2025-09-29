@@ -166,7 +166,7 @@ export function CommunitiesFeedScreen({ showHeader = true, aboveListComponent, h
   const [hasInitialData, setHasInitialData] = useState(false)
   const perPage = 50 // Increased from 30 to show more entries
   const pbRef = useRef<typeof pocketbase | null>(null)
-  const { setReturnToDirectories, user } = useAppStore()
+  const { setProfileNavIntent, setDirectoriesFilterTab, user } = useAppStore()
   const getPB = () => {
     if (!pbRef.current) pbRef.current = pocketbase
     return pbRef.current
@@ -612,13 +612,11 @@ export function CommunitiesFeedScreen({ showHeader = true, aboveListComponent, h
 
   // Memoize the onPress callback to prevent recreation on every render
   const handleUserPress = useCallback((userName: string) => {
-    if (userName) {
-          // Ensure back returns to directories view
-          setReturnToDirectories?.(true)
-      // Use push to preserve native back swipe gesture
-      router.push(`/user/${userName}`)
-    }
-  }, [setReturnToDirectories])
+    if (!userName) return
+    setDirectoriesFilterTab('people')
+    setProfileNavIntent({ targetPagerIndex: 1, directoryFilter: 'people', source: 'directory' })
+    router.push(`/user/${userName}`)
+  }, [setDirectoriesFilterTab, setProfileNavIntent])
 
   // Community tile press handler not used in this screen
 

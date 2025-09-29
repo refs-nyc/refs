@@ -38,6 +38,7 @@ export default function SearchBottomSheet() {
     newRefSheetRef,
     setAddingNewRefTo,
     setAddRefPrompt,
+    setProfileNavIntent,
   } = useAppStore()
 
   useEffect(() => {
@@ -72,6 +73,7 @@ export default function SearchBottomSheet() {
 
   const stumble = async () => {
     const randomProfile = await getRandomUser()
+    setProfileNavIntent({ targetPagerIndex: 0, source: 'other' })
     router.push(`/user/${randomProfile.userName}`)
   }
 

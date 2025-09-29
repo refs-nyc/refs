@@ -27,6 +27,7 @@ export default function Referencers({
     currentRefId,
     referencersContext,
     setReferencersContext,
+    setProfileNavIntent,
   } = useAppStore()
 
   useEffect(() => {
@@ -129,6 +130,7 @@ export default function Referencers({
                   small={false}
                   onPress={() => {
                     referencersBottomSheetRef.current?.close()
+                    setProfileNavIntent({ targetPagerIndex: 0, source: 'other' })
                     router.push(`/user/${user.userName}`)
                   }}
                   style={{ paddingHorizontal: 0 }}

@@ -38,6 +38,7 @@ export function MessagesScreen({ conversationId }: { conversationId: string }) {
     getNewMessages,
     loadConversationMessages,
     conversationHydration,
+    setProfileNavIntent,
   } = useAppStore()
 
   const flatListRef = useRef<FlatList<Message>>(null)
@@ -239,7 +240,14 @@ export function MessagesScreen({ conversationId }: { conversationId: string }) {
             </Text>
           </View>
           {conversation.is_direct ? (
-            <Pressable onPress={() => router.push(`/user/${members[0].expand?.user.userName}`)}>
+            <Pressable
+              onPress={() => {
+                const profileUserName = members[0].expand?.user.userName
+                if (!profileUserName) return
+                setProfileNavIntent({ targetPagerIndex: 0, source: 'messages' })
+                router.push(`/user/${profileUserName}`)
+              }}
+            >
               <Avatar source={members[0].expand?.user.image} size={s.$4} />
             </Pressable>
           ) : (

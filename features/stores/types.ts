@@ -17,7 +17,10 @@ export type ProfileNavIntent = {
 export type ReferencersContext =
   | {
       type: 'community'
-      onAdd?: () => void
+      refId: string
+      title?: string
+      isSubscribed: boolean
+      onAdd?: () => Promise<void>
     }
   | null
 

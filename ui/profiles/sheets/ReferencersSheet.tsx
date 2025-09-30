@@ -4,6 +4,7 @@ import UserListItem from '@/ui/atoms/UserListItem'
 import { Button } from '@/ui/buttons/Button'
 import { YStack } from '@/ui/core/Stacks'
 import { pocketbase } from '@/features/pocketbase'
+import { ensureCommunityChat, joinCommunityChat } from '@/features/communities/communityChat'
 
 import { Heading } from '@/ui/typo/Heading'
 import BottomSheet, { BottomSheetBackdrop, BottomSheetScrollView } from '@gorhom/bottom-sheet'
@@ -21,6 +22,7 @@ export default function Referencers({
   const [refData, setRefData] = useState<any>({})
   const [isLoading, setIsLoading] = useState(false)
   const {
+    user,
     getItemsByRefIds,
     addRefSheetRef,
     setAddingRefId,
@@ -29,6 +31,7 @@ export default function Referencers({
     setReferencersContext,
     setProfileNavIntent,
   } = useAppStore()
+  const [actionLoading, setActionLoading] = useState(false)
 
   useEffect(() => {
     const getUsers = async () => {
@@ -49,6 +52,15 @@ export default function Referencers({
           const user = item.expand?.creator
           if (!user || userIds.has(user.id)) continue
           userIds.add(user.id)
+          users.push(user)
+        }
+
+        if (
+          referencersContext?.type === 'community' &&
+          referencersContext.isSubscribed &&
+          user?.id &&
+          !users.some((existing) => existing.id === user.id)
+        ) {
           users.push(user)
         }
 
@@ -74,7 +86,7 @@ export default function Referencers({
       }
     }
     getUsers()
-  }, [currentRefId])
+  }, [currentRefId, referencersContext, user?.id])
 
   const renderBackdrop = useCallback(
     (p: any) => <BottomSheetBackdrop {...p} disappearsOnIndex={-1} appearsOnIndex={0} />,
@@ -101,7 +113,7 @@ export default function Referencers({
         <View style={{ flexDirection: 'row', alignItems: 'flex-start', paddingBottom: s.$1 }}>
           <View style={{ flex: 1, minWidth: 0, justifyContent: 'flex-start' }}>
             <Heading tag="h1" style={{ lineHeight: 30 }}>
-              {refData?.title}
+              {refData?.title || referencersContext?.title}
             </Heading>
             <View style={{ height: 8 }} />
             <Text style={{ color: c.grey2 }}>{"Everyone who's added it."}</Text>
@@ -159,18 +171,46 @@ export default function Referencers({
           <Button
             style={{ paddingTop: s.$2, paddingBottom: s.$2, width: '100%' }}
             textStyle={{ fontSize: s.$1, fontWeight: 800 }}
-            onPress={() => {
+            onPress={async () => {
               if (referencersContext?.type === 'community') {
-                referencersContext.onAdd?.()
-                setReferencersContext(null)
-                referencersBottomSheetRef.current?.close()
+                if (!currentRefId || !user?.id || actionLoading) return
+                setActionLoading(true)
+                try {
+                  const { conversationId } = await ensureCommunityChat(currentRefId, {
+                    title: referencersContext.title || refData?.title,
+                  })
+                  if (!referencersContext.isSubscribed) {
+                    await referencersContext.onAdd?.()
+                  }
+                  await joinCommunityChat(conversationId, user.id)
+                  referencersBottomSheetRef.current?.close()
+                  setReferencersContext(null)
+                  router.push(`/messages/${conversationId}`)
+                } catch (error) {
+                  console.warn('Failed to open community chat', { currentRefId, error })
+                } finally {
+                  setActionLoading(false)
+                }
               } else {
                 setAddingRefId(currentRefId)
                 addRefSheetRef.current?.expand()
               }
             }}
+            disabled={actionLoading || (referencersContext?.type === 'community' && !user?.id)}
             variant="raised"
-            title={referencersContext?.type === 'community' ? 'Subscribe' : 'Add Ref +'}
+            title={
+              referencersContext?.type === 'community'
+                ? referencersContext.isSubscribed
+                  ? actionLoading
+                    ? 'Opening chat...'
+                    : 'Go to chat'
+                  : actionLoading
+                  ? 'Joining...'
+                  : 'Join the chat'
+                : actionLoading
+                ? 'Working...'
+                : 'Add Ref +'
+            }
           />
         </View>
       </View>

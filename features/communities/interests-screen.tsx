@@ -274,20 +274,29 @@ export function CommunityInterestsScreen() {
     }
   }, [user?.id])
 
+  const computeFilteredItems = useCallback(
+    (
+      tab: 'all' | 'new' | 'mine',
+      subs: Map<string, boolean>,
+      items: any[]
+    ): any[] => {
+      if (tab === 'mine') {
+        return items.filter((it) => subs.has(it.ref || it.id))
+      }
+
+      let list = items
+      if (tab === 'new') {
+        list = list.filter((it) => (subscriptionCounts.get(it.ref || it.id) || 0) <= 2)
+      }
+      return list
+    },
+    [subscriptionCounts]
+  )
+
   // Keep filteredItems in sync with current data and filter selection
   useEffect(() => {
-    const isMineView = contentTab === 'mine'
-    if (isMineView) {
-      const mine = communityItems.filter((it) => subscriptions.has(it.ref || it.id))
-      setFilteredItems(mine)
-    } else {
-      let rest = communityItems.filter((it) => !subscriptions.has(it.ref || it.id))
-      if (contentTab === 'new') {
-        rest = rest.filter((it) => (subscriptionCounts.get(it.ref || it.id) || 0) <= 2)
-      }
-      setFilteredItems(rest)
-    }
-  }, [communityItems, filterTab, subscriptions, contentTab, subscriptionCounts])
+    setFilteredItems(computeFilteredItems(contentTab, subscriptions, communityItems))
+  }, [communityItems, subscriptions, contentTab, computeFilteredItems])
 
   // Toggle subscription
   const toggleSubscription = useCallback(
@@ -334,13 +343,7 @@ export function CommunityInterestsScreen() {
           } catch {}
         })()
 
-        if (contentTab === 'mine') {
-          const mine = communityItems.filter((it) => next.has(it.ref || it.id))
-          setFilteredItems(mine)
-        } else {
-          const rest = communityItems.filter((it) => !next.has(it.ref || it.id))
-          setFilteredItems(rest)
-        }
+        setFilteredItems(computeFilteredItems(contentTab, next, communityItems))
 
         const duration = shouldSubscribe ? 2500 : 1500
         setTimeout(() => setJustAddedTitle(null), duration)
@@ -356,7 +359,7 @@ export function CommunityInterestsScreen() {
         return next
       })
     },
-    [user?.id, contentTab, communityItems]
+    [user?.id, contentTab, communityItems, computeFilteredItems]
   )
 
   // Open referencers sheet
@@ -389,9 +392,8 @@ export function CommunityInterestsScreen() {
               const nextTab = active ? null : tab
               setFilterTab(nextTab)
               if (nextTab === 'popular' || nextTab === null) {
-                const rest = communityItems.filter((it) => !subscriptions.has(it.ref || it.id))
-                setFilteredItems(rest)
                 setContentTab('all')
+                setFilteredItems(computeFilteredItems('all', subscriptions, communityItems))
               } else if (nextTab === 'people') {
                 // no-op for data; the flip animation reveals the directory view
               }
@@ -432,16 +434,7 @@ export function CommunityInterestsScreen() {
               onPress={() => {
                 setContentTab(t.key)
                 // Avoid flash by updating list immediately on tab change
-                if (t.key === 'mine') {
-                  const mine = communityItems.filter((it) => subscriptions.has(it.ref || it.id))
-                  setFilteredItems(mine)
-                } else {
-                  let rest = communityItems.filter((it) => !subscriptions.has(it.ref || it.id))
-                  if (t.key === 'new') {
-                    rest = rest.filter((it) => (subscriptionCounts.get(it.ref || it.id) || 0) <= 2)
-                  }
-                  setFilteredItems(rest)
-                }
+                setFilteredItems(computeFilteredItems(t.key, subscriptions, communityItems))
               }}
               style={{ marginRight: idx < tabs.length - 1 ? 16 : 0 }}
             >
@@ -563,7 +556,8 @@ export function CommunityInterestsScreen() {
               const count = subscriptionCounts.get(refId) || 0
               const emphasized = count <= 2
               const isMineView = contentTab === 'mine'
-              const showNewBadge = !isMineView && emphasized
+              const isSubscribed = subscriptions.has(refId)
+              const showNewBadge = !isSubscribed && !isMineView && emphasized
               return (
                 <Animated.View style={{ position: 'relative', marginBottom: (s.$075 as number) + 2, paddingRight: BADGE_OVERHANG + 2 }} onLayout={(e) => {
                   try {
@@ -586,14 +580,19 @@ export function CommunityInterestsScreen() {
                       } catch {}
                     }}
                     onPress={() => {
-                      if (isMineView) {
-                        openReferencers(item)
-                      } else {
-                        openReferencers(item, {
-                          type: 'community',
-                          onAdd: () => toggleSubscription(item, { forceSubscribe: true }),
-                        })
-                      }
+                      const interestRefId = item?.ref || item?.id
+                      if (!interestRefId) return
+                      const title = item?.expand?.ref?.title || item?.title || ''
+                      const isSubscribed = subscriptions.has(interestRefId)
+                      openReferencers(item, {
+                        type: 'community',
+                        refId: interestRefId,
+                        title,
+                        isSubscribed,
+                        onAdd: isSubscribed
+                          ? undefined
+                          : () => toggleSubscription(item, { forceSubscribe: true }),
+                      })
                     }}
                     style={{
                       backgroundColor: c.surface,
@@ -621,7 +620,7 @@ export function CommunityInterestsScreen() {
                     )}
                   </RNPressable>
                   </RNAnimated.View>
-                    {isMineView ? (
+                    {isSubscribed ? (
                     <Pressable onPress={() => {
                       const isOwner = item?.expand?.ref?.creator === user?.id
                       if (isOwner) {
@@ -643,8 +642,8 @@ export function CommunityInterestsScreen() {
                         <Text style={{ color: c.surface, fontWeight: '700', fontSize: (s.$09 as number) - 2 }}>-</Text>
                       </View>
                     </Pressable>
-                  ) : (
-                    showNewBadge && (
+                    ) : (
+                      showNewBadge && (
                       <View style={{ position: 'absolute', top: -2, right: 0, backgroundColor: c.accent, borderRadius: 14, paddingHorizontal: 8, paddingVertical: 4, zIndex: 4 }}>
                         <Text style={{ color: c.surface, fontSize: (s.$09 as number) - 2, fontWeight: '700' }}>New</Text>
                       </View>
@@ -658,7 +657,7 @@ export function CommunityInterestsScreen() {
 
         {filterTab !== 'people' && contentTab !== 'mine' && (
           <Animated.View
-            style={[frontStyle, { position: 'absolute', top: 12, right: -5, zIndex: 6 }]}
+            style={[frontStyle, { position: 'absolute', top: 17, right: -8, zIndex: 6 }]}
           >
             <OvalJaggedAddButton onPress={openAddInterestSheet} />
           </Animated.View>

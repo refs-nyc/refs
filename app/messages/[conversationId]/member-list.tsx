@@ -128,6 +128,7 @@ export default function MemberListScreen() {
       <ScrollView
         contentContainerStyle={{
           paddingHorizontal: s.$1 + 6,
+          paddingTop: 5,
           paddingBottom: Math.max(insets.bottom, s.$1) + (s.$3 as number),
         }}
         showsVerticalScrollIndicator={false}
@@ -187,19 +188,18 @@ export default function MemberListScreen() {
           onPress={confirmLeave}
           disabled={leaving}
           style={{
-            borderWidth: 1,
-            borderColor: c.grey1,
-            borderRadius: s.$075,
+            backgroundColor: c.surface2,
+            borderRadius: s.$1,
             paddingVertical: s.$09,
             alignItems: 'center',
             flexDirection: 'row',
             justifyContent: 'center',
             gap: s.$05,
-            opacity: leaving ? 0.6 : 1,
+            opacity: leaving ? 0.7 : 1,
           }}
         >
-          {leaving && <ActivityIndicator color={c.grey1} size="small" />}
-          <Text style={{ color: c.grey1, fontWeight: '600' }}>Leave chat</Text>
+          {leaving && <ActivityIndicator color={c.accent} size="small" />}
+          <Text style={{ color: c.accent, fontWeight: '700' }}>Leave chat</Text>
         </Pressable>
       </View>
     </View>

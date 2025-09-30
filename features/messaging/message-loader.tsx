@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
 import { pocketbase } from '@/features/pocketbase'
 import { useAppStore } from '@/features/stores'
 import {
@@ -11,6 +11,9 @@ import {
 } from '@/features/types'
 import { ConversationsResponse } from '@/features/pocketbase/pocketbase-types'
 import { simpleCache } from '@/features/cache/simpleCache'
+import { constructPinataUrl } from '@/features/pinata'
+import { s } from '@/features/style'
+import { PixelRatio } from 'react-native'
 
 type ConversationPreviewCacheEntry = {
   conversationId: string
@@ -38,7 +41,48 @@ export function MessagesInit() {
     setBackgroundLoading,
     setConversationPreview,
     setConversationUnreadCount,
+    getSignedUrl,
   } = useAppStore()
+
+  const prefetchedAvatarUrlsRef = useRef<Set<string>>(new Set())
+
+  const prefetchAvatarSignedUrls = useCallback(
+    (memberships: ExpandedMembership[]) => {
+      if (!memberships.length) return
+
+      const scale = PixelRatio.get()
+      const avatarDimension = Math.round(((s.$5 as number) || 52) * scale)
+
+      const requests: Promise<unknown>[] = []
+
+      memberships.forEach((membership) => {
+        const image = membership.expand?.user?.image
+        if (!image) return
+
+        const optimizedUrl = constructPinataUrl(image, {
+          width: avatarDimension,
+          height: avatarDimension,
+        })
+
+        if (!optimizedUrl) return
+        if (prefetchedAvatarUrlsRef.current.has(optimizedUrl)) return
+
+        prefetchedAvatarUrlsRef.current.add(optimizedUrl)
+
+        requests.push(
+          getSignedUrl(optimizedUrl).catch((error) => {
+            prefetchedAvatarUrlsRef.current.delete(optimizedUrl)
+            console.warn('prefetchAvatarSignedUrls failed', { optimizedUrl, error })
+          })
+        )
+      })
+
+      if (requests.length) {
+        Promise.allSettled(requests).catch(() => {})
+      }
+    },
+    [getSignedUrl]
+  )
 
   const fetchConversationPreview = useCallback(
     async (
@@ -103,24 +147,26 @@ export function MessagesInit() {
 
         if (cancelled) return
 
-        if (cachedConversations) {
-          setConversations(cachedConversations as unknown as Conversation[])
+          if (cachedConversations) {
+            setConversations(cachedConversations as unknown as Conversation[])
 
-          if (!cachedMemberships || cachedMemberships.length === 0) {
-            const flattened = cachedConversations.flatMap((conversation) =>
-              (conversation.expand?.memberships_via_conversation || []).map((membership) => ({
-                ...membership,
-                conversation: membership.conversation ?? conversation.id,
-              }))
-            )
-            if (flattened.length) {
-              setMemberships(flattened)
+            if (!cachedMemberships || cachedMemberships.length === 0) {
+              const flattened = cachedConversations.flatMap((conversation) =>
+                (conversation.expand?.memberships_via_conversation || []).map((membership) => ({
+                  ...membership,
+                  conversation: membership.conversation ?? conversation.id,
+                }))
+              )
+              if (flattened.length) {
+                setMemberships(flattened)
+                prefetchAvatarSignedUrls(flattened)
+              }
             }
           }
-        }
-        if (cachedMemberships && cachedMemberships.length) {
-          setMemberships(cachedMemberships)
-        }
+          if (cachedMemberships && cachedMemberships.length) {
+            setMemberships(cachedMemberships)
+            prefetchAvatarSignedUrls(cachedMemberships)
+          }
         if (cachedPreviews) {
           cachedPreviews.forEach((preview) => {
             setConversationPreview(preview.conversationId, preview.message, preview.unreadCount ?? 0)
@@ -198,6 +244,7 @@ export function MessagesInit() {
 
           if (flattenedMemberships.length) {
             setMemberships(flattenedMemberships)
+            prefetchAvatarSignedUrls(flattenedMemberships)
             void simpleCache.set('conversation_memberships', flattenedMemberships, user.id)
           }
 
@@ -350,6 +397,8 @@ export function MessagesInit() {
                 console.error(error)
               }
             })
+
+            prefetchAvatarSignedUrls(expandedMemberships)
 
             const singleIndex = new Map<string, ExpandedMembership>([
               [conversation.id, expandedMembership],

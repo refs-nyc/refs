@@ -16,8 +16,7 @@ export function ConversationsScreen() {
       const conversation = conversations[conversationId]
       const conversationMemberships = memberships[conversationId] || []
       const membership = conversationMemberships.find((m) => m.expand?.user.id === user?.id)
-      const hasMessages = (messagesPerConversation[conversationId] || []).length > 0
-      if (membership && !membership.archived && hasMessages) {
+      if (membership && !membership.archived) {
         result.push(conversation)
       }
     }
@@ -25,7 +24,12 @@ export function ConversationsScreen() {
     const getLastMessageDate = (conversation: Conversation) => {
       const conversationMessages = messagesPerConversation[conversation.id] || []
       const lastMessage = conversationMessages[0]
-      return lastMessage?.created ? new Date(lastMessage.created).getTime() : 0
+      if (lastMessage?.created) return new Date(lastMessage.created).getTime()
+      const updated = (conversation as any)?.updated
+      if (updated) return new Date(updated).getTime()
+      const created = (conversation as any)?.created
+      if (created) return new Date(created).getTime()
+      return 0
     }
 
     result.sort((a, b) => getLastMessageDate(b) - getLastMessageDate(a))

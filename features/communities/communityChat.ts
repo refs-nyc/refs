@@ -65,42 +65,43 @@ export const ensureCommunityChat = async (
 }
 
 export const joinCommunityChat = async (conversationId: string, userId: string): Promise<void> => {
+  let alreadyMember = false
   try {
     const existing = await pocketbase.collection('memberships').getList(1, 1, {
       filter: pocketbase.filter('conversation = {:cid} && user = {:uid}', { cid: conversationId, uid: userId }),
     })
-    if ((existing?.items?.length ?? 0) > 0) return
+    alreadyMember = (existing?.items?.length ?? 0) > 0
   } catch {}
 
-  await pocketbase.collection('memberships').create({ conversation: conversationId, user: userId })
+  if (!alreadyMember) {
+    await pocketbase.collection('memberships').create({ conversation: conversationId, user: userId })
+  }
   await refreshConversation(conversationId)
 
-  const now = new Date().toISOString()
-  useAppStore.setState((state) => {
-    const conversation = state.conversations[conversationId]
-    if (!conversation) {
-      return {}
-    }
-    return {
-      conversations: {
-        ...state.conversations,
-        [conversationId]: { ...conversation, updated: now },
-      },
-    }
-  })
-
+  const preview: Message = {
+    id: `preview-${conversationId}`,
+    conversation: conversationId,
+    sender: userId,
+    text: 'started a chat',
+    created: new Date().toISOString(),
+  }
+  const store = useAppStore.getState()
   try {
-    const preview: Message = {
-      id: `preview-${conversationId}`,
-      conversation: conversationId,
-      sender: userId,
-      text: '',
-      created: now,
-    }
-    useAppStore.getState().setConversationPreview(conversationId, preview, 0)
+    store.setConversationPreview(conversationId, preview, 0)
   } catch (error) {
     console.warn('Failed to set conversation preview after joining chat', error)
   }
+
+  // Bump to top by refreshing membership order and conversations map
+  useAppStore.setState((state) => {
+    const conversation = state.conversations[conversationId]
+    if (!conversation) return state
+
+    // Store the last bumped chat id for the conversation screen to prioritize
+    return {
+      lastInterestConversationId: conversationId,
+    } as Partial<typeof state & { lastInterestConversationId: string }>
+  })
 }
 
 export const leaveCommunityChat = async (conversationId: string, userId: string) => {

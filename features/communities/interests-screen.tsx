@@ -5,6 +5,7 @@ import { pocketbase } from '@/features/pocketbase'
 import BottomSheet from '@gorhom/bottom-sheet'
 import { CommunityFormSheet } from '@/ui/communities/CommunityFormSheet'
 import { useAppStore } from '@/features/stores'
+import { ensureCommunityChat, joinCommunityChat } from './communityChat'
 import type { ReferencersContext } from '@/features/stores/types'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { supabase } from '@/features/supabase/client'
@@ -16,6 +17,7 @@ import { OvalJaggedAddButton } from '@/ui/buttons/OvalJaggedAddButton'
 import { Avatar } from '@/ui/atoms/Avatar'
 import { SimplePinataImage } from '@/ui/images/SimplePinataImage'
 import { SearchLoadingSpinner } from '@/ui/atoms/SearchLoadingSpinner'
+import { router } from 'expo-router'
 
 const win = Dimensions.get('window')
 const BADGE_OVERHANG = 8
@@ -58,6 +60,7 @@ export function CommunityInterestsScreen() {
     setReferencersContext,
     directoriesFilterTab,
     setDirectoriesFilterTab,
+    setConversationPreview,
   } = useAppStore()
   const initialFilterTab =
     communityCache.filterTab !== null ? communityCache.filterTab : directoriesFilterTab ?? 'popular'
@@ -73,6 +76,9 @@ export function CommunityInterestsScreen() {
   )
   const [rowWidths, setRowWidths] = useState<Record<string, number>>({})
   const communityFormRef = useRef<BottomSheet>(null)
+  const [pendingChatSubscriptions, setPendingChatSubscriptions] = useState<
+    Array<{ refId: string; title: string }>
+  >([])
   // Subscriptions (local interim): map of refId -> true (persisted per-user via AsyncStorage)
   const [subscriptions, setSubscriptions] = useState<Map<string, boolean>>(
     () => new Map(communityCache.subscriptions)
@@ -250,6 +256,15 @@ export function CommunityInterestsScreen() {
         const mapped = refs.map(mapRefToItem)
         setCommunityItems(mapped)
         setFilteredItems(mapped)
+
+        if (pendingChatSubscriptions.length) {
+          pendingChatSubscriptions.forEach(({ refId, title }) => {
+            ensureCommunityChat(refId, { title })
+              .then(({ conversationId }) => joinCommunityChat(conversationId, user?.id || ''))
+              .catch((error) => console.warn('Failed to sync pending chat', error))
+          })
+          setPendingChatSubscriptions([])
+        }
       } catch (e) {
         console.warn('Failed to load community refs', e)
       }
@@ -305,11 +320,11 @@ export function CommunityInterestsScreen() {
       if (!refId || !user?.id) return
       const key = `community_subs:${user.id}:edge-patagonia`
       const { forceSubscribe } = options ?? {}
-      setSubscriptions((prev) => {
-        const isSubscribed = prev.has(refId)
-        const shouldSubscribe = forceSubscribe ? true : !isSubscribed
-        if (shouldSubscribe === isSubscribed) {
-          return prev
+    setSubscriptions((prev) => {
+      const isSubscribed = prev.has(refId)
+      const shouldSubscribe = forceSubscribe ? true : !isSubscribed
+      if (shouldSubscribe === isSubscribed) {
+        return prev
         }
 
         const next = new Map(prev)
@@ -329,18 +344,28 @@ export function CommunityInterestsScreen() {
         ;(async () => {
           try {
             const sb: any = (supabase as any).client
-            if (!sb) return
             if (shouldSubscribe) {
-              await sb
-                .from('community_subscriptions')
-                .upsert({ user_id: user.id, ref_id: refId, community: 'edge-patagonia' }, { onConflict: 'user_id,ref_id' })
+              const { conversationId } = await ensureCommunityChat(refId, {
+                title: item?.expand?.ref?.title || item?.title || 'Community chat',
+              })
+              await joinCommunityChat(conversationId, user.id)
+              setConversationPreview(conversationId, null, 0)
+              if (sb) {
+                await sb
+                  .from('community_subscriptions')
+                  .upsert({ user_id: user.id, ref_id: refId, community: 'edge-patagonia' }, { onConflict: 'user_id,ref_id' })
+              }
             } else {
-              await sb
-                .from('community_subscriptions')
-                .delete()
-                .match({ user_id: user.id, ref_id: refId })
+              if (sb) {
+                await sb
+                  .from('community_subscriptions')
+                  .delete()
+                  .match({ user_id: user.id, ref_id: refId })
+              }
             }
-          } catch {}
+          } catch (error) {
+            console.warn('toggleSubscription community chat sync failed', error)
+          }
         })()
 
         setFilteredItems(computeFilteredItems(contentTab, next, communityItems))
@@ -702,6 +727,7 @@ export function CommunityInterestsScreen() {
             updated: item.expand?.ref?.updated || item.updated,
             expand: { ref: { ...(item.expand?.ref || {}), image: '' } },
             __promptKind: 'interest',
+            title: (item as any).expand?.ref?.title || (item as any).title || '',
           } as any
           setCommunityItems((prev) => {
             if (prev.some((x) => x.id === promptLike.id)) return prev
@@ -738,6 +764,24 @@ export function CommunityInterestsScreen() {
                 } catch {}
                 return updated
               })
+
+              setSubscriptionCounts((prevCounts) => {
+                const next = new Map(prevCounts)
+                next.set(promptLike.ref, (next.get(promptLike.ref) || 0) + 1)
+                return next
+              })
+
+              ;(async () => {
+                try {
+                  const { conversationId } = await ensureCommunityChat(promptLike.ref, {
+                    title: promptLike.expand?.ref?.title || promptLike.title || 'Community chat',
+                  })
+                  await joinCommunityChat(conversationId, user.id)
+                  router.push(`/messages/${conversationId}`)
+                } catch (error) {
+                  console.warn('Failed to open chat after creating interest', error)
+                }
+              })()
             }
           } catch {}
 

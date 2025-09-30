@@ -10,7 +10,7 @@ import { Heading } from '@/ui/typo/Heading'
 import BottomSheet, { BottomSheetBackdrop, BottomSheetScrollView } from '@gorhom/bottom-sheet'
 import { router } from 'expo-router'
 import { useCallback, useEffect, useState } from 'react'
-import { Text, View, Image } from 'react-native'
+import { Text, View, Image, InteractionManager } from 'react-native'
 import { useAppStore } from '@/features/stores'
 
 export default function Referencers({
@@ -176,16 +176,19 @@ export default function Referencers({
                 if (!currentRefId || !user?.id || actionLoading) return
                 setActionLoading(true)
                 try {
+                  const desiredTitle = referencersContext.title || refData?.title || 'Community chat'
                   const { conversationId } = await ensureCommunityChat(currentRefId, {
-                    title: referencersContext.title || refData?.title,
+                    title: desiredTitle,
                   })
                   if (!referencersContext.isSubscribed) {
                     await referencersContext.onAdd?.()
                   }
-                  await joinCommunityChat(conversationId, user.id)
                   referencersBottomSheetRef.current?.close()
                   setReferencersContext(null)
-                  router.push(`/messages/${conversationId}`)
+                  await joinCommunityChat(conversationId, user.id)
+                  InteractionManager.runAfterInteractions(() => {
+                    router.push(`/messages/${conversationId}`)
+                  })
                 } catch (error) {
                   console.warn('Failed to open community chat', { currentRefId, error })
                 } finally {

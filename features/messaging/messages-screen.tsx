@@ -61,9 +61,26 @@ export function MessagesScreen({ conversationId }: { conversationId: string }) {
   const [headerHeight, setHeaderHeight] = useState(initialHeaderHeight)
 
   const conversation = conversations[conversationId]
-  if (!conversation || !user) return null
+  const membershipRecords = memberships[conversationId] || []
 
-  const members = memberships[conversationId].filter((m) => m.expand?.user.id !== user.id)
+  useEffect(() => {
+    if (!user) return
+    if (!conversation) {
+      router.replace('/messages')
+      return
+    }
+    if (!membershipRecords.length) return
+    const isMember = membershipRecords.some((m) => m.expand?.user.id === user.id)
+    if (!isMember) {
+      router.replace('/messages')
+    }
+  }, [conversation, membershipRecords, user?.id])
+
+  const members = useMemo(() => {
+    if (!user) return membershipRecords
+    return membershipRecords.filter((m) => m.expand?.user.id !== user.id)
+  }, [membershipRecords, user?.id])
+
   const conversationMessages = messagesPerConversation[conversationId] || []
   const highlightedMessage = conversationMessages.find((m) => m.id === highlightedMessageId)
   const hydrationState = conversationHydration[conversationId]
@@ -82,12 +99,13 @@ export function MessagesScreen({ conversationId }: { conversationId: string }) {
       if (member.expand?.user.id) acc[member.expand?.user.id] = colors[index]
       return acc
     }, {} as Record<string, string>)
-  }, [members.length])
+  }, [members])
 
   useEffect(() => {
     if (!conversationMessages.length) return
+    if (!user) return
     updateLastRead(conversationId, user.id)
-  }, [conversationId, conversationMessages.length, updateLastRead, user.id])
+  }, [conversationId, conversationMessages.length, updateLastRead, user?.id])
 
   useEffect(() => {
     const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow'
@@ -120,6 +138,10 @@ export function MessagesScreen({ conversationId }: { conversationId: string }) {
       } catch {}
     })
   }, [conversationId, conversationMessages.length])
+
+  const isDirectConversation = conversation?.is_direct ?? false
+
+  if (!conversation || !user) return null
 
   const bottomOffset = keyboardVisible ? keyboardHeight + 3 : insets.bottom + 15
 
@@ -177,8 +199,7 @@ export function MessagesScreen({ conversationId }: { conversationId: string }) {
     const parentMessageIndex = conversationMessages.findIndex((m) => m.id === item.replying_to)
     const parentMessage = item.replying_to ? conversationMessages[parentMessageIndex] : undefined
     const parentMessageSender = parentMessage
-      ? memberships[conversationId].find((member) => member.expand?.user.id === parentMessage.sender)
-          ?.expand?.user
+      ? membershipRecords.find((member) => member.expand?.user.id === parentMessage.sender)?.expand?.user
       : undefined
 
     return (
@@ -186,10 +207,9 @@ export function MessagesScreen({ conversationId }: { conversationId: string }) {
         key={item.id}
         message={item}
         sender={
-          memberships[conversationId].find((member) => member.expand?.user.id === item.sender)
-            ?.expand?.user || user
+          membershipRecords.find((member) => member.expand?.user.id === item.sender)?.expand?.user || user
         }
-        showSender={!conversation.is_direct}
+        showSender={!isDirectConversation}
         senderColor={colorMap[item.sender]}
         onReplyPress={onReplyPress}
         onExpandReactionsPress={onExpandReactionsPress}
@@ -202,6 +222,12 @@ export function MessagesScreen({ conversationId }: { conversationId: string }) {
         }}
       />
     )
+  }
+
+  const firstMemberUser = members[0]?.expand?.user
+
+  const handleBackPress = () => {
+    router.replace('/messages')
   }
 
   return (
@@ -220,7 +246,7 @@ export function MessagesScreen({ conversationId }: { conversationId: string }) {
             paddingHorizontal: headerPaddingHorizontal,
           }}
         >
-          <Pressable onPress={() => router.back()} style={{ paddingRight: 8, paddingVertical: s.$05 }}>
+          <Pressable onPress={handleBackPress} style={{ paddingRight: 8, paddingVertical: s.$05 }}>
             <Ionicons name="chevron-back" size={18} color={c.muted} />
           </Pressable>
           <View style={{ flex: 1, paddingHorizontal: s.$075 }}>
@@ -234,21 +260,22 @@ export function MessagesScreen({ conversationId }: { conversationId: string }) {
               }}
               numberOfLines={2}
             >
-              {conversation.is_direct
-                ? `${members[0].expand?.user.firstName ?? ''} ${members[0].expand?.user.lastName ?? ''}`.trim()
+              {isDirectConversation
+                ? `${firstMemberUser?.firstName ?? ''} ${firstMemberUser?.lastName ?? ''}`.trim() ||
+                  conversation.title
                 : conversation.title}
             </Text>
           </View>
-          {conversation.is_direct ? (
+          {isDirectConversation ? (
             <Pressable
               onPress={() => {
-                const profileUserName = members[0].expand?.user.userName
+                const profileUserName = firstMemberUser?.userName
                 if (!profileUserName) return
                 setProfileNavIntent({ targetPagerIndex: 0, source: 'messages' })
                 router.push(`/user/${profileUserName}`)
               }}
             >
-              <Avatar source={members[0].expand?.user.image} size={s.$4} />
+              <Avatar source={firstMemberUser?.image} size={s.$4} />
             </Pressable>
           ) : (
             <Link href={`/messages/${conversationId}/member-list`}>

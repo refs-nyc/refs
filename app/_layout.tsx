@@ -37,6 +37,7 @@ import { KeyboardProvider } from 'react-native-keyboard-controller'
 import { RegisterPushNotifications } from '@/ui/notifications/RegisterPushNotifications'
 import { MessagesInit } from '@/features/messaging/message-loader'
 import { DirectMessageComposer } from '@/features/messaging/DirectMessageComposer'
+import { GroupMessageComposer } from '@/features/messaging/GroupMessageComposer'
 import { useAppStore } from '@/features/stores'
 import { DirectoryKeepAlive } from '@/ui/navigation/DirectoryKeepAlive'
 
@@ -209,6 +210,7 @@ function RootLayoutNav() {
       {/* new ref sheet */}
       <NewRefSheet bottomSheetRef={newRefSheetRef} />
       <DirectMessageComposer />
+      <GroupMessageComposer />
     </ThemeProvider>
   )
 }

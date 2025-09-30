@@ -73,6 +73,7 @@ export type MessageSlice = {
 
   archiveConversation: (userId: string, conversationId: string) => Promise<void>
   unarchiveConversation: (userId: string, conversationId: string) => Promise<void>
+  leaveConversation: (conversationId: string, userId: string) => Promise<void>
 }
 
 export const createMessageSlice: StateCreator<StoreSlices, [], [], MessageSlice> = (set, get) => ({
@@ -543,6 +544,45 @@ export const createMessageSlice: StateCreator<StoreSlices, [], [], MessageSlice>
     const membership = get().memberships[conversationId].find((m) => m.expand?.user.id === userId)
     if (membership) {
       await pocketbase.collection('memberships').update(membership.id, { archived: false })
+    }
+  },
+  leaveConversation: async (conversationId: string, userId: string) => {
+    try {
+      const membershipsForConversation = get().memberships[conversationId] || []
+      const membership = membershipsForConversation.find((m) => m.expand?.user.id === userId)
+      if (!membership?.id) return
+
+      await pocketbase.collection('memberships').delete(membership.id)
+
+      set((state) => {
+        const nextMemberships = { ...state.memberships }
+        const existingMemberships = nextMemberships[conversationId] || []
+        const filteredMemberships = existingMemberships.filter((m) => m.id !== membership.id)
+        if (filteredMemberships.length) {
+          nextMemberships[conversationId] = filteredMemberships
+        } else {
+          delete nextMemberships[conversationId]
+        }
+
+        const omitKey = <T extends Record<string, any>>(collection: T): T => {
+          const { [conversationId]: _removed, ...rest } = collection
+          return rest as T
+        }
+
+        return {
+          memberships: nextMemberships,
+          conversations: omitKey(state.conversations),
+          messagesPerConversation: omitKey(state.messagesPerConversation),
+          conversationHydration: omitKey(state.conversationHydration),
+          conversationLoading: omitKey(state.conversationLoading),
+          conversationUnreadCounts: omitKey(state.conversationUnreadCounts),
+          oldestLoadedMessageDate: omitKey(state.oldestLoadedMessageDate),
+          firstMessageDate: omitKey(state.firstMessageDate),
+        }
+      })
+    } catch (error) {
+      console.warn('leaveConversation failed', { conversationId, userId, error })
+      throw error
     }
   },
 })

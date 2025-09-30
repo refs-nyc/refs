@@ -6,12 +6,18 @@ import { useAppStore } from '@/features/stores'
 import UserListItem from '@/ui/atoms/UserListItem'
 import { s, c } from '@/features/style'
 import { Ionicons } from '@expo/vector-icons'
+import { router } from 'expo-router'
+import type { Profile } from '@/features/types'
 
 export function WantToMeetScreen() {
-  const { saves, removeSave, user, openDMComposer } = useAppStore()
-  const savedUsers = useMemo(() => saves.map((s) => s.expand.user), [saves])
+  const { saves, removeSave, user, openDMComposer, openGroupComposer, setProfileNavIntent } =
+    useAppStore()
+  const savedUsers = useMemo<Profile[]>(() => saves.map((s) => s.expand.user as Profile), [saves])
   const [selected, setSelected] = useState<Record<string, boolean>>({})
-  const selectedUsers = useMemo(() => savedUsers.filter((u: any) => selected[u.id]), [selected, savedUsers])
+  const selectedUsers = useMemo(
+    () => savedUsers.filter((u) => (u?.id ? selected[u.id] : false)),
+    [selected, savedUsers]
+  )
   const insets = useSafeAreaInsets()
 
   const [toastMessage, setToastMessage] = useState<string | null>(null)
@@ -23,9 +29,9 @@ export function WantToMeetScreen() {
     }
   }, [])
 
-  const showToast = (name: string) => {
+  const showToast = (message: string) => {
     if (toastTimerRef.current) clearTimeout(toastTimerRef.current)
-    setToastMessage(`Message sent to ${name}`)
+    setToastMessage(message)
     toastTimerRef.current = setTimeout(() => setToastMessage(null), 3000)
   }
 
@@ -35,7 +41,18 @@ export function WantToMeetScreen() {
     openDMComposer(target, {
       onSuccess: (profile) => {
         const displayName = profile.firstName || profile.name || 'user'
-        showToast(displayName)
+        showToast(`Message sent to ${displayName}`)
+      },
+    })
+  }
+
+  const handleGroupPress = () => {
+    if (selectedUsers.length < 2) return
+    openGroupComposer(selectedUsers, {
+      onSuccess: ({ title }) => {
+        setSelected({})
+        const displayTitle = title?.trim() || 'Group chat'
+        showToast(`Group chat "${displayTitle}" created`)
       },
     })
   }
@@ -59,7 +76,7 @@ export function WantToMeetScreen() {
       {/* Saved list */}
       <View style={{ flex: 1, paddingHorizontal: s.$1 + 6 }}>
         <ScrollView contentContainerStyle={{ paddingTop: s.$075, paddingBottom: s.$10 }}>
-          {savedUsers.map((u: any, idx: number) => {
+          {savedUsers.map((u, idx) => {
             const isSelected = !!selected[u.id]
             const matchingSave = saves.find((s) => s.user === u.id || s.expand?.user?.id === u.id)
 
@@ -75,38 +92,77 @@ export function WantToMeetScreen() {
                     paddingRight: isSelected ? (s.$3 as number) : undefined,
                   }}
                 />
-                {isSelected && matchingSave?.id && (
-                  <Pressable
-                    onPress={async (event) => {
-                      event.stopPropagation()
-                      try {
-                        await removeSave(matchingSave.id)
-                      } catch (e) {}
-                    }}
+                {isSelected && (
+                  <View
                     style={{
                       position: 'absolute',
                       right: -4,
                       top: -8,
-                      justifyContent: 'center',
+                      flexDirection: 'row',
                       alignItems: 'center',
-                      padding: 4,
+                      gap: s.$05,
                     }}
                   >
-                    <View
-                      style={{
-                        width: s.$2 as number,
-                        height: s.$2 as number,
-                        borderRadius: (s.$2 as number) / 2,
-                        backgroundColor: c.surface,
-                        borderWidth: 1,
-                        borderColor: c.surface,
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      }}
-                    >
-                      <Ionicons name="close" size={s.$1 as number} color={c.grey1} />
-                    </View>
-                  </Pressable>
+                    {u.userName && (
+                      <Pressable
+                        onPress={(event) => {
+                          event.stopPropagation()
+                          setProfileNavIntent({ targetPagerIndex: 0, source: 'wantToMeet' })
+                          router.push(`/user/${u.userName}`)
+                        }}
+                        style={{
+                          justifyContent: 'center',
+                          alignItems: 'center',
+                          padding: 4,
+                        }}
+                      >
+                        <View
+                          style={{
+                            width: s.$2 as number,
+                            height: s.$2 as number,
+                            borderRadius: (s.$2 as number) / 2,
+                            backgroundColor: c.surface,
+                            borderWidth: 1,
+                            borderColor: c.grey1,
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                          }}
+                        >
+                          <Ionicons name="arrow-forward" size={s.$1 as number} color={c.grey1} />
+                        </View>
+                      </Pressable>
+                    )}
+                    {matchingSave?.id && (
+                      <Pressable
+                        onPress={async (event) => {
+                          event.stopPropagation()
+                          try {
+                            await removeSave(matchingSave.id)
+                          } catch (e) {}
+                        }}
+                        style={{
+                          justifyContent: 'center',
+                          alignItems: 'center',
+                          padding: 4,
+                        }}
+                      >
+                        <View
+                          style={{
+                            width: s.$2 as number,
+                            height: s.$2 as number,
+                            borderRadius: (s.$2 as number) / 2,
+                            backgroundColor: c.surface,
+                            borderWidth: 1,
+                            borderColor: c.surface,
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                          }}
+                        >
+                          <Ionicons name="close" size={s.$1 as number} color={c.grey1} />
+                        </View>
+                      </Pressable>
+                    )}
+                  </View>
                 )}
               </View>
             )
@@ -131,11 +187,15 @@ export function WantToMeetScreen() {
               <Text style={{ color: c.white }}>DM</Text>
             </View>
           </Pressable>
-          <View style={{ flex: 1, opacity: selectedUsers.length >= 1 ? 1 : 0.5 }}>
+          <Pressable
+            disabled={selectedUsers.length < 2}
+            onPress={handleGroupPress}
+            style={{ flex: 1, opacity: selectedUsers.length >= 2 ? 1 : 0.5 }}
+          >
             <View style={{ borderWidth: 1, borderColor: c.olive, borderRadius: s.$075, paddingVertical: s.$075, alignItems: 'center' }}>
               <Text style={{ color: c.olive }}>+ Group</Text>
             </View>
-          </View>
+          </Pressable>
         </View>
       </View>
 

@@ -179,4 +179,25 @@ export const createUISlice: StateCreator<StoreSlices, [], [], UISlice> = (set, g
       dmComposerOnSuccess: null,
     }))
   },
+  groupComposerTargets: [],
+  groupComposerOnSuccess: null,
+  openGroupComposer: (targets, options) => {
+    const deduped = targets.reduce<Profile[]>((acc, target) => {
+      if (!target?.id) return acc
+      if (acc.some((existing) => existing.id === target.id)) return acc
+      acc.push(target)
+      return acc
+    }, [])
+
+    set(() => ({
+      groupComposerTargets: deduped,
+      groupComposerOnSuccess: options?.onSuccess ?? null,
+    }))
+  },
+  closeGroupComposer: () => {
+    set(() => ({
+      groupComposerTargets: [],
+      groupComposerOnSuccess: null,
+    }))
+  },
 })

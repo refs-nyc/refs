@@ -11,7 +11,7 @@ import React from 'react'
 export type ProfileNavIntent = {
   targetPagerIndex: 0 | 1 | 2
   directoryFilter?: 'popular' | 'people'
-  source?: 'directory' | 'wantToMeet' | 'messages' | 'other'
+  source?: 'directory' | 'wantToMeet' | 'messages' | 'other' | 'back-fallback'
 }
 
 export type ReferencersContext =
@@ -90,6 +90,12 @@ export type UISlice = {
   dmComposerOnSuccess: ((target: Profile) => void) | null
   openDMComposer: (target: Profile, options?: { onSuccess?: (target: Profile) => void; conversationId?: string }) => void
   closeDMComposer: () => void
+  groupComposerTargets: Profile[]
+  groupComposerOnSuccess: ((context: { conversationId: string; title: string }) => void) | null
+  openGroupComposer: (targets: Profile[], options?: {
+    onSuccess?: (context: { conversationId: string; title: string }) => void
+  }) => void
+  closeGroupComposer: () => void
 }
 
 export type StoreSlices = BackdropSlice &

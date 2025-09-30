@@ -24,6 +24,7 @@ const PEOPLE_TABS_FADE_WIDTH = 60
 const PEOPLE_SEARCH_BUTTON_RIGHT_OFFSET = -10
 const PEOPLE_SEARCH_BUTTON_TOP = -6
 const PEOPLE_SEARCH_CONTENT_PADDING = 85
+const PEOPLE_LEFT_INSET = 29
 
 type CommunityCacheState = {
   items: any[]
@@ -464,8 +465,8 @@ export function CommunityInterestsScreen() {
     const [activeTab, setActiveTab] = useState<string>('All')
     const tabs = ['All', 'Bio', 'Crypto', 'Longevity', 'Tennis', 'New Cities']
     return (
-      <View style={{ paddingTop: 28, marginBottom: 10 }}>
-        <View style={{ position: 'relative', overflow: 'hidden', paddingLeft: s.$1 + 6 }}>
+        <View style={{ paddingTop: 28, marginBottom: 10 }}>
+        <View style={{ position: 'relative', overflow: 'hidden', paddingLeft: PEOPLE_LEFT_INSET-27 }}>
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
@@ -665,10 +666,11 @@ export function CommunityInterestsScreen() {
 
         {/* BACK: People/Directory placeholder */}
         <Animated.View style={[{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }, backStyle]} pointerEvents={filterTab === 'people' ? 'auto' as any : 'none' as any}>
-          <View style={{ flex: 1 }}>
+          <View style={{ flex: 1, paddingLeft: PEOPLE_LEFT_INSET }}>
             <DirectoryScreen
               showHeader={false}
               hideInterestChips={true}
+              embedded={true}
               aboveListComponent={<PeopleTabs showSearchButton={filterTab === 'people'} />}
             />
           </View>

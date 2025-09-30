@@ -39,7 +39,7 @@ type FeedUser = {
 }
 
 // Memoized row component to prevent unnecessary re-renders
-const DirectoryRow = React.memo(({ u, onPress, userInterestMap, refTitleMap, currentUserId }: { u: FeedUser; onPress: () => void; userInterestMap: Map<string, Set<string>>; refTitleMap: Map<string, string>; currentUserId?: string }) => {
+const DirectoryRow = React.memo(({ u, onPress, userInterestMap, refTitleMap, currentUserId, innerLeftPadding }: { u: FeedUser; onPress: () => void; userInterestMap: Map<string, Set<string>>; refTitleMap: Map<string, string>; currentUserId?: string; innerLeftPadding?: number }) => {
   // Compute overlap with current user (by ref ids in this community)
   const overlapLabel = useMemo(() => {
     if (!currentUserId) return null
@@ -66,7 +66,8 @@ const DirectoryRow = React.memo(({ u, onPress, userInterestMap, refTitleMap, cur
         backgroundColor: c.surface,
         borderRadius: s.$1,
         paddingVertical: s.$1,
-        paddingHorizontal: s.$08,
+        paddingLeft: innerLeftPadding ?? (s.$08 as number),
+        paddingRight: s.$08,
         marginBottom: s.$075,
         flexDirection: 'row',
         alignItems: 'center',
@@ -150,7 +151,7 @@ const win = Dimensions.get('window')
 const BASE_DIRECTORY_LIST_HEIGHT = Math.max(360, Math.min(560, win.height - 220))
 const DIRECTORY_LIST_HEIGHT = Math.max(200, BASE_DIRECTORY_LIST_HEIGHT - 50)
 
-export function CommunitiesFeedScreen({ showHeader = true, aboveListComponent, hideInterestChips = false }: { showHeader?: boolean; aboveListComponent?: React.ReactNode; hideInterestChips?: boolean }) {
+export function CommunitiesFeedScreen({ showHeader = true, aboveListComponent, hideInterestChips = false, embedded = false }: { showHeader?: boolean; aboveListComponent?: React.ReactNode; hideInterestChips?: boolean; embedded?: boolean }) {
   // Directories screen: paginated list of all users
   const [users, setUsers] = useState<FeedUser[]>([])
   // const [communityItems, setCommunityItems] = useState<any[]>([])
@@ -628,6 +629,7 @@ export function CommunitiesFeedScreen({ showHeader = true, aboveListComponent, h
         userInterestMap={userInterestMap}
         refTitleMap={refTitleMap}
         currentUserId={user?.id}
+        innerLeftPadding={0}
       />
     )
   }, [handleUserPress])
@@ -678,7 +680,7 @@ export function CommunitiesFeedScreen({ showHeader = true, aboveListComponent, h
 
             {/* Optional menu directly above the directory list */}
             {aboveListComponent ? (
-              <View style={{ paddingHorizontal: s.$1 + 6, marginBottom: 10 }}>
+              <View style={{ paddingHorizontal: embedded ? 0 : (s.$1 as number) + 6, marginBottom: 10 }}>
                 {aboveListComponent}
               </View>
             ) : null}
@@ -686,7 +688,7 @@ export function CommunitiesFeedScreen({ showHeader = true, aboveListComponent, h
             {/* Natural scrolling list without surface2 backdrop */}
             <Animated.View entering={FadeIn.duration(120)} exiting={FadeOut.duration(120)} key={`list-${selectedInterests.join(',')}-${displayedUsers.length}`}> 
               <FlatList
-                contentContainerStyle={{ paddingLeft: (s.$1 as number) + 6, paddingRight: (s.$1 as number) + 6, paddingTop: 5, paddingBottom: 150 }}
+                contentContainerStyle={{ paddingLeft: embedded ? 0 : (s.$1 as number) + 6, paddingRight: embedded ? 0 : (s.$1 as number) + 6, paddingTop: 5, paddingBottom: 150 }}
                 data={displayedUsers}
                 keyExtractor={(u) => u.id}
                 renderItem={renderItem}

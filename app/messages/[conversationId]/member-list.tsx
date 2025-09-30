@@ -100,22 +100,28 @@ export default function MemberListScreen() {
           <View style={{ flex: 1 }}>
             <Text
               style={{
-                color: c.prompt,
-                fontSize: (s.$09 as number) + 2,
-                fontWeight: '700',
+                color: c.grey2,
+                fontSize: s.$09,
+                fontWeight: '600',
+                textAlign: 'center',
+                letterSpacing: 0.2,
+              }}
+            >
+              Members
+            </Text>
+            <Text
+              style={{
+                color: c.grey2,
+                fontSize: s.$09,
+                fontWeight: '600',
                 textAlign: 'center',
               }}
               numberOfLines={2}
             >
-              Members
+              {title}
             </Text>
           </View>
           <View style={{ width: 32 }} />
-        </View>
-        <View style={{ paddingHorizontal: s.$1 + 6, paddingBottom: s.$05 }}>
-          <Text style={{ color: c.grey1, fontSize: s.$09 }} numberOfLines={2}>
-            {title}
-          </Text>
         </View>
       </SafeAreaView>
 

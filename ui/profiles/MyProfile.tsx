@@ -1083,8 +1083,8 @@ export const MyProfile = ({ userName }: { userName: string }) => {
                 }}
                 style={{
                   position: 'absolute',
-                  right: s.$075,
-                  bottom: s.$075-65,
+                  right: 7,
+                  bottom: -65,
                   zIndex: 5,
                   opacity: hasProfile && !searchMode ? 1 : 0,
                 }}

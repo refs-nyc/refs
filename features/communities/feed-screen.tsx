@@ -10,6 +10,7 @@ import { Grid } from '@/ui/grid/Grid'
 import { Image } from 'expo-image'
 import { pocketbase } from '@/features/pocketbase'
 import { useAppStore } from '@/features/stores'
+import type { DirectoryUser } from '@/features/stores/users'
 import { simpleCache } from '@/features/cache/simpleCache'
 import Svg, { Circle } from 'react-native-svg'
 import AsyncStorage from '@react-native-async-storage/async-storage'
@@ -153,7 +154,14 @@ const DIRECTORY_LIST_HEIGHT = Math.max(200, BASE_DIRECTORY_LIST_HEIGHT - 50)
 
 export function CommunitiesFeedScreen({ showHeader = true, aboveListComponent, hideInterestChips = false, embedded = false }: { showHeader?: boolean; aboveListComponent?: React.ReactNode; hideInterestChips?: boolean; embedded?: boolean }) {
   // Directories screen: paginated list of all users
-  const [users, setUsers] = useState<FeedUser[]>([])
+  const {
+    setProfileNavIntent,
+    setDirectoriesFilterTab,
+    user,
+    directoryUsers,
+    setDirectoryUsers,
+  } = useAppStore()
+  const [users, setUsers] = useState<FeedUser[]>(() => (directoryUsers as FeedUser[]) || [])
   // const [communityItems, setCommunityItems] = useState<any[]>([])
   // const communityFormRef = useRef<BottomSheet>(null)
   const [outerScrollEnabled, setOuterScrollEnabled] = useState(true)
@@ -167,18 +175,31 @@ export function CommunitiesFeedScreen({ showHeader = true, aboveListComponent, h
   const [hasInitialData, setHasInitialData] = useState(false)
   const perPage = 50 // Increased from 30 to show more entries
   const pbRef = useRef<typeof pocketbase | null>(null)
-  const { setProfileNavIntent, setDirectoriesFilterTab, user } = useAppStore()
   const getPB = () => {
     if (!pbRef.current) pbRef.current = pocketbase
     return pbRef.current
   }
+
+  const updateUsers = useCallback(
+    (value: FeedUser[] | ((prev: FeedUser[]) => FeedUser[])) => {
+      setUsers((prev) => {
+        const next =
+          typeof value === 'function'
+            ? (value as (prev: FeedUser[]) => FeedUser[])(prev)
+            : value
+        setDirectoryUsers(next as DirectoryUser[])
+        return next
+      })
+    },
+    [setDirectoryUsers]
+  )
 
   const mapUsersWithItems = useCallback((userRecords: any[], itemsByCreator: Map<string, any[]>) => {
     const result: (FeedUser & { _latest?: number })[] = []
     for (const r of userRecords) {
       const creatorId = r.id
       const creatorItems = itemsByCreator.get(creatorId) || []
-      if (creatorItems.length === 0) continue // require at least 1 grid item
+      if (creatorItems.length === 0) continue
       const images = creatorItems
         .slice(0, 3)
         .map((it) => it?.image || it?.expand?.ref?.image)
@@ -230,7 +251,7 @@ export function CommunitiesFeedScreen({ showHeader = true, aboveListComponent, h
         const cachedUsers = await simpleCache.get('directory_users')
         if (cachedUsers) {
           console.log('📖 Using cached directory users')
-          setUsers(cachedUsers as any[])
+          updateUsers(cachedUsers as FeedUser[])
           setHasMore(true) // Assume there are more pages
           setPage(1)
           setIsLoading(false)
@@ -412,7 +433,7 @@ export function CommunitiesFeedScreen({ showHeader = true, aboveListComponent, h
       }
       
       const newUsers = targetPage === 1 ? filteredMapped : [...users, ...filteredMapped]
-      setUsers(newUsers)
+      updateUsers(newUsers)
       // Allow loading all pages; don't artificially cap at 50
       setHasMore(res.page < res.totalPages)
       setPage(res.page)
@@ -443,7 +464,7 @@ export function CommunitiesFeedScreen({ showHeader = true, aboveListComponent, h
         const cachedUsers = await simpleCache.get('directory_users')
         if (mounted && cachedUsers && Array.isArray(cachedUsers) && cachedUsers.length > 0) {
           console.log('📖 Using cached directory users')
-          setUsers(cachedUsers as FeedUser[])
+          updateUsers(cachedUsers as FeedUser[])
           setHasInitialData(true)
         }
 
@@ -495,7 +516,7 @@ export function CommunitiesFeedScreen({ showHeader = true, aboveListComponent, h
             }
 
             if (mounted) {
-              setUsers(prev => {
+              updateUsers(prev => {
                 const prevSeen = new Set(prev.map(p => p.id))
                 const appended = mapped.filter(m => !prevSeen.has(m.id))
                 return prev.length === 0 ? mapped : [...prev, ...appended]
@@ -509,7 +530,7 @@ export function CommunitiesFeedScreen({ showHeader = true, aboveListComponent, h
           await new Promise((r) => setTimeout(r, 0))
         }
 
-        // Cache the complete directory list
+        // Cache the complete directory list once when load finishes
         simpleCache.set('directory_users', aggregated).catch(() => {})
         if (mounted) {
           setHasMore(false)

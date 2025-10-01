@@ -5,10 +5,22 @@ import { ClientResponseError } from 'pocketbase'
 import type { StoreSlices } from './types'
 import { pocketbase } from '../pocketbase'
 
+export type DirectoryUser = {
+  id: string
+  userName: string
+  name: string
+  neighborhood: string
+  avatar_url: string
+  topRefs: string[]
+  _latest?: number
+}
+
 export type UserSlice = {
   stagedUser: Partial<Profile> & { password?: string; passwordConfirm?: string }
   user: Profile | null
   isInitialized: boolean
+  directoryUsers: DirectoryUser[]
+  setDirectoryUsers: (users: DirectoryUser[]) => void
   register: () => Promise<ExpandedProfile>
   updateUser: (fields: Partial<Profile>) => Promise<Profile>
   updateStagedUser: (formFields: Partial<Profile> & { password?: string; passwordConfirm?: string }) => void
@@ -26,6 +38,10 @@ export const createUserSlice: StateCreator<StoreSlices, [], [], UserSlice> = (se
   stagedUser: {},
   user: null, // user is ALWAYS the user of the app, this is only set if the user is logged in
   isInitialized: false,
+  directoryUsers: [],
+  setDirectoryUsers: (users) => {
+    set(() => ({ directoryUsers: users }))
+  },
   //
   //
   //

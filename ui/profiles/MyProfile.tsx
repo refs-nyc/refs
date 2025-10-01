@@ -6,7 +6,7 @@ import { s, c } from '@/features/style'
 import BottomSheet, { BottomSheetBackdrop, BottomSheetView } from '@gorhom/bottom-sheet'
 import { useShareIntentContext } from 'expo-share-intent'
 import { useEffect, useRef, useState, useMemo, useCallback } from 'react'
-import { ScrollView, View, Text, Pressable, Keyboard, InteractionManager } from 'react-native'
+import { ScrollView, View, Text, Pressable, Keyboard } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import * as ImagePicker from 'expo-image-picker'
 import FloatingJaggedButton from '../buttons/FloatingJaggedButton'
@@ -98,7 +98,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
   const [gridItems, setGridItems] = useState<ExpandedItem[]>(cachedEntry?.gridItems ?? [])
   const [backlogItems, setBacklogItems] = useState<ExpandedItem[]>(cachedEntry?.backlogItems ?? [])
   const [loading, setLoading] = useState(!cachedEntry)
-  const [gridHydrated, setGridHydrated] = useState(Boolean(cachedEntry?.gridItems?.length))
+  const [promptsReady, setPromptsReady] = useState(Boolean(cachedEntry?.gridItems?.length))
   const [focusReady, setFocusReady] = useState(Boolean(cachedEntry))
   const [removingItem, setRemovingItem] = useState<ExpandedItem | null>(null)
 
@@ -301,19 +301,19 @@ export const MyProfile = ({ userName }: { userName: string }) => {
     null
   )
 
-  const showGrid = hasProfile && gridHydrated
-  const allowPromptPlaceholders =
+  const showGrid = hasProfile
+  const promptDisplayReady =
     showGrid &&
+    promptsReady &&
     !searchMode &&
     !isSearchResultsSheetOpen &&
-    !loading &&
+    !loading
+  const allowPromptPlaceholders =
+    promptDisplayReady &&
     displayGridItems.length < GRID_CAPACITY
   const showPromptChips =
     ownProfile &&
-    showGrid &&
-    !searchMode &&
-    !isSearchResultsSheetOpen &&
-    !loading &&
+    promptDisplayReady &&
     displayGridItems.length < GRID_CAPACITY
 
   const handleShufflePromptSuggestions = useCallback(() => {
@@ -327,6 +327,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
 
   useEffect(() => {
     if (!showGrid) return
+    if (!promptsReady && displayGridItems.length === 0) return
 
     if (gridAnimationPlayedRef.current) {
       gridFade.setValue(1)
@@ -350,7 +351,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
         useNativeDriver: true,
       }),
     ]).start()
-  }, [showGrid, gridFade, gridScale, userName])
+  }, [showGrid, gridFade, gridScale, userName, promptsReady, displayGridItems.length])
 
   const gridContent = showGrid ? (
     <RNAnimated.View
@@ -518,10 +519,6 @@ export const MyProfile = ({ userName }: { userName: string }) => {
 
   // Simple cache to avoid refetching the same data
   // Memoized grid items map for O(1) lookup
-  const markGridReady = useCallback(() => {
-    requestAnimationFrame(() => setGridHydrated(true))
-  }, [])
-
   const gridItemsMap = useMemo(() => new Map(gridItems.map((item) => [item.id, item])), [gridItems])
 
   // Memoized selectedRefItems computation for better performance
@@ -560,7 +557,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
     const hadMemory = profileMemoryCache.has(userName)
     if (!hadMemory) {
       setLoading(true)
-      setGridHydrated(false)
+      setPromptsReady(false)
     }
 
     const storeState = useAppStore.getState()
@@ -573,8 +570,8 @@ export const MyProfile = ({ userName }: { userName: string }) => {
       setGridItems(memoryCached.gridItems)
       setBacklogItems(memoryCached.backlogItems)
       setLoading(false)
+      setPromptsReady(memoryCached.gridItems.length > 0)
       storeState.setGridItemCount(memoryCached.gridItems.length)
-      markGridReady()
     }
 
     const hydrateFromCache = async (userId?: string) => {
@@ -594,7 +591,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
       setGridItems(cachedGridItems as ExpandedItem[])
       setBacklogItems(cachedBacklogItems as ExpandedItem[])
       setLoading(false)
-      markGridReady()
+      setPromptsReady((cachedGridItems as ExpandedItem[]).length > 0)
       storeState.setGridItemCount((cachedGridItems as ExpandedItem[]).length)
       profileMemoryCache.set(userName, {
         profile: cachedProfile as Profile,
@@ -620,7 +617,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
         setGridItems(gridItemsRecord)
         setBacklogItems(backlogItemsRecord as ExpandedItem[])
         setLoading(false)
-        markGridReady()
+        setPromptsReady(true)
         useAppStore.getState().setGridItemCount(gridItemsRecord.length)
 
         profileMemoryCache.set(userName, {
@@ -650,7 +647,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
         console.error('Failed to refresh grid:', error)
         if (!cacheHydrated) {
           setLoading(false)
-          markGridReady()
+          setPromptsReady(true)
         }
       }
     }
@@ -745,19 +742,25 @@ export const MyProfile = ({ userName }: { userName: string }) => {
 
   useEffect(() => {
     let cancelled = false
+    let focusTimer: ReturnType<typeof setTimeout> | null = null
     // Make gesture controls available immediately
     setFocusReady(true)
 
     const init = async () => {
       try {
         await refreshGrid(userName)
+        if (cancelled) return
 
         const returningFromSearch = cachedSearchResults.length > 0 || isSearchResultsSheetOpen || searchMode
         if (returningFromSearch) {
           return
         }
         if (justOnboarded) {
-          setTimeout(() => setFocusReady(true), 2500)
+          focusTimer = setTimeout(() => {
+            if (!cancelled) {
+              setFocusReady(true)
+            }
+          }, 2500)
           setJustOnboarded(false)
         }
       } catch (error) {
@@ -765,15 +768,13 @@ export const MyProfile = ({ userName }: { userName: string }) => {
       }
     }
 
-    const handle = InteractionManager.runAfterInteractions(() => {
-      if (!cancelled) {
-        void init()
-      }
-    })
+    void init()
 
     return () => {
       cancelled = true
-      handle.cancel()
+      if (focusTimer) {
+        clearTimeout(focusTimer)
+      }
     }
   }, [userName, cachedSearchResults.length, isSearchResultsSheetOpen, searchMode, justOnboarded, setJustOnboarded])
 
@@ -812,7 +813,12 @@ export const MyProfile = ({ userName }: { userName: string }) => {
 
   // Animate prompt text with explicit schedule: L1 (3s) → pause (2s) → L2 (3s) → pause (2s) → repeat
   useEffect(() => {
-    const promptsActive = displayGridItems.length < GRID_CAPACITY && !searchMode && !isSearchResultsSheetOpen && !loading
+    const promptsActive =
+      displayGridItems.length < GRID_CAPACITY &&
+      !searchMode &&
+      !isSearchResultsSheetOpen &&
+      !loading &&
+      promptsReady
     const canShowPromptsNow = promptsActive && (startupAnimationDone || !(displayGridItems.length === 0))
     let tShow: ReturnType<typeof setTimeout> | null = null
     let tPause: ReturnType<typeof setTimeout> | null = null
@@ -848,7 +854,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
       setShowPrompt(false)
       setPromptTextIndex(0)
     }
-  }, [displayGridItems.length, searchMode, isSearchResultsSheetOpen, startupAnimationDone, loading])
+  }, [displayGridItems.length, searchMode, isSearchResultsSheetOpen, startupAnimationDone, loading, promptsReady])
 
   // Direct photo picker flow - route into existing NewRefSheet with pre-populated photo
   const triggerDirectPhotoPicker = useCallback(async (prompt: string) => {

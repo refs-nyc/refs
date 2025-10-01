@@ -36,7 +36,6 @@ import * as SystemUI from 'expo-system-ui'
 import { KeyboardProvider } from 'react-native-keyboard-controller'
 
 import { RegisterPushNotifications } from '@/ui/notifications/RegisterPushNotifications'
-import { MessagesInit } from '@/features/messaging/message-loader'
 import { DirectMessageComposer } from '@/features/messaging/DirectMessageComposer'
 import { GroupMessageComposer } from '@/features/messaging/GroupMessageComposer'
 import { useAppStore } from '@/features/stores'
@@ -143,7 +142,6 @@ function RootLayoutNav() {
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <StatusBar barStyle={colorScheme === 'dark' ? 'light-content' : 'dark-content'} />
       <RegisterPushNotifications />
-      <MessagesInit />
       <Navigation savesBottomSheetRef={savesBottomSheetRef} />
 
       <Stack

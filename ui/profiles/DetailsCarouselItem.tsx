@@ -19,6 +19,7 @@ import { Image } from 'expo-image'
 import { Link, useRouter } from 'expo-router'
 import { useContext, useState, useEffect } from 'react'
 import { Keyboard, Pressable, Text, useWindowDimensions, View } from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { TextInput } from 'react-native-gesture-handler'
 import { KeyboardAvoidingView } from 'react-native-keyboard-controller'
 import Animated, { useAnimatedStyle, withTiming, useSharedValue } from 'react-native-reanimated'
@@ -117,6 +118,7 @@ ProfileLabel.displayName = 'ProfileLabel'
 
 export const DetailsCarouselItem = ({ item, index }: { item: ExpandedItem; index?: number }) => {
   const win = useWindowDimensions()
+  const insets = useSafeAreaInsets()
 
   const profileDetailsStore = useContext(ProfileDetailsContext)
   const { currentIndex, showContextMenu, setShowContextMenu, openedFromFeed, editingRights } =
@@ -552,7 +554,7 @@ export const DetailsCarouselItem = ({ item, index }: { item: ExpandedItem; index
             width: '75%',
             alignSelf: 'center',
             position: 'absolute',
-            bottom: -35, // Moved up 10px from -25
+            bottom: Math.max(insets.bottom + 5, s.$05 as number),
           }}
         >
           <Button

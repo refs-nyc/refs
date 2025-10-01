@@ -92,77 +92,57 @@ export function WantToMeetScreen() {
                     paddingRight: isSelected ? (s.$3 as number) : undefined,
                   }}
                 />
-                {isSelected && (
-                  <View
+                {isSelected && u.userName && (
+                  <Pressable
+                    onPress={(event) => {
+                      event.stopPropagation()
+                      setProfileNavIntent({ targetPagerIndex: 0, source: 'wantToMeet' })
+                      router.push(`/user/${u.userName}`)
+                    }}
+                    style={{
+                      position: 'absolute',
+                      right: matchingSave?.id ? (s.$2 as number) + 12 : s.$075,
+                      top: 0,
+                      bottom: 0,
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                    }}
+                  >
+                    <Ionicons name="arrow-forward" size={s.$1 as number} color={c.grey1} />
+                  </Pressable>
+                )}
+                {isSelected && matchingSave?.id && (
+                  <Pressable
+                    onPress={async (event) => {
+                      event.stopPropagation()
+                      try {
+                        await removeSave(matchingSave.id)
+                      } catch (e) {}
+                    }}
                     style={{
                       position: 'absolute',
                       right: -4,
                       top: -8,
-                      flexDirection: 'row',
+                      justifyContent: 'center',
                       alignItems: 'center',
-                      gap: s.$05,
+                      padding: 4,
                     }}
                   >
-                    {u.userName && (
-                      <Pressable
-                        onPress={(event) => {
-                          event.stopPropagation()
-                          setProfileNavIntent({ targetPagerIndex: 0, source: 'wantToMeet' })
-                          router.push(`/user/${u.userName}`)
-                        }}
-                        style={{
-                          justifyContent: 'center',
-                          alignItems: 'center',
-                          padding: 4,
-                        }}
-                      >
-                        <View
-                          style={{
-                            width: s.$2 as number,
-                            height: s.$2 as number,
-                            borderRadius: (s.$2 as number) / 2,
-                            backgroundColor: c.surface,
-                            borderWidth: 1,
-                            borderColor: c.grey1,
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                          }}
-                        >
-                          <Ionicons name="arrow-forward" size={s.$1 as number} color={c.grey1} />
-                        </View>
-                      </Pressable>
-                    )}
-                    {matchingSave?.id && (
-                      <Pressable
-                        onPress={async (event) => {
-                          event.stopPropagation()
-                          try {
-                            await removeSave(matchingSave.id)
-                          } catch (e) {}
-                        }}
-                        style={{
-                          justifyContent: 'center',
-                          alignItems: 'center',
-                          padding: 4,
-                        }}
-                      >
-                        <View
-                          style={{
-                            width: s.$2 as number,
-                            height: s.$2 as number,
-                            borderRadius: (s.$2 as number) / 2,
-                            backgroundColor: c.surface,
-                            borderWidth: 1,
-                            borderColor: c.surface,
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                          }}
-                        >
-                          <Ionicons name="close" size={s.$1 as number} color={c.grey1} />
-                        </View>
-                      </Pressable>
-                    )}
-                  </View>
+                    <View
+                      style={{
+                        width: s.$2 as number,
+                        height: s.$2 as number,
+                        borderRadius: (s.$2 as number) / 2,
+                        backgroundColor: c.surface,
+                        borderWidth: 1,
+                        borderColor: c.surface,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      <Ionicons name="close" size={s.$1 as number} color={c.grey1} />
+                    </View>
+                  </Pressable>
                 )}
               </View>
             )

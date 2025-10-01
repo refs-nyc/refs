@@ -9,7 +9,7 @@ import { c } from '@/features/style'
 import { Gesture, GestureDetector } from 'react-native-gesture-handler'
 import Animated, { useSharedValue, useAnimatedStyle, withSpring, runOnJS } from 'react-native-reanimated'
 
-export function UserProfileScreen({ userName }: { userName: string }) {
+export function UserProfileScreen({ userName, prefetchedUserId }: { userName: string; prefetchedUserId?: string }) {
   if (!userName) {
     return null
   }
@@ -296,7 +296,7 @@ export function UserProfileScreen({ userName }: { userName: string }) {
 
   // Other users render normally; own profile renders pager (both pages stay mounted)
   if (!ownProfile) {
-    return <Profile userName={userName} />
+    return <Profile userName={userName} prefetchedUserId={prefetchedUserId} />
   }
 
   return (

@@ -5,10 +5,13 @@ import { useAppStore } from '@/features/stores'
 import SwipeableConversation from '@/ui/messaging/SwipeableConversation'
 import { router } from 'expo-router'
 import { Conversation } from '@/features/types'
+import { useCalendars } from 'expo-localization'
 
 export function ConversationsScreen() {
   const { conversations, memberships, messagesPerConversation, user, archiveConversation } =
     useAppStore()
+  const calendars = useCalendars()
+  const timeZone = calendars[0]?.timeZone || 'America/New_York'
 
   const activeConversations = useMemo(() => {
     const result: Conversation[] = []
@@ -107,7 +110,7 @@ export function ConversationsScreen() {
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
           <View style={{ paddingHorizontal: s.$1, paddingVertical: s.$05 }}>
-            <SwipeableConversation conversation={item} onArchive={() => onArchive(item)} />
+            <SwipeableConversation conversation={item} onArchive={() => onArchive(item)} timeZone={timeZone} />
           </View>
         )}
         contentContainerStyle={{ paddingBottom: s.$14 }}

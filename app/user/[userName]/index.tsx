@@ -6,9 +6,7 @@ import { useEffect } from 'react'
 export default function Screen() {
   const { user } = useAppStore()
 
-  const { userName } = useGlobalSearchParams()
-
-  // Only show the modal if the user is logged in
+  const { userName, userId } = useGlobalSearchParams()
   const router = useRouter()
 
   useEffect(() => {
@@ -22,6 +20,7 @@ export default function Screen() {
   }
 
   const userNameParam = typeof userName === 'string' ? userName : userName?.[0]
+  const userIdParam = typeof userId === 'string' ? userId : userId?.[0]
 
-  return <UserProfileScreen userName={userNameParam} />
+  return <UserProfileScreen userName={userNameParam} prefetchedUserId={userIdParam} />
 }

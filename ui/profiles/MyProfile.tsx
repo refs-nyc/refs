@@ -129,7 +129,6 @@ export const MyProfile = ({ userName }: { userName: string }) => {
     clearCachedSearchResults,
     setSearchResultsSheetOpen,
     logout,
-    showLogoutButton,
     hasShownInitialPromptHold,
     setHasShownInitialPromptHold,
     justOnboarded,
@@ -1098,26 +1097,6 @@ export const MyProfile = ({ userName }: { userName: string }) => {
 
           {searchDismissOverlays}
         </View>
-
-        {showLogoutButton && (
-          <View
-            style={{
-              position: 'absolute',
-              bottom: 50,
-              left: 0,
-              right: 0,
-              alignItems: 'center',
-              zIndex: 4,
-            }}
-          >
-            <Button
-              style={{ width: 120 }}
-              variant="inlineSmallMuted"
-              title="Log out"
-              onPress={logout}
-            />
-          </View>
-        )}
 
         {effectiveProfile && (
           <>

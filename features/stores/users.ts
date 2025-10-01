@@ -222,8 +222,6 @@ export const createUserSlice: StateCreator<StoreSlices, [], [], UserSlice> = (se
       .authWithPassword(email, password)
     set((state) => ({
       user: response.record,
-      // Reset logout button visibility on login
-      showLogoutButton: false,
       // Clear cached search results on login
       cachedSearchResults: [],
       cachedSearchTitle: '',
@@ -258,8 +256,6 @@ export const createUserSlice: StateCreator<StoreSlices, [], [], UserSlice> = (se
 
       set((state) => ({
         user: record,
-        // Reset logout button visibility on login
-        showLogoutButton: false,
         // Clear cached search results on login
         cachedSearchResults: [],
         cachedSearchTitle: '',
@@ -294,8 +290,6 @@ export const createUserSlice: StateCreator<StoreSlices, [], [], UserSlice> = (se
       user: null,
       stagedUser: {},
       isInitialized: true,
-      // Reset logout button visibility on logout
-      showLogoutButton: false,
       // Clear cached search results on logout
       cachedSearchResults: [],
       cachedSearchTitle: '',

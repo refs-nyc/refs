@@ -7,7 +7,7 @@ import { AvatarPicker } from '@/ui/inputs/AvatarPicker'
 import MessageBubble from '@/ui/messaging/MessageBubble'
 import MessageInput from '@/ui/messaging/MessageInput'
 import { Link, router } from 'expo-router'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState, lazy, Suspense } from 'react'
 import {
   FlatList,
   Keyboard,
@@ -18,7 +18,7 @@ import {
   View,
 } from 'react-native'
 import Ionicons from '@expo/vector-icons/Ionicons'
-import EmojiPicker from 'rn-emoji-keyboard'
+const EmojiPicker = lazy(() => import('rn-emoji-keyboard'))
 import { randomColors } from './utils'
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 
@@ -340,19 +340,21 @@ export function MessagesScreen({ conversationId }: { conversationId: string }) {
       </View>
 
       {showEmojiPicker && highlightedMessage && (
-        <EmojiPicker
-          open={true}
-          onClose={() => {
-            setHighlightedMessageId('')
-            setShowEmojiPicker(false)
-            setReplying(false)
-          }}
-          onEmojiSelected={(e: any) => {
-            sendReaction(user.id, highlightedMessageId, e.emoji)
-            setHighlightedMessageId('')
-            setShowEmojiPicker(false)
-          }}
-        />
+        <Suspense fallback={null}>
+          <EmojiPicker
+            open={true}
+            onClose={() => {
+              setHighlightedMessageId('')
+              setShowEmojiPicker(false)
+              setReplying(false)
+            }}
+            onEmojiSelected={(e: any) => {
+              sendReaction(user.id, highlightedMessageId, e.emoji)
+              setHighlightedMessageId('')
+              setShowEmojiPicker(false)
+            }}
+          />
+        </Suspense>
       )}
     </View>
   )

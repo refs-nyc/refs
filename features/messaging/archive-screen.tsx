@@ -5,11 +5,14 @@ import { useAppStore } from '@/features/stores'
 import SwipeableConversation from '@/ui/messaging/SwipeableConversation'
 import { router } from 'expo-router'
 import { Conversation } from '@/features/types'
+import { useCalendars } from 'expo-localization'
 
 export function ArchiveScreen() {
   const { user } = useAppStore()
   const { conversations, memberships, messagesPerConversation, unarchiveConversation } =
     useAppStore()
+  const calendars = useCalendars()
+  const timeZone = calendars[0]?.timeZone || 'America/New_York'
 
   const archivedConversations = useMemo(() => {
     const result: Conversation[] = []
@@ -67,6 +70,7 @@ export function ArchiveScreen() {
               conversation={item}
               onArchive={() => onUnarchive(item)}
               isInArchive
+              timeZone={timeZone}
             />
           </View>
         )}

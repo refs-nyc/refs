@@ -1,6 +1,5 @@
 import { router, usePathname } from 'expo-router'
 import { Text, View, Pressable, Animated } from 'react-native'
-import { Avatar } from '../atoms/Avatar'
 import { c, s } from '@/features/style'
 import { useAppStore } from '@/features/stores'
 import { NavigationBackdrop } from '@/ui/navigation/NavigationBackdrop'
@@ -29,11 +28,11 @@ export const Navigation = ({
     user,
     saves,
     cachedSearchResults,
-    setShowLogoutButton,
-    showLogoutButton,
+    logoutSheetRef,
     homePagerIndex,
     directoriesFilterTab,
     setProfileNavIntent,
+    setHomePagerIndex,
     conversationUnreadCounts,
   } = useAppStore()
 
@@ -49,6 +48,7 @@ export const Navigation = ({
 
     // If we have cached search results, navigate back to profile to restore them
     if (cachedSearchResults.length > 0 && user?.userName) {
+      setHomePagerIndex(0)
       setProfileNavIntent({ targetPagerIndex: 0, source: 'other' })
       router.push(`/user/${user.userName}`)
       return
@@ -65,6 +65,7 @@ export const Navigation = ({
 
     if (user?.userName) {
       const fallbackIndex = homePagerIndex ?? 0
+      setHomePagerIndex(fallbackIndex)
       setProfileNavIntent({
         targetPagerIndex: fallbackIndex as 0 | 1 | 2,
         directoryFilter: fallbackIndex === 1 ? directoriesFilterTab : undefined,
@@ -135,17 +136,20 @@ export const Navigation = ({
               </Pressable>
             )}
             <Pressable
-              onPress={() => {
-                if (!user?.userName) return
-                const targetIndex = homePagerIndex ?? 0
-                setProfileNavIntent({
-                  targetPagerIndex: targetIndex as 0 | 1 | 2,
-                  directoryFilter: targetIndex === 1 ? directoriesFilterTab : undefined,
-                  source: 'other',
-                })
+            onPress={() => {
+              if (!user?.userName) return
+              const targetIndex = homePagerIndex ?? 0
+              setHomePagerIndex(targetIndex)
+              setProfileNavIntent({
+                targetPagerIndex: targetIndex as 0 | 1 | 2,
+                directoryFilter: targetIndex === 1 ? directoriesFilterTab : undefined,
+                source: 'other',
+              })
                 router.push(`/user/${user.userName}`)
               }}
-              onLongPress={() => setShowLogoutButton(!showLogoutButton)}
+              onLongPress={() => {
+                logoutSheetRef?.current?.expand?.()
+              }}
               style={{ paddingLeft: 6 }}
             >
               <Text style={{ fontSize: 24, fontWeight: 'bold', textAlign: 'left' }}>Refs</Text>
@@ -181,7 +185,14 @@ export const Navigation = ({
           <Pressable
             onPress={() => {
               if (pathname.startsWith('/messages')) return
-              router.push('/messages')
+              const targetIndex = homePagerIndex ?? 0
+              setHomePagerIndex(targetIndex)
+              setProfileNavIntent({
+                targetPagerIndex: targetIndex as 0 | 1 | 2,
+                directoryFilter: targetIndex === 1 ? directoriesFilterTab : undefined,
+                source: 'messages',
+              })
+              router.navigate('/messages')
             }}
           >
             <View style={{ top: -3, position: 'relative' }}>

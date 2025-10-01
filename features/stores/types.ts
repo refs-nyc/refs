@@ -69,9 +69,7 @@ export type UISlice = {
   setSearchResultsSheetOpen: (open: boolean) => void
   setReturningFromSearchNavigation: (returning: boolean) => void
   setCloseActiveBottomSheet: (closeFunction: (() => void) | null) => void
-  // Logout button visibility
-  showLogoutButton: boolean
-  setShowLogoutButton: (show: boolean) => void
+  logoutSheetRef: React.RefObject<BottomSheet>
   // Prompt timing control (session-level)
   hasShownInitialPromptHold: boolean
   setHasShownInitialPromptHold: (shown: boolean) => void

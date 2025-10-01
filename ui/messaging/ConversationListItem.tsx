@@ -6,14 +6,15 @@ import { View, Text } from 'react-native'
 import { XStack, YStack } from '../core/Stacks'
 import { Avatar } from '../atoms/Avatar'
 import { formatTimestamp } from '@/features/messaging/utils'
-import { useCalendars } from 'expo-localization'
 import { Pressable } from 'react-native-gesture-handler'
 import { router } from 'expo-router'
 
 export default function ConversationListItem({
   conversation,
+  timeZone,
 }: {
   conversation: Conversation
+  timeZone: string
 }): JSX.Element | null {
   const { user, memberships, messagesPerConversation } = useAppStore()
 
@@ -31,9 +32,6 @@ export default function ConversationListItem({
     if (liveMemberships.length) setCachedMemberships(liveMemberships)
   }, [liveMemberships])
   const conversationMemberships = liveMemberships.length ? liveMemberships : cachedMemberships
-
-  const calendars = useCalendars()
-  const timeZone = calendars[0].timeZone || 'America/New_York'
 
   if (!user) return null
 

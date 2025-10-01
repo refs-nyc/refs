@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState, useMemo } from 'react'
-import { View, Text, Pressable, FlatList, ListRenderItem, InteractionManager, Dimensions, ScrollView } from 'react-native'
-import Animated, { FadeIn, FadeOut } from 'react-native-reanimated'
+import { View, Text, Pressable, FlatList, InteractionManager, Dimensions, ScrollView } from 'react-native'
 import { s, c, t } from '@/features/style'
 import { router } from 'expo-router'
 import { Grid } from '@/ui/grid/Grid'
@@ -152,6 +151,36 @@ const win = Dimensions.get('window')
 const BASE_DIRECTORY_LIST_HEIGHT = Math.max(360, Math.min(560, win.height - 220))
 const DIRECTORY_LIST_HEIGHT = Math.max(200, BASE_DIRECTORY_LIST_HEIGHT - 50)
 
+const normalizeDirectoryUsers = (list: FeedUser[], currentUserName?: string) => {
+  if (!Array.isArray(list)) return []
+  const seen = new Set<string>()
+  const normalized: FeedUser[] = []
+
+  for (const user of list) {
+    if (!user) continue
+    if (user.userName && user.userName === currentUserName) continue
+    if (!Array.isArray(user.topRefs) || user.topRefs.length === 0) continue
+
+    const rawId = user.id ?? user.userName
+    if (rawId == null) continue
+    const stringId = String(rawId)
+    if (!stringId || seen.has(stringId)) continue
+
+    seen.add(stringId)
+    normalized.push({ ...user, id: stringId })
+  }
+
+  return normalized
+}
+
+const haveSameIds = (a: FeedUser[], b: FeedUser[]) => {
+  if (a.length !== b.length) return false
+  for (let i = 0; i < a.length; i += 1) {
+    if (a[i]?.id !== b[i]?.id) return false
+  }
+  return true
+}
+
 export function CommunitiesFeedScreen({ showHeader = true, aboveListComponent, hideInterestChips = false, embedded = false }: { showHeader?: boolean; aboveListComponent?: React.ReactNode; hideInterestChips?: boolean; embedded?: boolean }) {
   // Directories screen: paginated list of all users
   const {
@@ -161,7 +190,13 @@ export function CommunitiesFeedScreen({ showHeader = true, aboveListComponent, h
     directoryUsers,
     setDirectoryUsers,
   } = useAppStore()
-  const [users, setUsers] = useState<FeedUser[]>(() => (directoryUsers as FeedUser[]) || [])
+  const directoryUsersNormalized = useMemo(
+    () => normalizeDirectoryUsers((directoryUsers as FeedUser[]) || [], user?.userName),
+    [directoryUsers, user?.userName]
+  )
+  const directoryUsersNormalizedRef = useRef<FeedUser[]>(directoryUsersNormalized)
+  const pendingStoreUpdateRef = useRef<FeedUser[] | null>(null)
+  const [users, setUsers] = useState<FeedUser[]>(directoryUsersNormalized)
   // const [communityItems, setCommunityItems] = useState<any[]>([])
   // const communityFormRef = useRef<BottomSheet>(null)
   const [outerScrollEnabled, setOuterScrollEnabled] = useState(true)
@@ -180,19 +215,30 @@ export function CommunitiesFeedScreen({ showHeader = true, aboveListComponent, h
     return pbRef.current
   }
 
-  const updateUsers = useCallback(
+  const commitUsers = useCallback(
     (value: FeedUser[] | ((prev: FeedUser[]) => FeedUser[])) => {
       setUsers((prev) => {
         const next =
           typeof value === 'function'
             ? (value as (prev: FeedUser[]) => FeedUser[])(prev)
             : value
-        setDirectoryUsers(next as DirectoryUser[])
-        return next
+        const normalized = normalizeDirectoryUsers(next as FeedUser[], user?.userName)
+        pendingStoreUpdateRef.current = normalized
+        return normalized
       })
     },
-    [setDirectoryUsers]
+    [user?.userName]
   )
+
+  useEffect(() => {
+    // Keep local state in sync if another part of the app updates the store
+    if (haveSameIds(directoryUsersNormalized, directoryUsersNormalizedRef.current)) {
+      directoryUsersNormalizedRef.current = directoryUsersNormalized
+      return
+    }
+    directoryUsersNormalizedRef.current = directoryUsersNormalized
+    setUsers(directoryUsersNormalized)
+  }, [directoryUsersNormalized])
 
   const mapUsersWithItems = useCallback((userRecords: any[], itemsByCreator: Map<string, any[]>) => {
     const result: (FeedUser & { _latest?: number })[] = []
@@ -241,17 +287,18 @@ export function CommunitiesFeedScreen({ showHeader = true, aboveListComponent, h
     })
   }, [processedUsers, selectedInterests, userInterestMap])
 
-  const fetchPage = useCallback(async (targetPage: number) => {
+  const fetchPage = useCallback(async (targetPage: number, options?: { skipCache?: boolean }) => {
     if (isLoading || !hasMore) return
     setIsLoading(true)
     
     try {
       // Check cache for first page only
-      if (targetPage === 1) {
+      const skipCache = options?.skipCache ?? false
+      if (targetPage === 1 && !skipCache) {
         const cachedUsers = await simpleCache.get('directory_users')
         if (cachedUsers) {
           console.log('📖 Using cached directory users')
-          updateUsers(cachedUsers as FeedUser[])
+          commitUsers(cachedUsers as FeedUser[])
           setHasMore(true) // Assume there are more pages
           setPage(1)
           setIsLoading(false)
@@ -432,8 +479,9 @@ export function CommunitiesFeedScreen({ showHeader = true, aboveListComponent, h
         })
       }
       
-      const newUsers = targetPage === 1 ? filteredMapped : [...users, ...filteredMapped]
-      updateUsers(newUsers)
+      const filteredWithRefs = normalizeDirectoryUsers(filteredMapped, user?.userName)
+      const nextUsers = targetPage === 1 ? filteredWithRefs : [...users, ...filteredWithRefs]
+      commitUsers(nextUsers)
       // Allow loading all pages; don't artificially cap at 50
       setHasMore(res.page < res.totalPages)
       setPage(res.page)
@@ -444,116 +492,57 @@ export function CommunitiesFeedScreen({ showHeader = true, aboveListComponent, h
       }
       
       // Cache first page data for quick access (silent operation)
-      if (targetPage === 1) {
-        simpleCache.set('directory_users', filteredMapped).catch(error => {
-          console.warn('Directory cache write failed:', error)
-        })
-      }
+      simpleCache.set('directory_users', nextUsers).catch(error => {
+        console.warn('Directory cache write failed:', error)
+      })
     } catch (e) {
       setHasMore(false)
     } finally {
       setIsLoading(false)
     }
-  }, [hasMore, isLoading, user, mapUsersWithItems, users])
+  }, [hasMore, isLoading, user, mapUsersWithItems, users, commitUsers])
 
   useEffect(() => {
-    let mounted = true
+    let cancelled = false
 
-    const loadAllPages = async () => {
+    const hydrate = async () => {
       try {
-        const cachedUsers = await simpleCache.get('directory_users')
-        if (mounted && cachedUsers && Array.isArray(cachedUsers) && cachedUsers.length > 0) {
-          console.log('📖 Using cached directory users')
-          updateUsers(cachedUsers as FeedUser[])
+        if (directoryUsersNormalized.length > 0) {
           setHasInitialData(true)
+          return
         }
 
-        // Fetch all pages to surface all users with at least 1 ref
-        const pb = getPB()
-        let current = 1
-        let totalPages = 1
-        const aggregated: FeedUser[] = []
+        const cachedUsers = await simpleCache.get('directory_users')
+        if (cancelled) return
 
-        while (current <= totalPages) {
-          const res = await pb.collection('users').getList(current, perPage, {
-            fields: 'id,userName,firstName,lastName,name,location,image,avatar_url',
-            sort: '-created',
-          })
-
-          totalPages = res.totalPages
-
-          const userIds = res.items.map((u: any) => u.id)
-          if (userIds.length > 0) {
-            const orFilter = userIds.map((id: string) => `creator = "${id}"`).join(' || ')
-            const perPageItems = Math.max(3 * userIds.length, 60)
-            const itemsRes = await pb.collection('items').getList(1, perPageItems, {
-              filter: `(${orFilter}) && backlog = false && list = false && parent = null`,
-              fields: 'id,image,creator,created,expand.ref(image)',
-              expand: 'ref',
-              sort: '-created',
-            })
-
-            const byCreator = new Map<string, any[]>()
-            for (const it of itemsRes.items as any[]) {
-              const creatorId = it.creator
-              if (!creatorId) continue
-              const arr = byCreator.get(creatorId) || []
-              if (arr.length < 3) {
-                arr.push(it)
-                byCreator.set(creatorId, arr)
-              }
-            }
-
-            const mapped = mapUsersWithItems(res.items, byCreator).filter(u => u.userName !== user?.userName)
-
-            // Deduplicate by id as we aggregate
-            const seen = new Set(aggregated.map(u => u.id))
-            for (const u of mapped) {
-              if (!seen.has(u.id)) {
-                aggregated.push(u)
-                seen.add(u.id)
-              }
-            }
-
-            if (mounted) {
-              updateUsers(prev => {
-                const prevSeen = new Set(prev.map(p => p.id))
-                const appended = mapped.filter(m => !prevSeen.has(m.id))
-                return prev.length === 0 ? mapped : [...prev, ...appended]
-              })
-              setHasInitialData(true)
-            }
-          }
-
-          current += 1
-          // Yield to UI thread to avoid jank between pages
-          await new Promise((r) => setTimeout(r, 0))
+        if (cachedUsers && Array.isArray(cachedUsers) && cachedUsers.length > 0) {
+          commitUsers(cachedUsers as FeedUser[])
+          setHasInitialData(true)
+          return
         }
 
-        // Cache the complete directory list once when load finishes
-        simpleCache.set('directory_users', aggregated).catch(() => {})
-        if (mounted) {
-          setHasMore(false)
-          setPage(totalPages)
-        }
-      } catch (e) {
-        // Fallback to first page if loop fails
-        if (mounted) {
-    fetchPage(1)
-        }
+        await fetchPage(1, { skipCache: true })
+      } catch (error) {
+        console.warn('Directory initial load failed:', error)
       }
     }
 
-    const handle = InteractionManager.runAfterInteractions(() => {
-      if (!mounted) return
-      void loadAllPages()
-    })
+    hydrate()
 
     return () => {
-      mounted = false
-      handle.cancel()
+      cancelled = true
     }
-  }, [mapUsersWithItems, perPage, user?.userName])
+  }, [commitUsers, directoryUsersNormalized, fetchPage])
+
+  useEffect(() => {
+    const candidate = pendingStoreUpdateRef.current
+    pendingStoreUpdateRef.current = null
+    if (!candidate) return
+    if (!haveSameIds(candidate, directoryUsersNormalizedRef.current)) {
+      setDirectoryUsers(candidate as DirectoryUser[])
+      directoryUsersNormalizedRef.current = candidate
+    }
+  }, [setDirectoryUsers, users])
 
   // Load popular interests and user->interest map for filtering
   useEffect(() => {
@@ -633,11 +622,14 @@ export function CommunitiesFeedScreen({ showHeader = true, aboveListComponent, h
   // Community interests grid removed from this screen
 
   // Memoize the onPress callback to prevent recreation on every render
-  const handleUserPress = useCallback((userName: string) => {
-    if (!userName) return
+  const handleUserPress = useCallback((userName: string, userId: string) => {
+    if (!userName || !userId) return
     setDirectoriesFilterTab('people')
     setProfileNavIntent({ targetPagerIndex: 1, directoryFilter: 'people', source: 'directory' })
-    router.push(`/user/${userName}`)
+    router.push({
+      pathname: '/user/[userName]',
+      params: { userName, userId, fromDirectory: '1' },
+    })
   }, [setDirectoriesFilterTab, setProfileNavIntent])
 
   // Community tile press handler not used in this screen
@@ -646,7 +638,7 @@ export function CommunitiesFeedScreen({ showHeader = true, aboveListComponent, h
     return (
       <DirectoryRow 
         u={item} 
-        onPress={() => handleUserPress(item.userName)} 
+        onPress={() => handleUserPress(item.userName, item.id)} 
         userInterestMap={userInterestMap}
         refTitleMap={refTitleMap}
         currentUserId={user?.id}
@@ -707,7 +699,7 @@ export function CommunitiesFeedScreen({ showHeader = true, aboveListComponent, h
             ) : null}
 
             {/* Natural scrolling list without surface2 backdrop */}
-            <Animated.View entering={FadeIn.duration(120)} exiting={FadeOut.duration(120)} key={`list-${selectedInterests.join(',')}-${displayedUsers.length}`}> 
+            <View>
               <FlatList
                 contentContainerStyle={{ paddingLeft: embedded ? 0 : (s.$1 as number) + 6, paddingRight: embedded ? 0 : (s.$1 as number) + 6, paddingTop: 5, paddingBottom: 150 }}
                 data={displayedUsers}
@@ -717,6 +709,11 @@ export function CommunitiesFeedScreen({ showHeader = true, aboveListComponent, h
                 maxToRenderPerBatch={5}
                 windowSize={10}
                 removeClippedSubviews={false}
+                onEndReached={() => {
+                  if (isLoading || !hasMore) return
+                  void fetchPage(page + 1, { skipCache: true })
+                }}
+                onEndReachedThreshold={0.6}
                 showsVerticalScrollIndicator={false}
                 alwaysBounceVertical={true}
                 bounces={true}
@@ -727,7 +724,7 @@ export function CommunitiesFeedScreen({ showHeader = true, aboveListComponent, h
                 updateCellsBatchingPeriod={50}
                 disableVirtualization={false}
               />
-            </Animated.View>
+            </View>
     </View>
   )
 }

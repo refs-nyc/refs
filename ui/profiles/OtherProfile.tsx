@@ -17,7 +17,7 @@ import { simpleCache } from '@/features/cache/simpleCache'
 import { pocketbase } from '@/features/pocketbase'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 
-export const OtherProfile = ({ userName }: { userName: string }) => {
+export const OtherProfile = ({ userName, prefetchedUserId }: { userName: string; prefetchedUserId?: string }) => {
   const [profile, setProfile] = useState<Profile>()
   const [gridItems, setGridItems] = useState<ExpandedItem[]>([])
   const [backlogItems, setBacklogItems] = useState<ExpandedItem[]>([])
@@ -25,61 +25,84 @@ export const OtherProfile = ({ userName }: { userName: string }) => {
 
   const { user, stopEditing, getUserByUserName } = useAppStore()
 
-  const refreshGrid = async (userName: string) => {
+  const refreshGrid = async (userName: string, hintedUserId?: string) => {
     setLoading(true)
     try {
-      // First, try to get cached profile data to extract userId
-      // This avoids the database query if we have cached data
-      let cachedProfile: any = null
-      let cachedGridItems: any = null
-      let cachedBacklogItems: any = null
-      
-      // Try to find cached data by checking if we have any cached profiles
-      // We'll use a simple approach: try to get profile data without userId first
-      const allKeys = await AsyncStorage.getAllKeys()
-      const profileKeys = allKeys.filter(key => key.includes('simple_cache_profile_'))
-      
-      if (profileKeys.length > 0) {
-        // We have some cached profiles, let's check if any match our userName
-        for (const key of profileKeys) {
-          try {
-            const cached = await AsyncStorage.getItem(key)
-            if (cached) {
-              const entry = JSON.parse(cached)
-              const profile = entry.data
-              if (profile.userName === userName && profile._cachedUserId) {
-                // Found a cached profile for this user with userId embedded
-                const userId = profile._cachedUserId
-                console.log(`📖 Found cached profile for ${userName} with userId ${userId}`)
-                
-                // Now we can access the cache using the userId
-                const results = await Promise.all([
-                  simpleCache.get('profile', userId),
-                  simpleCache.get('grid_items', userId),
-                  simpleCache.get('backlog_items', userId)
-                ])
-                
-                cachedProfile = results[0]
-                cachedGridItems = results[1]
-                cachedBacklogItems = results[2]
-                
-                if (cachedProfile && cachedGridItems && cachedBacklogItems) {
-                  console.log('📖 Using cached other profile data')
-                  setProfile(cachedProfile as Profile)
-                  setGridItems(cachedGridItems as ExpandedItem[])
-                  setBacklogItems(cachedBacklogItems as ExpandedItem[])
-                  setLoading(false)
-                  return
-                }
-                break
-              }
-            }
-          } catch (error) {
-            console.warn('Error checking cached profile:', error)
-          }
+      const tryHydrateFromCache = async (userId: string) => {
+        const [cachedProfile, cachedGridItems, cachedBacklogItems] = await Promise.all([
+          simpleCache.get('profile', userId),
+          simpleCache.get('grid_items', userId),
+          simpleCache.get('backlog_items', userId),
+        ])
+
+        if (cachedProfile && cachedGridItems && cachedBacklogItems) {
+          setProfile(cachedProfile as Profile)
+          setGridItems(cachedGridItems as ExpandedItem[])
+          setBacklogItems(cachedBacklogItems as ExpandedItem[])
+          setLoading(false)
+          return true
+        }
+        return false
+      }
+
+      if (hintedUserId) {
+        const hydrated = await tryHydrateFromCache(hintedUserId)
+        if (hydrated) {
+          return
         }
       }
-      
+
+      // First, try to get cached profile data to extract userId (fallback for routes without hints)
+      let derivedUserId: string | undefined = hintedUserId
+
+      if (!derivedUserId) {
+        try {
+          const lookup = await AsyncStorage.getItem(`simple_cache_profile_lookup_${userName}`)
+          if (lookup) {
+            const parsed = JSON.parse(lookup)
+            if (parsed?.userId) {
+              derivedUserId = parsed.userId
+            }
+          }
+        } catch (error) {
+          console.warn('Profile lookup read failed:', error)
+        }
+      }
+
+      if (!derivedUserId) {
+        try {
+          const allKeys = await AsyncStorage.getAllKeys()
+          const profileKeys = allKeys.filter(key => key.includes('simple_cache_profile_'))
+
+          if (profileKeys.length > 0) {
+            for (const key of profileKeys) {
+              try {
+                const cachedEntry = await AsyncStorage.getItem(key)
+                if (cachedEntry) {
+                  const entry = JSON.parse(cachedEntry)
+                  const cachedProfileData = entry.data
+                  if (cachedProfileData?.userName === userName && cachedProfileData?._cachedUserId) {
+                    derivedUserId = cachedProfileData._cachedUserId
+                    break
+                  }
+                }
+              } catch (error) {
+                console.warn('Error checking cached profile:', error)
+              }
+            }
+          }
+        } catch (error) {
+          console.warn('Profile key scan failed:', error)
+        }
+      }
+
+      if (derivedUserId) {
+        const hydrated = await tryHydrateFromCache(derivedUserId)
+        if (hydrated) {
+          return
+        }
+      }
+
       // If we didn't find cached data, fall back to the original approach
       // Get user ID for cache keys
       const user = await pocketbase.collection('users').getFirstListItem(`userName = "${userName}"`)
@@ -112,16 +135,23 @@ export const OtherProfile = ({ userName }: { userName: string }) => {
       setProfile(freshProfile)
       setGridItems(freshGridItems)
       setBacklogItems(freshBacklogItems as ExpandedItem[])
-      
+
       // Cache the fresh data
+      const profileWithUserId = { ...freshProfile, _cachedUserId: userId }
       Promise.all([
-        simpleCache.set('profile', freshProfile, userId),
+        simpleCache.set('profile', profileWithUserId, userId),
         simpleCache.set('grid_items', freshGridItems, userId),
         simpleCache.set('backlog_items', freshBacklogItems, userId)
       ]).catch(error => {
         console.warn('Cache write failed:', error)
       })
-      
+      // Persist hint for future lookups when arriving without params
+      try {
+        profileWithUserId && (await AsyncStorage.setItem(`simple_cache_profile_lookup_${userName}`, JSON.stringify({ userId })))
+      } catch (error) {
+        console.warn('Profile lookup write failed:', error)
+      }
+
       setLoading(false)
     } catch (error) {
       console.error(error)
@@ -133,13 +163,13 @@ export const OtherProfile = ({ userName }: { userName: string }) => {
     const init = async () => {
       try {
         // Only run heavy database operations when component is active
-        await refreshGrid(userName)
+        await refreshGrid(userName, prefetchedUserId)
       } catch (error) {
         console.error(error)
       }
     }
     init()
-  }, [userName]) // Removed isActiveTab dependency
+  }, [userName, prefetchedUserId]) // Removed isActiveTab dependency
 
   const bottomSheetRef = useRef<BottomSheet>(null)
   const detailsSheetRef = useRef<BottomSheet>(null)

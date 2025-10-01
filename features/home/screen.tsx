@@ -72,7 +72,10 @@ export function HomeScreen() {
           targetPagerIndex: 0,
           source: 'other',
         })
-        router.replace(`/user/${user.userName}`)
+        router.replace({
+          pathname: '/user/[userName]',
+          params: { userName: user.userName },
+        })
       }
       // Small delay to prevent navigation errors
       const timeout = setTimeout(redirectToProfile, 100)

@@ -43,6 +43,9 @@ export type MessageSlice = {
   messagesPerConversation: Record<string, Message[]>
   setMessagesForConversation: (conversationId: string, messages: Message[]) => void
   setConversationPreview: (conversationId: string, message: Message | null, unreadCount: number) => void
+  setConversationPreviews: (
+    entries: Array<{ conversationId: string; message: Message | null; unreadCount: number }>
+  ) => void
   oldestLoadedMessageDate: Record<string, string>
   setOldestLoadedMessageDate: (conversationId: string, dateString: string) => void
   addOlderMessages: (conversationId: string, messages: Message[]) => void
@@ -267,6 +270,27 @@ export const createMessageSlice: StateCreator<StoreSlices, [], [], MessageSlice>
         [conversationId]: unreadCount,
       },
     }))
+  },
+  setConversationPreviews: (entries) => {
+    if (!entries?.length) return
+    set((state) => {
+      const messagesPerConversation = { ...state.messagesPerConversation }
+      const conversationHydration = { ...state.conversationHydration }
+      const conversationUnreadCounts = { ...state.conversationUnreadCounts }
+      for (const { conversationId, message, unreadCount } of entries) {
+        if (!conversationId) continue
+        messagesPerConversation[conversationId] = message ? [message] : []
+        conversationHydration[conversationId] = 'preview'
+        if (typeof unreadCount === 'number') {
+          conversationUnreadCounts[conversationId] = unreadCount
+        }
+      }
+      return {
+        messagesPerConversation,
+        conversationHydration,
+        conversationUnreadCounts,
+      }
+    })
   },
   addOlderMessages: (conversationId: string, messages: Message[]) => {
     set((state) => {

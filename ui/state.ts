@@ -8,6 +8,7 @@ export const createUISlice: StateCreator<StoreSlices, [], [], UISlice> = (set, g
   addingToList: '',
   addingItem: null,
   referencersBottomSheetRef: React.createRef(),
+  logoutSheetRef: React.createRef<BottomSheet>(),
   currentRefId: '',
   referencersContext: null,
   addRefSheetRef: React.createRef(),
@@ -126,13 +127,6 @@ export const createUISlice: StateCreator<StoreSlices, [], [], UISlice> = (set, g
   setCloseActiveBottomSheet: (closeFunction: (() => void) | null) => {
     set(() => ({
       closeActiveBottomSheet: closeFunction,
-    }))
-  },
-  // Logout button visibility
-  showLogoutButton: false,
-  setShowLogoutButton: (show: boolean) => {
-    set(() => ({
-      showLogoutButton: show,
     }))
   },
   // Prompt timing control (session-level)

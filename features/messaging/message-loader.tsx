@@ -38,8 +38,8 @@ export function MessagesInit() {
     addReaction,
     removeReaction,
     updateMembership,
-    setBackgroundLoading,
     setConversationPreview,
+    setConversationPreviews,
     setConversationUnreadCount,
     getSignedUrl,
   } = useAppStore()
@@ -160,6 +160,9 @@ export function MessagesInit() {
               if (flattened.length) {
                 setMemberships(flattened)
                 prefetchAvatarSignedUrls(flattened)
+                setTimeout(() => {
+                  void simpleCache.set('conversation_memberships', flattened, user.id)
+                }, 0)
               }
             }
           }
@@ -167,10 +170,14 @@ export function MessagesInit() {
             setMemberships(cachedMemberships)
             prefetchAvatarSignedUrls(cachedMemberships)
           }
-        if (cachedPreviews) {
-          cachedPreviews.forEach((preview) => {
-            setConversationPreview(preview.conversationId, preview.message, preview.unreadCount ?? 0)
-          })
+        if (cachedPreviews && cachedPreviews.length) {
+          setConversationPreviews(
+            cachedPreviews.map((preview) => ({
+              conversationId: preview.conversationId,
+              message: preview.message,
+              unreadCount: preview.unreadCount ?? 0,
+            }))
+          )
         }
       } catch (error) {
         console.warn('Failed to hydrate messaging cache', error)
@@ -245,11 +252,15 @@ export function MessagesInit() {
           if (flattenedMemberships.length) {
             setMemberships(flattenedMemberships)
             prefetchAvatarSignedUrls(flattenedMemberships)
-            void simpleCache.set('conversation_memberships', flattenedMemberships, user.id)
+            setTimeout(() => {
+              void simpleCache.set('conversation_memberships', flattenedMemberships, user.id)
+            }, 0)
           }
 
           setConversations(conversations as unknown as Conversation[])
-          void simpleCache.set('conversations', conversations, user.id)
+          setTimeout(() => {
+            void simpleCache.set('conversations', conversations, user.id)
+          }, 0)
         }
 
         if (reactions.length) {
@@ -269,43 +280,49 @@ export function MessagesInit() {
             membershipsForPreview
           )
           if (!cancelled) {
-            void simpleCache.set('conversation_previews', previews, user.id)
+            setConversationPreviews(
+              previews.map((preview) => ({
+                conversationId: preview.conversationId,
+                message: preview.message,
+                unreadCount: preview.unreadCount ?? 0,
+              }))
+            )
+            setTimeout(() => {
+              void simpleCache.set('conversation_previews', previews, user.id)
+            }, 0)
           }
         }
       } catch (error) {
         console.error('Failed to load messaging data', error)
       } finally {
-        if (!cancelled) {
-          setBackgroundLoading(false)
-        }
+        // no-op
       }
     }
 
-    setBackgroundLoading(true)
+    hydrateFromCache()
+      .catch((error) => {
+        console.error('Messaging cache hydration failed', error)
+      })
 
-    ;(async () => {
-      await hydrateFromCache()
-      if (!cancelled) {
-        await fetchFreshData()
-      }
-    })().catch((error) => {
-      console.error('Messaging initialisation failed', error)
-      if (!cancelled) {
-        setBackgroundLoading(false)
-      }
-    })
+    const fetchTimeout = setTimeout(() => {
+      if (cancelled) return
+      fetchFreshData().catch((error) => {
+        console.error('Messaging initialisation failed', error)
+      })
+    }, 0)
 
     return () => {
       cancelled = true
+      clearTimeout(fetchTimeout)
     }
   }, [
     user?.id,
-    setBackgroundLoading,
     setConversations,
     setMemberships,
     setReactions,
     setSaves,
     setConversationPreview,
+    setConversationPreviews,
     fetchConversationPreview,
   ])
 

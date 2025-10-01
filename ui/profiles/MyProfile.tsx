@@ -10,9 +10,10 @@ import { ScrollView, View, Text, Pressable, Keyboard } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import * as ImagePicker from 'expo-image-picker'
 import FloatingJaggedButton from '../buttons/FloatingJaggedButton'
+import { DEFAULT_TILE_SIZE } from '../grid/GridTile'
 import { Grid } from '../grid/Grid'
-import { PlaceholderGrid } from '../grid/PlaceholderGrid'
 import { Button } from '../buttons/Button'
+import Ionicons from '@expo/vector-icons/Ionicons'
 
 import { Heading } from '../typo/Heading'
 import { ProfileDetailsSheet } from './ProfileDetailsSheet'
@@ -21,27 +22,90 @@ import { RemoveRefSheet } from './sheets/RemoveRefSheet'
 import SearchModeBottomSheet from './sheets/SearchModeBottomSheet'
 import SearchResultsSheet, { SearchResultsSheetRef } from './sheets/SearchResultsSheet'
 import { RefForm } from '../actions/RefForm'
-import Animated, { FadeIn, FadeOut } from 'react-native-reanimated'
+import Animated, { FadeIn, FadeOut, Easing } from 'react-native-reanimated'
+import { Animated as RNAnimated, Easing as RNEasing } from 'react-native'
 import { Collections } from '@/features/pocketbase/pocketbase-types'
-import { pocketbase } from '@/features/pocketbase'
 import { simpleCache } from '@/features/cache/simpleCache'
+
+const profileMemoryCache = new Map<string, {
+  profile: Profile
+  gridItems: ExpandedItem[]
+  backlogItems: ExpandedItem[]
+  timestamp: number
+}>()
+
+const gridAnimationHistory = new Set<string>()
+
+type PromptSuggestion = {
+  text: string
+  photoPath?: boolean
+}
+
+const PROMPT_SUGGESTIONS: PromptSuggestion[] = [
+  { text: 'Link you shared recently' },
+  { text: 'free space' },
+  { text: 'Place you feel like yourself' },
+  { text: 'Example of perfect design' },
+  { text: 'something you want to do more of' },
+  { text: 'Piece from a museum', photoPath: true },
+  { text: 'Most-rewatched movie' },
+  { text: 'Tradition you love', photoPath: true },
+  { text: 'Meme', photoPath: true },
+  { text: 'Neighborhood spot' },
+  { text: 'What you put on aux' },
+  { text: 'halloween pic', photoPath: true },
+  { text: 'Rabbit Hole' },
+  { text: 'a preferred publication' },
+  { text: 'something on your reading list' },
+]
+
+const PROMPT_BATCH_SIZE = 6
+
+const shufflePromptList = (source: PromptSuggestion[]) => {
+  const shuffled = [...source]
+  for (let i = shuffled.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1))
+    ;[shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]
+  }
+  return shuffled
+}
+
+const createPromptBatch = (size = PROMPT_BATCH_SIZE, excludeTexts?: Set<string>) => {
+  const skip = excludeTexts ? new Set(excludeTexts) : new Set<string>()
+  const shuffled = shufflePromptList(PROMPT_SUGGESTIONS)
+  const batch: PromptSuggestion[] = []
+
+  for (const suggestion of shuffled) {
+    if (skip.has(suggestion.text)) continue
+    batch.push(suggestion)
+    skip.add(suggestion.text)
+    if (batch.length === size) break
+  }
+
+  return batch
+}
+
+const PROMPT_CARD_BACKGROUNDS = [c.white, c.surface, c.surface2, c.accent2]
+const PROMPT_CARD_ROTATIONS = [-2.25, -0.5, 1, 2.75]
 
 export const MyProfile = ({ userName }: { userName: string }) => {
   const { hasShareIntent } = useShareIntentContext()
   const insets = useSafeAreaInsets()
 
-  const [profile, setProfile] = useState<Profile>()
-  const [gridItems, setGridItems] = useState<ExpandedItem[]>([])
-  const [backlogItems, setBacklogItems] = useState<ExpandedItem[]>([])
-  const [loading, setLoading] = useState(true)
-  const [focusReady, setFocusReady] = useState(false)
+  const cachedEntry = profileMemoryCache.get(userName)
+
+  const [profile, setProfile] = useState<Profile | undefined>(cachedEntry?.profile)
+  const [gridItems, setGridItems] = useState<ExpandedItem[]>(cachedEntry?.gridItems ?? [])
+  const [backlogItems, setBacklogItems] = useState<ExpandedItem[]>(cachedEntry?.backlogItems ?? [])
+  const [loading, setLoading] = useState(!cachedEntry)
+  const [promptsReady, setPromptsReady] = useState(Boolean(cachedEntry?.gridItems?.length))
+  const [focusReady, setFocusReady] = useState(Boolean(cachedEntry))
   const [removingItem, setRemovingItem] = useState<ExpandedItem | null>(null)
 
   // Get optimistic items from store
-  const { optimisticItems } = useAppStore()
+  const { optimisticItems, user } = useAppStore()
 
   const {
-    user,
     getUserByUserName,
     moveToBacklog,
     removeItem,
@@ -65,7 +129,6 @@ export const MyProfile = ({ userName }: { userName: string }) => {
     clearCachedSearchResults,
     setSearchResultsSheetOpen,
     logout,
-    showLogoutButton,
     hasShownInitialPromptHold,
     setHasShownInitialPromptHold,
     justOnboarded,
@@ -77,7 +140,10 @@ export const MyProfile = ({ userName }: { userName: string }) => {
     registerBackdropPress,
     unregisterBackdropPress,
   } = useAppStore()
-  
+  const ownProfile = user?.userName === userName
+  const effectiveProfile = profile ?? (ownProfile ? (user ?? undefined) : undefined)
+  const hasProfile = Boolean(effectiveProfile)
+
   // Combine grid items with optimistic items for display
   const displayGridItems = useMemo(() => {
     // Early return if no optimistic items
@@ -115,8 +181,6 @@ export const MyProfile = ({ userName }: { userName: string }) => {
       !animatedItemsRef.current.has(item.id)
     )
     
-    console.log('🔍 NEW OPTIMISTIC ITEMS FOUND:', newOptimisticItems.length, 'IDs:', newOptimisticItems.map(item => item.id))
-    
     if (newOptimisticItems.length > 0) {
       const newItemId = newOptimisticItems[0].id
       
@@ -125,12 +189,10 @@ export const MyProfile = ({ userName }: { userName: string }) => {
       
       // Set the first new optimistic item as the newly added item
       setNewlyAddedItemId(newItemId)
-      console.log('🎯 SETTING NEWLY ADDED ITEM ID:', newItemId)
       
       // Clear the animation after 1.5 seconds but DON'T remove optimistic item yet
       const timer = setTimeout(() => {
         setNewlyAddedItemId(null)
-        console.log('🎯 CLEARING NEWLY ADDED ITEM ID')
         
         // Don't remove optimistic item here - let it stay until real item is confirmed
         // removeOptimisticItem(newItemId)
@@ -155,7 +217,6 @@ export const MyProfile = ({ userName }: { userName: string }) => {
     
     // Remove confirmed optimistic items
     confirmedOptimisticItems.forEach(item => {
-      console.log('✅ REMOVING CONFIRMED OPTIMISTIC ITEM:', item.id)
       removeOptimisticItem(item.id)
     })
   }, [gridItems, optimisticItems.size])
@@ -166,7 +227,6 @@ export const MyProfile = ({ userName }: { userName: string }) => {
       // When component unmounts, clear any remaining optimistic items
       const optimisticItemsArray = Array.from(optimisticItems.values())
       optimisticItemsArray.forEach(item => {
-        console.log('🧹 CLEANUP: Removing optimistic item on unmount:', item.id)
         removeOptimisticItem(item.id)
       })
       
@@ -180,6 +240,214 @@ export const MyProfile = ({ userName }: { userName: string }) => {
   const [showPrompt, setShowPrompt] = useState(false)
   const [startupAnimationDone, setStartupAnimationDone] = useState(false)
   const [newlyAddedItemId, setNewlyAddedItemId] = useState<string | null>(null)
+  const [promptSuggestions, setPromptSuggestions] = useState<PromptSuggestion[]>(() => createPromptBatch())
+  const GRID_ROWS = 4
+  const GRID_COLUMNS = 3
+  const GRID_ROW_GAP = (s.$075 as number) + 5
+  const GRID_HEIGHT = GRID_ROWS * DEFAULT_TILE_SIZE + (GRID_ROWS - 1) * GRID_ROW_GAP
+  const GRID_CAPACITY = GRID_ROWS * GRID_COLUMNS
+
+  const headerContent = hasProfile ? (
+    searchMode || isSearchResultsSheetOpen ? (
+      <Text
+        style={{
+          color: c.prompt,
+          fontSize: s.$09,
+          fontFamily: 'System',
+          fontWeight: '400',
+          textAlign: 'center',
+          lineHeight: s.$1half,
+        }}
+      >
+        What did you get into today?
+      </Text>
+    ) : gridItems.length >= 12 ? (
+      <Text
+        style={{
+          color: c.prompt,
+          fontSize: s.$09,
+          fontFamily: 'System',
+          fontWeight: '400',
+          textAlign: 'center',
+          lineHeight: s.$1half,
+        }}
+      >
+        What did you get into today?
+      </Text>
+    ) : (
+      <Animated.Text
+        entering={FadeIn.duration(800)}
+        exiting={FadeOut.duration(800)}
+        key={`prompt-text-${promptTextIndex}-${promptFadeKey}`}
+        style={{
+          color: c.prompt,
+          fontSize: s.$09,
+          fontFamily: 'System',
+          fontWeight: '400',
+          textAlign: 'center',
+          lineHeight: s.$1half,
+          minWidth: 280,
+          minHeight: s.$1half,
+        }}
+      >
+        {showPrompt
+          ? promptTextIndex === 0
+            ? 'these prompts will disappear after you add'
+            : '(no one will know you used them)'
+          : ''}
+      </Animated.Text>
+    )
+  ) : (
+    null
+  )
+
+  const showGrid = hasProfile
+  const promptDisplayReady =
+    showGrid &&
+    promptsReady &&
+    !searchMode &&
+    !isSearchResultsSheetOpen &&
+    !loading
+  const allowPromptPlaceholders =
+    promptDisplayReady &&
+    displayGridItems.length < GRID_CAPACITY
+  const showPromptChips =
+    ownProfile &&
+    promptDisplayReady &&
+    displayGridItems.length < GRID_CAPACITY
+
+  const handleShufflePromptSuggestions = useCallback(() => {
+    setPromptSuggestions(createPromptBatch())
+  }, [])
+
+  const hasAnimatedBefore = gridAnimationHistory.has(userName)
+  const gridFade = useRef(new RNAnimated.Value(hasAnimatedBefore ? 1 : 0)).current
+  const gridScale = useRef(new RNAnimated.Value(hasAnimatedBefore ? 1 : 0.96)).current
+  const gridAnimationPlayedRef = useRef(hasAnimatedBefore)
+
+  useEffect(() => {
+    if (!showGrid) return
+    if (!promptsReady && displayGridItems.length === 0) return
+
+    if (gridAnimationPlayedRef.current) {
+      gridFade.setValue(1)
+      gridScale.setValue(1)
+      return
+    }
+
+    gridAnimationPlayedRef.current = true
+    gridAnimationHistory.add(userName)
+    RNAnimated.parallel([
+      RNAnimated.timing(gridFade, {
+        toValue: 1,
+        duration: 520,
+        easing: RNEasing.out(RNEasing.cubic),
+        useNativeDriver: true,
+      }),
+      RNAnimated.timing(gridScale, {
+        toValue: 1,
+        duration: 520,
+        easing: RNEasing.out(RNEasing.cubic),
+        useNativeDriver: true,
+      }),
+    ]).start()
+  }, [showGrid, gridFade, gridScale, userName, promptsReady, displayGridItems.length])
+
+  const gridContent = showGrid ? (
+    <RNAnimated.View
+      style={{
+        width: '100%',
+        opacity: gridFade,
+        transform: [{ scale: gridScale }],
+      }}
+    >
+      <Grid
+        editingRights={true}
+        screenFocused={focusReady && !loading}
+        shouldAnimateStartup={justOnboarded}
+        onStartupAnimationComplete={() => setStartupAnimationDone(true)}
+        onPressItem={(item) => {
+          setDetailsItem(item!)
+          detailsSheetRef.current?.snapToIndex(0)
+        }}
+        onLongPressItem={() => {
+          clearTimeout(timeout)
+          timeout = setTimeout(() => {
+            stopEditProfile()
+          }, 10000)
+          startEditProfile()
+        }}
+        onRemoveItem={(item) => {
+          setRemovingItem(item)
+          removeRefSheetRef.current?.expand()
+        }}
+        onAddItem={(prompt?: string) => {
+          setAddingNewRefTo('grid')
+          if (prompt) useAppStore.getState().setAddRefPrompt(prompt)
+          newRefSheetRef.current?.snapToIndex(1)
+        }}
+        onAddItemWithPrompt={(prompt: string, photoPath?: boolean) => {
+          if (photoPath) {
+            triggerDirectPhotoPicker(prompt)
+          } else {
+            setAddingNewRefTo('grid')
+            useAppStore.getState().setAddRefPrompt(prompt)
+            newRefSheetRef.current?.snapToIndex(1)
+          }
+        }}
+        columns={GRID_COLUMNS}
+        items={displayGridItems}
+        rows={GRID_ROWS}
+        rowGap={(s.$075 as number) + 5}
+        searchMode={searchMode}
+        selectedRefs={selectedRefs}
+        setSelectedRefs={setSelectedRefs}
+        newlyAddedItemId={newlyAddedItemId}
+        showPrompts={allowPromptPlaceholders}
+      />
+    </RNAnimated.View>
+  ) : null
+
+  const searchDismissOverlays = hasProfile && searchMode ? (
+    <>
+      <Pressable
+        style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 90, backgroundColor: 'transparent', zIndex: 1 }}
+        onPress={() => {
+          setSearchMode(false)
+          if (!searchMode) {
+            setSelectedRefs([])
+          }
+        }}
+      />
+      <Pressable
+        style={{ position: 'absolute', top: 90, left: 0, width: 16, bottom: 0, backgroundColor: 'transparent', zIndex: 1 }}
+        onPress={() => {
+          setSearchMode(false)
+          if (!searchMode) {
+            setSelectedRefs([])
+          }
+        }}
+      />
+      <Pressable
+        style={{ position: 'absolute', top: 90, right: 0, width: 16, bottom: 0, backgroundColor: 'transparent', zIndex: 1 }}
+        onPress={() => {
+          setSearchMode(false)
+          if (!searchMode) {
+            setSelectedRefs([])
+          }
+        }}
+      />
+      <Pressable
+        style={{ position: 'absolute', top: 590, left: 0, right: 0, bottom: 0, backgroundColor: 'transparent', zIndex: 1 }}
+        onPress={() => {
+          setSearchMode(false)
+          if (!searchMode) {
+            setSelectedRefs([])
+          }
+        }}
+      />
+    </>
+  ) : null
   
   // Track which items have already been animated to prevent re-animation on grid refresh
   const animatedItemsRef = useRef<Set<string>>(new Set())
@@ -250,9 +518,6 @@ export const MyProfile = ({ userName }: { userName: string }) => {
   const photoRefFormRef = useRef<BottomSheet>(null)
 
   // Simple cache to avoid refetching the same data
-  const lastFetchedUserName = useRef<string>('')
-  const lastFetchedTrigger = useRef<number>(0)
-
   // Memoized grid items map for O(1) lookup
   const gridItemsMap = useMemo(() => new Map(gridItems.map((item) => [item.id, item])), [gridItems])
 
@@ -289,84 +554,105 @@ export const MyProfile = ({ userName }: { userName: string }) => {
 
 
   const refreshGrid = async (userName: string) => {
-    setLoading(true)
-    
-    try {
-      // Start with cache check immediately (fastest path)
-      const user = await pocketbase.collection('users').getFirstListItem(`userName = "${userName}"`)
-      const userId = user.id
-      
-      // Check cache first (read-only, safe operation)
+    const hadMemory = profileMemoryCache.has(userName)
+    if (!hadMemory) {
+      setLoading(true)
+      setPromptsReady(false)
+    }
+
+    const storeState = useAppStore.getState()
+    const storeUser = storeState.user
+    const cacheUserId = storeUser?.userName === userName ? storeUser.id : undefined
+
+    const memoryCached = profileMemoryCache.get(userName)
+    if (memoryCached) {
+      setProfile(memoryCached.profile)
+      setGridItems(memoryCached.gridItems)
+      setBacklogItems(memoryCached.backlogItems)
+      setLoading(false)
+      setPromptsReady(memoryCached.gridItems.length > 0)
+      storeState.setGridItemCount(memoryCached.gridItems.length)
+    }
+
+    const hydrateFromCache = async (userId?: string) => {
+      if (!userId) return false
+
       const [cachedProfile, cachedGridItems, cachedBacklogItems] = await Promise.all([
         simpleCache.get('profile', userId),
         simpleCache.get('grid_items', userId),
-        simpleCache.get('backlog_items', userId)
+        simpleCache.get('backlog_items', userId),
       ])
-      
-      // Use cached data if available (fastest path)
-      if (cachedProfile && cachedGridItems && cachedBacklogItems) {
-        console.log('📖 Using cached profile data')
-        setProfile(cachedProfile as Profile)
-        setGridItems(cachedGridItems as ExpandedItem[])
-        setBacklogItems(cachedBacklogItems as ExpandedItem[])
+
+      if (!cachedProfile || !cachedGridItems || !cachedBacklogItems) {
+        return false
+      }
+
+      setProfile(cachedProfile as Profile)
+      setGridItems(cachedGridItems as ExpandedItem[])
+      setBacklogItems(cachedBacklogItems as ExpandedItem[])
+      setLoading(false)
+      setPromptsReady((cachedGridItems as ExpandedItem[]).length > 0)
+      storeState.setGridItemCount((cachedGridItems as ExpandedItem[]).length)
+      profileMemoryCache.set(userName, {
+        profile: cachedProfile as Profile,
+        gridItems: cachedGridItems as ExpandedItem[],
+        backlogItems: cachedBacklogItems as ExpandedItem[],
+        timestamp: Date.now(),
+      })
+      return true
+    }
+
+    const cacheHydrated = await hydrateFromCache(cacheUserId)
+
+
+    const fetchFreshData = async () => {
+      try {
+        const profileRecord = await getUserByUserName(userName)
+        const [gridItemsRecord, backlogItemsRecord] = await Promise.all([
+          getProfileItems(userName),
+          getBacklogItems(userName),
+        ])
+
+        setProfile(profileRecord)
+        setGridItems(gridItemsRecord)
+        setBacklogItems(backlogItemsRecord as ExpandedItem[])
         setLoading(false)
-        
-        // Update cached grid count
-        useAppStore.getState().setGridItemCount((cachedGridItems as ExpandedItem[]).length)
-        
-        // Only run autoMoveBacklogToGrid for own profile
+        setPromptsReady(true)
+        useAppStore.getState().setGridItemCount(gridItemsRecord.length)
+
+        profileMemoryCache.set(userName, {
+          profile: profileRecord,
+          gridItems: gridItemsRecord,
+          backlogItems: backlogItemsRecord as ExpandedItem[],
+          timestamp: Date.now(),
+        })
+
+        const userId = profileRecord.id
+        const cacheUpdates = [
+          simpleCache.set('profile', profileRecord, userId),
+          simpleCache.set('grid_items', gridItemsRecord, userId),
+          simpleCache.set('backlog_items', backlogItemsRecord, userId),
+        ]
+
+        void Promise.all(cacheUpdates).catch((error) => {
+          console.warn('Cache write failed:', error)
+        })
+
         if (userName === useAppStore.getState().user?.userName) {
-          Promise.all([
-            autoMoveBacklogToGrid(userName)
-          ]).catch(error => {
+          void autoMoveBacklogToGrid(userName, gridItemsRecord, backlogItemsRecord as ExpandedItem[]).catch((error) => {
             console.warn('Background operations failed:', error)
           })
         }
-        
-        return
+      } catch (error) {
+        console.error('Failed to refresh grid:', error)
+        if (!cacheHydrated) {
+          setLoading(false)
+          setPromptsReady(true)
+        }
       }
-      
-      // Cache miss - fetch fresh data in parallel
-      const [profile, gridItems, backlogItems] = await Promise.all([
-        getUserByUserName(userName),
-        getProfileItems(userName),
-        getBacklogItems(userName),
-      ])
-      
-      // Update state immediately
-      setProfile(profile)
-      setGridItems(gridItems)
-      setBacklogItems(backlogItems as ExpandedItem[])
-      setLoading(false)
-      
-      // Update cached grid count
-      useAppStore.getState().setGridItemCount(gridItems.length)
-      
-      // Only run autoMoveBacklogToGrid for own profile
-      if (userName === useAppStore.getState().user?.userName) {
-        Promise.all([
-          autoMoveBacklogToGrid(userName),
-          simpleCache.set('profile', profile, userId),
-          simpleCache.set('grid_items', gridItems, userId),
-          simpleCache.set('backlog_items', backlogItems, userId)
-        ]).catch(error => {
-          console.warn('Background operations failed:', error)
-        })
-      } else {
-        // For other profiles, just cache
-        Promise.all([
-          simpleCache.set('profile', profile, userId),
-          simpleCache.set('grid_items', gridItems, userId),
-          simpleCache.set('backlog_items', backlogItems, userId)
-        ]).catch(error => {
-          console.warn('Background operations failed:', error)
-        })
-      }
-      
-    } catch (error) {
-      console.error('Failed to refresh grid:', error)
-      setLoading(false)
     }
+
+    void fetchFreshData()
   }
 
   const handleMoveToBacklog = async () => {
@@ -439,41 +725,58 @@ export const MyProfile = ({ userName }: { userName: string }) => {
 
   useEffect(() => {
     if (hasShareIntent) {
-      setAddingNewRefTo(gridItems.length < 12 ? 'grid' : 'backlog')
+      setAddingNewRefTo(displayGridItems.length < GRID_CAPACITY ? 'grid' : 'backlog')
       bottomSheetRef.current?.snapToIndex(1)
     }
   }, [hasShareIntent])
 
   useEffect(() => {
+    if (!effectiveProfile?.userName) return
+    profileMemoryCache.set(effectiveProfile.userName, {
+      profile: effectiveProfile,
+      gridItems,
+      backlogItems,
+      timestamp: Date.now(),
+    })
+  }, [effectiveProfile?.userName, gridItems, backlogItems])
+
+  useEffect(() => {
+    let cancelled = false
+    let focusTimer: ReturnType<typeof setTimeout> | null = null
+    // Make gesture controls available immediately
+    setFocusReady(true)
+
     const init = async () => {
       try {
-        // Set focus ready immediately for faster perceived loading
-        setFocusReady(true)
-        
         await refreshGrid(userName)
-        
-        // If returning from a search context, grid is already ready
+        if (cancelled) return
+
         const returningFromSearch = cachedSearchResults.length > 0 || isSearchResultsSheetOpen || searchMode
         if (returningFromSearch) {
-          // Already set above
-        } else if (justOnboarded) {
-          // Only delay for the first post-registration landing where startup animation will play
-          setTimeout(() => setFocusReady(true), 2500)
-          // Reset flag so subsequent visits don't delay
+          return
+        }
+        if (justOnboarded) {
+          focusTimer = setTimeout(() => {
+            if (!cancelled) {
+              setFocusReady(true)
+            }
+          }, 2500)
           setJustOnboarded(false)
-        } else {
-          // Already set above for normal visits
         }
       } catch (error) {
         console.error('Failed to refresh grid:', error)
-        // Even if there's an error, set focus ready to show something
-        setFocusReady(true)
       }
     }
 
-    // Initialize immediately without setTimeout
-    init()
-  }, [userName])
+    void init()
+
+    return () => {
+      cancelled = true
+      if (focusTimer) {
+        clearTimeout(focusTimer)
+      }
+    }
+  }, [userName, cachedSearchResults.length, isSearchResultsSheetOpen, searchMode, justOnboarded, setJustOnboarded])
 
   // Simplified back button restoration logic - just reset sheet state
   useEffect(() => {
@@ -510,8 +813,13 @@ export const MyProfile = ({ userName }: { userName: string }) => {
 
   // Animate prompt text with explicit schedule: L1 (3s) → pause (2s) → L2 (3s) → pause (2s) → repeat
   useEffect(() => {
-    const promptsActive = gridItems.length < 12 && !searchMode && !isSearchResultsSheetOpen && !loading
-    const canShowPromptsNow = promptsActive && (startupAnimationDone || !(gridItems.length === 0))
+    const promptsActive =
+      displayGridItems.length < GRID_CAPACITY &&
+      !searchMode &&
+      !isSearchResultsSheetOpen &&
+      !loading &&
+      promptsReady
+    const canShowPromptsNow = promptsActive && (startupAnimationDone || !(displayGridItems.length === 0))
     let tShow: ReturnType<typeof setTimeout> | null = null
     let tPause: ReturnType<typeof setTimeout> | null = null
 
@@ -546,18 +854,16 @@ export const MyProfile = ({ userName }: { userName: string }) => {
       setShowPrompt(false)
       setPromptTextIndex(0)
     }
-  }, [gridItems.length, searchMode, isSearchResultsSheetOpen, startupAnimationDone, loading])
+  }, [displayGridItems.length, searchMode, isSearchResultsSheetOpen, startupAnimationDone, loading, promptsReady])
 
   // Direct photo picker flow - route into existing NewRefSheet with pre-populated photo
-  const triggerDirectPhotoPicker = async (prompt: string) => {
+  const triggerDirectPhotoPicker = useCallback(async (prompt: string) => {
     try {
-      // Request permissions
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync()
       if (status !== 'granted') {
         return
       }
 
-      // Launch image picker
       const result = await ImagePicker.launchImageLibraryAsync({
         allowsEditing: true,
         aspect: [1, 1],
@@ -566,22 +872,157 @@ export const MyProfile = ({ userName }: { userName: string }) => {
 
       if (!result.canceled && result.assets && result.assets[0]) {
         const selectedImage = result.assets[0]
-        // Populate store so NewRefSheet picks it up as a photo prompt
         try { useAppStore.getState().setSelectedPhoto(selectedImage.uri) } catch {}
         try { useAppStore.getState().setAddRefPrompt(prompt) } catch {}
-        // Open NewRefSheet directly at search-results height; it will switch to add step
         setAddingNewRefTo('grid')
         newRefSheetRef.current?.snapToIndex(1)
       }
     } catch (error) {
       console.error('Error picking image:', error)
     }
-  }
+  }, [setAddingNewRefTo])
+
+  const handlePromptChipPress = useCallback((prompt: PromptSuggestion) => {
+    setPromptSuggestions((current) => {
+      const remainder = current.filter((item) => item.text !== prompt.text)
+      const needed = PROMPT_BATCH_SIZE - remainder.length
+      if (needed <= 0) {
+        return remainder
+      }
+
+      const exclude = new Set(remainder.map((item) => item.text))
+      const replacements = createPromptBatch(needed, exclude)
+      return [...remainder, ...replacements]
+    })
+
+    if (prompt.photoPath) {
+      void triggerDirectPhotoPicker(prompt.text)
+      return
+    }
+
+    setAddingNewRefTo('grid')
+    try { useAppStore.getState().setAddRefPrompt(prompt.text) } catch {}
+    newRefSheetRef.current?.snapToIndex(1)
+  }, [triggerDirectPhotoPicker, setAddingNewRefTo])
+
+  const promptChipSection = showPromptChips && promptSuggestions.length > 0 ? (
+    <Animated.View
+      entering={FadeIn.duration(300).delay(120)}
+      style={{
+        marginTop: GRID_HEIGHT + s.$1,
+        paddingHorizontal: s.$1half,
+        paddingBottom: s.$1half,
+        zIndex: 4,
+      }}
+    >
+      <View
+        style={{
+          backgroundColor: c.surface2,
+          borderRadius: 26,
+          paddingVertical: s.$1,
+          paddingHorizontal: s.$1half,
+          borderWidth: 1,
+          borderColor: 'rgba(0,0,0,0.05)',
+          shadowColor: '#000',
+          shadowOpacity: 0.08,
+          shadowRadius: 12,
+          shadowOffset: { width: 0, height: 6 },
+          elevation: 3,
+        }}
+      >
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            marginBottom: s.$075,
+          }}
+        >
+          <Text style={{ color: c.muted2, fontSize: 14, fontWeight: '600' }}>
+            Need a spark? Tap to pin one.
+          </Text>
+          <Pressable
+            onPress={handleShufflePromptSuggestions}
+            hitSlop={10}
+            style={({ pressed }) => ({
+              flexDirection: 'row',
+              alignItems: 'center',
+              opacity: pressed ? 0.6 : 1,
+            })}
+          >
+            <Ionicons name="shuffle-outline" size={16} color={c.muted2} style={{ marginRight: 4 }} />
+            <Text style={{ color: c.muted2, fontSize: 13, fontWeight: '500' }}>Shuffle</Text>
+          </Pressable>
+        </View>
+
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: -6 }}>
+          {promptSuggestions.map((suggestion, index) => {
+            const backgroundColor = PROMPT_CARD_BACKGROUNDS[index % PROMPT_CARD_BACKGROUNDS.length]
+            const rotation = PROMPT_CARD_ROTATIONS[index % PROMPT_CARD_ROTATIONS.length]
+
+            return (
+              <Pressable
+                key={`${suggestion.text}-${index}`}
+                onPress={() => handlePromptChipPress(suggestion)}
+                style={({ pressed }) => ({
+                  marginHorizontal: 6,
+                  marginVertical: 6,
+                  paddingVertical: 10,
+                  paddingHorizontal: 18,
+                  borderRadius: 999,
+                  minWidth: 120,
+                  backgroundColor,
+                  borderWidth: 1,
+                  borderColor: 'rgba(0,0,0,0.05)',
+                  shadowColor: '#000',
+                  shadowOpacity: pressed ? 0.1 : 0.15,
+                  shadowRadius: pressed ? 5 : 8,
+                  shadowOffset: { width: 0, height: pressed ? 2 : 4 },
+                  elevation: pressed ? 2 : 4,
+                  transform: [{ rotate: `${rotation}deg` }, { scale: pressed ? 0.97 : 1 }],
+                })}
+              >
+                <View
+                  style={{
+                    position: 'absolute',
+                    top: -6,
+                    left: '50%',
+                    marginLeft: -6,
+                    width: 12,
+                    height: 12,
+                    borderRadius: 6,
+                    backgroundColor: c.olive,
+                    opacity: 0.6,
+                    shadowColor: '#6b5f49',
+                    shadowOpacity: 0.25,
+                    shadowRadius: 3,
+                    shadowOffset: { width: 0, height: 1 },
+                    elevation: 1,
+                  }}
+                />
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
+                  <Ionicons
+                    name={suggestion.photoPath ? 'camera-outline' : 'bulb-outline'}
+                    size={15}
+                    color={c.muted2}
+                    style={{ marginRight: 6 }}
+                  />
+                  <Text style={{ color: c.muted2, fontSize: 14, fontWeight: '600', textAlign: 'center', flexShrink: 1 }}>
+                    {suggestion.text}
+                  </Text>
+                </View>
+              </Pressable>
+            )
+          })}
+        </View>
+      </View>
+    </Animated.View>
+  ) : null
 
   return (
     <>
       <ScrollView
-        style={{ flex: 1 }}
+        style={{ flex: 1, backgroundColor: c.surface }}
         contentContainerStyle={{
           justifyContent: 'center',
           alignItems: 'center',
@@ -591,498 +1032,311 @@ export const MyProfile = ({ userName }: { userName: string }) => {
           minHeight: '100%',
         }}
         showsVerticalScrollIndicator={false}
+        scrollEnabled={false}
       >
-        {profile && (
-          <View
+        <View
+          style={{
+            flex: 1,
+            width: '100%',
+            marginHorizontal: s.$1half,
+            backgroundColor: c.surface,
+          }}
+        >
+          <Animated.View
+            entering={FadeIn.duration(400).delay(100)}
+            exiting={FadeOut.duration(300)}
+            key={`${searchMode}-${gridItems.length}-${hasProfile ? 'ready' : 'loading'}`}
             style={{
-              flex: 1,
-              width: '100%',
-              marginHorizontal: s.$1half,
+              paddingHorizontal: 10,
+              paddingVertical: s.$1,
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginTop: 7,
+              zIndex: 5,
             }}
           >
-            {/* Custom header text based on grid state */}
-            <Animated.View
-              entering={FadeIn.duration(400).delay(100)}
-              exiting={FadeOut.duration(300)}
-              key={`${searchMode}-${gridItems.length}`}
-              style={{
-                paddingHorizontal: 10,
-                paddingVertical: s.$1,
-                alignItems: 'center',
-                justifyContent: 'center',
-                marginTop: 7, // Center the text between nav and grid for both modes
-                zIndex: 5, // Above the overlay
-              }}
-            >
-              {searchMode || isSearchResultsSheetOpen ? (
-                <Text
-                  style={{
-                    color: c.prompt,
-                    fontSize: s.$09,
-                    fontFamily: 'System',
-                    fontWeight: '400',
-                    textAlign: 'center',
-                    lineHeight: s.$1half,
-                  }}
-                >
-                  What did you get into today?
-                </Text>
-              ) : gridItems.length >= 12 ? (
-                <Text
-                  style={{
-                    color: c.prompt,
-                    fontSize: s.$09,
-                    fontFamily: 'System',
-                    fontWeight: '400',
-                    textAlign: 'center',
-                    lineHeight: s.$1half,
-                  }}
-                >
-                  What did you get into today?
-                </Text>
-              ) : (
-                <Animated.Text
-                  entering={FadeIn.duration(800)}
-                  exiting={FadeOut.duration(800)}
-                  key={`prompt-text-${promptTextIndex}-${promptFadeKey}`}
-                  style={{
-                    color: c.prompt,
-                    fontSize: s.$09,
-                    fontFamily: 'System',
-                    fontWeight: '400',
-                    textAlign: 'center',
-                    lineHeight: s.$1half,
-                    minWidth: 280,
-                    minHeight: s.$1half, // reserve space during pause
-                  }}
-                >
-                  {showPrompt
-                    ? promptTextIndex === 0
-                      ? 'these prompts will disappear after you add'
-                      : '(no one will know you used them)'
-                    : ''}
-                </Animated.Text>
-              )}
-            </Animated.View>
+            {headerContent}
+          </Animated.View>
+
+          <View
+            style={{
+              position: 'absolute',
+              top: 90,
+              left: 0,
+              right: 0,
+              zIndex: 5,
+            }}
+          >
+            {gridContent || <View style={{ height: GRID_HEIGHT }} />}
 
             <View
-              style={{
-                gap: s.$2,
-                minHeight: 500,
-                position: 'absolute',
-                top: 90,
-                left: 0,
-                right: 0,
-                zIndex: 5, // Above the overlay
-              }}
-            >
-              {loading || !focusReady ? (
-                <View style={{ height: 500 }} />
-              ) : (
-                <Grid
-                  editingRights={true}
-                  screenFocused={focusReady && !loading}
-                  shouldAnimateStartup={justOnboarded}
-                  onStartupAnimationComplete={() => setStartupAnimationDone(true)}
-                  onPressItem={(item) => {
-                    // Normal mode - open details
-                    setDetailsItem(item!)
-                    detailsSheetRef.current?.snapToIndex(0)
-                  }}
-                  onLongPressItem={() => {
-                    clearTimeout(timeout)
-                    timeout = setTimeout(() => {
-                      stopEditProfile()
-                    }, 10000)
-                    startEditProfile()
-                  }}
-                  onRemoveItem={(item) => {
-                    setRemovingItem(item)
-                    removeRefSheetRef.current?.expand()
-                  }}
-                  onAddItem={(prompt?: string) => {
-                    setAddingNewRefTo('grid')
-                    if (prompt) useAppStore.getState().setAddRefPrompt(prompt)
-                    newRefSheetRef.current?.snapToIndex(1)
-                  }}
-                  onAddItemWithPrompt={(prompt: string, photoPath?: boolean) => {
-                    if (photoPath) {
-                      // Direct photo picker flow - bypass NewRefSheet entirely
-                      triggerDirectPhotoPicker(prompt)
-                    } else {
-                      // Normal search flow through NewRefSheet
-                      setAddingNewRefTo('grid')
-                      useAppStore.getState().setAddRefPrompt(prompt)
-                      newRefSheetRef.current?.snapToIndex(1)
-                    }
-                  }}
-                  columns={3}
-                  items={displayGridItems}
-                  rows={4}
-                  searchMode={searchMode}
-                  selectedRefs={selectedRefs}
-                  setSelectedRefs={setSelectedRefs}
-                  newlyAddedItemId={newlyAddedItemId}
-                />
-              )}
-            </View>
-
-            {/* Floating Search Button (toggle search mode) - positioned absolutely */}
-            <FloatingJaggedButton
-              icon="plus"
-              onPress={() => {
-                // Open AddRef flow like a prompt tile
-                setAddingNewRefTo('grid')
-                try { useAppStore.getState().setAddRefPrompt('') } catch {}
-                newRefSheetRef.current?.snapToIndex(1)
-              }}
-              style={{
-                position: 'absolute',
-                bottom: -30, // Moved up 10px from -40
-                right: 5, // Fixed distance from right edge of screen
-                zIndex: 5, // Behind the sheet (zIndex: 100) but above the grid content
-                opacity: searchMode ? 0 : 1, // Hide with opacity instead of conditional rendering
-              }}
-            />
-          </View>
-        )}
-
-        {!user && <Heading tag="h1">Profile for {userName} not found</Heading>}
-
-        {/* Multiple pressable areas to dismiss search mode - avoiding the grid */}
-        {searchMode && (
-          <>
-            {/* Top area above grid */}
-            <Pressable
+              pointerEvents="box-none"
               style={{
                 position: 'absolute',
                 top: 0,
                 left: 0,
                 right: 0,
-                height: 90, // Up to where grid starts
-                backgroundColor: 'transparent',
-                zIndex: 1,
+                height: GRID_HEIGHT,
               }}
-              onPress={() => {
-                setSearchMode(false)
-                // Don't clear selectedRefs if we're returning from search
-                if (!searchMode) { // Changed from returningFromSearch to searchMode
-                  setSelectedRefs([])
-                }
-              }}
-            />
-            {/* Left area beside grid */}
-            <Pressable
-              style={{
-                position: 'absolute',
-                top: 90,
-                left: 0,
-                width: 16, // s.$08
-                bottom: 0,
-                backgroundColor: 'transparent',
-                zIndex: 1,
-              }}
-              onPress={() => {
-                setSearchMode(false)
-                // Don't clear selectedRefs if we're returning from search
-                if (!searchMode) { // Changed from returningFromSearch to searchMode
-                  setSelectedRefs([])
-                }
-              }}
-            />
-            {/* Right area beside grid */}
-            <Pressable
-              style={{
-                position: 'absolute',
-                top: 90,
-                right: 0,
-                width: 16, // s.$08
-                bottom: 0,
-                backgroundColor: 'transparent',
-                zIndex: 1,
-              }}
-              onPress={() => {
-                setSearchMode(false)
-                // Don't clear selectedRefs if we're returning from search
-                if (!searchMode) { // Changed from returningFromSearch to searchMode
-                  setSelectedRefs([])
-                }
-              }}
-            />
-            {/* Bottom area below grid */}
-            <Pressable
-              style={{
-                position: 'absolute',
-                top: 590, // 90 + 500 (grid height)
-                left: 0,
-                right: 0,
-                bottom: 0,
-                backgroundColor: 'transparent',
-                zIndex: 1,
-              }}
-              onPress={() => {
-                setSearchMode(false)
-                // Don't clear selectedRefs if we're returning from search
-                if (!searchMode) { // Changed from returningFromSearch to searchMode
-                  setSelectedRefs([])
-                }
-              }}
-            />
-          </>
-        )}
-      </ScrollView>
+            >
+              <FloatingJaggedButton
+                icon="plus"
+                onPress={() => {
+                  setAddingNewRefTo('grid')
+                  try { useAppStore.getState().setAddRefPrompt('') } catch {}
+                  newRefSheetRef.current?.snapToIndex(1)
+                }}
+                style={{
+                  position: 'absolute',
+                  right: 7,
+                  bottom: -65,
+                  zIndex: 5,
+                  opacity: hasProfile && !searchMode ? 1 : 0,
+                }}
+              />
+            </View>
 
-      {/* Logout button positioned absolutely */}
-      {showLogoutButton && (
-        <View style={{ 
-          position: 'absolute',
-          bottom: 50,
-          left: 0,
-          right: 0,
-          alignItems: 'center',
-          zIndex: 4,
-        }}>
-          <Button
-            style={{ width: 120 }}
-            variant="inlineSmallMuted"
-            title="Log out"
-            onPress={logout}
-          />
+            {promptChipSection}
+          </View>
+
+          {hasProfile && !effectiveProfile && <Heading tag="h1">Profile for {userName} not found</Heading>}
+
+          {searchDismissOverlays}
         </View>
-      )}
 
-      {profile && (
-        <>
-          <MyBacklogSheet
-            backlogItems={backlogItems}
-            profile={profile}
-            user={user}
-            openAddtoBacklog={() => {
-              setAddingNewRefTo('backlog')
-              newRefSheetRef.current?.snapToIndex(1)
-            }}
-          />
-          <RemoveRefSheet
-            bottomSheetRef={removeRefSheetRef}
-            handleMoveToBacklog={handleMoveToBacklog}
-            handleRemoveFromProfile={handleRemoveFromProfile}
-            item={removingItem}
-          />
-          {detailsItem && (
-            <ProfileDetailsSheet
-              profileUsername={profile.userName}
-              detailsItemId={detailsItem.id}
-              onChange={(index: number) => {
-                if (index === -1) {
-                  // Reset editing mode when carousel closes
-                  stopEditing()
-                  setDetailsItem(null)
-                }
+        {effectiveProfile && (
+          <>
+            <MyBacklogSheet
+              backlogItems={backlogItems}
+              profile={effectiveProfile}
+              user={user}
+              openAddtoBacklog={() => {
+                setAddingNewRefTo('backlog')
+                newRefSheetRef.current?.snapToIndex(1)
               }}
-              openedFromFeed={false}
-              detailsSheetRef={detailsSheetRef}
             />
-          )}
+            <RemoveRefSheet
+              bottomSheetRef={removeRefSheetRef}
+              handleMoveToBacklog={handleMoveToBacklog}
+              handleRemoveFromProfile={handleRemoveFromProfile}
+              item={removingItem}
+            />
+            {detailsItem && (
+              <ProfileDetailsSheet
+                profileUsername={effectiveProfile.userName}
+                detailsItemId={detailsItem.id}
+                onChange={(index: number) => {
+                  if (index === -1) {
+                    // Reset editing mode when carousel closes
+                    stopEditing()
+                    setDetailsItem(null)
+                  }
+                }}
+                openedFromFeed={false}
+                detailsSheetRef={detailsSheetRef}
+              />
+            )}
 
-          {/* Search Results Sheet - render after FloatingJaggedButton so it appears above */}
-          <SearchResultsSheet
-            ref={searchResultsSheetTriggerRef}
-            bottomSheetRef={searchResultsSheetRef}
-            selectedRefs={selectedRefs}
-            selectedRefItems={finalSelectedRefItems}
-          />
+            {/* Search Results Sheet - render after FloatingJaggedButton so it appears above */}
+            <SearchResultsSheet
+              ref={searchResultsSheetTriggerRef}
+              bottomSheetRef={searchResultsSheetRef}
+              selectedRefs={selectedRefs}
+              selectedRefItems={finalSelectedRefItems}
+            />
 
-          {/* Direct Photo Form - bypasses NewRefSheet entirely */}
-          {showDirectPhotoForm && directPhotoRefFields && (
-            <BottomSheet
+            {/* Direct Photo Form - bypasses NewRefSheet entirely */}
+            {showDirectPhotoForm && directPhotoRefFields && (
+              <BottomSheet
 
-              ref={photoRefFormRef}
-              snapPoints={['80%', '85%', '100%', '110%']}
-              index={0}
-              enablePanDownToClose={true}
+                ref={photoRefFormRef}
+                snapPoints={['80%', '85%', '100%', '110%']}
+                index={0}
+                enablePanDownToClose={true}
 
 
 
 
 
                             backgroundStyle={{ backgroundColor: c.olive, borderRadius: 50, paddingTop: 0 }}
-              animatedIndex={detailsBackdropAnimatedIndex}
-              backdropComponent={(p) => (
-                <BottomSheetBackdrop
-                  {...p}
-                  disappearsOnIndex={-1}
-                  appearsOnIndex={0}
-                  pressBehavior={'close'}
-                />
-              )}
-              handleComponent={null}
-              enableDynamicSizing={false}
-              enableOverDrag={false}
-              onChange={(i: number) => {
-                if (i === -1) {
-                  Keyboard.dismiss()
-                  setShowDirectPhotoForm(false)
-                  setDirectPhotoRefFields(null)
-                  // Ensure backdrop animated index is reset
-                  if (detailsBackdropAnimatedIndex) {
-                    detailsBackdropAnimatedIndex.value = -1
+                animatedIndex={detailsBackdropAnimatedIndex}
+                backdropComponent={(p) => (
+                  <BottomSheetBackdrop
+                    {...p}
+                    disappearsOnIndex={-1}
+                    appearsOnIndex={0}
+                    pressBehavior={'close'}
+                  />
+                )}
+                handleComponent={null}
+                enableDynamicSizing={false}
+                enableOverDrag={false}
+                onChange={(i: number) => {
+                  if (i === -1) {
+                    Keyboard.dismiss()
+                    setShowDirectPhotoForm(false)
+                    setDirectPhotoRefFields(null)
+                    // Ensure backdrop animated index is reset
+                    if (detailsBackdropAnimatedIndex) {
+                      detailsBackdropAnimatedIndex.value = -1
+                    }
                   }
-                }
-              }}
-            >
-              <BottomSheetView
-                style={{
-                  paddingHorizontal: s.$2,
-                  paddingTop: 8,
-                  alignItems: 'center',
-                  justifyContent: 'center',
                 }}
               >
-                <RefForm
-                  key={`direct-photo-form-${directPhotoRefFields.image}`}
-                  existingRefFields={directPhotoRefFields}
-                  pickerOpen={false}
-                  canEditRefData={true}
-                  
-
-                  onAddRef={async (itemFields) => {
-                    // Merge promptContext from directPhotoRefFields if present
-                    // Ensure title is not empty - use prompt context as fallback
-                    const mergedFields = { 
-                      ...itemFields, 
-                      promptContext: directPhotoRefFields.promptContext,
-                      title: itemFields.title || directPhotoRefFields.promptContext || 'Untitled'
-                    }
-                    
-                    // Create optimistic item immediately
-                    const optimisticItem: ExpandedItem = {
-                      id: `temp-${Date.now()}`, collectionId: Collections.Items, collectionName: Collections.Items,
-                      creator: user?.id || '', ref: 'temp-ref', image: itemFields.image || '',
-                      url: itemFields.url || '', text: itemFields.text || '', list: itemFields.list || false,
-                      parent: itemFields.parent || '', backlog: false, order: 0,
-                      created: new Date().toISOString(), updated: new Date().toISOString(),
-                      promptContext: mergedFields.promptContext || '',
-                      expand: { 
-                        ref: { 
-                          id: 'temp-ref', 
-                          title: itemFields.title || '', 
-                          image: itemFields.image || '',
-                          url: itemFields.url || '',
-                          meta: '{}',
-                          creator: user?.id || '',
-                          created: new Date().toISOString(),
-                          updated: new Date().toISOString()
-                        }, 
-                        creator: null as any, 
-                        items_via_parent: [] as any 
-                      }
-                    }
-
-                    // Add optimistic item to grid immediately
-                    addOptimisticItem(optimisticItem)
-
-                    // Close the sheet immediately and reset backdrop
-                    Keyboard.dismiss()
-                    setShowDirectPhotoForm(false)
-                    setDirectPhotoRefFields(null)
-                    if (detailsBackdropAnimatedIndex) {
-                      detailsBackdropAnimatedIndex.value = -1
-                    }
-                    
-                    // Background database operations
-                    ;(async () => {
-                      try {
-                        await addToProfile(null, mergedFields, false)
-                      } catch (error) {
-                        console.error('Failed to add item to profile:', error)
-                        // Remove optimistic item on failure
-                        removeOptimisticItem(optimisticItem.id)
-                      }
-                    })()
+                <BottomSheetView
+                  style={{
+                    paddingHorizontal: s.$2,
+                    paddingTop: 8,
+                    alignItems: 'center',
+                    justifyContent: 'center',
                   }}
-                  onAddRefToList={async (itemFields) => {
-                    // Merge promptContext from directPhotoRefFields if present
-                    // Ensure title is not empty - use prompt context as fallback
-                    const mergedFields = { 
-                      ...itemFields, 
-                      promptContext: directPhotoRefFields.promptContext,
-                      title: itemFields.title || directPhotoRefFields.promptContext || 'Untitled'
-                    }
-                    const newItem = await addToProfile(null, mergedFields, false)
-                    Keyboard.dismiss()
-                    setShowDirectPhotoForm(false)
-                    setDirectPhotoRefFields(null)
-                    if (detailsBackdropAnimatedIndex) {
-                      detailsBackdropAnimatedIndex.value = -1
-                    }
-                  }}
-                  backlog={false}
-                />
-              </BottomSheetView>
-            </BottomSheet>
-          )}
+                >
+                  <RefForm
+                    key={`direct-photo-form-${directPhotoRefFields.image}`}
+                    existingRefFields={directPhotoRefFields}
+                    pickerOpen={false}
+                    canEditRefData={true}
+                    
 
-          {/* Search Bottom Sheet (only in search mode, always rendered last) */}
-          {searchMode && (
-            <SearchModeBottomSheet
-              open={false} // start minimized when searchMode is true
-              onClose={() => setSearchMode(false)}
-              selectedRefs={selectedRefs}
-              selectedRefItems={selectedRefItems}
-              onSearch={() => {
-                // Clear restored ref items for new searches
+                    onAddRef={async (itemFields) => {
+                      // Merge promptContext from directPhotoRefFields if present
+                      // Ensure title is not empty - use prompt context as fallback
+                      const mergedFields = { 
+                        ...itemFields, 
+                        promptContext: directPhotoRefFields.promptContext,
+                        title: itemFields.title || directPhotoRefFields.promptContext || 'Untitled'
+                      }
+                      
+                      // Create optimistic item immediately
+                      const optimisticItem: ExpandedItem = {
+                        id: `temp-${Date.now()}`, collectionId: Collections.Items, collectionName: Collections.Items,
+                        creator: user?.id || '', ref: 'temp-ref', image: itemFields.image || '',
+                        url: itemFields.url || '', text: itemFields.text || '', list: itemFields.list || false,
+                        parent: itemFields.parent || '', backlog: false, order: 0,
+                        created: new Date().toISOString(), updated: new Date().toISOString(),
+                        promptContext: mergedFields.promptContext || '',
+                        expand: { 
+                          ref: { 
+                            id: 'temp-ref', 
+                            title: itemFields.title || '', 
+                            image: itemFields.image || '',
+                            url: itemFields.url || '',
+                            meta: '{}',
+                            creator: user?.id || '',
+                            created: new Date().toISOString(),
+                            updated: new Date().toISOString()
+                          }, 
+                          creator: null as any, 
+                          items_via_parent: [] as any 
+                        }
+                      }
+
+                      // Add optimistic item to grid immediately
+                      addOptimisticItem(optimisticItem)
+
+                      // Close the sheet immediately and reset backdrop
+                      Keyboard.dismiss()
+                      setShowDirectPhotoForm(false)
+                      setDirectPhotoRefFields(null)
+                      if (detailsBackdropAnimatedIndex) {
+                        detailsBackdropAnimatedIndex.value = -1
+                      }
+                      
+                      // Background database operations
+                      ;(async () => {
+                        try {
+                          await addToProfile(null, mergedFields, false)
+                        } catch (error) {
+                          console.error('Failed to add item to profile:', error)
+                          // Remove optimistic item on failure
+                          removeOptimisticItem(optimisticItem.id)
+                        }
+                      })()
+                    }}
+                    onAddRefToList={async (itemFields) => {
+                      // Merge promptContext from directPhotoRefFields if present
+                      // Ensure title is not empty - use prompt context as fallback
+                      const mergedFields = { 
+                        ...itemFields, 
+                        promptContext: directPhotoRefFields.promptContext,
+                        title: itemFields.title || directPhotoRefFields.promptContext || 'Untitled'
+                      }
+                      const newItem = await addToProfile(null, mergedFields, false)
+                      Keyboard.dismiss()
+                      setShowDirectPhotoForm(false)
+                      setDirectPhotoRefFields(null)
+                      if (detailsBackdropAnimatedIndex) {
+                        detailsBackdropAnimatedIndex.value = -1
+                      }
+                    }}
+                    backlog={false}
+                  />
+                </BottomSheetView>
+              </BottomSheet>
+            )}
+
+            {/* Search Bottom Sheet (only in search mode, always rendered last) */}
+            {searchMode && (
+              <SearchModeBottomSheet
+                open={false} // start minimized when searchMode is true
+                onClose={() => setSearchMode(false)}
+                selectedRefs={selectedRefs}
+                selectedRefItems={selectedRefItems}
+                onSearch={() => {
+                  // Clear restored ref items for new searches
         
-                setGlobalSelectedRefItems([]) // Also clear global state
-                searchResultsSheetRef.current?.snapToIndex(1)
-                setSearchMode(false) // Exit search mode when opening search results
-                // Trigger the search after a small delay to ensure the sheet is open
-                setTimeout(() => {
-                  if (searchResultsSheetTriggerRef.current) {
-                    searchResultsSheetTriggerRef.current.triggerSearch()
-                  } else {
-                  }
-                }, 300) // Increased delay to ensure sheet is fully open
-              }}
-              onRestoreSearch={async (historyItem) => {
-                try {
-                  
-                  // Create ref items from history data with images
-                  const restoredItems = historyItem.ref_ids.map((refId: string, index: number) => ({
-                    id: refId,
-                    ref: refId,
-                    title: historyItem.ref_titles?.[index] || refId,
-                    image: historyItem.ref_images?.[index] || '',
-                    expand: {
-                      ref: {
-                        id: refId,
-                        title: historyItem.ref_titles?.[index] || refId,
-                        image: historyItem.ref_images?.[index] || '',
-                      },
-                    },
-                  }))
-
-                  // Set the selected refs and items so the SearchResultsSheet doesn't show validation error
-                  setSelectedRefs(historyItem.ref_ids)
-                  setGlobalSelectedRefItems(restoredItems)
-
-                  // Open the search results sheet immediately
+                  setGlobalSelectedRefItems([]) // Also clear global state
                   searchResultsSheetRef.current?.snapToIndex(1)
-                  setSearchMode(false)
-
-                  // Use the cached search results from history AFTER setting the flag
+                  setSearchMode(false) // Exit search mode when opening search results
+                  // Trigger the search after a small delay to ensure the sheet is open
                   setTimeout(() => {
                     if (searchResultsSheetTriggerRef.current) {
-                      searchResultsSheetTriggerRef.current.restoreSearchFromHistory(historyItem)
+                      searchResultsSheetTriggerRef.current.triggerSearch()
+                    } else {
                     }
-                  }, 100)
-                } catch (error) {
-                  console.error('❌ Error restoring search from history:', error)
-                }
-              }}
-            />
-          )}
-        </>
-      )}
+                  }, 300) // Increased delay to ensure sheet is fully open
+                }}
+                onRestoreSearch={async (historyItem) => {
+                  try {
+                    
+                    // Create ref items from history data with images
+                    const restoredItems = historyItem.ref_ids.map((refId: string, index: number) => ({
+                      id: refId,
+                      ref: refId,
+                      title: historyItem.ref_titles?.[index] || refId,
+                      image: historyItem.ref_images?.[index] || '',
+                      expand: {
+                        ref: {
+                          id: refId,
+                          title: historyItem.ref_titles?.[index] || refId,
+                          image: historyItem.ref_images?.[index] || '',
+                        },
+                      },
+                    }))
+
+                    // Set the selected refs and items so the SearchResultsSheet doesn't show validation error
+                    setSelectedRefs(historyItem.ref_ids)
+                    setGlobalSelectedRefItems(restoredItems)
+
+                    // Open the search results sheet immediately
+                    searchResultsSheetRef.current?.snapToIndex(1)
+                    setSearchMode(false)
+
+                    // Use the cached search results from history AFTER setting the flag
+                    setTimeout(() => {
+                      if (searchResultsSheetTriggerRef.current) {
+                        searchResultsSheetTriggerRef.current.restoreSearchFromHistory(historyItem)
+                      }
+                    }, 100)
+                  } catch (error) {
+                    console.error('❌ Error restoring search from history:', error)
+                  }
+                }}
+              />
+            )}
+          </>
+        )}
+      </ScrollView>
     </>
   )
 }

@@ -25,6 +25,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { useEffect, useRef } from 'react'
 import { StatusBar, useColorScheme } from 'react-native'
 import { Navigation } from '@/ui/navigation/Navigation'
+import { LogoutSheet } from '@/ui/navigation/LogoutSheet'
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native'
 import { useFonts } from 'expo-font'
 import { SplashScreen, Stack } from 'expo-router'
@@ -35,10 +36,9 @@ import * as SystemUI from 'expo-system-ui'
 import { KeyboardProvider } from 'react-native-keyboard-controller'
 
 import { RegisterPushNotifications } from '@/ui/notifications/RegisterPushNotifications'
-import { MessagesInit } from '@/features/messaging/message-loader'
+import { DirectMessageComposer } from '@/features/messaging/DirectMessageComposer'
+import { GroupMessageComposer } from '@/features/messaging/GroupMessageComposer'
 import { useAppStore } from '@/features/stores'
-import { StartupLoadingIndicator } from '@/ui/atoms/StartupLoadingIndicator'
-import { DirectoryKeepAlive } from '@/ui/navigation/DirectoryKeepAlive'
 
 import { LogBox } from 'react-native'
 import BottomSheet from '@gorhom/bottom-sheet'
@@ -84,17 +84,15 @@ function FontProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     SystemUI.setBackgroundColorAsync(c.surface)
+  }, [])
 
+  useEffect(() => {
     if (interLoaded || interError) {
-      // Hide the splash screen after the fonts have loaded (or an error was returned) and the UI is ready.
-      SplashScreen.hideAsync()
+      SplashScreen.hideAsync().catch(() => {})
     }
   }, [interLoaded, interError])
 
-  if (!interLoaded && !interError) {
-    return null
-  }
-
+  // Render immediately; text will fallback to system font until Inter loads.
   return <>{children}</>
 }
 
@@ -107,6 +105,11 @@ export default function RootLayout() {
       console.error('Failed to initialize app:', error)
     })
   }, [init])
+
+  useEffect(() => {
+    // Ensure splash hides even if fonts fail to load quickly.
+    SplashScreen.hideAsync().catch(() => {})
+  }, [])
 
   return (
     <Providers>
@@ -133,22 +136,13 @@ const Providers = ({ children }: { children: React.ReactNode }) => {
 function RootLayoutNav() {
   const savesBottomSheetRef = useRef<BottomSheet>(null)
   const colorScheme = useColorScheme()
-  const { referencersBottomSheetRef, addRefSheetRef, newRefSheetRef, setShowLogoutButton } = useAppStore()
-
-  // Ensure logout button is hidden on app startup
-  useEffect(() => {
-    setShowLogoutButton(false)
-  }, [setShowLogoutButton])
+  const { referencersBottomSheetRef, addRefSheetRef, newRefSheetRef, logoutSheetRef } = useAppStore()
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <StatusBar barStyle={colorScheme === 'dark' ? 'light-content' : 'dark-content'} />
       <RegisterPushNotifications />
-      <MessagesInit />
       <Navigation savesBottomSheetRef={savesBottomSheetRef} />
-      {/* Keep directory mounted to preserve images and scroll state across navigations */}
-      <DirectoryKeepAlive />
-      <StartupLoadingIndicator />
 
       <Stack
         screenOptions={{
@@ -182,14 +176,13 @@ function RootLayoutNav() {
         />
         <Stack.Screen
           name="user/[userName]/index"
-          options={{
+          options={({ route }: { route: { params?: Record<string, any> } }) => ({
             title: 'User',
-            // presentation: 'modal',
-            animation: 'slide_from_left',
+            animation: route.params?.fromDirectory ? 'slide_from_right' : 'none',
             gestureEnabled: true,
             gestureDirection: 'horizontal',
             headerShown: false,
-          }}
+          })}
         />
         <Stack.Screen
           name="user/login"
@@ -209,6 +202,9 @@ function RootLayoutNav() {
       <AddRefSheet bottomSheetRef={addRefSheetRef} />
       {/* new ref sheet */}
       <NewRefSheet bottomSheetRef={newRefSheetRef} />
+      <LogoutSheet bottomSheetRef={logoutSheetRef} />
+      <DirectMessageComposer />
+      <GroupMessageComposer />
     </ThemeProvider>
   )
 }

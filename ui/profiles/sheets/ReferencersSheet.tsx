@@ -4,12 +4,13 @@ import UserListItem from '@/ui/atoms/UserListItem'
 import { Button } from '@/ui/buttons/Button'
 import { YStack } from '@/ui/core/Stacks'
 import { pocketbase } from '@/features/pocketbase'
+import { ensureCommunityChat, joinCommunityChat } from '@/features/communities/communityChat'
 
 import { Heading } from '@/ui/typo/Heading'
 import BottomSheet, { BottomSheetBackdrop, BottomSheetScrollView } from '@gorhom/bottom-sheet'
 import { router } from 'expo-router'
 import { useCallback, useEffect, useState } from 'react'
-import { Text, View, Image } from 'react-native'
+import { Text, View, Image, InteractionManager } from 'react-native'
 import { useAppStore } from '@/features/stores'
 
 export default function Referencers({
@@ -20,7 +21,17 @@ export default function Referencers({
   const [users, setUsers] = useState<any[]>([])
   const [refData, setRefData] = useState<any>({})
   const [isLoading, setIsLoading] = useState(false)
-  const { getItemsByRefIds, addRefSheetRef, setAddingRefId, currentRefId } = useAppStore()
+  const {
+    user,
+    getItemsByRefIds,
+    addRefSheetRef,
+    setAddingRefId,
+    currentRefId,
+    referencersContext,
+    setReferencersContext,
+    setProfileNavIntent,
+  } = useAppStore()
+  const [actionLoading, setActionLoading] = useState(false)
 
   useEffect(() => {
     const getUsers = async () => {
@@ -44,8 +55,28 @@ export default function Referencers({
           users.push(user)
         }
 
+        if (
+          referencersContext?.type === 'community' &&
+          referencersContext.isSubscribed &&
+          user?.id &&
+          !users.some((existing) => existing.id === user.id)
+        ) {
+          users.push(user)
+        }
+
         setUsers(users)
-        setRefData(items[0]?.expand?.ref || {})
+        const primaryRef = items[0]?.expand?.ref
+        if (primaryRef) {
+          setRefData(primaryRef)
+        } else {
+          // Fallback: fetch the ref directly so we always have a title even when no items exist yet
+          try {
+            const refRecord = await pocketbase.collection('refs').getOne(currentRefId)
+            setRefData(refRecord || {})
+          } catch (e) {
+            setRefData({})
+          }
+        }
       } catch (error) {
         console.error('ReferencersSheet: Error loading users for ref', currentRefId, ':', error)
         setUsers([])
@@ -55,7 +86,7 @@ export default function Referencers({
       }
     }
     getUsers()
-  }, [currentRefId])
+  }, [currentRefId, referencersContext, user?.id])
 
   const renderBackdrop = useCallback(
     (p: any) => <BottomSheetBackdrop {...p} disappearsOnIndex={-1} appearsOnIndex={0} />,
@@ -72,12 +103,17 @@ export default function Referencers({
       snapPoints={['80%']}
       backgroundStyle={{ backgroundColor: c.surface, borderRadius: s.$4 }}
       handleIndicatorStyle={{ backgroundColor: 'transparent' }}
+      onChange={(index) => {
+        if (index === -1) {
+          setReferencersContext(null)
+        }
+      }}
     >
       <View style={{ paddingHorizontal: s.$3, paddingVertical: s.$1, height: '100%' }}>
         <View style={{ flexDirection: 'row', alignItems: 'flex-start', paddingBottom: s.$1 }}>
           <View style={{ flex: 1, minWidth: 0, justifyContent: 'flex-start' }}>
             <Heading tag="h1" style={{ lineHeight: 30 }}>
-              {refData?.title}
+              {refData?.title || referencersContext?.title}
             </Heading>
             <View style={{ height: 8 }} />
             <Text style={{ color: c.grey2 }}>{"Everyone who's added it."}</Text>
@@ -106,6 +142,7 @@ export default function Referencers({
                   small={false}
                   onPress={() => {
                     referencersBottomSheetRef.current?.close()
+                    setProfileNavIntent({ targetPagerIndex: 0, source: 'other' })
                     router.push(`/user/${user.userName}`)
                   }}
                   style={{ paddingHorizontal: 0 }}
@@ -134,13 +171,49 @@ export default function Referencers({
           <Button
             style={{ paddingTop: s.$2, paddingBottom: s.$2, width: '100%' }}
             textStyle={{ fontSize: s.$1, fontWeight: 800 }}
-            onPress={() => {
-              // open a dialog for adding this ref to your profile
-              setAddingRefId(currentRefId)
-              addRefSheetRef.current?.expand()
+            onPress={async () => {
+              if (referencersContext?.type === 'community') {
+                if (!currentRefId || !user?.id || actionLoading) return
+                setActionLoading(true)
+                try {
+                  const desiredTitle = referencersContext.title || refData?.title || 'Community chat'
+                  const { conversationId } = await ensureCommunityChat(currentRefId, {
+                    title: desiredTitle,
+                  })
+                  if (!referencersContext.isSubscribed) {
+                    await referencersContext.onAdd?.()
+                  }
+                  referencersBottomSheetRef.current?.close()
+                  setReferencersContext(null)
+                  await joinCommunityChat(conversationId, user.id)
+                  InteractionManager.runAfterInteractions(() => {
+                    router.push(`/messages/${conversationId}`)
+                  })
+                } catch (error) {
+                  console.warn('Failed to open community chat', { currentRefId, error })
+                } finally {
+                  setActionLoading(false)
+                }
+              } else {
+                setAddingRefId(currentRefId)
+                addRefSheetRef.current?.expand()
+              }
             }}
+            disabled={actionLoading || (referencersContext?.type === 'community' && !user?.id)}
             variant="raised"
-            title="Add Ref +"
+            title={
+              referencersContext?.type === 'community'
+                ? referencersContext.isSubscribed
+                  ? actionLoading
+                    ? 'Opening chat...'
+                    : 'Go to chat'
+                  : actionLoading
+                  ? 'Joining...'
+                  : 'Join the chat'
+                : actionLoading
+                ? 'Working...'
+                : 'Add Ref +'
+            }
           />
         </View>
       </View>

@@ -14,6 +14,7 @@ export default function MessageInput({
   onReplyClose,
   allowAttachment,
   onAttachmentPress,
+  compact = false,
 }: {
   onMessageSubmit: () => void
   setMessage: (str: string) => void
@@ -24,7 +25,10 @@ export default function MessageInput({
   onReplyClose?: () => void
   allowAttachment?: boolean
   onAttachmentPress?: () => void
+  compact?: boolean
 }) {
+  const verticalSpacing = compact ? s.$05 : s.$075
+
   return (
     <>
       {parentMessage && (
@@ -56,7 +60,7 @@ export default function MessageInput({
           style={{
             backgroundColor: c.white,
             borderRadius: s.$2,
-            marginVertical: s.$075,
+            marginVertical: verticalSpacing,
             paddingVertical: s.$09,
             paddingHorizontal: s.$1,
             justifyContent: 'space-between',

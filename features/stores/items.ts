@@ -598,11 +598,14 @@ export const getBacklogItems = async (userName: string) => {
 }
 
 // Function to automatically move items from backlog to grid when there's space
-export const autoMoveBacklogToGrid = async (userName: string) => {
+export const autoMoveBacklogToGrid = async (
+  userName: string,
+  existingGridItems?: ExpandedItem[],
+  existingBacklogItems?: ExpandedItem[]
+) => {
   try {
-    // Get current grid items
-    const gridItems = await getProfileItems(userName)
-    const backlogItems = await getBacklogItems(userName)
+    const gridItems = existingGridItems ?? (await getProfileItems(userName))
+    const backlogItems = existingBacklogItems ?? (await getBacklogItems(userName))
     
     // If grid is full, no need to move anything
     if (gridItems.length >= 12) {

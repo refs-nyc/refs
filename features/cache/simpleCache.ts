@@ -7,6 +7,9 @@ const CACHE_TTLS = {
   backlog_items: 3 * 60 * 1000,   // 3 minutes
   feed_items: 8 * 60 * 1000,      // 8 minutes
   directory_users: 10 * 60 * 1000, // 10 minutes
+  conversations: 5 * 60 * 1000,    // 5 minutes
+  conversation_memberships: 5 * 60 * 1000, // 5 minutes
+  conversation_previews: 3 * 60 * 1000, // 3 minutes
 } as const
 
 type CacheKey = keyof typeof CACHE_TTLS

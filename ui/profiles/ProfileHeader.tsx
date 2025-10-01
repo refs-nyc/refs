@@ -6,6 +6,7 @@ import { Pressable, View } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { router } from 'expo-router'
 import { Image } from 'expo-image'
+import Svg, { Circle } from 'react-native-svg'
 
 export const ProfileHeader = ({ profile }: { profile: Profile }) => {
   return (
@@ -21,14 +22,32 @@ export const ProfileHeader = ({ profile }: { profile: Profile }) => {
       }}
     >
       <View style={{ left: -s.$075 }}>
-        <Image
-          source={profile.image || (profile as any).avatar_url || undefined}
-          style={{ width: s.$6, height: s.$6, borderRadius: (s.$6 as number) / 2, backgroundColor: '#ddd' }}
-          contentFit={'cover'}
-          cachePolicy="memory-disk"
-          priority="high"
-          transition={150}
-        />
+        {profile.image || (profile as any).avatar_url ? (
+          <Image
+            source={profile.image || (profile as any).avatar_url || undefined}
+            style={{ width: s.$6, height: s.$6, borderRadius: (s.$6 as number) / 2, backgroundColor: c.surface2 }}
+            contentFit={'cover'}
+            cachePolicy="memory-disk"
+            priority="high"
+            transition={0}
+          />
+        ) : (
+          <View
+            style={{
+              width: s.$6,
+              height: s.$6,
+              borderRadius: (s.$6 as number) / 2,
+              backgroundColor: c.surface2,
+              justifyContent: 'center',
+              alignItems: 'center',
+            }}
+          >
+            <Svg width={32} height={20} viewBox="0 0 64 40">
+              <Circle cx="24" cy="20" r="16" stroke={c.muted} strokeWidth={2} fill="none" />
+              <Circle cx="40" cy="20" r="16" stroke={c.muted} strokeWidth={2} fill="none" />
+            </Svg>
+          </View>
+        )}
       </View>
 
       <YStack style={{ flex: 1 }} gap={s.$05}>

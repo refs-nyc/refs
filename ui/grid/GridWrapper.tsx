@@ -7,18 +7,31 @@ export const GridWrapper = ({
   columns = 3,
   rows = 4,
   cellGap = s.$075,
+  autoRows = false,
+  rowJustify = 'flex-start',
+  rowGap,
+  colGap,
 }: {
   children: React.ReactNode
   columns?: number
   rows?: number
   cellGap?: number
+  autoRows?: boolean
+  rowJustify?: 'flex-start' | 'center' | 'space-between' | 'space-around' | 'space-evenly'
+  rowGap?: number
+  colGap?: number
 }) => {
   const childrenArray = Children.toArray(children)
+  const computedRows = autoRows
+    ? Math.ceil(childrenArray.length / columns)
+    : rows
+  const gapRow = rowGap ?? cellGap
+  const gapCol = colGap ?? cellGap
 
   return (
-    <YStack gap={cellGap} style={{ width: '100%' }}>
-      {Array.from({ length: rows }).map((_, rowIndex) => (
-        <XStack key={rowIndex} gap={cellGap}>
+    <YStack gap={gapRow} style={{ width: '100%' }}>
+      {Array.from({ length: computedRows }).map((_, rowIndex) => (
+        <XStack key={rowIndex} gap={gapCol} style={{ justifyContent: rowJustify }}>
           {childrenArray
             .slice(rowIndex * columns, (rowIndex + 1) * columns)
             .map((child, colIndex) => (

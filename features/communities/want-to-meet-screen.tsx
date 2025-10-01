@@ -1,0 +1,207 @@
+import React, { useEffect, useMemo, useRef, useState } from 'react'
+import { View, Text, ScrollView, Pressable } from 'react-native'
+import Animated, { FadeIn, FadeOut } from 'react-native-reanimated'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { useAppStore } from '@/features/stores'
+import UserListItem from '@/ui/atoms/UserListItem'
+import { s, c } from '@/features/style'
+import { Ionicons } from '@expo/vector-icons'
+import { router } from 'expo-router'
+import type { Profile } from '@/features/types'
+
+export function WantToMeetScreen() {
+  const { saves, removeSave, user, openDMComposer, openGroupComposer, setProfileNavIntent } =
+    useAppStore()
+  const savedUsers = useMemo<Profile[]>(() => saves.map((s) => s.expand.user as Profile), [saves])
+  const [selected, setSelected] = useState<Record<string, boolean>>({})
+  const selectedUsers = useMemo(
+    () => savedUsers.filter((u) => (u?.id ? selected[u.id] : false)),
+    [selected, savedUsers]
+  )
+  const insets = useSafeAreaInsets()
+
+  const [toastMessage, setToastMessage] = useState<string | null>(null)
+  const toastTimerRef = useRef<NodeJS.Timeout | null>(null)
+
+  useEffect(() => {
+    return () => {
+      if (toastTimerRef.current) clearTimeout(toastTimerRef.current)
+    }
+  }, [])
+
+  const showToast = (message: string) => {
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current)
+    setToastMessage(message)
+    toastTimerRef.current = setTimeout(() => setToastMessage(null), 3000)
+  }
+
+  const handleDmPress = () => {
+    if (!(selectedUsers.length === 1 && user?.id)) return
+    const target = selectedUsers[0]
+    openDMComposer(target, {
+      onSuccess: (profile) => {
+        const displayName = profile.firstName || profile.name || 'user'
+        showToast(`Message sent to ${displayName}`)
+      },
+    })
+  }
+
+  const handleGroupPress = () => {
+    if (selectedUsers.length < 2) return
+    openGroupComposer(selectedUsers, {
+      onSuccess: ({ title }) => {
+        setSelected({})
+        const displayTitle = title?.trim() || 'Group chat'
+        showToast(`Group chat "${displayTitle}" created`)
+      },
+    })
+  }
+
+  return (
+    <View style={{ flex: 1, backgroundColor: c.surface }}>
+      {/* Header with subheader and inline + */}
+      <View style={{ paddingVertical: s.$1, justifyContent: 'center', marginTop: 7, paddingLeft: s.$1 + 6, paddingRight: s.$1 + 6, marginBottom: -5 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+          <View style={{ flexDirection: 'column' }}>
+            <Text style={{ color: c.prompt, fontSize: (s.$09 as number) + 4, fontFamily: 'System', fontWeight: '700', textAlign: 'left', lineHeight: s.$1half }}>
+              {`Want to Meet (${savedUsers.length})`}
+            </Text>
+            <Text style={{ color: c.prompt, fontSize: s.$09, fontFamily: 'System', fontWeight: '400', textAlign: 'left', lineHeight: s.$1half }}>
+              Select anyone to DM or start a group chat
+            </Text>
+          </View>
+        </View>
+      </View>
+
+      {/* Saved list */}
+      <View style={{ flex: 1, paddingHorizontal: s.$1 + 6 }}>
+        <ScrollView contentContainerStyle={{ paddingTop: s.$075, paddingBottom: s.$10 }}>
+          {savedUsers.map((u, idx) => {
+            const isSelected = !!selected[u.id]
+            const matchingSave = saves.find((s) => s.user === u.id || s.expand?.user?.id === u.id)
+
+            return (
+              <View key={u.id} style={{ marginBottom: idx === savedUsers.length - 1 ? 0 : s.$075, position: 'relative' }}>
+                <UserListItem
+                  user={u}
+                  onPress={() => setSelected((prev) => ({ ...prev, [u.id]: !prev[u.id] }))}
+                  small={true}
+                  whiteText={isSelected}
+                  style={{
+                    backgroundColor: isSelected ? c.olive : c.surface2,
+                    paddingRight: isSelected ? (s.$3 as number) : undefined,
+                  }}
+                />
+                {isSelected && u.userName && (
+                  <Pressable
+                    onPress={(event) => {
+                      event.stopPropagation()
+                      setProfileNavIntent({ targetPagerIndex: 0, source: 'wantToMeet' })
+                      router.push(`/user/${u.userName}`)
+                    }}
+                    style={{
+                      position: 'absolute',
+                      right: matchingSave?.id ? (s.$2 as number) + 12 : s.$075,
+                      top: 0,
+                      bottom: 0,
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                    }}
+                  >
+                    <Ionicons name="arrow-forward" size={s.$1 as number} color={c.grey1} />
+                  </Pressable>
+                )}
+                {isSelected && matchingSave?.id && (
+                  <Pressable
+                    onPress={async (event) => {
+                      event.stopPropagation()
+                      try {
+                        await removeSave(matchingSave.id)
+                      } catch (e) {}
+                    }}
+                    style={{
+                      position: 'absolute',
+                      right: -4,
+                      top: -8,
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                      padding: 4,
+                    }}
+                  >
+                    <View
+                      style={{
+                        width: s.$2 as number,
+                        height: s.$2 as number,
+                        borderRadius: (s.$2 as number) / 2,
+                        backgroundColor: c.surface,
+                        borderWidth: 1,
+                        borderColor: c.surface,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      <Ionicons name="close" size={s.$1 as number} color={c.grey1} />
+                    </View>
+                  </Pressable>
+                )}
+              </View>
+            )
+          })}
+          {savedUsers.length === 0 && (
+            <View style={{ alignItems: 'center', paddingVertical: s.$3 }}>
+              <Text style={{ color: c.muted }}>No saved users yet.</Text>
+            </View>
+          )}
+        </ScrollView>
+      </View>
+
+      {/* Action buttons */}
+      <View style={{ position: 'absolute', left: s.$1 + 6, right: s.$1 + 6, bottom: insets.bottom + (s.$3 as number) }}>
+        <View style={{ flexDirection: 'row', gap: s.$1, justifyContent: 'center' }}>
+          <Pressable
+            disabled={!(selectedUsers.length === 1 && user?.id)}
+            onPress={handleDmPress}
+            style={{ flex: 1, opacity: selectedUsers.length === 1 ? 1 : 0.5 }}
+          >
+            <View style={{ backgroundColor: c.olive, borderRadius: s.$075, paddingVertical: s.$075, alignItems: 'center' }}>
+              <Text style={{ color: c.white }}>DM</Text>
+            </View>
+          </Pressable>
+          <Pressable
+            disabled={selectedUsers.length < 2}
+            onPress={handleGroupPress}
+            style={{ flex: 1, opacity: selectedUsers.length >= 2 ? 1 : 0.5 }}
+          >
+            <View style={{ borderWidth: 1, borderColor: c.olive, borderRadius: s.$075, paddingVertical: s.$075, alignItems: 'center' }}>
+              <Text style={{ color: c.olive }}>+ Group</Text>
+            </View>
+          </Pressable>
+        </View>
+      </View>
+
+      {toastMessage && (
+        <Animated.View
+          entering={FadeIn.duration(200)}
+          exiting={FadeOut.duration(200)}
+          style={{ position: 'absolute', left: s.$1 + 6, right: s.$1 + 6, bottom: insets.bottom + 40 }}
+        >
+          <View
+            style={{
+              backgroundColor: c.surface2,
+              paddingVertical: s.$075,
+              paddingHorizontal: s.$1,
+              borderRadius: s.$075,
+              alignItems: 'center',
+              shadowColor: '#000',
+              shadowOpacity: 0.15,
+              shadowRadius: 8,
+              shadowOffset: { width: 0, height: 4 },
+            }}
+          >
+            <Text style={{ color: c.muted2 }}>{toastMessage}</Text>
+          </View>
+        </Animated.View>
+      )}
+    </View>
+  )
+}

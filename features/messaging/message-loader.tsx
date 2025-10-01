@@ -1,7 +1,6 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
 import { pocketbase } from '@/features/pocketbase'
 import { useAppStore } from '@/features/stores'
-import { PAGE_SIZE } from '@/features/stores/messages'
 import {
   Conversation,
   ExpandedMembership,
@@ -9,169 +8,331 @@ import {
   ExpandedSave,
   Message,
   Reaction,
-  Save,
 } from '@/features/types'
-import { ConversationsRecord } from '@/features/pocketbase/pocketbase-types'
+import { ConversationsResponse } from '@/features/pocketbase/pocketbase-types'
+import { simpleCache } from '@/features/cache/simpleCache'
+import { constructPinataUrl } from '@/features/pinata'
+import { s } from '@/features/style'
+import { PixelRatio } from 'react-native'
+
+type ConversationPreviewCacheEntry = {
+  conversationId: string
+  message: Message | null
+  unreadCount: number
+}
+
+type ExpandedConversation = ConversationsResponse<{
+  memberships_via_conversation: ExpandedMembership[]
+}>
 
 export function MessagesInit() {
   const {
     user,
-    setMessagesForConversation,
-    setOldestLoadedMessageDate,
-    addNewMessage,
-    setFirstMessageDate,
     setConversations,
+    setMemberships,
     setReactions,
+    setSaves,
+    addNewMessage,
     addConversation,
     addMembership,
     addReaction,
     removeReaction,
-    setMemberships,
     updateMembership,
-    setSaves,
-    setBackgroundLoading,
+    setConversationPreview,
+    setConversationPreviews,
+    setConversationUnreadCount,
+    getSignedUrl,
   } = useAppStore()
 
-  // Track completion of background operations
-  const [completedOperations, setCompletedOperations] = useState({
-    conversations: false,
-    reactions: false,
-    saves: false,
-    memberships: false,
-  })
+  const prefetchedAvatarUrlsRef = useRef<Set<string>>(new Set())
 
-  // load conversations - make non-blocking and more lazy
-  useEffect(() => {
-    if (!user) return
+  const prefetchAvatarSignedUrls = useCallback(
+    (memberships: ExpandedMembership[]) => {
+      if (!memberships.length) return
 
-    // Start background loading indicator
-    setBackgroundLoading(true)
+      const scale = PixelRatio.get()
+      const avatarDimension = Math.round(((s.$5 as number) || 52) * scale)
 
-    const getConversations = async () => {
+      const requests: Promise<unknown>[] = []
+
+      memberships.forEach((membership) => {
+        const image = membership.expand?.user?.image
+        if (!image) return
+
+        const optimizedUrl = constructPinataUrl(image, {
+          width: avatarDimension,
+          height: avatarDimension,
+        })
+
+        if (!optimizedUrl) return
+        if (prefetchedAvatarUrlsRef.current.has(optimizedUrl)) return
+
+        prefetchedAvatarUrlsRef.current.add(optimizedUrl)
+
+        requests.push(
+          getSignedUrl(optimizedUrl).catch((error) => {
+            prefetchedAvatarUrlsRef.current.delete(optimizedUrl)
+            console.warn('prefetchAvatarSignedUrls failed', { optimizedUrl, error })
+          })
+        )
+      })
+
+      if (requests.length) {
+        Promise.allSettled(requests).catch(() => {})
+      }
+    },
+    [getSignedUrl]
+  )
+
+  const fetchConversationPreview = useCallback(
+    async (
+      conversationId: string,
+      membershipIndex: Map<string, ExpandedMembership>,
+      membershipOverride?: ExpandedMembership
+    ): Promise<ConversationPreviewCacheEntry> => {
       try {
-        const conversations = await pocketbase
-          .collection('conversations')
-          .getFullList<Conversation>({
+        const latestResponse = await pocketbase.collection('messages').getList<Message>(1, 1, {
+          filter: `conversation = "${conversationId}"`,
+          sort: '-created',
+        })
+
+        const latest = latestResponse.items[0] ?? null
+        const totalMessages = latestResponse.totalItems ?? (latest ? 1 : 0)
+
+        const membership = membershipOverride ?? membershipIndex.get(conversationId)
+        let unreadCount = 0
+
+        const lastRead = membership?.last_read
+        const latestCreated = latest?.created
+
+        if (!lastRead) {
+          unreadCount = totalMessages
+        } else if (latestCreated && new Date(latestCreated) > new Date(lastRead)) {
+          const unreadResponse = await pocketbase.collection('messages').getList<Message>(1, 1, {
+            filter: `conversation = "${conversationId}" && created > "${lastRead}"`,
             sort: '-created',
           })
-        setConversations(conversations)
-
-        // Load messages in smaller batches with longer delays to be less aggressive
-        const batchSize = 3 // Reduced batch size for better responsiveness
-        for (let i = 0; i < conversations.length; i += batchSize) {
-          const batch = conversations.slice(i, i + batchSize)
-          setTimeout(() => {
-            batch.forEach((conversation) => {
-              loadInitialMessages(conversation).catch((error) => {
-                console.error('Failed to load messages for conversation:', conversation.id, error)
-              })
-            })
-          }, i * 200) // Increased delay to 200ms for better responsiveness
+          unreadCount = unreadResponse.totalItems ?? unreadResponse.items.length
         }
-        
-        // Mark conversations as completed
-        setCompletedOperations(prev => ({ ...prev, conversations: true }))
+
+        return {
+          conversationId,
+          message: latest ?? null,
+          unreadCount,
+        }
       } catch (error) {
-        console.error('Failed to load conversations:', error)
-        setCompletedOperations(prev => ({ ...prev, conversations: true }))
+        console.warn('Failed to build conversation preview', { conversationId, error })
+        return {
+          conversationId,
+          message: null,
+          unreadCount: 0,
+        }
       }
-    }
+    },
+    []
+  )
 
-    // Use a longer delay to prioritize UI responsiveness
-    setTimeout(() => {
-      getConversations()
-    }, 1000) // Increased from 0ms to 1000ms to prioritize UI responsiveness
-  }, [user])
-
-  //load reactions - make non-blocking and more lazy
   useEffect(() => {
     if (!user) return
 
-    const getReactions = async () => {
+    let cancelled = false
+
+    const hydrateFromCache = async () => {
       try {
-        const reactions = await pocketbase.collection('reactions').getFullList<ExpandedReaction>({
-          expand: 'user',
-        })
-        setReactions(reactions)
-        setCompletedOperations(prev => ({ ...prev, reactions: true }))
+        const [cachedConversations, cachedMemberships, cachedPreviews] = await Promise.all([
+          simpleCache.get<ExpandedConversation[]>('conversations', user.id),
+          simpleCache.get<ExpandedMembership[]>('conversation_memberships', user.id),
+          simpleCache.get<ConversationPreviewCacheEntry[]>('conversation_previews', user.id),
+        ])
+
+        if (cancelled) return
+
+          if (cachedConversations) {
+            setConversations(cachedConversations as unknown as Conversation[])
+
+            if (!cachedMemberships || cachedMemberships.length === 0) {
+              const flattened = cachedConversations.flatMap((conversation) =>
+                (conversation.expand?.memberships_via_conversation || []).map((membership) => ({
+                  ...membership,
+                  conversation: membership.conversation ?? conversation.id,
+                }))
+              )
+              if (flattened.length) {
+                setMemberships(flattened)
+                prefetchAvatarSignedUrls(flattened)
+                setTimeout(() => {
+                  void simpleCache.set('conversation_memberships', flattened, user.id)
+                }, 0)
+              }
+            }
+          }
+          if (cachedMemberships && cachedMemberships.length) {
+            setMemberships(cachedMemberships)
+            prefetchAvatarSignedUrls(cachedMemberships)
+          }
+        if (cachedPreviews && cachedPreviews.length) {
+          setConversationPreviews(
+            cachedPreviews.map((preview) => ({
+              conversationId: preview.conversationId,
+              message: preview.message,
+              unreadCount: preview.unreadCount ?? 0,
+            }))
+          )
+        }
       } catch (error) {
-        console.error('Failed to load reactions:', error)
-        setCompletedOperations(prev => ({ ...prev, reactions: true }))
+        console.warn('Failed to hydrate messaging cache', error)
       }
     }
 
-    // Increased delay to prioritize UI responsiveness
-    setTimeout(() => {
-      getReactions()
-    }, 1500) // Increased from 10ms to 1500ms to prioritize UI responsiveness
-  }, [user])
+    const buildMembershipIndex = (memberships: ExpandedMembership[]) => {
+      const map = new Map<string, ExpandedMembership>()
+      memberships.forEach((membership) => {
+        if (membership.expand?.user?.id === user.id) {
+          map.set(membership.conversation, membership)
+        }
+      })
+      return map
+    }
 
-  // load saves - make non-blocking and more lazy
-  useEffect(() => {
-    if (!user) return
+    const fetchConversationPreviews = async (
+      conversations: Conversation[],
+      memberships: ExpandedMembership[]
+    ): Promise<ConversationPreviewCacheEntry[]> => {
+      const membershipIndex = buildMembershipIndex(memberships)
+      const previews: ConversationPreviewCacheEntry[] = []
+      const queue = [...conversations]
+      const workerCount = Math.min(5, queue.length || 1)
 
-    const getSaves = async () => {
+      const workers = Array.from({ length: workerCount }).map(async () => {
+        while (!cancelled) {
+          const conversation = queue.shift()
+          if (!conversation) break
+
+          const preview = await fetchConversationPreview(conversation.id, membershipIndex)
+          if (cancelled) break
+
+          previews.push(preview)
+          setConversationPreview(preview.conversationId, preview.message, preview.unreadCount)
+        }
+      })
+
+      await Promise.all(workers)
+      return previews
+    }
+
+    const fetchFreshData = async () => {
       try {
-        const saves = await pocketbase.collection('saves').getFullList<ExpandedSave>({
-          expand: 'user',
-        })
-        setSaves(saves)
-        setCompletedOperations(prev => ({ ...prev, saves: true }))
+        const [conversationsRes, reactionsRes, savesRes] = await Promise.allSettled([
+          pocketbase
+            .collection('conversations')
+            .getFullList<ExpandedConversation>({
+              sort: '-created',
+              expand: 'memberships_via_conversation.user',
+            }),
+          pocketbase.collection('reactions').getFullList<ExpandedReaction>({ expand: 'user' }),
+          pocketbase.collection('saves').getFullList<ExpandedSave>({ expand: 'user' }),
+        ])
+
+        if (cancelled) return
+
+        const conversations =
+          conversationsRes.status === 'fulfilled' ? conversationsRes.value : ([] as ExpandedConversation[])
+        const reactions =
+          reactionsRes.status === 'fulfilled' ? reactionsRes.value : ([] as ExpandedReaction[])
+        const saves = savesRes.status === 'fulfilled' ? savesRes.value : ([] as ExpandedSave[])
+
+        if (conversations.length) {
+          const flattenedMemberships = conversations.flatMap((conversation) =>
+            (conversation.expand?.memberships_via_conversation || []).map((membership) => ({
+              ...membership,
+              conversation: membership.conversation ?? conversation.id,
+            }))
+          )
+
+          if (flattenedMemberships.length) {
+            setMemberships(flattenedMemberships)
+            prefetchAvatarSignedUrls(flattenedMemberships)
+            setTimeout(() => {
+              void simpleCache.set('conversation_memberships', flattenedMemberships, user.id)
+            }, 0)
+          }
+
+          setConversations(conversations as unknown as Conversation[])
+          setTimeout(() => {
+            void simpleCache.set('conversations', conversations, user.id)
+          }, 0)
+        }
+
+        if (reactions.length) {
+          setReactions(reactions)
+        }
+        if (saves.length) {
+          setSaves(saves)
+        }
+
+        if (conversations.length) {
+          const membershipsForPreview = conversations.flatMap(
+            (conversation) => conversation.expand?.memberships_via_conversation || []
+          ) as ExpandedMembership[]
+
+          const previews = await fetchConversationPreviews(
+            conversations as unknown as Conversation[],
+            membershipsForPreview
+          )
+          if (!cancelled) {
+            setConversationPreviews(
+              previews.map((preview) => ({
+                conversationId: preview.conversationId,
+                message: preview.message,
+                unreadCount: preview.unreadCount ?? 0,
+              }))
+            )
+            setTimeout(() => {
+              void simpleCache.set('conversation_previews', previews, user.id)
+            }, 0)
+          }
+        }
       } catch (error) {
-        console.error('Failed to load saves:', error)
-        setCompletedOperations(prev => ({ ...prev, saves: true }))
+        console.error('Failed to load messaging data', error)
+      } finally {
+        // no-op
       }
     }
 
-    // Increased delay to prioritize UI responsiveness
-    setTimeout(() => {
-      getSaves()
-    }, 2000) // Increased from 20ms to 2000ms to prioritize UI responsiveness
-  }, [user])
+    hydrateFromCache()
+      .catch((error) => {
+        console.error('Messaging cache hydration failed', error)
+      })
 
-    // load memberships - make non-blocking and more lazy
-  useEffect(() => {
-    if (!user) return
+    const fetchTimeout = setTimeout(() => {
+      if (cancelled) return
+      fetchFreshData().catch((error) => {
+        console.error('Messaging initialisation failed', error)
+      })
+    }, 0)
 
-        const getMemberships = async () => {
-      try {
-        const memberships = await pocketbase
-          .collection('memberships')
-          .getFullList<ExpandedMembership>({
-            expand: 'user',
-          })
-        setMemberships(memberships)
-        setCompletedOperations(prev => ({ ...prev, memberships: true }))
-      } catch (error) {
-        console.error('Failed to load memberships:', error)
-        setCompletedOperations(prev => ({ ...prev, memberships: true }))
-      }
+    return () => {
+      cancelled = true
+      clearTimeout(fetchTimeout)
     }
-
-    // Increased delay to prioritize UI responsiveness
-    setTimeout(() => {
-      getMemberships()
-    }, 2500) // Increased from 30ms to 2500ms to prioritize UI responsiveness
-  }, [user])
-
-  // Stop background loading when all operations are complete
-  useEffect(() => {
-    const allComplete = Object.values(completedOperations).every(complete => complete)
-    if (allComplete) {
-      // Add a small delay to ensure smooth transition
-      setTimeout(() => {
-        setBackgroundLoading(false)
-      }, 500)
-    }
-  }, [completedOperations, setBackgroundLoading])
+  }, [
+    user?.id,
+    setConversations,
+    setMemberships,
+    setReactions,
+    setSaves,
+    setConversationPreview,
+    setConversationPreviews,
+    fetchConversationPreview,
+  ])
 
   // subscribe to new messages
   useEffect(() => {
     if (!user) return
     try {
-      pocketbase.collection('messages').subscribe<Message>('*', (e) => {
-        if (e.action === 'create') {
-          addNewMessage(e.record.conversation!, e.record)
+      pocketbase.collection('messages').subscribe<Message>('*', (event) => {
+        if (event.action === 'create') {
+          addNewMessage(event.record.conversation!, event.record)
         }
       })
     } catch (error) {
@@ -181,21 +342,21 @@ export function MessagesInit() {
     return () => {
       pocketbase.collection('messages').unsubscribe('*')
     }
-  }, [user])
+  }, [user?.id, addNewMessage])
 
   // subscribe to reactions
   useEffect(() => {
     if (!user) return
     try {
-      pocketbase.collection('reactions').subscribe<Reaction>('*', async (e) => {
-        if (e.action === 'create') {
+      pocketbase.collection('reactions').subscribe<Reaction>('*', async (event) => {
+        if (event.action === 'create') {
           const expandedReaction = await pocketbase
             .collection('reactions')
-            .getOne<ExpandedReaction>(e.record.id, { expand: 'user' })
+            .getOne<ExpandedReaction>(event.record.id, { expand: 'user' })
           addReaction(expandedReaction)
         }
-        if (e.action === 'delete') {
-          removeReaction(e.record)
+        if (event.action === 'delete') {
+          removeReaction(event.record)
         }
       })
     } catch (error) {
@@ -205,35 +366,64 @@ export function MessagesInit() {
     return () => {
       pocketbase.collection('reactions').unsubscribe('*')
     }
-  }, [user])
+  }, [user?.id, addReaction, removeReaction])
 
-  //subscribe to membership updates (to see new conversations)
+  // subscribe to membership updates (to see new conversations)
   useEffect(() => {
     if (!user) return
+
+    let cancelled = false
+
     try {
-      pocketbase.collection('memberships').subscribe('*', async (e) => {
-        if (e.action === 'update') {
+      pocketbase.collection('memberships').subscribe('*', async (event) => {
+        if (event.action === 'update') {
           const expandedMembership = await pocketbase
             .collection('memberships')
-            .getOne<ExpandedMembership>(e.record.id, { expand: 'user' })
+            .getOne<ExpandedMembership>(event.record.id, { expand: 'user' })
           updateMembership(expandedMembership)
+
+          if (expandedMembership.expand?.user?.id === user.id) {
+            setConversationUnreadCount(expandedMembership.conversation, 0)
+          }
         }
-        if (e.action === 'create') {
+        if (event.action === 'create') {
           const expandedMembership = await pocketbase
             .collection('memberships')
-            .getOne<ExpandedMembership>(e.record.id, { expand: 'user' })
+            .getOne<ExpandedMembership>(event.record.id, { expand: 'user' })
           try {
             addMembership(expandedMembership)
           } catch (error) {
             console.error('error adding membership')
             console.error(error)
           }
-          if (e.record.user === user?.id) {
+          if (event.record.user === user.id) {
             const conversation = await pocketbase
               .collection('conversations')
-              .getOne(e.record.conversation)
-            await loadInitialMessages(conversation)
-            addConversation(conversation)
+              .getOne<ExpandedConversation>(event.record.conversation, {
+                expand: 'memberships_via_conversation.user',
+              })
+            addConversation(conversation as unknown as Conversation)
+
+            const expandedMemberships =
+              conversation.expand?.memberships_via_conversation || ([] as ExpandedMembership[])
+            expandedMemberships.forEach((membership) => {
+              try {
+                addMembership(membership)
+              } catch (error) {
+                console.error('error adding membership')
+                console.error(error)
+              }
+            })
+
+            prefetchAvatarSignedUrls(expandedMemberships)
+
+            const singleIndex = new Map<string, ExpandedMembership>([
+              [conversation.id, expandedMembership],
+            ])
+            const preview = await fetchConversationPreview(conversation.id, singleIndex, expandedMembership)
+            if (!cancelled) {
+              setConversationPreview(preview.conversationId, preview.message, preview.unreadCount)
+            }
           }
         }
       })
@@ -241,28 +431,18 @@ export function MessagesInit() {
       console.error(error)
     }
     return () => {
+      cancelled = true
       pocketbase.collection('memberships').unsubscribe('*')
     }
-  }, [user])
+  }, [
+    user?.id,
+    addConversation,
+    addMembership,
+    updateMembership,
+    setConversationPreview,
+    setConversationUnreadCount,
+    fetchConversationPreview,
+  ])
 
-  return <></>
-
-  async function loadInitialMessages(conversation: ConversationsRecord) {
-    const messages = await pocketbase.collection('messages').getList<Message>(0, PAGE_SIZE, {
-      filter: `conversation = "${conversation.id}"`,
-      sort: '-created',
-    })
-    setMessagesForConversation(conversation.id, messages.items)
-    if (messages.items.length) {
-      const oldestMessage = messages.items[messages.items.length - 1]
-      setOldestLoadedMessageDate(conversation.id, oldestMessage.created!)
-    }
-
-    const firstMessage = await pocketbase
-      .collection('messages')
-      .getFirstListItem<Message>(`conversation = "${conversation.id}"`, {
-        sort: 'created',
-      })
-    setFirstMessageDate(conversation.id, firstMessage.created!)
-  }
+  return null
 }

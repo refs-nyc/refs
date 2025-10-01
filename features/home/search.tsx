@@ -11,7 +11,7 @@ type SearchResult = Profile & { sharedRefCount: number }
 
 export default function SearchResultsScreen({ refIds }: { refIds: string[] }) {
   const [results, setResults] = useState<SearchResult[]>([])
-  const { user: currentUser, getItemsByRefIds, getAllItemsByCreator } = useAppStore()
+  const { user: currentUser, getItemsByRefIds, getAllItemsByCreator, setProfileNavIntent } = useAppStore()
 
   useEffect(() => {
     const getSearchResults = async () => {
@@ -78,7 +78,10 @@ export default function SearchResultsScreen({ refIds }: { refIds: string[] }) {
               key={result.id}
               user={result}
               small={false}
-              onPress={() => router.push(`/user/${result.userName}`)}
+              onPress={() => {
+                setProfileNavIntent({ targetPagerIndex: 0, source: 'other' })
+                router.push(`/user/${result.userName}`)
+              }}
               text={result.sharedRefCount + ' refs shared'}
             />
           ))

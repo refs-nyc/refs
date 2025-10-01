@@ -11,15 +11,15 @@ export function formatTimestamp(inputUtc: string, timeZone: string): string {
   const isThisYear = now.hasSame(dt, 'year')
   const daysAgo = now.diff(dt, 'days').days
 
-  if (isToday) return dt.toFormat('HH:mm') // e.g. 14:32
+  if (isToday) return dt.toFormat('h:mm a') // e.g. 2:32 PM
 
   if (isYesterday) return 'Yesterday'
 
   if (daysAgo < 7) return dt.weekdayLong || ''
 
-  if (isThisYear) return dt.toFormat('dd/MM') // e.g. 14/03
+  if (isThisYear) return dt.toFormat('MM/dd') // e.g. 03/14
 
-  return dt.toFormat('dd/MM/yyyy') // e.g. 14/03/2023
+  return dt.toFormat('MM/dd/yyyy') // e.g. 03/14/2023
 }
 
 export function randomColors(n: number): string[] {

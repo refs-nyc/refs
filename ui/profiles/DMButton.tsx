@@ -16,47 +16,57 @@ export const DMButton = ({
   disabled?: boolean
   style?: any
 }) => {
-  const { user, getDirectConversations } = useAppStore()
+  const { user, getDirectConversations, messagesPerConversation, openDMComposer } = useAppStore()
 
-  const [target, setTarget] = useState<string>('')
+  const [existingConversationId, setExistingConversationId] = useState<string | null>(null)
 
   useEffect(() => {
     const checkIfDirectMessageExists = async () => {
-      if (!profile) {
-        setTarget('')
+      if (!profile || !user) {
+        setExistingConversationId(null)
         return
       }
       try {
-        let existingConversationId = ''
-
         const directConversations = await getDirectConversations()
         for (const conversation of directConversations) {
           const otherUserId = conversation.expand?.memberships_via_conversation
             .map((m) => m.expand?.user.id)
-            .filter((id) => id !== user?.id)[0]
+            .filter((id) => id !== user.id)[0]
           if (otherUserId === profile.id) {
-            existingConversationId = conversation.id
-            break
+            setExistingConversationId(conversation.id)
+            return
           }
         }
-        if (!existingConversationId) {
-          setTarget(`/user/${profile.userName}/new-dm`)
-        } else {
-          setTarget('/messages/' + existingConversationId)
-        }
+        setExistingConversationId(null)
       } catch (error) {
         console.error(error)
+        setExistingConversationId(null)
       }
     }
     checkIfDirectMessageExists()
-  }, [profile])
+  }, [profile, user, getDirectConversations])
+
+  const handlePress = () => {
+    if (!profile || !user) return
+
+    if (existingConversationId) {
+      const messages = messagesPerConversation[existingConversationId] || []
+      if (messages.length > 0) {
+        const route = `/messages/${existingConversationId}` as const
+        if (fromSaves) router.replace(route)
+        else router.push(route)
+        return
+      }
+      openDMComposer(profile, { conversationId: existingConversationId })
+      return
+    }
+
+    openDMComposer(profile)
+  }
 
   return (
     <Button
-      onPress={() => {
-        if (fromSaves) router.replace(target as any)
-        else router.push(target as any)
-      }}
+      onPress={handlePress}
       variant={'whiteInverted'}
       disabled={disabled}
       title="Message"

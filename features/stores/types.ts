@@ -4,9 +4,25 @@ import type { ItemSlice } from './items'
 import type { MessageSlice } from './messages'
 import type { UserSlice } from './users'
 import type { UserCacheSlice } from './userCache'
-import { Item } from '@/features/types'
+import { Item, Profile } from '@/features/types'
 import BottomSheet from '@gorhom/bottom-sheet'
 import React from 'react'
+
+export type ProfileNavIntent = {
+  targetPagerIndex: 0 | 1 | 2
+  directoryFilter?: 'popular' | 'people'
+  source?: 'directory' | 'wantToMeet' | 'messages' | 'other' | 'back-fallback'
+}
+
+export type ReferencersContext =
+  | {
+      type: 'community'
+      refId: string
+      title?: string
+      isSubscribed: boolean
+      onAdd?: () => Promise<void>
+    }
+  | null
 
 export type UISlice = {
   editingProfile: boolean
@@ -19,10 +35,12 @@ export type UISlice = {
   newRefSheetRef: React.RefObject<BottomSheet>
   addingNewRefTo: null | 'grid' | 'backlog'
   addRefPrompt: string
+  referencersContext: ReferencersContext
   selectedPhoto: string | null
   setAddingNewRefTo: (newState: null | 'grid' | 'backlog') => void
   setAddingRefId: (id: string) => void
   setCurrentRefId: (id: string) => void
+  setReferencersContext: (ctx: ReferencersContext) => void
   setAddingToList: (newState: string) => void
   setAddRefPrompt: (prompt: string) => void
   setSelectedPhoto: (photo: string | null) => void
@@ -51,9 +69,7 @@ export type UISlice = {
   setSearchResultsSheetOpen: (open: boolean) => void
   setReturningFromSearchNavigation: (returning: boolean) => void
   setCloseActiveBottomSheet: (closeFunction: (() => void) | null) => void
-  // Logout button visibility
-  showLogoutButton: boolean
-  setShowLogoutButton: (show: boolean) => void
+  logoutSheetRef: React.RefObject<BottomSheet>
   // Prompt timing control (session-level)
   hasShownInitialPromptHold: boolean
   setHasShownInitialPromptHold: (shown: boolean) => void
@@ -65,9 +81,22 @@ export type UISlice = {
   // Home pager (MyProfile <-> Directories)
   homePagerIndex: number
   setHomePagerIndex: (i: number) => void
-  // Navigation hint: if true, back should return to directories
-  returnToDirectories: boolean
-  setReturnToDirectories: (v: boolean) => void
+  profileNavIntent: ProfileNavIntent | null
+  setProfileNavIntent: (intent: ProfileNavIntent | null) => void
+  consumeProfileNavIntent: () => ProfileNavIntent | null
+  directoriesFilterTab: 'popular' | 'people'
+  setDirectoriesFilterTab: (tab: 'popular' | 'people') => void
+  dmComposerTarget: Profile | null
+  dmComposerInitialConversationId: string | null
+  dmComposerOnSuccess: ((target: Profile) => void) | null
+  openDMComposer: (target: Profile, options?: { onSuccess?: (target: Profile) => void; conversationId?: string }) => void
+  closeDMComposer: () => void
+  groupComposerTargets: Profile[]
+  groupComposerOnSuccess: ((context: { conversationId: string; title: string }) => void) | null
+  openGroupComposer: (targets: Profile[], options?: {
+    onSuccess?: (context: { conversationId: string; title: string }) => void
+  }) => void
+  closeGroupComposer: () => void
 }
 
 export type StoreSlices = BackdropSlice &

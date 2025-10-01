@@ -11,10 +11,12 @@ export default function SwipeableConversation({
   conversation,
   isInArchive,
   onArchive,
+  timeZone,
 }: {
   conversation: Conversation
   isInArchive?: boolean
   onArchive: () => Promise<void>
+  timeZone: string
 }) {
   return (
     <Swipeable
@@ -30,7 +32,7 @@ export default function SwipeableConversation({
         />
       )}
     >
-      <ConversationListItem conversation={conversation} />
+      <ConversationListItem conversation={conversation} timeZone={timeZone} />
     </Swipeable>
   )
 }

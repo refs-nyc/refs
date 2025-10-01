@@ -2,6 +2,7 @@ import Svg, { G, Path, Circle, Rect } from 'react-native-svg'
 import { Pressable, ViewStyle, Animated } from 'react-native'
 import { useRef } from 'react'
 import { c } from '@/features/style'
+import { buildJaggedPaths } from './jaggedPaths'
 
 export default function FloatingJaggedButton({
   style,
@@ -20,17 +21,8 @@ export default function FloatingJaggedButton({
     Animated.spring(scale, { toValue: 1, useNativeDriver: true }).start()
   }
   // Jagged shape path (from your SVG, accent color)
-  const jaggedPaths = [
-    { d: 'M29.4253 20.8325L46.7043 29.1072L37.6999 38.1116L29.4253 20.8325Z', fill: c.accent },
-    { d: 'M22.6253 34.5644L39.9133 30.3959L33.1892 48.8701L22.6253 34.5644Z', fill: c.accent },
-    { d: 'M45.0786 48.3934L27.8157 56.6742L30.3318 36.1824L45.0786 48.3934Z', fill: c.accent },
-    { d: 'M52.972 22.5896L56.8983 39.532L36.7305 28.8086L52.972 22.5896Z', fill: c.accent },
-    { d: 'M64.5548 49.2125L43.4442 49.3443L54.1137 30.8642L64.5548 49.2125Z', fill: c.accent },
-    { d: 'M53.64 61.6303L34.9311 47.1712L57.8683 38.3664L53.64 61.6303Z', fill: c.accent },
-    { d: 'M66.3486 30.9324L55.4568 50.4083L44.0361 30.6271L66.3486 30.9324Z', fill: c.accent },
-    { d: 'M35.7432 30.0234H53.3682V49.0234H35.7432z', fill: c.accent },
-  ]
-  const outlinePaths = jaggedPaths.map((p) => ({ ...p, fill: c.surface2 }))
+  const jaggedPaths = buildJaggedPaths(c.accent)
+  const outlinePaths = buildJaggedPaths(c.surface2)
 
   return (
     <Animated.View style={[{ transform: [{ scale }] }, style]}>
@@ -51,19 +43,19 @@ export default function FloatingJaggedButton({
         {/* Main button circle with border */}
         <Circle cx={45} cy={45.5} r={40} fill={c.surface} stroke={c.accent} strokeWidth={5.15} />
         {/* Combined jagged shape drop shadow, Y offset 0.5 */}
-        <G transform="translate(45 45.5) scale(1.44) translate(-44.5 -42.5) translate(0 0.5)">
+        <G transform="translate(45 45.5) scale(1.44) translate(-44.5 -41.25) translate(0 0.5)">
           {outlinePaths.map((p, i) => (
             <Path key={i} d={p.d} fill="rgba(0,0,0,0.25)" />
           ))}
         </G>
         {/* Surface2 outline (larger), 25% scale up, same center as accent shape */}
-        <G transform="translate(45 45.5) scale(1.44) translate(-44.5 -42.5)">
+        <G transform="translate(45 45.5) scale(1.44) translate(-44.5 -41.25)">
           {outlinePaths.map((p, i) => (
             <Path key={i} d={p.d} fill={p.fill} />
           ))}
         </G>
         {/* Accent jagged shape, 10% larger, better centered */}
-        <G transform="translate(45 45.5) scale(1.265) translate(-44.5 -42.5)">
+        <G transform="translate(45 45.5) scale(1.265) translate(-44.5 -41.25)">
           {jaggedPaths.map((p, i) => (
             <Path key={i} d={p.d} fill={p.fill} />
           ))}

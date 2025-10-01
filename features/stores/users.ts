@@ -5,10 +5,22 @@ import { ClientResponseError } from 'pocketbase'
 import type { StoreSlices } from './types'
 import { pocketbase } from '../pocketbase'
 
+export type DirectoryUser = {
+  id: string
+  userName: string
+  name: string
+  neighborhood: string
+  avatar_url: string
+  topRefs: string[]
+  _latest?: number
+}
+
 export type UserSlice = {
   stagedUser: Partial<Profile> & { password?: string; passwordConfirm?: string }
   user: Profile | null
   isInitialized: boolean
+  directoryUsers: DirectoryUser[]
+  setDirectoryUsers: (users: DirectoryUser[]) => void
   register: () => Promise<ExpandedProfile>
   updateUser: (fields: Partial<Profile>) => Promise<Profile>
   updateStagedUser: (formFields: Partial<Profile> & { password?: string; passwordConfirm?: string }) => void
@@ -26,6 +38,10 @@ export const createUserSlice: StateCreator<StoreSlices, [], [], UserSlice> = (se
   stagedUser: {},
   user: null, // user is ALWAYS the user of the app, this is only set if the user is logged in
   isInitialized: false,
+  directoryUsers: [],
+  setDirectoryUsers: (users) => {
+    set(() => ({ directoryUsers: users }))
+  },
   //
   //
   //
@@ -34,7 +50,10 @@ export const createUserSlice: StateCreator<StoreSlices, [], [], UserSlice> = (se
       // Mark as initialized immediately to allow UI to be responsive
       set(() => ({
         isInitialized: true,
+        homePagerIndex: 0,
+        profileNavIntent: null,
       }))
+
 
       // If PocketBase has a valid auth store, sync it with our store
       if (pocketbase.authStore.isValid && pocketbase.authStore.record) {
@@ -46,6 +65,8 @@ export const createUserSlice: StateCreator<StoreSlices, [], [], UserSlice> = (se
 
           set(() => ({
             user: record,
+            homePagerIndex: 0,
+            profileNavIntent: null,
           }))
         } catch (error) {
           console.error('Failed to sync user state:', error)
@@ -53,18 +74,24 @@ export const createUserSlice: StateCreator<StoreSlices, [], [], UserSlice> = (se
           pocketbase.authStore.clear()
           set(() => ({
             user: null,
+            homePagerIndex: 0,
+            profileNavIntent: null,
           }))
         }
       } else {
         // No valid auth, mark as initialized with no user
         set(() => ({
           user: null,
+          homePagerIndex: 0,
+          profileNavIntent: null,
         }))
       }
     } catch (error) {
       console.error('Init error:', error)
       set(() => ({
         user: null,
+        homePagerIndex: 0,
+        profileNavIntent: null,
       }))
     }
   },
@@ -195,8 +222,6 @@ export const createUserSlice: StateCreator<StoreSlices, [], [], UserSlice> = (se
       .authWithPassword(email, password)
     set((state) => ({
       user: response.record,
-      // Reset logout button visibility on login
-      showLogoutButton: false,
       // Clear cached search results on login
       cachedSearchResults: [],
       cachedSearchTitle: '',
@@ -231,8 +256,6 @@ export const createUserSlice: StateCreator<StoreSlices, [], [], UserSlice> = (se
 
       set((state) => ({
         user: record,
-        // Reset logout button visibility on login
-        showLogoutButton: false,
         // Clear cached search results on login
         cachedSearchResults: [],
         cachedSearchTitle: '',
@@ -267,8 +290,6 @@ export const createUserSlice: StateCreator<StoreSlices, [], [], UserSlice> = (se
       user: null,
       stagedUser: {},
       isInitialized: true,
-      // Reset logout button visibility on logout
-      showLogoutButton: false,
       // Clear cached search results on logout
       cachedSearchResults: [],
       cachedSearchTitle: '',

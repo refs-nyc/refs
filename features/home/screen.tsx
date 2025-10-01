@@ -68,8 +68,14 @@ export function HomeScreen() {
     if (user) {
       const redirectToProfile = () => {
         // Ensure we land on grid view when redirecting from login
-        useAppStore.getState().setHomePagerIndex(0)
-        router.replace(`/user/${user.userName}`)
+        useAppStore.getState().setProfileNavIntent({
+          targetPagerIndex: 0,
+          source: 'other',
+        })
+        router.replace({
+          pathname: '/user/[userName]',
+          params: { userName: user.userName },
+        })
       }
       // Small delay to prevent navigation errors
       const timeout = setTimeout(redirectToProfile, 100)

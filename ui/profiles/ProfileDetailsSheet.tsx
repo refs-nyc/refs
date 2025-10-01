@@ -73,7 +73,7 @@ export const ProfileDetailsSheet = ({
   // if the current user is the item creator, then they have editing rights
   const editingRights = profile?.id === user?.id
 
-  const snapPoints = ['100%']
+  const snapPoints = ['88%', '100%']
 
   useEffect(() => {
     const key = registerBackdropPress(() => {

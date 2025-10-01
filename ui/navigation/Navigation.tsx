@@ -1,15 +1,15 @@
-import { Link, router, usePathname } from 'expo-router'
+import { router, usePathname } from 'expo-router'
 import { Text, View, Pressable, Animated } from 'react-native'
-import { Avatar } from '../atoms/Avatar'
 import { c, s } from '@/features/style'
 import { useAppStore } from '@/features/stores'
 import { NavigationBackdrop } from '@/ui/navigation/NavigationBackdrop'
 import { Badge } from '../atoms/Badge'
 import { useMemo, useRef, useEffect } from 'react'
-import SavesIcon from '@/assets/icons/saves.svg'
+import Svg, { Path } from 'react-native-svg'
 import MessageIcon from '@/assets/icons/message.svg'
 import { Ionicons } from '@expo/vector-icons'
 import BottomSheet from '@gorhom/bottom-sheet'
+import { useNavigation } from '@react-navigation/native'
 
 export const Navigation = ({
   savesBottomSheetRef,
@@ -17,66 +17,63 @@ export const Navigation = ({
   savesBottomSheetRef: React.RefObject<BottomSheet>
 }) => {
   const pathname = usePathname()
+  const segments = pathname.split('/').filter(Boolean)
+  const inMessageThread =
+    segments[0] === 'messages' &&
+    segments.length >= 2 &&
+    segments[1] !== 'archive' &&
+    segments[1] !== 'new-gc'
 
   const {
     user,
     saves,
-    messagesPerConversation,
-    conversations,
-    memberships,
     cachedSearchResults,
-    setShowLogoutButton,
-    showLogoutButton,
-    returnToDirectories,
-    setReturnToDirectories,
+    logoutSheetRef,
+    homePagerIndex,
+    directoriesFilterTab,
+    setProfileNavIntent,
     setHomePagerIndex,
+    conversationUnreadCounts,
   } = useAppStore()
 
   const isHomePage = pathname === '/' || pathname === '/index' || pathname === `/user/${user?.userName}`
 
   const scaleAnim = useRef(new Animated.Value(1)).current
+  const navigation = useNavigation<any>()
 
   // Back button handler with robust fallbacks for directories and no-stack cases
   const handleBackPress = () => {
-    console.log('🔍 Back button pressed, cachedSearchResults.length:', cachedSearchResults.length)
-    
-    // If returning from Directories -> user profile, jump back into Directories view
-    if (returnToDirectories) {
-      setReturnToDirectories?.(false)
-      setHomePagerIndex?.(1)
-      if (user?.userName) {
-        router.replace(`/user/${user.userName}`)
-        return
-      }
-    }
+    const routerCanGoBack = typeof (router as any).canGoBack === 'function' ? (router as any).canGoBack() : false
+    const navCanGoBack = navigation?.canGoBack?.() ?? false
 
     // If we have cached search results, navigate back to profile to restore them
-    if (cachedSearchResults.length > 0) {
-      const currentUser = user?.userName
-      if (currentUser) {
-        console.log('🔍 Navigating to profile with cached results')
-        router.push(`/user/${currentUser}`)
-        return
-      }
+    if (cachedSearchResults.length > 0 && user?.userName) {
+      setHomePagerIndex(0)
+      setProfileNavIntent({ targetPagerIndex: 0, source: 'other' })
+      router.push(`/user/${user.userName}`)
+      return
     }
-    
-   console.log('🔍 No cached results, using default back behavior')
-   // Prefer native back if possible; otherwise, fallback to profile route and ensure pager index
-   try {
-     // @ts-ignore router.canGoBack exists in expo-router v3
-     const canGoBack = typeof (router as any).canGoBack === 'function' ? (router as any).canGoBack() : false
-     if (canGoBack) {
-       router.back()
-       return
-     }
-   } catch {}
- 
-   if (user?.userName) {
-    setHomePagerIndex?.(1)
-    setReturnToDirectories?.(false)
-    router.replace(`/user/${user.userName}`)
-    return
-   }
+
+    if (routerCanGoBack || navCanGoBack) {
+      if (routerCanGoBack) {
+        router.back()
+      } else {
+        navigation.goBack()
+      }
+      return
+    }
+
+    if (user?.userName) {
+      const fallbackIndex = homePagerIndex ?? 0
+      setHomePagerIndex(fallbackIndex)
+      setProfileNavIntent({
+        targetPagerIndex: fallbackIndex as 0 | 1 | 2,
+        directoryFilter: fallbackIndex === 1 ? directoriesFilterTab : undefined,
+        source: 'back-fallback',
+      })
+      router.replace(`/user/${user.userName}`)
+      return
+    }
   }
 
   const animateBadge = () => {
@@ -101,45 +98,12 @@ export const Navigation = ({
   }, [saves.length])
 
   const newMessages = useMemo(() => {
-    if (!user?.id || !messagesPerConversation || Object.keys(memberships).length === 0) {
-      return 0
-    }
-
-    const userId = user.id
-    let totalNewMessages = 0
-
-    // Use more efficient iteration
-    const conversationIds = Object.keys(conversations)
-    for (let i = 0; i < conversationIds.length; i++) {
-      const conversationId = conversationIds[i]
-      const membership = memberships[conversationId]?.find((m) => m.expand?.user.id === userId)
-
-      if (!membership || membership?.archived) continue
-
-      const conversationMessages = messagesPerConversation[conversationId]
-      if (!conversationMessages) continue
-
-      const lastRead = membership?.last_read
-      if (lastRead) {
-        const lastReadDate = new Date(lastRead)
-        // Use more efficient filtering
-        let unreadCount = 0
-        for (let j = 0; j < conversationMessages.length; j++) {
-          const message = conversationMessages[j]
-          if (new Date(message.created!) > lastReadDate && message.sender !== userId) {
-            unreadCount++
-          }
-        }
-        totalNewMessages += unreadCount
-      } else {
-        totalNewMessages += conversationMessages.length
-      }
-    }
-
-    return totalNewMessages
-  }, [messagesPerConversation, memberships, user?.id, conversations])
+    if (!user?.id) return 0
+    return Object.values(conversationUnreadCounts).reduce((total, count) => total + count, 0)
+  }, [conversationUnreadCounts, user?.id])
 
   if (!user) return null
+  if (inMessageThread) return null
 
   return (
     <View style={{ display: 'flex', flexDirection: 'row', paddingLeft: 2 }}>
@@ -171,33 +135,34 @@ export const Navigation = ({
                 <Ionicons name="chevron-back" size={18} color={c.grey2} />
               </Pressable>
             )}
-            <Pressable 
-              onPress={() => router.push(`/user/${user.userName}`)} 
-              onLongPress={() => setShowLogoutButton(!showLogoutButton)}
+            <Pressable
+            onPress={() => {
+              if (!user?.userName) return
+              const targetIndex = homePagerIndex ?? 0
+              setHomePagerIndex(targetIndex)
+              setProfileNavIntent({
+                targetPagerIndex: targetIndex as 0 | 1 | 2,
+                directoryFilter: targetIndex === 1 ? directoriesFilterTab : undefined,
+                source: 'other',
+              })
+                router.push(`/user/${user.userName}`)
+              }}
+              onLongPress={() => {
+                logoutSheetRef?.current?.expand?.()
+              }}
               style={{ paddingLeft: 6 }}
             >
               <Text style={{ fontSize: 24, fontWeight: 'bold', textAlign: 'left' }}>Refs</Text>
             </Pressable>
           </View>
         </View>
-        <View style={{ top: 1.5, paddingRight: 17 }}>
-          <Pressable onPress={() => {
-            console.log('👤 AVATAR CLICK - Clearing returnToDirectories and setting pager to 0')
-            setReturnToDirectories(false) // Clear any directory return flags
-            setHomePagerIndex(0) // Always go to grid view
-            router.push(`/user/${user.userName}`)
-            // Force set pager index again after navigation
-            setTimeout(() => {
-              setHomePagerIndex(0)
-            }, 100)
-          }}>
-            <Avatar source={user.image} size={30} />
-          </Pressable>
-        </View>
+        {/* Avatar temporarily removed */}
         <View style={{ display: 'flex', flexDirection: 'row', paddingRight: 18 }}>
           <Pressable onPress={() => savesBottomSheetRef.current?.expand()}>
             <View style={{ top: -2 }}>
-              <SavesIcon width={28} height={28} />
+              <Svg width={42} height={31} viewBox="0 0 34 31" fill="none">
+                <Path d="M24.5059 2C19.449 2 16.9564 6.9852 16.9564 6.9852C16.9564 6.9852 14.4638 2 9.40693 2C5.29726 2 2.04286 5.43823 2.0008 9.54089C1.91511 18.057 8.75652 24.1133 16.2554 29.2028C16.4621 29.3435 16.7064 29.4187 16.9564 29.4187C17.2064 29.4187 17.4507 29.3435 17.6574 29.2028C25.1555 24.1133 31.9969 18.057 31.912 9.54089C31.8699 5.43823 28.6155 2 24.5059 2Z" stroke="#B0B0B0" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"/>
+              </Svg>
             </View>
             <View
               style={{
@@ -209,7 +174,7 @@ export const Navigation = ({
               }}
             >
               <Animated.View
-                style={{ top: -2, right: -6, zIndex: 1, transform: [{ scale: scaleAnim }] }}
+                style={{ bottom: 16, right: -16, zIndex: 1, transform: [{ scale: scaleAnim }] }}
               >
                 {saves.length > 0 && <Badge count={saves.length} color="#7e8f78" />}
               </Animated.View>
@@ -217,20 +182,22 @@ export const Navigation = ({
           </Pressable>
         </View>
         <View style={{ display: 'flex', flexDirection: 'row', paddingRight: 6 }}>
-          <Pressable onPress={() => router.push('/messages')}>
-            <View style={{ top: -3 }}>
+          <Pressable
+            onPress={() => {
+              if (pathname.startsWith('/messages')) return
+              const targetIndex = homePagerIndex ?? 0
+              setHomePagerIndex(targetIndex)
+              setProfileNavIntent({
+                targetPagerIndex: targetIndex as 0 | 1 | 2,
+                directoryFilter: targetIndex === 1 ? directoriesFilterTab : undefined,
+                source: 'messages',
+              })
+              router.navigate('/messages')
+            }}
+          >
+            <View style={{ top: -3, position: 'relative' }}>
               <MessageIcon width={36} />
-            </View>
-            <View
-              style={{
-                position: 'absolute',
-                height: '85%',
-                width: '100%',
-                justifyContent: 'center',
-                alignItems: 'center',
-              }}
-            >
-              <View style={{ bottom: 2, right: -10, zIndex: 1 }}>
+              <View style={{ position: 'absolute', top: -6, right: -6, zIndex: 1 }}>
                 {newMessages > 0 && <Badge count={newMessages} color="#7e8f78" />}
               </View>
             </View>

@@ -29,6 +29,10 @@ export const GridTileWrapper = ({
   size = DEFAULT_TILE_SIZE,
   tileStyle,
   isShuffling = false,
+  promptTextColor,
+  promptBorderColor,
+  topRightAction,
+  onTopRightActionPress,
 }: {
   type: GridTileType
   children: React.ReactNode
@@ -39,6 +43,10 @@ export const GridTileWrapper = ({
   size?: number
   tileStyle?: any
   isShuffling?: boolean
+  promptTextColor?: string
+  promptBorderColor?: string
+  topRightAction?: React.ReactNode
+  onTopRightActionPress?: () => void
 }) => {
   const { editingProfile, stopEditProfile } = useAppStore()
   
@@ -117,7 +125,7 @@ export const GridTileWrapper = ({
     type === 'prompt'
       ? {
           borderWidth: 2,
-          borderColor: '#B0B0B0',
+          borderColor: promptBorderColor || '#B0B0B0',
           borderStyle: 'dashed',
           borderDashArray: [4, 4],
           borderMiterLimit: 29,
@@ -158,13 +166,28 @@ export const GridTileWrapper = ({
           </Pressable>
         </YStack>
       )}
+      {!editingProfile && topRightAction && (
+        <YStack style={{ position: 'absolute', zIndex: 999, top: 0, right: 0 }}>
+          <Pressable
+            onPress={(e) => {
+              e.preventDefault?.()
+              e.stopPropagation?.()
+              onTopRightActionPress && onTopRightActionPress()
+            }}
+            hitSlop={{ top: 8, right: 8, bottom: 8, left: 8 }}
+            style={{ transform: 'translate(5px, -6px)' }}
+          >
+            {topRightAction}
+          </Pressable>
+        </YStack>
+      )}
       {type === 'placeholder' ? (
         <Text style={{ color: c.muted, fontSize: 16, textAlign: 'center', paddingHorizontal: 10 }}>
           {children}
         </Text>
       ) : type === 'prompt' ? (
         <Animated.Text style={[
-          { color: '#B0B0B0', fontSize: 14, textAlign: 'center', paddingHorizontal: 8, fontWeight: '500' },
+          { color: promptTextColor || '#B0B0B0', fontSize: 14, textAlign: 'center', paddingHorizontal: 1, fontWeight: '500' },
           textAnimatedStyle
         ]}>
           {children}

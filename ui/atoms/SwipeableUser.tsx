@@ -14,11 +14,13 @@ export default function SwipeableConversation({
   user,
   onPress,
   backgroundColor,
+  whiteText = true,
 }: {
   onActionPress: () => Promise<void>
   user: Profile
   onPress: () => void
   backgroundColor: string
+  whiteText?: boolean
 }) {
   const [disablePress, setDisablePress] = useState(false)
   return (
@@ -37,7 +39,7 @@ export default function SwipeableConversation({
         onPress={disablePress ? () => {} : onPress}
         style={{ backgroundColor: backgroundColor }}
         small={true}
-        whiteText={true}
+        whiteText={whiteText}
       />
     </Swipeable>
   )

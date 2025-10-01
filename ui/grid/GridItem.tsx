@@ -26,13 +26,21 @@ export const GridItem = ({
   // Only subscribe to uploadingItems to prevent unnecessary re-renders
   const uploadingItems = useAppStore(state => state.uploadingItems)
   const processing = uploadingItems?.has?.(item.id)
+
+  // Community prompt-like flag
+  const isCommunityPrompt = !image && (item.__promptKind === 'interest' || item.__promptKind === 'event')
+  const promptColor = item.__promptKind === 'event' ? c.olive : '#B0B0B0'
+
   return (
     <>
       {item && (
         <>
           {item.list || !image ? (
-            // No image: leave tile background visible, we still draw the bottom title card
-            <View style={{ flex: 1 }} />
+            isCommunityPrompt ? (
+              <View style={{ flex: 1 }} />
+            ) : (
+              <View style={{ flex: 1 }} />
+            )
           ) : (
             <GridTileImage key={item.id} source={image} processing={!!processing} />
           )}
@@ -47,8 +55,8 @@ export const GridItem = ({
         </Pressable>
       )}
 
-      {/* Bottom title card for all item tiles (excluding prompt/placeholder handled in wrapper) */}
-      {item && (
+      {/* Bottom title card for classic image tiles */}
+      {item && !isCommunityPrompt && (
         <View
           style={{
             position: 'absolute',
@@ -67,8 +75,17 @@ export const GridItem = ({
           <Text
             numberOfLines={1}
             ellipsizeMode="tail"
-            style={{ color: c.muted, fontSize: 14, textAlign: 'left', fontWeight: '500' }}
+            style={{ color: c.grey2, fontSize: 14, textAlign: 'left', fontWeight: '500' }}
           >
+            {item?.expand?.ref?.title || item?.title || ''}
+          </Text>
+        </View>
+      )}
+
+      {/* Prompt-like text overlay for community interest/event (no image) */}
+      {item && isCommunityPrompt && (
+        <View style={{ position: 'absolute', left: 8, right: 8, top: 8, bottom: 8, justifyContent: 'center' }}>
+          <Text style={{ color: promptColor, fontSize: 14, textAlign: 'center', fontWeight: '500' }} numberOfLines={6}>
             {item?.expand?.ref?.title || item?.title || ''}
           </Text>
         </View>

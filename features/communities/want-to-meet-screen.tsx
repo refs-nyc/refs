@@ -198,23 +198,32 @@ export function WantToMeetScreen() {
         <Animated.View
           entering={FadeIn.duration(200)}
           exiting={FadeOut.duration(200)}
-          style={{ position: 'absolute', left: s.$1 + 6, right: s.$1 + 6, bottom: insets.bottom + 40 }}
+          style={{ position: 'absolute', left: 10, right: 10, bottom: insets.bottom + 35 }}
         >
-          <View
+          <Pressable
+            onPress={() => {
+              setToastMessage(null)
+              router.navigate('/messages')
+            }}
             style={{
-              backgroundColor: c.surface2,
-              paddingVertical: s.$075,
+              backgroundColor: c.accent,
+              paddingVertical: s.$1,
               paddingHorizontal: s.$1,
-              borderRadius: s.$075,
+              borderRadius: s.$075 + 10,
+              flexDirection: 'row',
               alignItems: 'center',
+              justifyContent: 'space-between',
               shadowColor: '#000',
               shadowOpacity: 0.15,
               shadowRadius: 8,
               shadowOffset: { width: 0, height: 4 },
             }}
           >
-            <Text style={{ color: c.muted2 }}>{toastMessage}</Text>
-          </View>
+            <Text style={{ color: c.surface, fontWeight: '700', fontSize: (s.$09 as number) + 2 }}>
+              {toastMessage}
+            </Text>
+            <Ionicons name="arrow-forward" size={18} color={c.surface} />
+          </Pressable>
         </Animated.View>
       )}
     </View>

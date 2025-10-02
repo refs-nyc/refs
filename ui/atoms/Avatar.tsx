@@ -2,7 +2,6 @@ import { SimplePinataImage } from '../images/SimplePinataImage'
 import { View, Text } from 'react-native'
 import { c, s } from '@/features/style'
 import { Ionicons } from '@expo/vector-icons'
-import { YStack, XStack } from '../core/Stacks'
 
 export const Avatar = ({ source, size = s.$3 }: { source: string | undefined; size: number }) => {
   if (!source)
@@ -37,39 +36,28 @@ export const AvatarStack = ({
   if (shownSources.length > 3) shownSources = shownSources.slice(0, 3)
 
   const others = sources.length - shownSources.length
-  const ySpacing = 5
-  const xSpacing = size / 2
+  const overlap = size * 0.4
 
   return (
-    <>
-      <YStack gap={0}>
-        <XStack
-          style={{
-            height: size + (shownSources.length - 1) * ySpacing,
-            width: size + xSpacing * (shownSources.length - 1),
-            margin: 'auto',
-          }}
-        >
-          {shownSources.map((source, index) => (
-            <View
-              key={index}
-              style={{
-                position: 'relative',
-                left: -size * index + index * xSpacing,
-                top: index * ySpacing,
-              }}
-            >
-              <Avatar source={source} size={size} />
-            </View>
-          ))}
-        </XStack>
-        {others > 0 && (
-          <Text>
-            {' '}
-            and <Text style={{ fontWeight: 'bold' }}>{others} others</Text>
-          </Text>
-        )}
-      </YStack>
-    </>
+    <View style={{ flexDirection: 'column', alignItems: 'flex-end' }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+        {shownSources.map((source, index) => (
+          <View
+            key={index}
+            style={{
+              marginLeft: index === 0 ? 0 : -overlap,
+            }}
+          >
+            <Avatar source={source} size={size} />
+          </View>
+        ))}
+      </View>
+      {others > 0 && (
+        <Text>
+          {' '}
+          and <Text style={{ fontWeight: 'bold' }}>{others} others</Text>
+        </Text>
+      )}
+    </View>
   )
 }

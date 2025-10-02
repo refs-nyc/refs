@@ -148,8 +148,13 @@ export function GroupMessageComposer() {
       const memberIds = groupComposerTargets.map((member) => member.id)
       const conversationId = await createConversation(false, user.id, memberIds, payload.title)
       setMessagesForConversation(conversationId, [])
-      await sendMessage(user.id, conversationId, payload.message)
       handleSendSuccess(conversationId, payload)
+
+      try {
+        await sendMessage(user.id, conversationId, payload.message)
+      } catch (error) {
+        console.error('Failed to send initial group message', error)
+      }
     } catch (error) {
       clearRetry()
       retryTimeoutRef.current = setTimeout(() => {
@@ -163,6 +168,7 @@ export function GroupMessageComposer() {
     sendMessage,
     handleSendSuccess,
     clearRetry,
+    setMessagesForConversation,
   ])
 
   const handleSend = useCallback(() => {

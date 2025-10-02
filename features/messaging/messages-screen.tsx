@@ -39,6 +39,7 @@ export function MessagesScreen({ conversationId }: { conversationId: string }) {
     loadConversationMessages,
     conversationHydration,
     setProfileNavIntent,
+    hydrateConversation,
   } = useAppStore()
 
   const flatListRef = useRef<FlatList<Message>>(null)
@@ -66,7 +67,10 @@ export function MessagesScreen({ conversationId }: { conversationId: string }) {
   useEffect(() => {
     if (!user) return
     if (!conversation) {
-      router.replace('/messages')
+      hydrateConversation(conversationId).catch((error) => {
+        console.error('hydrateConversation failed', error)
+        router.replace('/messages')
+      })
       return
     }
     if (!membershipRecords.length) return
@@ -74,7 +78,7 @@ export function MessagesScreen({ conversationId }: { conversationId: string }) {
     if (!isMember) {
       router.replace('/messages')
     }
-  }, [conversation, membershipRecords, user?.id])
+  }, [conversation, membershipRecords.length, user?.id, conversationId, hydrateConversation])
 
   const members = useMemo(() => {
     if (!user) return membershipRecords

@@ -64,6 +64,8 @@ export type MessageSlice = {
   incrementConversationUnreadCount: (conversationId: string, amount?: number) => void
   resetConversationUnreadCount: (conversationId: string) => void
 
+  hydrateConversation: (conversationId: string) => Promise<void>
+
   reactions: Record<string, ExpandedReaction[]>
   setReactions: (reactions: ExpandedReaction[]) => void
   addReaction: (reaction: ExpandedReaction) => void
@@ -117,11 +119,11 @@ export const createMessageSlice: StateCreator<StoreSlices, [], [], MessageSlice>
         .collection('memberships')
         .create({ conversation: newConversation.id, user: creatorId })
 
-      for (const userId of otherMemberIds) {
-        await pocketbase
-          .collection('memberships')
-          .create({ conversation: newConversation.id, user: userId })
-      }
+      await Promise.all(
+        otherMemberIds.map((userId) =>
+          pocketbase.collection('memberships').create({ conversation: newConversation.id, user: userId })
+        )
+      )
 
       const newMemberships = await pocketbase
         .collection('memberships')
@@ -455,6 +457,39 @@ export const createMessageSlice: StateCreator<StoreSlices, [], [], MessageSlice>
     set((state) => ({
       conversationUnreadCounts: { ...state.conversationUnreadCounts, [conversationId]: 0 },
     }))
+  },
+  hydrateConversation: async (conversationId: string) => {
+    const { conversations, conversationLoading } = get()
+    if (conversations[conversationId]) return
+    if (conversationLoading[conversationId]) return
+
+    set((state) => ({
+      conversationLoading: { ...state.conversationLoading, [conversationId]: true },
+    }))
+
+    try {
+      const record = await pocketbase
+        .collection('conversations')
+        .getOne<ConversationWithMemberships>(conversationId, {
+          expand: 'memberships_via_conversation.user',
+        })
+
+      const expandedMemberships = (record.expand?.memberships_via_conversation || []).map((membership) => ({
+        ...membership,
+        conversation: membership.conversation ?? record.id,
+      })) as ExpandedMembership[]
+
+      set((state) => ({
+        conversations: { ...state.conversations, [record.id]: record },
+        memberships: { ...state.memberships, [record.id]: expandedMemberships },
+        conversationLoading: { ...state.conversationLoading, [conversationId]: false },
+      }))
+    } catch (error) {
+      set((state) => ({
+        conversationLoading: { ...state.conversationLoading, [conversationId]: false },
+      }))
+      throw error
+    }
   },
   getNewMessages: async (conversationId: string, oldestLoadedMessageDate: string) => {
     const newMessages = await pocketbase.collection('messages').getList<Message>(1, PAGE_SIZE, {

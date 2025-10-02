@@ -198,18 +198,8 @@ export const Navigation = ({
             <View style={{ top: -3, position: 'relative' }}>
               <MessageIcon width={36} />
               {newMessages > 0 && (
-                <View
-                  style={{
-                    position: 'absolute',
-                    height: '85%',
-                    width: '100%',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                  }}
-                >
-                  <View style={{ position: 'absolute', bottom: 16, right: -16, zIndex: 1 }}>
-                    <Badge count={newMessages} color="#7e8f78" />
-                  </View>
+                <View style={{ position: 'absolute', top: 0, right: 0, zIndex: 1 }}>
+                  <Badge count={newMessages} color="#7e8f78" />
                 </View>
               )}
             </View>

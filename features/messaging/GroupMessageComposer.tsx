@@ -253,6 +253,7 @@ export function GroupMessageComposer() {
             horizontal
             pagingEnabled
             showsHorizontalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
             onMomentumScrollEnd={(event) => {
               const newIndex = Math.round(event.nativeEvent.contentOffset.x / safePageWidth)
               setActivePage(newIndex)
@@ -368,7 +369,7 @@ export function GroupMessageComposer() {
                 </Pressable>
                 <Text style={{ fontSize: s.$1, fontWeight: '700', color: c.muted2 }}>Adding</Text>
               </View>
-              <ScrollView showsVerticalScrollIndicator={false}>
+              <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
                 {groupComposerTargets.map((profile) => (
                   <View
                     key={profile.id}

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { BackHandler, Keyboard, Pressable, Text, TextInput, View } from 'react-native'
+import { BackHandler, Keyboard, Pressable, Text, TextInput, View, ScrollView } from 'react-native'
 import BottomSheet, { BottomSheetBackdrop, BottomSheetView } from '@gorhom/bottom-sheet'
 import { useAppStore } from '@/features/stores'
 import { Avatar } from '@/ui/atoms/Avatar'
@@ -120,7 +120,7 @@ export function DirectMessageComposer() {
     >
       <BottomSheetView style={{ flex: 1, paddingHorizontal: s.$1 + 6, paddingTop: s.$1 }}>
         {dmComposerTarget && (
-          <View style={{ gap: s.$1 }}>
+          <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ gap: s.$1 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
               <Text style={{ fontSize: s.$1, fontWeight: '700', color: c.muted2 }}>
                 Message to {dmComposerTarget.firstName || dmComposerTarget.name || ''}
@@ -164,7 +164,7 @@ export function DirectMessageComposer() {
                 />
               </Pressable>
             </View>
-          </View>
+          </ScrollView>
         )}
       </BottomSheetView>
     </BottomSheet>

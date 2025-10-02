@@ -405,7 +405,7 @@ export function CommunityInterestsScreen() {
     [setCurrentRefId, referencersBottomSheetRef, setReferencersContext]
   )
 
-  // Filter tabs: Corkboard vs People (Mine removed since it's below)
+  // Filter tabs: Channels vs People (Mine removed since it's below)
   const FilterTabs = () => (
     <View style={{ flexDirection: 'row', paddingLeft: s.$1 + 6, marginTop: -8, marginBottom: 10 }}>
       {(['popular', 'people'] as const).map((tab) => {
@@ -434,7 +434,7 @@ export function CommunityInterestsScreen() {
             }}
           >
             <Text style={{ color: active ? c.surface : c.prompt, opacity: active ? 1 : 0.5, fontSize: (s.$09 as number) - 2, fontWeight: '700' }}>
-              {tab === 'popular' ? 'corkboard' : tab}
+              {tab === 'popular' ? 'channels' : tab}
             </Text>
           </Pressable>
         )

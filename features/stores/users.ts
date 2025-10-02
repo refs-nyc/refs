@@ -47,6 +47,17 @@ export const createUserSlice: StateCreator<StoreSlices, [], [], UserSlice> = (se
   //
   init: async () => {
     try {
+      const primeSaves = () => {
+        const ensure = get().ensureSavesLoaded
+        if (typeof ensure === 'function') {
+          setTimeout(() => {
+            ensure().catch((error: unknown) => {
+              console.warn('Initial saves hydration failed', error)
+            })
+          }, 0)
+        }
+      }
+
       // Mark as initialized immediately to allow UI to be responsive
       set(() => ({
         isInitialized: true,
@@ -68,6 +79,8 @@ export const createUserSlice: StateCreator<StoreSlices, [], [], UserSlice> = (se
             homePagerIndex: 0,
             profileNavIntent: null,
           }))
+
+          primeSaves()
         } catch (error) {
           console.error('Failed to sync user state:', error)
           // If we can't get the user record, clear the auth store

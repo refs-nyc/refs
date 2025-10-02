@@ -10,8 +10,16 @@ import { router } from 'expo-router'
 import type { Profile } from '@/features/types'
 
 export function WantToMeetScreen() {
-  const { saves, removeSave, user, openDMComposer, openGroupComposer, setProfileNavIntent } =
-    useAppStore()
+  const {
+    saves,
+    removeSave,
+    user,
+    openDMComposer,
+    openGroupComposer,
+    setProfileNavIntent,
+    ensureSavesLoaded,
+    savesHydrated,
+  } = useAppStore()
   const savedUsers = useMemo<Profile[]>(() => saves.map((s) => s.expand.user as Profile), [saves])
   const [selected, setSelected] = useState<Record<string, boolean>>({})
   const selectedUsers = useMemo(
@@ -28,6 +36,13 @@ export function WantToMeetScreen() {
       if (toastTimerRef.current) clearTimeout(toastTimerRef.current)
     }
   }, [])
+
+  useEffect(() => {
+    if (!user?.id || savesHydrated) return
+    ensureSavesLoaded().catch((error) => {
+      console.warn('Failed to load saves for WantToMeet', error)
+    })
+  }, [ensureSavesLoaded, savesHydrated, user?.id])
 
   const showToast = (message: string) => {
     if (toastTimerRef.current) clearTimeout(toastTimerRef.current)

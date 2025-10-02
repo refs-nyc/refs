@@ -228,7 +228,6 @@ export const OtherProfile = ({ userName, prefetchedUserId }: { userName: string;
           <OtherButtonsSheet
             bottomSheetRef={bottomSheetRef}
             profile={profile}
-            user={user}
             openBacklogSheet={() => {
               backlogSheetRef.current?.snapToIndex(0)
             }}

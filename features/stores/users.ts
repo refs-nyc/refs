@@ -4,6 +4,8 @@ import { UsersRecord } from '../pocketbase/pocketbase-types'
 import { ClientResponseError } from 'pocketbase'
 import type { StoreSlices } from './types'
 import { pocketbase } from '../pocketbase'
+import { InteractionManager } from 'react-native'
+import { bootStep } from '@/features/debug/bootMetrics'
 
 export type DirectoryUser = {
   id: string
@@ -46,15 +48,16 @@ export const createUserSlice: StateCreator<StoreSlices, [], [], UserSlice> = (se
   //
   //
   init: async () => {
+    bootStep('store.init.start')
     try {
       const primeSaves = () => {
         const ensure = get().ensureSavesLoaded
         if (typeof ensure === 'function') {
-          setTimeout(() => {
+          InteractionManager.runAfterInteractions(() => {
             ensure().catch((error: unknown) => {
               console.warn('Initial saves hydration failed', error)
             })
-          }, 0)
+          })
         }
       }
 
@@ -68,11 +71,14 @@ export const createUserSlice: StateCreator<StoreSlices, [], [], UserSlice> = (se
 
       // If PocketBase has a valid auth store, sync it with our store
       if (pocketbase.authStore.isValid && pocketbase.authStore.record) {
+        bootStep('store.init.auth.valid')
         try {
           // Optimize by not expanding items on init - load them separately if needed
+          bootStep('store.init.user.fetch')
           const record = await pocketbase
             .collection<Profile>('users')
             .getOne(pocketbase.authStore.record.id)
+          bootStep('store.init.user.synced')
 
           set(() => ({
             user: record,
@@ -81,6 +87,27 @@ export const createUserSlice: StateCreator<StoreSlices, [], [], UserSlice> = (se
           }))
 
           primeSaves()
+          bootStep('store.init.primeSaves.queued')
+
+          const userName = record.userName
+          if (userName) {
+            InteractionManager.runAfterInteractions(() => {
+              const preload = get().preloadBundleFromCache
+              if (preload && record.id) {
+                preload(userName, record.id).catch((error) => {
+                  console.warn('Preloading profile bundle failed', error)
+                })
+              }
+            })
+            InteractionManager.runAfterInteractions(() => {
+              try {
+                get().primeProfileBundle?.(userName)
+                bootStep('store.init.profilePrime.queued')
+              } catch (error) {
+                console.warn('Failed to prime profile bundle', error)
+              }
+            })
+          }
         } catch (error) {
           console.error('Failed to sync user state:', error)
           // If we can't get the user record, clear the auth store
@@ -92,6 +119,7 @@ export const createUserSlice: StateCreator<StoreSlices, [], [], UserSlice> = (se
           }))
         }
       } else {
+        bootStep('store.init.auth.absent')
         // No valid auth, mark as initialized with no user
         set(() => ({
           user: null,
@@ -106,6 +134,8 @@ export const createUserSlice: StateCreator<StoreSlices, [], [], UserSlice> = (se
         homePagerIndex: 0,
         profileNavIntent: null,
       }))
+    } finally {
+      bootStep('store.init.end')
     }
   },
   //

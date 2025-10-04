@@ -12,6 +12,7 @@ import Animated, {
   withSequence,
   withSpring,
 } from 'react-native-reanimated'
+import { bootStep } from '@/features/debug/bootMetrics'
 
 const PROMPTS = [
   { text: 'Link you shared recently', photoPath: false },
@@ -326,8 +327,18 @@ export const Grid = ({
     transform: [{ scale: buttonScale.value }],
   }))
 
+  const layoutLoggedRef = useRef(false)
+
   return (
-    <View style={{ marginTop: 10 }}>
+    <View
+      style={{ marginTop: 10 }}
+      onLayout={() => {
+        if (!layoutLoggedRef.current) {
+          bootStep('grid.layout')
+          layoutLoggedRef.current = true
+        }
+      }}
+    >
       <GridWrapper columns={columns} rows={rows} autoRows={autoRows} rowJustify={rowJustify} rowGap={rowGap}>
         {items.map((item, i) => {
           const isSelected = searchMode && selectedRefsSet.has(item.id)

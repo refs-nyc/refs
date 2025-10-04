@@ -16,8 +16,10 @@ export function DirectMessageComposer() {
     moduleBackdropAnimatedIndex,
     createConversation,
     sendMessage,
-    getDirectConversations,
     setMessagesForConversation,
+    conversations,
+    memberships,
+    getDirectConversations,
   } = useAppStore()
 
   const sheetRef = useRef<BottomSheet>(null)
@@ -63,14 +65,27 @@ export function DirectMessageComposer() {
       let conversationId = dmComposerInitialConversationId ?? ''
 
       if (!conversationId) {
-        const directConversations = await getDirectConversations()
-        for (const conversation of directConversations) {
-          const otherUserId = conversation.expand?.memberships_via_conversation
-            .map((m) => m.expand?.user.id)
-            .filter((id) => id !== user.id)[0]
-          if (otherUserId === dmComposerTarget.id) {
-            conversationId = conversation.id
+        for (const [id, conversation] of Object.entries(conversations)) {
+          if (!conversation?.is_direct) continue
+          const conversationMemberships = memberships[id] || []
+          const hasViewer = conversationMemberships.some((m) => m.expand?.user?.id === user.id)
+          const hasTarget = conversationMemberships.some((m) => m.expand?.user?.id === dmComposerTarget.id)
+          if (hasViewer && hasTarget) {
+            conversationId = id
             break
+          }
+        }
+
+        if (!conversationId) {
+          const directConversations = await getDirectConversations()
+          for (const conversation of directConversations) {
+            const otherUserId = conversation.expand?.memberships_via_conversation
+              .map((m) => m.expand?.user.id)
+              .filter((id) => id !== user.id)[0]
+            if (otherUserId === dmComposerTarget.id) {
+              conversationId = conversation.id
+              break
+            }
           }
         }
       }

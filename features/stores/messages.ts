@@ -12,7 +12,9 @@ import {
 import { pocketbase } from '../pocketbase'
 import { ClientResponseError } from 'pocketbase'
 import { simpleCache } from '@/features/cache/simpleCache'
+import { constructPinataUrl } from '@/features/pinata'
 import type { StoreSlices } from './types'
+import { InteractionManager, PixelRatio } from 'react-native'
 
 export const PAGE_SIZE = 10
 
@@ -66,6 +68,9 @@ export type MessageSlice = {
 
   hydrateConversation: (conversationId: string) => Promise<void>
 
+  loadMoreConversations: (() => Promise<void>) | null
+  setLoadMoreConversationsHandler: (handler: (() => Promise<void>) | null) => void
+
   reactions: Record<string, ExpandedReaction[]>
   setReactions: (reactions: ExpandedReaction[]) => void
   addReaction: (reaction: ExpandedReaction) => void
@@ -90,6 +95,10 @@ export const createMessageSlice: StateCreator<StoreSlices, [], [], MessageSlice>
   conversationHydration: {},
   conversationLoading: {},
   conversationUnreadCounts: {},
+  loadMoreConversations: null,
+  setLoadMoreConversationsHandler: (handler) => {
+    set(() => ({ loadMoreConversations: handler }))
+  },
   setConversations: (items: Conversation[]) => {
     const newItems: Record<string, Conversation> = {}
     items.forEach((item) => {
@@ -262,35 +271,71 @@ export const createMessageSlice: StateCreator<StoreSlices, [], [], MessageSlice>
     }))
   },
   setConversationPreview: (conversationId: string, message: Message | null, unreadCount: number) => {
-    set((state) => ({
-      messagesPerConversation: {
-        ...state.messagesPerConversation,
-        [conversationId]: message ? [message] : [],
-      },
-      conversationHydration: {
-        ...state.conversationHydration,
-        [conversationId]: 'preview',
-      },
-      conversationUnreadCounts: {
-        ...state.conversationUnreadCounts,
-        [conversationId]: unreadCount,
-      },
-    }))
+    set((state) => {
+      const existingMessages = state.messagesPerConversation[conversationId] || []
+      const existingMessage = existingMessages[0] ?? null
+      const existingUnread = state.conversationUnreadCounts[conversationId] ?? 0
+      const sameMessage = existingMessage?.id === message?.id
+      const sameUnread = existingUnread === unreadCount
+
+      if (sameMessage && sameUnread) {
+        return state
+      }
+
+      const nextMessages = message ? [message] : []
+      const prevHydration = state.conversationHydration[conversationId]
+      const nextHydration = prevHydration === 'hydrated' ? 'hydrated' : 'preview'
+
+      return {
+        messagesPerConversation: {
+          ...state.messagesPerConversation,
+          [conversationId]: nextMessages,
+        },
+        conversationHydration: {
+          ...state.conversationHydration,
+          [conversationId]: nextHydration,
+        },
+        conversationUnreadCounts: {
+          ...state.conversationUnreadCounts,
+          [conversationId]: unreadCount,
+        },
+      }
+    })
   },
   setConversationPreviews: (entries) => {
     if (!entries?.length) return
     set((state) => {
+      let changed = false
       const messagesPerConversation = { ...state.messagesPerConversation }
       const conversationHydration = { ...state.conversationHydration }
       const conversationUnreadCounts = { ...state.conversationUnreadCounts }
+
       for (const { conversationId, message, unreadCount } of entries) {
         if (!conversationId) continue
+
+        const existingMessages = messagesPerConversation[conversationId] || []
+        const existingMessage = existingMessages[0] ?? null
+        const existingUnread = conversationUnreadCounts[conversationId] ?? 0
+        const sameMessage = existingMessage?.id === message?.id
+        const sameUnread = existingUnread === unreadCount
+
+        if (sameMessage && sameUnread) {
+          continue
+        }
+
         messagesPerConversation[conversationId] = message ? [message] : []
-        conversationHydration[conversationId] = 'preview'
+        const prevHydration = conversationHydration[conversationId]
+        conversationHydration[conversationId] = prevHydration === 'hydrated' ? 'hydrated' : 'preview'
         if (typeof unreadCount === 'number') {
           conversationUnreadCounts[conversationId] = unreadCount
         }
+        changed = true
       }
+
+      if (!changed) {
+        return state
+      }
+
       return {
         messagesPerConversation,
         conversationHydration,
@@ -670,10 +715,40 @@ export const createMessageSlice: StateCreator<StoreSlices, [], [], MessageSlice>
       return
     }
 
+    const prefetchSaveAvatars = (saves: ExpandedSave[]) => {
+      if (!saves.length) return
+      const { getSignedUrl } = get()
+      if (typeof getSignedUrl !== 'function') return
+
+      const scale = typeof PixelRatio.get === 'function' ? PixelRatio.get() : 1
+      const dimension = Math.round(52 * scale)
+      const targets: string[] = []
+      const seen = new Set<string>()
+
+      for (const save of saves) {
+        const image = save.expand?.user?.image
+        if (!image) continue
+        const optimized = constructPinataUrl(image, { width: dimension, height: dimension }) || image
+        if (seen.has(optimized)) continue
+        seen.add(optimized)
+        targets.push(optimized)
+        if (targets.length >= 20) break
+      }
+
+      if (!targets.length) return
+
+      InteractionManager.runAfterInteractions(() => {
+        targets.forEach((url) => {
+          getSignedUrl(url).catch(() => undefined)
+        })
+      })
+    }
+
     try {
       const cached = await simpleCache.get<ExpandedSave[]>('saves', userId)
       if (cached) {
         set(() => ({ saves: cached, savesHydrated: true }))
+        prefetchSaveAvatars(cached)
         return
       }
     } catch (error) {
@@ -686,6 +761,7 @@ export const createMessageSlice: StateCreator<StoreSlices, [], [], MessageSlice>
       void simpleCache.set('saves', fresh, userId).catch((error) => {
         console.warn('Persisting saves cache failed', error)
       })
+      prefetchSaveAvatars(fresh)
     } catch (error) {
       console.error('Failed to fetch saves list', error)
     }

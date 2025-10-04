@@ -1,5 +1,4 @@
 import { useAppStore } from '@/features/stores'
-import { getBacklogItems, getProfileItems } from '@/features/stores/items'
 import type { Profile } from '@/features/types'
 import { ExpandedItem } from '@/features/types'
 import { s } from '@/features/style'
@@ -11,11 +10,12 @@ import { PlaceholderGrid } from '../grid/PlaceholderGrid'
 import { Heading } from '../typo/Heading'
 import { ProfileDetailsSheet } from './ProfileDetailsSheet'
 import { ProfileHeader } from './ProfileHeader'
+import { bootStep } from '@/features/debug/bootMetrics'
 import { OtherBacklogSheet } from './sheets/OtherBacklogSheet'
 import { OtherButtonsSheet } from './sheets/OtherButtonsSheet'
-import { simpleCache } from '@/features/cache/simpleCache'
-import { pocketbase } from '@/features/pocketbase'
 import AsyncStorage from '@react-native-async-storage/async-storage'
+
+const profileIdLookup = new Map<string, string>()
 
 export const OtherProfile = ({ userName, prefetchedUserId }: { userName: string; prefetchedUserId?: string }) => {
   const [profile, setProfile] = useState<Profile>()
@@ -23,138 +23,41 @@ export const OtherProfile = ({ userName, prefetchedUserId }: { userName: string;
   const [backlogItems, setBacklogItems] = useState<ExpandedItem[]>([])
   const [loading, setLoading] = useState<boolean>(true)
 
-  const { user, stopEditing, getUserByUserName } = useAppStore()
+  const { user, stopEditing } = useAppStore()
+  const liveProfileBundle = useAppStore((state) => state.profileBundles[userName])
 
-  const refreshGrid = async (userName: string, hintedUserId?: string) => {
+  useEffect(() => {
+    if (prefetchedUserId) {
+      profileIdLookup.set(userName, prefetchedUserId)
+    }
+  }, [prefetchedUserId, userName])
+
+  const refreshGrid = async (userName: string) => {
     setLoading(true)
     try {
-      const tryHydrateFromCache = async (userId: string) => {
-        const [cachedProfile, cachedGridItems, cachedBacklogItems] = await Promise.all([
-          simpleCache.get('profile', userId),
-          simpleCache.get('grid_items', userId),
-          simpleCache.get('backlog_items', userId),
-        ])
-
-        if (cachedProfile && cachedGridItems && cachedBacklogItems) {
-          setProfile(cachedProfile as Profile)
-          setGridItems(cachedGridItems as ExpandedItem[])
-          setBacklogItems(cachedBacklogItems as ExpandedItem[])
-          setLoading(false)
-          return true
-        }
-        return false
-      }
-
-      if (hintedUserId) {
-        const hydrated = await tryHydrateFromCache(hintedUserId)
-        if (hydrated) {
-          return
-        }
-      }
-
-      // First, try to get cached profile data to extract userId (fallback for routes without hints)
-      let derivedUserId: string | undefined = hintedUserId
-
-      if (!derivedUserId) {
-        try {
-          const lookup = await AsyncStorage.getItem(`simple_cache_profile_lookup_${userName}`)
-          if (lookup) {
-            const parsed = JSON.parse(lookup)
-            if (parsed?.userId) {
-              derivedUserId = parsed.userId
-            }
-          }
-        } catch (error) {
-          console.warn('Profile lookup read failed:', error)
-        }
-      }
-
-      if (!derivedUserId) {
-        try {
-          const allKeys = await AsyncStorage.getAllKeys()
-          const profileKeys = allKeys.filter(key => key.includes('simple_cache_profile_'))
-
-          if (profileKeys.length > 0) {
-            for (const key of profileKeys) {
-              try {
-                const cachedEntry = await AsyncStorage.getItem(key)
-                if (cachedEntry) {
-                  const entry = JSON.parse(cachedEntry)
-                  const cachedProfileData = entry.data
-                  if (cachedProfileData?.userName === userName && cachedProfileData?._cachedUserId) {
-                    derivedUserId = cachedProfileData._cachedUserId
-                    break
-                  }
-                }
-              } catch (error) {
-                console.warn('Error checking cached profile:', error)
-              }
-            }
-          }
-        } catch (error) {
-          console.warn('Profile key scan failed:', error)
-        }
-      }
-
-      if (derivedUserId) {
-        const hydrated = await tryHydrateFromCache(derivedUserId)
-        if (hydrated) {
-          return
-        }
-      }
-
-      // If we didn't find cached data, fall back to the original approach
-      // Get user ID for cache keys
-      const user = await pocketbase.collection('users').getFirstListItem(`userName = "${userName}"`)
-      const userId = user.id
-      
-      // Check cache first (read-only, safe operation)
-      const [profile, gridItems, backlogItems] = await Promise.all([
-        simpleCache.get('profile', userId),
-        simpleCache.get('grid_items', userId),
-        simpleCache.get('backlog_items', userId)
-      ])
-      
-      // Use cached data if available
-      if (profile && gridItems && backlogItems) {
-        console.log('📖 Using cached other profile data')
-        setProfile(profile as Profile)
-        setGridItems(gridItems as ExpandedItem[])
-        setBacklogItems(backlogItems as ExpandedItem[])
+      bootStep(`otherProfile.${userName}.refresh.start`)
+      const storeState = useAppStore.getState()
+      const existingBundle = storeState.profileBundles[userName]
+      if (existingBundle) {
+        setProfile(existingBundle.profile)
+        setGridItems(existingBundle.gridItems)
+        setBacklogItems(existingBundle.backlogItems)
         setLoading(false)
-        return
-      }
-      
-      // Fetch fresh data
-      const [freshProfile, freshGridItems, freshBacklogItems] = await Promise.all([
-        getUserByUserName(userName),
-        getProfileItems(userName),
-        getBacklogItems(userName),
-      ])
-      
-      setProfile(freshProfile)
-      setGridItems(freshGridItems)
-      setBacklogItems(freshBacklogItems as ExpandedItem[])
-
-      // Cache the fresh data
-      const profileWithUserId = { ...freshProfile, _cachedUserId: userId }
-      Promise.all([
-        simpleCache.set('profile', profileWithUserId, userId),
-        simpleCache.set('grid_items', freshGridItems, userId),
-        simpleCache.set('backlog_items', freshBacklogItems, userId)
-      ]).catch(error => {
-        console.warn('Cache write failed:', error)
-      })
-      // Persist hint for future lookups when arriving without params
-      try {
-        profileWithUserId && (await AsyncStorage.setItem(`simple_cache_profile_lookup_${userName}`, JSON.stringify({ userId })))
-      } catch (error) {
-        console.warn('Profile lookup write failed:', error)
       }
 
+      const bundle = await storeState.getProfileBundle(userName)
+      bootStep(`otherProfile.${userName}.refresh.end`)
+      setProfile(bundle.profile)
+      setGridItems(bundle.gridItems)
+      setBacklogItems(bundle.backlogItems)
       setLoading(false)
+      profileIdLookup.set(userName, bundle.profile.id)
+      await AsyncStorage.setItem(
+        `simple_cache_profile_lookup_${userName}`,
+        JSON.stringify({ userId: bundle.profile.id })
+      )
     } catch (error) {
-      console.error(error)
+      console.error('Failed to refresh other profile:', error)
       setLoading(false)
     }
   }
@@ -163,7 +66,7 @@ export const OtherProfile = ({ userName, prefetchedUserId }: { userName: string;
     const init = async () => {
       try {
         // Only run heavy database operations when component is active
-        await refreshGrid(userName, prefetchedUserId)
+        await refreshGrid(userName)
       } catch (error) {
         console.error(error)
       }
@@ -176,6 +79,20 @@ export const OtherProfile = ({ userName, prefetchedUserId }: { userName: string;
   const backlogSheetRef = useRef<BottomSheet>(null)
 
   const [detailsItem, setDetailsItem] = useState<ExpandedItem | null>(null)
+
+  useEffect(() => {
+    if (!liveProfileBundle) return
+    const nextBacklog = liveProfileBundle.backlogItems
+    const sameLength = nextBacklog.length === backlogItems.length
+    const sameContent =
+      sameLength &&
+      nextBacklog.every((item, index) => backlogItems[index]?.id === item.id)
+
+    if (!sameContent) {
+      bootStep(`otherProfile.${userName}.backlog.update`)
+      setBacklogItems(nextBacklog)
+    }
+  }, [liveProfileBundle, backlogItems])
 
   return (
     <>

@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
-import { View, Text, ScrollView, Pressable } from 'react-native'
+import { View, Text, ScrollView, Pressable, PixelRatio } from 'react-native'
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useAppStore } from '@/features/stores'
@@ -8,6 +8,7 @@ import { s, c } from '@/features/style'
 import { Ionicons } from '@expo/vector-icons'
 import { router } from 'expo-router'
 import type { Profile } from '@/features/types'
+import { constructPinataUrl } from '@/features/pinata'
 
 export function WantToMeetScreen() {
   const {
@@ -19,6 +20,7 @@ export function WantToMeetScreen() {
     setProfileNavIntent,
     ensureSavesLoaded,
     savesHydrated,
+    getSignedUrl,
   } = useAppStore()
   const savedUsers = useMemo<Profile[]>(() => saves.map((s) => s.expand.user as Profile), [saves])
   const [selected, setSelected] = useState<Record<string, boolean>>({})
@@ -43,6 +45,30 @@ export function WantToMeetScreen() {
       console.warn('Failed to load saves for WantToMeet', error)
     })
   }, [ensureSavesLoaded, savesHydrated, user?.id])
+
+  useEffect(() => {
+    if (!savedUsers.length) return
+
+    const scale = PixelRatio.get()
+    const avatarDimension = Math.round(((s.$4 as number) || 48) * scale)
+    const uniqueUrls = new Set<string>()
+
+    savedUsers.forEach((profile) => {
+      if (!profile?.image) return
+      const optimized = constructPinataUrl(profile.image, {
+        width: avatarDimension,
+        height: avatarDimension,
+      })
+      uniqueUrls.add(optimized || profile.image)
+    })
+
+    const urls = Array.from(uniqueUrls).slice(0, 20)
+    if (!urls.length) return
+
+    urls.forEach((url) => {
+      getSignedUrl(url).catch(() => undefined)
+    })
+  }, [savedUsers, getSignedUrl])
 
   const showToast = (message: string) => {
     if (toastTimerRef.current) clearTimeout(toastTimerRef.current)

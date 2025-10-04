@@ -10,12 +10,17 @@ import MessageIcon from '@/assets/icons/message.svg'
 import { Ionicons } from '@expo/vector-icons'
 import BottomSheet from '@gorhom/bottom-sheet'
 import { useNavigation } from '@react-navigation/native'
+import { bootStep } from '@/features/debug/bootMetrics'
 
 export const Navigation = ({
   savesBottomSheetRef,
 }: {
   savesBottomSheetRef: React.RefObject<BottomSheet>
 }) => {
+  useEffect(() => {
+    bootStep('navigation.mount')
+  }, [])
+
   const pathname = usePathname()
   const segments = pathname.split('/').filter(Boolean)
   const inMessageThread =

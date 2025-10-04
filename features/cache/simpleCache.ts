@@ -2,15 +2,16 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 
 // Simple cache with fixed TTLs
 const CACHE_TTLS = {
-  profile: 15 * 60 * 1000,        // 15 minutes
-  grid_items: 3 * 60 * 1000,      // 3 minutes
-  backlog_items: 3 * 60 * 1000,   // 3 minutes
-  feed_items: 8 * 60 * 1000,      // 8 minutes
-  directory_users: 10 * 60 * 1000, // 10 minutes
-  conversations: 5 * 60 * 1000,    // 5 minutes
-  conversation_memberships: 5 * 60 * 1000, // 5 minutes
-  conversation_previews: 3 * 60 * 1000, // 3 minutes
-  saves: 10 * 60 * 1000,          // 10 minutes
+  profile: 30 * 60 * 1000,        // 30 minutes
+  grid_items: 15 * 60 * 1000,     // 15 minutes
+  grid_items_preview: 15 * 60 * 1000,
+  backlog_items: 15 * 60 * 1000,  // 15 minutes
+  feed_items: 15 * 60 * 1000,     // 15 minutes
+  directory_users: 15 * 60 * 1000, // 15 minutes
+  conversations: 10 * 60 * 1000,   // 10 minutes
+  conversation_memberships: 10 * 60 * 1000, // 10 minutes
+  conversation_previews: 10 * 60 * 1000, // 10 minutes
+  saves: 20 * 60 * 1000,          // 20 minutes
 } as const
 
 type CacheKey = keyof typeof CACHE_TTLS
@@ -20,9 +21,12 @@ interface CacheEntry<T> {
   expires: number
 }
 
+export const GRID_PREVIEW_LIMIT = 16
+
 class SimpleCache {
   private static instance: SimpleCache
   private cachePrefix = 'simple_cache_'
+  private userKeyIndex = new Map<string, Set<string>>()
 
   static getInstance(): SimpleCache {
     if (!SimpleCache.instance) {
@@ -33,6 +37,24 @@ class SimpleCache {
 
   private getKey(key: string, userId?: string): string {
     return userId ? `${this.cachePrefix}${key}_${userId}` : `${this.cachePrefix}${key}`
+  }
+
+  private trackUserKey(userId: string, cacheKey: string) {
+    const existing = this.userKeyIndex.get(userId)
+    if (existing) {
+      existing.add(cacheKey)
+    } else {
+      this.userKeyIndex.set(userId, new Set([cacheKey]))
+    }
+  }
+
+  private untrackUserKey(userId: string, cacheKey: string) {
+    const existing = this.userKeyIndex.get(userId)
+    if (!existing) return
+    existing.delete(cacheKey)
+    if (existing.size === 0) {
+      this.userKeyIndex.delete(userId)
+    }
   }
 
   // Read from cache (safe operation)
@@ -50,6 +72,9 @@ class SimpleCache {
       // Check if expired
       if (Date.now() > entry.expires) {
         await AsyncStorage.removeItem(cacheKey)
+        if (userId) {
+          this.untrackUserKey(userId, cacheKey)
+        }
         return null
       }
 
@@ -71,7 +96,22 @@ class SimpleCache {
       }
       
       await AsyncStorage.setItem(cacheKey, JSON.stringify(entry))
+      if (userId) {
+        this.trackUserKey(userId, cacheKey)
+      }
       console.log(`💾 Cache set: ${cacheKey}`)
+
+      if (key === 'grid_items' && Array.isArray(data) && userId) {
+        const preview = (data as unknown[]).slice(0, GRID_PREVIEW_LIMIT)
+        const previewKey = this.getKey('grid_items_preview', userId)
+        const previewEntry: CacheEntry<unknown[]> = {
+          data: preview,
+          expires: Date.now() + CACHE_TTLS.grid_items_preview,
+        }
+        await AsyncStorage.setItem(previewKey, JSON.stringify(previewEntry))
+        this.trackUserKey(userId, previewKey)
+        console.log(`💾 Cache set: ${previewKey}`)
+      }
     } catch (error) {
       console.warn('Cache write failed:', error)
       // Don't throw - cache failures shouldn't break the app
@@ -81,9 +121,17 @@ class SimpleCache {
   // Clear cache for a user (when data changes)
   async clearUser(userId: string): Promise<void> {
     try {
-      const keys = await AsyncStorage.getAllKeys()
-      const userKeys = keys.filter(key => key.includes(`_${userId}`))
-      await AsyncStorage.multiRemove(userKeys)
+      const indexedKeys = Array.from(this.userKeyIndex.get(userId) ?? [])
+      if (indexedKeys.length > 0) {
+        await AsyncStorage.multiRemove(indexedKeys)
+      } else {
+        const keys = await AsyncStorage.getAllKeys()
+        const filtered = keys.filter((key) => key.includes(`_${userId}`))
+        if (filtered.length) {
+          await AsyncStorage.multiRemove(filtered)
+        }
+      }
+      this.userKeyIndex.delete(userId)
       console.log(`🗑️ Cache cleared for user: ${userId}`)
     } catch (error) {
       console.warn('Cache clear failed:', error)

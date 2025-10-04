@@ -1,6 +1,6 @@
 import { Profile } from '@/ui'
 import React, { useEffect, useMemo, useRef } from 'react'
-import { Dimensions, View } from 'react-native'
+import { Dimensions, View, InteractionManager } from 'react-native'
 import Svg, { Path, G } from 'react-native-svg'
 import { useAppStore } from '@/features/stores'
 import { CommunityInterestsScreen } from '@/features/communities/interests-screen'
@@ -8,6 +8,7 @@ import { WantToMeetScreen } from '@/features/communities/want-to-meet-screen'
 import { c } from '@/features/style'
 import { Gesture, GestureDetector } from 'react-native-gesture-handler'
 import Animated, { useSharedValue, useAnimatedStyle, withSpring, runOnJS } from 'react-native-reanimated'
+import { bootStep } from '@/features/debug/bootMetrics'
 
 export function UserProfileScreen({ userName, prefetchedUserId }: { userName: string; prefetchedUserId?: string }) {
   if (!userName) {
@@ -34,6 +35,7 @@ export function UserProfileScreen({ userName, prefetchedUserId }: { userName: st
   const isDragging = useSharedValue(false)
   const skipNextAnimation = useRef(true)
   const hasCommittedDefault = useRef(false)
+  const lastPagerIndexRef = useRef(homePagerIndex)
   if (!user) {
     return null
   }
@@ -42,6 +44,8 @@ export function UserProfileScreen({ userName, prefetchedUserId }: { userName: st
   useEffect(() => {
     skipNextAnimation.current = true
     hasCommittedDefault.current = false
+    lastPagerIndexRef.current = homePagerIndex
+    bootStep(`profileScreen.${userName}.mount`)
   }, [userName])
 
   useEffect(() => {
@@ -56,6 +60,8 @@ export function UserProfileScreen({ userName, prefetchedUserId }: { userName: st
         skipNextAnimation.current = true
         hasCommittedDefault.current = true
         translateX.value = -intent.targetPagerIndex * width
+        lastPagerIndexRef.current = intent.targetPagerIndex
+        bootStep(`profileScreen.${userName}.intent.${intent.targetPagerIndex}`)
         setHomePagerIndex(intent.targetPagerIndex)
         return
       }
@@ -65,6 +71,8 @@ export function UserProfileScreen({ userName, prefetchedUserId }: { userName: st
       hasCommittedDefault.current = true
       skipNextAnimation.current = true
       translateX.value = -homePagerIndex * width
+      lastPagerIndexRef.current = homePagerIndex
+      bootStep(`profileScreen.${userName}.defaultCommitted`)
     }
   }, [ownProfile, profileNavIntent, consumeProfileNavIntent, setHomePagerIndex, width, translateX, homePagerIndex, setDirectoriesFilterTab])
 
@@ -73,13 +81,21 @@ export function UserProfileScreen({ userName, prefetchedUserId }: { userName: st
     if (skipNextAnimation.current) {
       translateX.value = -homePagerIndex * width
       skipNextAnimation.current = false
+      lastPagerIndexRef.current = homePagerIndex
+      bootStep(`profileScreen.${userName}.translate.immediate`)
       return
     }
+    if (lastPagerIndexRef.current === homePagerIndex) {
+      return
+    }
+    bootStep(`profileScreen.${userName}.translate.request.${homePagerIndex}`)
+    lastPagerIndexRef.current = homePagerIndex
     translateX.value = withSpring(-homePagerIndex * width, {
       damping: 20,
       stiffness: 200,
     })
-  }, [homePagerIndex, width, translateX])
+    bootStep(`profileScreen.${userName}.translate.spring`)
+  }, [homePagerIndex, width, translateX, userName])
 
   // Gesture handling for horizontal swipes (will only be attached on own profile)
   const panGesture = Gesture.Pan()
@@ -113,7 +129,7 @@ export function UserProfileScreen({ userName, prefetchedUserId }: { userName: st
         stiffness: 220,
       })
       if (nextIndex !== homePagerIndex) {
-        runOnJS(setHomePagerIndex)(nextIndex)
+      runOnJS(setHomePagerIndex)(nextIndex)
       }
     })
     .onFinalize(() => {})
@@ -136,53 +152,40 @@ export function UserProfileScreen({ userName, prefetchedUserId }: { userName: st
   // Simple preloader that runs once when component mounts
   useEffect(() => {
     const preloadData = async () => {
+      bootStep(`profileScreen.${userName}.preload.start`)
       try {
-        // Preload profile data for current user
-        if (user?.userName === userName) {
-          // This will cache the profile data
-          await import('@/features/stores/items').then(({ getProfileItems }) => 
-            getProfileItems(userName)
-          )
-        }
-        
-        // Preload directory data (first 20 results)
-        await import('@/features/communities/feed-screen').then(async () => {
-          const { pocketbase } = await import('@/features/pocketbase')
-          const { simpleCache } = await import('@/features/cache/simpleCache')
-          
-          // Check if we already have cached directory data
-          const cachedDirectory = await simpleCache.get('directory_users')
-          if (!cachedDirectory) {
-            // Preload directory data in background
-            const res = await pocketbase.collection('users').getList(1, 20, {
-              fields: 'id,userName,firstName,lastName,name,location,image,avatar_url',
+        const { pocketbase } = await import('@/features/pocketbase')
+        const { simpleCache } = await import('@/features/cache/simpleCache')
+        const cachedDirectory = await simpleCache.get('directory_users')
+        if (!cachedDirectory) {
+          const res = await pocketbase.collection('users').getList(1, 20, {
+            fields: 'id,userName,firstName,lastName,name,location,image,avatar_url',
+            sort: '-created',
+          })
+
+          const userIds = res.items.map((u: any) => u.id)
+          if (userIds.length > 0) {
+            const orFilter = userIds.map((id: string) => `creator = "${id}"`).join(' || ')
+            const itemsRes = await pocketbase.collection('items').getList(1, 60, {
+              filter: `(${orFilter}) && backlog = false && list = false && parent = null`,
+              fields: 'id,image,creator,created,expand.ref(image)',
+              expand: 'ref',
               sort: '-created',
             })
-            
-            // Batch fetch grid items for all users
-            const userIds = res.items.map((u: any) => u.id)
-            if (userIds.length > 0) {
-              const orFilter = userIds.map((id: string) => `creator = "${id}"`).join(' || ')
-              const itemsRes = await pocketbase.collection('items').getList(1, 60, {
-                filter: `(${orFilter}) && backlog = false && list = false && parent = null`,
-                fields: 'id,image,creator,created,expand.ref(image)',
-                expand: 'ref',
-                sort: '-created',
-              })
-              
-              // Group items by creator and create directory data
-              const byCreator = new Map<string, any[]>()
-              for (const it of itemsRes.items as any[]) {
-                const creatorId = it.creator
-                if (!creatorId) continue
-                const arr = byCreator.get(creatorId) || []
-                if (arr.length < 3) {
-                  arr.push(it)
-                  byCreator.set(creatorId, arr)
-                }
+
+            const byCreator = new Map<string, any[]>()
+            for (const it of itemsRes.items as any[]) {
+              const creatorId = it.creator
+              if (!creatorId) continue
+              const arr = byCreator.get(creatorId) || []
+              if (arr.length < 3) {
+                arr.push(it)
+                byCreator.set(creatorId, arr)
               }
-              
-              const mapped = res.items.map((r: any) => {
+            }
+
+            const mapped = res.items
+              .map((r: any) => {
                 const creatorId = r.id
                 const creatorItems = byCreator.get(creatorId) || []
                 const images = creatorItems
@@ -199,21 +202,33 @@ export function UserProfileScreen({ userName, prefetchedUserId }: { userName: st
                   topRefs: images,
                   _latest: latest,
                 }
-              }).filter(u => u.userName !== user?.userName)
-              
-              // Cache the directory data
-              await simpleCache.set('directory_users', mapped)
-            }
+              })
+              .filter((u) => u.userName !== user?.userName)
+
+            void simpleCache.set('directory_users', mapped).catch((error) => {
+              console.warn('Directory cache write failed during preload', error)
+            })
           }
-        })
+        }
       } catch (error) {
         console.warn('Preloading failed:', error)
-        // Don't break the app if preloading fails
+      } finally {
+        bootStep(`profileScreen.${userName}.preload.end`)
       }
     }
-    
-    preloadData()
-  }, [userName, user?.userName]) // Only run once when component mounts
+
+    if (!user?.userName || user.userName !== userName) {
+      return
+    }
+
+    const interactionHandle = InteractionManager.runAfterInteractions(() => {
+      preloadData().catch(() => {})
+    })
+
+    return () => {
+      interactionHandle?.cancel?.()
+    }
+  }, [userName, user?.userName])
 
   // Define Dots component before conditional returns to prevent hook ordering issues
   const Dots = useMemo(() => {

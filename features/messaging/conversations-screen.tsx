@@ -1,5 +1,5 @@
-import { useMemo } from 'react'
-import { View, DimensionValue, Pressable, Text, FlatList } from 'react-native'
+import { useMemo, useRef } from 'react'
+import { View, DimensionValue, Pressable, Text, FlatList, NativeSyntheticEvent, NativeScrollEvent } from 'react-native'
 import { c, s } from '../style'
 import { useAppStore } from '@/features/stores'
 import SwipeableConversation from '@/ui/messaging/SwipeableConversation'
@@ -8,7 +8,14 @@ import { Conversation } from '@/features/types'
 import { useCalendars } from 'expo-localization'
 
 export function ConversationsScreen() {
-  const { conversations, memberships, messagesPerConversation, user, archiveConversation } =
+  const {
+    conversations,
+    memberships,
+    messagesPerConversation,
+    user,
+    archiveConversation,
+    loadMoreConversations,
+  } =
     useAppStore()
   const calendars = useCalendars()
   const timeZone = calendars[0]?.timeZone || 'America/New_York'
@@ -46,6 +53,15 @@ export function ConversationsScreen() {
   }
 
   if (!user) return null
+
+  const hasUserScrolledRef = useRef(false)
+
+  const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    if (hasUserScrolledRef.current) return
+    if (event.nativeEvent.contentOffset.y > 24) {
+      hasUserScrolledRef.current = true
+    }
+  }
 
   return (
     <View
@@ -116,6 +132,15 @@ export function ConversationsScreen() {
         contentContainerStyle={{ paddingBottom: s.$14 }}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
+        onScroll={handleScroll}
+        scrollEventThrottle={16}
+        onEndReached={() => {
+          if (!loadMoreConversations || !hasUserScrolledRef.current) return
+          loadMoreConversations().catch((error) => {
+            console.error('loadMoreConversations failed', error)
+          })
+        }}
+        onEndReachedThreshold={0.6}
       />
     </View>
   )

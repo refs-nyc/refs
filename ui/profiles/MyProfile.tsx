@@ -1,12 +1,13 @@
 import { useAppStore } from '@/features/stores'
-import { getBacklogItems, getProfileItems, autoMoveBacklogToGrid } from '@/features/stores/items'
+import type { ProfileBundle } from '@/features/stores/profileBundles'
+import { autoMoveBacklogToGrid } from '@/features/stores/items'
 import type { Profile } from '@/features/types'
 import { ExpandedItem } from '@/features/types'
 import { s, c } from '@/features/style'
 import BottomSheet, { BottomSheetBackdrop, BottomSheetView } from '@gorhom/bottom-sheet'
 import { useShareIntentContext } from 'expo-share-intent'
 import { useEffect, useRef, useState, useMemo, useCallback } from 'react'
-import { ScrollView, View, Text, Pressable, Keyboard } from 'react-native'
+import { ScrollView, View, Text, Pressable, Keyboard, InteractionManager } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import * as ImagePicker from 'expo-image-picker'
 import FloatingJaggedButton from '../buttons/FloatingJaggedButton'
@@ -25,7 +26,7 @@ import { RefForm } from '../actions/RefForm'
 import Animated, { FadeIn, FadeOut, Easing } from 'react-native-reanimated'
 import { Animated as RNAnimated, Easing as RNEasing } from 'react-native'
 import { Collections } from '@/features/pocketbase/pocketbase-types'
-import { simpleCache } from '@/features/cache/simpleCache'
+import { bootStep } from '@/features/debug/bootMetrics'
 
 const profileMemoryCache = new Map<string, {
   profile: Profile
@@ -104,6 +105,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
 
   // Get optimistic items from store
   const { optimisticItems, user } = useAppStore()
+  const liveProfileBundle = useAppStore((state) => state.profileBundles[userName])
 
   const {
     getUserByUserName,
@@ -553,106 +555,115 @@ export const MyProfile = ({ userName }: { userName: string }) => {
 
 
 
-  const refreshGrid = async (userName: string) => {
+  const refreshGrid = async (userName: string, options?: { blocking?: boolean }) => {
+    const storeState = useAppStore.getState()
     const hadMemory = profileMemoryCache.has(userName)
-    if (!hadMemory) {
+    const existingBundle = storeState.profileBundles[userName]
+    let shouldBlock = options?.blocking ?? (!existingBundle && !hadMemory)
+    const STALE_MS = 5 * 60 * 1000
+
+    if (!hadMemory && !existingBundle) {
+      bootStep(`myProfile.${userName}.bundle.noMemory`)
       setLoading(true)
       setPromptsReady(false)
     }
 
-    const storeState = useAppStore.getState()
-    const storeUser = storeState.user
-    const cacheUserId = storeUser?.userName === userName ? storeUser.id : undefined
-
-    const memoryCached = profileMemoryCache.get(userName)
-    if (memoryCached) {
-      setProfile(memoryCached.profile)
-      setGridItems(memoryCached.gridItems)
-      setBacklogItems(memoryCached.backlogItems)
-      setLoading(false)
-      setPromptsReady(memoryCached.gridItems.length > 0)
-      storeState.setGridItemCount(memoryCached.gridItems.length)
-    }
-
-    const hydrateFromCache = async (userId?: string) => {
-      if (!userId) return false
-
-      const [cachedProfile, cachedGridItems, cachedBacklogItems] = await Promise.all([
-        simpleCache.get('profile', userId),
-        simpleCache.get('grid_items', userId),
-        simpleCache.get('backlog_items', userId),
-      ])
-
-      if (!cachedProfile || !cachedGridItems || !cachedBacklogItems) {
-        return false
-      }
-
-      setProfile(cachedProfile as Profile)
-      setGridItems(cachedGridItems as ExpandedItem[])
-      setBacklogItems(cachedBacklogItems as ExpandedItem[])
-      setLoading(false)
-      setPromptsReady((cachedGridItems as ExpandedItem[]).length > 0)
-      storeState.setGridItemCount((cachedGridItems as ExpandedItem[]).length)
-      profileMemoryCache.set(userName, {
-        profile: cachedProfile as Profile,
-        gridItems: cachedGridItems as ExpandedItem[],
-        backlogItems: cachedBacklogItems as ExpandedItem[],
-        timestamp: Date.now(),
-      })
-      return true
-    }
-
-    const cacheHydrated = await hydrateFromCache(cacheUserId)
-
-
-    const fetchFreshData = async () => {
-      try {
-        const profileRecord = await getUserByUserName(userName)
-        const [gridItemsRecord, backlogItemsRecord] = await Promise.all([
-          getProfileItems(userName),
-          getBacklogItems(userName),
-        ])
-
-        setProfile(profileRecord)
-        setGridItems(gridItemsRecord)
-        setBacklogItems(backlogItemsRecord as ExpandedItem[])
+    let previewBundle: ProfileBundle | null = null
+    const preload = storeState.preloadBundleFromCache
+    const userId = storeState.user?.id
+    if (!existingBundle && preload && userId) {
+      previewBundle = await preload(userName, userId)
+      if (previewBundle) {
+        bootStep(`myProfile.${userName}.bundle.previewLoaded`)
+        setProfile(previewBundle.profile)
+        setGridItems(previewBundle.gridItems)
+        setBacklogItems(previewBundle.backlogItems)
         setLoading(false)
-        setPromptsReady(true)
-        useAppStore.getState().setGridItemCount(gridItemsRecord.length)
+        setPromptsReady(previewBundle.gridItems.length > 0)
+        storeState.setGridItemCount(previewBundle.gridItems.length)
+        profileMemoryCache.set(userName, previewBundle)
+        shouldBlock = false
+      }
+    }
 
-        profileMemoryCache.set(userName, {
-          profile: profileRecord,
-          gridItems: gridItemsRecord,
-          backlogItems: backlogItemsRecord as ExpandedItem[],
-          timestamp: Date.now(),
-        })
+    const now = Date.now()
+    let shouldRefresh = true
 
-        const userId = profileRecord.id
-        const cacheUpdates = [
-          simpleCache.set('profile', profileRecord, userId),
-          simpleCache.set('grid_items', gridItemsRecord, userId),
-          simpleCache.set('backlog_items', backlogItemsRecord, userId),
-        ]
+    if (existingBundle) {
+      bootStep(`myProfile.${userName}.bundle.cache`)
+      setProfile(existingBundle.profile)
+      setGridItems(existingBundle.gridItems)
+      setBacklogItems(existingBundle.backlogItems)
+      setLoading(false)
+      setPromptsReady(existingBundle.gridItems.length > 0)
+      storeState.setGridItemCount(existingBundle.gridItems.length)
+      profileMemoryCache.set(userName, existingBundle)
+      shouldRefresh = now - existingBundle.timestamp > STALE_MS
+      if (!existingBundle.gridItems.length) {
+        shouldRefresh = true
+      }
+    } else if (hadMemory) {
+      const cachedEntry = profileMemoryCache.get(userName)
+      if (cachedEntry) {
+        bootStep(`myProfile.${userName}.bundle.memory`)
+        setProfile(cachedEntry.profile)
+        setGridItems(cachedEntry.gridItems)
+        setBacklogItems(cachedEntry.backlogItems)
+        setLoading(false)
+        setPromptsReady(cachedEntry.gridItems.length > 0)
+        storeState.setGridItemCount(cachedEntry.gridItems.length)
+        shouldRefresh = now - cachedEntry.timestamp > STALE_MS
+        if (!cachedEntry.gridItems.length) {
+          shouldRefresh = true
+          shouldBlock = false
+        }
+      }
+    }
 
-        void Promise.all(cacheUpdates).catch((error) => {
-          console.warn('Cache write failed:', error)
-        })
+    const fetchBundle = async () => {
+      if (!shouldRefresh) {
+        if (process.env.NODE_ENV !== 'production') {
+          bootStep(`myProfile.${userName}.bundle.skipRefresh`)
+        }
+        return
+      }
+      bootStep(`myProfile.${userName}.bundle.fetch.start`)
+      try {
+        const bundle = await storeState.getProfileBundle(userName)
+        bootStep(`myProfile.${userName}.bundle.fetch.end`)
+        setProfile(bundle.profile)
+        setGridItems(bundle.gridItems)
+        setBacklogItems(bundle.backlogItems)
+        setLoading(false)
+        setPromptsReady(bundle.gridItems.length > 0)
+        storeState.setGridItemCount(bundle.gridItems.length)
+        profileMemoryCache.set(userName, bundle)
 
-        if (userName === useAppStore.getState().user?.userName) {
-          void autoMoveBacklogToGrid(userName, gridItemsRecord, backlogItemsRecord as ExpandedItem[]).catch((error) => {
-            console.warn('Background operations failed:', error)
-          })
+        if (userName === storeState.user?.userName) {
+          setTimeout(() => {
+            bootStep(`myProfile.${userName}.autoMove.queued`)
+            void autoMoveBacklogToGrid(userName, bundle.gridItems, bundle.backlogItems).catch((error) => {
+              console.warn('Background operations failed:', error)
+            })
+          }, 500)
         }
       } catch (error) {
         console.error('Failed to refresh grid:', error)
-        if (!cacheHydrated) {
+        bootStep(`myProfile.${userName}.bundle.fetch.error`)
+        if (!existingBundle && !hadMemory) {
           setLoading(false)
           setPromptsReady(true)
         }
       }
     }
 
-    void fetchFreshData()
+    if (shouldBlock) {
+      await fetchBundle()
+    } else {
+      InteractionManager.runAfterInteractions(() => {
+        void fetchBundle()
+      })
+    }
   }
 
   const handleMoveToBacklog = async () => {
@@ -732,6 +743,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
 
   useEffect(() => {
     if (!effectiveProfile?.userName) return
+    bootStep(`myProfile.${effectiveProfile.userName}.cache.persist`)
     profileMemoryCache.set(effectiveProfile.userName, {
       profile: effectiveProfile,
       gridItems,
@@ -741,14 +753,36 @@ export const MyProfile = ({ userName }: { userName: string }) => {
   }, [effectiveProfile?.userName, gridItems, backlogItems])
 
   useEffect(() => {
+    bootStep(`myProfile.${userName}.focus.state.${focusReady ? 'ready' : 'locked'}`)
+  }, [focusReady, userName])
+
+  useEffect(() => {
+    if (!liveProfileBundle) return
+    const nextBacklog = liveProfileBundle.backlogItems
+    const sameLength = nextBacklog.length === backlogItems.length
+    const sameContent =
+      sameLength &&
+      nextBacklog.every((item, index) => backlogItems[index]?.id === item.id)
+
+    if (!sameContent) {
+      bootStep(`myProfile.${userName}.backlog.update`)
+      setBacklogItems(nextBacklog)
+    }
+  }, [liveProfileBundle, backlogItems])
+
+  useEffect(() => {
     let cancelled = false
     let focusTimer: ReturnType<typeof setTimeout> | null = null
     // Make gesture controls available immediately
+    bootStep(`myProfile.${userName}.focus.init`)
     setFocusReady(true)
 
     const init = async () => {
       try {
-        await refreshGrid(userName)
+        bootStep(`myProfile.${userName}.refresh.start`)
+        const hasImmediateData = profileMemoryCache.has(userName) || Boolean(liveProfileBundle)
+        await refreshGrid(userName, { blocking: !hasImmediateData })
+        bootStep(`myProfile.${userName}.refresh.end`)
         if (cancelled) return
 
         const returningFromSearch = cachedSearchResults.length > 0 || isSearchResultsSheetOpen || searchMode
@@ -758,6 +792,8 @@ export const MyProfile = ({ userName }: { userName: string }) => {
         if (justOnboarded) {
           focusTimer = setTimeout(() => {
             if (!cancelled) {
+              bootStep(`myProfile.${userName}.focus.ready`) 
+              bootStep(`myProfile.${userName}.focus.timer`)
               setFocusReady(true)
             }
           }, 2500)

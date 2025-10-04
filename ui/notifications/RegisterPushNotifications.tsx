@@ -23,7 +23,16 @@ export function RegisterPushNotifications() {
     }
 
     const logInformation = async () => {
-      const { data: pushTokenString } = await Notifications.getExpoPushTokenAsync({ projectId })
+      try {
+        await Notifications.getExpoPushTokenAsync({ projectId })
+      } catch (error: any) {
+        const message = typeof error?.message === 'string' ? error.message : `${error}`
+        if (message?.includes('503')) {
+          console.warn('Expo push service temporarily unavailable (dev log)')
+        } else {
+          console.warn('Failed to fetch dev push token', message)
+        }
+      }
     }
 
     // Delay push notification registration to prioritize UI responsiveness
@@ -31,12 +40,18 @@ export function RegisterPushNotifications() {
       registerForPushNotificationsAsync()
         .then(async (token) => {
           setExpoPushToken(token ?? '')
-          // Only update user if we still have a logged in user
           if (user && token) {
             await updateUser({ pushToken: token })
           }
         })
-        .catch((error: any) => setExpoPushToken(`${error}`))
+        .catch((error: any) => {
+          const message = typeof error?.message === 'string' ? error.message : `${error}`
+          if (message?.includes('503')) {
+            console.warn('Expo push service temporarily unavailable')
+            return
+          }
+          setExpoPushToken(message)
+        })
 
       notificationListener.current = Notifications.addNotificationReceivedListener((notification) => {
         setNotification(notification)

@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react'
-import { View, Text, Dimensions, Pressable, FlatList, ScrollView, RefreshControl, InteractionManager } from 'react-native'
+import { View, Text, Dimensions, Pressable, FlatList, RefreshControl, InteractionManager } from 'react-native'
 import { s, c } from '@/features/style'
 import { pocketbase } from '@/features/pocketbase'
 import BottomSheet from '@gorhom/bottom-sheet'
@@ -11,7 +11,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 import { supabase } from '@/features/supabase/client'
 import Animated, { FadeIn, FadeOut, useSharedValue, useAnimatedStyle, withTiming, interpolate, Extrapolation } from 'react-native-reanimated'
 import { Animated as RNAnimated, Pressable as RNPressable } from 'react-native'
-import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg'
 import { CommunitiesFeedScreen as DirectoryScreen } from '@/features/communities/feed-screen'
 import { OvalJaggedAddButton } from '@/ui/buttons/OvalJaggedAddButton'
 import { Avatar } from '@/ui/atoms/Avatar'
@@ -22,11 +21,9 @@ import { router } from 'expo-router'
 const win = Dimensions.get('window')
 const BADGE_OVERHANG = 8
 const COMMUNITY_SLUG = 'edge-patagonia'
-const PEOPLE_TABS_FADE_WIDTH = 60
 const PEOPLE_SEARCH_BUTTON_RIGHT_OFFSET = -10
 const PEOPLE_SEARCH_BUTTON_TOP = -6
-const PEOPLE_SEARCH_CONTENT_PADDING = 85
-const PEOPLE_LEFT_INSET = 29
+const PEOPLE_HORIZONTAL_INSET = (s.$1 as number) + 6
 
 type CommunityCacheState = {
   items: any[]
@@ -479,52 +476,9 @@ export function CommunityInterestsScreen() {
   }
 
   // People tabs (UI only for parity)
-  const PeopleTabs = ({ showSearchButton }: { showSearchButton: boolean }) => {
-    const [activeTab, setActiveTab] = useState<string>('All')
-    const tabs = ['All', 'Bio', 'Crypto', 'Longevity', 'Tennis', 'New Cities']
-    return (
-        <View style={{ paddingTop: 28, marginBottom: 10 }}>
-        <View style={{ position: 'relative', overflow: 'hidden', paddingLeft: PEOPLE_LEFT_INSET-27 }}>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{ paddingRight: showSearchButton ? PEOPLE_SEARCH_CONTENT_PADDING : 0 }}
-          >
-            <View style={{ flexDirection: 'row' }}>
-              {tabs.map((label, idx) => {
-                const active = label === activeTab
-                const isLast = idx === tabs.length - 1
-                return (
-                  <Pressable
-                    key={label}
-                    onPress={() => setActiveTab(label)}
-                    style={{ marginRight: isLast ? 0 : 16 }}
-                    hitSlop={8}
-                  >
-                    <Text style={{ color: c.prompt, opacity: active ? 1 : 0.5, fontSize: s.$09, textDecorationLine: active ? 'underline' : 'none' }}>{label}</Text>
-                  </Pressable>
-                )
-              })}
-            </View>
-          </ScrollView>
-          <Svg
-            pointerEvents="none"
-            style={{ position: 'absolute', top: 0, right: (showSearchButton ? PEOPLE_SEARCH_CONTENT_PADDING - 20 : 0) + 5, height: '100%' }}
-            width={PEOPLE_TABS_FADE_WIDTH}
-            height="100%"
-          >
-            <Defs>
-              <LinearGradient id="peopleTabsFade" x1="0" y1="0" x2="1" y2="0">
-                <Stop offset="0" stopColor={c.surface} stopOpacity={0} />
-                <Stop offset="0.6" stopColor={c.surface} stopOpacity={0.6} />
-                <Stop offset="1" stopColor={c.surface} stopOpacity={1} />
-              </LinearGradient>
-            </Defs>
-            <Rect x={0} y={0} width={PEOPLE_TABS_FADE_WIDTH} height="100%" fill="url(#peopleTabsFade)" />
-          </Svg>
-        </View>
-      </View>
-    )
+  const PeopleTabs = (_props: { showSearchButton: boolean }) => {
+    // Directory pill ticker temporarily disabled per request
+    return null
   }
 
   return (
@@ -547,7 +501,7 @@ export function CommunityInterestsScreen() {
       </View>
 
       {/* Flip container: Interests (front) and People/Directory (back) */}
-      <View style={{ flex: 1, paddingHorizontal: s.$1 + 6, paddingTop: 6, position: 'relative' }}>
+      <View style={{ flex: 1, paddingHorizontal: PEOPLE_HORIZONTAL_INSET, paddingTop: 6, position: 'relative' }}>
         {/* FRONT: Interests list */}
         {/* Plain text tabs just above the interest pills */}
         <Animated.View style={[frontStyle]} pointerEvents={filterTab === 'people' ? 'none' as any : 'auto' as any}>
@@ -690,7 +644,7 @@ export function CommunityInterestsScreen() {
 
         {/* BACK: People/Directory placeholder */}
         <Animated.View style={[{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }, backStyle]} pointerEvents={filterTab === 'people' ? 'auto' as any : 'none' as any}>
-          <View style={{ flex: 1, paddingLeft: PEOPLE_LEFT_INSET }}>
+          <View style={{ flex: 1 }}>
             <DirectoryScreen
               showHeader={false}
               hideInterestChips={true}

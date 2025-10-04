@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState, useMemo } from 'react'
 import { View, Text, Pressable, FlatList, InteractionManager, Dimensions, ScrollView } from 'react-native'
-import { s, c, t } from '@/features/style'
+import { s, c } from '@/features/style'
 import { router } from 'expo-router'
 import { Grid } from '@/ui/grid/Grid'
 // import { Button } from '@/ui/buttons/Button'
@@ -58,32 +58,36 @@ const DirectoryRow = React.memo(({ u, onPress, userInterestMap, refTitleMap, cur
     const suffix = count > 1 ? ` +${count - 1}` : ''
     return `${first || `${count} shared`}${suffix}`
   }, [currentUserId, userInterestMap, refTitleMap, u.id])
-  
+
+  const pillPadding = innerLeftPadding ?? (s.$1 as number)
+  const pillRightPadding = s.$1 as number
+  const avatarSize = s.$3 as number
+
   return (
     <Pressable
       key={u.id}
       style={{
-        backgroundColor: c.surface,
-        borderRadius: s.$1,
-        paddingVertical: s.$1,
-        paddingLeft: innerLeftPadding ?? (s.$08 as number),
-        paddingRight: s.$08,
-        marginBottom: s.$075,
+        backgroundColor: c.surface2,
+        borderRadius: 12,
+        paddingVertical: 15,
+        paddingLeft: pillPadding,
+        paddingRight: pillRightPadding,
+        marginBottom: (s.$075 as number) + 2,
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        height: 80,
+        width: '100%',
       }}
       onPress={onPress}
     >
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: s.$05, flex: 1 }}>
         {u.avatar_url ? (
           <Image
             source={u.avatar_url}
             style={{
-              width: 60,
-              height: 60,
-              borderRadius: 30,
+              width: avatarSize,
+              height: avatarSize,
+              borderRadius: avatarSize / 2,
               backgroundColor: c.surface2,
             }}
             contentFit={'cover'}
@@ -94,9 +98,9 @@ const DirectoryRow = React.memo(({ u, onPress, userInterestMap, refTitleMap, cur
         ) : (
           <View
             style={{
-              width: 60,
-              height: 60,
-              borderRadius: 30,
+              width: avatarSize,
+              height: avatarSize,
+              borderRadius: avatarSize / 2,
               backgroundColor: c.surface2,
               justifyContent: 'center',
               alignItems: 'center',
@@ -108,17 +112,36 @@ const DirectoryRow = React.memo(({ u, onPress, userInterestMap, refTitleMap, cur
             </Svg>
           </View>
         )}
-        <View style={{ flex: 1, marginLeft: 5, gap: 4 }}>
-          <Text style={[t.psemi, { fontSize: (s.$09 as number) + 4 }]} numberOfLines={1} ellipsizeMode="tail">
+        <View style={{ flex: 1, marginLeft: 5, gap: 2 }}>
+          <Text
+            style={{
+              fontSize: (s.$09 as number) + 2,
+              fontWeight: '700',
+              color: c.muted,
+              textAlign: 'left',
+              lineHeight: (s.$09 as number) + 6,
+            }}
+            numberOfLines={1}
+            ellipsizeMode="tail"
+          >
             {u.name}
           </Text>
-          <Text style={[t.smallmuted, { opacity: 0.6 }]} numberOfLines={1} ellipsizeMode="tail">
+          <Text
+            style={{
+              fontSize: 13,
+              color: c.muted,
+              textAlign: 'left',
+              lineHeight: 18,
+            }}
+            numberOfLines={1}
+            ellipsizeMode="tail"
+          >
             {u.neighborhood || 'Neighborhood'}
           </Text>
         </View>
       </View>
 
-      <View style={{ flexDirection: 'row', marginLeft: s.$08 }}>
+      <View style={{ flexDirection: 'row', marginLeft: s.$05 }}>
         {overlapLabel && (
           <View style={{
             borderWidth: 1.5,
@@ -150,6 +173,8 @@ let hasScheduledProfilePreload = false
 const win = Dimensions.get('window')
 const BASE_DIRECTORY_LIST_HEIGHT = Math.max(360, Math.min(560, win.height - 220))
 const DIRECTORY_LIST_HEIGHT = Math.max(200, BASE_DIRECTORY_LIST_HEIGHT - 50)
+const EMBEDDED_LEFT_PADDING = 30
+const EMBEDDED_RIGHT_PADDING = 30
 
 const normalizeDirectoryUsers = (list: FeedUser[], currentUserName?: string) => {
   if (!Array.isArray(list)) return []
@@ -642,7 +667,7 @@ export function CommunitiesFeedScreen({ showHeader = true, aboveListComponent, h
         userInterestMap={userInterestMap}
         refTitleMap={refTitleMap}
         currentUserId={user?.id}
-        innerLeftPadding={0}
+        innerLeftPadding={s.$1 as number}
       />
     )
   }, [handleUserPress])
@@ -693,7 +718,13 @@ export function CommunitiesFeedScreen({ showHeader = true, aboveListComponent, h
 
             {/* Optional menu directly above the directory list */}
             {aboveListComponent ? (
-              <View style={{ paddingHorizontal: embedded ? 0 : (s.$1 as number) + 6, marginBottom: 10 }}>
+              <View
+                style={{
+                  paddingLeft: embedded ? EMBEDDED_LEFT_PADDING : (s.$1 as number) + 6,
+                  paddingRight: embedded ? EMBEDDED_RIGHT_PADDING : (s.$1 as number) + 6,
+                  marginBottom: 10,
+                }}
+              >
                 {aboveListComponent}
               </View>
             ) : null}
@@ -701,7 +732,12 @@ export function CommunitiesFeedScreen({ showHeader = true, aboveListComponent, h
             {/* Natural scrolling list without surface2 backdrop */}
             <View>
               <FlatList
-                contentContainerStyle={{ paddingLeft: embedded ? 0 : (s.$1 as number) + 6, paddingRight: embedded ? 0 : (s.$1 as number) + 6, paddingTop: 5, paddingBottom: 150 }}
+                contentContainerStyle={{
+                  paddingLeft: embedded ? EMBEDDED_LEFT_PADDING : (s.$1 as number) + 6,
+                  paddingRight: embedded ? EMBEDDED_RIGHT_PADDING : (s.$1 as number) + 6,
+                  paddingTop: 5,
+                  paddingBottom: 150,
+                }}
                 data={displayedUsers}
                 keyExtractor={(u) => u.id}
                 renderItem={renderItem}

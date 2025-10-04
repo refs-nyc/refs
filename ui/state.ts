@@ -3,6 +3,7 @@ import { Item, Profile } from '@/features/types'
 import BottomSheet from '@gorhom/bottom-sheet'
 import React from 'react'
 import type { StateCreator } from 'zustand'
+import { bootStep, BOOT_METRICS_ENABLED } from '@/features/debug/bootMetrics'
 
 export const createUISlice: StateCreator<StoreSlices, [], [], UISlice> = (set, get) => ({
   addingToList: '',
@@ -142,10 +143,31 @@ export const createUISlice: StateCreator<StoreSlices, [], [], UISlice> = (set, g
   // Home pager (MyProfile <-> Directories)
   homePagerIndex: 0,
   setHomePagerIndex: (i: number) => {
-    set(() => ({ homePagerIndex: i }))
+    set((state) => {
+      if (state.homePagerIndex === i) return state
+      if (BOOT_METRICS_ENABLED) {
+        bootStep(`homePagerIndex.set.${i}`)
+      }
+      if (__DEV__) {
+        const stack = new Error().stack?.split('\n').slice(1, 7)
+        console.log(`[homePagerIndex] ${state.homePagerIndex} → ${i}`)
+        stack?.forEach((line) => console.log(`   ${line.trim()}`))
+      }
+      return { homePagerIndex: i }
+    })
   },
   profileNavIntent: null,
-  setProfileNavIntent: (intent: ProfileNavIntent | null) => set(() => ({ profileNavIntent: intent })),
+  setProfileNavIntent: (intent: ProfileNavIntent | null) =>
+    set((state) => {
+      if (BOOT_METRICS_ENABLED && intent) {
+        bootStep(`profileNavIntent.set.${intent.targetPagerIndex}.${intent.source ?? 'unknown'}`)
+        if (__DEV__) {
+          // eslint-disable-next-line no-console
+          console.log('profileNavIntent.set stack', new Error().stack?.split('\n').slice(1, 4).join('\n'))
+        }
+      }
+      return { profileNavIntent: intent }
+    }),
   consumeProfileNavIntent: (): ProfileNavIntent | null => {
     const intent = get().profileNavIntent
     set(() => ({ profileNavIntent: null }))

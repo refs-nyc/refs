@@ -41,8 +41,13 @@ export async function registerForPushNotificationsAsync() {
         })
       ).data
       return pushTokenString
-    } catch (e: unknown) {
-      handleRegistrationError(`${e}`)
+    } catch (e: any) {
+      const message = typeof e?.message === 'string' ? e.message : `${e}`
+      if (message?.includes('503')) {
+        console.warn('Push token fetch skipped (service unavailable)')
+        return null
+      }
+      handleRegistrationError(message)
     }
   }
 }

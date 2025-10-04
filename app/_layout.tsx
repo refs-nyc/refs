@@ -39,6 +39,7 @@ import { RegisterPushNotifications } from '@/ui/notifications/RegisterPushNotifi
 import { DirectMessageComposer } from '@/features/messaging/DirectMessageComposer'
 import { GroupMessageComposer } from '@/features/messaging/GroupMessageComposer'
 import { useAppStore } from '@/features/stores'
+import { bootReset, bootStep, bootIdle } from '@/features/debug/bootMetrics'
 
 import { LogBox } from 'react-native'
 import BottomSheet from '@gorhom/bottom-sheet'
@@ -74,6 +75,8 @@ configureReanimatedLogger({ strict: false })
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync()
 
+let bootResetRan = false
+
 function FontProvider({ children }: { children: React.ReactNode }) {
   const [interLoaded, interError] = useFonts({
     Inter: require('@/assets/fonts/Inter-Medium.ttf'),
@@ -99,16 +102,28 @@ function FontProvider({ children }: { children: React.ReactNode }) {
 export default function RootLayout() {
   const { init } = useAppStore()
 
+  if (!bootResetRan) {
+    bootReset('RootLayout.render')
+    bootResetRan = true
+  }
+
   useEffect(() => {
     // Initialize user store to sync with PocketBase auth - make non-blocking
-    init().catch((error) => {
+    bootStep('store.init.invoke')
+    init()
+      .then(() => {
+        bootStep('store.init.resolved')
+      })
+      .catch((error) => {
       console.error('Failed to initialize app:', error)
-    })
+      })
   }, [init])
 
   useEffect(() => {
     // Ensure splash hides even if fonts fail to load quickly.
     SplashScreen.hideAsync().catch(() => {})
+    bootStep('RootLayout.ready')
+    bootIdle('app.idle')
   }, [])
 
   return (

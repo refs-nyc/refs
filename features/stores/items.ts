@@ -6,6 +6,7 @@ import type { StoreSlices } from './types'
 import { pocketbase } from '../pocketbase'
 import { edgeFunctionClient } from '../supabase/edge-function-client'
 import { simpleCache } from '@/features/cache/simpleCache'
+import { bootStep } from '@/features/debug/bootMetrics'
 
 const USE_WEBHOOKS = (process.env.EXPO_PUBLIC_USE_WEBHOOKS || '').toLowerCase() === 'true'
 
@@ -604,11 +605,13 @@ export const autoMoveBacklogToGrid = async (
   existingBacklogItems?: ExpandedItem[]
 ) => {
   try {
+    bootStep(`autoMove.${userName}.start`)
     const gridItems = existingGridItems ?? (await getProfileItems(userName))
     const backlogItems = existingBacklogItems ?? (await getBacklogItems(userName))
-    
+
     // If grid is full, no need to move anything
     if (gridItems.length >= 12) {
+      bootStep(`autoMove.${userName}.skipFull`)
       return
     }
     
@@ -620,9 +623,11 @@ export const autoMoveBacklogToGrid = async (
     for (const item of itemsToMove) {
       await pocketbase.collection('items').update(item.id, { backlog: false })
     }
-    
+
     console.log(`Moved ${itemsToMove.length} items from backlog to grid`)
+    bootStep(`autoMove.${userName}.moved.${itemsToMove.length}`)
   } catch (error) {
     console.error('Error auto-moving backlog items to grid:', error)
+    bootStep(`autoMove.${userName}.error`)
   }
 }

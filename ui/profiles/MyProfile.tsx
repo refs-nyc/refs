@@ -608,14 +608,10 @@ export const MyProfile = ({ userName }: { userName: string }) => {
     const fetchFreshData = async () => {
       try {
         const profileRecord = await getUserByUserName(userName)
-        const [gridItemsRecord, backlogItemsRecord] = await Promise.all([
-          getProfileItems(userName),
-          getBacklogItems(userName),
-        ])
+        const gridItemsRecord = await getProfileItems(userName)
 
         setProfile(profileRecord)
         setGridItems(gridItemsRecord)
-        setBacklogItems(backlogItemsRecord as ExpandedItem[])
         setLoading(false)
         setPromptsReady(true)
         useAppStore.getState().setGridItemCount(gridItemsRecord.length)
@@ -623,26 +619,40 @@ export const MyProfile = ({ userName }: { userName: string }) => {
         profileMemoryCache.set(userName, {
           profile: profileRecord,
           gridItems: gridItemsRecord,
-          backlogItems: backlogItemsRecord as ExpandedItem[],
+          backlogItems: profileMemoryCache.get(userName)?.backlogItems ?? [],
           timestamp: Date.now(),
         })
 
         const userId = profileRecord.id
-        const cacheUpdates = [
+        void Promise.all([
           simpleCache.set('profile', profileRecord, userId),
           simpleCache.set('grid_items', gridItemsRecord, userId),
-          simpleCache.set('backlog_items', backlogItemsRecord, userId),
-        ]
-
-        void Promise.all(cacheUpdates).catch((error) => {
+        ]).catch((error) => {
           console.warn('Cache write failed:', error)
         })
 
-        if (userName === useAppStore.getState().user?.userName) {
-          void autoMoveBacklogToGrid(userName, gridItemsRecord, backlogItemsRecord as ExpandedItem[]).catch((error) => {
-            console.warn('Background operations failed:', error)
+        void getBacklogItems(userName)
+          .then((backlogItemsRecord) => {
+            setBacklogItems(backlogItemsRecord as ExpandedItem[])
+            profileMemoryCache.set(userName, {
+              profile: profileRecord,
+              gridItems: gridItemsRecord,
+              backlogItems: backlogItemsRecord as ExpandedItem[],
+              timestamp: Date.now(),
+            })
+            void simpleCache
+              .set('backlog_items', backlogItemsRecord, userId)
+              .catch((error) => console.warn('Cache write failed:', error))
+
+            if (userName === useAppStore.getState().user?.userName) {
+              void autoMoveBacklogToGrid(userName, gridItemsRecord, backlogItemsRecord as ExpandedItem[]).catch((error) => {
+                console.warn('Background operations failed:', error)
+              })
+            }
           })
-        }
+          .catch((error) => {
+            console.warn('Failed to load backlog items', error)
+          })
       } catch (error) {
         console.error('Failed to refresh grid:', error)
         if (!cacheHydrated) {

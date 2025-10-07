@@ -306,7 +306,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
         <View style={{ flex: 1 }}>
           <Text
             style={{
-              color: c.newDark,
+              color: '#030303',
               fontSize: (s.$09 as number) + 4,
               fontFamily: 'System',
               fontWeight: '700',
@@ -544,50 +544,50 @@ export const MyProfile = ({ userName }: { userName: string }) => {
         transform: [{ scale: gridScale }],
       }}
     >
-      <Grid
-        editingRights={true}
+    <Grid
+      editingRights={true}
         screenFocused={focusReady && !loading}
-        shouldAnimateStartup={justOnboarded}
-        onPressItem={(item) => {
-          setDetailsItem(item!)
-          detailsSheetRef.current?.snapToIndex(0)
-        }}
-        onLongPressItem={() => {
-          clearTimeout(timeout)
-          timeout = setTimeout(() => {
-            stopEditProfile()
-          }, 10000)
-          startEditProfile()
-        }}
-        onRemoveItem={(item) => {
-          setRemovingItem(item)
-          removeRefSheetRef.current?.expand()
-        }}
-        onAddItem={(prompt?: string) => {
+      shouldAnimateStartup={justOnboarded}
+      onPressItem={(item) => {
+        setDetailsItem(item!)
+        detailsSheetRef.current?.snapToIndex(0)
+      }}
+      onLongPressItem={() => {
+        clearTimeout(timeout)
+        timeout = setTimeout(() => {
+          stopEditProfile()
+        }, 10000)
+        startEditProfile()
+      }}
+      onRemoveItem={(item) => {
+        setRemovingItem(item)
+        removeRefSheetRef.current?.expand()
+      }}
+      onAddItem={(prompt?: string) => {
+        setAddingNewRefTo('grid')
+        if (prompt) useAppStore.getState().setAddRefPrompt(prompt)
+        newRefSheetRef.current?.snapToIndex(1)
+      }}
+      onAddItemWithPrompt={(prompt: string, photoPath?: boolean) => {
+        if (photoPath) {
+          triggerDirectPhotoPicker(prompt)
+        } else {
           setAddingNewRefTo('grid')
-          if (prompt) useAppStore.getState().setAddRefPrompt(prompt)
+          useAppStore.getState().setAddRefPrompt(prompt)
           newRefSheetRef.current?.snapToIndex(1)
-        }}
-        onAddItemWithPrompt={(prompt: string, photoPath?: boolean) => {
-          if (photoPath) {
-            triggerDirectPhotoPicker(prompt)
-          } else {
-            setAddingNewRefTo('grid')
-            useAppStore.getState().setAddRefPrompt(prompt)
-            newRefSheetRef.current?.snapToIndex(1)
-          }
-        }}
+        }
+      }}
         columns={GRID_COLUMNS}
-        items={displayGridItems}
+      items={displayGridItems}
         rows={GRID_ROWS}
-        rowGap={(s.$075 as number) + 5}
-        searchMode={searchMode}
-        selectedRefs={selectedRefs}
-        setSelectedRefs={setSelectedRefs}
-        newlyAddedItemId={newlyAddedItemId}
+      rowGap={(s.$075 as number) + 5}
+      searchMode={searchMode}
+      selectedRefs={selectedRefs}
+      setSelectedRefs={setSelectedRefs}
+      newlyAddedItemId={newlyAddedItemId}
         showPrompts={allowPromptPlaceholders}
         rowJustify="center"
-      />
+    />
     </RNAnimated.View>
   ) : null
 
@@ -827,11 +827,11 @@ export const MyProfile = ({ userName }: { userName: string }) => {
               .set('backlog_items', backlogItemsRecord, userId)
               .catch((error) => console.warn('Cache write failed:', error))
 
-            if (userName === useAppStore.getState().user?.userName) {
-              void autoMoveBacklogToGrid(userName, gridItemsRecord, backlogItemsRecord as ExpandedItem[]).catch((error) => {
-                console.warn('Background operations failed:', error)
-              })
-            }
+        if (userName === useAppStore.getState().user?.userName) {
+          void autoMoveBacklogToGrid(userName, gridItemsRecord, backlogItemsRecord as ExpandedItem[]).catch((error) => {
+            console.warn('Background operations failed:', error)
+          })
+        }
           })
           .catch((error) => {
             console.warn('Failed to load backlog items', error)
@@ -961,7 +961,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
       }
     }
 
-    void init()
+        void init()
 
     return () => {
       cancelled = true
@@ -1182,7 +1182,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
         scrollEnabled={false}
       >
         <View
-          style={{ flex: 1, width: '100%', backgroundColor: c.surface, paddingHorizontal: s.$1 + 6 }}
+          style={{ flex: 1, width: '100%', backgroundColor: c.surface, paddingHorizontal: s.$1 }}
         >
           <Animated.View
             entering={FadeIn.duration(400).delay(100)}

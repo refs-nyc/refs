@@ -260,6 +260,7 @@ export const OtherProfile = ({ userName, prefetchedUserId }: { userName: string;
               flex: 1,
               width: '100%',
               paddingHorizontal: s.$1 + 6,
+              marginTop: 5,
             }}
           >
             <View style={{ width: '100%', paddingHorizontal: 0, marginBottom: s.$1 }}>
@@ -267,7 +268,7 @@ export const OtherProfile = ({ userName, prefetchedUserId }: { userName: string;
                 <View style={{ flex: 1 }}>
                   <Text
                     style={{
-                      color: c.newDark,
+                      color: '#030303',
                       fontSize: (s.$09 as number) + 4,
                       fontFamily: 'System',
                       fontWeight: '700',

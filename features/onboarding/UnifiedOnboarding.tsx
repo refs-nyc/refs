@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { View, Text, Pressable, ScrollView, Dimensions, ActivityIndicator, Keyboard, Platform, KeyboardAvoidingView } from 'react-native'
+import { View, Text, Pressable, ScrollView, Dimensions, ActivityIndicator, Keyboard, Platform, KeyboardAvoidingView, Animated } from 'react-native'
 import { router } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { s, c } from '@/features/style'
@@ -22,6 +22,11 @@ export function UnifiedOnboarding() {
   const [keyboardHeight, setKeyboardHeight] = useState(0)
   const scrollViewRef = useRef<ScrollView>(null)
   const [currentFieldIndex, setCurrentFieldIndex] = useState(0)
+  const [serverError, setServerError] = useState<string>('')
+  const pillScale = useRef(new Animated.Value(1)).current
+  const [displayedUsers, setDisplayedUsers] = useState<any[]>([])
+  const [allUsers, setAllUsers] = useState<any[]>([])
+  const avatarOpacity = useRef(new Animated.Value(1)).current
 
   // Watch all fields to enable/disable button
   const fullName = watch('fullName')
@@ -65,15 +70,17 @@ export function UnifiedOnboarding() {
     confirmPassword &&
     password === confirmPassword
 
-  // Fetch 3 most recent users for avatars
+  // Fetch users for avatars
   useEffect(() => {
     const fetchRecentUsers = async () => {
       try {
-        const res = await pocketbase.collection('users').getList(1, 3, {
+        const res = await pocketbase.collection('users').getList(1, 20, {
           sort: '-created',
           fields: 'id,image,avatar_url',
         })
-        setRecentUsers(res.items || [])
+        const users = res.items || []
+        setAllUsers(users)
+        setDisplayedUsers(users.slice(0, 3))
       } catch (e) {
         console.warn('Failed to fetch recent users', e)
       }
@@ -84,6 +91,7 @@ export function UnifiedOnboarding() {
   const onSubmit = async (data: any) => {
     if (!isFormValid || isSubmitting) return
     setIsSubmitting(true)
+    setServerError('')
 
     try {
       const nameParts = data.fullName.trim().split(' ')
@@ -101,7 +109,7 @@ export function UnifiedOnboarding() {
       // Registration successful, app will auto-navigate
     } catch (error: any) {
       console.error('Registration failed:', error)
-      alert(error?.message || 'Registration failed. Please try again.')
+      setServerError(error?.message || 'Registration failed. Please try again.')
     } finally {
       setIsSubmitting(false)
     }
@@ -151,24 +159,77 @@ export function UnifiedOnboarding() {
           >
             Directory for
           </Text>
-          <View
-            style={{
-              borderWidth: 1.5,
-              borderColor: c.newDark,
-              borderRadius: 27,
-              paddingVertical: 18,
-              paddingHorizontal: 20,
-              flexDirection: 'row',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              backgroundColor: c.surface,
-              shadowColor: '#000',
-              shadowOffset: { width: 0, height: 4 },
-              shadowOpacity: 0.12,
-              shadowRadius: 12,
-              elevation: 5,
+          <Pressable
+            onPressIn={() => {
+              // Immediate press down
+              Animated.spring(pillScale, {
+                toValue: 0.95,
+                damping: 14,
+                stiffness: 180,
+                useNativeDriver: true,
+              }).start()
+            }}
+            onPressOut={() => {
+              // Immediate spring back
+              Animated.spring(pillScale, {
+                toValue: 1,
+                damping: 14,
+                stiffness: 220,
+                useNativeDriver: true,
+              }).start()
+            }}
+            onPress={() => {
+              // Avatar shuffle animation
+              if (allUsers.length < 4) return
+
+              // Fade out
+              Animated.timing(avatarOpacity, {
+                toValue: 0,
+                duration: 200,
+                useNativeDriver: true,
+              }).start(() => {
+                // Get random 3 users that aren't currently displayed
+                const currentIds = displayedUsers.map(u => u.id)
+                const availableUsers = allUsers.filter(u => !currentIds.includes(u.id))
+                
+                if (availableUsers.length >= 3) {
+                  // Shuffle and pick 3
+                  const shuffled = [...availableUsers].sort(() => Math.random() - 0.5)
+                  setDisplayedUsers(shuffled.slice(0, 3))
+                } else {
+                  // Not enough different users, just shuffle all
+                  const shuffled = [...allUsers].sort(() => Math.random() - 0.5)
+                  setDisplayedUsers(shuffled.slice(0, 3))
+                }
+
+                // Fade in
+                Animated.timing(avatarOpacity, {
+                  toValue: 1,
+                  duration: 200,
+                  useNativeDriver: true,
+                }).start()
+              })
             }}
           >
+            <Animated.View
+              style={{
+                borderWidth: 1.5,
+                borderColor: c.newDark,
+                borderRadius: 27,
+                paddingVertical: 18,
+                paddingHorizontal: 20,
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                backgroundColor: c.surface,
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.12,
+                shadowRadius: 12,
+                elevation: 5,
+                transform: [{ scale: pillScale }],
+              }}
+            >
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
               {/* Venn diagram icon */}
               <Svg width={28} height={18} viewBox="0 0 64 40">
@@ -188,8 +249,8 @@ export function UnifiedOnboarding() {
             </View>
 
             {/* Avatars */}
-            <View style={{ flexDirection: 'row', marginLeft: 10 }}>
-              {recentUsers.slice(0, 3).map((user, idx) => {
+            <Animated.View style={{ flexDirection: 'row', marginLeft: 10, opacity: avatarOpacity }}>
+              {displayedUsers.map((user, idx) => {
                 const avatarUrl = user.image || user.avatar_url
                 return (
                   <View
@@ -218,8 +279,9 @@ export function UnifiedOnboarding() {
               </View>
                 )
               })}
-            </View>
-        </View>
+            </Animated.View>
+          </Animated.View>
+          </Pressable>
         </View>
         </View>
 
@@ -230,25 +292,32 @@ export function UnifiedOnboarding() {
             name="fullName"
             rules={{ required: 'Full name is required' }}
             render={({ field: { onChange, onBlur, value, ref } }) => (
-              <FormFieldWithIcon
-                ref={ref}
-                type="user"
-                id="fullName"
-                placeholder="Full Name"
-                onChange={onChange}
-                onBlur={() => {
-                  setCurrentFieldIndex(0)
-                  onBlur()
-                }}
-                value={value || ''}
-                autoFocus={false}
-                autoCorrect={false}
-                returnKeyType="next"
-                onSubmitEditing={() => {
-                  setCurrentFieldIndex(1)
-                  setFocus('email')
-                }}
-              />
+              <View>
+                <FormFieldWithIcon
+                  ref={ref}
+                  type="user"
+                  id="fullName"
+                  placeholder="Full Name"
+                  onChange={onChange}
+                  onBlur={() => {
+                    setCurrentFieldIndex(0)
+                    onBlur()
+                  }}
+                  value={value || ''}
+                  autoFocus={false}
+                  autoCorrect={false}
+                  returnKeyType="next"
+                  onSubmitEditing={() => {
+                    setCurrentFieldIndex(1)
+                    setFocus('email')
+                  }}
+                />
+                {formState.errors.fullName && (
+                  <Text style={{ color: c.accent, fontSize: 11, marginTop: 4, marginLeft: 4, fontFamily: 'InterSemiBold', fontWeight: '600' }}>
+                    {formState.errors.fullName.message as string}
+                  </Text>
+                )}
+              </View>
             )}
           />
 
@@ -263,25 +332,32 @@ export function UnifiedOnboarding() {
               },
             }}
             render={({ field: { onChange, onBlur, value, ref } }) => (
-              <FormFieldWithIcon
-                ref={ref}
-                type="email"
-                id="email"
-                placeholder="Email"
-                onChange={onChange}
-                onBlur={() => {
-                  setCurrentFieldIndex(1)
-                  onBlur()
-                }}
-                value={value || ''}
-                autoFocus={false}
-                autoCorrect={false}
-                returnKeyType="next"
-                onSubmitEditing={() => {
-                  setCurrentFieldIndex(2)
-                  setFocus('password')
-                }}
-              />
+              <View>
+                <FormFieldWithIcon
+                  ref={ref}
+                  type="email"
+                  id="email"
+                  placeholder="Email"
+                  onChange={onChange}
+                  onBlur={() => {
+                    setCurrentFieldIndex(1)
+                    onBlur()
+                  }}
+                  value={value || ''}
+                  autoFocus={false}
+                  autoCorrect={false}
+                  returnKeyType="next"
+                  onSubmitEditing={() => {
+                    setCurrentFieldIndex(2)
+                    setFocus('password')
+                  }}
+                />
+                {formState.errors.email && (
+                  <Text style={{ color: c.accent, fontSize: 11, marginTop: 4, marginLeft: 4, fontFamily: 'InterSemiBold', fontWeight: '600' }}>
+                    {formState.errors.email.message as string}
+                  </Text>
+                )}
+              </View>
             )}
           />
 
@@ -293,25 +369,32 @@ export function UnifiedOnboarding() {
               minLength: { value: 6, message: 'Password must be at least 6 characters' },
             }}
             render={({ field: { onChange, onBlur, value, ref } }) => (
-              <FormFieldWithIcon
-                ref={ref}
-                type="password"
-                id="password"
-                placeholder="Password"
-                onChange={onChange}
-                onBlur={() => {
-                  setCurrentFieldIndex(2)
-                  onBlur()
-                }}
-                value={value || ''}
-                autoFocus={false}
-                autoCorrect={false}
-                returnKeyType="next"
-                onSubmitEditing={() => {
-                  setCurrentFieldIndex(3)
-                  setFocus('confirmPassword')
-                }}
-              />
+              <View>
+                <FormFieldWithIcon
+                  ref={ref}
+                  type="password"
+                  id="password"
+                  placeholder="Password"
+                  onChange={onChange}
+                  onBlur={() => {
+                    setCurrentFieldIndex(2)
+                    onBlur()
+                  }}
+                  value={value || ''}
+                  autoFocus={false}
+                  autoCorrect={false}
+                  returnKeyType="next"
+                  onSubmitEditing={() => {
+                    setCurrentFieldIndex(3)
+                    setFocus('confirmPassword')
+                  }}
+                />
+                {formState.errors.password && (
+                  <Text style={{ color: c.accent, fontSize: 11, marginTop: 4, marginLeft: 4, fontFamily: 'InterSemiBold', fontWeight: '600' }}>
+                    {formState.errors.password.message as string}
+                  </Text>
+                )}
+              </View>
             )}
           />
 
@@ -323,24 +406,38 @@ export function UnifiedOnboarding() {
               validate: (value) => value === getValues('password') || 'Passwords do not match',
             }}
             render={({ field: { onChange, onBlur, value, ref } }) => (
-              <FormFieldWithIcon
-                ref={ref}
-                type="passwordConfirm"
-                id="confirmPassword"
-                placeholder="Password confirmation"
-                onChange={onChange}
-                onBlur={() => {
-                  setCurrentFieldIndex(3)
-                  onBlur()
-                }}
-                value={value || ''}
-                autoFocus={false}
-                autoCorrect={false}
-                returnKeyType="done"
-                onSubmitEditing={handleSubmit(onSubmit)}
-              />
+              <View>
+                <FormFieldWithIcon
+                  ref={ref}
+                  type="passwordConfirm"
+                  id="confirmPassword"
+                  placeholder="Password confirmation"
+                  onChange={onChange}
+                  onBlur={() => {
+                    setCurrentFieldIndex(3)
+                    onBlur()
+                  }}
+                  value={value || ''}
+                  autoFocus={false}
+                  autoCorrect={false}
+                  returnKeyType="done"
+                  onSubmitEditing={handleSubmit(onSubmit)}
+                />
+                {formState.errors.confirmPassword && (
+                  <Text style={{ color: c.accent, fontSize: 11, marginTop: 4, marginLeft: 4, fontFamily: 'InterSemiBold', fontWeight: '600' }}>
+                    {formState.errors.confirmPassword.message as string}
+                  </Text>
+                )}
+              </View>
             )}
           />
+
+          {/* Server error message */}
+          {serverError && (
+            <Text style={{ color: c.accent, fontSize: 11, marginTop: -4, marginLeft: 4, textAlign: 'center', fontFamily: 'InterSemiBold', fontWeight: '600' }}>
+              {serverError}
+            </Text>
+          )}
 
           {/* Looks good button - styled like a form field */}
           <Pressable
@@ -391,7 +488,8 @@ export function UnifiedOnboarding() {
               style={{
                 color: c.muted,
                 fontSize: s.$09,
-                fontFamily: 'Inter',
+                fontFamily: 'InterSemiBold',
+                fontWeight: '600',
               }}
             >
               Log in instead

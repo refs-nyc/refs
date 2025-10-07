@@ -256,7 +256,7 @@ export function MessagesScreen({ conversationId }: { conversationId: string }) {
           <View style={{ flex: 1, paddingHorizontal: s.$075 }}>
             <Text
               style={{
-                color: c.prompt,
+                color: c.newDark,
                 fontSize: (s.$09 as number) + 4,
                 fontFamily: 'System',
                 fontWeight: '700',

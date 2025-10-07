@@ -1,7 +1,7 @@
-import SavesList from '@/features/messaging/saves'
 import { c, s } from '@/features/style'
 import BottomSheet, { BottomSheetBackdrop } from '@gorhom/bottom-sheet'
 import { useCallback } from 'react'
+import { View, Text } from 'react-native'
 
 export default function Saves({
   savesBottomSheetRef,
@@ -25,7 +25,11 @@ export default function Saves({
       handleComponent={null}
       // handleIndicatorStyle={{ width: s.$13, height: s.$075, backgroundColor: c.white }}
     >
-      <SavesList />
+      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: s.$2 }}>
+        <Text style={{ color: c.surface, fontSize: (s.$09 as number) + 2, fontWeight: '600' }}>
+          Coming soon
+        </Text>
+      </View>
     </BottomSheet>
   )
 }

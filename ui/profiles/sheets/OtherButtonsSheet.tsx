@@ -41,7 +41,7 @@ export const OtherButtonsSheet = ({
     if (isSaving) return
 
     setOptimisticSaved(true)
-    void addSave(profile.id).catch((error) => {
+    void addSave(profile.id, profile).catch((error) => {
       console.warn('Failed to save profile', error)
       setOptimisticSaved(false)
     })

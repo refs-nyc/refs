@@ -1,10 +1,10 @@
 import { router, usePathname } from 'expo-router'
-import { Text, View, Pressable, Animated } from 'react-native'
+import { Text, View, Pressable } from 'react-native'
 import { c, s } from '@/features/style'
 import { useAppStore } from '@/features/stores'
 import { NavigationBackdrop } from '@/ui/navigation/NavigationBackdrop'
 import { Badge } from '../atoms/Badge'
-import { useMemo, useRef, useEffect } from 'react'
+import { useMemo } from 'react'
 import Svg, { Path } from 'react-native-svg'
 import MessageIcon from '@/assets/icons/message.svg'
 import { Ionicons } from '@expo/vector-icons'
@@ -26,7 +26,6 @@ export const Navigation = ({
 
   const {
     user,
-    saves,
     cachedSearchResults,
     logoutSheetRef,
     homePagerIndex,
@@ -38,7 +37,6 @@ export const Navigation = ({
 
   const isHomePage = pathname === '/' || pathname === '/index' || pathname === `/user/${user?.userName}`
 
-  const scaleAnim = useRef(new Animated.Value(1)).current
   const navigation = useNavigation<any>()
 
   // Back button handler with robust fallbacks for directories and no-stack cases
@@ -75,27 +73,6 @@ export const Navigation = ({
       return
     }
   }
-
-  const animateBadge = () => {
-    Animated.sequence([
-      Animated.timing(scaleAnim, {
-        toValue: 1.2,
-        duration: 200,
-        useNativeDriver: true,
-      }),
-      Animated.timing(scaleAnim, {
-        toValue: 1,
-        duration: 200,
-        useNativeDriver: true,
-      }),
-    ]).start()
-  }
-
-  useEffect(() => {
-    if (saves.length > 0) {
-      animateBadge()
-    }
-  }, [saves.length])
 
   const newMessages = useMemo(() => {
     if (!user?.id) return 0
@@ -163,21 +140,6 @@ export const Navigation = ({
               <Svg width={42} height={31} viewBox="0 0 34 31" fill="none">
                 <Path d="M24.5059 2C19.449 2 16.9564 6.9852 16.9564 6.9852C16.9564 6.9852 14.4638 2 9.40693 2C5.29726 2 2.04286 5.43823 2.0008 9.54089C1.91511 18.057 8.75652 24.1133 16.2554 29.2028C16.4621 29.3435 16.7064 29.4187 16.9564 29.4187C17.2064 29.4187 17.4507 29.3435 17.6574 29.2028C25.1555 24.1133 31.9969 18.057 31.912 9.54089C31.8699 5.43823 28.6155 2 24.5059 2Z" stroke="#B0B0B0" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"/>
               </Svg>
-            </View>
-            <View
-              style={{
-                position: 'absolute',
-                height: '85%',
-                width: '100%',
-                justifyContent: 'center',
-                alignItems: 'center',
-              }}
-            >
-              <Animated.View
-                style={{ bottom: 16, right: -16, zIndex: 1, transform: [{ scale: scaleAnim }] }}
-              >
-                {saves.length > 0 && <Badge count={saves.length} color="#7e8f78" />}
-              </Animated.View>
             </View>
           </Pressable>
         </View>

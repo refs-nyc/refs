@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, forwardRef } from 'react'
 import { TextInput, Pressable, View } from 'react-native'
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { c, s } from '@/features/style'
@@ -6,16 +6,7 @@ import { XStack } from '@/ui/core/Stacks'
 import { SizableText } from '../typo/SizableText'
 import { GlobalError } from 'react-hook-form'
 
-export const FormFieldWithIcon = ({
-  type,
-  id,
-  placeholder,
-  onChange,
-  value = '',
-  autoFocus = false,
-  onBlur,
-  autoCorrect = true,
-}: {
+export const FormFieldWithIcon = forwardRef<TextInput, {
   type:
     | 'email'
     | 'firstName'
@@ -34,7 +25,20 @@ export const FormFieldWithIcon = ({
   value: string
   autoFocus: boolean
   autoCorrect?: boolean
-}) => {
+  returnKeyType?: 'done' | 'go' | 'next' | 'search' | 'send' | 'default'
+  onSubmitEditing?: () => void
+}>(({
+  type,
+  id,
+  placeholder,
+  onChange,
+  value = '',
+  autoFocus = false,
+  onBlur,
+  autoCorrect = true,
+  returnKeyType = 'default',
+  onSubmitEditing,
+}, ref) => {
   const [showPassword, setShowPassword] = useState(false)
   const onSelect = (s: string) => {}
   const onCancel = () => {}
@@ -70,6 +74,7 @@ export const FormFieldWithIcon = ({
         ) : null}
 
         <TextInput
+          ref={ref}
           style={{
             flex: 1,
             paddingVertical: 10,
@@ -90,6 +95,11 @@ export const FormFieldWithIcon = ({
           onChangeText={onChange}
           value={value}
           keyboardType={type === 'email' ? 'email-address' : 'default'}
+          returnKeyType={returnKeyType}
+          onSubmitEditing={onSubmitEditing}
+          blurOnSubmit={false}
+          textContentType={type === 'password' || type === 'passwordConfirm' ? 'oneTimeCode' : type === 'email' ? 'emailAddress' : 'none'}
+          autoComplete="off"
           onLayout={() => {
             if (autoFocus) {
               // re-affirm focus to keep keyboard visible across step transitions
@@ -99,7 +109,9 @@ export const FormFieldWithIcon = ({
       </XStack>
     </>
   )
-}
+})
+
+FormFieldWithIcon.displayName = 'FormFieldWithIcon'
 
 export const ErrorView = ({ error }: { error?: GlobalError }) => {
   if (!error) return null

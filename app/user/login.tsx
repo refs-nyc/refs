@@ -1,170 +1,178 @@
-import { useMemo, useRef, useState } from 'react'
+import { useState } from 'react'
 import { useAppStore } from '@/features/stores'
 import { s, c } from '@/features/style'
 import { router } from 'expo-router'
-import { ProfileStep } from '@/ui/profiles/ProfileStep'
-import { View, Dimensions, Text, TouchableOpacity } from 'react-native'
-import Carousel, { ICarouselInstance } from 'react-native-reanimated-carousel'
-import { ErrorView, FormFieldWithIcon } from '@/ui/inputs/FormFieldWithIcon'
+import { View, Text, Pressable, ScrollView, ActivityIndicator } from 'react-native'
+import { FormFieldWithIcon } from '@/ui/inputs/FormFieldWithIcon'
 import { Controller, useForm } from 'react-hook-form'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
-const win = Dimensions.get('window')
+export default function Screen() {
+  const { loginWithPassword } = useAppStore()
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const insets = useSafeAreaInsets()
 
-const EmailStep = ({ carouselRef }: { carouselRef: React.RefObject<ICarouselInstance> }) => {
   const {
     control,
     handleSubmit,
-    setError,
     watch,
-    formState: { errors },
-  } = useForm({
-    defaultValues: {
-      email: '',
-    },
-    mode: 'onSubmit',
-  })
-
-  const { updateStagedUser } = useAppStore()
-
-  return (
-    <ProfileStep
-      buttonTitle="Next"
-      showFullHeightStack={false}
-      onSubmit={handleSubmit(async (values) => {
-        const email = (values.email || '').trim()
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-        if (!emailRegex.test(email)) {
-          setError('email', { type: 'manual', message: 'Please use a valid email address' })
-          return
-        }
-        updateStagedUser({ email })
-        carouselRef.current?.next()
-      })}
-      disabled={!((watch('email') || '').trim())}
-    >
-      <Controller
-        name="email"
-        control={control}
-        render={({ field: { onChange, onBlur, value } }) => (
-          <FormFieldWithIcon
-            onChange={onChange}
-            onBlur={onBlur}
-            type="email"
-            id="email"
-            placeholder={'Login with email'}
-            value={value}
-            autoFocus={false}
-            autoCorrect={false}
-          />
-        )}
-      />
-      {/* Warnings etc */}
-      <ErrorView error={errors?.email} />
-    </ProfileStep>
-  )
-}
-
-const LoginStep = () => {
-  const {
-    control,
-    handleSubmit,
     setError,
-    formState: { errors, isValid },
+    formState: { errors },
   } = useForm({
     mode: 'onChange',
     defaultValues: {
-      login: '',
+      email: '',
+      password: '',
     },
   })
 
-  const { stagedUser, loginWithPassword } = useAppStore()
-  const [loginInProgress, setLoginInProgress] = useState(false)
+  const email = watch('email')
+  const password = watch('password')
+
+  const isFormValid = email && email.includes('@') && password && password.length >= 6
+
+  const onSubmit = async (data: any) => {
+    if (!isFormValid || isSubmitting) return
+    setIsSubmitting(true)
+
+    try {
+      await loginWithPassword(data.email.trim().toLowerCase(), data.password)
+      router.dismissAll()
+    } catch (error: any) {
+      setIsSubmitting(false)
+      setError('password', { type: 'manual', message: 'Login unsuccessful' })
+    }
+  }
 
   return (
-    <ProfileStep
-      buttonTitle={loginInProgress ? 'Logging in...' : 'Log in'}
-      showFullHeightStack={false}
-      onSubmit={handleSubmit(async (values) => {
-        if (values.login) {
-          setLoginInProgress(true)
-          if (!stagedUser.email) throw new Error('email required')
-          try {
-            await loginWithPassword(stagedUser.email, values.login)
-            router.dismissAll()
-          } catch (error) {
-            setLoginInProgress(false)
-            setError('login', { type: 'loginFailed', message: 'Login unsuccessful' })
-          }
-        }
-      })}
-      disabled={!isValid}
-    >
-      <Controller
-        name="login"
-        control={control}
-        rules={{
-          required: 'Password is required',
+    <View style={{ flex: 1, backgroundColor: c.surface }}>
+      <ScrollView
+        contentContainerStyle={{
+          paddingTop: insets.top + 40,
+          paddingBottom: insets.bottom + 100,
+          paddingHorizontal: s.$2,
         }}
-        render={({ field: { onChange, onBlur, value } }) => {
-          return (
-            <FormFieldWithIcon
-              onBlur={onBlur}
-              onChange={onChange}
-              type="password"
-              id="login"
-              placeholder="Password"
-              value={value}
-              autoFocus={false}
-              autoCorrect={false}
-            />
-          )
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Refs Header */}
+        <Text
+          style={{
+            fontSize: 24,
+            fontWeight: 'bold',
+            color: c.newDark,
+            marginBottom: 40,
+          }}
+        >
+          Refs
+        </Text>
+
+        {/* Form Fields */}
+        <View style={{ gap: s.$1 }}>
+          <Controller
+            control={control}
+            name="email"
+            rules={{
+              required: 'Email is required',
+              pattern: {
+                value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+                message: 'Invalid email address',
+              },
+            }}
+            render={({ field: { onChange, onBlur, value } }) => (
+              <FormFieldWithIcon
+                type="email"
+                id="email"
+                placeholder="Email"
+                onChange={onChange}
+                onBlur={onBlur}
+                value={value || ''}
+                autoFocus={false}
+                autoCorrect={false}
+              />
+            )}
+          />
+
+          <Controller
+            control={control}
+            name="password"
+            rules={{
+              required: 'Password is required',
+            }}
+            render={({ field: { onChange, onBlur, value } }) => (
+              <FormFieldWithIcon
+                type="password"
+                id="password"
+                placeholder="Password"
+                onChange={onChange}
+                onBlur={onBlur}
+                value={value || ''}
+                autoFocus={false}
+                autoCorrect={false}
+              />
+            )}
+          />
+
+          {errors.password && (
+            <Text style={{ color: c.accent, fontSize: s.$08, textAlign: 'center' }}>
+              {errors.password.message}
+            </Text>
+          )}
+        </View>
+
+        {/* Register instead button */}
+        <Pressable
+          onPress={() => router.push('/user/register')}
+          style={{ marginTop: s.$2, alignItems: 'center' }}
+        >
+          <Text
+            style={{
+              color: c.muted,
+              fontSize: s.$09,
+              fontFamily: 'Inter',
+            }}
+          >
+            Register instead
+          </Text>
+        </Pressable>
+      </ScrollView>
+
+      {/* Log in button - fixed at bottom */}
+      <View
+        style={{
+          position: 'absolute',
+          bottom: insets.bottom + 20,
+          left: s.$2,
+          right: s.$2,
         }}
-      />
-      {/* Warnings etc */}
-      <ErrorView error={errors?.login} />
-    </ProfileStep>
-  )
-}
-
-export default function Screen() {
-  const carouselRef = useRef<ICarouselInstance>(null)
-  const slides = useMemo(() => [EmailStep, LoginStep], [])
-
-  return (
-    <View style={{ flex: 1 }}>
-      <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-        <Text style={styles.backButtonText}>Back</Text>
-      </TouchableOpacity>
-      <Carousel
-        loop={false}
-        ref={carouselRef}
-        data={slides}
-        width={win.width}
-        height={win.height}
-        enabled={false}
-        renderItem={({ item }) => item({ carouselRef })}
-      />
+      >
+        <Pressable
+          onPress={handleSubmit(onSubmit)}
+          disabled={!isFormValid || isSubmitting}
+          style={{
+            backgroundColor: c.accent,
+            paddingVertical: 18,
+            borderRadius: s.$12,
+            alignItems: 'center',
+            opacity: isFormValid && !isSubmitting ? 1 : 0.4,
+          }}
+        >
+          {isSubmitting ? (
+            <ActivityIndicator color={c.surface} />
+          ) : (
+            <Text
+              style={{
+                color: c.surface,
+                fontSize: s.$1,
+                fontFamily: 'InterBold',
+                fontWeight: '700',
+              }}
+            >
+              Log in
+            </Text>
+          )}
+        </Pressable>
+      </View>
     </View>
   )
-}
-
-const styles = {
-  errorText: {
-    fontSize: s.$08,
-    fontFamily: 'Inter',
-    textAlign: 'center',
-    color: c.accent,
-  },
-  backButton: {
-    position: 'absolute' as const,
-    top: 50,
-    right: 20,
-    zIndex: 10,
-    padding: 10,
-  },
-  backButtonText: {
-    color: '#999999',
-    fontSize: 16,
-    fontFamily: 'Inter',
-  },
 }

@@ -405,7 +405,7 @@ export function EdgeCorkboardScreen() {
           <Text style={{ color: c.newDark, fontSize: (s.$09 as number) + 6, fontFamily: 'InterBold', fontWeight: '700', marginBottom: 4 }}>
             Edge Corkboard
           </Text>
-          <View style={{ height: (s.$05 as number) + 3 }} />
+          <View style={{ height: (s.$05 as number) + 8 }} />
         </View>
 
         {/* Filter ticker */}

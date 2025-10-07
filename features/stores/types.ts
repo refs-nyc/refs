@@ -12,6 +12,7 @@ export type ProfileNavIntent = {
   targetPagerIndex: 0 | 1 | 2
   directoryFilter?: 'popular' | 'people'
   source?: 'directory' | 'wantToMeet' | 'messages' | 'other' | 'back-fallback'
+  animate?: boolean
 }
 
 export type ReferencersContext =

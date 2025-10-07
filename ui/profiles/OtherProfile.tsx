@@ -5,7 +5,8 @@ import { ExpandedItem } from '@/features/types'
 import { c, s } from '@/features/style'
 import BottomSheet from '@gorhom/bottom-sheet'
 import { useEffect, useRef, useState } from 'react'
-import { ScrollView, View, Text, Pressable, Animated, Dimensions, StyleSheet } from 'react-native'
+import { ScrollView, View, Text, Pressable, Animated, Dimensions, StyleSheet, GestureResponderEvent } from 'react-native'
+import { withTiming } from 'react-native-reanimated'
 import { Grid } from '../grid/Grid'
 import { PlaceholderGrid } from '../grid/PlaceholderGrid'
 import { Heading } from '../typo/Heading'
@@ -23,7 +24,7 @@ export const OtherProfile = ({ userName, prefetchedUserId }: { userName: string;
   const [backlogItems, setBacklogItems] = useState<ExpandedItem[]>([])
   const [loading, setLoading] = useState<boolean>(true)
 
-  const { user, stopEditing, getUserByUserName } = useAppStore()
+  const { user, stopEditing, getUserByUserName, otherProfileBackdropAnimatedIndex } = useAppStore()
 
   const refreshGrid = async (userName: string, hintedUserId?: string) => {
     setLoading(true)
@@ -198,6 +199,9 @@ export const OtherProfile = ({ userName, prefetchedUserId }: { userName: string;
   const openAvatar = () => {
     if (!hasAvatar) return
     setAvatarOverlayVisible(true)
+    if (otherProfileBackdropAnimatedIndex) {
+      otherProfileBackdropAnimatedIndex.value = withTiming(0, { duration: 180 })
+    }
     overlayOpacity.setValue(0)
     overlayScale.setValue(0.85)
     Animated.parallel([
@@ -216,6 +220,9 @@ export const OtherProfile = ({ userName, prefetchedUserId }: { userName: string;
   }
 
   const closeAvatar = () => {
+    if (otherProfileBackdropAnimatedIndex) {
+      otherProfileBackdropAnimatedIndex.value = withTiming(-1, { duration: 180 })
+    }
     Animated.parallel([
       Animated.timing(overlayOpacity, {
         toValue: 0,
@@ -380,10 +387,15 @@ export const OtherProfile = ({ userName, prefetchedUserId }: { userName: string;
         <Pressable style={StyleSheet.absoluteFill} onPress={closeAvatar}>
           <Animated.View
             pointerEvents="none"
-            style={[StyleSheet.absoluteFillObject, { backgroundColor: 'rgba(0,0,0,0.6)', opacity: overlayOpacity }]}
+            style={[StyleSheet.absoluteFillObject, { backgroundColor: 'rgba(0,0,0,0.5)', opacity: overlayOpacity }]}
           />
-          <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-            <Pressable onPress={closeAvatar} hitSlop={12}>
+          <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }} pointerEvents="box-none">
+            <Pressable
+              onPress={(event: GestureResponderEvent) => {
+                event.stopPropagation()
+              }}
+              hitSlop={20}
+            >
               <Animated.View
                 style={{
                   transform: [{ scale: overlayScale }],
@@ -393,6 +405,7 @@ export const OtherProfile = ({ userName, prefetchedUserId }: { userName: string;
                   shadowOpacity: 0.35,
                   shadowRadius: 16,
                   shadowOffset: { width: 0, height: 10 },
+                  opacity: overlayOpacity,
                 }}
               >
                 <Image

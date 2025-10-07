@@ -28,6 +28,7 @@ import { Animated as RNAnimated, Easing as RNEasing } from 'react-native'
 import { Collections } from '@/features/pocketbase/pocketbase-types'
 import { simpleCache } from '@/features/cache/simpleCache'
 import { pinataUpload } from '@/features/pinata'
+import { Picker } from '@/ui/inputs/Picker'
 
 const profileMemoryCache = new Map<string, {
   profile: Profile
@@ -107,7 +108,9 @@ export const MyProfile = ({ userName }: { userName: string }) => {
   const [removingItem, setRemovingItem] = useState<ExpandedItem | null>(null)
   const [optimisticAvatarUri, setOptimisticAvatarUri] = useState<string | null>(null)
   const [avatarUploading, setAvatarUploading] = useState(false)
+  const [showAvatarPicker, setShowAvatarPicker] = useState(false)
   const avatarScale = useRef(new RNAnimated.Value(1)).current
+  const avatarSwapOpacity = useRef(new RNAnimated.Value(1)).current
 
   // Get optimistic items from store
   const { optimisticItems, user } = useAppStore()
@@ -263,6 +266,40 @@ export const MyProfile = ({ userName }: { userName: string }) => {
   const GRID_HEIGHT = GRID_ROWS * DEFAULT_TILE_SIZE + (GRID_ROWS - 1) * GRID_ROW_GAP
   const GRID_CAPACITY = GRID_ROWS * GRID_COLUMNS
 
+  // Avatar interaction handlers - must be defined before headerContent
+  const bounceAvatar = useCallback(() => {
+    RNAnimated.sequence([
+      RNAnimated.spring(avatarScale, {
+        toValue: 0.9,
+        damping: 14,
+        stiffness: 180,
+        useNativeDriver: true,
+      }),
+      RNAnimated.spring(avatarScale, {
+        toValue: 1,
+        damping: 14,
+        stiffness: 220,
+        useNativeDriver: true,
+      }),
+    ]).start()
+  }, [avatarScale])
+
+  const handleAvatarPress = useCallback(() => {
+    console.log('🎯 Avatar pressed!', { ownProfile, avatarUploading })
+    if (!ownProfile || avatarUploading) {
+      console.log('⚠️ Avatar press blocked:', { ownProfile, avatarUploading })
+      return
+    }
+    bounceAvatar()
+    console.log('✅ Opening avatar picker')
+    setShowAvatarPicker(true)
+  }, [ownProfile, avatarUploading, bounceAvatar])
+
+  const handleAvatarPickerCancel = useCallback(() => {
+    setShowAvatarPicker(false)
+    setAvatarUploading(false)
+  }, [])
+
   const headerContent = hasProfile ? (
     <View style={{ width: '100%', paddingHorizontal: 0 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 18 }}>
@@ -296,7 +333,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
           const outerRingSize = AVATAR_SIZE * 1.1
           const innerRingSize = AVATAR_SIZE
           const container = (
-            <RNAnimated.View style={{ transform: [{ scale: avatarScale }] }}>
+            <RNAnimated.View style={{ transform: [{ scale: avatarScale }], opacity: avatarSwapOpacity }}>
                 <View
                   style={{
                     width: outerRingSize,
@@ -355,7 +392,15 @@ export const MyProfile = ({ userName }: { userName: string }) => {
           )
 
           const avatarNode = ownProfile ? (
-            <Pressable onPress={handleAvatarPress} hitSlop={12} disabled={avatarUploading}>
+            <Pressable
+              onPressIn={() => {
+                if (avatarUploading) return
+                bounceAvatar()
+              }}
+              onPress={handleAvatarPress}
+              hitSlop={12}
+              disabled={avatarUploading}
+            >
               {container}
             </Pressable>
           ) : (
@@ -383,50 +428,29 @@ export const MyProfile = ({ userName }: { userName: string }) => {
     promptDisplayReady &&
     displayGridItems.length < GRID_CAPACITY
 
-  const bounceAvatar = useCallback(() => {
-    RNAnimated.sequence([
-      RNAnimated.timing(avatarScale, {
-        toValue: 0.92,
-        duration: 90,
-        useNativeDriver: true,
-      }),
-      RNAnimated.spring(avatarScale, {
-        toValue: 1,
-        damping: 14,
-        stiffness: 220,
-        useNativeDriver: true,
-      }),
-    ]).start()
-  }, [avatarScale])
-
   const handleShufflePromptSuggestions = useCallback(() => {
     setPromptSuggestions(createPromptBatch())
   }, [])
 
-  const handleAvatarPress = useCallback(async () => {
-    if (!ownProfile) return
-    try {
-      const permission = await ImagePicker.requestMediaLibraryPermissionsAsync()
-      if (permission.status !== 'granted') {
+  const handleAvatarSelection = useCallback(
+    (asset: ImagePicker.ImagePickerAsset) => {
+      if (!asset?.uri) {
+        setShowAvatarPicker(false)
         return
       }
 
-      const result = await ImagePicker.launchImageLibraryAsync({
-        allowsEditing: true,
-        aspect: [1, 1],
-        quality: 0.85,
-      })
-
-      if (result.canceled || !result.assets || !result.assets[0]) {
-        return
-      }
-
-      const asset = result.assets[0]
       const previousAvatar = avatarUri || null
 
+      setShowAvatarPicker(false)
       setOptimisticAvatarUri(asset.uri)
+      avatarSwapOpacity.setValue(0.6)
+      RNAnimated.timing(avatarSwapOpacity, {
+        toValue: 1,
+        duration: 220,
+        easing: RNEasing.out(RNEasing.quad),
+        useNativeDriver: true,
+      }).start()
       setAvatarUploading(true)
-      bounceAvatar()
 
       ;(async () => {
         try {
@@ -468,11 +492,16 @@ export const MyProfile = ({ userName }: { userName: string }) => {
           setAvatarUploading(false)
         }
       })()
-    } catch (error) {
-      console.error('Avatar picker error:', error)
-      setAvatarUploading(false)
-    }
-  }, [ownProfile, avatarUri, bounceAvatar, updateUser, userName, gridItems, backlogItems])
+    },
+    [
+      avatarUri,
+      avatarSwapOpacity,
+      updateUser,
+      userName,
+      gridItems,
+      backlogItems,
+    ]
+  )
 
   const hasAnimatedBefore = gridAnimationHistory.has(userName)
   const gridFade = useRef(new RNAnimated.Value(hasAnimatedBefore ? 1 : 0)).current
@@ -1451,6 +1480,19 @@ export const MyProfile = ({ userName }: { userName: string }) => {
           </>
         )}
       </ScrollView>
+      {showAvatarPicker && (
+        <Picker
+          onSuccess={handleAvatarSelection}
+          onCancel={handleAvatarPickerCancel}
+          disablePinata
+          options={{
+            mediaTypes: ['images'],
+            allowsEditing: true,
+            aspect: [1, 1],
+            quality: 0.85,
+          }}
+        />
+      )}
     </>
   )
 }

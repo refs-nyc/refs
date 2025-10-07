@@ -53,10 +53,18 @@ export function UserProfileScreen({ userName, prefetchedUserId }: { userName: st
         if (intent.directoryFilter) {
           setDirectoriesFilterTab(intent.directoryFilter)
         }
-        skipNextAnimation.current = true
+
+        const shouldAnimate = intent.animate === true && homePagerIndex !== intent.targetPagerIndex
+        skipNextAnimation.current = shouldAnimate ? false : true
         hasCommittedDefault.current = true
-        translateX.value = -intent.targetPagerIndex * width
-        setHomePagerIndex(intent.targetPagerIndex)
+
+        if (!shouldAnimate) {
+          translateX.value = -intent.targetPagerIndex * width
+        }
+
+        if (homePagerIndex !== intent.targetPagerIndex) {
+          setHomePagerIndex(intent.targetPagerIndex)
+        }
         return
       }
     }

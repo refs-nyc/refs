@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useRef, useState, useMemo } from 'react'
 import { View, Text, Pressable, FlatList, InteractionManager, Dimensions, ScrollView } from 'react-native'
 import Animated, { useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated'
 import { s, c, t } from '@/features/style'
-import { router } from 'expo-router'
+import { router, usePathname } from 'expo-router'
 import { Grid } from '@/ui/grid/Grid'
 // import { Button } from '@/ui/buttons/Button'
 // import BottomSheet from '@gorhom/bottom-sheet'
@@ -59,6 +59,108 @@ const BookmarkIcon = ({ filled }: { filled: boolean }) => {
         fill={filled ? stroke : 'none'}
       />
     </Svg>
+  )
+}
+
+const OnboardingPill = ({
+  userName,
+  fullName,
+  avatarUri,
+}: {
+  userName: string
+  fullName: string
+  avatarUri?: string
+}) => {
+  const pillScale = useSharedValue(1)
+  const setProfileNavIntent = useAppStore((state) => state.setProfileNavIntent)
+  const homePagerIndex = useAppStore((state) => state.homePagerIndex)
+  const pathname = usePathname()
+  const hasAvatar = Boolean(avatarUri)
+
+  const pillAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: pillScale.value }],
+  }))
+
+  const handlePress = useCallback(() => {
+    if (!userName) return
+
+    pillScale.value = withSpring(
+      0.95,
+      { damping: 10, stiffness: 400 },
+      (finished) => {
+        if (finished) {
+          pillScale.value = withSpring(1, { damping: 8, stiffness: 300 })
+        }
+      }
+    )
+
+    const targetIndex = 0
+    const alreadyOnGrid = homePagerIndex === targetIndex
+
+    setProfileNavIntent({ targetPagerIndex: targetIndex, source: 'directory', animate: !alreadyOnGrid })
+
+    const expectedPath = `/user/${userName}`
+    if (!pathname || pathname !== expectedPath) {
+      router.push({ pathname: '/user/[userName]', params: { userName } })
+    }
+  }, [homePagerIndex, pathname, setProfileNavIntent, userName])
+
+  return (
+    <Pressable onPress={handlePress}>
+      <Animated.View
+        style={[
+          {
+            backgroundColor: c.surface,
+            borderRadius: s.$1,
+            paddingVertical: s.$075,
+            paddingHorizontal: s.$075,
+            marginBottom: s.$075,
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            borderWidth: 2,
+            borderColor: c.prompt,
+            borderStyle: 'dashed',
+          },
+          pillAnimatedStyle,
+        ]}
+      >
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+          <View
+            style={{
+              width: 60,
+              height: 60,
+              borderRadius: 30,
+              borderWidth: 1.5,
+              borderColor: `${c.prompt}1A`, // 10% opacity
+              justifyContent: 'center',
+              alignItems: 'center',
+              overflow: 'hidden',
+              backgroundColor: c.surface,
+            }}
+          >
+            {hasAvatar ? (
+              <Image
+                source={avatarUri}
+                style={{ width: '100%', height: '100%', borderRadius: 30 }}
+                contentFit="cover"
+                transition={150}
+              />
+            ) : (
+              <Text style={{ color: c.prompt, fontSize: 28, fontWeight: '600' }}>+</Text>
+            )}
+          </View>
+          <View style={{ marginLeft: 3, gap: 2 }}>
+            <Text style={{ color: c.prompt, fontWeight: '700', fontSize: (s.$09 as number) + 1 }} numberOfLines={1} ellipsizeMode="tail">
+              {fullName}
+            </Text>
+            <Text style={{ color: c.accent, fontFamily: 'InterMedium', fontSize: 12, fontWeight: '500' }}>
+              Add a profile photo and 3 refs to appear
+            </Text>
+          </View>
+        </View>
+      </Animated.View>
+    </Pressable>
   )
 }
 
@@ -160,7 +262,7 @@ const DirectoryRow = React.memo(({
             </Svg>
           </View>
         )}
-        <View style={{ flex: 1, marginLeft: 5, gap: 2 }}>
+        <View style={{ flex: 1, marginLeft: 5, gap: 4 }}>
           <Text style={{ color: c.black, fontWeight: '700', fontSize: (s.$09 as number) + 1 }} numberOfLines={1} ellipsizeMode="tail">
             {u.name}
           </Text>
@@ -270,6 +372,7 @@ export function CommunitiesFeedScreen({
     saves,
     addSave,
     removeSave,
+    gridItemCount,
   } = useAppStore()
   const directoryUsersNormalized = useMemo(
     () => normalizeDirectoryUsers((directoryUsers as FeedUser[]) || [], user?.userName),
@@ -809,6 +912,32 @@ export function CommunitiesFeedScreen({
     [handleUserPress, toggleSaveForUser, isUserSaved, userInterestMap, refTitleMap, user?.id]
   )
 
+  // Compute user's display name for onboarding pill
+  const userDisplayName = useMemo(() => {
+    if (!user) return ''
+    const first = (user.firstName || '').trim()
+    const last = (user.lastName || '').trim()
+    const combined = `${first} ${last}`.trim()
+    if (combined) return combined
+    const fallback = (user.name || '').trim()
+    return fallback || user.userName || ''
+  }, [user])
+
+  const userAvatarUri = useMemo(() => {
+    if (!user) return ''
+    const avatarCandidate = (user as any)?.avatar_url
+    const candidates = [user.image, avatarCandidate]
+    for (const candidate of candidates) {
+      if (typeof candidate === 'string' && candidate.trim()) {
+        return candidate.trim()
+      }
+    }
+    return ''
+  }, [user])
+
+  // Show onboarding pill until user has at least 3 refs
+  const showOnboardingPill = gridItemCount < 3 && user?.userName
+
   return (
     <View style={{ flex: 1, backgroundColor: c.surface }}>
       {showHeader && (
@@ -874,11 +1003,22 @@ export function CommunitiesFeedScreen({
 
             {/* Natural scrolling list without surface2 backdrop */}
             <View>
+              {/* Onboarding pill - shown until user has at least 3 refs */}
+              {showOnboardingPill && (
+                <View style={{ paddingLeft: embedded ? embeddedPadding : (s.$1 as number) + 6, paddingRight: embedded ? embeddedPadding : (s.$1 as number) + 6, paddingTop: 5 }}>
+                  <OnboardingPill
+                    userName={user?.userName || ''}
+                    fullName={userDisplayName}
+                    avatarUri={userAvatarUri}
+                  />
+                </View>
+              )}
+              
               <FlatList
                 contentContainerStyle={{
                   paddingLeft: embedded ? embeddedPadding : (s.$1 as number) + 6,
                   paddingRight: embedded ? embeddedPadding : (s.$1 as number) + 6,
-                  paddingTop: 5,
+                  paddingTop: showOnboardingPill ? 0 : 5,
                   paddingBottom: 150,
                 }}
                 data={displayedUsers}

@@ -127,7 +127,7 @@ export const Navigation = ({
               onLongPress={() => {
                 logoutSheetRef?.current?.expand?.()
               }}
-              style={{ paddingLeft: 6 }}
+              style={{ paddingLeft: 3 }}
             >
               <Text style={{ fontSize: 24, fontWeight: 'bold', textAlign: 'left' }}>Refs</Text>
             </Pressable>
@@ -138,7 +138,7 @@ export const Navigation = ({
           <Pressable onPress={() => savesBottomSheetRef.current?.expand()}>
             <View style={{ top: -2 }}>
               <Svg width={42} height={31} viewBox="0 0 34 31" fill="none">
-                <Path d="M24.5059 2C19.449 2 16.9564 6.9852 16.9564 6.9852C16.9564 6.9852 14.4638 2 9.40693 2C5.29726 2 2.04286 5.43823 2.0008 9.54089C1.91511 18.057 8.75652 24.1133 16.2554 29.2028C16.4621 29.3435 16.7064 29.4187 16.9564 29.4187C17.2064 29.4187 17.4507 29.3435 17.6574 29.2028C25.1555 24.1133 31.9969 18.057 31.912 9.54089C31.8699 5.43823 28.6155 2 24.5059 2Z" stroke="#B0B0B0" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"/>
+                <Path d="M24.5059 2C19.449 2 16.9564 6.9852 16.9564 6.9852C16.9564 6.9852 14.4638 2 9.40693 2C5.29726 2 2.04286 5.43823 2.0008 9.54089C1.91511 18.057 8.75652 24.1133 16.2554 29.2028C16.4621 29.3435 16.7064 29.4187 16.9564 29.4187C17.2064 29.4187 17.4507 29.3435 17.6574 29.2028C25.1555 24.1133 31.9969 18.057 31.912 9.54089C31.8699 5.43823 28.6155 2 24.5059 2Z" stroke={c.newDark} strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round"/>
               </Svg>
             </View>
           </Pressable>

@@ -1,16 +1,19 @@
 import { SimplePinataImage } from '../images/SimplePinataImage'
 import { View, Text } from 'react-native'
 import { c, s } from '@/features/style'
-import { Ionicons } from '@expo/vector-icons'
+import Svg, { Circle } from 'react-native-svg'
 
 export const Avatar = ({ source, size = s.$3 }: { source: string | undefined; size: number }) => {
   if (!source)
     return (
-      <View style={{ width: size, height: size, backgroundColor: "#A6B89F", borderRadius: size / 2, alignItems: "center" }}>
-        <View style={{ top: size * 0.16 }}>
-          <Ionicons name="person" size={size * 0.65} color='#fff' />
-        </View>
-      </View>
+      <View
+        style={{
+          width: size,
+          height: size,
+          borderRadius: size / 2,
+          backgroundColor: 'transparent',
+        }}
+      />
     )
   return (
     <>

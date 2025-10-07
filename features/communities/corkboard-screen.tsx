@@ -401,14 +401,11 @@ export function EdgeCorkboardScreen() {
       {/* Header + upper ticker (front only) */}
       <View>
         {/* Header */}
-        <View style={{ paddingVertical: s.$1, justifyContent: 'center', marginTop: 7, paddingLeft: s.$1 + 6, paddingRight: s.$1 + 6, marginBottom: 0 }}>
-          <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between' }}>
-            <View style={{ flexDirection: 'column' }}>
-              <Text style={{ color: c.newDark, fontSize: (s.$09 as number) + 4, fontFamily: 'System', fontWeight: '700', textAlign: 'left', lineHeight: s.$1half }}>
-                Edge Corkboard
-              </Text>
-            </View>
-          </View>
+        <View style={{ paddingHorizontal: s.$1 + 6, paddingTop: s.$1 + 6 }}>
+          <Text style={{ color: c.newDark, fontSize: (s.$09 as number) + 6, fontFamily: 'InterBold', fontWeight: '700', marginBottom: 4 }}>
+            Edge Corkboard
+          </Text>
+          <View style={{ height: (s.$05 as number) + 3 }} />
         </View>
 
         {/* Filter ticker */}

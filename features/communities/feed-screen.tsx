@@ -251,16 +251,9 @@ const DirectoryRow = React.memo(({
               width: 60,
               height: 60,
               borderRadius: 30,
-              backgroundColor: c.surface2,
-              justifyContent: 'center',
-              alignItems: 'center',
+              backgroundColor: 'transparent',
             }}
-          >
-            <Svg width={32} height={20} viewBox="0 0 64 40">
-              <Circle cx="24" cy="20" r="16" fill="none" stroke={c.muted} strokeWidth="2" />
-              <Circle cx="40" cy="20" r="16" fill="none" stroke={c.muted} strokeWidth="2" />
-            </Svg>
-          </View>
+          />
         )}
         <View style={{ flex: 1, marginLeft: 5, gap: 4 }}>
           <Text style={{ color: c.black, fontWeight: '700', fontSize: (s.$09 as number) + 1 }} numberOfLines={1} ellipsizeMode="tail">
@@ -425,11 +418,27 @@ export function CommunitiesFeedScreen({
   }, [directoryUsersNormalized])
 
   const mapUsersWithItems = useCallback((userRecords: any[], itemsByCreator: Map<string, any[]>) => {
+    console.log(`📊 mapUsersWithItems called with ${userRecords.length} users`)
     const result: (FeedUser & { _latest?: number })[] = []
     for (const r of userRecords) {
       const creatorId = r.id
       const creatorItems = itemsByCreator.get(creatorId) || []
-      if (creatorItems.length === 0) continue
+      
+      // Filter: must have an avatar AND at least 3 grid items
+      const image = (r.image || '').trim()
+      const avatarUrl = (r.avatar_url || '').trim()
+      const hasAvatar = Boolean(image || avatarUrl)
+      const hasEnoughItems = creatorItems.length >= 3
+      
+      console.log(`🔍 Checking ${r.userName}: image="${image}", avatar_url="${avatarUrl}", hasAvatar=${hasAvatar}, itemCount=${creatorItems.length}`)
+      
+      if (!hasAvatar || !hasEnoughItems) {
+        console.log(`🚫 Filtering out ${r.userName}: hasAvatar=${hasAvatar}, itemCount=${creatorItems.length}`)
+        continue
+      }
+      
+      console.log(`✅ Including ${r.userName} in directory`)
+      
       const images = creatorItems
         .slice(0, 3)
         .map((it) => it?.image || it?.expand?.ref?.image)
@@ -557,12 +566,30 @@ export function CommunitiesFeedScreen({
       if (targetPage === 1 && !skipCache) {
         const cachedUsers = await simpleCache.get('directory_users')
         if (cachedUsers) {
-          console.log('📖 Using cached directory users')
-          commitUsers(cachedUsers as FeedUser[])
-          setHasMore(true) // Assume there are more pages
-          setPage(1)
-          setIsLoading(false)
-          return
+          console.log('📖 Checking cached directory users...')
+          // Filter cached users to ensure they have avatar AND 3+ items
+          const filteredCached = (cachedUsers as FeedUser[]).filter(u => {
+            const hasAvatar = Boolean(u.avatar_url && u.avatar_url.trim())
+            const hasEnoughItems = (u.topRefs?.length || 0) >= 3
+            if (!hasAvatar || !hasEnoughItems) {
+              console.log(`🚫 Cached user ${u.userName} doesn't meet criteria: hasAvatar=${hasAvatar} (avatar_url="${u.avatar_url}"), itemCount=${u.topRefs?.length || 0}`)
+            }
+            return hasAvatar && hasEnoughItems
+          })
+          
+          // If we filtered out ANY users, invalidate cache and fetch fresh
+          if (filteredCached.length < (cachedUsers as FeedUser[]).length) {
+            console.log(`🗑️ Cache is stale (${(cachedUsers as FeedUser[]).length} users → ${filteredCached.length} after filtering). Clearing and fetching fresh data...`)
+            await AsyncStorage.removeItem('simple_cache_directory_users')
+            // Continue to fetch fresh data below (don't return early)
+          } else {
+            console.log(`✅ Using ${filteredCached.length} users from cache (all valid)`)
+            commitUsers(filteredCached)
+            setHasMore(true) // Assume there are more pages
+            setPage(1)
+            setIsLoading(false)
+            return
+          }
         }
       }
       
@@ -776,8 +803,27 @@ export function CommunitiesFeedScreen({
         if (cancelled) return
 
         if (cachedUsers && Array.isArray(cachedUsers) && cachedUsers.length > 0) {
-          commitUsers(cachedUsers as FeedUser[])
-          setHasInitialData(true)
+          console.log('🔍 Hydrate: Filtering cached users...')
+          // Filter cached users to ensure they have avatar AND 3+ items
+          const filteredCached = (cachedUsers as FeedUser[]).filter(u => {
+            const hasAvatar = Boolean(u.avatar_url && u.avatar_url.trim())
+            const hasEnoughItems = (u.topRefs?.length || 0) >= 3
+            return hasAvatar && hasEnoughItems
+          })
+          
+          // If cache has stale data, clear it and fetch fresh
+          if (filteredCached.length < cachedUsers.length) {
+            console.log(`🗑️ Hydrate: Cache is stale (${cachedUsers.length} → ${filteredCached.length}). Fetching fresh...`)
+            await AsyncStorage.removeItem('simple_cache_directory_users')
+            await fetchPage(1, { skipCache: true })
+          } else if (filteredCached.length > 0) {
+            console.log(`✅ Hydrate: Using ${filteredCached.length} valid cached users`)
+            commitUsers(filteredCached)
+            setHasInitialData(true)
+          } else {
+            // No valid users in cache, fetch fresh
+            await fetchPage(1, { skipCache: true })
+          }
           return
         }
 
@@ -1003,22 +1049,20 @@ export function CommunitiesFeedScreen({
 
             {/* Natural scrolling list without surface2 backdrop */}
             <View>
-              {/* Onboarding pill - shown until user has at least 3 refs */}
-              {showOnboardingPill && (
-                <View style={{ paddingLeft: embedded ? embeddedPadding : (s.$1 as number) + 6, paddingRight: embedded ? embeddedPadding : (s.$1 as number) + 6, paddingTop: 5 }}>
-                  <OnboardingPill
-                    userName={user?.userName || ''}
-                    fullName={userDisplayName}
-                    avatarUri={userAvatarUri}
-                  />
-                </View>
-              )}
-              
               <FlatList
+                ListHeaderComponent={
+                  showOnboardingPill ? (
+                    <OnboardingPill
+                      userName={user?.userName || ''}
+                      fullName={userDisplayName}
+                      avatarUri={userAvatarUri}
+                    />
+                  ) : null
+                }
                 contentContainerStyle={{
                   paddingLeft: embedded ? embeddedPadding : (s.$1 as number) + 6,
                   paddingRight: embedded ? embeddedPadding : (s.$1 as number) + 6,
-                  paddingTop: showOnboardingPill ? 0 : 5,
+                  paddingTop: 10,
                   paddingBottom: 150,
                 }}
                 data={displayedUsers}

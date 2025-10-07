@@ -58,7 +58,7 @@ export function CommunityInterestsScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: c.surface }}>
       <View style={{ paddingHorizontal: s.$1 + 6, paddingTop: s.$1 + 6 }}>
-        <Text style={{ color: c.newDark, fontSize: (s.$09 as number) + 6, fontWeight: '700', marginBottom: 4 }}>
+        <Text style={{ color: c.newDark, fontSize: (s.$09 as number) + 6, fontFamily: 'InterBold', fontWeight: '700', marginBottom: 4 }}>
           Edge Directory
         </Text>
         <View style={{ height: (s.$05 as number) + 3 }} />

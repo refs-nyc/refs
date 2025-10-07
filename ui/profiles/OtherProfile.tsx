@@ -17,6 +17,7 @@ import { simpleCache } from '@/features/cache/simpleCache'
 import { pocketbase } from '@/features/pocketbase'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { Image } from 'expo-image'
+import Svg, { Circle } from 'react-native-svg'
 
 export const OtherProfile = ({ userName, prefetchedUserId }: { userName: string; prefetchedUserId?: string }) => {
   const [profile, setProfile] = useState<Profile>()
@@ -290,40 +291,57 @@ export const OtherProfile = ({ userName, prefetchedUserId }: { userName: string;
                   ) : null}
                 </View>
                 <Pressable onPress={openAvatar} hitSlop={12} disabled={!hasAvatar}>
-                  <View
-                    style={{
-                      width: 61.2 * 1.1,
-                      height: 61.2 * 1.1,
-                      borderRadius: (61.2 * 1.1) / 2,
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      backgroundColor: c.surface,
-                      borderWidth: 2.5,
-                      borderColor: '#B0B0B0',
-                    }}
-                  >
-                  <View
-                    style={{
-                      width: 61.2,
-                      height: 61.2,
-                      borderRadius: 61.2 / 2,
-                      borderWidth: 2.5,
-                      borderColor: hasAvatar ? c.surface : '#B0B0B0',
-                      overflow: 'hidden',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      backgroundColor: c.surface2,
-                      borderStyle: hasAvatar ? 'solid' : 'dashed',
+                  {hasAvatar ? (
+                    <View
+                      style={{
+                        width: 61.2 * 1.1,
+                        height: 61.2 * 1.1,
+                        borderRadius: (61.2 * 1.1) / 2,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        backgroundColor: c.surface,
+                        borderWidth: 2.5,
+                        borderColor: '#B0B0B0',
                       }}
                     >
-                      {hasAvatar ? (
+                      <View
+                        style={{
+                          width: 61.2,
+                          height: 61.2,
+                          borderRadius: 61.2 / 2,
+                          borderWidth: 2.5,
+                          borderColor: c.surface,
+                          overflow: 'hidden',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          backgroundColor: c.surface2,
+                          borderStyle: 'solid',
+                        }}
+                      >
                         <Image source={remoteAvatar} style={{ width: '100%', height: '100%' }} contentFit="cover" transition={150} />
-                      ) : (
-                        <Text style={{ color: c.prompt, fontSize: 24, fontWeight: '600' }}>+
-                        </Text>
-                      )}
+                      </View>
                     </View>
-                  </View>
+                  ) : (
+                    <View
+                      style={{
+                        width: 61.2,
+                        height: 61.2,
+                        borderRadius: 61.2 / 2,
+                        borderWidth: 2.5,
+                        borderColor: '#B0B0B0',
+                        borderStyle: 'dashed',
+                        overflow: 'hidden',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        backgroundColor: c.surface2,
+                      }}
+                    >
+                      <Svg width={32} height={20} viewBox="0 0 64 40">
+                        <Circle cx="24" cy="20" r="16" fill="none" stroke={c.muted} strokeWidth="2" />
+                        <Circle cx="40" cy="20" r="16" fill="none" stroke={c.muted} strokeWidth="2" />
+                      </Svg>
+                    </View>
+                  )}
                 </Pressable>
               </View>
             </View>

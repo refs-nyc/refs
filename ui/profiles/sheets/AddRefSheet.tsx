@@ -75,6 +75,16 @@ export const AddRefSheet = ({
       snapPoints={[sheetHeight]}
       index={-1}
       backgroundStyle={{ backgroundColor: c.olive, borderRadius: 50, paddingTop: 0 }}
+      onAnimate={(fromIndex, toIndex) => {
+        // Dismiss keyboard immediately when sheet starts closing
+        if (fromIndex !== -1 && toIndex === -1) {
+          try { 
+            require('react-native').Keyboard.dismiss() 
+          } catch (e) {
+            console.warn('Failed to dismiss keyboard:', e)
+          }
+        }
+      }}
       onChange={(i: number) => {
         if (i === -1) {
           setRefFields(null)
@@ -95,6 +105,8 @@ export const AddRefSheet = ({
       )}
       handleComponent={null}
       keyboardBehavior="interactive"
+      keyboardBlurBehavior="restore"
+      android_keyboardInputMode="adjustResize"
     >
       {!refFields || !user ? (
         <></>

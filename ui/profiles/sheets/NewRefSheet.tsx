@@ -375,6 +375,17 @@ export const NewRefSheet = ({
       index={-1}
 
       backgroundStyle={{ backgroundColor: c.olive, borderRadius: 50, paddingTop: 0 }}
+      onAnimate={(fromIndex, toIndex) => {
+        // Dismiss keyboard immediately when sheet starts closing
+        if (fromIndex !== -1 && toIndex === -1) {
+          console.log('⌨️ SHEET CLOSING - Dismissing keyboard immediately')
+          try { 
+            Keyboard.dismiss() 
+          } catch (e) {
+            console.warn('Failed to dismiss keyboard:', e)
+          }
+        }
+      }}
       onChange={(i: number) => {
         console.log('📱 SHEET CHANGE - index:', i, 'step:', step)
         setIsSheetOpen(i !== -1)
@@ -414,6 +425,8 @@ export const NewRefSheet = ({
         />
       )}
       keyboardBehavior="interactive"
+      keyboardBlurBehavior="restore"
+      android_keyboardInputMode="adjustResize"
     >
       {isOpen && (
         <BottomSheetView

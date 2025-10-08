@@ -28,8 +28,6 @@ export function CommunityFormSheet() {
   const [text, setText] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const backdropKeyRef = useRef<string | null>(null)
-  const hasFocusedOnOpenRef = useRef(false)
-
   const inputRef = useRef<any>(null)
 
   // Standardized snap like other sheets (fixed percent, no dynamic resize)
@@ -99,35 +97,45 @@ export function CommunityFormSheet() {
       snapPoints={snapPoints}
       enablePanDownToClose={true}
       backgroundStyle={{ backgroundColor: c.surface, borderRadius: 50 }}
+      onAnimate={(fromIndex, toIndex) => {
+        // Focus keyboard immediately when sheet starts opening
+        if (fromIndex === -1 && toIndex !== -1) {
+          // Focus on every open, not just the first time
+          // Small delay to ensure sheet animation has started
+          setTimeout(() => {
+            try {
+              inputRef.current?.focus()
+            } catch (e) {
+              console.warn('Failed to focus input:', e)
+            }
+          }, 50)
+        }
+        // Dismiss keyboard immediately when sheet starts closing
+        if (fromIndex !== -1 && toIndex === -1) {
+          try { inputRef.current?.blur() } catch {}
+          try { require('react-native').Keyboard.dismiss() } catch {}
+        }
+      }}
       onChange={(i) => {
         const open = i !== -1
         setIsOpen(open)
-        if (open) {
-          hasFocusedOnOpenRef.current = false
-          // Focus input only when opening, to avoid keyboard on app load
-          if (!hasFocusedOnOpenRef.current) {
-            hasFocusedOnOpenRef.current = true
-            requestAnimationFrame(() => inputRef.current?.focus())
-          }
-        } else {
+        if (!open) {
           // Unregister backdrop handler on close
           if (backdropKeyRef.current) {
             try { unregisterBackdropPress(backdropKeyRef.current) } catch {}
             backdropKeyRef.current = null
           }
-          try { inputRef.current?.blur() } catch {}
-          try { require('react-native').Keyboard.dismiss() } catch {}
         }
       }}
-      onAnimate={undefined}
       handleComponent={null}
       backdropComponent={(p) => (
         <BottomSheetBackdrop {...p} disappearsOnIndex={-1} appearsOnIndex={0} pressBehavior={'close'} />
       )}
       enableDynamicSizing={false}
-      keyboardBehavior="extend"
-      keyboardBlurBehavior="none"
+      keyboardBehavior="interactive"
+      keyboardBlurBehavior="restore"
       enableContentPanningGesture={true}
+      android_keyboardInputMode="adjustResize"
     >
       <BottomSheetScrollView
         keyboardShouldPersistTaps="always"

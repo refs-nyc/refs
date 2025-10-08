@@ -185,9 +185,15 @@ export default function Referencers({
                   }
                   referencersBottomSheetRef.current?.close()
                   setReferencersContext(null)
-                  await joinCommunityChat(conversationId, user.id)
-                  InteractionManager.runAfterInteractions(() => {
-                    router.push(`/messages/${conversationId}`)
+                  
+                  // Defer both joining and navigation to prevent hooks errors
+                  InteractionManager.runAfterInteractions(async () => {
+                    try {
+                      await joinCommunityChat(conversationId, user.id)
+                      router.push(`/messages/${conversationId}`)
+                    } catch (error) {
+                      console.warn('Failed to join and navigate to chat', error)
+                    }
                   })
                 } catch (error) {
                   console.warn('Failed to open community chat', { currentRefId, error })

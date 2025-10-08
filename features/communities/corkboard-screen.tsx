@@ -271,7 +271,9 @@ export function EdgeCorkboardScreen() {
         setLastPillRefId(refId)
 
         const arr = Array.from(next.keys())
-        AsyncStorage.setItem(key, JSON.stringify(arr)).catch(() => {})
+        AsyncStorage.setItem(key, JSON.stringify(arr))
+          .then(() => console.log('✅ Subscriptions saved locally:', arr.length, 'interests'))
+          .catch((error) => console.warn('Failed to save subscriptions locally:', error))
 
         ;(async () => {
           try {
@@ -283,16 +285,27 @@ export function EdgeCorkboardScreen() {
               await joinCommunityChat(conversationId, user.id)
               setConversationPreview(conversationId, null, 0)
               if (sb) {
-                await sb
+                const result = await sb
                   .from('community_subscriptions')
                   .upsert({ user_id: user.id, ref_id: refId, community: 'edge-patagonia' }, { onConflict: 'user_id,ref_id' })
+                if (result.error) {
+                  // Supabase sync is best-effort; local storage is source of truth
+                  if (__DEV__) console.log('Supabase subscription sync skipped:', result.error.message)
+                } else {
+                  if (__DEV__) console.log('✅ Subscription synced to Supabase for ref:', refId)
+                }
               }
             } else {
               if (sb) {
-                await sb
+                const result = await sb
                   .from('community_subscriptions')
                   .delete()
                   .match({ user_id: user.id, ref_id: refId })
+                if (result.error) {
+                  console.warn('Failed to delete subscription from Supabase:', result.error)
+                } else {
+                  console.log('✅ Subscription removed from Supabase for ref:', refId)
+                }
               }
             }
           } catch (error) {
@@ -582,13 +595,26 @@ export function EdgeCorkboardScreen() {
                       updated.set(promptLike.ref, true)
                       // persist locally
                       try { AsyncStorage.setItem(key, JSON.stringify(Array.from(updated.keys()))) } catch {}
-                      // best-effort remote
-                      try {
-                        const sb: any = (supabase as any).client
-                        if (sb) {
-                          sb.from('community_subscriptions').upsert({ user_id: user.id, ref_id: promptLike.ref, community: 'edge-patagonia' }, { onConflict: 'user_id,ref_id' })
+                      // best-effort remote (await for better reliability)
+                      ;(async () => {
+                        try {
+                          const sb: any = (supabase as any).client
+                          if (sb) {
+                            const result = await sb.from('community_subscriptions').upsert({ 
+                              user_id: user.id, 
+                              ref_id: promptLike.ref, 
+                              community: 'edge-patagonia' 
+                            }, { onConflict: 'user_id,ref_id' })
+                            if (result.error) {
+                              console.warn('Failed to save subscription to Supabase:', result.error)
+                            } else {
+                              console.log('✅ Subscription saved to Supabase for ref:', promptLike.ref)
+                            }
+                          }
+                        } catch (error) {
+                          console.warn('Failed to save subscription:', error)
                         }
-                      } catch {}
+                      })()
                       return updated
                     })
 

@@ -78,12 +78,18 @@ export const joinCommunityChat = async (conversationId: string, userId: string):
   }
   await refreshConversation(conversationId)
 
+  // Format timestamp to match PocketBase's format: 'yyyy-MM-dd HH:mm:ss.SSSZ'
+  // Example: '2025-10-08T01:11:00.000Z' -> '2025-10-08 01:11:00.000Z'
+  const now = new Date()
+  const isoString = now.toISOString()
+  const pbTimestamp = isoString.replace('T', ' ')
+  
   const preview: Message = {
     id: `preview-${conversationId}`,
     conversation: conversationId,
     sender: userId,
     text: 'started a chat',
-    created: new Date().toISOString(),
+    created: pbTimestamp,
   }
   const store = useAppStore.getState()
   try {

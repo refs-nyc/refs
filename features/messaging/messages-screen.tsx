@@ -74,8 +74,8 @@ export function MessagesScreen({
   const headerGap = 5
   const headerPaddingBottom = s.$08 as number
   const headerPaddingHorizontal = s.$1 as number
-  const initialHeaderHeight = insets.top + headerGap + headerPaddingBottom + (s.$4 as number)
-  const [headerHeight, setHeaderHeight] = useState(initialHeaderHeight)
+  // Use a fixed header height to prevent jumping on mount
+  const headerHeight = insets.top + headerGap + headerPaddingBottom + (s.$4 as number)
 
   const conversation = conversations[conversationId]
   const membershipRecords = memberships[conversationId] || []
@@ -281,8 +281,7 @@ export function MessagesScreen({
     <Animated.View style={[{ flex: 1, backgroundColor: c.surface }, animatedContainerStyle]}>
       <SafeAreaView
         edges={['top']}
-        style={{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 2 }}
-        onLayout={(e) => setHeaderHeight(e.nativeEvent.layout.height)}
+        style={{ position: 'absolute', top: -25, left: 0, right: 0, zIndex: 2 }}
       >
         <View
           style={{
@@ -343,8 +342,8 @@ export function MessagesScreen({
         style={{ flex: 1 }}
         contentContainerStyle={{
           paddingHorizontal: s.$075,
-          paddingTop: s.$075,
-          paddingBottom: bottomOffset + 80,
+          paddingTop: bottomOffset + 60,
+          paddingBottom: s.$075,
           justifyContent: 'flex-end',
         }}
         ListFooterComponent={<View style={{ height: headerHeight }} />}
@@ -364,7 +363,7 @@ export function MessagesScreen({
         </Sheet>
       )}
 
-      <View style={{ paddingHorizontal: s.$075, marginBottom: bottomOffset }}>
+      <View style={{ position: 'absolute', bottom: bottomOffset - 20, left: 0, right: 0, paddingHorizontal: s.$075 }}>
         <MessageInput
           onMessageSubmit={onMessageSubmit}
           setMessage={setMessage}

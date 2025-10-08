@@ -9,15 +9,8 @@ export default function Page() {
   const { user, cachedSearchResults, setHomePagerIndex, setProfileNavIntent, homePagerIndex, directoriesFilterTab } = useAppStore()
   const router = useRouter()
   const navigation = useNavigation<any>()
-
-  if (!user) {
-    router.dismissTo('/')
-    return
-  }
-
   const { conversationId } = useLocalSearchParams()
-  if (typeof conversationId !== 'string') return null
-
+  
   const closeHandlerRef = useRef<(() => void) | null>(null)
 
   const performNavigation = useCallback(() => {
@@ -72,6 +65,14 @@ export default function Page() {
       performNavigation()
     }
   }, [performNavigation])
+
+  // Conditional checks AFTER all hooks to comply with rules of hooks
+  if (!user) {
+    router.dismissTo('/')
+    return null
+  }
+
+  if (typeof conversationId !== 'string') return null
 
   return (
     <SwipeToGoBack onSwipeComplete={requestClose}>

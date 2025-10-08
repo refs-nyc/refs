@@ -27,6 +27,7 @@ export const FormFieldWithIcon = forwardRef<TextInput, {
   autoCorrect?: boolean
   returnKeyType?: 'done' | 'go' | 'next' | 'search' | 'send' | 'default'
   onSubmitEditing?: () => void
+  onFocus?: () => void
 }>(({
   type,
   id,
@@ -38,6 +39,7 @@ export const FormFieldWithIcon = forwardRef<TextInput, {
   autoCorrect = true,
   returnKeyType = 'default',
   onSubmitEditing,
+  onFocus,
 }, ref) => {
   const [showPassword, setShowPassword] = useState(false)
   const onSelect = (s: string) => {}
@@ -92,14 +94,24 @@ export const FormFieldWithIcon = forwardRef<TextInput, {
           placeholder={placeholder}
           placeholderTextColor={c.accent}
           onBlur={onBlur}
+          onFocus={onFocus}
           onChangeText={onChange}
           value={value}
           keyboardType={type === 'email' ? 'email-address' : 'default'}
           returnKeyType={returnKeyType}
           onSubmitEditing={onSubmitEditing}
           blurOnSubmit={false}
-          textContentType={type === 'password' || type === 'passwordConfirm' ? 'oneTimeCode' : type === 'email' ? 'emailAddress' : 'none'}
-          autoComplete="off"
+          textContentType={
+            type === 'password' ? 'newPassword' : 
+            type === 'passwordConfirm' ? 'password' : 
+            type === 'email' ? 'emailAddress' : 
+            'none'
+          }
+          autoComplete={
+            type === 'password' || type === 'passwordConfirm' ? 'password' : 
+            type === 'email' ? 'email' : 
+            'off'
+          }
           onLayout={() => {
             if (autoFocus) {
               // re-affirm focus to keep keyboard visible across step transitions

@@ -43,3 +43,5 @@
   - Fixed by adding `cachedUsers.length > 0` check before using cached data
   - Added comprehensive logging throughout directory fetch flow to debug future issues
   - Verified: Production DB has 16 users with `show_in_directory=true`, API queries work correctly, field exists in schema
+- **CRITICAL FIX**: Registration flow was completely broken - UnifiedOnboarding was calling `registerUser({params})` but `register()` doesn't accept parameters; it reads from `stagedUser` in the store. Fixed by calling `updateStagedUser()` first to stage the data, then calling `register()` with no parameters. This was preventing ALL new user signups.
+- Fixed password field autofill issues: Changed `textContentType` from `'oneTimeCode'` to `'newPassword'`/`'password'` and `autoComplete` from `'off'` to `'password'` so iOS properly suggests strong passwords and password managers work correctly.

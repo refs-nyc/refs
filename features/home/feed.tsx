@@ -10,8 +10,6 @@ import { Button, DismissKeyboard, Heading, Text, XStack, YStack } from '@/ui'
 import SearchBottomSheet from '@/ui/actions/SearchBottomSheet'
 import { Avatar } from '@/ui/atoms/Avatar'
 import { SimplePinataImage } from '@/ui/images/SimplePinataImage'
-import { ProfileDetailsSheet } from '@/ui/profiles/ProfileDetailsSheet'
-import BottomSheet from '@gorhom/bottom-sheet'
 import { simpleCache } from '@/features/cache/simpleCache'
 
 const win = Dimensions.get('window')
@@ -149,9 +147,7 @@ const ListItem = ({
 export const Feed = () => {
   const [items, setItems] = useState<ExpandedItem[]>([])
   const feedRefreshTrigger = useAppStore((state) => state.feedRefreshTrigger)
-  const [detailsItem, setDetailsItem] = useState<ExpandedItem | null>(null)
-  const detailsSheetRef = useRef<BottomSheet>(null)
-  const { getFeedItems, referencersBottomSheetRef, setCurrentRefId, logout } = useAppStore()
+  const { getFeedItems, referencersBottomSheetRef, setCurrentRefId, logout, detailsSheetRef, setDetailsSheetData } = useAppStore()
 
   const fetchFeedItems = async () => {
     try {
@@ -207,9 +203,11 @@ export const Feed = () => {
                     key={item.id}
                     item={item}
                     onImagePress={() => {
-                      // set the current item
-                      setDetailsItem(item)
-                      // open the details sheet
+                      setDetailsSheetData({
+                        itemId: item.id,
+                        profileUsername: item.expand!.creator.userName,
+                        openedFromFeed: true,
+                      })
                       detailsSheetRef.current?.snapToIndex(0)
                     }}
                     onTitlePress={() => {
@@ -235,20 +233,6 @@ export const Feed = () => {
       </DismissKeyboard>
       {items.length > 0 && <Ticker />}
       <SearchBottomSheet />
-      {detailsItem && (
-        <ProfileDetailsSheet
-          detailsSheetRef={detailsSheetRef}
-          profileUsername={detailsItem.expand!.creator.userName}
-          detailsItemId={detailsItem.id}
-          onChange={(index) => {
-            // if the index is -1, then the user has closed the sheet
-            if (index === -1) {
-              setDetailsItem(null)
-            }
-          }}
-          openedFromFeed={true}
-        />
-      )}
     </>
   )
 }

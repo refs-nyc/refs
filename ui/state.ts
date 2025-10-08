@@ -9,6 +9,12 @@ export const createUISlice: StateCreator<StoreSlices, [], [], UISlice> = (set, g
   addingItem: null,
   referencersBottomSheetRef: React.createRef(),
   logoutSheetRef: React.createRef<BottomSheet>(),
+  detailsSheetRef: React.createRef<BottomSheet>(),
+  detailsItemId: null,
+  detailsProfileUsername: null,
+  detailsOpenedFromFeed: false,
+  communityFormSheetRef: React.createRef<BottomSheet>(),
+  communityFormOnAdded: null,
   currentRefId: '',
   referencersContext: null,
   addRefSheetRef: React.createRef(),
@@ -47,6 +53,32 @@ export const createUISlice: StateCreator<StoreSlices, [], [], UISlice> = (set, g
     set(() => ({
       currentRefId: id,
     }))
+  },
+  setDetailsSheetData: (data: { itemId: string; profileUsername: string; openedFromFeed: boolean }) => {
+    set(() => ({
+      detailsItemId: data.itemId,
+      detailsProfileUsername: data.profileUsername,
+      detailsOpenedFromFeed: data.openedFromFeed,
+    }))
+  },
+  clearDetailsSheetData: () => {
+    set(() => ({
+      detailsItemId: null,
+      detailsProfileUsername: null,
+      detailsOpenedFromFeed: false,
+    }))
+  },
+  openCommunityFormSheet: (onAdded?: (item: any) => void) => {
+    set(() => ({
+      communityFormOnAdded: onAdded || null,
+    }))
+    get().communityFormSheetRef.current?.snapToIndex(0)
+  },
+  closeCommunityFormSheet: () => {
+    set(() => ({
+      communityFormOnAdded: null,
+    }))
+    get().communityFormSheetRef.current?.close()
   },
   setAddRefPrompt: (prompt: string) => {
     set(() => ({

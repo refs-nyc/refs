@@ -71,6 +71,18 @@ export type UISlice = {
   setReturningFromSearchNavigation: (returning: boolean) => void
   setCloseActiveBottomSheet: (closeFunction: (() => void) | null) => void
   logoutSheetRef: React.RefObject<BottomSheet>
+  // Profile Details Sheet
+  detailsSheetRef: React.RefObject<BottomSheet>
+  detailsItemId: string | null
+  detailsProfileUsername: string | null
+  detailsOpenedFromFeed: boolean
+  setDetailsSheetData: (data: { itemId: string; profileUsername: string; openedFromFeed: boolean }) => void
+  clearDetailsSheetData: () => void
+  // Community Form Sheet
+  communityFormSheetRef: React.RefObject<BottomSheet>
+  communityFormOnAdded: ((item: any) => void) | null
+  openCommunityFormSheet: (onAdded?: (item: any) => void) => void
+  closeCommunityFormSheet: () => void
   // Prompt timing control (session-level)
   hasShownInitialPromptHold: boolean
   setHasShownInitialPromptHold: (shown: boolean) => void

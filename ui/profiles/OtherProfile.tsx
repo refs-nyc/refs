@@ -10,7 +10,6 @@ import { withTiming } from 'react-native-reanimated'
 import { Grid } from '../grid/Grid'
 import { PlaceholderGrid } from '../grid/PlaceholderGrid'
 import { Heading } from '../typo/Heading'
-import { ProfileDetailsSheet } from './ProfileDetailsSheet'
 import { OtherBacklogSheet } from './sheets/OtherBacklogSheet'
 import { OtherButtonsSheet } from './sheets/OtherButtonsSheet'
 import { simpleCache } from '@/features/cache/simpleCache'
@@ -25,7 +24,7 @@ export const OtherProfile = ({ userName, prefetchedUserId }: { userName: string;
   const [backlogItems, setBacklogItems] = useState<ExpandedItem[]>([])
   const [loading, setLoading] = useState<boolean>(true)
 
-  const { user, stopEditing, getUserByUserName, otherProfileBackdropAnimatedIndex } = useAppStore()
+  const { user, stopEditing, getUserByUserName, otherProfileBackdropAnimatedIndex, detailsSheetRef, setDetailsSheetData } = useAppStore()
 
   const refreshGrid = async (userName: string, hintedUserId?: string) => {
     setLoading(true)
@@ -174,10 +173,7 @@ export const OtherProfile = ({ userName, prefetchedUserId }: { userName: string;
   }, [userName, prefetchedUserId]) // Removed isActiveTab dependency
 
   const bottomSheetRef = useRef<BottomSheet>(null)
-  const detailsSheetRef = useRef<BottomSheet>(null)
   const backlogSheetRef = useRef<BottomSheet>(null)
-
-  const [detailsItem, setDetailsItem] = useState<ExpandedItem | null>(null)
   const [avatarOverlayVisible, setAvatarOverlayVisible] = useState(false)
   const overlayOpacity = useRef(new Animated.Value(0)).current
   const overlayScale = useRef(new Animated.Value(0.85)).current
@@ -358,7 +354,11 @@ export const OtherProfile = ({ userName, prefetchedUserId }: { userName: string;
                   editingRights={false}
                   rowJustify="center"
                   onPressItem={(item) => {
-                    setDetailsItem(item!)
+                    setDetailsSheetData({
+                      itemId: item!.id,
+                      profileUsername: profile.userName,
+                      openedFromFeed: false,
+                    })
                     detailsSheetRef.current?.snapToIndex(0)
                   }}
                   isOffscreen={false} // OtherProfile is always visible when mounted
@@ -385,20 +385,6 @@ export const OtherProfile = ({ userName, prefetchedUserId }: { userName: string;
             backlogItems={backlogItems}
             profile={profile}
           />
-          {detailsItem && (
-            <ProfileDetailsSheet
-              profileUsername={profile.userName}
-              detailsItemId={detailsItem.id}
-              onChange={(index: number) => {
-                if (index === -1) {
-                  stopEditing()
-                  setDetailsItem(null)
-                }
-              }}
-              openedFromFeed={false}
-              detailsSheetRef={detailsSheetRef}
-            />
-          )}
         </>
       )}
 

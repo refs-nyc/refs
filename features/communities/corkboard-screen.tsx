@@ -2,8 +2,6 @@ import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react'
 import { View, Text, Dimensions, Pressable, FlatList, InteractionManager } from 'react-native'
 import { s, c } from '@/features/style'
 import { pocketbase } from '@/features/pocketbase'
-import BottomSheet from '@gorhom/bottom-sheet'
-import { CommunityFormSheet } from '@/ui/communities/CommunityFormSheet'
 import { useAppStore } from '@/features/stores'
 import { ensureCommunityChat, joinCommunityChat } from './communityChat'
 import type { ReferencersContext } from '@/features/stores/types'
@@ -51,6 +49,7 @@ export function EdgeCorkboardScreen() {
     referencersBottomSheetRef,
     setReferencersContext,
     setConversationPreview,
+    openCommunityFormSheet,
   } = useAppStore()
   const [communityItems, setCommunityItems] = useState<any[]>(() => communityCache.items)
   const [filteredItems, setFilteredItems] = useState<any[]>(() =>
@@ -62,7 +61,6 @@ export function EdgeCorkboardScreen() {
     () => new Map(communityCache.subscriptionCounts)
   )
   const [rowWidths, setRowWidths] = useState<Record<string, number>>({})
-  const communityFormRef = useRef<BottomSheet>(null)
   const [pendingChatSubscriptions, setPendingChatSubscriptions] = useState<
     Array<{ refId: string; title: string }>
   >([])
@@ -74,9 +72,6 @@ export function EdgeCorkboardScreen() {
   // Simple scale refs for press feedback per-item
   const scaleRefs = useRef<Record<string, any>>({}).current
   const [newlyAddedId, setNewlyAddedId] = useState<string | null>(null)
-  const openAddInterestSheet = useCallback(() => {
-    try { communityFormRef.current?.expand() } catch {}
-  }, [])
 
   useEffect(() => {
     communityCache.items = communityItems
@@ -553,85 +548,81 @@ export function EdgeCorkboardScreen() {
 
         {contentTab !== 'mine' && (
           <View style={{ position: 'absolute', top: 17, right: -8, zIndex: 6 }}>
-            <OvalJaggedAddButton onPress={openAddInterestSheet} />
+            <OvalJaggedAddButton onPress={() => {
+              openCommunityFormSheet((item) => {
+                const promptLike = {
+                  id: item.ref,
+                  ref: item.ref,
+                  image: '',
+                  text: '',
+                  url: '',
+                  list: false,
+                  backlog: false,
+                  created: item.expand?.ref?.created || item.created,
+                  updated: item.expand?.ref?.updated || item.updated,
+                  expand: { ref: { ...(item.expand?.ref || {}), image: '' } },
+                  __promptKind: 'interest',
+                  title: (item as any).expand?.ref?.title || (item as any).title || '',
+                } as any
+                setCommunityItems((prev) => {
+                  if (prev.some((x) => x.id === promptLike.id)) return prev
+                  const next = [promptLike, ...prev]
+                  next.sort((a, b) => (b.created || '').localeCompare(a.created || ''))
+                  setNewlyAddedId(promptLike.id)
+                  setFilteredItems(computeFilteredItems(contentTab, subscriptions, next))
+                  return next
+                })
+
+                // Auto-subscribe the creator to their new interest
+                try {
+                  if (user?.id) {
+                    const key = `community_subs:${user.id}:edge-patagonia`
+                    setSubscriptions((prev) => {
+                      const updated = new Map(prev)
+                      updated.set(promptLike.ref, true)
+                      // persist locally
+                      try { AsyncStorage.setItem(key, JSON.stringify(Array.from(updated.keys()))) } catch {}
+                      // best-effort remote
+                      try {
+                        const sb: any = (supabase as any).client
+                        if (sb) {
+                          sb.from('community_subscriptions').upsert({ user_id: user.id, ref_id: promptLike.ref, community: 'edge-patagonia' }, { onConflict: 'user_id,ref_id' })
+                        }
+                      } catch {}
+                      return updated
+                    })
+
+                    setSubscriptionCounts((prevCounts) => {
+                      const next = new Map(prevCounts)
+                      next.set(promptLike.ref, (next.get(promptLike.ref) || 0) + 1)
+                      return next
+                    })
+
+                    ;(async () => {
+                      try {
+                        const { conversationId } = await ensureCommunityChat(promptLike.ref, {
+                          title: promptLike.expand?.ref?.title || promptLike.title || 'Community chat',
+                        })
+                        await joinCommunityChat(conversationId, user.id)
+                        router.push(`/messages/${conversationId}`)
+                      } catch (error) {
+                        console.warn('Failed to open chat after creating interest', error)
+                      }
+                    })()
+                  }
+                } catch {}
+
+                // Notify directories screen to add a chip immediately
+                try {
+                  const event = new CustomEvent('refs:new-interest', { detail: { id: item.ref, title: item.expand?.ref?.title || '', created: item.created } })
+                  // @ts-ignore
+                  globalThis.dispatchEvent?.(event)
+                } catch {}
+              })
+            }} />
           </View>
         )}
       </View>
-
-      {/* Add sheet */}
-      <CommunityFormSheet
-        bottomSheetRef={communityFormRef}
-        onAdded={(item) => {
-          const promptLike = {
-            id: item.ref,
-            ref: item.ref,
-            image: '',
-            text: '',
-            url: '',
-            list: false,
-            backlog: false,
-            created: item.expand?.ref?.created || item.created,
-            updated: item.expand?.ref?.updated || item.updated,
-            expand: { ref: { ...(item.expand?.ref || {}), image: '' } },
-            __promptKind: 'interest',
-            title: (item as any).expand?.ref?.title || (item as any).title || '',
-          } as any
-          setCommunityItems((prev) => {
-            if (prev.some((x) => x.id === promptLike.id)) return prev
-            const next = [promptLike, ...prev]
-            next.sort((a, b) => (b.created || '').localeCompare(a.created || ''))
-            setNewlyAddedId(promptLike.id)
-            setFilteredItems(computeFilteredItems(contentTab, subscriptions, next))
-            return next
-          })
-
-          // Auto-subscribe the creator to their new interest
-          try {
-            if (user?.id) {
-              const key = `community_subs:${user.id}:edge-patagonia`
-              setSubscriptions((prev) => {
-                const updated = new Map(prev)
-                updated.set(promptLike.ref, true)
-                // persist locally
-                try { AsyncStorage.setItem(key, JSON.stringify(Array.from(updated.keys()))) } catch {}
-                // best-effort remote
-                try {
-                  const sb: any = (supabase as any).client
-                  if (sb) {
-                    sb.from('community_subscriptions').upsert({ user_id: user.id, ref_id: promptLike.ref, community: 'edge-patagonia' }, { onConflict: 'user_id,ref_id' })
-                  }
-                } catch {}
-                return updated
-              })
-
-              setSubscriptionCounts((prevCounts) => {
-                const next = new Map(prevCounts)
-                next.set(promptLike.ref, (next.get(promptLike.ref) || 0) + 1)
-                return next
-              })
-
-              ;(async () => {
-                try {
-                  const { conversationId } = await ensureCommunityChat(promptLike.ref, {
-                    title: promptLike.expand?.ref?.title || promptLike.title || 'Community chat',
-                  })
-                  await joinCommunityChat(conversationId, user.id)
-                  router.push(`/messages/${conversationId}`)
-                } catch (error) {
-                  console.warn('Failed to open chat after creating interest', error)
-                }
-              })()
-            }
-          } catch {}
-
-          // Notify directories screen to add a chip immediately
-          try {
-            const event = new CustomEvent('refs:new-interest', { detail: { id: item.ref, title: item.expand?.ref?.title || '', created: item.created } })
-            // @ts-ignore
-            globalThis.dispatchEvent?.(event)
-          } catch {}
-        }}
-      />
 
       {/* Added pill notification */}
       {justAddedTitle && (

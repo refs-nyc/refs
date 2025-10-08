@@ -46,6 +46,8 @@ import Saves from '@/features/saves/saves-sheet'
 import Referencers from '@/ui/profiles/sheets/ReferencersSheet'
 import { AddRefSheet } from '@/ui/profiles/sheets/AddRefSheet'
 import { NewRefSheet } from '@/ui/profiles/sheets/NewRefSheet'
+import { ProfileDetailsSheet } from '@/ui/profiles/ProfileDetailsSheet'
+import { CommunityFormSheet } from '@/ui/communities/CommunityFormSheet'
 
 // TODO: this error keeps getting thrown whenever the app fast reloads in development
 // I suspect that pocketbase subscribes to updates and then doesn't unsubscribe when the app is being reloaded
@@ -215,6 +217,10 @@ function RootLayoutNav() {
       {/* new ref sheet */}
       <NewRefSheet bottomSheetRef={newRefSheetRef} />
       <LogoutSheet bottomSheetRef={logoutSheetRef} />
+      {/* profile details sheet (media carousel) */}
+      <ProfileDetailsSheet />
+      {/* community form sheet */}
+      <CommunityFormSheet />
       <DirectMessageComposer />
       <GroupMessageComposer />
     </ThemeProvider>

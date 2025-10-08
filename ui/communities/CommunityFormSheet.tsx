@@ -9,15 +9,16 @@ import { TapGestureHandler } from 'react-native-gesture-handler'
 
 export type CommunityKind = 'interest' | 'event'
 
-export function CommunityFormSheet({
-  bottomSheetRef,
-  onAdded,
-}: {
-  bottomSheetRef: React.RefObject<BottomSheet>
-  onAdded?: (item: ExpandedItem) => void
-}) {
-  const { createRef, createItem } = useAppStore()
-  const { detailsBackdropAnimatedIndex, registerBackdropPress, unregisterBackdropPress } = useAppStore()
+export function CommunityFormSheet() {
+  const { 
+    createRef, 
+    createItem,
+    communityFormSheetRef,
+    communityFormOnAdded,
+    closeCommunityFormSheet,
+    registerBackdropPress, 
+    unregisterBackdropPress 
+  } = useAppStore()
 
   const [isOpen, setIsOpen] = useState(false)
   // Simplify: interest-only for now
@@ -32,7 +33,7 @@ export function CommunityFormSheet({
   const inputRef = useRef<any>(null)
 
   // Standardized snap like other sheets (fixed percent, no dynamic resize)
-  const snapPoints = useMemo(() => ['85%'], [])
+  const snapPoints = useMemo(() => ['75%'], [])
 
   const headerText = 'Type anything'
   const subtitleText = 'Whatever you want to connect with people over.'
@@ -45,7 +46,7 @@ export function CommunityFormSheet({
     setSubmitting(false)
     // Register global backdrop press to close this sheet (enables nav bar tap-to-dismiss)
     try {
-      backdropKeyRef.current = registerBackdropPress(() => bottomSheetRef.current?.close())
+      backdropKeyRef.current = registerBackdropPress(() => communityFormSheetRef.current?.close())
     } catch {}
     return () => {
       if (backdropKeyRef.current) {
@@ -78,11 +79,11 @@ export function CommunityFormSheet({
         updated: (newRef as any).updated,
         expand: { ref: newRef },
       }
-      onAdded?.(syntheticItem)
+      communityFormOnAdded?.(syntheticItem)
       setInterestText('')
       setText('')
       setKind('interest')
-      bottomSheetRef.current?.close()
+      closeCommunityFormSheet()
       setIsOpen(false)
     } catch (e) {
       setSubmitting(false)
@@ -93,7 +94,7 @@ export function CommunityFormSheet({
 
   return (
     <BottomSheet
-      ref={bottomSheetRef}
+      ref={communityFormSheetRef}
       index={-1}
       snapPoints={snapPoints}
       enablePanDownToClose={true}
@@ -109,12 +110,6 @@ export function CommunityFormSheet({
             requestAnimationFrame(() => inputRef.current?.focus())
           }
         } else {
-          // Force-hide global backdrop immediately to avoid post-close touch delay
-          try {
-            if (detailsBackdropAnimatedIndex) {
-              ;(detailsBackdropAnimatedIndex as any).value = -1
-            }
-          } catch {}
           // Unregister backdrop handler on close
           if (backdropKeyRef.current) {
             try { unregisterBackdropPress(backdropKeyRef.current) } catch {}
@@ -125,7 +120,6 @@ export function CommunityFormSheet({
         }
       }}
       onAnimate={undefined}
-      animatedIndex={detailsBackdropAnimatedIndex}
       handleComponent={null}
       backdropComponent={(p) => (
         <BottomSheetBackdrop {...p} disappearsOnIndex={-1} appearsOnIndex={0} pressBehavior={'close'} />

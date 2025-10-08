@@ -17,7 +17,6 @@ import { Button } from '../buttons/Button'
 import Ionicons from '@expo/vector-icons/Ionicons'
 
 import { Heading } from '../typo/Heading'
-import { ProfileDetailsSheet } from './ProfileDetailsSheet'
 import { MyBacklogSheet } from './sheets/MyBacklogSheet'
 import { RemoveRefSheet } from './sheets/RemoveRefSheet'
 import SearchModeBottomSheet from './sheets/SearchModeBottomSheet'
@@ -150,6 +149,8 @@ export const MyProfile = ({ userName }: { userName: string }) => {
     registerBackdropPress,
     unregisterBackdropPress,
     updateUser,
+    detailsSheetRef,
+    setDetailsSheetData,
   } = useAppStore()
   const ownProfile = user?.userName === userName
   const effectiveProfile = profile ?? (ownProfile ? (user ?? undefined) : undefined)
@@ -549,7 +550,12 @@ export const MyProfile = ({ userName }: { userName: string }) => {
         screenFocused={focusReady && !loading}
       shouldAnimateStartup={justOnboarded}
       onPressItem={(item) => {
-        setDetailsItem(item!)
+        if (!effectiveProfile) return
+        setDetailsSheetData({
+          itemId: item!.id,
+          profileUsername: effectiveProfile.userName,
+          openedFromFeed: false,
+        })
         detailsSheetRef.current?.snapToIndex(0)
       }}
       onLongPressItem={() => {
@@ -996,10 +1002,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
   }, [setSearchMode, setSearchResultsSheetOpen])
 
   const bottomSheetRef = useRef<BottomSheet>(null)
-  const detailsSheetRef = useRef<BottomSheet>(null)
   const removeRefSheetRef = useRef<BottomSheet>(null)
-
-  const [detailsItem, setDetailsItem] = useState<ExpandedItem | null>(null)
 
   // timeout used to stop editing the profile after 10 seconds
   let timeout: ReturnType<typeof setTimeout>
@@ -1264,21 +1267,6 @@ export const MyProfile = ({ userName }: { userName: string }) => {
               handleRemoveFromProfile={handleRemoveFromProfile}
               item={removingItem}
             />
-            {detailsItem && (
-              <ProfileDetailsSheet
-                profileUsername={effectiveProfile.userName}
-                detailsItemId={detailsItem.id}
-                onChange={(index: number) => {
-                  if (index === -1) {
-                    // Reset editing mode when carousel closes
-                    stopEditing()
-                    setDetailsItem(null)
-                  }
-                }}
-                openedFromFeed={false}
-                detailsSheetRef={detailsSheetRef}
-              />
-            )}
 
             {/* Search Results Sheet - render after FloatingJaggedButton so it appears above */}
             <SearchResultsSheet

@@ -34,24 +34,16 @@ const ConditionalGridLines = React.memo(() => {
 })
 ConditionalGridLines.displayName = 'ConditionalGridLines'
 
-export const ProfileDetailsSheet = ({
-  onChange,
-  detailsSheetRef,
-  profileUsername,
-  detailsItemId,
-  openedFromFeed,
-}: {
-  profileUsername: string
-  detailsItemId: string
-  onChange: (index: number) => void
-  detailsSheetRef: React.RefObject<BottomSheet>
-  openedFromFeed: boolean
-}) => {
+export const ProfileDetailsSheet = () => {
   const [profile, setProfile] = useState<Profile | null>(null)
   const [gridItems, setGridItems] = useState<ExpandedItem[]>([])
   const {
-
     user,
+    detailsSheetRef,
+    detailsItemId,
+    detailsProfileUsername,
+    detailsOpenedFromFeed,
+    clearDetailsSheetData,
     detailsBackdropAnimatedIndex,
     registerBackdropPress,
     unregisterBackdropPress,
@@ -61,19 +53,24 @@ export const ProfileDetailsSheet = ({
   // Use preloaded data for smooth animation, fallback to fetching if needed
   useEffect(() => {
     const initializeData = async () => {
+      if (!detailsProfileUsername) {
+        setProfile(null)
+        setGridItems([])
+        return
+      }
       // Fetch data
-      const profile = await getUserByUserName(profileUsername)
+      const profile = await getUserByUserName(detailsProfileUsername)
       const gridItems = await getProfileItems(profile.userName)
       setProfile(profile)
       setGridItems(gridItems)
     }
     initializeData()
-  }, [profileUsername, user?.userName])
+  }, [detailsProfileUsername, user?.userName])
 
   // if the current user is the item creator, then they have editing rights
   const editingRights = profile?.id === user?.id
 
-  const snapPoints = ['88%', '100%']
+  const snapPoints = ['70%', '100%']
 
   useEffect(() => {
     const key = registerBackdropPress(() => {
@@ -95,6 +92,12 @@ export const ProfileDetailsSheet = ({
     gridItems.findIndex((itm) => itm.id === detailsItemId)
   )
 
+  const handleChange = useCallback((index: number) => {
+    if (index === -1) {
+      clearDetailsSheetData()
+    }
+  }, [clearDetailsSheetData])
+
   return (
     <BottomSheet
       ref={detailsSheetRef}
@@ -104,23 +107,22 @@ export const ProfileDetailsSheet = ({
         padding: 0,
         overflow: 'hidden',
       }}
-      animatedIndex={detailsBackdropAnimatedIndex}
       backdropComponent={renderBackdrop}
       handleComponent={null}
       enableDynamicSizing={false}
       snapPoints={snapPoints}
       enablePanDownToClose={true}
       keyboardBehavior="interactive"
-      onChange={onChange}
+      onChange={handleChange}
       // animationDuration={300}
       enableOverDrag={false}
     >
       <ConditionalGridLines />
-      {profile && gridItems.length > 0 && (
+      {profile && gridItems.length > 0 && detailsItemId && (
         <ProfileDetailsProvider
           editingRights={editingRights}
           initialIndex={initialIndex}
-          openedFromFeed={openedFromFeed}
+          openedFromFeed={detailsOpenedFromFeed}
         >
           <Details data={gridItems} />
         </ProfileDetailsProvider>

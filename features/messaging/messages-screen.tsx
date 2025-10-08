@@ -7,22 +7,30 @@ import { AvatarPicker } from '@/ui/inputs/AvatarPicker'
 import MessageBubble from '@/ui/messaging/MessageBubble'
 import MessageInput from '@/ui/messaging/MessageInput'
 import { Link, router } from 'expo-router'
-import { useEffect, useMemo, useRef, useState, lazy, Suspense } from 'react'
+import { useEffect, useMemo, useRef, useState, lazy, Suspense, useCallback } from 'react'
 import {
   FlatList,
   Keyboard,
   Platform,
   Pressable,
   Text,
-  useWindowDimensions,
   View,
 } from 'react-native'
 import Ionicons from '@expo/vector-icons/Ionicons'
 const EmojiPicker = lazy(() => import('rn-emoji-keyboard'))
 import { randomColors } from './utils'
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
+import Animated, { useSharedValue, useAnimatedStyle, withTiming, Easing, runOnJS } from 'react-native-reanimated'
 
-export function MessagesScreen({ conversationId }: { conversationId: string }) {
+export function MessagesScreen({
+  conversationId,
+  onClose,
+  registerCloseHandler,
+}: {
+  conversationId: string
+  onClose?: () => void
+  registerCloseHandler?: (fn: (() => void) | null) => void
+}) {
   const {
     user,
     conversations,
@@ -39,6 +47,7 @@ export function MessagesScreen({ conversationId }: { conversationId: string }) {
     loadConversationMessages,
     conversationHydration,
     setProfileNavIntent,
+    hydrateConversation,
   } = useAppStore()
 
   const flatListRef = useRef<FlatList<Message>>(null)
@@ -51,8 +60,16 @@ export function MessagesScreen({ conversationId }: { conversationId: string }) {
   const [keyboardVisible, setKeyboardVisible] = useState(false)
   const [keyboardHeight, setKeyboardHeight] = useState(0)
 
-  const windowHeight = useWindowDimensions().height
   const insets = useSafeAreaInsets()
+
+  const screenOpacity = useSharedValue(0)
+  const isExitingRef = useRef(false)
+
+  const animatedContainerStyle = useAnimatedStyle(() => ({ opacity: screenOpacity.value }))
+
+  useEffect(() => {
+    screenOpacity.value = withTiming(1, { duration: 180, easing: Easing.out(Easing.quad) })
+  }, [screenOpacity])
 
   const headerGap = 5
   const headerPaddingBottom = s.$08 as number
@@ -66,7 +83,10 @@ export function MessagesScreen({ conversationId }: { conversationId: string }) {
   useEffect(() => {
     if (!user) return
     if (!conversation) {
-      router.replace('/messages')
+      hydrateConversation(conversationId).catch((error) => {
+        console.error('hydrateConversation failed', error)
+        router.replace('/messages')
+      })
       return
     }
     if (!membershipRecords.length) return
@@ -74,7 +94,7 @@ export function MessagesScreen({ conversationId }: { conversationId: string }) {
     if (!isMember) {
       router.replace('/messages')
     }
-  }, [conversation, membershipRecords, user?.id])
+  }, [conversation, membershipRecords.length, user?.id, conversationId, hydrateConversation])
 
   const members = useMemo(() => {
     if (!user) return membershipRecords
@@ -226,12 +246,39 @@ export function MessagesScreen({ conversationId }: { conversationId: string }) {
 
   const firstMemberUser = members[0]?.expand?.user
 
-  const handleBackPress = () => {
+  const handleCloseComplete = useCallback(() => {
+    if (onClose) {
+      onClose()
+      return
+    }
     router.replace('/messages')
+  }, [onClose])
+
+  const startExitTransition = useCallback(() => {
+    if (isExitingRef.current) return
+    isExitingRef.current = true
+    screenOpacity.value = withTiming(
+      0,
+      { duration: 160, easing: Easing.out(Easing.quad) },
+      (finished) => {
+        if (finished) {
+          runOnJS(handleCloseComplete)()
+        }
+      }
+    )
+  }, [handleCloseComplete, screenOpacity])
+
+  useEffect(() => {
+    registerCloseHandler?.(startExitTransition)
+    return () => registerCloseHandler?.(null)
+  }, [registerCloseHandler, startExitTransition])
+
+  const handleBackPress = () => {
+    startExitTransition()
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: c.surface }}>
+    <Animated.View style={[{ flex: 1, backgroundColor: c.surface }, animatedContainerStyle]}>
       <SafeAreaView
         edges={['top']}
         style={{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 2 }}
@@ -252,7 +299,7 @@ export function MessagesScreen({ conversationId }: { conversationId: string }) {
           <View style={{ flex: 1, paddingHorizontal: s.$075 }}>
             <Text
               style={{
-                color: c.prompt,
+                color: c.newDark,
                 fontSize: (s.$09 as number) + 4,
                 fontFamily: 'System',
                 fontWeight: '700',
@@ -356,6 +403,6 @@ export function MessagesScreen({ conversationId }: { conversationId: string }) {
           />
         </Suspense>
       )}
-    </View>
+    </Animated.View>
   )
 }

@@ -72,7 +72,7 @@ export const NavigationBackdrop = () => {
           bottom: 0,
           right: 0,
           left: 0,
-          backgroundColor: 'black',
+          backgroundColor: '#1a1a18', // Warm dark grey to match surface tone
         },
         animatedStyle,
       ]}

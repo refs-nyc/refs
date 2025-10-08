@@ -6,7 +6,8 @@ import { s, c } from '@/features/style'
 import BottomSheet, { BottomSheetBackdrop, BottomSheetView } from '@gorhom/bottom-sheet'
 import { useShareIntentContext } from 'expo-share-intent'
 import { useEffect, useRef, useState, useMemo, useCallback } from 'react'
-import { ScrollView, View, Text, Pressable, Keyboard } from 'react-native'
+import { ScrollView, View, Text, Pressable, Keyboard, ActivityIndicator } from 'react-native'
+import { Image } from 'expo-image'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import * as ImagePicker from 'expo-image-picker'
 import FloatingJaggedButton from '../buttons/FloatingJaggedButton'
@@ -26,6 +27,8 @@ import Animated, { FadeIn, FadeOut, Easing } from 'react-native-reanimated'
 import { Animated as RNAnimated, Easing as RNEasing } from 'react-native'
 import { Collections } from '@/features/pocketbase/pocketbase-types'
 import { simpleCache } from '@/features/cache/simpleCache'
+import { pinataUpload } from '@/features/pinata'
+import { Picker } from '@/ui/inputs/Picker'
 
 const profileMemoryCache = new Map<string, {
   profile: Profile
@@ -87,6 +90,8 @@ const createPromptBatch = (size = PROMPT_BATCH_SIZE, excludeTexts?: Set<string>)
 
 const PROMPT_CARD_BACKGROUNDS = [c.white, c.surface, c.surface2, c.accent2]
 const PROMPT_CARD_ROTATIONS = [-2.25, -0.5, 1, 2.75]
+const AVATAR_SIZE = 61.2
+const AVATAR_PLACEHOLDER_BORDER = '#B0B0B0'
 
 export const MyProfile = ({ userName }: { userName: string }) => {
   const { hasShareIntent } = useShareIntentContext()
@@ -101,6 +106,11 @@ export const MyProfile = ({ userName }: { userName: string }) => {
   const [promptsReady, setPromptsReady] = useState(Boolean(cachedEntry?.gridItems?.length))
   const [focusReady, setFocusReady] = useState(Boolean(cachedEntry))
   const [removingItem, setRemovingItem] = useState<ExpandedItem | null>(null)
+  const [optimisticAvatarUri, setOptimisticAvatarUri] = useState<string | null>(null)
+  const [avatarUploading, setAvatarUploading] = useState(false)
+  const [showAvatarPicker, setShowAvatarPicker] = useState(false)
+  const avatarScale = useRef(new RNAnimated.Value(1)).current
+  const avatarSwapOpacity = useRef(new RNAnimated.Value(1)).current
 
   // Get optimistic items from store
   const { optimisticItems, user } = useAppStore()
@@ -139,10 +149,23 @@ export const MyProfile = ({ userName }: { userName: string }) => {
     detailsBackdropAnimatedIndex,
     registerBackdropPress,
     unregisterBackdropPress,
+    updateUser,
   } = useAppStore()
   const ownProfile = user?.userName === userName
   const effectiveProfile = profile ?? (ownProfile ? (user ?? undefined) : undefined)
   const hasProfile = Boolean(effectiveProfile)
+  const displayName = useMemo(() => {
+    if (!effectiveProfile) return userName
+    const first = (effectiveProfile.firstName || '').trim()
+    const last = (effectiveProfile.lastName || '').trim()
+    const combined = `${first} ${last}`.trim()
+    if (combined) return combined
+    const fallback = (effectiveProfile.name || '').trim()
+    return fallback || effectiveProfile.userName || userName
+  }, [effectiveProfile, userName])
+  const locationLabel = (effectiveProfile?.location || '').trim()
+  const remoteAvatar = effectiveProfile?.image || (effectiveProfile as any)?.avatar_url || ''
+  const avatarUri = optimisticAvatarUri ?? remoteAvatar ?? ''
 
   // Combine grid items with optimistic items for display
   const displayGridItems = useMemo(() => {
@@ -235,10 +258,6 @@ export const MyProfile = ({ userName }: { userName: string }) => {
     }
   }, [optimisticItems.size])
 
-  const [promptTextIndex, setPromptTextIndex] = useState(0)
-  const [promptFadeKey, setPromptFadeKey] = useState(0)
-  const [showPrompt, setShowPrompt] = useState(false)
-  const [startupAnimationDone, setStartupAnimationDone] = useState(false)
   const [newlyAddedItemId, setNewlyAddedItemId] = useState<string | null>(null)
   const [promptSuggestions, setPromptSuggestions] = useState<PromptSuggestion[]>(() => createPromptBatch())
   const GRID_ROWS = 4
@@ -247,59 +266,152 @@ export const MyProfile = ({ userName }: { userName: string }) => {
   const GRID_HEIGHT = GRID_ROWS * DEFAULT_TILE_SIZE + (GRID_ROWS - 1) * GRID_ROW_GAP
   const GRID_CAPACITY = GRID_ROWS * GRID_COLUMNS
 
+  // Avatar interaction handlers - must be defined before headerContent
+  const bounceAvatar = useCallback(() => {
+    RNAnimated.sequence([
+      RNAnimated.spring(avatarScale, {
+        toValue: 0.9,
+        damping: 14,
+        stiffness: 180,
+        useNativeDriver: true,
+      }),
+      RNAnimated.spring(avatarScale, {
+        toValue: 1,
+        damping: 14,
+        stiffness: 220,
+        useNativeDriver: true,
+      }),
+    ]).start()
+  }, [avatarScale])
+
+  const handleAvatarPress = useCallback(() => {
+    console.log('🎯 Avatar pressed!', { ownProfile, avatarUploading })
+    if (!ownProfile || avatarUploading) {
+      console.log('⚠️ Avatar press blocked:', { ownProfile, avatarUploading })
+      return
+    }
+    bounceAvatar()
+    console.log('✅ Opening avatar picker')
+    setShowAvatarPicker(true)
+  }, [ownProfile, avatarUploading, bounceAvatar])
+
+  const handleAvatarPickerCancel = useCallback(() => {
+    setShowAvatarPicker(false)
+    setAvatarUploading(false)
+  }, [])
+
   const headerContent = hasProfile ? (
-    searchMode || isSearchResultsSheetOpen ? (
-      <Text
-        style={{
-          color: c.prompt,
-          fontSize: s.$09,
-          fontFamily: 'System',
-          fontWeight: '400',
-          textAlign: 'center',
-          lineHeight: s.$1half,
-        }}
-      >
-        What did you get into today?
-      </Text>
-    ) : gridItems.length >= 12 ? (
-      <Text
-        style={{
-          color: c.prompt,
-          fontSize: s.$09,
-          fontFamily: 'System',
-          fontWeight: '400',
-          textAlign: 'center',
-          lineHeight: s.$1half,
-        }}
-      >
-        What did you get into today?
-      </Text>
-    ) : (
-      <Animated.Text
-        entering={FadeIn.duration(800)}
-        exiting={FadeOut.duration(800)}
-        key={`prompt-text-${promptTextIndex}-${promptFadeKey}`}
-        style={{
-          color: c.prompt,
-          fontSize: s.$09,
-          fontFamily: 'System',
-          fontWeight: '400',
-          textAlign: 'center',
-          lineHeight: s.$1half,
-          minWidth: 280,
-          minHeight: s.$1half,
-        }}
-      >
-        {showPrompt
-          ? promptTextIndex === 0
-            ? 'these prompts will disappear after you add'
-            : '(no one will know you used them)'
-          : ''}
-      </Animated.Text>
-    )
-  ) : (
-    null
-  )
+    <View style={{ width: '100%', paddingHorizontal: 0 }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 18 }}>
+        <View style={{ flex: 1 }}>
+          <Text
+            style={{
+              color: '#030303',
+              fontSize: (s.$09 as number) + 4,
+              fontFamily: 'System',
+              fontWeight: '700',
+              lineHeight: s.$1half,
+            }}
+          >
+            {displayName}
+          </Text>
+          {locationLabel ? (
+            <Text
+              style={{
+                color: c.prompt,
+                fontSize: 13,
+                fontFamily: 'Inter',
+                fontWeight: '500',
+                lineHeight: s.$1half,
+              }}
+            >
+              {locationLabel}
+            </Text>
+          ) : null}
+        </View>
+        {(() => {
+          const outerRingSize = AVATAR_SIZE * 1.1
+          const innerRingSize = AVATAR_SIZE
+          const container = (
+            <RNAnimated.View style={{ transform: [{ scale: avatarScale }], opacity: avatarSwapOpacity }}>
+                <View
+                  style={{
+                    width: outerRingSize,
+                    height: outerRingSize,
+                    borderRadius: outerRingSize / 2,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backgroundColor: c.surface,
+                    borderWidth: 2.5,
+                    borderColor: '#B0B0B0',
+                  }}
+                >
+                  <View
+                    style={{
+                      width: innerRingSize,
+                      height: innerRingSize,
+                      borderRadius: innerRingSize / 2,
+                      borderWidth: 2.5,
+                      borderColor: avatarUri ? c.surface : '#B0B0B0',
+                      overflow: 'hidden',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      backgroundColor: c.surface2,
+                      borderStyle: avatarUri ? 'solid' : 'dashed',
+                  }}
+                >
+                  {avatarUri ? (
+                    <Image
+                      source={avatarUri}
+                      style={{ width: '100%', height: '100%' }}
+                      contentFit="cover"
+                      transition={150}
+                    />
+                  ) : (
+                    <Text style={{ color: c.prompt, fontSize: 28, fontWeight: '600' }}>+</Text>
+                  )}
+                  {avatarUri && avatarUploading && (
+                    <View
+                      style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        backgroundColor: 'rgba(242,238,230,0.55)',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      <ActivityIndicator size="small" color={c.olive} />
+                    </View>
+                  )}
+                </View>
+              </View>
+            </RNAnimated.View>
+          )
+
+          const avatarNode = ownProfile ? (
+            <Pressable
+              onPressIn={() => {
+                if (avatarUploading) return
+                bounceAvatar()
+              }}
+              onPress={handleAvatarPress}
+              hitSlop={12}
+              disabled={avatarUploading}
+            >
+              {container}
+            </Pressable>
+          ) : (
+            container
+          )
+
+          return <View style={{ paddingRight: 6 }}>{avatarNode}</View>
+        })()}
+      </View>
+    </View>
+  ) : null
 
   const showGrid = hasProfile
   const promptDisplayReady =
@@ -319,6 +431,77 @@ export const MyProfile = ({ userName }: { userName: string }) => {
   const handleShufflePromptSuggestions = useCallback(() => {
     setPromptSuggestions(createPromptBatch())
   }, [])
+
+  const handleAvatarSelection = useCallback(
+    (asset: ImagePicker.ImagePickerAsset) => {
+      if (!asset?.uri) {
+        setShowAvatarPicker(false)
+        return
+      }
+
+      const previousAvatar = avatarUri || null
+
+      setShowAvatarPicker(false)
+      setOptimisticAvatarUri(asset.uri)
+      avatarSwapOpacity.setValue(0.6)
+      RNAnimated.timing(avatarSwapOpacity, {
+        toValue: 1,
+        duration: 220,
+        easing: RNEasing.out(RNEasing.quad),
+        useNativeDriver: true,
+      }).start()
+      setAvatarUploading(true)
+
+      ;(async () => {
+        try {
+          const uploadedUrl = await pinataUpload(asset, { prefix: 'avatars' })
+          const updatedRecord = await updateUser({ image: uploadedUrl, avatar_url: uploadedUrl })
+
+          useAppStore.setState((state) => ({
+            user:
+              state.user && state.user.id === updatedRecord.id
+                ? { ...state.user, image: uploadedUrl, avatar_url: uploadedUrl }
+                : state.user,
+          }))
+
+          setProfile((prev) => (prev ? { ...prev, image: uploadedUrl, avatar_url: uploadedUrl } : updatedRecord))
+          setOptimisticAvatarUri(uploadedUrl)
+
+          const cachedEntry = profileMemoryCache.get(userName)
+          profileMemoryCache.set(userName, {
+            profile: {
+              ...(cachedEntry?.profile ?? updatedRecord),
+              image: uploadedUrl,
+              avatar_url: uploadedUrl,
+            } as Profile,
+            gridItems: cachedEntry?.gridItems ?? gridItems,
+            backlogItems: cachedEntry?.backlogItems ?? backlogItems,
+            timestamp: Date.now(),
+          })
+
+          const userId = updatedRecord.id
+          if (userId) {
+            void simpleCache.set('profile', updatedRecord, userId).catch((error) => {
+              console.warn('Profile cache update failed:', error)
+            })
+          }
+        } catch (error) {
+          console.error('Failed to update avatar:', error)
+          setOptimisticAvatarUri(previousAvatar || null)
+        } finally {
+          setAvatarUploading(false)
+        }
+      })()
+    },
+    [
+      avatarUri,
+      avatarSwapOpacity,
+      updateUser,
+      userName,
+      gridItems,
+      backlogItems,
+    ]
+  )
 
   const hasAnimatedBefore = gridAnimationHistory.has(userName)
   const gridFade = useRef(new RNAnimated.Value(hasAnimatedBefore ? 1 : 0)).current
@@ -361,50 +544,50 @@ export const MyProfile = ({ userName }: { userName: string }) => {
         transform: [{ scale: gridScale }],
       }}
     >
-      <Grid
-        editingRights={true}
+    <Grid
+      editingRights={true}
         screenFocused={focusReady && !loading}
-        shouldAnimateStartup={justOnboarded}
-        onStartupAnimationComplete={() => setStartupAnimationDone(true)}
-        onPressItem={(item) => {
-          setDetailsItem(item!)
-          detailsSheetRef.current?.snapToIndex(0)
-        }}
-        onLongPressItem={() => {
-          clearTimeout(timeout)
-          timeout = setTimeout(() => {
-            stopEditProfile()
-          }, 10000)
-          startEditProfile()
-        }}
-        onRemoveItem={(item) => {
-          setRemovingItem(item)
-          removeRefSheetRef.current?.expand()
-        }}
-        onAddItem={(prompt?: string) => {
+      shouldAnimateStartup={justOnboarded}
+      onPressItem={(item) => {
+        setDetailsItem(item!)
+        detailsSheetRef.current?.snapToIndex(0)
+      }}
+      onLongPressItem={() => {
+        clearTimeout(timeout)
+        timeout = setTimeout(() => {
+          stopEditProfile()
+        }, 10000)
+        startEditProfile()
+      }}
+      onRemoveItem={(item) => {
+        setRemovingItem(item)
+        removeRefSheetRef.current?.expand()
+      }}
+      onAddItem={(prompt?: string) => {
+        setAddingNewRefTo('grid')
+        if (prompt) useAppStore.getState().setAddRefPrompt(prompt)
+        newRefSheetRef.current?.snapToIndex(1)
+      }}
+      onAddItemWithPrompt={(prompt: string, photoPath?: boolean) => {
+        if (photoPath) {
+          triggerDirectPhotoPicker(prompt)
+        } else {
           setAddingNewRefTo('grid')
-          if (prompt) useAppStore.getState().setAddRefPrompt(prompt)
+          useAppStore.getState().setAddRefPrompt(prompt)
           newRefSheetRef.current?.snapToIndex(1)
-        }}
-        onAddItemWithPrompt={(prompt: string, photoPath?: boolean) => {
-          if (photoPath) {
-            triggerDirectPhotoPicker(prompt)
-          } else {
-            setAddingNewRefTo('grid')
-            useAppStore.getState().setAddRefPrompt(prompt)
-            newRefSheetRef.current?.snapToIndex(1)
-          }
-        }}
+        }
+      }}
         columns={GRID_COLUMNS}
-        items={displayGridItems}
+      items={displayGridItems}
         rows={GRID_ROWS}
-        rowGap={(s.$075 as number) + 5}
-        searchMode={searchMode}
-        selectedRefs={selectedRefs}
-        setSelectedRefs={setSelectedRefs}
-        newlyAddedItemId={newlyAddedItemId}
+      rowGap={(s.$075 as number) + 5}
+      searchMode={searchMode}
+      selectedRefs={selectedRefs}
+      setSelectedRefs={setSelectedRefs}
+      newlyAddedItemId={newlyAddedItemId}
         showPrompts={allowPromptPlaceholders}
-      />
+        rowJustify="center"
+    />
     </RNAnimated.View>
   ) : null
 
@@ -608,14 +791,10 @@ export const MyProfile = ({ userName }: { userName: string }) => {
     const fetchFreshData = async () => {
       try {
         const profileRecord = await getUserByUserName(userName)
-        const [gridItemsRecord, backlogItemsRecord] = await Promise.all([
-          getProfileItems(userName),
-          getBacklogItems(userName),
-        ])
+        const gridItemsRecord = await getProfileItems(userName)
 
         setProfile(profileRecord)
         setGridItems(gridItemsRecord)
-        setBacklogItems(backlogItemsRecord as ExpandedItem[])
         setLoading(false)
         setPromptsReady(true)
         useAppStore.getState().setGridItemCount(gridItemsRecord.length)
@@ -623,26 +802,40 @@ export const MyProfile = ({ userName }: { userName: string }) => {
         profileMemoryCache.set(userName, {
           profile: profileRecord,
           gridItems: gridItemsRecord,
-          backlogItems: backlogItemsRecord as ExpandedItem[],
+          backlogItems: profileMemoryCache.get(userName)?.backlogItems ?? [],
           timestamp: Date.now(),
         })
 
         const userId = profileRecord.id
-        const cacheUpdates = [
+        void Promise.all([
           simpleCache.set('profile', profileRecord, userId),
           simpleCache.set('grid_items', gridItemsRecord, userId),
-          simpleCache.set('backlog_items', backlogItemsRecord, userId),
-        ]
-
-        void Promise.all(cacheUpdates).catch((error) => {
+        ]).catch((error) => {
           console.warn('Cache write failed:', error)
         })
+
+        void getBacklogItems(userName)
+          .then((backlogItemsRecord) => {
+            setBacklogItems(backlogItemsRecord as ExpandedItem[])
+            profileMemoryCache.set(userName, {
+              profile: profileRecord,
+              gridItems: gridItemsRecord,
+              backlogItems: backlogItemsRecord as ExpandedItem[],
+              timestamp: Date.now(),
+            })
+            void simpleCache
+              .set('backlog_items', backlogItemsRecord, userId)
+              .catch((error) => console.warn('Cache write failed:', error))
 
         if (userName === useAppStore.getState().user?.userName) {
           void autoMoveBacklogToGrid(userName, gridItemsRecord, backlogItemsRecord as ExpandedItem[]).catch((error) => {
             console.warn('Background operations failed:', error)
           })
         }
+          })
+          .catch((error) => {
+            console.warn('Failed to load backlog items', error)
+          })
       } catch (error) {
         console.error('Failed to refresh grid:', error)
         if (!cacheHydrated) {
@@ -768,7 +961,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
       }
     }
 
-    void init()
+        void init()
 
     return () => {
       cancelled = true
@@ -810,51 +1003,6 @@ export const MyProfile = ({ userName }: { userName: string }) => {
 
   // timeout used to stop editing the profile after 10 seconds
   let timeout: ReturnType<typeof setTimeout>
-
-  // Animate prompt text with explicit schedule: L1 (3s) → pause (2s) → L2 (3s) → pause (2s) → repeat
-  useEffect(() => {
-    const promptsActive =
-      displayGridItems.length < GRID_CAPACITY &&
-      !searchMode &&
-      !isSearchResultsSheetOpen &&
-      !loading &&
-      promptsReady
-    const canShowPromptsNow = promptsActive && (startupAnimationDone || !(displayGridItems.length === 0))
-    let tShow: ReturnType<typeof setTimeout> | null = null
-    let tPause: ReturnType<typeof setTimeout> | null = null
-
-    if (canShowPromptsNow) {
-      setPromptTextIndex(0)
-      setShowPrompt(true)
-      setPromptFadeKey((k) => k + 1)
-
-      const cycle = (idx: number) => {
-        // visible for 3s
-        tShow = setTimeout(() => {
-          // fade out and pause 2s
-          setShowPrompt(false)
-          setPromptFadeKey((k) => k + 1)
-          tPause = setTimeout(() => {
-            const next = idx === 0 ? 1 : 0
-            setPromptTextIndex(next)
-            setShowPrompt(true)
-            setPromptFadeKey((k) => k + 1)
-            cycle(next)
-          }, 2000)
-        }, 3000)
-      }
-
-      cycle(0)
-
-      return () => {
-        if (tShow) clearTimeout(tShow)
-        if (tPause) clearTimeout(tPause)
-      }
-    } else {
-      setShowPrompt(false)
-      setPromptTextIndex(0)
-    }
-  }, [displayGridItems.length, searchMode, isSearchResultsSheetOpen, startupAnimationDone, loading, promptsReady])
 
   // Direct photo picker flow - route into existing NewRefSheet with pre-populated photo
   const triggerDirectPhotoPicker = useCallback(async (prompt: string) => {
@@ -910,7 +1058,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
       entering={FadeIn.duration(300).delay(120)}
       style={{
         marginTop: GRID_HEIGHT + s.$1,
-        paddingHorizontal: s.$1half,
+        paddingHorizontal: 0,
         paddingBottom: s.$1half,
         zIndex: 4,
       }}
@@ -938,7 +1086,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
             marginBottom: s.$075,
           }}
         >
-          <Text style={{ color: c.muted2, fontSize: 14, fontWeight: '600' }}>
+          <Text style={{ color: c.muted2, fontSize: 13, fontFamily: 'Inter', fontWeight: '500' }}>
             Need a spark? Tap to pin one.
           </Text>
           <Pressable
@@ -951,7 +1099,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
             })}
           >
             <Ionicons name="shuffle-outline" size={16} color={c.muted2} style={{ marginRight: 4 }} />
-            <Text style={{ color: c.muted2, fontSize: 13, fontWeight: '500' }}>Shuffle</Text>
+            <Text style={{ color: c.muted2, fontSize: 13, fontFamily: 'Inter', fontWeight: '500' }}>Shuffle</Text>
           </Pressable>
         </View>
 
@@ -1025,8 +1173,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
         style={{ flex: 1, backgroundColor: c.surface }}
         contentContainerStyle={{
           justifyContent: 'center',
-          alignItems: 'center',
-          paddingHorizontal: s.$08,
+          alignItems: 'stretch',
           paddingBottom: s.$10,
           gap: s.$4,
           minHeight: '100%',
@@ -1035,24 +1182,20 @@ export const MyProfile = ({ userName }: { userName: string }) => {
         scrollEnabled={false}
       >
         <View
-          style={{
-            flex: 1,
-            width: '100%',
-            marginHorizontal: s.$1half,
-            backgroundColor: c.surface,
-          }}
+          style={{ flex: 1, width: '100%', backgroundColor: c.surface, paddingHorizontal: s.$1 }}
         >
           <Animated.View
             entering={FadeIn.duration(400).delay(100)}
             exiting={FadeOut.duration(300)}
             key={`${searchMode}-${gridItems.length}-${hasProfile ? 'ready' : 'loading'}`}
             style={{
-              paddingHorizontal: 10,
+              paddingHorizontal: 0,
               paddingVertical: s.$1,
-              alignItems: 'center',
-              justifyContent: 'center',
-              marginTop: 7,
+              alignItems: 'flex-start',
+              justifyContent: 'flex-start',
+              marginTop: -3,
               zIndex: 5,
+              alignSelf: 'stretch',
             }}
           >
             {headerContent}
@@ -1088,7 +1231,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
                 }}
                 style={{
                   position: 'absolute',
-                  right: 7,
+                  right: 0,
                   bottom: -65,
                   zIndex: 5,
                   opacity: hasProfile && !searchMode ? 1 : 0,
@@ -1337,6 +1480,19 @@ export const MyProfile = ({ userName }: { userName: string }) => {
           </>
         )}
       </ScrollView>
+      {showAvatarPicker && (
+        <Picker
+          onSuccess={handleAvatarSelection}
+          onCancel={handleAvatarPickerCancel}
+          disablePinata
+          options={{
+            mediaTypes: ['images'],
+            allowsEditing: true,
+            aspect: [1, 1],
+            quality: 0.85,
+          }}
+        />
+      )}
     </>
   )
 }

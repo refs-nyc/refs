@@ -1,509 +1,502 @@
-import React, { useMemo, useRef, useState, useEffect } from 'react'
-import { View, Text, Keyboard, Pressable, Animated, Dimensions, Switch } from 'react-native'
+import React, { useState, useEffect, useRef } from 'react'
+import { View, Text, Pressable, ScrollView, Dimensions, ActivityIndicator, Keyboard, Platform, KeyboardAvoidingView, Animated } from 'react-native'
 import { router } from 'expo-router'
-import Ionicons from '@expo/vector-icons/Ionicons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { s, c } from '@/features/style'
-import { LoopingFadeCarousel } from '@/ui/display/LoopingFadeCarousel'
-import { DetailsDemo } from '@/ui/display/DetailsDemo'
-import { MiniGridDemo } from '@/ui/display/MiniGridDemo'
-import { PinnedProfileStep } from '@/ui/profiles/PinnedProfileStep'
 import { Controller, useForm } from 'react-hook-form'
 import { FormFieldWithIcon } from '@/ui/inputs/FormFieldWithIcon'
-import { AvatarPicker } from '@/ui/inputs/AvatarPicker'
-import { DeviceLocation } from '@/ui/inputs/DeviceLocation'
 import { useAppStore } from '@/features/stores'
-import { registerForPushNotificationsAsync } from '@/ui/notifications/utils'
 import { pocketbase } from '@/features/pocketbase'
+import { Image } from 'expo-image'
+import Svg, { Circle } from 'react-native-svg'
 
-type StepId =
-  | 'firstName'
-  | 'lastName'
-  | 'email'
-  | 'password'
-  | 'confirmPassword'
-  | 'neighborhood'
-  | 'photo'
-  | 'notifications'
+const win = Dimensions.get('window')
 
 export function UnifiedOnboarding() {
-  const {
-    updateStagedUser,
-    register,
-    updateUser,
-    user,
-    getUserByEmail,
-    setJustOnboarded,
-    setSuppressHomeRedirect,
-    setProfileNavIntent,
-  } = useAppStore() as any
-  const [step, setStep] = useState<StepId>('firstName')
-  const form = useForm({ mode: 'onSubmit', shouldUnregister: false })
-  const { control, handleSubmit, formState, getValues, trigger, setValue, watch } = form
+  const { register: registerUser, setJustOnboarded } = useAppStore() as any
+  const form = useForm({ mode: 'onChange', shouldUnregister: false })
+  const { control, handleSubmit, formState, getValues, watch, setFocus } = form
   const insets = useSafeAreaInsets()
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [recentUsers, setRecentUsers] = useState<any[]>([])
+  const [keyboardHeight, setKeyboardHeight] = useState(0)
+  const scrollViewRef = useRef<ScrollView>(null)
+  const [currentFieldIndex, setCurrentFieldIndex] = useState(0)
+  const [serverError, setServerError] = useState<string>('')
+  const pillScale = useRef(new Animated.Value(1)).current
+  const [displayedUsers, setDisplayedUsers] = useState<any[]>([])
+  const [allUsers, setAllUsers] = useState<any[]>([])
+  const avatarOpacity = useRef(new Animated.Value(1)).current
 
-  const win = Dimensions.get('window')
-  const [totalUsers, setTotalUsers] = useState<number | null>(null)
+  // Watch all fields to enable/disable button
+  const fullName = watch('fullName')
+  const email = watch('email')
+  const password = watch('password')
+  const confirmPassword = watch('confirmPassword')
 
-  // Photo step staged fade for header then picker
-  const photoTextOpacity = useRef(new Animated.Value(0)).current
-  const photoPickerOpacity = useRef(new Animated.Value(0)).current
-  const notifTextOpacity = useRef(new Animated.Value(0)).current
-  const notifContentOpacity = useRef(new Animated.Value(0)).current
-  const [pushAccepted, setPushAccepted] = useState(false)
-
+  // Handle keyboard show/hide and scroll to active field
   useEffect(() => {
-    if (step === 'photo') {
-      photoTextOpacity.setValue(1)
-      photoPickerOpacity.setValue(1)
-    } else {
-      photoTextOpacity.setValue(0)
-      photoPickerOpacity.setValue(0)
+    const keyboardWillShow = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
+      (e) => {
+        setKeyboardHeight(e.endCoordinates.height)
+        // Scroll to show all forms AND the "Looks good" button above keyboard
+        setTimeout(() => {
+          scrollViewRef.current?.scrollTo({ y: 105, animated: true })
+        }, 100)
+      }
+    )
+    const keyboardWillHide = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
+      () => {
+        setKeyboardHeight(0)
+        scrollViewRef.current?.scrollTo({ y: 0, animated: true })
+      }
+    )
+
+    return () => {
+      keyboardWillShow.remove()
+      keyboardWillHide.remove()
     }
-  }, [step, photoTextOpacity, photoPickerOpacity])
+  }, [currentFieldIndex])
 
-  useEffect(() => {
-    if (step === 'notifications') {
-      notifTextOpacity.setValue(1)
-      notifContentOpacity.setValue(1)
-    } else {
-      notifTextOpacity.setValue(0)
-      notifContentOpacity.setValue(0)
-    }
-  }, [step, notifTextOpacity, notifContentOpacity])
+  const isFormValid =
+    fullName &&
+    fullName.trim().length > 0 &&
+    email &&
+    email.includes('@') &&
+    password &&
+    password.length >= 6 &&
+    confirmPassword &&
+    password === confirmPassword
 
+  // Fetch users for avatars
   useEffect(() => {
-    // Fetch total user count when entering notifications step
-    const fetchCount = async () => {
+    const fetchRecentUsers = async () => {
       try {
-        const res = await pocketbase.collection('users').getList(1, 1)
-        // PocketBase returns totalItems on paginated list
-        // @ts-ignore
-        const count = (res as any).totalItems ?? 0
-        setTotalUsers(count)
+        const res = await pocketbase.collection('users').getList(1, 20, {
+          sort: '-created',
+          fields: 'id,image,avatar_url',
+        })
+        const users = res.items || []
+        setAllUsers(users)
+        setDisplayedUsers(users.slice(0, 3))
       } catch (e) {
-        console.warn('Failed to fetch user count', e)
-        setTotalUsers(null)
+        console.warn('Failed to fetch recent users', e)
       }
     }
-    if (step === 'notifications') fetchCount()
-  }, [step])
-
-  // Staggered slides as proper components to avoid hook-order issues
-  const BringTogetherSlide = () => {
-    const textOpacity = useRef(new Animated.Value(0)).current
-    const contentOpacity = useRef(new Animated.Value(0)).current
-    useEffect(() => {
-      const gapDelay = 750 // slightly later fade for content
-      Animated.timing(textOpacity, { toValue: 1, duration: 350, useNativeDriver: true }).start(() => {
-        setTimeout(() => {
-          Animated.timing(contentOpacity, { toValue: 1, duration: 700, useNativeDriver: true }).start()
-        }, gapDelay)
-      })
-    }, [textOpacity, contentOpacity])
-    return (
-      <View style={{ marginTop: -70 }}>
-        <Animated.Text
-          key="intro"
-          style={{ color: c.accent, fontSize: 24, marginBottom: s.$2, opacity: textOpacity, transform: [{ translateY: 10 }] }}
-        >
-          <Text style={{ fontFamily: 'InterSemiBold' }}>Refs</Text> is a place to bring it all together
-        </Animated.Text>
-        <Animated.View style={{ opacity: contentOpacity }}>
-          <View style={{ alignItems: 'flex-start', paddingTop: s.$075, paddingLeft: 0, marginTop: -5 }}>
-            <View style={{ width: '100%', height: win.width * 0.54, overflow: 'hidden', opacity: 0.95, alignSelf: 'flex-start' }}>
-              <DetailsDemo scale={0.8} />
-            </View>
-          </View>
-        </Animated.View>
-      </View>
-    )
-  }
-
-  const SyllabusSlide = () => {
-    const textOpacity = useRef(new Animated.Value(0)).current
-    const contentOpacity = useRef(new Animated.Value(0)).current
-    useEffect(() => {
-      const gapDelay = 750 // slightly later fade for content
-      Animated.timing(textOpacity, { toValue: 1, duration: 350, useNativeDriver: true }).start(() => {
-        setTimeout(() => {
-          Animated.timing(contentOpacity, { toValue: 1, duration: 700, useNativeDriver: true }).start()
-        }, gapDelay)
-      })
-    }, [textOpacity, contentOpacity])
-    return (
-      <View style={{ marginTop: -70 }}>
-        <Animated.Text
-          key="syllabus"
-          style={{ color: c.accent, fontSize: 24, marginBottom: s.$2, opacity: textOpacity, transform: [{ translateY: 15 }] }}
-        >
-          A syllabus for people reading <Text style={{ fontStyle: 'italic' }}>you</Text>
-        </Animated.Text>
-        <Animated.View style={{ opacity: contentOpacity }}>
-          <View style={{ alignItems: 'center', paddingTop: s.$075, paddingLeft: 0, marginTop: -5 }}>
-            <View style={{ transform: [{ scale: 0.9 }] }}>
-              <MiniGridDemo />
-            </View>
-          </View>
-        </Animated.View>
-      </View>
-    )
-  }
-
-  const slides = useMemo(() => {
-    // Build the "Apps for our ..." composite line with staged fades
-    const AppsLine = () => {
-      const o1 = useRef(new Animated.Value(0)).current
-      const o2 = useRef(new Animated.Value(0)).current
-      const o3 = useRef(new Animated.Value(0)).current
-      const o4 = useRef(new Animated.Value(0)).current
-      React.useEffect(() => {
-        const d = 745
-        const p = 500
-        Animated.sequence([
-          Animated.timing(o1, { toValue: 1, duration: d, useNativeDriver: true }),
-          Animated.delay(p),
-          Animated.timing(o2, { toValue: 1, duration: d, useNativeDriver: true }),
-          Animated.delay(p),
-          Animated.timing(o3, { toValue: 1, duration: d, useNativeDriver: true }),
-          Animated.delay(p),
-          Animated.timing(o4, { toValue: 1, duration: d, useNativeDriver: true }),
-        ]).start()
-      }, [])
-      const textStyle = { color: c.accent, fontSize: 24 } as const
-      return (
-        <View style={{ flexDirection: 'column' }}>
-          <Animated.Text style={[textStyle, { opacity: o1 }]}>Apps for our photos,</Animated.Text>
-          <Animated.Text style={[textStyle, { opacity: o2 }]}>fleeting thoughts,</Animated.Text>
-          <Animated.Text style={[textStyle, { opacity: o3 }]}>books,</Animated.Text>
-          <Animated.Text style={[textStyle, { opacity: o4 }]}>...beers?</Animated.Text>
-        </View>
-      )
-    }
-
-    return [
-      { content: 'The internet splits us into pieces', durationMs: 3750 },
-      { content: <AppsLine />, durationMs: 5500 },
-      { content: 'so we only ever see one side of each other', durationMs: Math.round(3750 * 0.8) },
-      { content: <BringTogetherSlide />, durationMs: 8500 },
-      { content: <SyllabusSlide />, durationMs: 3750 * 1.5 },
-      { content: 'and instead of waiting for an algorithm to tell you who to meet...', durationMs: Math.round(3750 * 0.8) },
-      { content: 'you can follow the paths your refs create', durationMs: 3750 },
-    ]
+    fetchRecentUsers()
   }, [])
 
-  const locationValue = watch('location') as any
-  const imageValue = watch('image') as any
-  const isLocationSelected = Boolean(locationValue?.location)
+  const onSubmit = async (data: any) => {
+    if (!isFormValid || isSubmitting) return
+    setIsSubmitting(true)
+    setServerError('')
 
-  const goNext = async () => {
-    const order: StepId[] = [
-      'firstName',
-      'lastName',
-      'email',
-      'password',
-      'confirmPassword',
-      'neighborhood',
-      'notifications',
-      'photo',
-    ]
-    const i = order.indexOf(step)
-    if (i < order.length - 1) setStep(order[i + 1])
-  }
+    try {
+      const nameParts = data.fullName.trim().split(' ')
+      const firstName = nameParts[0] || ''
+      const lastName = nameParts.slice(1).join(' ') || ''
 
-  const goBack = () => {
-    const order: StepId[] = [
-      'firstName',
-      'lastName',
-      'email',
-      'password',
-      'confirmPassword',
-      'neighborhood',
-      'notifications',
-      'photo',
-    ]
-    const i = order.indexOf(step)
-    if (i > 0) setStep(order[i - 1])
-  }
+      await registerUser({
+        email: data.email.trim().toLowerCase(),
+        password: data.password,
+        firstName,
+        lastName,
+      })
 
-  const slideValue = useRef(new Animated.Value(0)).current
-  const animateTo = (dir: 'next' | 'back') => {
-    const out = dir === 'next' ? -win.width : win.width
-    const inFrom = dir === 'next' ? win.width : -win.width
-    // slide current out
-    Keyboard.dismiss() // ensure we control keyboard state; will be re-focused by next field
-    Animated.timing(slideValue, { toValue: out, duration: 240, useNativeDriver: true }).start(() => {
-      // instantly move to off-screen start and animate in
-      slideValue.setValue(inFrom)
-      Animated.timing(slideValue, { toValue: 0, duration: 240, useNativeDriver: true }).start()
-    })
+      setJustOnboarded(true)
+      // Registration successful, app will auto-navigate
+    } catch (error: any) {
+      console.error('Registration failed:', error)
+      setServerError(error?.message || 'Registration failed. Please try again.')
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
-    <View style={{ flex: 1 }}>
-      {/* Global back button in top-left */}
-      {step !== 'firstName' && (
-        <Pressable onPress={() => { animateTo('back'); goBack() }} style={{ position: 'absolute', top: insets.top - 3, left: (s as any).$2 - 6, zIndex: 100 }} hitSlop={10}>
-          <Ionicons name="chevron-back" size={24} color="#9BA6A0" />
-        </Pressable>
-      )}
-
-      {/* Top carousel (last visible step: neighborhood) or photo header */}
-      {step === 'notifications' ? (
-        <View key="notifications" style={{ flex: 1, paddingTop: 150, paddingHorizontal: s.$2 }}>
-          <Animated.Text style={{ color: c.accent, fontSize: 24, opacity: notifTextOpacity, textAlign: 'left' }}>Now, turn on push notifications</Animated.Text>
-          <Animated.View style={{ opacity: notifContentOpacity }}>
-            <View style={{ alignItems: 'center', paddingTop: s.$075, paddingLeft: 0, marginTop: 40 }}>
-              <View style={{ alignItems: 'center' }}>
-                <Switch
-                  trackColor={{ false: c.surface, true: c.accent2 }}
-                  thumbColor={c.white}
-                  ios_backgroundColor={c.surface}
-                  onValueChange={async (val) => {
-                    // Optimistically toggle UI
-                    setPushAccepted(val)
-                    if (val) {
-                      const token = await registerForPushNotificationsAsync()
-                      if (token && user) {
-                        try {
-                          await updateUser({ pushToken: token })
-                        } catch {}
-                      }
-                    } else {
-                      // Optional: clear token server-side if user turns it off here
-                      try {
-                        if (user) await updateUser({ pushToken: '' as any })
-                      } catch {}
-                    }
-                  }}
-                  value={pushAccepted}
-                />
-                <Text style={{ fontFamily: 'System', fontWeight: '400', fontSize: 14, color: '#B0B0B0', opacity: 0.5, marginTop: s.$1 }}>(you can turn these off anytime)</Text>
-              </View>
-            </View>
-          </Animated.View>
-        </View>
-      ) : step === 'photo' ? (
-        <View style={{ paddingTop: 150, paddingHorizontal: s.$2 }}>
-          <Animated.Text style={{ color: c.accent, fontSize: 24, opacity: photoTextOpacity }}>And finally, add a profile photo</Animated.Text>
-        </View>
-      ) : (
-        <View style={{ flex: 1, paddingTop: 150, paddingHorizontal: s.$2, paddingBottom: 80 }}>
-          <LoopingFadeCarousel slides={slides} freezeIndex={slides.length - 1} />
-        </View>
-      )}
-
-      {/* Bottom pinned form */}
-      <PinnedProfileStep
-        canGoBack={step !== 'firstName'}
-        onBack={() => { animateTo('back'); goBack() }}
-         onNext={async () => {
-           if (step === 'password') {
-             // persist staged password early so confirm step can validate reliably
-             useAppStore.getState().updateStagedUser({ password: getValues('password') as string })
-           }
-            if (step === 'firstName') {
-              useAppStore.getState().updateStagedUser({ firstName: getValues('firstName') as any })
-            }
-            if (step === 'lastName') {
-              useAppStore.getState().updateStagedUser({ lastName: getValues('lastName') as any })
-            }
-            if (step === 'email') {
-              const email = getValues('email') as string
-              try {
-                await getUserByEmail(email)
-                // If we get here without error, user exists → redirect to login
-                router.push('/user/login')
-                return
-              } catch (err: any) {
-                // 404 means no user exists → continue
-                useAppStore.getState().updateStagedUser({ email })
-              }
-            }
-           if (step === 'confirmPassword') {
-             const valid = await trigger(['password', 'confirmPassword'])
-             if (!valid) return
-             // ensure password stored for register flow
-              useAppStore.getState().updateStagedUser({
-                password: getValues('password') as string,
-                // PocketBase requires passwordConfirm on user creation
-                passwordConfirm: getValues('confirmPassword') as string,
-              })
-           }
-            if (step === 'photo') {
-              const img = getValues('image') as any
-              const allValues = form.getValues() as any
-              // Ensure required fields for PocketBase auth
-              if (!allValues?.password) {
-                console.error('Missing password before register')
-                return
-              }
-              if (!allValues?.email) {
-                console.error('Missing email before register')
-                return
-              }
-              if (!img) return
-              // Classic flow: only stage the image here; other fields were already staged on prior steps
-              useAppStore.getState().updateStagedUser({ image: img as string })
-              try {
-                // prevent Home redirect while onboarding completes
-                setSuppressHomeRedirect(true)
-                await register()
-                // Mark for startup animation gating on first entry to grid
-                setJustOnboarded(true)
-              } catch (e: any) {
-                const storeState = useAppStore.getState()
-                const staged = storeState.stagedUser as any
-                const stagedKeys = Object.keys(staged || {})
-                const fieldErrors = (e && (e.data?.data || e.response?.data?.data)) || {}
-                console.error('Register failed (keys, fieldErrors):', stagedKeys, fieldErrors)
-                const emailErr = (fieldErrors as any)?.email
-                if (emailErr && (emailErr.code?.includes('used') || emailErr.message?.includes('used'))) {
-                  router.push('/user/login')
-                  return
-                }
-                return
-              }
-              // Single-screen onboarding: go straight to grid
-              animateTo('next')
-              if (user?.userName) {
-                setProfileNavIntent({ targetPagerIndex: 0, source: 'other' })
-                router.replace(`/user/${user.userName}`)
-              } else {
-                router.replace('/')
-              }
-              return
-            }
-            if (step === 'notifications') {
-              // Proceed to photo picker
-              animateTo('next')
-              setStep('photo')
-              return
-            }
-           animateTo('next'); goNext()
-         }}
-          nextDisabled={
-            step === 'neighborhood'
-              ? !isLocationSelected
-              : step === 'photo'
-              ? !imageValue
-              : step === 'notifications'
-              ? false
-              : !formState.isValid
-          }
-        inputWidth={'100%'}
-        contentWidth={win.width - 20}
-        translateX={slideValue as unknown as number}
-        bottomOffsetExtra={step === 'neighborhood' ? 10 : 0}
-        nextTitle={step === 'photo' ? 'Take me to my grid' : step === 'notifications' ? 'Next' : 'Next'}
+    <KeyboardAvoidingView 
+      style={{ flex: 1, backgroundColor: c.surface }}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={0}
+    >
+      <ScrollView
+        ref={scrollViewRef}
+        contentContainerStyle={{
+          flexGrow: 1,
+          paddingTop: insets.top + 16,
+          paddingBottom: 160,
+          paddingHorizontal: s.$2,
+          justifyContent: 'space-between',
+        }}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
       >
-        {step === 'firstName' && (
-          <Controller
-            name="firstName"
-            control={control}
-            rules={{ required: true }}
-            render={({ field: { onChange, value, onBlur } }) => (
-              <FormFieldWithIcon id="firstName" type="user" placeholder="First Name" onChange={onChange} onBlur={onBlur} value={value} autoFocus={true} />
-            )}
-          />
-        )}
-        {step === 'lastName' && (
-          <Controller
-            name="lastName"
-            control={control}
-            rules={{ required: true }}
-            render={({ field: { onChange, value, onBlur } }) => (
-              <FormFieldWithIcon id="lastName" type="user" placeholder="Last Name" onChange={onChange} onBlur={onBlur} value={value} autoFocus={true} />
-            )}
-          />
-        )}
-        {step === 'email' && (
-          <Controller
-            name="email"
-            control={control}
-            rules={{ required: true }}
-            render={({ field: { onChange, value, onBlur } }) => (
-              <FormFieldWithIcon id="email" type="email" placeholder="Email" onChange={onChange} onBlur={onBlur} value={value} autoFocus={true} />
-            )}
-          />
-        )}
-        {step === 'password' && (
-          <Controller
-            name="password"
-            control={control}
-            rules={{ required: true, minLength: 8 }}
-            render={({ field: { onChange, value, onBlur } }) => (
-              <FormFieldWithIcon id="password" type="password" placeholder="Password" onChange={onChange} onBlur={onBlur} value={value} autoFocus={true} />
-            )}
-          />
-        )}
-        {step === 'confirmPassword' && (
-          <Controller
-            name="confirmPassword"
-            control={control}
-            rules={{
-              required: true,
-              validate: (v: string) => {
-                const match = v === (form.getValues('password') as string)
-                return match || 'Passwords do not match'
-              },
-              minLength: 8,
+        {/* Top section with header and pill */}
+        <View>
+          {/* Refs Header - positioned to match navigation bar */}
+          <Text
+            style={{
+              fontSize: 24,
+              fontWeight: 'bold',
+              color: c.newDark,
+              marginBottom: 50,
             }}
-            render={({ field: { onChange, value, onBlur } }) => (
-              <FormFieldWithIcon
-                id="confirmPassword"
-                type="password"
-                placeholder="Confirm Password"
-                onChange={onChange}
-                onBlur={onBlur}
-                value={value}
-                autoFocus={true}
-              />
-            )}
-          />
-        )}
-        {step === 'neighborhood' && (
-          <Controller
-            name="location"
-            control={control}
-            rules={{
-              validate: (v: any) => (v && v.location ? true : 'Location required'),
+          >
+            Refs
+          </Text>
+
+          {/* Directory for Edge Patagonia pill */}
+          <View>
+          <Text
+            style={{
+              color: c.muted,
+              fontSize: s.$09,
+              marginBottom: (s.$075 as number) + 3,
+              fontFamily: 'Inter',
             }}
-            render={({ field: { onChange } }) => (
-              <DeviceLocation
-                onChange={(values) => {
-                  // Pass value through RHF's onChange to update state consistently
-                  onChange(values as any)
-                  // Also be explicit: set + validate ensures Next enables instantly
-                  setValue('location', values as any, { shouldValidate: true, shouldDirty: true })
-                  trigger('location')
-                  // Persist to staged user for register flow
-                  useAppStore.getState().updateStagedUser({
-                    location: values.location,
-                    lat: (values as any).lat,
-                    lon: (values as any).lon,
-                  } as any)
+          >
+            Directory for
+          </Text>
+          <Pressable
+            onPressIn={() => {
+              // Immediate press down
+              Animated.spring(pillScale, {
+                toValue: 0.95,
+                damping: 14,
+                stiffness: 180,
+                useNativeDriver: true,
+              }).start()
+            }}
+            onPressOut={() => {
+              // Immediate spring back
+              Animated.spring(pillScale, {
+                toValue: 1,
+                damping: 14,
+                stiffness: 220,
+                useNativeDriver: true,
+              }).start()
+            }}
+            onPress={() => {
+              // Avatar shuffle animation
+              if (allUsers.length < 4) return
+
+              // Fade out
+              Animated.timing(avatarOpacity, {
+                toValue: 0,
+                duration: 200,
+                useNativeDriver: true,
+              }).start(() => {
+                // Get random 3 users that aren't currently displayed
+                const currentIds = displayedUsers.map(u => u.id)
+                const availableUsers = allUsers.filter(u => !currentIds.includes(u.id))
+                
+                if (availableUsers.length >= 3) {
+                  // Shuffle and pick 3
+                  const shuffled = [...availableUsers].sort(() => Math.random() - 0.5)
+                  setDisplayedUsers(shuffled.slice(0, 3))
+                } else {
+                  // Not enough different users, just shuffle all
+                  const shuffled = [...allUsers].sort(() => Math.random() - 0.5)
+                  setDisplayedUsers(shuffled.slice(0, 3))
+                }
+
+                // Fade in
+                Animated.timing(avatarOpacity, {
+                  toValue: 1,
+                  duration: 200,
+                  useNativeDriver: true,
+                }).start()
+              })
+            }}
+          >
+            <Animated.View
+              style={{
+                borderWidth: 1.5,
+                borderColor: c.newDark,
+                borderRadius: 27,
+                paddingVertical: 18,
+                paddingHorizontal: 20,
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                backgroundColor: c.surface,
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.12,
+                shadowRadius: 12,
+                elevation: 5,
+                transform: [{ scale: pillScale }],
+              }}
+            >
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+              {/* Venn diagram icon */}
+              <Svg width={28} height={18} viewBox="0 0 64 40">
+                <Circle cx="24" cy="20" r="16" fill="none" stroke={c.newDark} strokeWidth="2.5" />
+                <Circle cx="40" cy="20" r="16" fill="none" stroke={c.newDark} strokeWidth="2.5" />
+              </Svg>
+              <Text
+                style={{
+                  fontSize: (s.$09 as number) + 6,
+                  fontFamily: 'InterBold',
+                  fontWeight: '700',
+                  color: c.newDark,
                 }}
-              />
-            )}
-          />
-        )}
-        {step === 'photo' && (
+              >
+                Edge Patagonia
+              </Text>
+            </View>
+
+            {/* Avatars */}
+            <Animated.View style={{ flexDirection: 'row', marginLeft: 10, opacity: avatarOpacity }}>
+              {displayedUsers.map((user, idx) => {
+                const avatarUrl = user.image || user.avatar_url
+                return (
+                  <View
+                    key={user.id}
+                    style={{
+                      width: 32,
+                      height: 32,
+                      borderRadius: 16,
+                      marginLeft: idx > 0 ? -8 : 0,
+                      borderWidth: 2,
+                      borderColor: c.surface,
+                      overflow: 'hidden',
+                      backgroundColor: c.surface2,
+                    }}
+                  >
+                    {avatarUrl ? (
+                      <Image
+                        source={avatarUrl}
+                        style={{ width: '100%', height: '100%' }}
+                        contentFit="cover"
+                        transition={0}
+                      />
+                    ) : (
+                      <View style={{ width: '100%', height: '100%', backgroundColor: c.surface2 }} />
+                    )}
+              </View>
+                )
+              })}
+            </Animated.View>
+          </Animated.View>
+          </Pressable>
+        </View>
+        </View>
+
+        {/* Centered Form Fields */}
+        <View style={{ gap: s.$1, paddingVertical: s.$2 }}>
           <Controller
-            name="image"
             control={control}
-            rules={{ required: true }}
-            render={({ field: { onChange, value } }) => (
-              <Animated.View style={{ alignItems: 'center', justifyContent: 'center', marginTop: -200, opacity: photoPickerOpacity }}>
-                <AvatarPicker onComplete={(s) => onChange(s)} source={value} onReplace={() => {}}>
-                  <></>
-                </AvatarPicker>
-              </Animated.View>
+            name="fullName"
+            rules={{ required: 'Full name is required' }}
+            render={({ field: { onChange, onBlur, value, ref } }) => (
+              <View>
+                <FormFieldWithIcon
+                  ref={ref}
+                  type="user"
+                  id="fullName"
+                  placeholder="Full Name"
+                  onChange={onChange}
+                  onBlur={() => {
+                    setCurrentFieldIndex(0)
+                    onBlur()
+                  }}
+                  value={value || ''}
+                  autoFocus={false}
+                  autoCorrect={false}
+                  returnKeyType="next"
+                  onSubmitEditing={() => {
+                    setCurrentFieldIndex(1)
+                    setFocus('email')
+                  }}
+                />
+                {formState.errors.fullName && (
+                  <Text style={{ color: c.accent, fontSize: 11, marginTop: 4, marginLeft: 4, fontFamily: 'InterSemiBold', fontWeight: '600' }}>
+                    {formState.errors.fullName.message as string}
+                  </Text>
+                )}
+              </View>
             )}
           />
-        )}
-        {step === 'notifications' && <View />}
-      </PinnedProfileStep>
-    </View>
+
+          <Controller
+            control={control}
+            name="email"
+            rules={{
+              required: 'Email is required',
+              pattern: {
+                value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+                message: 'Invalid email address',
+              },
+            }}
+            render={({ field: { onChange, onBlur, value, ref } }) => (
+              <View>
+                <FormFieldWithIcon
+                  ref={ref}
+                  type="email"
+                  id="email"
+                  placeholder="Email"
+                  onChange={onChange}
+                  onBlur={() => {
+                    setCurrentFieldIndex(1)
+                    onBlur()
+                  }}
+                  value={value || ''}
+                  autoFocus={false}
+                  autoCorrect={false}
+                  returnKeyType="next"
+                  onSubmitEditing={() => {
+                    setCurrentFieldIndex(2)
+                    setFocus('password')
+                  }}
+                />
+                {formState.errors.email && (
+                  <Text style={{ color: c.accent, fontSize: 11, marginTop: 4, marginLeft: 4, fontFamily: 'InterSemiBold', fontWeight: '600' }}>
+                    {formState.errors.email.message as string}
+                  </Text>
+                )}
+              </View>
+            )}
+          />
+
+          <Controller
+            control={control}
+            name="password"
+            rules={{
+              required: 'Password is required',
+              minLength: { value: 6, message: 'Password must be at least 6 characters' },
+            }}
+            render={({ field: { onChange, onBlur, value, ref } }) => (
+              <View>
+                <FormFieldWithIcon
+                  ref={ref}
+                  type="password"
+                  id="password"
+                  placeholder="Password"
+                  onChange={onChange}
+                  onBlur={() => {
+                    setCurrentFieldIndex(2)
+                    onBlur()
+                  }}
+                  value={value || ''}
+                  autoFocus={false}
+                  autoCorrect={false}
+                  returnKeyType="next"
+                  onSubmitEditing={() => {
+                    setCurrentFieldIndex(3)
+                    setFocus('confirmPassword')
+                  }}
+                />
+                {formState.errors.password && (
+                  <Text style={{ color: c.accent, fontSize: 11, marginTop: 4, marginLeft: 4, fontFamily: 'InterSemiBold', fontWeight: '600' }}>
+                    {formState.errors.password.message as string}
+                  </Text>
+                )}
+              </View>
+            )}
+          />
+
+          <Controller
+            control={control}
+            name="confirmPassword"
+            rules={{
+              required: 'Please confirm password',
+              validate: (value) => value === getValues('password') || 'Passwords do not match',
+            }}
+            render={({ field: { onChange, onBlur, value, ref } }) => (
+              <View>
+                <FormFieldWithIcon
+                  ref={ref}
+                  type="passwordConfirm"
+                  id="confirmPassword"
+                  placeholder="Password confirmation"
+                  onChange={onChange}
+                  onBlur={() => {
+                    setCurrentFieldIndex(3)
+                    onBlur()
+                  }}
+                  value={value || ''}
+                  autoFocus={false}
+                  autoCorrect={false}
+                  returnKeyType="done"
+                  onSubmitEditing={handleSubmit(onSubmit)}
+                />
+                {formState.errors.confirmPassword && (
+                  <Text style={{ color: c.accent, fontSize: 11, marginTop: 4, marginLeft: 4, fontFamily: 'InterSemiBold', fontWeight: '600' }}>
+                    {formState.errors.confirmPassword.message as string}
+                  </Text>
+                )}
+              </View>
+            )}
+          />
+
+          {/* Server error message */}
+          {serverError && (
+            <Text style={{ color: c.accent, fontSize: 11, marginTop: -4, marginLeft: 4, textAlign: 'center', fontFamily: 'InterSemiBold', fontWeight: '600' }}>
+              {serverError}
+            </Text>
+          )}
+
+          {/* Looks good button - styled like a form field */}
+          <Pressable
+            onPress={handleSubmit(onSubmit)}
+            disabled={!isFormValid || isSubmitting}
+            style={{
+              backgroundColor: c.accent,
+              paddingVertical: 18,
+              borderRadius: s.$12,
+              alignItems: 'center',
+              opacity: isFormValid && !isSubmitting ? 1 : 0.4,
+            }}
+          >
+            {isSubmitting ? (
+              <ActivityIndicator color={c.surface} />
+            ) : (
+              <Text
+                style={{
+                  color: c.surface,
+                  fontSize: s.$1,
+                  fontFamily: 'InterBold',
+                  fontWeight: '700',
+                }}
+              >
+                Looks good
+              </Text>
+            )}
+          </Pressable>
+        </View>
+
+      </ScrollView>
+
+      {/* Log in instead button - fixed at bottom, only show when keyboard is hidden */}
+      {keyboardHeight === 0 && (
+        <View
+          style={{
+            position: 'absolute',
+            bottom: 30,
+            left: s.$2,
+            right: s.$2,
+          }}
+        >
+          <Pressable
+            onPress={() => router.push('/user/login')}
+            style={{ alignItems: 'center', paddingVertical: 8 }}
+          >
+            <Text
+              style={{
+                color: c.muted,
+                fontSize: s.$09,
+                fontFamily: 'InterSemiBold',
+                fontWeight: '600',
+              }}
+            >
+              Log in instead
+            </Text>
+          </Pressable>
+        </View>
+      )}
+    </KeyboardAvoidingView>
   )
 }

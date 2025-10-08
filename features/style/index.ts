@@ -12,9 +12,10 @@ export const c = {
   olive: '#A5B89F',
   olive2: '#8D9C89',
   // Surface colors
-  surface: '#F3F2ED',
-  surface2: '#EFEDE3',
+  surface: '#F9F7F1',
+  surface2: '#F4F1E9',
   // Greys
+  newDark: '#707070',
   grey1: '#D9D9D9',
   grey2: '#787676',
   muted: '#787676',

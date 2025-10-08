@@ -10,6 +10,7 @@ const CACHE_TTLS = {
   conversations: 5 * 60 * 1000,    // 5 minutes
   conversation_memberships: 5 * 60 * 1000, // 5 minutes
   conversation_previews: 3 * 60 * 1000, // 3 minutes
+  saves: 10 * 60 * 1000,          // 10 minutes
 } as const
 
 type CacheKey = keyof typeof CACHE_TTLS

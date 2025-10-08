@@ -38,6 +38,7 @@ export function LogoutSheet({ bottomSheetRef }: { bottomSheetRef: React.RefObjec
             bottomSheetRef.current?.close()
             logout()
           }}
+          textStyle={{ fontWeight: '700' }}
         />
       </BottomSheetView>
     </BottomSheet>

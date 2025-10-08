@@ -1,7 +1,8 @@
 import React, { useCallback, useEffect, useRef, useState, useMemo } from 'react'
 import { View, Text, Pressable, FlatList, InteractionManager, Dimensions, ScrollView } from 'react-native'
+import Animated, { useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated'
 import { s, c, t } from '@/features/style'
-import { router } from 'expo-router'
+import { router, usePathname } from 'expo-router'
 import { Grid } from '@/ui/grid/Grid'
 // import { Button } from '@/ui/buttons/Button'
 // import BottomSheet from '@gorhom/bottom-sheet'
@@ -10,9 +11,12 @@ import { Image } from 'expo-image'
 import { pocketbase } from '@/features/pocketbase'
 import { useAppStore } from '@/features/stores'
 import type { DirectoryUser } from '@/features/stores/users'
+import type { Profile } from '@/features/types'
 import { simpleCache } from '@/features/cache/simpleCache'
-import Svg, { Circle } from 'react-native-svg'
+import Svg, { Circle, Path } from 'react-native-svg'
 import AsyncStorage from '@react-native-async-storage/async-storage'
+
+const DIRECTORY_TICKER_COLOR = c.accent
 // Listen for interests added from the CommunityInterestsScreen and update chips instantly
 if (typeof globalThis !== 'undefined' && (globalThis as any).addEventListener) {
   try {
@@ -39,7 +43,164 @@ type FeedUser = {
 }
 
 // Memoized row component to prevent unnecessary re-renders
-const DirectoryRow = React.memo(({ u, onPress, userInterestMap, refTitleMap, currentUserId, innerLeftPadding }: { u: FeedUser; onPress: () => void; userInterestMap: Map<string, Set<string>>; refTitleMap: Map<string, string>; currentUserId?: string; innerLeftPadding?: number }) => {
+const BookmarkIcon = ({ filled }: { filled: boolean }) => {
+  // Slightly wider with a thinner stroke
+  const width = 36
+  const height = 48
+  const stroke = c.newDark
+  return (
+    <Svg width={width} height={height} viewBox="0 0 26 28" fill="none">
+      <Path
+        d="M6 3h14a1 1 0 011 1v20l-8-3.5L5 24V4a1 1 0 011-1z"
+        stroke={stroke}
+        strokeWidth={1.9}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        fill={filled ? stroke : 'none'}
+      />
+    </Svg>
+  )
+}
+
+const OnboardingPill = ({
+  userName,
+  fullName,
+  avatarUri,
+}: {
+  userName: string
+  fullName: string
+  avatarUri?: string
+}) => {
+  const pillScale = useSharedValue(1)
+  const setProfileNavIntent = useAppStore((state) => state.setProfileNavIntent)
+  const homePagerIndex = useAppStore((state) => state.homePagerIndex)
+  const pathname = usePathname()
+  const hasAvatar = Boolean(avatarUri)
+
+  const pillAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: pillScale.value }],
+  }))
+
+  const handlePress = useCallback(() => {
+    if (!userName) return
+
+    pillScale.value = withSpring(
+      0.95,
+      { damping: 10, stiffness: 400 },
+      (finished) => {
+        if (finished) {
+          pillScale.value = withSpring(1, { damping: 8, stiffness: 300 })
+        }
+      }
+    )
+
+    const targetIndex = 0
+    const alreadyOnGrid = homePagerIndex === targetIndex
+
+    setProfileNavIntent({ targetPagerIndex: targetIndex, source: 'directory', animate: !alreadyOnGrid })
+
+    const expectedPath = `/user/${userName}`
+    // Always push to create navigation history for proper back gesture
+    // Add timestamp to force new stack entry
+    if (!pathname || pathname !== expectedPath) {
+      router.push({
+        pathname: '/user/[userName]',
+        params: { userName, _t: Date.now().toString() }
+      })
+    }
+  }, [homePagerIndex, pathname, setProfileNavIntent, userName])
+
+  return (
+    <Pressable onPress={handlePress}>
+      <Animated.View
+        style={[
+          {
+            backgroundColor: c.surface,
+            borderRadius: s.$1,
+            paddingVertical: s.$075,
+            paddingHorizontal: s.$075,
+            marginBottom: s.$075,
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            borderWidth: 2,
+            borderColor: c.prompt,
+            borderStyle: 'dashed',
+          },
+          pillAnimatedStyle,
+        ]}
+      >
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+          <View
+            style={{
+              width: 60,
+              height: 60,
+              borderRadius: 30,
+              borderWidth: 1.5,
+              borderColor: `${c.prompt}1A`, // 10% opacity
+              justifyContent: 'center',
+              alignItems: 'center',
+              overflow: 'hidden',
+              backgroundColor: c.surface,
+            }}
+          >
+            {hasAvatar ? (
+              <Image
+                source={avatarUri}
+                style={{ width: '100%', height: '100%', borderRadius: 30 }}
+                contentFit="cover"
+                transition={150}
+              />
+            ) : (
+              <Text style={{ color: c.prompt, fontSize: 28, fontWeight: '600' }}>+</Text>
+            )}
+          </View>
+          <View style={{ marginLeft: 3, gap: 2 }}>
+            <Text style={{ color: c.prompt, fontWeight: '700', fontSize: (s.$09 as number) + 1 }} numberOfLines={1} ellipsizeMode="tail">
+              {fullName}
+            </Text>
+            <Text style={{ color: c.accent, fontFamily: 'InterMedium', fontSize: 12, fontWeight: '500' }}>
+              Add a profile photo and 3 refs to appear
+            </Text>
+          </View>
+        </View>
+      </Animated.View>
+    </Pressable>
+  )
+}
+
+const DirectoryRow = React.memo(({
+  u,
+  onPress,
+  onToggleSave,
+  isSaved,
+  userInterestMap,
+  refTitleMap,
+  currentUserId,
+  innerLeftPadding,
+}: {
+  u: FeedUser
+  onPress: () => void
+  onToggleSave: () => void
+  isSaved: boolean
+  userInterestMap: Map<string, Set<string>>
+  refTitleMap: Map<string, string>
+  currentUserId?: string
+  innerLeftPadding?: number
+}) => {
+  const bookmarkScale = useSharedValue(1)
+  
+  const bookmarkAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: bookmarkScale.value }],
+  }))
+
+  const handleBookmarkPress = useCallback(() => {
+    bookmarkScale.value = withSpring(0.9, { damping: 10, stiffness: 400 }, () => {
+      bookmarkScale.value = withSpring(1, { damping: 8, stiffness: 300 })
+    })
+    onToggleSave()
+  }, [onToggleSave])
+
   // Compute overlap with current user (by ref ids in this community)
   const overlapLabel = useMemo(() => {
     if (!currentUserId) return null
@@ -63,16 +224,14 @@ const DirectoryRow = React.memo(({ u, onPress, userInterestMap, refTitleMap, cur
     <Pressable
       key={u.id}
       style={{
-        backgroundColor: c.surface,
+        backgroundColor: c.surface2,
         borderRadius: s.$1,
-        paddingVertical: s.$1,
-        paddingLeft: innerLeftPadding ?? (s.$08 as number),
-        paddingRight: s.$08,
+        paddingVertical: s.$075,
+        paddingHorizontal: s.$075,
         marginBottom: s.$075,
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        height: 80,
       }}
       onPress={onPress}
     >
@@ -97,49 +256,56 @@ const DirectoryRow = React.memo(({ u, onPress, userInterestMap, refTitleMap, cur
               width: 60,
               height: 60,
               borderRadius: 30,
-              backgroundColor: c.surface2,
-              justifyContent: 'center',
-              alignItems: 'center',
+              backgroundColor: 'transparent',
             }}
-          >
-            <Svg width={32} height={20} viewBox="0 0 64 40">
-              <Circle cx="24" cy="20" r="16" fill="none" stroke={c.muted} strokeWidth="2" />
-              <Circle cx="40" cy="20" r="16" fill="none" stroke={c.muted} strokeWidth="2" />
-            </Svg>
-          </View>
+          />
         )}
         <View style={{ flex: 1, marginLeft: 5, gap: 4 }}>
-          <Text style={[t.psemi, { fontSize: (s.$09 as number) + 4 }]} numberOfLines={1} ellipsizeMode="tail">
+          <Text style={{ color: c.black, fontWeight: '700', fontSize: (s.$09 as number) + 1 }} numberOfLines={1} ellipsizeMode="tail">
             {u.name}
           </Text>
-          <Text style={[t.smallmuted, { opacity: 0.6 }]} numberOfLines={1} ellipsizeMode="tail">
-            {u.neighborhood || 'Neighborhood'}
+          <Text style={{ color: c.newDark }} numberOfLines={1} ellipsizeMode="tail">
+            {u.neighborhood || 'Elsewhere'}
           </Text>
         </View>
       </View>
 
-      <View style={{ flexDirection: 'row', marginLeft: s.$08 }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: s.$05 }}>
         {overlapLabel && (
-          <View style={{
-            borderWidth: 1.5,
-            borderColor: 'rgba(176,176,176,0.5)',
-            borderRadius: 14,
-            paddingHorizontal: 8,
-            paddingVertical: 4,
-            backgroundColor: 'transparent',
-          }}>
-            <Text style={{ color: c.prompt, opacity: 0.5, fontSize: (s.$09 as number) - 2, fontWeight: '700' }} numberOfLines={1}>
+          <View
+            style={{
+              borderWidth: 1.5,
+              borderColor: 'rgba(176,176,176,0.5)',
+              borderRadius: 14,
+              paddingHorizontal: 8,
+              paddingVertical: 4,
+              backgroundColor: 'transparent',
+            }}
+          >
+            <Text style={{ color: c.newDark, opacity: 0.8, fontSize: (s.$09 as number) - 2, fontWeight: '600' }} numberOfLines={1}>
               {overlapLabel}
             </Text>
           </View>
         )}
+        <Pressable
+          onPress={(event) => {
+            event.stopPropagation()
+            handleBookmarkPress()
+          }}
+          hitSlop={10}
+          style={{ padding: 2 }}
+        >
+          <Animated.View style={bookmarkAnimatedStyle}>
+            <BookmarkIcon filled={isSaved} />
+          </Animated.View>
+        </Pressable>
       </View>
     </Pressable>
   )
 }, (prevProps, nextProps) => {
-  // Simple comparison - only re-render if user ID changes
-  // This prevents unnecessary re-renders during scroll
-  return prevProps.u.id === nextProps.u.id
+  if (prevProps.u.id !== nextProps.u.id) return false
+  if (prevProps.isSaved !== nextProps.isSaved) return false
+  return true
 })
 
 DirectoryRow.displayName = 'DirectoryRow'
@@ -181,7 +347,19 @@ const haveSameIds = (a: FeedUser[], b: FeedUser[]) => {
   return true
 }
 
-export function CommunitiesFeedScreen({ showHeader = true, aboveListComponent, hideInterestChips = false, embedded = false }: { showHeader?: boolean; aboveListComponent?: React.ReactNode; hideInterestChips?: boolean; embedded?: boolean }) {
+export function CommunitiesFeedScreen({
+  showHeader = true,
+  aboveListComponent,
+  hideInterestChips = false,
+  embedded = false,
+  embeddedPadding = 0,
+}: {
+  showHeader?: boolean
+  aboveListComponent?: React.ReactNode
+  hideInterestChips?: boolean
+  embedded?: boolean
+  embeddedPadding?: number
+}) {
   // Directories screen: paginated list of all users
   const {
     setProfileNavIntent,
@@ -189,6 +367,10 @@ export function CommunitiesFeedScreen({ showHeader = true, aboveListComponent, h
     user,
     directoryUsers,
     setDirectoryUsers,
+    saves,
+    addSave,
+    removeSave,
+    gridItemCount,
   } = useAppStore()
   const directoryUsersNormalized = useMemo(
     () => normalizeDirectoryUsers((directoryUsers as FeedUser[]) || [], user?.userName),
@@ -241,21 +423,43 @@ export function CommunitiesFeedScreen({ showHeader = true, aboveListComponent, h
   }, [directoryUsersNormalized])
 
   const mapUsersWithItems = useCallback((userRecords: any[], itemsByCreator: Map<string, any[]>) => {
+    console.log(`📊 mapUsersWithItems called with ${userRecords.length} users`)
     const result: (FeedUser & { _latest?: number })[] = []
     for (const r of userRecords) {
       const creatorId = r.id
       const creatorItems = itemsByCreator.get(creatorId) || []
-      if (creatorItems.length === 0) continue
+      
+      // Filter: must have an avatar AND at least 3 grid items
+      const image = (r.image || '').trim()
+      const avatarUrl = (r.avatar_url || '').trim()
+      const hasAvatar = Boolean(image || avatarUrl)
+      const hasEnoughItems = creatorItems.length >= 3
+      
+      console.log(`🔍 Checking ${r.userName}: image="${image}", avatar_url="${avatarUrl}", hasAvatar=${hasAvatar}, itemCount=${creatorItems.length}`)
+      
+      if (!hasAvatar || !hasEnoughItems) {
+        console.log(`🚫 Filtering out ${r.userName}: hasAvatar=${hasAvatar}, itemCount=${creatorItems.length}`)
+        continue
+      }
+      
+      console.log(`✅ Including ${r.userName} in directory`)
+      
       const images = creatorItems
         .slice(0, 3)
         .map((it) => it?.image || it?.expand?.ref?.image)
         .filter(Boolean)
       const latest = creatorItems[0]?.created ? new Date(creatorItems[0].created).getTime() : 0
+      const first = (r.firstName || '').trim()
+      const last = (r.lastName || '').trim()
+      const combinedName = `${first} ${last}`.trim()
+      const displayName = combinedName || r.firstName || r.name || r.userName
+      const neighborhood = (r.location || '').trim() || 'Elsewhere'
+
       result.push({
         id: r.id,
         userName: r.userName,
-        name: r.firstName || r.name || r.userName,
-        neighborhood: r.location || '',
+        name: displayName,
+        neighborhood,
         // Prefer `image` as source of truth, fallback to `avatar_url` if present
         avatar_url: r.image || r.avatar_url || '',
         topRefs: images,
@@ -273,6 +477,76 @@ export function CommunitiesFeedScreen({ showHeader = true, aboveListComponent, h
     // This should be a pure pass-through for cached data
     return users
   }, [users]) // Depend on the actual array since we're not processing it
+
+  const saveMapRef = useRef(new Map<string, string>())
+  const [optimisticSaved, setOptimisticSaved] = useState<Map<string, boolean>>(new Map())
+
+  useEffect(() => {
+    const map = new Map<string, string>()
+    for (const save of saves) {
+      const savedUserId = save.expand?.user?.id || (save as any).user
+      if (savedUserId) map.set(savedUserId, save.id)
+    }
+    saveMapRef.current = map
+  }, [saves])
+
+  const isUserSaved = useCallback(
+    (userId: string) => {
+      if (optimisticSaved.has(userId)) return optimisticSaved.get(userId) === true
+      return saveMapRef.current.has(userId)
+    },
+    [optimisticSaved]
+  )
+
+  const toggleSaveForUser = useCallback(
+    (user: FeedUser) => {
+      const userId = user.id
+      const existing = saveMapRef.current.get(userId)
+      if (existing) {
+        setOptimisticSaved((prev) => {
+          const map = new Map(prev)
+          map.set(userId, false)
+          return map
+        })
+        void removeSave(existing).finally(() => {
+          setOptimisticSaved((prev) => {
+            const map = new Map(prev)
+            map.delete(userId)
+            return map
+          })
+        })
+      } else {
+        setOptimisticSaved((prev) => {
+          const map = new Map(prev)
+          map.set(userId, true)
+          return map
+        })
+        const [firstNameHint, ...rest] = (user.name || '').split(' ').filter(Boolean)
+        const profileHint: Partial<Profile> = {
+          id: userId,
+          firstName: firstNameHint || user.name || user.userName,
+          lastName: rest.join(' '),
+          name: user.name,
+          userName: user.userName,
+          location: user.neighborhood,
+          image: user.avatar_url,
+          avatar_url: user.avatar_url,
+        }
+        void addSave(userId, profileHint)
+          .catch((error) => {
+            console.warn('Failed to save user', error)
+          })
+          .finally(() => {
+            setOptimisticSaved((prev) => {
+              const map = new Map(prev)
+              map.delete(userId)
+              return map
+            })
+          })
+      }
+    },
+    [addSave, removeSave]
+  )
 
   // Directory list filtered by selected interest chips (AND match)
   const displayedUsers = useMemo(() => {
@@ -297,12 +571,30 @@ export function CommunitiesFeedScreen({ showHeader = true, aboveListComponent, h
       if (targetPage === 1 && !skipCache) {
         const cachedUsers = await simpleCache.get('directory_users')
         if (cachedUsers) {
-          console.log('📖 Using cached directory users')
-          commitUsers(cachedUsers as FeedUser[])
-          setHasMore(true) // Assume there are more pages
-          setPage(1)
-          setIsLoading(false)
-          return
+          console.log('📖 Checking cached directory users...')
+          // Filter cached users to ensure they have avatar AND 3+ items
+          const filteredCached = (cachedUsers as FeedUser[]).filter(u => {
+            const hasAvatar = Boolean(u.avatar_url && u.avatar_url.trim())
+            const hasEnoughItems = (u.topRefs?.length || 0) >= 3
+            if (!hasAvatar || !hasEnoughItems) {
+              console.log(`🚫 Cached user ${u.userName} doesn't meet criteria: hasAvatar=${hasAvatar} (avatar_url="${u.avatar_url}"), itemCount=${u.topRefs?.length || 0}`)
+            }
+            return hasAvatar && hasEnoughItems
+          })
+          
+          // If we filtered out ANY users, invalidate cache and fetch fresh
+          if (filteredCached.length < (cachedUsers as FeedUser[]).length) {
+            console.log(`🗑️ Cache is stale (${(cachedUsers as FeedUser[]).length} users → ${filteredCached.length} after filtering). Clearing and fetching fresh data...`)
+            await AsyncStorage.removeItem('simple_cache_directory_users')
+            // Continue to fetch fresh data below (don't return early)
+          } else {
+            console.log(`✅ Using ${filteredCached.length} users from cache (all valid)`)
+            commitUsers(filteredCached)
+            setHasMore(true) // Assume there are more pages
+            setPage(1)
+            setIsLoading(false)
+            return
+          }
         }
       }
       
@@ -516,8 +808,27 @@ export function CommunitiesFeedScreen({ showHeader = true, aboveListComponent, h
         if (cancelled) return
 
         if (cachedUsers && Array.isArray(cachedUsers) && cachedUsers.length > 0) {
-          commitUsers(cachedUsers as FeedUser[])
-          setHasInitialData(true)
+          console.log('🔍 Hydrate: Filtering cached users...')
+          // Filter cached users to ensure they have avatar AND 3+ items
+          const filteredCached = (cachedUsers as FeedUser[]).filter(u => {
+            const hasAvatar = Boolean(u.avatar_url && u.avatar_url.trim())
+            const hasEnoughItems = (u.topRefs?.length || 0) >= 3
+            return hasAvatar && hasEnoughItems
+          })
+          
+          // If cache has stale data, clear it and fetch fresh
+          if (filteredCached.length < cachedUsers.length) {
+            console.log(`🗑️ Hydrate: Cache is stale (${cachedUsers.length} → ${filteredCached.length}). Fetching fresh...`)
+            await AsyncStorage.removeItem('simple_cache_directory_users')
+            await fetchPage(1, { skipCache: true })
+          } else if (filteredCached.length > 0) {
+            console.log(`✅ Hydrate: Using ${filteredCached.length} valid cached users`)
+            commitUsers(filteredCached)
+            setHasInitialData(true)
+          } else {
+            // No valid users in cache, fetch fresh
+            await fetchPage(1, { skipCache: true })
+          }
           return
         }
 
@@ -634,62 +945,105 @@ export function CommunitiesFeedScreen({ showHeader = true, aboveListComponent, h
 
   // Community tile press handler not used in this screen
 
-  const renderItem = useCallback(({ item, index }: { item: FeedUser; index: number }) => {
-    return (
-      <DirectoryRow 
-        u={item} 
-        onPress={() => handleUserPress(item.userName, item.id)} 
-        userInterestMap={userInterestMap}
-        refTitleMap={refTitleMap}
-        currentUserId={user?.id}
-        innerLeftPadding={0}
-      />
-    )
-  }, [handleUserPress])
+  const renderItem = useCallback(
+    ({ item }: { item: FeedUser; index: number }) => {
+      return (
+        <DirectoryRow
+          u={item}
+          onPress={() => handleUserPress(item.userName, item.id)}
+          onToggleSave={() => toggleSaveForUser(item)}
+          isSaved={isUserSaved(item.id)}
+          userInterestMap={userInterestMap}
+          refTitleMap={refTitleMap}
+          currentUserId={user?.id}
+          innerLeftPadding={0}
+        />
+      )
+    },
+    [handleUserPress, toggleSaveForUser, isUserSaved, userInterestMap, refTitleMap, user?.id]
+  )
+
+  // Compute user's display name for onboarding pill
+  const userDisplayName = useMemo(() => {
+    if (!user) return ''
+    const first = (user.firstName || '').trim()
+    const last = (user.lastName || '').trim()
+    const combined = `${first} ${last}`.trim()
+    if (combined) return combined
+    const fallback = (user.name || '').trim()
+    return fallback || user.userName || ''
+  }, [user])
+
+  const userAvatarUri = useMemo(() => {
+    if (!user) return ''
+    const avatarCandidate = (user as any)?.avatar_url
+    const candidates = [user.image, avatarCandidate]
+    for (const candidate of candidates) {
+      if (typeof candidate === 'string' && candidate.trim()) {
+        return candidate.trim()
+      }
+    }
+    return ''
+  }, [user])
+
+  // Show onboarding pill until user has at least 3 refs
+  const showOnboardingPill = gridItemCount < 3 && user?.userName
 
   return (
     <View style={{ flex: 1, backgroundColor: c.surface }}>
       {showHeader && (
         // Header: independent from list scroll; surface background
-        <View style={{ paddingVertical: s.$1, alignItems: 'flex-start', justifyContent: 'center', marginTop: 7, paddingLeft: s.$1 + 6, marginBottom: -5 }}>
-          <Text style={{ color: c.prompt, fontSize: (s.$09 as number) + 4, fontFamily: 'System', fontWeight: '700', textAlign: 'left', lineHeight: s.$1half }}>
+        <View style={{ paddingVertical: s.$1, alignItems: 'flex-start', justifyContent: 'center', marginTop: 7, paddingLeft: s.$1 + 6, marginBottom: 0 }}>
+          <Text style={{ color: c.newDark, fontSize: (s.$09 as number) + 4, fontFamily: 'System', fontWeight: '700', textAlign: 'left', lineHeight: s.$1half }}>
             Directory
           </Text>
-        <Text style={{ color: c.prompt, fontSize: s.$09, fontFamily: 'System', fontWeight: '400', textAlign: 'left', lineHeight: s.$1half }}>
+          <Text style={{ color: c.prompt, fontSize: s.$09, fontFamily: 'System', fontWeight: '400', textAlign: 'left', lineHeight: s.$1half }}>
             Edge Patagonia
-        </Text>
-      </View>
+          </Text>
+        </View>
       )}
 
-            {/* Ticker filter chips (popular interests) as subheader under viewing */}
-            {hideInterestChips ? null : (
-              <View style={{ paddingLeft: s.$1 + 6, paddingTop: 0, paddingBottom: 24, marginTop: 0 }}>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingRight: s.$1 }}>
-                  {topInterests.map((ti) => {
-                    const selected = selectedInterests.includes(ti.refId)
-                    return (
-                      <Pressable
-                        key={ti.refId}
-                        onPress={() => toggleChip(ti.refId)}
-                        style={{
-                          marginRight: 8,
-                          borderWidth: 1.5,
-                          borderColor: selected ? c.prompt : 'rgba(176,176,176,0.5)',
-                          borderRadius: 14,
-                          paddingHorizontal: 8,
-                          paddingVertical: 4,
-                          backgroundColor: selected ? c.prompt : 'transparent',
-                        }}
-                      >
-                        <Text style={{ color: selected ? c.surface : c.prompt, opacity: selected ? 1 : 0.5, fontSize: (s.$09 as number) - 2 }} numberOfLines={1}>
-                          {ti.title}
-                        </Text>
-                      </Pressable>
-                    )
-                  })}
-                </ScrollView>
-              </View>
-            )}
+      {/* Ticker filter chips (popular interests) as subheader under viewing */}
+      {hideInterestChips
+        ? null
+        : (
+          <View style={{ paddingLeft: s.$1 + 6, paddingTop: 0, paddingBottom: 24, marginTop: 0 }}>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingRight: s.$1 }}>
+              {topInterests.map((ti) => {
+                const selected = selectedInterests.includes(ti.refId)
+                const tickerColor = DIRECTORY_TICKER_COLOR
+                return (
+                  <Pressable
+                    key={ti.refId}
+                    onPress={() => toggleChip(ti.refId)}
+                    style={{
+                      marginRight: 8,
+                      borderWidth: 1.5,
+                      borderColor: tickerColor,
+                      borderRadius: 14,
+                      paddingHorizontal: 8,
+                      paddingVertical: 4,
+                      backgroundColor: selected ? tickerColor : 'transparent',
+                      opacity: selected ? 1 : 0.5,
+                    }}
+                  >
+                    <Text
+                      style={{
+                        color: selected ? c.surface : tickerColor,
+                        fontSize: 18,
+                        fontFamily: 'InterSemiBold',
+                        fontWeight: '600',
+                      }}
+                      numberOfLines={1}
+                    >
+                      {ti.title}
+                    </Text>
+                  </Pressable>
+                )
+              })}
+            </ScrollView>
+          </View>
+        )}
 
             {/* Optional menu directly above the directory list */}
             {aboveListComponent ? (
@@ -701,7 +1055,21 @@ export function CommunitiesFeedScreen({ showHeader = true, aboveListComponent, h
             {/* Natural scrolling list without surface2 backdrop */}
             <View>
               <FlatList
-                contentContainerStyle={{ paddingLeft: embedded ? 0 : (s.$1 as number) + 6, paddingRight: embedded ? 0 : (s.$1 as number) + 6, paddingTop: 5, paddingBottom: 150 }}
+                ListHeaderComponent={
+                  showOnboardingPill ? (
+                    <OnboardingPill
+                      userName={user?.userName || ''}
+                      fullName={userDisplayName}
+                      avatarUri={userAvatarUri}
+                    />
+                  ) : null
+                }
+                contentContainerStyle={{
+                  paddingLeft: embedded ? embeddedPadding : (s.$1 as number) + 6,
+                  paddingRight: embedded ? embeddedPadding : (s.$1 as number) + 6,
+                  paddingTop: 10,
+                  paddingBottom: 150,
+                }}
                 data={displayedUsers}
                 keyExtractor={(u) => u.id}
                 renderItem={renderItem}

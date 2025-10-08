@@ -10,7 +10,10 @@ import {
   Save,
 } from '../types'
 import { pocketbase } from '../pocketbase'
+import { ClientResponseError } from 'pocketbase'
+import { simpleCache } from '@/features/cache/simpleCache'
 import type { StoreSlices } from './types'
+import type { Profile } from '../types'
 
 export const PAGE_SIZE = 10
 
@@ -62,6 +65,8 @@ export type MessageSlice = {
   incrementConversationUnreadCount: (conversationId: string, amount?: number) => void
   resetConversationUnreadCount: (conversationId: string) => void
 
+  hydrateConversation: (conversationId: string) => Promise<void>
+
   reactions: Record<string, ExpandedReaction[]>
   setReactions: (reactions: ExpandedReaction[]) => void
   addReaction: (reaction: ExpandedReaction) => void
@@ -71,8 +76,10 @@ export type MessageSlice = {
 
   saves: ExpandedSave[]
   setSaves: (saves: ExpandedSave[]) => void
-  addSave: (userId: string, savedBy: string) => Promise<void>
+  addSave: (userId: string, profileHint?: Partial<Profile>) => Promise<void>
   removeSave: (id: string) => Promise<void>
+  savesHydrated: boolean
+  ensureSavesLoaded: () => Promise<void>
 
   archiveConversation: (userId: string, conversationId: string) => Promise<void>
   unarchiveConversation: (userId: string, conversationId: string) => Promise<void>
@@ -113,11 +120,11 @@ export const createMessageSlice: StateCreator<StoreSlices, [], [], MessageSlice>
         .collection('memberships')
         .create({ conversation: newConversation.id, user: creatorId })
 
-      for (const userId of otherMemberIds) {
-        await pocketbase
-          .collection('memberships')
-          .create({ conversation: newConversation.id, user: userId })
-      }
+      await Promise.all(
+        otherMemberIds.map((userId) =>
+          pocketbase.collection('memberships').create({ conversation: newConversation.id, user: userId })
+        )
+      )
 
       const newMemberships = await pocketbase
         .collection('memberships')
@@ -452,6 +459,39 @@ export const createMessageSlice: StateCreator<StoreSlices, [], [], MessageSlice>
       conversationUnreadCounts: { ...state.conversationUnreadCounts, [conversationId]: 0 },
     }))
   },
+  hydrateConversation: async (conversationId: string) => {
+    const { conversations, conversationLoading } = get()
+    if (conversations[conversationId]) return
+    if (conversationLoading[conversationId]) return
+
+    set((state) => ({
+      conversationLoading: { ...state.conversationLoading, [conversationId]: true },
+    }))
+
+    try {
+      const record = await pocketbase
+        .collection('conversations')
+        .getOne<ConversationWithMemberships>(conversationId, {
+          expand: 'memberships_via_conversation.user',
+        })
+
+      const expandedMemberships = (record.expand?.memberships_via_conversation || []).map((membership) => ({
+        ...membership,
+        conversation: membership.conversation ?? record.id,
+      })) as ExpandedMembership[]
+
+      set((state) => ({
+        conversations: { ...state.conversations, [record.id]: record },
+        memberships: { ...state.memberships, [record.id]: expandedMemberships },
+        conversationLoading: { ...state.conversationLoading, [conversationId]: false },
+      }))
+    } catch (error) {
+      set((state) => ({
+        conversationLoading: { ...state.conversationLoading, [conversationId]: false },
+      }))
+      throw error
+    }
+  },
   getNewMessages: async (conversationId: string, oldestLoadedMessageDate: string) => {
     const newMessages = await pocketbase.collection('messages').getList<Message>(1, PAGE_SIZE, {
       filter: `conversation = "${conversationId}" && created < "${oldestLoadedMessageDate}"`,
@@ -523,39 +563,192 @@ export const createMessageSlice: StateCreator<StoreSlices, [], [], MessageSlice>
     }
   },
   saves: [],
+  savesHydrated: false,
   setSaves: (saves: ExpandedSave[]) => {
-    set((state) => ({
-      saves: saves,
+    set(() => ({
+      saves,
+      savesHydrated: true,
     }))
+
+    const userId = pocketbase.authStore.record?.id
+    if (userId) {
+      void simpleCache.set('saves', saves, userId).catch((error) => {
+        console.warn('Persisting saves cache failed', error)
+      })
+    }
   },
-  addSave: async (userId: string, savedBy: string) => {
-    try {
-      const id = (
-        await pocketbase.collection('saves').create<Save>({ user: userId, saved_by: savedBy })
-      ).id
-      const save = await pocketbase.collection('saves').getOne<ExpandedSave>(id, { expand: 'user' })
+  addSave: async (userId: string, profileHint?: Partial<Profile>) => {
+    const savedBy = pocketbase.authStore.record?.id
+    if (!savedBy) {
+      console.warn('addSave called without an authenticated user')
+      return
+    }
+
+    const now = new Date().toISOString()
+    let optimisticId: string | null = null
+    if (profileHint) {
+      const deriveName = () => {
+        if (profileHint?.name && profileHint.name.trim()) return profileHint.name.trim()
+        const first = profileHint?.firstName?.trim() || ''
+        const last = profileHint?.lastName?.trim() || ''
+        const combined = `${first} ${last}`.trim()
+        if (combined) return combined
+        return profileHint?.userName || ''
+      }
+
+      const optimisticUser: any = {
+        id: userId,
+        firstName: profileHint?.firstName ?? deriveName().split(' ')[0] ?? '',
+        lastName: profileHint?.lastName ?? deriveName().split(' ').slice(1).join(' '),
+        name: deriveName(),
+        userName: profileHint?.userName ?? '',
+        location: profileHint?.location ?? '',
+        image: profileHint?.image ?? '',
+        avatar_url: profileHint?.avatar_url ?? profileHint?.image ?? '',
+      }
+
+      optimisticId = `temp-save-${userId}-${Date.now()}`
+      const optimisticSave = {
+        id: optimisticId,
+        collectionId: 'saves',
+        collectionName: 'saves',
+        created: now,
+        updated: now,
+        saved_by: savedBy,
+        user: userId,
+        expand: { user: optimisticUser },
+      } as unknown as ExpandedSave
+
       set((state) => {
-        if (!state.saves.length) return { saves: [save] }
+        if (state.saves.some((s) => s.expand?.user?.id === userId || s.id === optimisticId)) {
+          return { saves: state.saves, savesHydrated: true }
+        }
         return {
-          saves: state.saves.some((m) => m.id === save.id)
-            ? [...state.saves]
-            : [...state.saves, save],
+          saves: [...state.saves, optimisticSave],
+          savesHydrated: true,
         }
       })
+    }
+
+    try {
+      const created = await pocketbase.collection('saves').create<Save>({ user: userId, saved_by: savedBy })
+      const save = await pocketbase.collection('saves').getOne<ExpandedSave>(created.id, { expand: 'user' })
+      set((state) => {
+        let next = state.saves
+        if (optimisticId) {
+          next = next.filter((s) => s.id !== optimisticId)
+        }
+        const alreadyHave = next.some((m) => m.id === save.id)
+        if (!alreadyHave) next = [...next, save]
+        return {
+          saves: next,
+          savesHydrated: true,
+        }
+      })
+      const current = get().saves
+      void simpleCache.set('saves', current, savedBy).catch((error) => {
+        console.warn('Persisting saves cache failed', error)
+      })
     } catch (error) {
-      console.error(error)
+      if (optimisticId) {
+        set((state) => ({
+          saves: state.saves.filter((s) => s.id !== optimisticId),
+          savesHydrated: true,
+        }))
+      }
+      if (error instanceof ClientResponseError) {
+        const duplicate = (error.data?.data as any)?.user?.code === 'validation_not_unique'
+        if (duplicate) {
+          try {
+            const existing = await pocketbase
+              .collection('saves')
+              .getFirstListItem<ExpandedSave>(
+                pocketbase.filter('user = {:user} && saved_by = {:savedBy}', { user: userId, savedBy }),
+                { expand: 'user' }
+              )
+
+            if (!existing) {
+              throw new Error('Duplicate save lookup returned no record')
+            }
+
+            let nextSaves: ExpandedSave[] = []
+            set((state) => {
+              if (state.saves.some((m) => m.id === existing.id)) {
+                nextSaves = state.saves
+                return { saves: state.saves, savesHydrated: true }
+              }
+              nextSaves = [...state.saves, existing]
+              return { saves: nextSaves, savesHydrated: true }
+            })
+            void simpleCache.set('saves', nextSaves, savedBy).catch((cacheError) => {
+              console.warn('Persisting saves cache failed', cacheError)
+            })
+            return
+          } catch (fetchError) {
+            console.error('Failed to hydrate existing save after duplicate response', fetchError)
+            throw fetchError
+          }
+        }
+      }
+
+      console.error('addSave error', error)
+      throw error
     }
   },
   removeSave: async (id: string) => {
+    let removed: ExpandedSave | undefined
+    set((state) => {
+      removed = state.saves.find((m) => m.id === id)
+      return {
+        saves: state.saves.filter((m) => m.id !== id),
+        savesHydrated: true,
+      }
+    })
     try {
       await pocketbase.collection('saves').delete(id)
-      set((state) => {
-        return {
-          saves: state.saves.filter((m) => m.id !== id),
-        }
-      })
+      const userId = pocketbase.authStore.record?.id
+      if (userId) {
+        void simpleCache.set('saves', get().saves, userId).catch((error) => {
+          console.warn('Persisting saves cache failed', error)
+        })
+      }
     } catch (error) {
       console.error(error)
+      if (removed) {
+        set((state) => ({
+          saves: [...state.saves, removed!],
+          savesHydrated: true,
+        }))
+      }
+    }
+  },
+  ensureSavesLoaded: async () => {
+    if (get().savesHydrated) return
+
+    const userId = pocketbase.authStore.record?.id
+    if (!userId) {
+      console.warn('ensureSavesLoaded called without auth user')
+      return
+    }
+
+    try {
+      const cached = await simpleCache.get<ExpandedSave[]>('saves', userId)
+      if (cached) {
+        set(() => ({ saves: cached, savesHydrated: true }))
+        return
+      }
+    } catch (error) {
+      console.warn('Reading saves cache failed', error)
+    }
+
+    try {
+      const fresh = await pocketbase.collection('saves').getFullList<ExpandedSave>({ expand: 'user' })
+      set(() => ({ saves: fresh, savesHydrated: true }))
+      void simpleCache.set('saves', fresh, userId).catch((error) => {
+        console.warn('Persisting saves cache failed', error)
+      })
+    } catch (error) {
+      console.error('Failed to fetch saves list', error)
     }
   },
   archiveConversation: async (userId: string, conversationId: string) => {

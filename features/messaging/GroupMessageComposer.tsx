@@ -148,8 +148,13 @@ export function GroupMessageComposer() {
       const memberIds = groupComposerTargets.map((member) => member.id)
       const conversationId = await createConversation(false, user.id, memberIds, payload.title)
       setMessagesForConversation(conversationId, [])
-      await sendMessage(user.id, conversationId, payload.message)
       handleSendSuccess(conversationId, payload)
+
+      try {
+        await sendMessage(user.id, conversationId, payload.message)
+      } catch (error) {
+        console.error('Failed to send initial group message', error)
+      }
     } catch (error) {
       clearRetry()
       retryTimeoutRef.current = setTimeout(() => {
@@ -163,6 +168,7 @@ export function GroupMessageComposer() {
     sendMessage,
     handleSendSuccess,
     clearRetry,
+    setMessagesForConversation,
   ])
 
   const handleSend = useCallback(() => {
@@ -247,6 +253,7 @@ export function GroupMessageComposer() {
             horizontal
             pagingEnabled
             showsHorizontalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
             onMomentumScrollEnd={(event) => {
               const newIndex = Math.round(event.nativeEvent.contentOffset.x / safePageWidth)
               setActivePage(newIndex)
@@ -362,7 +369,7 @@ export function GroupMessageComposer() {
                 </Pressable>
                 <Text style={{ fontSize: s.$1, fontWeight: '700', color: c.muted2 }}>Adding</Text>
               </View>
-              <ScrollView showsVerticalScrollIndicator={false}>
+              <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
                 {groupComposerTargets.map((profile) => (
                   <View
                     key={profile.id}

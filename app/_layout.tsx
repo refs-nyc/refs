@@ -176,13 +176,13 @@ function RootLayoutNav() {
         />
         <Stack.Screen
           name="user/[userName]/index"
-          options={({ route }: { route: { params?: Record<string, any> } }) => ({
+          options={{
             title: 'User',
-            animation: route.params?.fromDirectory ? 'slide_from_right' : 'none',
-            gestureEnabled: true,
-            gestureDirection: 'horizontal',
+            presentation: 'card',
+            animation: 'slide_from_right',
+            gestureEnabled: false,
             headerShown: false,
-          })}
+          }}
         />
         <Stack.Screen
           name="user/login"
@@ -192,6 +192,18 @@ function RootLayoutNav() {
             gestureEnabled: true,
             gestureDirection: 'horizontal',
             headerShown: false,
+          }}
+        />
+        <Stack.Screen
+          name="messages"
+          options={{
+            title: 'Messages',
+            presentation: 'modal',
+            animation: 'slide_from_bottom',
+            gestureEnabled: true,
+            gestureDirection: 'vertical',
+            headerShown: false,
+            animationDuration: 300,
           }}
         />
       </Stack>

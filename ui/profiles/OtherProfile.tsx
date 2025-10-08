@@ -2,20 +2,22 @@ import { useAppStore } from '@/features/stores'
 import { getBacklogItems, getProfileItems } from '@/features/stores/items'
 import type { Profile } from '@/features/types'
 import { ExpandedItem } from '@/features/types'
-import { s } from '@/features/style'
+import { c, s } from '@/features/style'
 import BottomSheet from '@gorhom/bottom-sheet'
 import { useEffect, useRef, useState } from 'react'
-import { ScrollView, View } from 'react-native'
+import { ScrollView, View, Text, Pressable, Animated, Dimensions, StyleSheet, GestureResponderEvent } from 'react-native'
+import { withTiming } from 'react-native-reanimated'
 import { Grid } from '../grid/Grid'
 import { PlaceholderGrid } from '../grid/PlaceholderGrid'
 import { Heading } from '../typo/Heading'
 import { ProfileDetailsSheet } from './ProfileDetailsSheet'
-import { ProfileHeader } from './ProfileHeader'
 import { OtherBacklogSheet } from './sheets/OtherBacklogSheet'
 import { OtherButtonsSheet } from './sheets/OtherButtonsSheet'
 import { simpleCache } from '@/features/cache/simpleCache'
 import { pocketbase } from '@/features/pocketbase'
 import AsyncStorage from '@react-native-async-storage/async-storage'
+import { Image } from 'expo-image'
+import Svg, { Circle } from 'react-native-svg'
 
 export const OtherProfile = ({ userName, prefetchedUserId }: { userName: string; prefetchedUserId?: string }) => {
   const [profile, setProfile] = useState<Profile>()
@@ -23,7 +25,7 @@ export const OtherProfile = ({ userName, prefetchedUserId }: { userName: string;
   const [backlogItems, setBacklogItems] = useState<ExpandedItem[]>([])
   const [loading, setLoading] = useState<boolean>(true)
 
-  const { user, stopEditing, getUserByUserName } = useAppStore()
+  const { user, stopEditing, getUserByUserName, otherProfileBackdropAnimatedIndex } = useAppStore()
 
   const refreshGrid = async (userName: string, hintedUserId?: string) => {
     setLoading(true)
@@ -176,6 +178,68 @@ export const OtherProfile = ({ userName, prefetchedUserId }: { userName: string;
   const backlogSheetRef = useRef<BottomSheet>(null)
 
   const [detailsItem, setDetailsItem] = useState<ExpandedItem | null>(null)
+  const [avatarOverlayVisible, setAvatarOverlayVisible] = useState(false)
+  const overlayOpacity = useRef(new Animated.Value(0)).current
+  const overlayScale = useRef(new Animated.Value(0.85)).current
+
+  const displayName = (() => {
+    if (!profile) return userName
+    const first = (profile.firstName || '').trim()
+    const last = (profile.lastName || '').trim()
+    const combined = `${first} ${last}`.trim()
+    if (combined) return combined
+    const fallback = (profile.name || '').trim()
+    return fallback || profile.userName || userName
+  })()
+
+  const locationLabel = (profile?.location || '').trim()
+  const remoteAvatar = profile?.image || (profile as any)?.avatar_url || ''
+  const hasAvatar = Boolean(remoteAvatar)
+  const expandedAvatarSize = Math.min(Dimensions.get('window').width * 0.75, 300)
+
+  const openAvatar = () => {
+    if (!hasAvatar) return
+    setAvatarOverlayVisible(true)
+    if (otherProfileBackdropAnimatedIndex) {
+      otherProfileBackdropAnimatedIndex.value = withTiming(0, { duration: 180 })
+    }
+    overlayOpacity.setValue(0)
+    overlayScale.setValue(0.85)
+    Animated.parallel([
+      Animated.timing(overlayOpacity, {
+        toValue: 1,
+        duration: 180,
+        useNativeDriver: true,
+      }),
+      Animated.spring(overlayScale, {
+        toValue: 1,
+        damping: 14,
+        stiffness: 200,
+        useNativeDriver: true,
+      }),
+    ]).start()
+  }
+
+  const closeAvatar = () => {
+    if (otherProfileBackdropAnimatedIndex) {
+      otherProfileBackdropAnimatedIndex.value = withTiming(-1, { duration: 180 })
+    }
+    Animated.parallel([
+      Animated.timing(overlayOpacity, {
+        toValue: 0,
+        duration: 150,
+        useNativeDriver: true,
+      }),
+      Animated.spring(overlayScale, {
+        toValue: 0.85,
+        damping: 14,
+        stiffness: 200,
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      setAvatarOverlayVisible(false)
+    })
+  }
 
   return (
     <>
@@ -183,8 +247,7 @@ export const OtherProfile = ({ userName, prefetchedUserId }: { userName: string;
         style={{ flex: 1 }}
         contentContainerStyle={{
           justifyContent: 'center',
-          alignItems: 'center',
-          paddingHorizontal: s.$08,
+          alignItems: 'stretch',
           paddingBottom: s.$10,
           gap: s.$4,
           minHeight: '100%',
@@ -196,10 +259,93 @@ export const OtherProfile = ({ userName, prefetchedUserId }: { userName: string;
             style={{
               flex: 1,
               width: '100%',
-              marginHorizontal: s.$1half,
+              paddingHorizontal: s.$1 + 6,
+              marginTop: 5,
             }}
           >
-            <ProfileHeader profile={profile} />
+            <View style={{ width: '100%', paddingHorizontal: 0, marginBottom: s.$1 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 18 }}>
+                <View style={{ flex: 1 }}>
+                  <Text
+                    style={{
+                      color: '#030303',
+                      fontSize: (s.$09 as number) + 4,
+                      fontFamily: 'System',
+                      fontWeight: '700',
+                      lineHeight: s.$1half,
+                    }}
+                  >
+                    {displayName}
+                  </Text>
+                  {locationLabel ? (
+                    <Text
+                      style={{
+                        color: c.prompt,
+                        fontSize: 13,
+                        fontFamily: 'Inter',
+                        fontWeight: '500',
+                        lineHeight: s.$1half,
+                      }}
+                    >
+                      {locationLabel}
+                    </Text>
+                  ) : null}
+                </View>
+                <Pressable onPress={openAvatar} hitSlop={12} disabled={!hasAvatar}>
+                  {hasAvatar ? (
+                    <View
+                      style={{
+                        width: 61.2 * 1.1,
+                        height: 61.2 * 1.1,
+                        borderRadius: (61.2 * 1.1) / 2,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        backgroundColor: c.surface,
+                        borderWidth: 2.5,
+                        borderColor: '#B0B0B0',
+                      }}
+                    >
+                      <View
+                        style={{
+                          width: 61.2,
+                          height: 61.2,
+                          borderRadius: 61.2 / 2,
+                          borderWidth: 2.5,
+                          borderColor: c.surface,
+                          overflow: 'hidden',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          backgroundColor: c.surface2,
+                          borderStyle: 'solid',
+                        }}
+                      >
+                        <Image source={remoteAvatar} style={{ width: '100%', height: '100%' }} contentFit="cover" transition={150} />
+                      </View>
+                    </View>
+                  ) : (
+                    <View
+                      style={{
+                        width: 61.2,
+                        height: 61.2,
+                        borderRadius: 61.2 / 2,
+                        borderWidth: 2.5,
+                        borderColor: '#B0B0B0',
+                        borderStyle: 'dashed',
+                        overflow: 'hidden',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        backgroundColor: c.surface2,
+                      }}
+                    >
+                      <Svg width={32} height={20} viewBox="0 0 64 40">
+                        <Circle cx="24" cy="20" r="16" fill="none" stroke={c.muted} strokeWidth="2" />
+                        <Circle cx="40" cy="20" r="16" fill="none" stroke={c.muted} strokeWidth="2" />
+                      </Svg>
+                    </View>
+                  )}
+                </Pressable>
+              </View>
+            </View>
 
             <View style={{ gap: s.$2 }}>
               {loading ? (
@@ -210,6 +356,7 @@ export const OtherProfile = ({ userName, prefetchedUserId }: { userName: string;
                   items={gridItems}
                   rows={4}
                   editingRights={false}
+                  rowJustify="center"
                   onPressItem={(item) => {
                     setDetailsItem(item!)
                     detailsSheetRef.current?.snapToIndex(0)
@@ -223,12 +370,12 @@ export const OtherProfile = ({ userName, prefetchedUserId }: { userName: string;
 
         {!user && <Heading tag="h1">Profile for {userName} not found</Heading>}
       </ScrollView>
+
       {profile && (
         <>
           <OtherButtonsSheet
             bottomSheetRef={bottomSheetRef}
             profile={profile}
-            user={user}
             openBacklogSheet={() => {
               backlogSheetRef.current?.snapToIndex(0)
             }}
@@ -253,6 +400,42 @@ export const OtherProfile = ({ userName, prefetchedUserId }: { userName: string;
             />
           )}
         </>
+      )}
+
+      {avatarOverlayVisible && (
+        <Pressable style={StyleSheet.absoluteFill} onPress={closeAvatar}>
+          <Animated.View
+            pointerEvents="none"
+            style={[StyleSheet.absoluteFillObject, { backgroundColor: 'rgba(0,0,0,0.5)', opacity: overlayOpacity }]}
+          />
+          <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }} pointerEvents="box-none">
+            <Pressable
+              onPress={(event: GestureResponderEvent) => {
+                event.stopPropagation()
+              }}
+              hitSlop={20}
+            >
+              <Animated.View
+                style={{
+                  transform: [{ scale: overlayScale }],
+                  borderRadius: expandedAvatarSize / 2,
+                  overflow: 'hidden',
+                  shadowColor: '#000',
+                  shadowOpacity: 0.35,
+                  shadowRadius: 16,
+                  shadowOffset: { width: 0, height: 10 },
+                  opacity: overlayOpacity,
+                }}
+              >
+                <Image
+                  source={remoteAvatar}
+                  style={{ width: expandedAvatarSize, height: expandedAvatarSize, backgroundColor: c.surface2 }}
+                  contentFit="cover"
+                />
+              </Animated.View>
+            </Pressable>
+          </View>
+        </Pressable>
       )}
     </>
   )

@@ -25,6 +25,23 @@ type ExpandedConversation = ConversationsResponse<{
   memberships_via_conversation: ExpandedMembership[]
 }>
 
+const CONVERSATION_PAGE_SIZE = 20
+const PREVIEW_BATCH_SIZE = 4
+
+const pause = (ms = 0) =>
+  new Promise<void>((resolve) => {
+    setTimeout(resolve, ms)
+  })
+
+const chunk = <T,>(items: T[], size: number): T[][] => {
+  if (size <= 0) return []
+  const result: T[][] = []
+  for (let i = 0; i < items.length; i += size) {
+    result.push(items.slice(i, i + size))
+  }
+  return result
+}
+
 export function MessagesInit() {
   const {
     user,
@@ -45,6 +62,11 @@ export function MessagesInit() {
   } = useAppStore()
 
   const prefetchedAvatarUrlsRef = useRef<Set<string>>(new Set())
+  const queueRef = useRef<Promise<void>>(Promise.resolve())
+  const cancelledRef = useRef(false)
+  const conversationAccumulatorRef = useRef<Map<string, ExpandedConversation>>(new Map())
+  const membershipAccumulatorRef = useRef<Map<string, ExpandedMembership>>(new Map())
+  const previewAccumulatorRef = useRef<Map<string, ConversationPreviewCacheEntry>>(new Map())
 
   const prefetchAvatarSignedUrls = useCallback(
     (memberships: ExpandedMembership[]) => {
@@ -133,9 +155,81 @@ export function MessagesInit() {
   )
 
   useEffect(() => {
-    if (!user) return
+    if (!user?.id) return
 
-    let cancelled = false
+    cancelledRef.current = false
+    queueRef.current = Promise.resolve()
+
+    const cacheTimeouts: ReturnType<typeof setTimeout>[] = []
+    const conversationAccumulator = conversationAccumulatorRef.current
+    const membershipAccumulator = membershipAccumulatorRef.current
+    const previewAccumulator = previewAccumulatorRef.current
+
+    const schedule = (task: () => Promise<void> | void, delay = 0) => {
+      queueRef.current = queueRef.current
+        .then(async () => {
+          if (cancelledRef.current) return
+          if (delay) await pause(delay)
+          if (cancelledRef.current) return
+          await task()
+        })
+        .catch((error) => {
+          console.error('Messaging preload task failed', error)
+        })
+    }
+
+    const queueCacheWrite = (key: 'conversations' | 'conversation_memberships' | 'conversation_previews', value: unknown) => {
+      const handle = setTimeout(() => {
+        if (cancelledRef.current) return
+        void simpleCache.set(key as any, value, user.id).catch((error) => {
+          console.warn(`Persisting ${key} cache failed`, error)
+        })
+      }, 0)
+      cacheTimeouts.push(handle)
+    }
+
+    const getSortTimestamp = (conversation: ExpandedConversation) =>
+      ((conversation as any).updated as string | undefined) ??
+      ((conversation as any).created as string | undefined) ??
+      ''
+
+    const toSortedConversations = () => {
+      const list = Array.from(conversationAccumulator.values())
+      list.sort((a, b) => getSortTimestamp(b).localeCompare(getSortTimestamp(a)))
+      return list
+    }
+
+    const applyConversationBatch = (batch: ExpandedConversation[]) => {
+      if (!batch.length) return
+      batch.forEach((conversation) => {
+        conversationAccumulator.set(conversation.id, conversation)
+      })
+      const sorted = toSortedConversations()
+      setConversations(sorted as unknown as Conversation[])
+      queueCacheWrite('conversations', sorted)
+    }
+
+    const applyMembershipBatch = (memberships: ExpandedMembership[]) => {
+      if (!memberships.length) return
+      memberships.forEach((membership) => {
+        membershipAccumulator.set(membership.id, membership)
+      })
+      const next = Array.from(membershipAccumulator.values())
+      setMemberships(next)
+      prefetchAvatarSignedUrls(memberships)
+      queueCacheWrite('conversation_memberships', next)
+    }
+
+    const applyPreviewEntry = (entry: ConversationPreviewCacheEntry) => {
+      previewAccumulator.set(entry.conversationId, entry)
+      setConversationPreview(entry.conversationId, entry.message, entry.unreadCount ?? 0)
+    }
+
+    const flushPreviewCache = () => {
+      const previews = Array.from(previewAccumulator.values())
+      if (!previews.length) return
+      queueCacheWrite('conversation_previews', previews)
+    }
 
     const hydrateFromCache = async () => {
       try {
@@ -145,32 +239,37 @@ export function MessagesInit() {
           simpleCache.get<ConversationPreviewCacheEntry[]>('conversation_previews', user.id),
         ])
 
-        if (cancelled) return
+        if (cancelledRef.current) return
 
-          if (cachedConversations) {
-            setConversations(cachedConversations as unknown as Conversation[])
+        if (cachedConversations?.length) {
+          cachedConversations.forEach((conversation) => {
+            conversationAccumulator.set(conversation.id, conversation)
+          })
+          const sorted = toSortedConversations()
+          setConversations(sorted as unknown as Conversation[])
 
-            if (!cachedMemberships || cachedMemberships.length === 0) {
-              const flattened = cachedConversations.flatMap((conversation) =>
-                (conversation.expand?.memberships_via_conversation || []).map((membership) => ({
-                  ...membership,
-                  conversation: membership.conversation ?? conversation.id,
-                }))
-              )
-              if (flattened.length) {
-                setMemberships(flattened)
-                prefetchAvatarSignedUrls(flattened)
-                setTimeout(() => {
-                  void simpleCache.set('conversation_memberships', flattened, user.id)
-                }, 0)
-              }
+          if (!cachedMemberships?.length) {
+            const flattened = cachedConversations.flatMap((conversation) =>
+              (conversation.expand?.memberships_via_conversation || []).map((membership) => ({
+                ...membership,
+                conversation: membership.conversation ?? conversation.id,
+              }))
+            ) as ExpandedMembership[]
+            if (flattened.length) {
+              applyMembershipBatch(flattened)
             }
           }
-          if (cachedMemberships && cachedMemberships.length) {
-            setMemberships(cachedMemberships)
-            prefetchAvatarSignedUrls(cachedMemberships)
-          }
-        if (cachedPreviews && cachedPreviews.length) {
+        }
+
+        if (cachedMemberships?.length) {
+          applyMembershipBatch(cachedMemberships)
+        }
+
+        if (cachedPreviews?.length) {
+          previewAccumulator.clear()
+          cachedPreviews.forEach((preview) => {
+            previewAccumulator.set(preview.conversationId, preview)
+          })
           setConversationPreviews(
             cachedPreviews.map((preview) => ({
               conversationId: preview.conversationId,
@@ -184,9 +283,23 @@ export function MessagesInit() {
       }
     }
 
-    const buildMembershipIndex = (memberships: ExpandedMembership[]) => {
+    const flattenMemberships = (batch: ExpandedConversation[]) => {
+      const flattened: ExpandedMembership[] = []
+      batch.forEach((conversation) => {
+        const memberships = conversation.expand?.memberships_via_conversation || []
+        memberships.forEach((membership) => {
+          flattened.push({
+            ...membership,
+            conversation: membership.conversation ?? conversation.id,
+          } as ExpandedMembership)
+        })
+      })
+      return flattened
+    }
+
+    const buildMembershipIndex = () => {
       const map = new Map<string, ExpandedMembership>()
-      memberships.forEach((membership) => {
+      membershipAccumulator.forEach((membership) => {
         if (membership.expand?.user?.id === user.id) {
           map.set(membership.conversation, membership)
         }
@@ -194,126 +307,117 @@ export function MessagesInit() {
       return map
     }
 
-    const fetchConversationPreviews = async (
-      conversations: Conversation[],
-      memberships: ExpandedMembership[]
-    ): Promise<ConversationPreviewCacheEntry[]> => {
-      const membershipIndex = buildMembershipIndex(memberships)
-      const previews: ConversationPreviewCacheEntry[] = []
-      const queue = [...conversations]
-      const workerCount = Math.min(5, queue.length || 1)
-
-      const workers = Array.from({ length: workerCount }).map(async () => {
-        while (!cancelled) {
-          const conversation = queue.shift()
-          if (!conversation) break
-
-          const preview = await fetchConversationPreview(conversation.id, membershipIndex)
-          if (cancelled) break
-
-          previews.push(preview)
-          setConversationPreview(preview.conversationId, preview.message, preview.unreadCount)
-        }
-      })
-
-      await Promise.all(workers)
-      return previews
+    const buildPreviewBatch = async (conversations: ExpandedConversation[]) => {
+      if (!conversations.length) return
+      const membershipIndex = buildMembershipIndex()
+      for (const conversation of conversations) {
+        if (cancelledRef.current) break
+        const preview = await fetchConversationPreview(
+          conversation.id,
+          membershipIndex
+        )
+        if (cancelledRef.current) break
+        applyPreviewEntry(preview)
+        await pause()
+      }
+      flushPreviewCache()
     }
 
-    const fetchFreshData = async () => {
+    const loadConversationPage = async (page: number) => {
       try {
-        const [conversationsRes, reactionsRes, savesRes] = await Promise.allSettled([
-          pocketbase
-            .collection('conversations')
-            .getFullList<ExpandedConversation>({
-              sort: '-created',
-              expand: 'memberships_via_conversation.user',
-            }),
-          pocketbase.collection('reactions').getFullList<ExpandedReaction>({ expand: 'user' }),
-          pocketbase.collection('saves').getFullList<ExpandedSave>({ expand: 'user' }),
-        ])
+        const response = await pocketbase
+          .collection('conversations')
+          .getList<ExpandedConversation>(page, CONVERSATION_PAGE_SIZE, {
+            sort: '-created',
+            expand: 'memberships_via_conversation.user',
+          })
 
-        if (cancelled) return
+        if (cancelledRef.current) return null
 
-        const conversations =
-          conversationsRes.status === 'fulfilled' ? conversationsRes.value : ([] as ExpandedConversation[])
-        const reactions =
-          reactionsRes.status === 'fulfilled' ? reactionsRes.value : ([] as ExpandedReaction[])
-        const saves = savesRes.status === 'fulfilled' ? savesRes.value : ([] as ExpandedSave[])
-
-        if (conversations.length) {
-          const flattenedMemberships = conversations.flatMap((conversation) =>
-            (conversation.expand?.memberships_via_conversation || []).map((membership) => ({
-              ...membership,
-              conversation: membership.conversation ?? conversation.id,
-            }))
-          )
-
-          if (flattenedMemberships.length) {
-            setMemberships(flattenedMemberships)
-            prefetchAvatarSignedUrls(flattenedMemberships)
-            setTimeout(() => {
-              void simpleCache.set('conversation_memberships', flattenedMemberships, user.id)
-            }, 0)
+        const items = response.items ?? []
+        if (items.length) {
+          applyConversationBatch(items)
+          const flattened = flattenMemberships(items)
+          if (flattened.length) {
+            applyMembershipBatch(flattened)
           }
-
-          setConversations(conversations as unknown as Conversation[])
-          setTimeout(() => {
-            void simpleCache.set('conversations', conversations, user.id)
-          }, 0)
         }
 
-        if (reactions.length) {
-          setReactions(reactions)
-        }
-        if (saves.length) {
-          setSaves(saves)
-        }
-
-        if (conversations.length) {
-          const membershipsForPreview = conversations.flatMap(
-            (conversation) => conversation.expand?.memberships_via_conversation || []
-          ) as ExpandedMembership[]
-
-          const previews = await fetchConversationPreviews(
-            conversations as unknown as Conversation[],
-            membershipsForPreview
-          )
-          if (!cancelled) {
-            setConversationPreviews(
-              previews.map((preview) => ({
-                conversationId: preview.conversationId,
-                message: preview.message,
-                unreadCount: preview.unreadCount ?? 0,
-              }))
-            )
-            setTimeout(() => {
-              void simpleCache.set('conversation_previews', previews, user.id)
-            }, 0)
-          }
+        return {
+          items,
+          totalPages: response.totalPages ?? 1,
         }
       } catch (error) {
-        console.error('Failed to load messaging data', error)
-      } finally {
-        // no-op
+        console.error('Failed to load conversations page', error)
+        return null
       }
     }
 
-    hydrateFromCache()
-      .catch((error) => {
-        console.error('Messaging cache hydration failed', error)
-      })
+    const warmAdditionalPages = async (startPage: number, totalPages: number) => {
+      for (let page = startPage; page <= totalPages; page += 1) {
+        if (cancelledRef.current) break
+        await pause(24)
+        const result = await loadConversationPage(page)
+        if (!result?.items?.length || cancelledRef.current) continue
+        const chunks = chunk(result.items, PREVIEW_BATCH_SIZE)
+        for (const batch of chunks) {
+          if (cancelledRef.current) break
+          await buildPreviewBatch(batch)
+        }
+      }
+    }
 
-    const fetchTimeout = setTimeout(() => {
-      if (cancelled) return
-      fetchFreshData().catch((error) => {
-        console.error('Messaging initialisation failed', error)
-      })
-    }, 0)
+    const loadReactions = async () => {
+      try {
+        const reactions = await pocketbase.collection('reactions').getFullList<ExpandedReaction>({ expand: 'user' })
+        if (cancelledRef.current || !reactions.length) return
+        setReactions(reactions)
+      } catch (error) {
+        console.error('Failed to load reactions', error)
+      }
+    }
+
+    const loadSaves = async () => {
+      try {
+        const saves = await pocketbase.collection('saves').getFullList<ExpandedSave>({ expand: 'user' })
+        if (cancelledRef.current || !saves.length) return
+        setSaves(saves)
+      } catch (error) {
+        console.error('Failed to load saves', error)
+      }
+    }
+
+    schedule(hydrateFromCache)
+
+    schedule(async () => {
+      const firstPage = await loadConversationPage(1)
+      if (!firstPage?.items?.length || cancelledRef.current) return
+
+      const firstBatch = firstPage.items.slice(0, PREVIEW_BATCH_SIZE)
+      if (firstBatch.length) {
+        schedule(() => buildPreviewBatch(firstBatch))
+      }
+
+      const remaining = firstPage.items.slice(PREVIEW_BATCH_SIZE)
+      if (remaining.length) {
+        const batches = chunk(remaining, PREVIEW_BATCH_SIZE)
+        batches.forEach((batch, index) => {
+          schedule(() => buildPreviewBatch(batch), 12 * (index + 1))
+        })
+      }
+
+      if (firstPage.totalPages > 1) {
+        schedule(() => warmAdditionalPages(2, firstPage.totalPages), 32)
+      }
+    })
+
+    schedule(loadReactions, 48)
+    schedule(loadSaves, 64)
 
     return () => {
-      cancelled = true
-      clearTimeout(fetchTimeout)
+      cancelledRef.current = true
+      cacheTimeouts.forEach((timeout) => clearTimeout(timeout))
+      queueRef.current = Promise.resolve()
     }
   }, [
     user?.id,
@@ -324,6 +428,7 @@ export function MessagesInit() {
     setConversationPreview,
     setConversationPreviews,
     fetchConversationPreview,
+    prefetchAvatarSignedUrls,
   ])
 
   // subscribe to new messages

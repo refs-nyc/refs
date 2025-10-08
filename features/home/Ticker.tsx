@@ -11,6 +11,7 @@ function truncate(text: string, maxLength: number) {
 export const Ticker = () => {
   const [tickerItems, setTickerItems] = useState<CompleteRef[]>([])
   const { getTickerItems, referencersBottomSheetRef, setCurrentRefId } = useAppStore()
+  const tickerColor = '#A5B89F'
 
   useEffect(() => {
     async function fetchTickerItems() {
@@ -53,7 +54,7 @@ export const Ticker = () => {
             style={{
               backgroundColor: c.surface,
               borderWidth: 2,
-              borderColor: c.olive,
+              borderColor: tickerColor,
               borderRadius: s.$2 * 0.9,
               paddingHorizontal: s.$075 * 0.9,
               display: 'flex',
@@ -62,7 +63,7 @@ export const Ticker = () => {
               height: s.$4 * 0.9,
             }}
           >
-            <Text style={{ fontSize: s.$09 * 0.9, color: c.olive }}>
+            <Text style={{ fontSize: s.$09 * 0.9, color: tickerColor }}>
               {truncate(ref.title || '', 35)}
             </Text>
           </TouchableOpacity>

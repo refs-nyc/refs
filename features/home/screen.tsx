@@ -13,6 +13,7 @@ import Animated, {
 import { router } from 'expo-router'
 import { c, s } from '@/features/style/index'
 import { Feed } from './feed'
+import { UnifiedOnboarding } from '@/features/onboarding/UnifiedOnboarding'
 
 const dims = Dimensions.get('window')
 
@@ -86,29 +87,7 @@ export function HomeScreen() {
   if (user) {
     return null // Don't render anything while redirecting
   } else {
-    // if the user is not logged in, show the home screen
-    return (
-      <View
-        style={{
-          flex: 1,
-          justifyContent: 'flex-start',
-          padding: s.$4,
-          height: s.full as DimensionValue,
-          marginTop: dims.height * 0.2,
-        }}
-      >
-        <YStack gap={s.$3}>
-          <Heading tag="h1normal" style={{ textAlign: 'center', color: c.black }}>
-            <Heading tag="strong">Refs</Heading>
-            <Text style={{ fontFamily: 'Inter', fontWeight: '400' }}>{' is the phonebook for the internet.'}</Text>
-          </Heading>
-          <YStack style={{ alignItems: 'center' }} gap={s.$05}>
-            <Button title="Join" onPress={() => router.push('/onboarding')} />
-            <Button variant="basic" title="Login" onPress={() => router.push('/user/login')} />
-          </YStack>
-        </YStack>
-        <RotatingImage />
-      </View>
-    )
+    // if the user is not logged in, show the new onboarding screen
+    return <UnifiedOnboarding />
   }
 }

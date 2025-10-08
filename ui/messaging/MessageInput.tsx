@@ -3,6 +3,7 @@ import { XStack, YStack } from '../core/Stacks'
 import { c, s } from '@/features/style'
 import { Ionicons } from '@expo/vector-icons'
 import { Message, Profile } from '@/features/types'
+import { useRef, useEffect } from 'react'
 
 export default function MessageInput({
   onMessageSubmit,
@@ -28,6 +29,21 @@ export default function MessageInput({
   compact?: boolean
 }) {
   const verticalSpacing = compact ? s.$05 : s.$075
+  const inputRef = useRef<TextInput>(null)
+
+  // Focus the input when component mounts (more reliable than autoFocus during navigation)
+  useEffect(() => {
+    // Small delay to ensure the component is fully mounted
+    const timer = setTimeout(() => {
+      try {
+        inputRef.current?.focus()
+      } catch (e) {
+        console.warn('Failed to focus message input:', e)
+      }
+    }, 100)
+    
+    return () => clearTimeout(timer)
+  }, [])
 
   return (
     <>
@@ -69,6 +85,7 @@ export default function MessageInput({
           }}
         >
           <TextInput
+            ref={inputRef}
             style={{ width: '70%' }}
             placeholder="Type anything..."
             multiline={true}

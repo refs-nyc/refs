@@ -598,7 +598,9 @@ export function EdgeCorkboardScreen() {
                       return next
                     })
 
-                    ;(async () => {
+                    // Use InteractionManager to defer navigation until after sheet closes
+                    // This prevents "rendered fewer hooks than expected" error
+                    InteractionManager.runAfterInteractions(async () => {
                       try {
                         const { conversationId } = await ensureCommunityChat(promptLike.ref, {
                           title: promptLike.expand?.ref?.title || promptLike.title || 'Community chat',
@@ -608,7 +610,7 @@ export function EdgeCorkboardScreen() {
                       } catch (error) {
                         console.warn('Failed to open chat after creating interest', error)
                       }
-                    })()
+                    })
                   }
                 } catch {}
 

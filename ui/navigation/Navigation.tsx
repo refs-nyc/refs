@@ -83,8 +83,7 @@ export const Navigation = ({
   if (inMessageThread) return null
 
   return (
-    <View style={{ display: 'flex', flexDirection: 'row', paddingLeft: 2 }}>
-      <NavigationBackdrop />
+    <View style={{ display: 'flex', flexDirection: 'row', paddingLeft: 2, backgroundColor: c.surface }}>
       <View
         style={{
           display: 'flex',

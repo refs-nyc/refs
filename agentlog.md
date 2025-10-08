@@ -32,3 +32,4 @@
 - Optimistic saves now animate instantly: directory bookmark scales on tap, the Want To Meet count pulses on change, and the saves store keeps optimistic placeholders while the network call completes.
 - Saves bottom sheet is currently a placeholder (no list) so the heart entry can evolve into a future feed without showing stale data.
 - Directory avatar zoom now drives `otherProfileBackdropAnimatedIndex` so the global nav dimming animates in sync with the overlay; we tween that shared value to `0`/`-1` alongside the opacity/scale springs to keep dismissal and backdrop lighting perfectly aligned.
+- Messages screen exit now hands navigation off after a 160 ms fade-out, using the `SwipeToGoBack` hook-in to let the underlying profile surface fade back in without timers or extra effects.

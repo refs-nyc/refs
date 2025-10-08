@@ -100,8 +100,13 @@ const OnboardingPill = ({
     setProfileNavIntent({ targetPagerIndex: targetIndex, source: 'directory', animate: !alreadyOnGrid })
 
     const expectedPath = `/user/${userName}`
+    // Always push to create navigation history for proper back gesture
+    // Add timestamp to force new stack entry
     if (!pathname || pathname !== expectedPath) {
-      router.push({ pathname: '/user/[userName]', params: { userName } })
+      router.push({
+        pathname: '/user/[userName]',
+        params: { userName, _t: Date.now().toString() }
+      })
     }
   }, [homePagerIndex, pathname, setProfileNavIntent, userName])
 

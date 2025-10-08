@@ -1,10 +1,14 @@
 import { MessagesScreen } from '@/features/messaging/messages-screen'
 import { useAppStore } from '@/features/stores'
 import { useLocalSearchParams, useRouter } from 'expo-router'
+import { SwipeToGoBack } from '@/ui/SwipeToGoBack'
+import { useNavigation } from '@react-navigation/native'
+import { useRef, useCallback } from 'react'
 
 export default function Page() {
-  const { user } = useAppStore()
+  const { user, cachedSearchResults, setHomePagerIndex, setProfileNavIntent, homePagerIndex, directoriesFilterTab } = useAppStore()
   const router = useRouter()
+  const navigation = useNavigation<any>()
 
   if (!user) {
     router.dismissTo('/')
@@ -14,5 +18,70 @@ export default function Page() {
   const { conversationId } = useLocalSearchParams()
   if (typeof conversationId !== 'string') return null
 
-  return <MessagesScreen conversationId={conversationId} />
+  const closeHandlerRef = useRef<(() => void) | null>(null)
+
+  const performNavigation = useCallback(() => {
+    const routerCanGoBack = typeof (router as any).canGoBack === 'function' ? (router as any).canGoBack() : false
+    const navCanGoBack = navigation?.canGoBack?.() ?? false
+
+    // Always try router.back() or navigation.goBack() first for proper animation direction
+    if (routerCanGoBack || navCanGoBack) {
+      if (routerCanGoBack) {
+        router.back()
+      } else {
+        navigation.goBack()
+      }
+      return
+    }
+
+    // If we have cached search results, navigate back to profile to restore them
+    if (cachedSearchResults.length > 0 && user?.userName) {
+      setHomePagerIndex(0)
+      setProfileNavIntent({ targetPagerIndex: 0, source: 'other' })
+      router.push(`/user/${user.userName}`)
+      return
+    }
+
+    // Last resort fallback
+    if (user?.userName) {
+      const fallbackIndex = homePagerIndex ?? 0
+      setHomePagerIndex(fallbackIndex)
+      setProfileNavIntent({
+        targetPagerIndex: fallbackIndex as 0 | 1 | 2,
+        directoryFilter: fallbackIndex === 1 ? directoriesFilterTab : undefined,
+        source: 'back-fallback',
+      })
+      router.replace(`/user/${user.userName}`)
+      return
+    }
+  }, [
+    cachedSearchResults.length,
+    directoriesFilterTab,
+    homePagerIndex,
+    navigation,
+    router,
+    setHomePagerIndex,
+    setProfileNavIntent,
+    user?.userName,
+  ])
+
+  const requestClose = useCallback(() => {
+    if (closeHandlerRef.current) {
+      closeHandlerRef.current()
+    } else {
+      performNavigation()
+    }
+  }, [performNavigation])
+
+  return (
+    <SwipeToGoBack onSwipeComplete={requestClose}>
+      <MessagesScreen
+        conversationId={conversationId}
+        onClose={performNavigation}
+        registerCloseHandler={(fn) => {
+          closeHandlerRef.current = fn ?? null
+        }}
+      />
+    </SwipeToGoBack>
+  )
 }

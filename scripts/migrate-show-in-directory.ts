@@ -11,7 +11,7 @@
 
 import PocketBase from 'pocketbase'
 
-const POCKETBASE_URL = process.env.EXPO_PUBLIC_POCKETBASE_URL || 'http://127.0.0.1:8090'
+const POCKETBASE_URL = process.env.POCKETBASE_URL || process.env.EXPO_PUBLIC_POCKETBASE_URL || 'http://127.0.0.1:8090'
 
 async function migrate() {
   console.log('🚀 Starting show_in_directory migration...')

@@ -181,7 +181,7 @@ function RootLayoutNav() {
           options={{
             title: 'User',
             presentation: 'card',
-            animation: 'slide_from_right',
+            animation: 'none',
             gestureEnabled: false,
             headerShown: false,
           }}

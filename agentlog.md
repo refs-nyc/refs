@@ -36,3 +36,10 @@
 - Fixed "Rendered fewer hooks than expected" error when navigating to community chats by moving all React hooks in `/app/messages/[conversationId]/index.tsx` to be called BEFORE any conditional returns, ensuring hooks are always called in the same order per React's rules.
 - Corrected timestamp format for community chat preview messages: replaced `.toISOString()` with PocketBase's expected format (`'yyyy-MM-dd HH:mm:ss.SSSZ'`) by converting the `T` separator to a space, eliminating "Invalid DateTime" errors in the messages list.
 - Removed dynamic header height calculation in `MessagesScreen` that was causing the chat header to jump on mount; now uses a fixed height based on safe area insets so back button, title, and avatars stay in position from the start.
+- Implemented message input bar as absolutely positioned at bottom of screen to prevent it from being pushed off-screen by message content; swapped FlatList padding (inverted lists use `paddingTop` for visual bottom space).
+- **RESOLVED**: Directory "Everyone" tab was showing empty in production due to silent error handling and potential empty cache issues:
+  - Root cause 1: Silent catch block in `fetchPage` (line 783) was swallowing all errors without logging - added detailed error logging
+  - Root cause 2: Cache validation was not checking for empty arrays - empty cache `[]` would pass validation and return 0 users
+  - Fixed by adding `cachedUsers.length > 0` check before using cached data
+  - Added comprehensive logging throughout directory fetch flow to debug future issues
+  - Verified: Production DB has 16 users with `show_in_directory=true`, API queries work correctly, field exists in schema

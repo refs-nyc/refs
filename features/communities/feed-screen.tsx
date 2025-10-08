@@ -555,8 +555,8 @@ export function CommunitiesFeedScreen({
       const skipCache = options?.skipCache ?? false
       if (targetPage === 1 && !skipCache) {
         const cachedUsers = await simpleCache.get('directory_users')
-        if (cachedUsers) {
-          console.log('📖 Checking cached directory users...')
+        if (cachedUsers && Array.isArray(cachedUsers) && cachedUsers.length > 0) {
+          console.log(`📖 Checking cached directory users (${cachedUsers.length} in cache)...`)
           // Filter cached users to ensure they have avatar AND 3+ items
           const filteredCached = (cachedUsers as FeedUser[]).filter(u => {
             const hasAvatar = Boolean(u.avatar_url && u.avatar_url.trim())
@@ -585,15 +585,21 @@ export function CommunitiesFeedScreen({
       
       const pb = getPB()
       // NEW: Filter by show_in_directory flag instead of fetching all users and filtering
+      console.log(`🔍 Fetching directory users page ${targetPage} with filter: show_in_directory = true`)
       const res = await pb.collection('users').getList(targetPage, perPage, {
         filter: 'show_in_directory = true',
         fields: 'id,userName,firstName,lastName,name,location,image,avatar_url',
         sort: '-created',
       })
+      console.log(`📊 Directory query returned ${res.items.length} users (total: ${res.totalItems})`)
+      if (res.items.length > 0) {
+        console.log(`   First user: ${res.items[0].userName}`)
+      }
 
       // Fetch top 3 items for display purposes only (no filtering needed)
       const userIds = res.items.map((u: any) => u.id)
       if (userIds.length === 0) {
+        console.log('⚠️ No users returned from directory query')
         setHasMore(false)
         setIsLoading(false)
         return
@@ -775,6 +781,8 @@ export function CommunitiesFeedScreen({
         console.warn('Directory cache write failed:', error)
       })
     } catch (e) {
+      console.error('❌ Directory fetch error:', e)
+      console.error('   Error details:', JSON.stringify(e, null, 2))
       setHasMore(false)
     } finally {
       setIsLoading(false)

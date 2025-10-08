@@ -13,7 +13,7 @@ import Svg, { Circle } from 'react-native-svg'
 const win = Dimensions.get('window')
 
 export function UnifiedOnboarding() {
-  const { register: registerUser, setJustOnboarded } = useAppStore() as any
+  const { register: registerUser, updateStagedUser, setJustOnboarded } = useAppStore() as any
   const form = useForm({ mode: 'onChange', shouldUnregister: false })
   const { control, handleSubmit, formState, getValues, watch, setFocus } = form
   const insets = useSafeAreaInsets()
@@ -94,16 +94,38 @@ export function UnifiedOnboarding() {
     setServerError('')
 
     try {
+      // Validate all required fields
+      if (!data.email || !data.email.trim()) {
+        setServerError('Email is required')
+        setIsSubmitting(false)
+        return
+      }
+      if (!data.password || data.password.length < 6) {
+        setServerError('Password must be at least 6 characters')
+        setIsSubmitting(false)
+        return
+      }
+      if (!data.fullName || !data.fullName.trim()) {
+        setServerError('Full name is required')
+        setIsSubmitting(false)
+        return
+      }
+
       const nameParts = data.fullName.trim().split(' ')
       const firstName = nameParts[0] || ''
       const lastName = nameParts.slice(1).join(' ') || ''
 
-      await registerUser({
+      // First, stage the user data
+      updateStagedUser({
         email: data.email.trim().toLowerCase(),
         password: data.password,
+        passwordConfirm: data.confirmPassword,
         firstName,
         lastName,
       })
+
+      // Then call register (which reads from stagedUser)
+      await registerUser()
 
       setJustOnboarded(true)
       // Registration successful, app will auto-navigate

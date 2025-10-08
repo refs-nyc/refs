@@ -423,27 +423,14 @@ export function CommunitiesFeedScreen({
   }, [directoryUsersNormalized])
 
   const mapUsersWithItems = useCallback((userRecords: any[], itemsByCreator: Map<string, any[]>) => {
-    console.log(`📊 mapUsersWithItems called with ${userRecords.length} users`)
+    console.log(`📊 mapUsersWithItems called with ${userRecords.length} users (pre-filtered by show_in_directory)`)
     const result: (FeedUser & { _latest?: number })[] = []
     for (const r of userRecords) {
       const creatorId = r.id
       const creatorItems = itemsByCreator.get(creatorId) || []
       
-      // Filter: must have an avatar AND at least 3 grid items
-      const image = (r.image || '').trim()
-      const avatarUrl = (r.avatar_url || '').trim()
-      const hasAvatar = Boolean(image || avatarUrl)
-      const hasEnoughItems = creatorItems.length >= 3
-      
-      console.log(`🔍 Checking ${r.userName}: image="${image}", avatar_url="${avatarUrl}", hasAvatar=${hasAvatar}, itemCount=${creatorItems.length}`)
-      
-      if (!hasAvatar || !hasEnoughItems) {
-        console.log(`🚫 Filtering out ${r.userName}: hasAvatar=${hasAvatar}, itemCount=${creatorItems.length}`)
-        continue
-      }
-      
-      console.log(`✅ Including ${r.userName} in directory`)
-      
+      // No filtering needed - users are pre-filtered by show_in_directory flag
+      // Just map to display format
       const images = creatorItems
         .slice(0, 3)
         .map((it) => it?.image || it?.expand?.ref?.image)
@@ -466,8 +453,6 @@ export function CommunitiesFeedScreen({
         _latest: latest,
       } as any)
     }
-    // Remove expensive sort operation - let the database handle sorting
-    // result.sort((a, b) => (b._latest || 0) - (a._latest || 0))
     return result as FeedUser[]
   }, [])
 
@@ -599,12 +584,14 @@ export function CommunitiesFeedScreen({
       }
       
       const pb = getPB()
+      // NEW: Filter by show_in_directory flag instead of fetching all users and filtering
       const res = await pb.collection('users').getList(targetPage, perPage, {
+        filter: 'show_in_directory = true',
         fields: 'id,userName,firstName,lastName,name,location,image,avatar_url',
         sort: '-created',
       })
 
-      // Batch fetch grid items for all users on this page
+      // Fetch top 3 items for display purposes only (no filtering needed)
       const userIds = res.items.map((u: any) => u.id)
       if (userIds.length === 0) {
         setHasMore(false)
@@ -613,6 +600,7 @@ export function CommunitiesFeedScreen({
       }
 
       const orFilter = userIds.map((id: string) => `creator = "${id}"`).join(' || ')
+      // Only need 3 items per user for display (not filtering)
       const perPageItems = Math.max(3 * userIds.length, 60)
       const itemsRes = await pb.collection('items').getList(1, perPageItems, {
         filter: `(${orFilter}) && backlog = false && list = false && parent = null`,
@@ -621,8 +609,7 @@ export function CommunitiesFeedScreen({
         sort: '-created',
       })
 
-      // Process data immediately instead of deferring with InteractionManager
-      // Group items by creator
+      // Group items by creator for display
       const byCreator = new Map<string, any[]>()
       for (const it of itemsRes.items as any[]) {
         const creatorId = it.creator

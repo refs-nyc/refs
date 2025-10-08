@@ -4,6 +4,7 @@ import { UsersRecord } from '../pocketbase/pocketbase-types'
 import { ClientResponseError } from 'pocketbase'
 import type { StoreSlices } from './types'
 import { pocketbase } from '../pocketbase'
+import { updateShowInDirectory } from './items'
 
 export type DirectoryUser = {
   id: string
@@ -132,6 +133,14 @@ export const createUserSlice: StateCreator<StoreSlices, [], [], UserSlice> = (se
       const record = await pocketbase
         .collection<UsersRecord>('users')
         .update(pocketbase.authStore.record.id, { ...fields })
+
+      // If avatar/image was updated, check if we should update show_in_directory flag
+      if (fields.image || fields.avatar_url) {
+        const userId = pocketbase.authStore.record.id
+        updateShowInDirectory(userId).catch(error => {
+          console.warn('Failed to update show_in_directory:', error)
+        })
+      }
 
       return record
     } catch (err) {

@@ -101,6 +101,7 @@ export const ProfileDetailsSheet = () => {
   return (
     <BottomSheet
       ref={detailsSheetRef}
+      index={-1}
       backgroundStyle={{
         backgroundColor: c.surface,
         borderRadius: 50,

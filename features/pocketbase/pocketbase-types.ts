@@ -204,6 +204,7 @@ export type UsersRecord = {
   lon?: number
   name?: string
   pushToken?: string
+  show_in_directory?: boolean
   updated?: IsoDateString
   userName: string
   verified?: boolean

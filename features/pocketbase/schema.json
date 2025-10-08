@@ -372,6 +372,15 @@
       },
       {
         "hidden": false,
+        "id": "bool3847291054",
+        "name": "show_in_directory",
+        "presentable": false,
+        "required": false,
+        "system": false,
+        "type": "bool"
+      },
+      {
+        "hidden": false,
         "id": "autodate2990389176",
         "name": "created",
         "onCreate": true,

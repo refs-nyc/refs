@@ -9,6 +9,47 @@ import { simpleCache } from '@/features/cache/simpleCache'
 
 const USE_WEBHOOKS = (process.env.EXPO_PUBLIC_USE_WEBHOOKS || '').toLowerCase() === 'true'
 
+// Helper function to update show_in_directory flag when item count or avatar changes
+export async function updateShowInDirectory(userId: string) {
+  try {
+    // Get user's current info
+    const user = await pocketbase.collection('users').getOne(userId)
+    const hasAvatar = Boolean((user.image || '').trim() || (user.avatar_url || '').trim())
+    
+    // Count items created by user (non-backlog, non-list grid items)
+    const createdItems = await pocketbase.collection('items').getList(1, 1, {
+      filter: `creator = "${userId}" && backlog = false && list = false && parent = null`,
+    })
+    
+    // Count saved items on user's profile
+    const savedItems = await pocketbase.collection('saves').getList(1, 1, {
+      filter: `user = "${userId}"`,
+    })
+    
+    const totalProfileItems = createdItems.totalItems + savedItems.totalItems
+    const hasEnoughItems = totalProfileItems >= 3
+    
+    // Update flag if criteria is met
+    const shouldShow = hasAvatar && hasEnoughItems
+    
+    console.log(`🏷️ Updating show_in_directory for ${userId}: hasAvatar=${hasAvatar}, created=${createdItems.totalItems}, saved=${savedItems.totalItems}, total=${totalProfileItems}, shouldShow=${shouldShow}`)
+    
+    if (user.show_in_directory !== shouldShow) {
+      await pocketbase.collection('users').update(userId, {
+        show_in_directory: shouldShow,
+      })
+      console.log(`✅ Updated show_in_directory to ${shouldShow} for user ${userId}`)
+      
+      // Clear directory cache so the change is reflected immediately
+      simpleCache.set('directory_users', null).catch(error => {
+        console.warn('Directory cache clear failed:', error)
+      })
+    }
+  } catch (error) {
+    console.warn('Failed to update show_in_directory:', error)
+  }
+}
+
 // Helper function to trigger webhook for item changes (gated by env flag)
 async function triggerItemWebhook(itemId: string, action: 'create' | 'update', itemData: any) {
   try {
@@ -254,6 +295,14 @@ export const createItemSlice: StateCreator<StoreSlices, [], [], ItemSlice> = (se
     // Update cached grid count if adding to grid (not backlog)
     if (!backlog) {
       get().incrementGridItemCount()
+      
+      // Update show_in_directory flag if adding to grid (async, non-blocking)
+      const userId = pocketbase.authStore.record?.id
+      if (userId) {
+        updateShowInDirectory(userId).catch(error => {
+          console.warn('Failed to update show_in_directory:', error)
+        })
+      }
     }
 
     get().triggerFeedRefresh()
@@ -359,6 +408,11 @@ export const createItemSlice: StateCreator<StoreSlices, [], [], ItemSlice> = (se
     // Update cached grid count if item was in grid (not backlog)
     if (!item.backlog) {
       get().decrementGridItemCount()
+      
+      // Update show_in_directory flag after removing from grid (async, non-blocking)
+      updateShowInDirectory(userId).catch(error => {
+        console.warn('Failed to update show_in_directory:', error)
+      })
     }
 
     get().triggerFeedRefresh()
@@ -466,6 +520,11 @@ export const createItemSlice: StateCreator<StoreSlices, [], [], ItemSlice> = (se
 
       // Update cached grid count since item is moving from grid to backlog
       get().decrementGridItemCount()
+      
+      // Update show_in_directory flag after moving to backlog (async, non-blocking)
+      updateShowInDirectory(userId).catch(error => {
+        console.warn('Failed to update show_in_directory:', error)
+      })
 
       // Trigger feed refresh since backlog items don't appear in the feed
       get().triggerFeedRefresh()

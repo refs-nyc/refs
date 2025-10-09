@@ -6,7 +6,7 @@ import { s, c } from '@/features/style'
 import BottomSheet, { BottomSheetBackdrop, BottomSheetView } from '@gorhom/bottom-sheet'
 import { useShareIntentContext } from 'expo-share-intent'
 import { useEffect, useRef, useState, useMemo, useCallback } from 'react'
-import { ScrollView, View, Text, Pressable, Keyboard, ActivityIndicator } from 'react-native'
+import { ScrollView, View, Text, Pressable, Keyboard, ActivityIndicator, InteractionManager } from 'react-native'
 import { Image } from 'expo-image'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import * as ImagePicker from 'expo-image-picker'
@@ -547,7 +547,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
     >
     <Grid
       editingRights={true}
-        screenFocused={focusReady && !loading}
+        screenFocused={focusReady}
       shouldAnimateStartup={justOnboarded}
       onPressItem={(item) => {
         if (!effectiveProfile) return
@@ -572,7 +572,6 @@ export const MyProfile = ({ userName }: { userName: string }) => {
       onAddItem={(prompt?: string) => {
         setAddingNewRefTo('grid')
         if (prompt) useAppStore.getState().setAddRefPrompt(prompt)
-        newRefSheetRef.current?.snapToIndex(1)
       }}
       onAddItemWithPrompt={(prompt: string, photoPath?: boolean) => {
         if (photoPath) {
@@ -580,7 +579,6 @@ export const MyProfile = ({ userName }: { userName: string }) => {
         } else {
           setAddingNewRefTo('grid')
           useAppStore.getState().setAddRefPrompt(prompt)
-          newRefSheetRef.current?.snapToIndex(1)
         }
       }}
         columns={GRID_COLUMNS}
@@ -742,9 +740,17 @@ export const MyProfile = ({ userName }: { userName: string }) => {
 
 
 
-  const refreshGrid = async (userName: string) => {
+  const refreshGrid = async (
+    userName: string,
+    options?: { cacheOnly?: boolean; background?: boolean }
+  ): Promise<boolean> => {
+    const cacheOnly = options?.cacheOnly === true
+    const background = options?.background === true
+
+    let hasVisibleData = false
+
     const hadMemory = profileMemoryCache.has(userName)
-    if (!hadMemory) {
+    if (!hadMemory && !cacheOnly && !background) {
       setLoading(true)
       setPromptsReady(false)
     }
@@ -761,6 +767,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
       setLoading(false)
       setPromptsReady(memoryCached.gridItems.length > 0)
       storeState.setGridItemCount(memoryCached.gridItems.length)
+      hasVisibleData = true
     }
 
     const hydrateFromCache = async (userId?: string) => {
@@ -792,6 +799,16 @@ export const MyProfile = ({ userName }: { userName: string }) => {
     }
 
     const cacheHydrated = await hydrateFromCache(cacheUserId)
+    if (cacheHydrated) {
+      hasVisibleData = true
+    }
+
+    if (cacheOnly) {
+      if (!hasVisibleData && !hadMemory) {
+        setLoading(true)
+      }
+      return hasVisibleData
+    }
 
 
     const fetchFreshData = async () => {
@@ -851,7 +868,13 @@ export const MyProfile = ({ userName }: { userName: string }) => {
       }
     }
 
-    void fetchFreshData()
+    if (background) {
+      void fetchFreshData()
+      return hasVisibleData
+    }
+
+    await fetchFreshData()
+    return true
   }
 
   const handleMoveToBacklog = async () => {
@@ -942,12 +965,22 @@ export const MyProfile = ({ userName }: { userName: string }) => {
   useEffect(() => {
     let cancelled = false
     let focusTimer: ReturnType<typeof setTimeout> | null = null
-    // Make gesture controls available immediately
+
     setFocusReady(true)
 
-    const init = async () => {
+    const run = async () => {
       try {
-        await refreshGrid(userName)
+        const hadImmediateData = await refreshGrid(userName, { cacheOnly: true })
+        if (!hadImmediateData) {
+          setLoading(true)
+        }
+
+        InteractionManager.runAfterInteractions(() => {
+          refreshGrid(userName, { background: true }).catch((error) => {
+            console.warn('Background grid refresh failed:', error)
+          })
+        })
+
         if (cancelled) return
 
         const returningFromSearch = cachedSearchResults.length > 0 || isSearchResultsSheetOpen || searchMode
@@ -967,7 +1000,11 @@ export const MyProfile = ({ userName }: { userName: string }) => {
       }
     }
 
-        void init()
+    requestAnimationFrame(() => {
+      if (!cancelled) {
+        void run()
+      }
+    })
 
     return () => {
       cancelled = true
@@ -1026,7 +1063,6 @@ export const MyProfile = ({ userName }: { userName: string }) => {
         try { useAppStore.getState().setSelectedPhoto(selectedImage.uri) } catch {}
         try { useAppStore.getState().setAddRefPrompt(prompt) } catch {}
         setAddingNewRefTo('grid')
-        newRefSheetRef.current?.snapToIndex(1)
       }
     } catch (error) {
       console.error('Error picking image:', error)
@@ -1053,7 +1089,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
 
     setAddingNewRefTo('grid')
     try { useAppStore.getState().setAddRefPrompt(prompt.text) } catch {}
-    newRefSheetRef.current?.snapToIndex(1)
+    // Opening is controlled by NewRefSheet effect
   }, [triggerDirectPhotoPicker, setAddingNewRefTo])
 
   const promptChipSection = showPromptChips && promptSuggestions.length > 0 ? (
@@ -1230,7 +1266,6 @@ export const MyProfile = ({ userName }: { userName: string }) => {
                 onPress={() => {
                   setAddingNewRefTo('grid')
                   try { useAppStore.getState().setAddRefPrompt('') } catch {}
-                  newRefSheetRef.current?.snapToIndex(1)
                 }}
                 style={{
                   position: 'absolute',
@@ -1258,7 +1293,6 @@ export const MyProfile = ({ userName }: { userName: string }) => {
               user={user}
               openAddtoBacklog={() => {
                 setAddingNewRefTo('backlog')
-                newRefSheetRef.current?.snapToIndex(1)
               }}
             />
             <RemoveRefSheet

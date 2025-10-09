@@ -5,6 +5,7 @@ import { ClientResponseError } from 'pocketbase'
 import type { StoreSlices } from './types'
 import { pocketbase } from '../pocketbase'
 import { updateShowInDirectory } from './items'
+import { simpleCache } from '@/features/cache/simpleCache'
 
 export type DirectoryUser = {
   id: string
@@ -48,15 +49,40 @@ export const createUserSlice: StateCreator<StoreSlices, [], [], UserSlice> = (se
   //
   init: async () => {
     try {
-      const primeSaves = () => {
-        const ensure = get().ensureSavesLoaded
-        if (typeof ensure === 'function') {
-          setTimeout(() => {
-            ensure().catch((error: unknown) => {
+      const primeBackgroundData = () => {
+        const ensureSaves = get().ensureSavesLoaded
+        const warmFeedFromCache = get().ensureFeedHydrated
+        const refreshFeed = get().refreshFeed
+        const pushDirectoryCacheToStore = async () => {
+          try {
+            const cached = await simpleCache.get<DirectoryUser[]>('directory_users')
+            if (Array.isArray(cached) && cached.length > 0) {
+              get().setDirectoryUsers(cached)
+            }
+          } catch (error) {
+            console.warn('Directory cache hydration failed', error)
+          }
+        }
+
+        setTimeout(() => {
+          if (typeof ensureSaves === 'function') {
+            ensureSaves().catch((error: unknown) => {
               console.warn('Initial saves hydration failed', error)
             })
-          }, 0)
-        }
+          }
+
+          if (typeof warmFeedFromCache === 'function') {
+            warmFeedFromCache({ refresh: false }).catch((error: unknown) => {
+              console.warn('Initial feed cache hydration failed', error)
+            })
+          }
+
+          void pushDirectoryCacheToStore()
+
+          if (typeof refreshFeed === 'function') {
+            // First feed refresh happens when the sheet/home feed triggers it.
+          }
+        }, 0)
       }
 
       // Mark as initialized immediately to allow UI to be responsive
@@ -81,7 +107,7 @@ export const createUserSlice: StateCreator<StoreSlices, [], [], UserSlice> = (se
             profileNavIntent: null,
           }))
 
-          primeSaves()
+          primeBackgroundData()
         } catch (error) {
           console.error('Failed to sync user state:', error)
           // If we can't get the user record, clear the auth store
@@ -319,6 +345,11 @@ export const createUserSlice: StateCreator<StoreSlices, [], [], UserSlice> = (se
       cachedRefTitles: [],
       cachedRefImages: [],
     }))
+
+    const resetFeed = get().resetFeed
+    if (typeof resetFeed === 'function') {
+      resetFeed()
+    }
 
     pocketbase.realtime.unsubscribe()
     pocketbase.authStore.clear()

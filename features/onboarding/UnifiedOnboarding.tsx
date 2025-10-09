@@ -43,9 +43,9 @@ export function UnifiedOnboarding() {
       Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
       (e) => {
         setKeyboardHeight(e.endCoordinates.height)
-        // Scroll to show all forms AND the "Looks good" button above keyboard
+        // Scroll to show all forms, push toggle, AND the "Looks good" button above keyboard
         setTimeout(() => {
-          scrollViewRef.current?.scrollTo({ y: 105, animated: true })
+          scrollViewRef.current?.scrollTo({ y: 180, animated: true })
         }, 100)
       }
     )
@@ -166,7 +166,7 @@ export function UnifiedOnboarding() {
               fontSize: 24,
               fontWeight: 'bold',
               color: c.newDark,
-              marginBottom: 50,
+              marginBottom: 40,
             }}
           >
             Refs
@@ -311,7 +311,7 @@ export function UnifiedOnboarding() {
         </View>
 
         {/* Centered Form Fields */}
-        <View style={{ gap: s.$1, paddingVertical: s.$2 }}>
+        <View style={{ gap: s.$1, marginTop: s.$3 }}>
           <Controller
             control={control}
             name="fullName"
@@ -467,8 +467,8 @@ export function UnifiedOnboarding() {
           {/* Push Notification opt-in */}
           <View
             style={{
-              marginTop: s.$2,
-              marginBottom: s.$1,
+              marginTop: keyboardHeight > 0 ? (s.$075 as number) - 2 : (s.$1 as number) - 2,
+              marginBottom: 0,
               padding: s.$1,
               backgroundColor: c.surface2,
               borderRadius: s.$12,
@@ -525,6 +525,7 @@ export function UnifiedOnboarding() {
             onPress={handleSubmit(onSubmit)}
             disabled={!isFormValid || !pushOptIn || isSubmitting}
             style={{
+              marginTop: (s.$1 as number) + 6,
               backgroundColor: c.accent,
               paddingVertical: 18,
               borderRadius: s.$12,

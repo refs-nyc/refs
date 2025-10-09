@@ -33,6 +33,7 @@ export const GridTileWrapper = ({
   promptBorderColor,
   topRightAction,
   onTopRightActionPress,
+  isEditMode = false,
 }: {
   type: GridTileType
   children: React.ReactNode
@@ -47,6 +48,7 @@ export const GridTileWrapper = ({
   promptBorderColor?: string
   topRightAction?: React.ReactNode
   onTopRightActionPress?: () => void
+  isEditMode?: boolean
 }) => {
   const { editingProfile, stopEditProfile } = useAppStore()
   
@@ -149,20 +151,24 @@ export const GridTileWrapper = ({
         animatedStyle,
       ]}
     >
-      {editingProfile && type !== 'add' && id && (
-        <YStack style={{ position: 'absolute', zIndex: 999, top: 0, right: 0 }}>
+      {(editingProfile || isEditMode) && type !== 'add' && id && (
+        <YStack style={{ position: 'absolute', zIndex: 999, top: -8, right: -8 }}>
           <Pressable
             onPress={() => {
               stopEditProfile()
               onRemove && onRemove()
             }}
             style={{
-              transform: 'translate(8px, -8px)',
-              backgroundColor: c.grey1,
+              backgroundColor: c.surface2,
               borderRadius: 100,
             }}
           >
-            <Ionicons size={12} style={{ padding: 6 }} name="close" />
+            <Ionicons 
+              size={isEditMode ? 16 : 12} 
+              style={{ padding: isEditMode ? 8 : 6 }} 
+              name="close"
+              color={c.muted}
+            />
           </Pressable>
         </YStack>
       )}

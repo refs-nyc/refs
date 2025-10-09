@@ -7,6 +7,7 @@ import { createUserSlice } from './users'
 import { createUserCacheSlice } from './userCache'
 import type { StoreSlices } from './types'
 import { createUISlice } from '@/ui/state'
+import { createFeedSlice } from './feed'
 
 export const useAppStore = create<StoreSlices>((...a) => ({
   ...createBackdropSlice(...a),
@@ -15,5 +16,6 @@ export const useAppStore = create<StoreSlices>((...a) => ({
   ...createMessageSlice(...a),
   ...createUserSlice(...a),
   ...createUserCacheSlice(...a),
+  ...createFeedSlice(...a),
   ...createUISlice(...a),
 }))

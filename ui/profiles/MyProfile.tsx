@@ -108,6 +108,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
   const [optimisticAvatarUri, setOptimisticAvatarUri] = useState<string | null>(null)
   const [avatarUploading, setAvatarUploading] = useState(false)
   const [showAvatarPicker, setShowAvatarPicker] = useState(false)
+  const [isEditMode, setIsEditMode] = useState(false)
   const avatarScale = useRef(new RNAnimated.Value(1)).current
   const avatarSwapOpacity = useRef(new RNAnimated.Value(1)).current
 
@@ -305,29 +306,29 @@ export const MyProfile = ({ userName }: { userName: string }) => {
     <View style={{ width: '100%', paddingHorizontal: 0 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 18 }}>
         <View style={{ flex: 1 }}>
-          <Text
-            style={{
+      <Text
+        style={{
               color: '#030303',
               fontSize: (s.$09 as number) + 4,
-              fontFamily: 'System',
+          fontFamily: 'System',
               fontWeight: '700',
-              lineHeight: s.$1half,
-            }}
-          >
+          lineHeight: s.$1half,
+        }}
+      >
             {displayName}
-          </Text>
+      </Text>
           {locationLabel ? (
-            <Text
-              style={{
-                color: c.prompt,
+      <Text
+        style={{
+          color: c.prompt,
                 fontSize: 13,
                 fontFamily: 'Inter',
                 fontWeight: '500',
-                lineHeight: s.$1half,
-              }}
-            >
+          lineHeight: s.$1half,
+        }}
+      >
               {locationLabel}
-            </Text>
+      </Text>
           ) : null}
         </View>
         {(() => {
@@ -373,7 +374,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
                   )}
                   {avatarUri && avatarUploading && (
                     <View
-                      style={{
+        style={{
                         position: 'absolute',
                         top: 0,
                         left: 0,
@@ -388,6 +389,28 @@ export const MyProfile = ({ userName }: { userName: string }) => {
                     </View>
                   )}
                 </View>
+                {/* Edit button */}
+                {ownProfile && !avatarUploading && (
+                  <Pressable
+                    onPress={() => setIsEditMode(!isEditMode)}
+                    hitSlop={8}
+                    style={{
+                      position: 'absolute',
+                      top: 0,
+                      right: 0,
+                      width: 24,
+                      height: 24,
+                      borderRadius: 12,
+                      backgroundColor: c.surface2,
+                      borderWidth: 2,
+                      borderColor: c.surface,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    <Ionicons name="pencil" size={12} color={c.newDark} />
+                  </Pressable>
+                )}
               </View>
             </RNAnimated.View>
           )
@@ -427,7 +450,8 @@ export const MyProfile = ({ userName }: { userName: string }) => {
   const showPromptChips =
     ownProfile &&
     promptDisplayReady &&
-    displayGridItems.length < GRID_CAPACITY
+    displayGridItems.length < GRID_CAPACITY &&
+    !isEditMode
 
   const handleShufflePromptSuggestions = useCallback(() => {
     setPromptSuggestions(createPromptBatch())
@@ -547,8 +571,9 @@ export const MyProfile = ({ userName }: { userName: string }) => {
     >
     <Grid
       editingRights={true}
-        screenFocused={focusReady}
+      screenFocused={focusReady}
       shouldAnimateStartup={justOnboarded}
+      isEditMode={isEditMode}
       onPressItem={(item) => {
         if (!effectiveProfile) return
         setDetailsSheetData({
@@ -869,7 +894,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
     }
 
     if (background) {
-      void fetchFreshData()
+    void fetchFreshData()
       return hasVisibleData
     }
 
@@ -1218,7 +1243,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
           minHeight: '100%',
         }}
         showsVerticalScrollIndicator={false}
-        scrollEnabled={false}
+        scrollEnabled={isEditMode}
       >
         <View
           style={{ flex: 1, width: '100%', backgroundColor: c.surface, paddingHorizontal: s.$1 }}
@@ -1272,12 +1297,215 @@ export const MyProfile = ({ userName }: { userName: string }) => {
                   right: 0,
                   bottom: -65,
                   zIndex: 5,
-                  opacity: hasProfile && !searchMode ? 1 : 0,
+                  opacity: hasProfile && !searchMode && !isEditMode ? 1 : 0,
                 }}
               />
             </View>
 
             {promptChipSection}
+
+            {/* Settings section */}
+            {isEditMode && hasProfile && (
+              <View
+                style={{
+                  marginTop: s.$1,
+                  paddingHorizontal: s.$1,
+                }}
+              >
+                <Text
+                  style={{
+                    fontSize: (s.$09 as number) + 4,
+                    fontFamily: 'System',
+                    fontWeight: '700',
+                    color: c.newDark,
+                    marginBottom: s.$1,
+                  }}
+                >
+                  Settings
+                </Text>
+
+                {/* Name Field */}
+                <Pressable
+                  onPress={() => {
+                    console.log('Edit name')
+                  }}
+                  style={({ pressed }) => ({
+                    backgroundColor: c.surface2,
+                    borderRadius: s.$12,
+                    padding: s.$1,
+                    marginBottom: s.$075,
+                    opacity: pressed ? 0.6 : 1,
+                  })}
+                >
+                  <Text
+                    style={{
+                      color: c.muted2,
+                      fontSize: 11,
+                      fontFamily: 'Inter',
+                      fontWeight: '600',
+                      marginBottom: 4,
+                      textTransform: 'uppercase',
+                    }}
+                  >
+                    Name
+                  </Text>
+                  <Text
+                    style={{
+                      color: c.newDark,
+                      fontSize: 15,
+                      fontFamily: 'Inter',
+                      fontWeight: '500',
+                    }}
+                  >
+                    {displayName}
+                  </Text>
+                </Pressable>
+
+                {/* Neighborhood Field */}
+                <Pressable
+                  onPress={() => {
+                    console.log('Edit neighborhood')
+                  }}
+                  style={({ pressed }) => ({
+                    backgroundColor: c.surface2,
+                    borderRadius: s.$12,
+                    padding: s.$1,
+                    marginBottom: s.$075,
+                    opacity: pressed ? 0.6 : 1,
+                  })}
+                >
+                  <Text
+                    style={{
+                      color: c.muted2,
+                      fontSize: 11,
+                      fontFamily: 'Inter',
+                      fontWeight: '600',
+                      marginBottom: 4,
+                      textTransform: 'uppercase',
+                    }}
+                  >
+                    Neighborhood
+                  </Text>
+                  <Text
+                    style={{
+                      color: c.newDark,
+                      fontSize: 15,
+                      fontFamily: 'Inter',
+                      fontWeight: '500',
+                    }}
+                  >
+                    {locationLabel || 'Elsewhere'}
+                  </Text>
+                </Pressable>
+
+                {/* Push Notifications Toggle */}
+                <View
+                  style={{
+                    backgroundColor: c.surface2,
+                    borderRadius: s.$12,
+                    padding: s.$1,
+                    marginBottom: s.$075,
+                  }}
+                >
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <View style={{ flex: 1 }}>
+                      <Text
+                        style={{
+                          color: c.newDark,
+                          fontSize: 15,
+                          fontFamily: 'Inter',
+                          fontWeight: '600',
+                          marginBottom: 4,
+                        }}
+                      >
+                        Push Notifications
+                      </Text>
+                      <Text
+                        style={{
+                          color: c.accent,
+                          fontSize: 12,
+                          fontFamily: 'Inter',
+                          fontWeight: '500',
+                        }}
+                      >
+                        Get notified when someone saves your refs
+                      </Text>
+                    </View>
+                    <View
+                      style={{
+                        width: 50,
+                        height: 30,
+                        borderRadius: 15,
+                        backgroundColor: c.accent,
+                        justifyContent: 'center',
+                        paddingHorizontal: 3,
+                      }}
+                    >
+                      <View
+                        style={{
+                          width: 24,
+                          height: 24,
+                          borderRadius: 12,
+                          backgroundColor: c.surface,
+                          alignSelf: 'flex-end',
+                        }}
+                      />
+                    </View>
+                  </View>
+                </View>
+
+                {/* Log Out Button */}
+                <Pressable
+                  onPress={() => {
+                    logout()
+                  }}
+                  style={({ pressed }) => ({
+                    backgroundColor: c.surface2,
+                    borderRadius: s.$12,
+                    padding: s.$1,
+                    marginBottom: s.$075,
+                    opacity: pressed ? 0.6 : 1,
+                  })}
+                >
+                  <Text
+                    style={{
+                      color: c.newDark,
+                      fontSize: 15,
+                      fontFamily: 'Inter',
+                      fontWeight: '600',
+                      textAlign: 'center',
+                    }}
+                  >
+                    Log Out
+                  </Text>
+                </Pressable>
+
+                {/* Delete Account Button */}
+                <Pressable
+                  onPress={() => {
+                    console.log('Delete account')
+                  }}
+                  style={({ pressed }) => ({
+                    backgroundColor: c.surface2,
+                    borderRadius: s.$12,
+                    padding: s.$1,
+                    opacity: pressed ? 0.6 : 1,
+                  })}
+                >
+                  <Text
+                    style={{
+                      color: c.accent,
+                      fontSize: 15,
+                      fontFamily: 'Inter',
+                      fontWeight: '600',
+                      textAlign: 'center',
+                    }}
+                  >
+                    Delete Account
+                  </Text>
+                </Pressable>
+              </View>
+            )}
           </View>
 
           {hasProfile && !effectiveProfile && <Heading tag="h1">Profile for {userName} not found</Heading>}

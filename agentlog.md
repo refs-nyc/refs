@@ -45,3 +45,7 @@
   - Verified: Production DB has 16 users with `show_in_directory=true`, API queries work correctly, field exists in schema
 - **CRITICAL FIX**: Registration flow was completely broken - UnifiedOnboarding was calling `registerUser({params})` but `register()` doesn't accept parameters; it reads from `stagedUser` in the store. Fixed by calling `updateStagedUser()` first to stage the data, then calling `register()` with no parameters. This was preventing ALL new user signups.
 - Fixed password field autofill issues: Changed `textContentType` from `'oneTimeCode'` to `'newPassword'`/`'password'` and `autoComplete` from `'off'` to `'password'` so iOS properly suggests strong passwords and password managers work correctly.
+- Push notifications are iOS-only for now; Expo token registration runs via `RegisterPushNotifications` and stores the token on the user record for future server-side sends.
+- Refreshed the app icon to use the venn diagram mark on the `c.surface` background so TestFlight builds reflect the latest brand palette.
+- Supabase now mirrors PocketBase push tokens: added `users.push_token`, and the client updates both stores whenever registration succeeds (or clears).
+- Introduced Supabase Edge Function `notifications` to send Expo pushes given a batch of recipient user IDs; PocketBase hooks (messages/items/memberships) call it for DMs, ref matches, copying from a profile, and community joins.

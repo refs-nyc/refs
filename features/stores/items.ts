@@ -272,10 +272,12 @@ export const createItemSlice: StateCreator<StoreSlices, [], [], ItemSlice> = (se
     })),
   triggerFeedRefresh: () => {
     set((state) => ({ feedRefreshTrigger: state.feedRefreshTrigger + 1 }))
-    // Clear feed cache when items change
-    simpleCache.set('feed_items', null).catch(error => {
-      console.warn('Feed cache clear failed:', error)
-    })
+    const refreshFeed = get().refreshFeed
+    if (typeof refreshFeed === 'function') {
+      refreshFeed({ force: true, silent: true }).catch((error: unknown) => {
+        console.warn('Feed refresh failed after item change', error)
+      })
+    }
   },
   triggerProfileRefresh: () =>
     set((state) => ({ profileRefreshTrigger: state.profileRefreshTrigger + 1 })),

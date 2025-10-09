@@ -6,6 +6,7 @@ import { router } from 'expo-router'
 import { registerForPushNotificationsAsync } from '@/ui/notifications/utils'
 import { s, c } from '@/features/style'
 import { useAppStore } from '@/features/stores'
+import { supabase } from '@/features/supabase/client'
 
 export const FirstVisitScreen = () => {
   const { user, updateUser } = useAppStore()
@@ -16,7 +17,22 @@ export const FirstVisitScreen = () => {
 
     await registerForPushNotificationsAsync()
       .then(async (token) => {
-        await updateUser({ pushToken: token ?? '' })
+        const normalizedToken = token ?? ''
+        await updateUser({ pushToken: normalizedToken })
+
+        const supabaseClient = supabase.client
+        if (supabaseClient && user) {
+          try {
+            await supabaseClient
+              .from('users')
+              .upsert(
+                { id: user.id, push_token: normalizedToken || null },
+                { onConflict: 'id' },
+              )
+          } catch (error) {
+            console.warn('Failed to upsert push token in Supabase', error)
+          }
+        }
       })
       .catch((err) => {
         console.error(err)

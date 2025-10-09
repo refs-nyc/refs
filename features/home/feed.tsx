@@ -1,237 +1,188 @@
-import { Link } from 'expo-router'
-import { useEffect, useRef, useState } from 'react'
-import { Dimensions, Pressable, ScrollView, View } from 'react-native'
+import { useCallback, useEffect, useMemo, useRef } from 'react'
+import { ActivityIndicator, Dimensions, FlatList, View } from 'react-native'
+import { router } from 'expo-router'
 
+import { FeedRow } from '@/features/feed/FeedRow'
 import { Ticker } from '@/features/home/Ticker'
 import { useAppStore } from '@/features/stores'
-import type { ExpandedItem } from '@/features/types'
+import type { FeedEntry } from '@/features/stores/feed'
 import { c, s } from '@/features/style'
-import { Button, DismissKeyboard, Heading, Text, XStack, YStack } from '@/ui'
+import { Button, DismissKeyboard } from '@/ui'
 import SearchBottomSheet from '@/ui/actions/SearchBottomSheet'
-import { Avatar } from '@/ui/atoms/Avatar'
-import { SimplePinataImage } from '@/ui/images/SimplePinataImage'
-import { simpleCache } from '@/features/cache/simpleCache'
 
 const win = Dimensions.get('window')
 
-// Needed to compensate for differences between paragraph padding vs image padding.
-const COMPENSATE_PADDING = 5
-const FEED_PREVIEW_IMAGE_SIZE = 42
-const FEED_REF_IMAGE_SIZE = Math.round(FEED_PREVIEW_IMAGE_SIZE * 1.33)
-
-const formatDate = (isoDateString: string): string => {
-  const date = new Date(isoDateString)
-  const now = new Date()
-  const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60))
-  const diffInDays = Math.floor(diffInHours / 24)
-
-  // Use built-in relative time formatter for recent items
-  const rtf = new Intl.RelativeTimeFormat('en', { numeric: 'auto' })
-
-  if (diffInHours < 24) {
-    if (diffInHours < 1) {
-      const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60))
-      if (diffInMinutes < 1) return 'now'
-      return rtf.format(-diffInMinutes, 'minute')
-    }
-    return rtf.format(-diffInHours, 'hour')
-  }
-
-  // Show relative days for up to 7 days
-  if (diffInDays <= 7) {
-    return rtf.format(-diffInDays, 'day')
-  }
-
-  // Use built-in date formatter for older items
-  const dtf = new Intl.DateTimeFormat('en', {
-    month: 'short',
-    day: 'numeric',
-    year: date.getFullYear() === now.getFullYear() ? undefined : 'numeric',
-  })
-
-  return dtf.format(date)
-}
-
-const ListItem = ({
-  item,
-  onTitlePress,
-  onImagePress,
-}: {
-  item: ExpandedItem
-  onTitlePress: () => void
-  onImagePress: () => void
-}) => {
-  const creator = item.expand!.creator
-  const creatorProfileUrl = `/user/${creator.userName}/` as const
-
-  return (
-    <View
-      style={{
-        backgroundColor: c.surface2,
-        borderRadius: 10,
-        paddingHorizontal: 10,
-        paddingVertical: 10,
-        width: win.width - 20,
-        alignSelf: 'center',
-        marginBottom: 6,
-      }}
-    >
-      <XStack
-        key={item.id}
-        gap={s.$08}
-        style={{
-          alignItems: 'center',
-          width: '100%',
-          justifyContent: 'space-between',
-          paddingHorizontal: 10,
-        }}
-      >
-        {item.expand?.creator && (
-          <Link href={creatorProfileUrl}>
-            <View style={{}}>
-              <Avatar source={creator.image} size={FEED_PREVIEW_IMAGE_SIZE} />
-            </View>
-          </Link>
-        )}
-        <View style={{ overflow: 'hidden', flex: 1 }}>
-          <Text style={{ fontSize: 16 }}>
-            <Link href={creatorProfileUrl}>
-              <Heading tag="semistrong">{item.expand?.creator?.firstName || 'Anonymous'} </Heading>
-            </Link>
-            <Text style={{ color: c.muted2 }}>added </Text>
-            <Heading tag="semistrong" onPress={onTitlePress}>
-              {item.expand?.ref?.title}
-            </Heading>
-          </Text>
-          <Text style={{ fontSize: 12, color: c.muted, paddingTop: 2 }}>
-            {formatDate(item.created)}
-          </Text>
-        </View>
-
-        {item?.image ? (
-          <Pressable onPress={onImagePress}>
-            <View
-              style={{
-                minWidth: FEED_REF_IMAGE_SIZE,
-                minHeight: FEED_REF_IMAGE_SIZE,
-              }}
-            >
-              <SimplePinataImage
-                originalSource={item.image}
-                imageOptions={{ width: FEED_REF_IMAGE_SIZE, height: FEED_REF_IMAGE_SIZE }}
-                style={{
-                  width: FEED_REF_IMAGE_SIZE,
-                  height: FEED_REF_IMAGE_SIZE,
-                  backgroundColor: c.accent,
-                  borderRadius: s.$075,
-                  top: 2,
-                }}
-              />
-            </View>
-          </Pressable>
-        ) : (
-          <View
-            style={{
-              width: FEED_REF_IMAGE_SIZE,
-              height: FEED_REF_IMAGE_SIZE,
-              backgroundColor: c.accent,
-              borderRadius: s.$075,
-            }}
-          />
-        )}
-      </XStack>
-    </View>
-  )
-}
-
 export const Feed = () => {
-  const [items, setItems] = useState<ExpandedItem[]>([])
+  const feedEntries = useAppStore((state) => state.feedEntries)
   const feedRefreshTrigger = useAppStore((state) => state.feedRefreshTrigger)
-  const { getFeedItems, referencersBottomSheetRef, setCurrentRefId, logout, detailsSheetRef, setDetailsSheetData } = useAppStore()
+  const ensureFeedHydrated = useAppStore((state) => state.ensureFeedHydrated)
+  const refreshFeed = useAppStore((state) => state.refreshFeed)
+  const prefetchNextFeedPage = useAppStore((state) => state.prefetchNextFeedPage)
+  const fetchMoreFeed = useAppStore((state) => state.fetchMoreFeed)
+  const feedHasMore = useAppStore((state) => state.feedHasMore)
+  const feedRefreshing = useAppStore((state) => state.feedRefreshing)
+  const feedLoadingMore = useAppStore((state) => state.feedLoadingMore)
+  const feedHydrated = useAppStore((state) => state.feedHydrated)
+  const referencersBottomSheetRef = useAppStore((state) => state.referencersBottomSheetRef)
+  const detailsSheetRef = useAppStore((state) => state.detailsSheetRef)
+  const setCurrentRefId = useAppStore((state) => state.setCurrentRefId)
+  const setDetailsSheetData = useAppStore((state) => state.setDetailsSheetData)
+  const logout = useAppStore((state) => state.logout)
+  const enableFeedNetwork = useAppStore((state) => state.enableFeedNetwork)
 
-  const fetchFeedItems = async () => {
-    try {
-      // Check cache first (read-only, safe operation)
-      const cachedItems = await simpleCache.get('feed_items')
-      
-      if (cachedItems) {
-        console.log('📖 Using cached feed items')
-        setItems(cachedItems as ExpandedItem[])
-        return
-      }
-      
-      // Fetch fresh data
-      const freshItems = await getFeedItems()
-      setItems(freshItems)
-      
-      // Cache the fresh data
-      simpleCache.set('feed_items', freshItems).catch(error => {
-        console.warn('Feed cache write failed:', error)
-      })
-    } catch (error) {
-      console.error('Failed to refresh feed:', error)
-    }
-  }
+  const hydrationAttemptedRef = useRef(false)
 
   useEffect(() => {
-    fetchFeedItems()
-  }, [feedRefreshTrigger]) // Refetch whenever the trigger changes
+    enableFeedNetwork()
+  }, [enableFeedNetwork])
+
+  useEffect(() => {
+    if (feedHydrated) {
+      return
+    }
+    if (hydrationAttemptedRef.current) {
+      return
+    }
+    hydrationAttemptedRef.current = true
+
+    const timeout = setTimeout(() => {
+      ensureFeedHydrated({ refresh: false })
+        .catch((error: unknown) => {
+          console.warn('Feed hydration failed', error)
+        })
+    }, 0)
+
+    return () => clearTimeout(timeout)
+  }, [ensureFeedHydrated, feedHydrated])
+
+  useEffect(() => {
+    if (!feedHydrated) {
+      hydrationAttemptedRef.current = false
+    }
+  }, [feedHydrated])
+
+  useEffect(() => {
+    if (feedRefreshTrigger > 0) {
+      refreshFeed({ force: true })
+        .catch((error: unknown) => {
+          console.warn('Feed refresh failed', error)
+        })
+    }
+  }, [feedRefreshTrigger, refreshFeed])
+
+  const prefetchedOnceRef = useRef(false)
+  useEffect(() => {
+    if (feedEntries.length === 0) {
+      prefetchedOnceRef.current = false
+      return
+    }
+    if (!prefetchedOnceRef.current && feedEntries.length > 0) {
+      prefetchedOnceRef.current = true
+      prefetchNextFeedPage()
+        .catch((error: unknown) => {
+          console.warn('Feed prefetch failed', error)
+        })
+    }
+  }, [feedEntries.length, prefetchNextFeedPage])
+
+  const handleRefPress = useCallback(
+    (entry: FeedEntry) => {
+      if (!entry.ref?.id) return
+      setCurrentRefId(entry.ref.id)
+      referencersBottomSheetRef.current?.expand?.()
+    },
+    [referencersBottomSheetRef, setCurrentRefId]
+  )
+
+  const handleImagePress = useCallback(
+    (entry: FeedEntry) => {
+      if (entry.kind === 'ref_add' && entry.itemId) {
+        setDetailsSheetData({
+          itemId: entry.itemId,
+          profileUsername: entry.actor.userName,
+          openedFromFeed: true,
+        })
+        detailsSheetRef.current?.snapToIndex?.(0)
+        return
+      }
+      handleRefPress(entry)
+    },
+    [detailsSheetRef, handleRefPress, setDetailsSheetData]
+  )
+
+  const handleActorPress = useCallback((entry: FeedEntry) => {
+    if (!entry.actor.userName) return
+    router.push(`/user/${entry.actor.userName}`)
+  }, [])
+
+  const handleEndReached = useCallback(() => {
+    if (!feedHasMore || feedLoadingMore) {
+      return
+    }
+    fetchMoreFeed()
+      .catch((error: unknown) => {
+        console.warn('Feed load more failed', error)
+      })
+  }, [feedHasMore, feedLoadingMore, fetchMoreFeed])
+
+  const renderItem = useCallback(
+    ({ item }: { item: FeedEntry }) => (
+      <View style={{ width: win.width - 20, alignSelf: 'center' }}>
+        <FeedRow
+          entry={item}
+          onPressRef={handleRefPress}
+          onPressImage={handleImagePress}
+          onPressActor={handleActorPress}
+        />
+      </View>
+    ),
+    [handleActorPress, handleImagePress, handleRefPress]
+  )
+
+  const keyExtractor = useCallback((item: FeedEntry) => item.id, [])
+
+  const listFooter = useMemo(() => {
+    return (
+      <View style={{ paddingVertical: s.$4, alignItems: 'center' }}>
+        {feedLoadingMore && (
+          <ActivityIndicator style={{ marginBottom: s.$2 }} color={c.muted} />
+        )}
+        <Button
+          style={{ width: 120 }}
+          variant="inlineSmallMuted"
+          title="Log out"
+          onPress={logout}
+        />
+      </View>
+    )
+  }, [feedLoadingMore, logout])
 
   return (
     <>
       <DismissKeyboard>
-        <ScrollView>
-          <View style={{ height: '100%' }}>
-            <View
-              style={{
-                paddingTop: s.$1,
-                paddingHorizontal: s.$1half,
-                width: win.width,
-                display: 'flex',
-                gap: s.$0,
-              }}
-            >
-              <YStack
-                gap={0}
-                style={{
-                  flex: 1,
-                  paddingBottom: s.$6, // Reduced by 75px (from s.$12 to s.$6)
-                }}
-              >
-                {items.map((item) => (
-                  <ListItem
-                    key={item.id}
-                    item={item}
-                    onImagePress={() => {
-                      setDetailsSheetData({
-                        itemId: item.id,
-                        profileUsername: item.expand!.creator.userName,
-                        openedFromFeed: true,
-                      })
-                      detailsSheetRef.current?.snapToIndex(0)
-                    }}
-                    onTitlePress={() => {
-                      setCurrentRefId(item.ref)
-                      referencersBottomSheetRef.current?.expand()
-                    }}
-                  />
-                ))}
-
-                {/* Logout button at the bottom of the feed */}
-                <View style={{ marginTop: s.$4, marginBottom: s.$2, alignItems: 'center' }}>
-                  <Button
-                    style={{ width: 120 }}
-                    variant="inlineSmallMuted"
-                    title="Log out"
-                    onPress={logout}
-                  />
-                </View>
-              </YStack>
-            </View>
-          </View>
-        </ScrollView>
+        <FlatList
+          data={feedEntries}
+          keyExtractor={keyExtractor}
+          renderItem={renderItem}
+          refreshing={feedRefreshing}
+          onRefresh={() => {
+            refreshFeed({ force: true })
+              .catch((error: unknown) => {
+                console.warn('Feed refresh failed', error)
+              })
+          }}
+          onEndReachedThreshold={0.6}
+          onEndReached={handleEndReached}
+          contentContainerStyle={{
+            paddingTop: s.$1,
+            paddingHorizontal: s.$1half,
+            paddingBottom: s.$6,
+          }}
+          ListFooterComponent={listFooter}
+          showsVerticalScrollIndicator={false}
+        />
       </DismissKeyboard>
-      {items.length > 0 && <Ticker />}
+      {feedEntries.length > 0 && <Ticker />}
       <SearchBottomSheet />
     </>
   )

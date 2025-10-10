@@ -193,6 +193,7 @@ export const Grid = ({
   rowJustify = 'flex-start',
   rowGap,
   showPrompts = true,
+  isEditMode = false,
 }: {
   onPressItem?: (item?: ExpandedItem) => void
   onLongPressItem?: () => void
@@ -218,6 +219,7 @@ export const Grid = ({
   rowJustify?: 'flex-start' | 'center' | 'space-between' | 'space-around' | 'space-evenly'
   rowGap?: number
   showPrompts?: boolean
+  isEditMode?: boolean
 }) => {
   const gridSize = columns * rows
 
@@ -351,6 +353,7 @@ export const Grid = ({
                   promptTextColor={item.__promptKind === 'event' ? c.olive : '#B0B0B0'}
                   topRightAction={topRightActionForItem ? topRightActionForItem(item) : undefined}
                   onTopRightActionPress={() => onTopRightActionPress && onTopRightActionPress(item)}
+                  isEditMode={isEditMode}
                   tileStyle={
                     searchMode
                       ? {
@@ -417,7 +420,7 @@ export const Grid = ({
       </GridWrapper>
 
       {/* Shuffle prompts button */}
-      {editingRights && !searchMode && !hideShuffleButton && showPrompts && items.length < gridSize && (
+      {editingRights && !searchMode && !hideShuffleButton && !isEditMode && showPrompts && items.length < gridSize && (
         <Animated.View style={buttonAnimatedStyle}>
           <Pressable
             onPress={handleShufflePrompts}

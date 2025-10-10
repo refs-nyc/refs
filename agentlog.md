@@ -11,6 +11,9 @@
 - Messaging bootstrap hydrates from cache instantly and defers the multi-query PocketBase fetch until after interactions, keeping the JS queue free during launch.
 
 ## 2025-??-??
+- Attempted overlay height spacer approach for settings, but it still flashed; backed out.
+- Swapped to a dedicated settings bottom sheet: pencil opens the sheet (`BottomSheet`), settings live there, FAB fades via opacity when edit mode is active, so the grid stays untouched and no more black flash.
+- Refined the settings sheet snap logic to avoid `CONTENT_HEIGHT` snap errors: compute numeric snap points from measured content/fallback heights, keep the 50px radius, and pad the scroll container so the grid stays editable beneath the open sheet.
 - While aligning the profile grid we tried three approaches that did **not** fix the right-edge drift:
   - Added padding directly on the animated grid wrapper (`paddingHorizontal: s.$1 + 6` then `-2`), but the absolute overlay still pinned the inner grid to the right.
   - Offsetting the absolute container with manual `left/right` values and later converting to wrapper padding simply changed the overlay bounds while the `Grid` component continued using its own internal padding, so the tiles never shifted.
@@ -45,3 +48,7 @@
   - Verified: Production DB has 16 users with `show_in_directory=true`, API queries work correctly, field exists in schema
 - **CRITICAL FIX**: Registration flow was completely broken - UnifiedOnboarding was calling `registerUser({params})` but `register()` doesn't accept parameters; it reads from `stagedUser` in the store. Fixed by calling `updateStagedUser()` first to stage the data, then calling `register()` with no parameters. This was preventing ALL new user signups.
 - Fixed password field autofill issues: Changed `textContentType` from `'oneTimeCode'` to `'newPassword'`/`'password'` and `autoComplete` from `'off'` to `'password'` so iOS properly suggests strong passwords and password managers work correctly.
+- Push notifications are iOS-only for now; Expo token registration runs via `RegisterPushNotifications` and stores the token on the user record for future server-side sends.
+- Refreshed the app icon to use the venn diagram mark on the `c.surface` background so TestFlight builds reflect the latest brand palette.
+- Supabase now mirrors PocketBase push tokens: added `users.push_token`, and the client updates both stores whenever registration succeeds (or clears).
+- Introduced Supabase Edge Function `notifications` to send Expo pushes given a batch of recipient user IDs; PocketBase hooks (messages/items/memberships) call it for DMs, ref matches, copying from a profile, and community joins.

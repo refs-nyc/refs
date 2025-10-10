@@ -4,6 +4,7 @@ import type { ItemSlice } from './items'
 import type { MessageSlice } from './messages'
 import type { UserSlice } from './users'
 import type { UserCacheSlice } from './userCache'
+import type { FeedSlice } from './feed'
 import { Item, Profile } from '@/features/types'
 import BottomSheet from '@gorhom/bottom-sheet'
 import React from 'react'
@@ -118,4 +119,5 @@ export type StoreSlices = BackdropSlice &
   MessageSlice &
   UserSlice &
   UserCacheSlice &
+  FeedSlice &
   UISlice

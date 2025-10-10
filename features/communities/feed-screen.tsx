@@ -567,16 +567,22 @@ export function CommunitiesFeedScreen({
             return hasAvatar && hasEnoughItems
           })
           
+          if (filteredCached.length > 0) {
+            console.log(`✅ Using ${filteredCached.length} users from cache as placeholder`)
+            commitUsers(filteredCached)
+            setHasInitialData(true)
+            setPage(1)
+            setHasMore(true)
+            // Keep loading indicator true so the fresh fetch below can update state
+          }
+
           // If we filtered out ANY users, invalidate cache and fetch fresh
           if (filteredCached.length < (cachedUsers as FeedUser[]).length) {
             console.log(`🗑️ Cache is stale (${(cachedUsers as FeedUser[]).length} users → ${filteredCached.length} after filtering). Clearing and fetching fresh data...`)
             await AsyncStorage.removeItem('simple_cache_directory_users')
             // Continue to fetch fresh data below (don't return early)
-          } else {
-            console.log(`✅ Using ${filteredCached.length} users from cache (all valid)`)
-            commitUsers(filteredCached)
-            setHasMore(true) // Assume there are more pages
-            setPage(1)
+          } else if (filteredCached.length > 0) {
+            // Cache is good and we already committed it – no need to hit the network
             setIsLoading(false)
             return
           }

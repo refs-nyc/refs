@@ -6,6 +6,7 @@ const CACHE_TTLS = {
   grid_items: 3 * 60 * 1000,      // 3 minutes
   backlog_items: 3 * 60 * 1000,   // 3 minutes
   feed_items: 8 * 60 * 1000,      // 8 minutes
+  feed_entries: 10 * 60 * 1000,   // 10 minutes
   directory_users: 10 * 60 * 1000, // 10 minutes
   conversations: 5 * 60 * 1000,    // 5 minutes
   conversation_memberships: 5 * 60 * 1000, // 5 minutes

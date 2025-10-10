@@ -3,10 +3,10 @@ import { getBacklogItems, getProfileItems, autoMoveBacklogToGrid } from '@/featu
 import type { Profile } from '@/features/types'
 import { ExpandedItem } from '@/features/types'
 import { s, c } from '@/features/style'
-import BottomSheet, { BottomSheetBackdrop, BottomSheetView } from '@gorhom/bottom-sheet'
+import BottomSheet, { BottomSheetBackdrop, BottomSheetTextInput, BottomSheetView } from '@gorhom/bottom-sheet'
 import { useShareIntentContext } from 'expo-share-intent'
 import { useEffect, useRef, useState, useMemo, useCallback } from 'react'
-import { ScrollView, View, Text, Pressable, Keyboard, ActivityIndicator } from 'react-native'
+import { ScrollView, View, Text, Pressable, Keyboard, ActivityIndicator, InteractionManager, useWindowDimensions, Alert } from 'react-native'
 import { Image } from 'expo-image'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import * as ImagePicker from 'expo-image-picker'
@@ -95,6 +95,7 @@ const AVATAR_PLACEHOLDER_BORDER = '#B0B0B0'
 export const MyProfile = ({ userName }: { userName: string }) => {
   const { hasShareIntent } = useShareIntentContext()
   const insets = useSafeAreaInsets()
+  const { height: windowHeight } = useWindowDimensions()
 
   const cachedEntry = profileMemoryCache.get(userName)
 
@@ -108,9 +109,35 @@ export const MyProfile = ({ userName }: { userName: string }) => {
   const [optimisticAvatarUri, setOptimisticAvatarUri] = useState<string | null>(null)
   const [avatarUploading, setAvatarUploading] = useState(false)
   const [showAvatarPicker, setShowAvatarPicker] = useState(false)
+  const [isEditMode, setIsEditMode] = useState(false)
+  const [isSettingsSheetOpen, setIsSettingsSheetOpen] = useState(false)
+  const [settingsSheetHeight, setSettingsSheetHeight] = useState(0)
   const avatarScale = useRef(new RNAnimated.Value(1)).current
   const avatarSwapOpacity = useRef(new RNAnimated.Value(1)).current
+  const settingsSheetRef = useRef<BottomSheet>(null)
+  const pendingSettingsSheetActionRef = useRef<(() => void) | null>(null)
+  const baseScrollPadding = s.$10 as number
+  const fallbackSettingsSheetHeight = useMemo(() => Math.round(windowHeight * 0.45), [windowHeight])
+  const scrollPaddingBottom = useMemo(() => {
+    if (!isSettingsSheetOpen) return baseScrollPadding
 
+    const measuredHeight = settingsSheetHeight > 0 ? settingsSheetHeight : fallbackSettingsSheetHeight
+    const buffer = 24
+
+    return baseScrollPadding + measuredHeight + insets.bottom + buffer
+  }, [baseScrollPadding, fallbackSettingsSheetHeight, insets.bottom, isSettingsSheetOpen, settingsSheetHeight])
+  const settingsSheetSnapPoints = useMemo(() => {
+    const baseHeight = Math.max(settingsSheetHeight, fallbackSettingsSheetHeight)
+    const cappedBase = Math.min(baseHeight, Math.round(windowHeight * 0.92))
+    const expandedCandidate = Math.max(cappedBase + 120, Math.round(windowHeight * 0.78))
+    const cappedExpanded = Math.min(expandedCandidate, Math.round(windowHeight * 0.95))
+
+    if (cappedExpanded <= cappedBase + 40) {
+      return [cappedBase]
+    }
+
+    return [cappedBase, cappedExpanded]
+  }, [fallbackSettingsSheetHeight, settingsSheetHeight, windowHeight])
   // Get optimistic items from store
   const { optimisticItems, user } = useAppStore()
 
@@ -152,6 +179,62 @@ export const MyProfile = ({ userName }: { userName: string }) => {
     detailsSheetRef,
     setDetailsSheetData,
   } = useAppStore()
+  const closeSettingsSheet = useCallback(
+    ({ exitEditMode = false, afterClose }: { exitEditMode?: boolean; afterClose?: () => void } = {}) => {
+      if (!isSettingsSheetOpen) {
+        if (exitEditMode) {
+          setIsEditMode(false)
+          stopEditProfile()
+          stopEditing()
+        }
+        if (afterClose) {
+          afterClose()
+        }
+        pendingSettingsSheetActionRef.current = null
+        return
+      }
+
+      if (afterClose) {
+        pendingSettingsSheetActionRef.current = afterClose
+      }
+
+      settingsSheetRef.current?.close()
+      setIsSettingsSheetOpen(false)
+
+      if (exitEditMode) {
+        setIsEditMode(false)
+        stopEditProfile()
+        stopEditing()
+      }
+    },
+    [isSettingsSheetOpen, stopEditProfile, stopEditing]
+  )
+
+  const enterEditMode = useCallback(() => {
+    if (isEditMode) {
+      if (!isSettingsSheetOpen) {
+        settingsSheetRef.current?.snapToIndex(0)
+        setIsSettingsSheetOpen(true)
+      }
+      return
+    }
+
+    setIsEditMode(true)
+    startEditProfile()
+    setIsSettingsSheetOpen(true)
+    settingsSheetRef.current?.snapToIndex(0)
+  }, [isEditMode, isSettingsSheetOpen, startEditProfile])
+
+  const exitEditMode = useCallback(() => {
+    if (!isEditMode) return
+    pendingSettingsSheetActionRef.current = null
+    settingsSheetRef.current?.close()
+    setIsSettingsSheetOpen(false)
+    setIsEditMode(false)
+    stopEditProfile()
+    stopEditing()
+  }, [isEditMode, stopEditProfile, stopEditing])
+
   const ownProfile = user?.userName === userName
   const effectiveProfile = profile ?? (ownProfile ? (user ?? undefined) : undefined)
   const hasProfile = Boolean(effectiveProfile)
@@ -305,29 +388,29 @@ export const MyProfile = ({ userName }: { userName: string }) => {
     <View style={{ width: '100%', paddingHorizontal: 0 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 18 }}>
         <View style={{ flex: 1 }}>
-          <Text
-            style={{
+      <Text
+        style={{
               color: '#030303',
               fontSize: (s.$09 as number) + 4,
-              fontFamily: 'System',
+          fontFamily: 'System',
               fontWeight: '700',
-              lineHeight: s.$1half,
-            }}
-          >
+          lineHeight: s.$1half,
+        }}
+      >
             {displayName}
-          </Text>
+      </Text>
           {locationLabel ? (
-            <Text
-              style={{
-                color: c.prompt,
+      <Text
+        style={{
+          color: c.prompt,
                 fontSize: 13,
                 fontFamily: 'Inter',
                 fontWeight: '500',
-                lineHeight: s.$1half,
-              }}
-            >
+          lineHeight: s.$1half,
+        }}
+      >
               {locationLabel}
-            </Text>
+      </Text>
           ) : null}
         </View>
         {(() => {
@@ -373,7 +456,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
                   )}
                   {avatarUri && avatarUploading && (
                     <View
-                      style={{
+        style={{
                         position: 'absolute',
                         top: 0,
                         left: 0,
@@ -388,6 +471,44 @@ export const MyProfile = ({ userName }: { userName: string }) => {
                     </View>
                   )}
                 </View>
+                {/* Edit button */}
+                {ownProfile && !avatarUploading && (
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel={isEditMode ? 'Finish editing profile' : 'Edit profile'}
+                    onPress={() => {
+                      if (isEditMode) {
+                        exitEditMode()
+                        return
+                      }
+                      enterEditMode()
+                    }}
+                    hitSlop={8}
+                    style={{
+                      position: 'absolute',
+                      top: 0,
+                      right: 0,
+                      width: 26,
+                      height: 26,
+                      borderRadius: 13,
+                      backgroundColor: isEditMode ? c.olive : AVATAR_PLACEHOLDER_BORDER,
+                      borderWidth: 2.5,
+                      borderColor: c.surface,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      shadowColor: '#000',
+                      shadowOpacity: isEditMode ? 0.18 : 0,
+                      shadowRadius: isEditMode ? 4 : 0,
+                      shadowOffset: { width: 0, height: isEditMode ? 2 : 0 },
+                    }}
+                  >
+                    <Ionicons
+                      name={isEditMode ? 'checkmark' : 'pencil'}
+                      size={13}
+                      color={c.surface}
+                    />
+                  </Pressable>
+                )}
               </View>
             </RNAnimated.View>
           )
@@ -427,7 +548,8 @@ export const MyProfile = ({ userName }: { userName: string }) => {
   const showPromptChips =
     ownProfile &&
     promptDisplayReady &&
-    displayGridItems.length < GRID_CAPACITY
+    displayGridItems.length < GRID_CAPACITY &&
+    !isEditMode
 
   const handleShufflePromptSuggestions = useCallback(() => {
     setPromptSuggestions(createPromptBatch())
@@ -547,16 +669,26 @@ export const MyProfile = ({ userName }: { userName: string }) => {
     >
     <Grid
       editingRights={true}
-        screenFocused={focusReady && !loading}
+      screenFocused={focusReady}
       shouldAnimateStartup={justOnboarded}
+      isEditMode={isEditMode}
       onPressItem={(item) => {
-        if (!effectiveProfile) return
-        setDetailsSheetData({
-          itemId: item!.id,
-          profileUsername: effectiveProfile.userName,
-          openedFromFeed: false,
-        })
-        detailsSheetRef.current?.snapToIndex(0)
+        if (!effectiveProfile || !item) return
+        const openDetails = () => {
+          setDetailsSheetData({
+            itemId: item.id,
+            profileUsername: effectiveProfile.userName,
+            openedFromFeed: false,
+          })
+          detailsSheetRef.current?.snapToIndex(0)
+        }
+
+        if (isSettingsSheetOpen) {
+          closeSettingsSheet({ afterClose: openDetails })
+          return
+        }
+
+        openDetails()
       }}
       onLongPressItem={() => {
         clearTimeout(timeout)
@@ -564,24 +696,53 @@ export const MyProfile = ({ userName }: { userName: string }) => {
           stopEditProfile()
         }, 10000)
         startEditProfile()
+        if (!isEditMode) {
+          setIsEditMode(true)
+        }
       }}
       onRemoveItem={(item) => {
+        if (!item) return
         setRemovingItem(item)
-        removeRefSheetRef.current?.expand()
+        const openRemoveSheet = () => {
+          removeRefSheetRef.current?.expand()
+        }
+
+        if (isSettingsSheetOpen) {
+          closeSettingsSheet({ afterClose: openRemoveSheet })
+          return
+        }
+
+        openRemoveSheet()
       }}
       onAddItem={(prompt?: string) => {
-        setAddingNewRefTo('grid')
-        if (prompt) useAppStore.getState().setAddRefPrompt(prompt)
-        newRefSheetRef.current?.snapToIndex(1)
+        const proceed = () => {
+          setAddingNewRefTo('grid')
+          if (prompt) useAppStore.getState().setAddRefPrompt(prompt)
+        }
+
+        if (isSettingsSheetOpen) {
+          closeSettingsSheet({ afterClose: proceed })
+          return
+        }
+
+        proceed()
       }}
       onAddItemWithPrompt={(prompt: string, photoPath?: boolean) => {
-        if (photoPath) {
-          triggerDirectPhotoPicker(prompt)
-        } else {
-          setAddingNewRefTo('grid')
-          useAppStore.getState().setAddRefPrompt(prompt)
-          newRefSheetRef.current?.snapToIndex(1)
+        const proceed = () => {
+          if (photoPath) {
+            void triggerDirectPhotoPicker(prompt)
+          } else {
+            setAddingNewRefTo('grid')
+            useAppStore.getState().setAddRefPrompt(prompt)
+          }
         }
+
+        if (isSettingsSheetOpen) {
+          closeSettingsSheet({ afterClose: proceed })
+          return
+        }
+
+        proceed()
       }}
         columns={GRID_COLUMNS}
       items={displayGridItems}
@@ -742,9 +903,17 @@ export const MyProfile = ({ userName }: { userName: string }) => {
 
 
 
-  const refreshGrid = async (userName: string) => {
+  const refreshGrid = async (
+    userName: string,
+    options?: { cacheOnly?: boolean; background?: boolean }
+  ): Promise<boolean> => {
+    const cacheOnly = options?.cacheOnly === true
+    const background = options?.background === true
+
+    let hasVisibleData = false
+
     const hadMemory = profileMemoryCache.has(userName)
-    if (!hadMemory) {
+    if (!hadMemory && !cacheOnly && !background) {
       setLoading(true)
       setPromptsReady(false)
     }
@@ -761,6 +930,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
       setLoading(false)
       setPromptsReady(memoryCached.gridItems.length > 0)
       storeState.setGridItemCount(memoryCached.gridItems.length)
+      hasVisibleData = true
     }
 
     const hydrateFromCache = async (userId?: string) => {
@@ -792,6 +962,16 @@ export const MyProfile = ({ userName }: { userName: string }) => {
     }
 
     const cacheHydrated = await hydrateFromCache(cacheUserId)
+    if (cacheHydrated) {
+      hasVisibleData = true
+    }
+
+    if (cacheOnly) {
+      if (!hasVisibleData && !hadMemory) {
+        setLoading(true)
+      }
+      return hasVisibleData
+    }
 
 
     const fetchFreshData = async () => {
@@ -851,7 +1031,13 @@ export const MyProfile = ({ userName }: { userName: string }) => {
       }
     }
 
+    if (background) {
     void fetchFreshData()
+      return hasVisibleData
+    }
+
+    await fetchFreshData()
+    return true
   }
 
   const handleMoveToBacklog = async () => {
@@ -942,12 +1128,22 @@ export const MyProfile = ({ userName }: { userName: string }) => {
   useEffect(() => {
     let cancelled = false
     let focusTimer: ReturnType<typeof setTimeout> | null = null
-    // Make gesture controls available immediately
+
     setFocusReady(true)
 
-    const init = async () => {
+    const run = async () => {
       try {
-        await refreshGrid(userName)
+        const hadImmediateData = await refreshGrid(userName, { cacheOnly: true })
+        if (!hadImmediateData) {
+          setLoading(true)
+        }
+
+        InteractionManager.runAfterInteractions(() => {
+          refreshGrid(userName, { background: true }).catch((error) => {
+            console.warn('Background grid refresh failed:', error)
+          })
+        })
+
         if (cancelled) return
 
         const returningFromSearch = cachedSearchResults.length > 0 || isSearchResultsSheetOpen || searchMode
@@ -967,7 +1163,11 @@ export const MyProfile = ({ userName }: { userName: string }) => {
       }
     }
 
-        void init()
+    requestAnimationFrame(() => {
+      if (!cancelled) {
+        void run()
+      }
+    })
 
     return () => {
       cancelled = true
@@ -1026,35 +1226,46 @@ export const MyProfile = ({ userName }: { userName: string }) => {
         try { useAppStore.getState().setSelectedPhoto(selectedImage.uri) } catch {}
         try { useAppStore.getState().setAddRefPrompt(prompt) } catch {}
         setAddingNewRefTo('grid')
-        newRefSheetRef.current?.snapToIndex(1)
       }
     } catch (error) {
       console.error('Error picking image:', error)
     }
   }, [setAddingNewRefTo])
 
-  const handlePromptChipPress = useCallback((prompt: PromptSuggestion) => {
-    setPromptSuggestions((current) => {
-      const remainder = current.filter((item) => item.text !== prompt.text)
-      const needed = PROMPT_BATCH_SIZE - remainder.length
-      if (needed <= 0) {
-        return remainder
+  const handlePromptChipPress = useCallback(
+    (prompt: PromptSuggestion) => {
+      setPromptSuggestions((current) => {
+        const remainder = current.filter((item) => item.text !== prompt.text)
+        const needed = PROMPT_BATCH_SIZE - remainder.length
+        if (needed <= 0) {
+          return remainder
+        }
+
+        const exclude = new Set(remainder.map((item) => item.text))
+        const replacements = createPromptBatch(needed, exclude)
+        return [...remainder, ...replacements]
+      })
+
+      const execute = () => {
+        if (prompt.photoPath) {
+          void triggerDirectPhotoPicker(prompt.text)
+          return
+        }
+
+        setAddingNewRefTo('grid')
+        try { useAppStore.getState().setAddRefPrompt(prompt.text) } catch {}
+        // Opening is controlled by NewRefSheet effect
       }
 
-      const exclude = new Set(remainder.map((item) => item.text))
-      const replacements = createPromptBatch(needed, exclude)
-      return [...remainder, ...replacements]
-    })
+      if (isSettingsSheetOpen) {
+        closeSettingsSheet({ afterClose: execute })
+        return
+      }
 
-    if (prompt.photoPath) {
-      void triggerDirectPhotoPicker(prompt.text)
-      return
-    }
-
-    setAddingNewRefTo('grid')
-    try { useAppStore.getState().setAddRefPrompt(prompt.text) } catch {}
-    newRefSheetRef.current?.snapToIndex(1)
-  }, [triggerDirectPhotoPicker, setAddingNewRefTo])
+      execute()
+    },
+    [triggerDirectPhotoPicker, setAddingNewRefTo, isSettingsSheetOpen, closeSettingsSheet]
+  )
 
   const promptChipSection = showPromptChips && promptSuggestions.length > 0 ? (
     <Animated.View
@@ -1170,6 +1381,15 @@ export const MyProfile = ({ userName }: { userName: string }) => {
     </Animated.View>
   ) : null
 
+  const settingsSheetScrim = isSettingsSheetOpen ? (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel="Dismiss profile settings"
+      onPress={() => closeSettingsSheet()}
+      style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 6, backgroundColor: 'transparent' }}
+    />
+  ) : null
+
   return (
     <>
       <ScrollView
@@ -1177,15 +1397,15 @@ export const MyProfile = ({ userName }: { userName: string }) => {
         contentContainerStyle={{
           justifyContent: 'center',
           alignItems: 'stretch',
-          paddingBottom: s.$10,
+          paddingBottom: scrollPaddingBottom,
           gap: s.$4,
           minHeight: '100%',
         }}
         showsVerticalScrollIndicator={false}
-        scrollEnabled={false}
+        scrollEnabled={isEditMode || isSettingsSheetOpen}
       >
         <View
-          style={{ flex: 1, width: '100%', backgroundColor: c.surface, paddingHorizontal: s.$1 }}
+          style={{ flex: 1, width: '100%', backgroundColor: c.surface, paddingHorizontal: s.$1, position: 'relative' }}
         >
           <Animated.View
             entering={FadeIn.duration(400).delay(100)}
@@ -1230,19 +1450,21 @@ export const MyProfile = ({ userName }: { userName: string }) => {
                 onPress={() => {
                   setAddingNewRefTo('grid')
                   try { useAppStore.getState().setAddRefPrompt('') } catch {}
-                  newRefSheetRef.current?.snapToIndex(1)
                 }}
                 style={{
                   position: 'absolute',
                   right: 0,
                   bottom: -65,
                   zIndex: 5,
-                  opacity: hasProfile && !searchMode ? 1 : 0,
+                  opacity: hasProfile && !searchMode && !isEditMode ? 1 : 0,
                 }}
               />
             </View>
 
             {promptChipSection}
+
+            {settingsSheetScrim}
+
           </View>
 
           {hasProfile && !effectiveProfile && <Heading tag="h1">Profile for {userName} not found</Heading>}
@@ -1258,7 +1480,6 @@ export const MyProfile = ({ userName }: { userName: string }) => {
               user={user}
               openAddtoBacklog={() => {
                 setAddingNewRefTo('backlog')
-                newRefSheetRef.current?.snapToIndex(1)
               }}
             />
             <RemoveRefSheet
@@ -1275,6 +1496,253 @@ export const MyProfile = ({ userName }: { userName: string }) => {
               selectedRefs={selectedRefs}
               selectedRefItems={finalSelectedRefItems}
             />
+
+            <BottomSheet
+              ref={settingsSheetRef}
+              index={-1}
+              snapPoints={settingsSheetSnapPoints}
+              enablePanDownToClose
+              enableOverDrag={false}
+              onChange={(idx) => {
+                const open = idx >= 0
+                setIsSettingsSheetOpen(open)
+                if (!open) {
+                  const pending = pendingSettingsSheetActionRef.current
+                  pendingSettingsSheetActionRef.current = null
+                  if (pending) {
+                    pending()
+                  }
+                }
+              }}
+              onClose={() => {
+                setIsSettingsSheetOpen(false)
+                const pending = pendingSettingsSheetActionRef.current
+                pendingSettingsSheetActionRef.current = null
+                if (pending) {
+                  pending()
+                }
+              }}
+              backgroundStyle={{ backgroundColor: c.surface, borderRadius: 50 }}
+              handleComponent={null}
+              style={{ borderTopLeftRadius: 50, borderTopRightRadius: 50, overflow: 'hidden' }}
+            >
+              <BottomSheetView
+                onLayout={(event) => {
+                  const height = Math.round(event.nativeEvent.layout.height)
+                  if (height > 0 && Math.abs(height - settingsSheetHeight) > 2) {
+                    setSettingsSheetHeight(height)
+                  }
+                }}
+                style={{ paddingHorizontal: s.$1, paddingVertical: s.$1, gap: s.$075 }}
+              >
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    marginBottom: s.$075,
+                  }}
+                >
+                  <Text
+                    style={{
+                      fontSize: (s.$09 as number) + 4,
+                      fontFamily: 'System',
+                      fontWeight: '700',
+                      color: c.newDark,
+                    }}
+                  >
+                    Profile Settings
+                  </Text>
+                  <Pressable
+                    onPress={() => {
+                      settingsSheetRef.current?.close()
+                      setIsSettingsSheetOpen(false)
+                      setIsEditMode(false)
+                    }}
+                    hitSlop={10}
+                    style={{
+                      width: 32,
+                      height: 32,
+                      borderRadius: 16,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    <Ionicons name="close" size={18} color={c.muted2} />
+                  </Pressable>
+                </View>
+
+                <Pressable
+                  onPress={() => {
+                    console.log('Edit name')
+                  }}
+                  style={({ pressed }) => ({
+                    backgroundColor: c.surface2,
+                    borderRadius: s.$12,
+                    padding: s.$1,
+                    opacity: pressed ? 0.6 : 1,
+                  })}
+                >
+                  <Text
+                    style={{
+                      color: c.muted2,
+                      fontSize: 11,
+                      fontFamily: 'Inter',
+                      fontWeight: '600',
+                      marginBottom: 4,
+                      textTransform: 'uppercase',
+                    }}
+                  >
+                    Name
+                  </Text>
+                  <Text
+                    style={{
+                      color: c.newDark,
+                      fontSize: 15,
+                      fontFamily: 'Inter',
+                      fontWeight: '500',
+                    }}
+                  >
+                    {displayName}
+                  </Text>
+                </Pressable>
+
+                <Pressable
+                  onPress={() => {
+                    console.log('Edit neighborhood')
+                  }}
+                  style={({ pressed }) => ({
+                    backgroundColor: c.surface2,
+                    borderRadius: s.$12,
+                    padding: s.$1,
+                    opacity: pressed ? 0.6 : 1,
+                  })}
+                >
+                  <Text
+                    style={{
+                      color: c.muted2,
+                      fontSize: 11,
+                      fontFamily: 'Inter',
+                      fontWeight: '600',
+                      marginBottom: 4,
+                      textTransform: 'uppercase',
+                    }}
+                  >
+                    Neighborhood
+                  </Text>
+                  <Text
+                    style={{
+                      color: c.newDark,
+                      fontSize: 15,
+                      fontFamily: 'Inter',
+                      fontWeight: '500',
+                    }}
+                  >
+                    {locationLabel || 'Elsewhere'}
+                  </Text>
+                </Pressable>
+
+                <View
+                  style={{
+                    backgroundColor: c.surface2,
+                    borderRadius: s.$12,
+                    padding: s.$1,
+                  }}
+                >
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <View style={{ flex: 1 }}>
+                      <Text
+                        style={{
+                          color: c.newDark,
+                          fontSize: 15,
+                          fontFamily: 'Inter',
+                          fontWeight: '600',
+                          marginBottom: 4,
+                        }}
+                      >
+                        Push Notifications
+                      </Text>
+                      <Text
+                        style={{
+                          color: c.accent,
+                          fontSize: 12,
+                          fontFamily: 'Inter',
+                          fontWeight: '500',
+                        }}
+                      >
+                        Get notified when someone saves your refs
+                      </Text>
+                    </View>
+                    <View
+                      style={{
+                        width: 50,
+                        height: 30,
+                        borderRadius: 15,
+                        backgroundColor: c.accent,
+                        justifyContent: 'center',
+                        paddingHorizontal: 3,
+                      }}
+                    >
+                      <View
+                        style={{
+                          width: 24,
+                          height: 24,
+                          borderRadius: 12,
+                          backgroundColor: c.surface,
+                          alignSelf: 'flex-end',
+                        }}
+                      />
+                    </View>
+                  </View>
+                </View>
+
+                <Pressable
+                  onPress={logout}
+                  style={({ pressed }) => ({
+                    backgroundColor: c.surface2,
+                    borderRadius: s.$12,
+                    padding: s.$1,
+                    opacity: pressed ? 0.6 : 1,
+                  })}
+                >
+                  <Text
+                    style={{
+                      color: c.newDark,
+                      fontSize: 15,
+                      fontFamily: 'Inter',
+                      fontWeight: '600',
+                      textAlign: 'center',
+                    }}
+                  >
+                    Log Out
+                  </Text>
+                </Pressable>
+
+                <Pressable
+                  onPress={() => {
+                    console.log('Delete account')
+                  }}
+                  style={({ pressed }) => ({
+                    backgroundColor: c.surface2,
+                    borderRadius: s.$12,
+                    padding: s.$1,
+                    opacity: pressed ? 0.6 : 1,
+                  })}
+                >
+                  <Text
+                    style={{
+                      color: c.accent,
+                      fontSize: 15,
+                      fontFamily: 'Inter',
+                      fontWeight: '600',
+                      textAlign: 'center',
+                    }}
+                  >
+                    Delete Account
+                  </Text>
+                </Pressable>
+              </BottomSheetView>
+            </BottomSheet>
 
             {/* Direct Photo Form - bypasses NewRefSheet entirely */}
             {showDirectPhotoForm && directPhotoRefFields && (

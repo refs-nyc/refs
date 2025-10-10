@@ -3,6 +3,7 @@ import * as Notifications from 'expo-notifications'
 import Constants from 'expo-constants'
 import { registerForPushNotificationsAsync } from './utils'
 import { useAppStore } from '@/features/stores'
+import { supabase } from '@/features/supabase/client'
 
 export function RegisterPushNotifications() {
   const [expoPushToken, setExpoPushToken] = useState('')
@@ -30,10 +31,31 @@ export function RegisterPushNotifications() {
     const timeoutId = setTimeout(() => {
       registerForPushNotificationsAsync()
         .then(async (token) => {
-          setExpoPushToken(token ?? '')
-          // Only update user if we still have a logged in user
-          if (user && token) {
-            await updateUser({ pushToken: token })
+          const normalizedToken = token ?? ''
+          setExpoPushToken(normalizedToken)
+
+          if (!user) {
+            return
+          }
+
+          try {
+            await updateUser({ pushToken: normalizedToken })
+          } catch (error) {
+            console.warn('Failed to update push token in PocketBase', error)
+          }
+
+          const supabaseClient = supabase.client
+          if (supabaseClient) {
+            try {
+              await supabaseClient
+                .from('users')
+                .upsert(
+                  { id: user.id, push_token: normalizedToken || null },
+                  { onConflict: 'id' },
+                )
+            } catch (error) {
+              console.warn('Failed to upsert push token in Supabase', error)
+            }
           }
         })
         .catch((error: any) => setExpoPushToken(`${error}`))
@@ -42,8 +64,8 @@ export function RegisterPushNotifications() {
         setNotification(notification)
       })
 
-      responseListener.current = Notifications.addNotificationResponseReceivedListener((response) => {
-        // log the response if we want to
+      responseListener.current = Notifications.addNotificationResponseReceivedListener(() => {
+        // no-op for now
       })
 
       process.env.NODE_ENV === 'development' && logInformation()

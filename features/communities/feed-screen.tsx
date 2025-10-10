@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState, useMemo } from 'react'
-import { View, Text, Pressable, FlatList, InteractionManager, Dimensions, ScrollView } from 'react-native'
+import { View, Text, Pressable, FlatList, Dimensions, ScrollView } from 'react-native'
 import Animated, { useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated'
 import { s, c, t } from '@/features/style'
 import { router, usePathname } from 'expo-router'
@@ -15,6 +15,7 @@ import type { Profile } from '@/features/types'
 import { simpleCache } from '@/features/cache/simpleCache'
 import Svg, { Circle, Path } from 'react-native-svg'
 import AsyncStorage from '@react-native-async-storage/async-storage'
+import { enqueueIdleTask, IdleTaskHandle } from '@/features/utils/idleQueue'
 
 const DIRECTORY_TICKER_COLOR = c.accent
 // Listen for interests added from the CommunityInterestsScreen and update chips instantly
@@ -311,8 +312,6 @@ const DirectoryRow = React.memo(({
 DirectoryRow.displayName = 'DirectoryRow'
 
 // Ensure we only schedule profile preloading once per app session
-let hasScheduledProfilePreload = false
-
 const win = Dimensions.get('window')
 const BASE_DIRECTORY_LIST_HEIGHT = Math.max(360, Math.min(560, win.height - 220))
 const DIRECTORY_LIST_HEIGHT = Math.max(200, BASE_DIRECTORY_LIST_HEIGHT - 50)
@@ -396,6 +395,75 @@ export function CommunitiesFeedScreen({
     if (!pbRef.current) pbRef.current = pocketbase
     return pbRef.current
   }
+
+  const warmedProfileIdsRef = useRef<Set<string>>(new Set())
+  const warmupHandlesRef = useRef<Map<string, IdleTaskHandle>>(new Map())
+
+  const queueProfileWarmups = useCallback((feedUsers: FeedUser[]) => {
+    const warmed = warmedProfileIdsRef.current
+    const handles = warmupHandlesRef.current
+
+    feedUsers.forEach((feedUser) => {
+      const userId = feedUser.id
+      if (!userId || !feedUser.userName) return
+      if (warmed.has(userId) || handles.has(userId)) return
+
+      const handle = enqueueIdleTask(async () => {
+        handles.delete(userId)
+
+        const cachedProfile = await simpleCache.get('profile', userId)
+        if (cachedProfile) {
+          warmed.add(userId)
+          return
+        }
+
+        try {
+          const profileRecord = await pocketbase.collection('users').getOne(userId)
+          const [gridItemsRecord, backlogItemsRecord] = await Promise.all([
+            pocketbase.collection('items').getList(1, 6, {
+              filter: pocketbase.filter(
+                'creator.userName = {:userName} && backlog = false && parent = null',
+                { userName: feedUser.userName }
+              ),
+              expand: 'ref',
+              sort: '-created',
+            }),
+            pocketbase.collection('items').getList(1, 6, {
+              filter: pocketbase.filter(
+                'creator.userName = {:userName} && backlog = true && parent = null',
+                { userName: feedUser.userName }
+              ),
+              expand: 'ref',
+              sort: '-created',
+            }),
+          ])
+
+          const profileWithUserId = { ...profileRecord, _cachedUserId: userId }
+
+          await Promise.all([
+            simpleCache.set('profile', profileWithUserId, userId),
+            simpleCache.set('grid_items', gridItemsRecord.items, userId),
+            simpleCache.set('backlog_items', backlogItemsRecord.items, userId),
+          ])
+
+          warmed.add(userId)
+        } catch (error) {
+          if (__DEV__) {
+            console.warn('Profile warmup failed:', feedUser.userName, error)
+          }
+        }
+      })
+
+      handles.set(userId, handle)
+    })
+  }, [])
+
+  useEffect(() => {
+    return () => {
+      warmupHandlesRef.current.forEach((handle) => handle.cancel())
+      warmupHandlesRef.current.clear()
+    }
+  }, [])
 
   const commitUsers = useCallback(
     (value: FeedUser[] | ((prev: FeedUser[]) => FeedUser[])) => {
@@ -637,142 +705,10 @@ export function CommunitiesFeedScreen({
       // Filter out the current user from the directory list
       const filteredMapped = mapped.filter(u => u.userName !== user?.userName)
       
-      // Pre-load profile data for all users in the directory (deferred)
-      const preloadProfiles = async () => {
-        try {
-          // Build a set of cached profile IDs by key prefix (avoid JSON parsing)
-          const cachedIds = new Set<string>()
-          try {
-            const allKeys = await AsyncStorage.getAllKeys()
-            for (const key of allKeys) {
-              if (key.startsWith('simple_cache_profile_')) {
-                const id = key.slice('simple_cache_profile_'.length)
-                if (id) cachedIds.add(id)
-              }
-            }
-          } catch {}
-
-          // Only pre-load profiles that aren't already cached (by id)
-          const usersToPreload = filteredMapped.filter(u => !cachedIds.has(u.id))
-          
-          if (usersToPreload.length === 0) {
-            console.log('✅ All profiles already cached, skipping pre-loading')
-            return
-          }
-          
-          console.log(`🚀 Pre-loading ${usersToPreload.length} uncached profiles`)
-          
-          // Start with just the first 3 uncached users to make them instantly available
-          const immediateUsers = usersToPreload.slice(0, 3)
-          
-          // Pre-load these users immediately and synchronously
-          for (const userData of immediateUsers) {
-            if (userData.userName) {
-              try {
-                const [profile, gridItems, backlogItems] = await Promise.all([
-                  pocketbase.collection('users').getFirstListItem(`userName = "${userData.userName}"`),
-                  pocketbase.collection('items').getList(1, 50, {
-                    filter: pocketbase.filter(
-                      'creator.userName = {:userName} && backlog = false && parent = null',
-                      { userName: userData.userName }
-                    ),
-                    expand: 'ref, creator',
-                    sort: '-created',
-                  }),
-                  pocketbase.collection('items').getList(1, 50, {
-                    filter: pocketbase.filter(
-                      'creator.userName = {:userName} && backlog = true && parent = null',
-                      { userName: userData.userName }
-                    ),
-                    expand: 'ref',
-                    sort: '-created',
-                  })
-                ])
-                
-                // Cache the pre-loaded data immediately
-                const userId = profile.id
-                // Embed userId in profile data for easy access in OtherProfile
-                const profileWithUserId = { ...profile, _cachedUserId: userId }
-                
-                await Promise.all([
-                  simpleCache.set('profile', profileWithUserId, userId),
-                  simpleCache.set('grid_items', gridItems.items, userId),
-                  simpleCache.set('backlog_items', backlogItems.items, userId)
-                ])
-                
-                console.log(`🚀 Pre-loaded profile for ${userData.userName}`)
-              } catch (error) {
-                console.warn(`Profile pre-load failed for ${userData.userName}:`, error)
-              }
-            }
-          }
-          
-          // Pre-load the rest of the uncached profiles in the background
-          if (usersToPreload.length > 3) {
-            const remainingUsers = usersToPreload.slice(3)
-            
-            // Defer background pre-loading to idle frames to avoid jank
-            setTimeout(async () => {
-              for (const userData of remainingUsers) {
-                if (userData.userName) {
-                  try {
-                    const [profile, gridItems, backlogItems] = await Promise.allSettled([
-                      pocketbase.collection('users').getFirstListItem(`userName = "${userData.userName}"`),
-                      pocketbase.collection('items').getList(1, 50, {
-                        filter: pocketbase.filter(
-                          'creator.userName = {:userName} && backlog = false && parent = null',
-                          { userName: userData.userName }
-                        ),
-                        expand: 'ref, creator',
-                        sort: '-created',
-                      }),
-                      pocketbase.collection('items').getList(1, 50, {
-                        filter: pocketbase.filter(
-                          'creator.userName = {:userName} && backlog = true && parent = null',
-                          { userName: userData.userName }
-                        ),
-                        expand: 'ref',
-                        sort: '-created',
-                      })
-                    ])
-                    
-                    if (profile.status === 'fulfilled' && gridItems.status === 'fulfilled' && backlogItems.status === 'fulfilled') {
-                      const userId = profile.value.id
-                      // Embed userId in profile data for easy access in OtherProfile
-                      const profileWithUserId = { ...profile.value, _cachedUserId: userId }
-                      
-                      Promise.allSettled([
-                        simpleCache.set('profile', profileWithUserId, userId),
-                        simpleCache.set('grid_items', gridItems.value.items, userId),
-                        simpleCache.set('backlog_items', backlogItems.value.items, userId)
-                      ]).catch(error => {
-                        console.warn('Profile pre-load cache failed:', error)
-                      })
-                    }
-                  } catch (error) {
-                    console.warn('Background profile pre-load failed:', error)
-                  }
-                }
-              }
-            }, 1000)
-          }
-        } catch (error) {
-          console.warn('Profile pre-loading failed:', error)
-        }
-      }
-      
-      // Schedule pre-loading after interactions and only once per session
-      if (!hasScheduledProfilePreload) {
-        hasScheduledProfilePreload = true
-        InteractionManager.runAfterInteractions(() => {
-          // Small delay to ensure scroll/gesture handlers are idle
-          setTimeout(() => { preloadProfiles() }, 0)
-        })
-      }
-      
       const filteredWithRefs = normalizeDirectoryUsers(filteredMapped, user?.userName)
       const nextUsers = targetPage === 1 ? filteredWithRefs : [...users, ...filteredWithRefs]
       commitUsers(nextUsers)
+      queueProfileWarmups(filteredMapped)
       // Allow loading all pages; don't artificially cap at 50
       setHasMore(res.page < res.totalPages)
       setPage(res.page)
@@ -825,6 +761,7 @@ export function CommunitiesFeedScreen({
           } else if (filteredCached.length > 0) {
             console.log(`✅ Hydrate: Using ${filteredCached.length} valid cached users`)
             commitUsers(filteredCached)
+            queueProfileWarmups(filteredCached)
             setHasInitialData(true)
           } else {
             // No valid users in cache, fetch fresh
@@ -844,7 +781,7 @@ export function CommunitiesFeedScreen({
     return () => {
       cancelled = true
     }
-  }, [commitUsers, directoryUsersNormalized, fetchPage])
+  }, [commitUsers, directoryUsersNormalized, fetchPage, queueProfileWarmups])
 
   useEffect(() => {
     const candidate = pendingStoreUpdateRef.current

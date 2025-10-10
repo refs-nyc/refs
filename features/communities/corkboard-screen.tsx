@@ -5,6 +5,7 @@ import { pocketbase } from '@/features/pocketbase'
 import { useAppStore } from '@/features/stores'
 import { ensureCommunityChat, joinCommunityChat } from './communityChat'
 import type { ReferencersContext } from '@/features/stores/types'
+import type { Profile } from '@/features/types'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { supabase } from '@/features/supabase/client'
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated'
@@ -397,11 +398,19 @@ export function EdgeCorkboardScreen() {
     (item: any, context: ReferencersContext = null) => {
       const refId = item?.ref || item?.id
       if (!refId) return
+      const creatorProfile =
+        (item?.expand?.ref?.expand?.creator as Profile | undefined) ||
+        (item?.expand?.creator as Profile | undefined) ||
+        null
       try {
         setCurrentRefId(refId)
       } catch {}
       try {
-        setReferencersContext(context)
+        if (context?.type === 'community') {
+          setReferencersContext({ ...context, creator: creatorProfile })
+        } else {
+          setReferencersContext(context)
+        }
       } catch {}
       try {
         referencersBottomSheetRef.current?.expand()
@@ -683,7 +692,6 @@ export function EdgeCorkboardScreen() {
                         title,
                         onConfirm: () => handleConfirmRemoval(),
                       })
-                      removeInterestSheetRef.current?.expand()
                     }}
                     hitSlop={8}
                     style={{ position: 'absolute', top: -5, right: 1, zIndex: 5 }}

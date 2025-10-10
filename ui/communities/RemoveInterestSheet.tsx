@@ -30,6 +30,14 @@ export const RemoveInterestSheet = () => {
     }, 200)
   }, [pendingInterestRemoval, setPendingInterestRemoval, removeInterestSheetRef])
 
+  // Open sheet when pendingInterestRemoval is set
+  useEffect(() => {
+    if (!pendingInterestRemoval) return
+    requestAnimationFrame(() => {
+      removeInterestSheetRef.current?.snapToIndex(0)
+    })
+  }, [pendingInterestRemoval, removeInterestSheetRef])
+
   // close the sheet when the user taps the navigation backdrop
   useEffect(() => {
     const key = registerBackdropPress(() => {
@@ -38,7 +46,7 @@ export const RemoveInterestSheet = () => {
     return () => {
       unregisterBackdropPress(key)
     }
-  }, [])
+  }, [registerBackdropPress, unregisterBackdropPress])
 
   const disappearsOnIndex = -1
   const appearsOnIndex = 0
@@ -48,9 +56,10 @@ export const RemoveInterestSheet = () => {
 
   return (
     <BottomSheet
-      enableDynamicSizing={true}
+      enableDynamicSizing={false}
       ref={removeInterestSheetRef}
       enablePanDownToClose={true}
+      snapPoints={[220]}
       index={-1}
       animatedIndex={removeRefSheetBackdropAnimatedIndex}
       backgroundStyle={{ backgroundColor: c.surface, borderRadius: 50, paddingTop: 0, opacity: 1 }}
@@ -66,6 +75,11 @@ export const RemoveInterestSheet = () => {
       keyboardBehavior="interactive"
       style={{ zIndex: 10000 }}
       containerStyle={{ zIndex: 10000 }}
+      onChange={(index) => {
+        if (index === -1) {
+          setPendingInterestRemoval(null)
+        }
+      }}
     >
       <YStack
         gap={s.$2}
@@ -92,4 +106,3 @@ export const RemoveInterestSheet = () => {
     </BottomSheet>
   )
 }
-

@@ -23,6 +23,7 @@ export type ReferencersContext =
       title?: string
       isSubscribed: boolean
       onAdd?: () => Promise<void>
+      creator?: Profile | null
     }
   | null
 

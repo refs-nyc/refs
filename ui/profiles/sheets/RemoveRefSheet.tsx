@@ -7,7 +7,6 @@ import { Heading } from '@/ui/typo/Heading'
 import BottomSheet, { BottomSheetBackdrop } from '@gorhom/bottom-sheet'
 import { useEffect } from 'react'
 import { View } from 'react-native'
-import Animated, { FadeIn, FadeOut } from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 export const RemoveRefSheet = ({
@@ -45,21 +44,23 @@ export const RemoveRefSheet = ({
     <BottomSheet
       enableDynamicSizing={false}
       ref={bottomSheetRef}
-      enablePanDownToClose={true}
-      snapPoints={[240]}
+      enablePanDownToClose
       index={-1}
+      snapPoints={[240]}
       animatedIndex={removeRefSheetBackdropAnimatedIndex}
-      backgroundStyle={{ backgroundColor: c.surface, borderRadius: 50, paddingTop: 0 }}
+      backgroundStyle={{ backgroundColor: c.surface, borderRadius: 50, paddingTop: 0, opacity: 1 }}
+      handleComponent={null}
+      keyboardBehavior="interactive"
+      style={{ zIndex: 10000 }}
+      containerStyle={{ zIndex: 10000 }}
       backdropComponent={(p) => (
         <BottomSheetBackdrop
           {...p}
           disappearsOnIndex={disappearsOnIndex}
           appearsOnIndex={appearsOnIndex}
-          pressBehavior={'close'}
+          pressBehavior="close"
         />
       )}
-      handleComponent={null}
-      keyboardBehavior="interactive"
       onChange={(index) => {
         if (index === -1) {
           onClose()
@@ -68,7 +69,11 @@ export const RemoveRefSheet = ({
     >
       <YStack
         gap={s.$2}
-        style={{ paddingHorizontal: s.$2, paddingTop: s.$3, paddingBottom: insets.bottom || s.$2 }}
+        style={{
+          paddingHorizontal: s.$2,
+          paddingTop: s.$3,
+          paddingBottom: (insets.bottom || s.$2) + s.$075,
+        }}
       >
         <XStack style={{ justifyContent: 'center' }}>
           <Heading tag="h2semi" style={{ color: c.muted }}>

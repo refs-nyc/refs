@@ -16,6 +16,10 @@
 - Refined the settings sheet snap logic to avoid `CONTENT_HEIGHT` snap errors: compute numeric snap points from measured content/fallback heights, keep the 50px radius, and pad the scroll container so the grid stays editable beneath the open sheet.
 - Reinstated the shared `NavigationBackdrop` (ordered beneath sheets) so global dimming stays consistent, while OtherProfile's avatar zoom still registers/unregisters backdrop presses to close cleanly without leaking edit state.
 - Push registration now treats Expo/Supabase outages as informational only—skips token writes and logs debug info instead of throwing alerts when the APIs are unavailable.
+- Added a lightweight navigation overlay tied to the remove-ref sheet so the header dims while the sheet stays bright; remove-ref sheet now matches the community interest sheet styling (fixed snap, rounded 50px, consistent backdrop).
+- Added a tiny idle-task queue (`features/utils/idleQueue.ts`) and now feed warmups enqueue one profile at a time—each preload only fetches six grid/backlog items so JS stays responsive.
+- MyProfile skips the redundant post-interaction refresh and instead queues a background fetch once cached data is on screen, keeping the screen tappable instantly.
+- Referencers sheet now seeds the list with the interest creator (and the viewer if subscribed) so a brand new community always shows at least the host.
 - While aligning the profile grid we tried three approaches that did **not** fix the right-edge drift:
   - Added padding directly on the animated grid wrapper (`paddingHorizontal: s.$1 + 6` then `-2`), but the absolute overlay still pinned the inner grid to the right.
   - Offsetting the absolute container with manual `left/right` values and later converting to wrapper padding simply changed the overlay bounds while the `Grid` component continued using its own internal padding, so the tiles never shifted.
@@ -40,7 +44,7 @@
 - Messages screen exit now hands navigation off after a 160 ms fade-out, using the `SwipeToGoBack` hook-in to let the underlying profile surface fade back in without timers or extra effects.
 - Fixed "Rendered fewer hooks than expected" error when navigating to community chats by moving all React hooks in `/app/messages/[conversationId]/index.tsx` to be called BEFORE any conditional returns, ensuring hooks are always called in the same order per React's rules.
 - Corrected timestamp format for community chat preview messages: replaced `.toISOString()` with PocketBase's expected format (`'yyyy-MM-dd HH:mm:ss.SSSZ'`) by converting the `T` separator to a space, eliminating "Invalid DateTime" errors in the messages list.
-- Removed dynamic header height calculation in `MessagesScreen` that was causing the chat header to jump on mount; now uses a fixed height based on safe area insets so back button, title, and avatars stay in position from the start.
+- Fixed chat header jumping issue in `MessagesScreen`: replaced `SafeAreaView` with absolute positioning and negative `top` offset with a regular `View` that uses `insets.top` directly in `paddingTop`. The header now stays in position from the start without any jump or shift when entering a chat.
 - Implemented message input bar as absolutely positioned at bottom of screen to prevent it from being pushed off-screen by message content; swapped FlatList padding (inverted lists use `paddingTop` for visual bottom space).
 - **RESOLVED**: Directory "Everyone" tab was showing empty in production due to silent error handling and potential empty cache issues:
   - Root cause 1: Silent catch block in `fetchPage` (line 783) was swallowing all errors without logging - added detailed error logging

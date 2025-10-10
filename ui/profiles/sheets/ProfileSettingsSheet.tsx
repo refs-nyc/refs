@@ -9,7 +9,6 @@ import * as Location from 'expo-location'
 export const ProfileSettingsSheet = () => {
   const {
     user,
-    detailsBackdropAnimatedIndex,
     logout,
     stopEditProfile,
     stopEditing,
@@ -201,7 +200,6 @@ export const ProfileSettingsSheet = () => {
       snapPoints={settingsSheetSnapPoints}
       enablePanDownToClose
       enableOverDrag={false}
-      animatedIndex={detailsBackdropAnimatedIndex}
       animationConfigs={{
         damping: 28,
         stiffness: 180,
@@ -211,13 +209,10 @@ export const ProfileSettingsSheet = () => {
         restSpeedThreshold: 0.01,
       }}
       onChange={(idx) => {
-        const open = idx >= 0
-        setIsSettingsSheetOpen(open)
-        if (!open && detailsBackdropAnimatedIndex) {
-          detailsBackdropAnimatedIndex.value = -1
-        }
-      }}
-      backgroundStyle={{ backgroundColor: c.surface, borderRadius: 50 }}
+      const open = idx >= 0
+      setIsSettingsSheetOpen(open)
+    }}
+    backgroundStyle={{ backgroundColor: c.surface, borderRadius: 50 }}
       handleComponent={null}
       style={{ borderTopLeftRadius: 50, borderTopRightRadius: 50, overflow: 'hidden' }}
       backdropComponent={(props) => (
@@ -260,6 +255,7 @@ export const ProfileSettingsSheet = () => {
           <Pressable
             onPress={() => {
               settingsSheetRef.current?.close()
+              setIsSettingsSheetOpen(false)
             }}
             hitSlop={10}
             style={{
@@ -476,4 +472,3 @@ export const ProfileSettingsSheet = () => {
     </BottomSheet>
   )
 }
-

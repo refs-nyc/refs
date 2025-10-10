@@ -6,7 +6,7 @@ import { s, c } from '@/features/style'
 import BottomSheet, { BottomSheetBackdrop, BottomSheetTextInput, BottomSheetView } from '@gorhom/bottom-sheet'
 import { useShareIntentContext } from 'expo-share-intent'
 import { useEffect, useRef, useState, useMemo, useCallback } from 'react'
-import { ScrollView, View, Text, Pressable, Keyboard, ActivityIndicator, InteractionManager, useWindowDimensions, Alert } from 'react-native'
+import { ScrollView, View, Text, Pressable, Keyboard, ActivityIndicator, useWindowDimensions, Alert } from 'react-native'
 import { Image } from 'expo-image'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import * as ImagePicker from 'expo-image-picker'
@@ -28,6 +28,7 @@ import { Collections } from '@/features/pocketbase/pocketbase-types'
 import { simpleCache } from '@/features/cache/simpleCache'
 import { pinataUpload } from '@/features/pinata'
 import { Picker } from '@/ui/inputs/Picker'
+import { enqueueIdleTask } from '@/features/utils/idleQueue'
 
 const profileMemoryCache = new Map<string, {
   profile: Profile
@@ -111,6 +112,8 @@ export const MyProfile = ({ userName }: { userName: string }) => {
   const [showAvatarPicker, setShowAvatarPicker] = useState(false)
   const avatarScale = useRef(new RNAnimated.Value(1)).current
   const avatarSwapOpacity = useRef(new RNAnimated.Value(1)).current
+  const removeRefSheetRef = useRef<BottomSheet>(null)
+  const bottomSheetRef = useRef<BottomSheet>(null)
   // Get optimistic items from store
   const { optimisticItems, user } = useAppStore()
 
@@ -172,12 +175,20 @@ export const MyProfile = ({ userName }: { userName: string }) => {
       exitEditMode()
     }
   }, [homePagerIndex, isEditMode, editingProfile, exitEditMode])
+
+  useEffect(() => {
+    if (!removingItem) return
+    requestAnimationFrame(() => {
+      removeRefSheetRef.current?.snapToIndex(0)
+    })
+  }, [removingItem])
   const closeSettingsSheet = useCallback(
     ({ afterClose }: { exitEditMode?: boolean; afterClose?: () => void } = {}) => {
+      setIsSettingsSheetOpen(false)
       settingsSheetRef.current?.close()
       afterClose?.()
     },
-    [settingsSheetRef]
+    [settingsSheetRef, setIsSettingsSheetOpen]
   )
 
   const enterEditMode = useCallback(() => {
@@ -190,12 +201,14 @@ export const MyProfile = ({ userName }: { userName: string }) => {
   }, [isEditMode, setIsEditMode, startEditProfile])
 
   const openSettingsSheet = useCallback(() => {
+    setIsSettingsSheetOpen(true)
     settingsSheetRef.current?.snapToIndex(0)
-  }, [settingsSheetRef])
+  }, [settingsSheetRef, setIsSettingsSheetOpen])
 
   const exitEditMode = useCallback(() => {
     if (!isEditMode) return
     settingsSheetRef.current?.close()
+    setIsSettingsSheetOpen(false)
     setIsEditMode(false)
     stopEditProfile()
     stopEditing()
@@ -675,17 +688,13 @@ export const MyProfile = ({ userName }: { userName: string }) => {
       onLongPressItem={undefined}
       onRemoveItem={(item) => {
         if (!item) return
-        setRemovingItem(item)
-        const openRemoveSheet = () => {
-          removeRefSheetRef.current?.expand()
-        }
+        const show = () => setRemovingItem(item)
 
         if (isSettingsSheetOpen) {
-          closeSettingsSheet({ afterClose: openRemoveSheet })
-          return
+          closeSettingsSheet({ afterClose: show })
+        } else {
+          show()
         }
-
-        openRemoveSheet()
       }}
       onAddItem={(prompt?: string) => {
         const proceed = () => {
@@ -1109,13 +1118,12 @@ export const MyProfile = ({ userName }: { userName: string }) => {
         const hadImmediateData = await refreshGrid(userName, { cacheOnly: true })
         if (!hadImmediateData) {
           setLoading(true)
-        }
-
-        InteractionManager.runAfterInteractions(() => {
-          refreshGrid(userName, { background: true }).catch((error) => {
-            console.warn('Background grid refresh failed:', error)
+          await refreshGrid(userName)
+        } else {
+          enqueueIdleTask(async () => {
+            await refreshGrid(userName, { background: true })
           })
-        })
+        }
 
         if (cancelled) return
 
@@ -1173,9 +1181,6 @@ export const MyProfile = ({ userName }: { userName: string }) => {
       // Don't clear selectedRefs or cachedSearchResults here - preserve them for back button
     }
   }, [setSearchMode, setSearchResultsSheetOpen])
-
-  const bottomSheetRef = useRef<BottomSheet>(null)
-  const removeRefSheetRef = useRef<BottomSheet>(null)
 
   // timeout used to stop editing the profile after 10 seconds
   let timeout: ReturnType<typeof setTimeout>
@@ -1505,6 +1510,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
               handleMoveToBacklog={handleMoveToBacklog}
               handleRemoveFromProfile={handleRemoveFromProfile}
               item={removingItem}
+              onClose={() => setRemovingItem(null)}
             />
 
             {/* Search Results Sheet - render after FloatingJaggedButton so it appears above */}

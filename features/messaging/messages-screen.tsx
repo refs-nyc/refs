@@ -363,7 +363,7 @@ export function MessagesScreen({
         </Sheet>
       )}
 
-      <View style={{ position: 'absolute', bottom: bottomOffset - 20, left: 0, right: 0, paddingHorizontal: s.$075 }}>
+      <View style={{ position: 'absolute', bottom: bottomOffset, left: 0, right: 0, paddingHorizontal: s.$075 }}>
         <MessageInput
           onMessageSubmit={onMessageSubmit}
           setMessage={setMessage}

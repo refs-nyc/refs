@@ -23,6 +23,7 @@ export type ReferencersContext =
       title?: string
       isSubscribed: boolean
       onAdd?: () => Promise<void>
+      creator?: Profile | null
     }
   | null
 
@@ -35,6 +36,10 @@ export type UISlice = {
   addRefSheetRef: React.RefObject<BottomSheet>
   addingRefId: string
   newRefSheetRef: React.RefObject<BottomSheet>
+  settingsSheetRef: React.RefObject<BottomSheet>
+  isSettingsSheetOpen: boolean
+  settingsSheetHeight: number
+  isEditMode: boolean
   addingNewRefTo: null | 'grid' | 'backlog'
   addRefPrompt: string
   referencersContext: ReferencersContext
@@ -46,6 +51,9 @@ export type UISlice = {
   setAddingToList: (newState: string) => void
   setAddRefPrompt: (prompt: string) => void
   setSelectedPhoto: (photo: string | null) => void
+  setIsSettingsSheetOpen: (value: boolean) => void
+  setSettingsSheetHeight: (value: number) => void
+  setIsEditMode: (value: boolean) => void
   stopEditProfile: () => void
   startEditProfile: () => void
   // Background loading state
@@ -111,6 +119,10 @@ export type UISlice = {
     onSuccess?: (context: { conversationId: string; title: string }) => void
   }) => void
   closeGroupComposer: () => void
+  // Remove Interest Sheet
+  removeInterestSheetRef: React.RefObject<BottomSheet>
+  pendingInterestRemoval: { item: any; isOwner: boolean; title: string; onConfirm: () => void } | null
+  setPendingInterestRemoval: (data: { item: any; isOwner: boolean; title: string; onConfirm: () => void } | null) => void
 }
 
 export type StoreSlices = BackdropSlice &

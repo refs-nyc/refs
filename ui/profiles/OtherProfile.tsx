@@ -4,7 +4,7 @@ import type { Profile } from '@/features/types'
 import { ExpandedItem } from '@/features/types'
 import { c, s } from '@/features/style'
 import BottomSheet from '@gorhom/bottom-sheet'
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { ScrollView, View, Text, Pressable, Animated, Dimensions, StyleSheet, GestureResponderEvent } from 'react-native'
 import { withTiming } from 'react-native-reanimated'
 import { Grid } from '../grid/Grid'
@@ -24,7 +24,16 @@ export const OtherProfile = ({ userName, prefetchedUserId }: { userName: string;
   const [backlogItems, setBacklogItems] = useState<ExpandedItem[]>([])
   const [loading, setLoading] = useState<boolean>(true)
 
-  const { user, stopEditing, getUserByUserName, otherProfileBackdropAnimatedIndex, detailsSheetRef, setDetailsSheetData } = useAppStore()
+  const {
+    user,
+    stopEditing,
+    getUserByUserName,
+    otherProfileBackdropAnimatedIndex,
+    detailsSheetRef,
+    setDetailsSheetData,
+    registerBackdropPress,
+    unregisterBackdropPress,
+  } = useAppStore()
 
   const refreshGrid = async (userName: string, hintedUserId?: string) => {
     setLoading(true)
@@ -193,7 +202,7 @@ export const OtherProfile = ({ userName, prefetchedUserId }: { userName: string;
   const hasAvatar = Boolean(remoteAvatar)
   const expandedAvatarSize = Math.min(Dimensions.get('window').width * 0.75, 300)
 
-  const openAvatar = () => {
+  const openAvatar = useCallback(() => {
     if (!hasAvatar) return
     setAvatarOverlayVisible(true)
     if (otherProfileBackdropAnimatedIndex) {
@@ -214,9 +223,9 @@ export const OtherProfile = ({ userName, prefetchedUserId }: { userName: string;
         useNativeDriver: true,
       }),
     ]).start()
-  }
+  }, [hasAvatar, otherProfileBackdropAnimatedIndex, overlayOpacity, overlayScale])
 
-  const closeAvatar = () => {
+  const closeAvatar = useCallback(() => {
     if (otherProfileBackdropAnimatedIndex) {
       otherProfileBackdropAnimatedIndex.value = withTiming(-1, { duration: 180 })
     }
@@ -235,7 +244,43 @@ export const OtherProfile = ({ userName, prefetchedUserId }: { userName: string;
     ]).start(() => {
       setAvatarOverlayVisible(false)
     })
-  }
+  }, [otherProfileBackdropAnimatedIndex, overlayOpacity, overlayScale])
+
+  const backdropPressKeyRef = useRef<string | null>(null)
+
+  useEffect(() => {
+    if (!avatarOverlayVisible) {
+      if (backdropPressKeyRef.current) {
+        unregisterBackdropPress(backdropPressKeyRef.current)
+        backdropPressKeyRef.current = null
+      }
+      return
+    }
+
+    const key = registerBackdropPress(() => {
+      closeAvatar()
+    })
+    backdropPressKeyRef.current = key
+
+    return () => {
+      if (backdropPressKeyRef.current) {
+        unregisterBackdropPress(backdropPressKeyRef.current)
+        backdropPressKeyRef.current = null
+      }
+    }
+  }, [avatarOverlayVisible, closeAvatar, registerBackdropPress, unregisterBackdropPress])
+
+  useEffect(() => {
+    return () => {
+      if (backdropPressKeyRef.current) {
+        unregisterBackdropPress(backdropPressKeyRef.current)
+        backdropPressKeyRef.current = null
+      }
+      if (otherProfileBackdropAnimatedIndex) {
+        otherProfileBackdropAnimatedIndex.value = -1
+      }
+    }
+  }, [otherProfileBackdropAnimatedIndex, unregisterBackdropPress])
 
   return (
     <>
@@ -410,6 +455,7 @@ export const OtherProfile = ({ userName, prefetchedUserId }: { userName: string;
                   shadowOpacity: 0.35,
                   shadowRadius: 16,
                   shadowOffset: { width: 0, height: 10 },
+                  backgroundColor: c.surface,
                   opacity: overlayOpacity,
                 }}
               >

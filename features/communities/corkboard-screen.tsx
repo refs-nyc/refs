@@ -5,6 +5,7 @@ import { pocketbase } from '@/features/pocketbase'
 import { useAppStore } from '@/features/stores'
 import { ensureCommunityChat, joinCommunityChat } from './communityChat'
 import type { ReferencersContext } from '@/features/stores/types'
+import type { Profile } from '@/features/types'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { supabase } from '@/features/supabase/client'
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated'
@@ -14,6 +15,7 @@ import { Avatar } from '@/ui/atoms/Avatar'
 import { SimplePinataImage } from '@/ui/images/SimplePinataImage'
 import { SearchLoadingSpinner } from '@/ui/atoms/SearchLoadingSpinner'
 import { router } from 'expo-router'
+import { Image } from 'expo-image'
 
 const win = Dimensions.get('window')
 const BADGE_OVERHANG = 8
@@ -26,6 +28,7 @@ type CommunityCacheState = {
   contentTab: 'all' | 'mine'
   subscriptions: Array<[string, boolean]>
   subscriptionCounts: Array<[string, number]>
+  memberAvatars: Array<[string, string[]]>
 }
 
 const communityCache: CommunityCacheState = {
@@ -34,6 +37,7 @@ const communityCache: CommunityCacheState = {
   contentTab: 'all',
   subscriptions: [],
   subscriptionCounts: [],
+  memberAvatars: [],
 }
 
 // Ensure each FlatList cell allows overflow so badges can overhang
@@ -50,6 +54,9 @@ export function EdgeCorkboardScreen() {
     setReferencersContext,
     setConversationPreview,
     openCommunityFormSheet,
+    removeInterestSheetRef,
+    setPendingInterestRemoval,
+    pendingInterestRemoval,
   } = useAppStore()
   const [communityItems, setCommunityItems] = useState<any[]>(() => communityCache.items)
   const [filteredItems, setFilteredItems] = useState<any[]>(() =>
@@ -59,6 +66,9 @@ export function EdgeCorkboardScreen() {
   const [justAddedTitle, setJustAddedTitle] = useState<string | null>(null)
   const [subscriptionCounts, setSubscriptionCounts] = useState<Map<string, number>>(
     () => new Map(communityCache.subscriptionCounts)
+  )
+  const [memberAvatars, setMemberAvatars] = useState<Map<string, string[]>>(
+    () => new Map(communityCache.memberAvatars)
   )
   const [rowWidths, setRowWidths] = useState<Record<string, number>>({})
   const [pendingChatSubscriptions, setPendingChatSubscriptions] = useState<
@@ -92,6 +102,10 @@ export function EdgeCorkboardScreen() {
   useEffect(() => {
     communityCache.subscriptionCounts = Array.from(subscriptionCounts.entries())
   }, [subscriptionCounts])
+
+  useEffect(() => {
+    communityCache.memberAvatars = Array.from(memberAvatars.entries())
+  }, [memberAvatars])
 
 
   useEffect(() => {
@@ -171,16 +185,24 @@ export function EdgeCorkboardScreen() {
     const load = async () => {
       try {
         const sb: any = (supabase as any).client
-        const [refs, countRows] = await Promise.all([
+        const [refs, countRows, memberRows] = await Promise.all([
           pocketbase.collection('refs').getFullList({
             filter: pocketbase.filter('meta ~ {:community}', { community: COMMUNITY }),
             sort: '-created',
+            expand: 'creator',
           }),
           sb
             ? sb
                 .from('community_subscriptions')
                 .select('ref_id')
                 .eq('community', COMMUNITY)
+            : Promise.resolve({ data: [] }),
+          sb
+            ? sb
+                .from('community_subscriptions')
+                .select('ref_id, user:user_id(image, avatar_url)')
+                .eq('community', COMMUNITY)
+                .order('created', { ascending: true })
             : Promise.resolve({ data: [] }),
         ])
 
@@ -193,6 +215,33 @@ export function EdgeCorkboardScreen() {
           counts.set(id, (counts.get(id) || 0) + 1)
         }
         setSubscriptionCounts(counts)
+
+        // Build member avatars map - start with creator, then add subscribers
+        const avatarsMap = new Map<string, string[]>()
+        
+        // First, add creator avatars
+        for (const ref of refs) {
+          const refId = ref.id
+          const creatorAvatar = (ref as any).expand?.creator?.image || (ref as any).expand?.creator?.avatar_url
+          if (creatorAvatar) {
+            avatarsMap.set(refId, [creatorAvatar])
+          }
+        }
+        
+        // Then add subscriber avatars (up to 3 total)
+        const memberData = (memberRows as any)?.data || []
+        for (const row of memberData) {
+          const refId = row.ref_id
+          const avatarUrl = row.user?.image || row.user?.avatar_url
+          if (avatarUrl) {
+            const existing = avatarsMap.get(refId) || []
+            // Don't add duplicates and keep limit at 3
+            if (existing.length < 3 && !existing.includes(avatarUrl)) {
+              avatarsMap.set(refId, [...existing, avatarUrl])
+            }
+          }
+        }
+        setMemberAvatars(avatarsMap)
 
         const mapped = refs.map(mapRefToItem)
         setCommunityItems(mapped)
@@ -326,10 +375,22 @@ export function EdgeCorkboardScreen() {
           return nextCounts
         })
 
+        // Update member avatars optimistically
+        if (shouldSubscribe && user?.image) {
+          setMemberAvatars((prevAvatars) => {
+            const nextAvatars = new Map(prevAvatars)
+            const current = nextAvatars.get(refId) || []
+            if (current.length < 3 && !current.includes(user.image!)) {
+              nextAvatars.set(refId, [...current, user.image!])
+            }
+            return nextAvatars
+          })
+        }
+
         return next
       })
     },
-    [user?.id, contentTab, communityItems, computeFilteredItems]
+    [user?.id, user?.image, contentTab, communityItems, computeFilteredItems]
   )
 
   // Open referencers sheet
@@ -337,11 +398,19 @@ export function EdgeCorkboardScreen() {
     (item: any, context: ReferencersContext = null) => {
       const refId = item?.ref || item?.id
       if (!refId) return
+      const creatorProfile =
+        (item?.expand?.ref?.expand?.creator as Profile | undefined) ||
+        (item?.expand?.creator as Profile | undefined) ||
+        null
       try {
         setCurrentRefId(refId)
       } catch {}
       try {
-        setReferencersContext(context)
+        if (context?.type === 'community') {
+          setReferencersContext({ ...context, creator: creatorProfile })
+        } else {
+          setReferencersContext(context)
+        }
       } catch {}
       try {
         referencersBottomSheetRef.current?.expand()
@@ -349,6 +418,28 @@ export function EdgeCorkboardScreen() {
     },
     [setCurrentRefId, referencersBottomSheetRef, setReferencersContext]
   )
+
+  // Handle confirmed removal of interest
+  const handleConfirmRemoval = useCallback(() => {
+    if (!pendingInterestRemoval) return
+    const { item, isOwner } = pendingInterestRemoval
+
+    if (isOwner) {
+      const refToDelete = item.ref || item.id
+      if (refToDelete) {
+        void pocketbase
+          .collection('refs')
+          .delete(refToDelete)
+          .catch((error) => {
+            console.warn('Failed to delete community ref', error)
+          })
+      }
+    } else {
+      toggleSubscription(item)
+    }
+
+    setPendingInterestRemoval(null)
+  }, [pendingInterestRemoval, toggleSubscription, setPendingInterestRemoval])
 
   // Filter tabs were previously used to flip to the directory view. With the directory now living
   // on its own screen we only display a static label for context.
@@ -450,6 +541,7 @@ export function EdgeCorkboardScreen() {
             const isSubscribed = subscriptions.has(refId)
             const emphasized = count <= 2
             const showNewBadge = !isSubscribed && contentTab !== 'mine' && emphasized
+            const avatars = memberAvatars.get(refId) || []
             return (
               <Animated.View
                 style={{ position: 'relative', marginBottom: (s.$075 as number) + 2, paddingRight: BADGE_OVERHANG + 2 }}
@@ -490,35 +582,102 @@ export function EdgeCorkboardScreen() {
                       })
                     }}
                     style={{
-                      backgroundColor: c.surface,
-                      borderWidth: 2.5,
-                      borderStyle: 'solid',
-                      borderColor: INTEREST_PILL_BORDER_COLOR,
-                      borderRadius: 12,
-                      paddingVertical: 15,
+                      backgroundColor: c.surface2,
+                      borderRadius: 17,
+                      paddingVertical: 22,
                       paddingHorizontal: s.$1,
                       flexDirection: 'row',
                       alignItems: 'center',
                       justifyContent: 'space-between',
                       width: '100%',
+                      shadowColor: '#000',
+                      shadowOffset: { width: 0, height: 1 },
+                      shadowOpacity: 0.08,
+                      shadowRadius: 2,
+                      elevation: 1,
                     }}
                   >
-                    <Text
-                      style={{
-                        color: INTEREST_PILL_BORDER_COLOR,
-                        fontSize: 18,
-                        fontFamily: 'InterMedium',
-                        fontWeight: '600',
-                        paddingVertical: 3,
-                      }}
-                      numberOfLines={2}
-                    >
-                      {item?.expand?.ref?.title || item?.title || ''}
-                    </Text>
-                    {count >= 3 && (
-                      <Text style={{ position: 'absolute', right: 12, bottom: 8, color: c.prompt, opacity: 0.5, fontSize: (s.$09 as number) - 3 }}>
-                        {`${count} people`}
+                    <View style={{ flex: 1, paddingRight: avatars.length > 0 ? 50 : 0 }}>
+                      <Text
+                        style={{
+                          color: c.muted,
+                          fontSize: 18,
+                          fontFamily: 'InterMedium',
+                          fontWeight: '600',
+                          paddingVertical: 3,
+                        }}
+                        numberOfLines={2}
+                      >
+                        {item?.expand?.ref?.title || item?.title || ''}
                       </Text>
+                    </View>
+                    {avatars.length > 0 && (
+                      <View
+                        style={{
+                          position: 'absolute',
+                          right: 12,
+                          bottom: 8,
+                          flexDirection: 'row',
+                        }}
+                      >
+                        {(() => {
+                          const displayAvatars = count > 3 ? avatars.slice(0, 2) : avatars
+                          const remaining = count > 3 ? count - 2 : 0
+                          
+                          return (
+                            <>
+                              {displayAvatars.map((avatarUrl, idx) => (
+                                <View
+                                  key={`${refId}-${idx}`}
+                                  style={{
+                                    width: 28,
+                                    height: 28,
+                                    borderRadius: 14,
+                                    marginLeft: idx > 0 ? -8 : 0,
+                                    borderWidth: 2,
+                                    borderColor: c.surface2,
+                                    overflow: 'hidden',
+                                    backgroundColor: c.surface,
+                                  }}
+                                >
+                                  <Image
+                                    source={avatarUrl}
+                                    style={{ width: '100%', height: '100%' }}
+                                    contentFit="cover"
+                                    transition={0}
+                                    cachePolicy="memory-disk"
+                                  />
+                                </View>
+                              ))}
+                              {remaining > 0 && (
+                                <View
+                                  style={{
+                                    width: 28,
+                                    height: 28,
+                                    borderRadius: 14,
+                                    marginLeft: -8,
+                                    borderWidth: 2,
+                                    borderColor: c.surface2,
+                                    backgroundColor: c.muted,
+                                    justifyContent: 'center',
+                                    alignItems: 'center',
+                                  }}
+                                >
+                                  <Text
+                                    style={{
+                                      color: c.surface,
+                                      fontSize: 10,
+                                      fontWeight: '700',
+                                    }}
+                                  >
+                                    +{remaining}
+                                  </Text>
+                                </View>
+                              )}
+                            </>
+                          )
+                        })()}
+                      </View>
                     )}
                   </RNPressable>
                 </RNAnimated.View>
@@ -526,25 +685,19 @@ export function EdgeCorkboardScreen() {
                   <Pressable
                     onPress={() => {
                       const isOwner = item?.expand?.ref?.creator === user?.id
-                      if (isOwner) {
-                        const refToDelete = item.ref || item.id
-                        if (refToDelete) {
-                          void pocketbase
-                            .collection('refs')
-                            .delete(refToDelete)
-                            .catch((error) => {
-                              console.warn('Failed to delete community ref', error)
-                            })
-                        }
-                      } else {
-                        toggleSubscription(item)
-                      }
+                      const title = item?.expand?.ref?.title || item?.title || ''
+                      setPendingInterestRemoval({
+                        item,
+                        isOwner,
+                        title,
+                        onConfirm: () => handleConfirmRemoval(),
+                      })
                     }}
                     hitSlop={8}
-                    style={{ position: 'absolute', top: -2, right: 0, zIndex: 5 }}
+                    style={{ position: 'absolute', top: -5, right: 1, zIndex: 5 }}
                   >
                     <View style={{ backgroundColor: item?.expand?.ref?.creator === user?.id ? '#D9534F' : c.grey1, borderRadius: 14, paddingHorizontal: 8, paddingVertical: 4 }}>
-                      <Text style={{ color: c.surface, fontWeight: '700', fontSize: (s.$09 as number) - 2 }}>-</Text>
+                      <Text style={{ color: c.surface, fontWeight: '700', fontSize: (s.$09 as number) - 2, transform: [{ scale: 1.3 }] }}>-</Text>
                     </View>
                   </Pressable>
                 ) : (

@@ -160,6 +160,11 @@ export const createUserSlice: StateCreator<StoreSlices, [], [], UserSlice> = (se
         .collection<UsersRecord>('users')
         .update(pocketbase.authStore.record.id, { ...fields })
 
+      // Update local store so UI reflects changes immediately
+      set((state) => ({
+        user: state.user ? { ...state.user, ...record } : record,
+      }))
+
       // If avatar/image was updated, check if we should update show_in_directory flag
       if (fields.image || fields.avatar_url) {
         const userId = pocketbase.authStore.record.id

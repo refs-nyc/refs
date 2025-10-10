@@ -19,7 +19,7 @@ import {
 import Ionicons from '@expo/vector-icons/Ionicons'
 const EmojiPicker = lazy(() => import('rn-emoji-keyboard'))
 import { randomColors } from './utils'
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, Easing, runOnJS } from 'react-native-reanimated'
 
 export function MessagesScreen({
@@ -279,15 +279,21 @@ export function MessagesScreen({
 
   return (
     <Animated.View style={[{ flex: 1, backgroundColor: c.surface }, animatedContainerStyle]}>
-      <SafeAreaView
-        edges={['top']}
-        style={{ position: 'absolute', top: -25, left: 0, right: 0, zIndex: 2 }}
+      <View
+        style={{ 
+          position: 'absolute', 
+          top: 0, 
+          left: 0, 
+          right: 0, 
+          zIndex: 2,
+          backgroundColor: c.surface,
+          paddingTop: insets.top + headerGap,
+        }}
       >
         <View
           style={{
             flexDirection: 'row',
             alignItems: 'center',
-            paddingTop: headerGap,
             paddingBottom: headerPaddingBottom,
             paddingHorizontal: headerPaddingHorizontal,
           }}
@@ -329,7 +335,7 @@ export function MessagesScreen({
             </Link>
           )}
         </View>
-      </SafeAreaView>
+      </View>
 
       <FlatList
         ref={flatListRef}
@@ -363,7 +369,7 @@ export function MessagesScreen({
         </Sheet>
       )}
 
-      <View style={{ position: 'absolute', bottom: bottomOffset - 20, left: 0, right: 0, paddingHorizontal: s.$075 }}>
+      <View style={{ position: 'absolute', bottom: bottomOffset, left: 0, right: 0, paddingHorizontal: s.$075 }}>
         <MessageInput
           onMessageSubmit={onMessageSubmit}
           setMessage={setMessage}

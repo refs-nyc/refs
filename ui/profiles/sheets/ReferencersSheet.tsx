@@ -43,28 +43,42 @@ export default function Referencers({
       
       try {
         setIsLoading(true)
-        const users: Profile[] = []
-        const userIds: Set<string> = new Set()
+        const collected: Profile[] = []
+        const pushUnique = (candidate: any, position: 'back' | 'front' = 'back') => {
+          if (!candidate || !candidate.id) return
+          const existingIndex = collected.findIndex((existing) => existing.id === candidate.id)
+          if (existingIndex >= 0) {
+            if (position === 'front' && existingIndex > 0) {
+              const [existing] = collected.splice(existingIndex, 1)
+              collected.unshift(existing)
+            }
+            return
+          }
+          const profileCandidate = candidate as Profile
+          if (position === 'front') {
+            collected.unshift(profileCandidate)
+          } else {
+            collected.push(profileCandidate)
+          }
+        }
 
         const items = await getItemsByRefIds([currentRefId])
 
         for (const item of items) {
-          const user = item.expand?.creator
-          if (!user || userIds.has(user.id)) continue
-          userIds.add(user.id)
-          users.push(user)
+          const creator = item.expand?.creator
+          if (creator) {
+            pushUnique(creator)
+          }
         }
 
-        if (
-          referencersContext?.type === 'community' &&
-          referencersContext.isSubscribed &&
-          user?.id &&
-          !users.some((existing) => existing.id === user.id)
-        ) {
-          users.push(user)
+        if (referencersContext?.type === 'community') {
+          pushUnique(referencersContext.creator, 'front')
+          if (referencersContext.isSubscribed && user) {
+            pushUnique(user)
+          }
         }
 
-        setUsers(users)
+        setUsers(collected)
         const primaryRef = items[0]?.expand?.ref
         if (primaryRef) {
           setRefData(primaryRef)

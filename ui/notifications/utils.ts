@@ -4,8 +4,8 @@ import * as Notifications from 'expo-notifications'
 import Constants from 'expo-constants'
 
 function handleRegistrationError(errorMessage: string) {
-  alert(errorMessage)
-  throw new Error(errorMessage)
+  console.info('[push] registration skipped:', errorMessage)
+  return null
 }
 
 export async function registerForPushNotificationsAsync() {
@@ -26,23 +26,22 @@ export async function registerForPushNotificationsAsync() {
       finalStatus = status
     }
     if (finalStatus !== 'granted') {
-      handleRegistrationError('Permission not granted to get push token for push notification!')
-      return
+      return handleRegistrationError(
+        'Permission not granted to get push token for push notification!'
+      )
     }
     const projectId =
       Constants?.expoConfig?.extra?.eas?.projectId ?? Constants?.easConfig?.projectId
     if (!projectId) {
-      handleRegistrationError('Project ID not found')
+      return handleRegistrationError('Project ID not found')
     }
     try {
-      const pushTokenString = (
-        await Notifications.getExpoPushTokenAsync({
-          projectId,
-        })
-      ).data
-      return pushTokenString
+      const pushTokenString = await Notifications.getExpoPushTokenAsync({
+        projectId,
+      })
+      return pushTokenString.data
     } catch (e: unknown) {
-      handleRegistrationError(`${e}`)
+      return handleRegistrationError(`${e}`)
     }
   }
 }

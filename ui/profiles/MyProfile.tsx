@@ -187,7 +187,9 @@ export const MyProfile = ({ userName }: { userName: string }) => {
   }, [isEditMode, setIsEditMode, settingsSheetRef, stopEditProfile, stopEditing])
 
   const ownProfile = user?.userName === userName
-  const effectiveProfile = profile ?? (ownProfile ? (user ?? undefined) : undefined)
+  // For own profile, always prefer global user state (source of truth)
+  // For other profiles, use fetched profile
+  const effectiveProfile = ownProfile ? (user ?? profile) : profile
   const hasProfile = Boolean(effectiveProfile)
 
   const displayName = useMemo(() => {
@@ -438,13 +440,13 @@ export const MyProfile = ({ userName }: { userName: string }) => {
                     hitSlop={8}
                     style={{
                       position: 'absolute',
-                      top: -9,
-                      right: -9,
-                      width: 35,
-                      height: 35,
-                      borderRadius: 17.5,
-                      backgroundColor: AVATAR_PLACEHOLDER_BORDER,
-                      borderWidth: 2.5,
+                      bottom: -10,
+                      right: -12,
+                      width: 36,
+                      height: 36,
+                      borderRadius: 18,
+                      backgroundColor: c.surface2,
+                      borderWidth: 4.5,
                       borderColor: c.surface,
                       alignItems: 'center',
                       justifyContent: 'center',
@@ -452,8 +454,8 @@ export const MyProfile = ({ userName }: { userName: string }) => {
                   >
                     <Ionicons
                       name="pencil-sharp"
-                      size={15}
-                      color={c.surface}
+                      size={18}
+                      color={c.newDark}
                     />
                   </Pressable>
                 )}
@@ -1400,7 +1402,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
                 style={[
                   {
                     position: 'absolute',
-                    right: 0,
+                    right: 5,
                     bottom: -65,
                     zIndex: 5,
                   },

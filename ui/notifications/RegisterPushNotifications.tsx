@@ -24,24 +24,31 @@ export function RegisterPushNotifications() {
     }
 
     const logInformation = async () => {
-      const { data: pushTokenString } = await Notifications.getExpoPushTokenAsync({ projectId })
+      try {
+        await Notifications.getExpoPushTokenAsync({ projectId })
+      } catch (error) {
+        console.info('[push] dev token fetch skipped:', error)
+      }
     }
 
     // Delay push notification registration to prioritize UI responsiveness
     const timeoutId = setTimeout(() => {
       registerForPushNotificationsAsync()
         .then(async (token) => {
-          const normalizedToken = token ?? ''
-          setExpoPushToken(normalizedToken)
+          if (!token) {
+            return
+          }
+
+          setExpoPushToken(token)
 
           if (!user) {
             return
           }
 
           try {
-            await updateUser({ pushToken: normalizedToken })
+            await updateUser({ pushToken: token })
           } catch (error) {
-            console.warn('Failed to update push token in PocketBase', error)
+            console.info('Failed to update push token in PocketBase (non-fatal)', error)
           }
 
           const supabaseClient = supabase.client
@@ -49,16 +56,15 @@ export function RegisterPushNotifications() {
             try {
               await supabaseClient
                 .from('users')
-                .upsert(
-                  { id: user.id, push_token: normalizedToken || null },
-                  { onConflict: 'id' },
-                )
+                .upsert({ id: user.id, push_token: token }, { onConflict: 'id' })
             } catch (error) {
-              console.warn('Failed to upsert push token in Supabase', error)
+              console.info('Failed to upsert push token in Supabase (non-fatal)', error)
             }
           }
         })
-        .catch((error: any) => setExpoPushToken(`${error}`))
+        .catch((error: any) => {
+          console.info('[push] registration promise rejected:', error)
+        })
 
       notificationListener.current = Notifications.addNotificationReceivedListener((notification) => {
         setNotification(notification)

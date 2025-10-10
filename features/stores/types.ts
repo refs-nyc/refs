@@ -118,6 +118,10 @@ export type UISlice = {
     onSuccess?: (context: { conversationId: string; title: string }) => void
   }) => void
   closeGroupComposer: () => void
+  // Remove Interest Sheet
+  removeInterestSheetRef: React.RefObject<BottomSheet>
+  pendingInterestRemoval: { item: any; isOwner: boolean; title: string; onConfirm: () => void } | null
+  setPendingInterestRemoval: (data: { item: any; isOwner: boolean; title: string; onConfirm: () => void } | null) => void
 }
 
 export type StoreSlices = BackdropSlice &

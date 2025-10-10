@@ -47,7 +47,7 @@ const BookmarkIcon = ({ filled }: { filled: boolean }) => {
   // Slightly wider with a thinner stroke
   const width = 36
   const height = 48
-  const stroke = c.newDark
+  const stroke = c.accent
   return (
     <Svg width={width} height={height} viewBox="0 0 26 28" fill="none">
       <Path

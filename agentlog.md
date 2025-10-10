@@ -14,6 +14,8 @@
 - Attempted overlay height spacer approach for settings, but it still flashed; backed out.
 - Swapped to a dedicated settings bottom sheet: pencil opens the sheet (`BottomSheet`), settings live there, FAB fades via opacity when edit mode is active, so the grid stays untouched and no more black flash.
 - Refined the settings sheet snap logic to avoid `CONTENT_HEIGHT` snap errors: compute numeric snap points from measured content/fallback heights, keep the 50px radius, and pad the scroll container so the grid stays editable beneath the open sheet.
+- Reinstated the shared `NavigationBackdrop` (ordered beneath sheets) so global dimming stays consistent, while OtherProfile's avatar zoom still registers/unregisters backdrop presses to close cleanly without leaking edit state.
+- Push registration now treats Expo/Supabase outages as informational only—skips token writes and logs debug info instead of throwing alerts when the APIs are unavailable.
 - While aligning the profile grid we tried three approaches that did **not** fix the right-edge drift:
   - Added padding directly on the animated grid wrapper (`paddingHorizontal: s.$1 + 6` then `-2`), but the absolute overlay still pinned the inner grid to the right.
   - Offsetting the absolute container with manual `left/right` values and later converting to wrapper padding simply changed the overlay bounds while the `Grid` component continued using its own internal padding, so the tiles never shifted.
@@ -52,3 +54,12 @@
 - Refreshed the app icon to use the venn diagram mark on the `c.surface` background so TestFlight builds reflect the latest brand palette.
 - Supabase now mirrors PocketBase push tokens: added `users.push_token`, and the client updates both stores whenever registration succeeds (or clears).
 - Introduced Supabase Edge Function `notifications` to send Expo pushes given a batch of recipient user IDs; PocketBase hooks (messages/items/memberships) call it for DMs, ref matches, copying from a profile, and community joins.
+- **CRITICAL ARCHITECTURE: Global Bottom Sheet Dimming**
+  - The app uses a centralized dimming system with `NavigationBackdrop` (`zIndex: 1000`) rendered at root level in `_layout.tsx`, positioned between `<Navigation>` and `<Stack>`.
+  - All global sheets (Saves, Referencers, AddRefSheet, NewRefSheet, LogoutSheet, ProfileDetailsSheet, ProfileSettingsSheet, CommunityFormSheet, DirectMessageComposer, GroupMessageComposer, RemoveInterestSheet) MUST be rendered at root level in `_layout.tsx` AFTER the NavigationBackdrop.
+  - Each sheet uses `animatedIndex` tied to a shared backdrop value (`moduleBackdropAnimatedIndex`, `detailsBackdropAnimatedIndex`, `otherProfileBackdropAnimatedIndex`, or `removeRefSheetBackdropAnimatedIndex`) from the store.
+  - Sheets must have `zIndex: 10000` and `containerStyle={{ zIndex: 10000 }}` to appear above the NavigationBackdrop.
+  - The NavigationBackdrop interpolates all backdrop animated indices to create a unified dim overlay that covers everything except elevated sheets.
+  - **NEVER** render confirmation sheets or any global UI inside screen components—they will be trapped under the NavigationBackdrop and appear dimmed. Always add new global sheets to `_layout.tsx` and wire them through the store.
+  - Sheet backdrop components should use BottomSheetBackdrop with `disappearsOnIndex={-1}` and `appearsOnIndex={0}` for proper coordination.
+  - This architecture ensures the header and background dim in unison while sheets remain bright and properly elevated.

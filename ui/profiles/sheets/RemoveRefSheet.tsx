@@ -8,6 +8,7 @@ import BottomSheet, { BottomSheetBackdrop } from '@gorhom/bottom-sheet'
 import { useEffect } from 'react'
 import { View } from 'react-native'
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 export const RemoveRefSheet = ({
   bottomSheetRef,
@@ -20,6 +21,7 @@ export const RemoveRefSheet = ({
   handleRemoveFromProfile: () => Promise<void>
   item: ExpandedItem | null
 }) => {
+  const insets = useSafeAreaInsets()
   const { removeRefSheetBackdropAnimatedIndex, registerBackdropPress, unregisterBackdropPress } =
     useAppStore()
 
@@ -39,10 +41,9 @@ export const RemoveRefSheet = ({
 
   return (
     <BottomSheet
-      enableDynamicSizing={false}
+      enableDynamicSizing={true}
       ref={bottomSheetRef}
       enablePanDownToClose={true}
-      snapPoints={['35%']}
       index={-1}
       animatedIndex={removeRefSheetBackdropAnimatedIndex}
       backgroundStyle={{ backgroundColor: c.surface, borderRadius: 50, paddingTop: 0 }}
@@ -59,16 +60,20 @@ export const RemoveRefSheet = ({
     >
       <YStack
         gap={s.$2}
-        style={{ paddingHorizontal: s.$2, paddingVertical: s.$3, paddingTop: s.$3 + 8 }}
+        style={{ paddingHorizontal: s.$2, paddingTop: s.$3, paddingBottom: insets.bottom || s.$2 }}
       >
         <XStack style={{ justifyContent: 'center' }}>
-          <Heading tag="h2light" style={{ color: c.muted }}>
-            Do what with {item?.expand.ref?.title}?
+          <Heading tag="h2semi" style={{ color: c.muted }}>
+            Do what with{' '}
+            <Heading tag="h2semi" style={{ color: c.black }}>
+              {item?.expand.ref?.title}
+            </Heading>
+            ?
           </Heading>
         </XStack>
         <YStack gap={s.$1 + s.$05}>
-          <Button onPress={handleRemoveFromProfile} title="Remove" variant="basic" />
-          <Button onPress={handleMoveToBacklog} title={`Send to Backlog`} />
+          <Button onPress={handleRemoveFromProfile} title="Remove" variant="basic" style={{ minHeight: 50 }} />
+          <Button onPress={handleMoveToBacklog} title={`Send to Backlog`} style={{ minHeight: 50 }} />
         </YStack>
       </YStack>
     </BottomSheet>

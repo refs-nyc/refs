@@ -193,6 +193,26 @@ export const createUISlice: StateCreator<StoreSlices, [], [], UISlice> = (set, g
   // Home pager (MyProfile <-> Directories)
   homePagerIndex: 0,
   setHomePagerIndex: (i: number) => {
+    const {
+      editingProfile,
+      stopEditProfile,
+      stopEditing,
+      isEditMode,
+      setIsEditMode,
+      setIsSettingsSheetOpen,
+      settingsSheetRef,
+    } = get()
+
+    if (editingProfile || isEditMode) {
+      stopEditProfile()
+      if (typeof stopEditing === 'function') {
+        stopEditing()
+      }
+      setIsEditMode(false)
+      setIsSettingsSheetOpen(false)
+      settingsSheetRef.current?.close?.()
+    }
+
     set(() => ({ homePagerIndex: i }))
   },
   profileNavIntent: null,
@@ -243,6 +263,13 @@ export const createUISlice: StateCreator<StoreSlices, [], [], UISlice> = (set, g
     set(() => ({
       groupComposerTargets: [],
       groupComposerOnSuccess: null,
+    }))
+  },
+  removeInterestSheetRef: React.createRef<BottomSheet>(),
+  pendingInterestRemoval: null,
+  setPendingInterestRemoval: (data) => {
+    set(() => ({
+      pendingInterestRemoval: data,
     }))
   },
 })

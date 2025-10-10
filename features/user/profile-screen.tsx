@@ -27,6 +27,8 @@ export function UserProfileScreen({ userName, prefetchedUserId }: { userName: st
     detailsBackdropAnimatedIndex,
     otherProfileBackdropAnimatedIndex,
     removeRefSheetBackdropAnimatedIndex,
+    editingProfile,
+    stopEditProfile,
   } = useAppStore()
   const { width } = Dimensions.get('window')
 
@@ -89,6 +91,18 @@ export function UserProfileScreen({ userName, prefetchedUserId }: { userName: st
       stiffness: 200,
     })
   }, [homePagerIndex, width, translateX])
+
+  useEffect(() => {
+    if (homePagerIndex !== 0 && editingProfile) {
+      stopEditProfile()
+    }
+  }, [homePagerIndex, editingProfile, stopEditProfile])
+
+  useEffect(() => {
+    return () => {
+      stopEditProfile()
+    }
+  }, [stopEditProfile])
 
   // Gesture handling for horizontal swipes (will only be attached on own profile)
   const panGesture = Gesture.Pan()

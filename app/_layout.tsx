@@ -25,6 +25,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { useEffect, useRef } from 'react'
 import { StatusBar, useColorScheme } from 'react-native'
 import { Navigation } from '@/ui/navigation/Navigation'
+import { NavigationBackdrop } from '@/ui/navigation/NavigationBackdrop'
 import { LogoutSheet } from '@/ui/navigation/LogoutSheet'
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native'
 import { useFonts } from 'expo-font'
@@ -49,6 +50,7 @@ import { NewRefSheet } from '@/ui/profiles/sheets/NewRefSheet'
 import { ProfileDetailsSheet } from '@/ui/profiles/ProfileDetailsSheet'
 import { ProfileSettingsSheet } from '@/ui/profiles/sheets/ProfileSettingsSheet'
 import { CommunityFormSheet } from '@/ui/communities/CommunityFormSheet'
+import { RemoveInterestSheet } from '@/ui/communities/RemoveInterestSheet'
 
 // TODO: this error keeps getting thrown whenever the app fast reloads in development
 // I suspect that pocketbase subscribes to updates and then doesn't unsubscribe when the app is being reloaded
@@ -146,6 +148,7 @@ function RootLayoutNav() {
       <StatusBar barStyle={colorScheme === 'dark' ? 'light-content' : 'dark-content'} />
       <RegisterPushNotifications />
       <Navigation savesBottomSheetRef={savesBottomSheetRef} />
+      <NavigationBackdrop />
 
       <Stack
         screenOptions={{
@@ -226,6 +229,7 @@ function RootLayoutNav() {
       <CommunityFormSheet />
       <DirectMessageComposer />
       <GroupMessageComposer />
+      <RemoveInterestSheet />
     </ThemeProvider>
   )
 }

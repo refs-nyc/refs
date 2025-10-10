@@ -156,7 +156,22 @@ export const MyProfile = ({ userName }: { userName: string }) => {
     updateUser,
     detailsSheetRef,
     setDetailsSheetData,
+    homePagerIndex,
+    editingProfile,
   } = useAppStore()
+
+  useEffect(() => {
+    return () => {
+      setIsEditMode(false)
+      stopEditProfile()
+    }
+  }, [stopEditProfile])
+
+  useEffect(() => {
+    if (homePagerIndex !== 0 && (isEditMode || editingProfile)) {
+      exitEditMode()
+    }
+  }, [homePagerIndex, isEditMode, editingProfile, exitEditMode])
   const closeSettingsSheet = useCallback(
     ({ afterClose }: { exitEditMode?: boolean; afterClose?: () => void } = {}) => {
       settingsSheetRef.current?.close()

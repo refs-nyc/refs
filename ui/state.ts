@@ -15,6 +15,10 @@ export const createUISlice: StateCreator<StoreSlices, [], [], UISlice> = (set, g
   detailsOpenedFromFeed: false,
   communityFormSheetRef: React.createRef<BottomSheet>(),
   communityFormOnAdded: null,
+  settingsSheetRef: React.createRef<BottomSheet>(),
+  isSettingsSheetOpen: false,
+  settingsSheetHeight: 0,
+  isEditMode: false,
   currentRefId: '',
   referencersContext: null,
   addRefSheetRef: React.createRef(),
@@ -88,6 +92,21 @@ export const createUISlice: StateCreator<StoreSlices, [], [], UISlice> = (set, g
   setSelectedPhoto: (photo: string | null) => {
     set(() => ({
       selectedPhoto: photo,
+    }))
+  },
+  setIsSettingsSheetOpen: (value: boolean) => {
+    set(() => ({
+      isSettingsSheetOpen: value,
+    }))
+  },
+  setSettingsSheetHeight: (value: number) => {
+    set(() => ({
+      settingsSheetHeight: value,
+    }))
+  },
+  setIsEditMode: (value: boolean) => {
+    set(() => ({
+      isEditMode: value,
     }))
   },
   editingProfile: false,

@@ -35,6 +35,10 @@ export type UISlice = {
   addRefSheetRef: React.RefObject<BottomSheet>
   addingRefId: string
   newRefSheetRef: React.RefObject<BottomSheet>
+  settingsSheetRef: React.RefObject<BottomSheet>
+  isSettingsSheetOpen: boolean
+  settingsSheetHeight: number
+  isEditMode: boolean
   addingNewRefTo: null | 'grid' | 'backlog'
   addRefPrompt: string
   referencersContext: ReferencersContext
@@ -46,6 +50,9 @@ export type UISlice = {
   setAddingToList: (newState: string) => void
   setAddRefPrompt: (prompt: string) => void
   setSelectedPhoto: (photo: string | null) => void
+  setIsSettingsSheetOpen: (value: boolean) => void
+  setSettingsSheetHeight: (value: number) => void
+  setIsEditMode: (value: boolean) => void
   stopEditProfile: () => void
   startEditProfile: () => void
   // Background loading state

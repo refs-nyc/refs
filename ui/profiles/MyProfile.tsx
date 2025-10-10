@@ -22,7 +22,7 @@ import { RemoveRefSheet } from './sheets/RemoveRefSheet'
 import SearchModeBottomSheet from './sheets/SearchModeBottomSheet'
 import SearchResultsSheet, { SearchResultsSheetRef } from './sheets/SearchResultsSheet'
 import { RefForm } from '../actions/RefForm'
-import Animated, { FadeIn, FadeOut, Easing } from 'react-native-reanimated'
+import Animated, { FadeIn, FadeOut, SlideInDown, SlideOutDown, Easing, useAnimatedStyle, withTiming } from 'react-native-reanimated'
 import { Animated as RNAnimated, Easing as RNEasing } from 'react-native'
 import { Collections } from '@/features/pocketbase/pocketbase-types'
 import { simpleCache } from '@/features/cache/simpleCache'
@@ -109,35 +109,8 @@ export const MyProfile = ({ userName }: { userName: string }) => {
   const [optimisticAvatarUri, setOptimisticAvatarUri] = useState<string | null>(null)
   const [avatarUploading, setAvatarUploading] = useState(false)
   const [showAvatarPicker, setShowAvatarPicker] = useState(false)
-  const [isEditMode, setIsEditMode] = useState(false)
-  const [isSettingsSheetOpen, setIsSettingsSheetOpen] = useState(false)
-  const [settingsSheetHeight, setSettingsSheetHeight] = useState(0)
   const avatarScale = useRef(new RNAnimated.Value(1)).current
   const avatarSwapOpacity = useRef(new RNAnimated.Value(1)).current
-  const settingsSheetRef = useRef<BottomSheet>(null)
-  const pendingSettingsSheetActionRef = useRef<(() => void) | null>(null)
-  const baseScrollPadding = s.$10 as number
-  const fallbackSettingsSheetHeight = useMemo(() => Math.round(windowHeight * 0.45), [windowHeight])
-  const scrollPaddingBottom = useMemo(() => {
-    if (!isSettingsSheetOpen) return baseScrollPadding
-
-    const measuredHeight = settingsSheetHeight > 0 ? settingsSheetHeight : fallbackSettingsSheetHeight
-    const buffer = 24
-
-    return baseScrollPadding + measuredHeight + insets.bottom + buffer
-  }, [baseScrollPadding, fallbackSettingsSheetHeight, insets.bottom, isSettingsSheetOpen, settingsSheetHeight])
-  const settingsSheetSnapPoints = useMemo(() => {
-    const baseHeight = Math.max(settingsSheetHeight, fallbackSettingsSheetHeight)
-    const cappedBase = Math.min(baseHeight, Math.round(windowHeight * 0.92))
-    const expandedCandidate = Math.max(cappedBase + 120, Math.round(windowHeight * 0.78))
-    const cappedExpanded = Math.min(expandedCandidate, Math.round(windowHeight * 0.95))
-
-    if (cappedExpanded <= cappedBase + 40) {
-      return [cappedBase]
-    }
-
-    return [cappedBase, cappedExpanded]
-  }, [fallbackSettingsSheetHeight, settingsSheetHeight, windowHeight])
   // Get optimistic items from store
   const { optimisticItems, user } = useAppStore()
 
@@ -150,6 +123,11 @@ export const MyProfile = ({ userName }: { userName: string }) => {
     stopEditing,
     setAddingNewRefTo,
     newRefSheetRef,
+    settingsSheetRef,
+    isSettingsSheetOpen,
+    setIsSettingsSheetOpen,
+    isEditMode,
+    setIsEditMode,
     searchMode,
     selectedRefs,
     selectedRefItems: globalSelectedRefItems,
@@ -180,64 +158,38 @@ export const MyProfile = ({ userName }: { userName: string }) => {
     setDetailsSheetData,
   } = useAppStore()
   const closeSettingsSheet = useCallback(
-    ({ exitEditMode = false, afterClose }: { exitEditMode?: boolean; afterClose?: () => void } = {}) => {
-      if (!isSettingsSheetOpen) {
-        if (exitEditMode) {
-          setIsEditMode(false)
-          stopEditProfile()
-          stopEditing()
-        }
-        if (afterClose) {
-          afterClose()
-        }
-        pendingSettingsSheetActionRef.current = null
-        return
-      }
-
-      if (afterClose) {
-        pendingSettingsSheetActionRef.current = afterClose
-      }
-
+    ({ afterClose }: { exitEditMode?: boolean; afterClose?: () => void } = {}) => {
       settingsSheetRef.current?.close()
-      setIsSettingsSheetOpen(false)
-
-      if (exitEditMode) {
-        setIsEditMode(false)
-        stopEditProfile()
-        stopEditing()
-      }
+      afterClose?.()
     },
-    [isSettingsSheetOpen, stopEditProfile, stopEditing]
+    [settingsSheetRef]
   )
 
   const enterEditMode = useCallback(() => {
     if (isEditMode) {
-      if (!isSettingsSheetOpen) {
-        settingsSheetRef.current?.snapToIndex(0)
-        setIsSettingsSheetOpen(true)
-      }
       return
     }
 
     setIsEditMode(true)
     startEditProfile()
-    setIsSettingsSheetOpen(true)
+  }, [isEditMode, setIsEditMode, startEditProfile])
+
+  const openSettingsSheet = useCallback(() => {
     settingsSheetRef.current?.snapToIndex(0)
-  }, [isEditMode, isSettingsSheetOpen, startEditProfile])
+  }, [settingsSheetRef])
 
   const exitEditMode = useCallback(() => {
     if (!isEditMode) return
-    pendingSettingsSheetActionRef.current = null
     settingsSheetRef.current?.close()
-    setIsSettingsSheetOpen(false)
     setIsEditMode(false)
     stopEditProfile()
     stopEditing()
-  }, [isEditMode, stopEditProfile, stopEditing])
+  }, [isEditMode, setIsEditMode, settingsSheetRef, stopEditProfile, stopEditing])
 
   const ownProfile = user?.userName === userName
   const effectiveProfile = profile ?? (ownProfile ? (user ?? undefined) : undefined)
   const hasProfile = Boolean(effectiveProfile)
+
   const displayName = useMemo(() => {
     if (!effectiveProfile) return userName
     const first = (effectiveProfile.firstName || '').trim()
@@ -486,25 +438,21 @@ export const MyProfile = ({ userName }: { userName: string }) => {
                     hitSlop={8}
                     style={{
                       position: 'absolute',
-                      top: 0,
-                      right: 0,
-                      width: 26,
-                      height: 26,
-                      borderRadius: 13,
-                      backgroundColor: isEditMode ? c.olive : AVATAR_PLACEHOLDER_BORDER,
+                      top: -9,
+                      right: -9,
+                      width: 35,
+                      height: 35,
+                      borderRadius: 17.5,
+                      backgroundColor: AVATAR_PLACEHOLDER_BORDER,
                       borderWidth: 2.5,
                       borderColor: c.surface,
                       alignItems: 'center',
                       justifyContent: 'center',
-                      shadowColor: '#000',
-                      shadowOpacity: isEditMode ? 0.18 : 0,
-                      shadowRadius: isEditMode ? 4 : 0,
-                      shadowOffset: { width: 0, height: isEditMode ? 2 : 0 },
                     }}
                   >
                     <Ionicons
-                      name={isEditMode ? 'checkmark' : 'pencil'}
-                      size={13}
+                      name="pencil-sharp"
+                      size={15}
                       color={c.surface}
                     />
                   </Pressable>
@@ -550,6 +498,23 @@ export const MyProfile = ({ userName }: { userName: string }) => {
     promptDisplayReady &&
     displayGridItems.length < GRID_CAPACITY &&
     !isEditMode
+
+  const fabAnimatedStyle = useAnimatedStyle(() => {
+    const shouldShow = hasProfile && !searchMode && !isEditMode
+    return {
+      opacity: withTiming(shouldShow ? 1 : 0, { 
+        duration: shouldShow ? 500 : 200,
+      }),
+    }
+  }, [hasProfile, searchMode, isEditMode])
+
+  const promptChipsAnimatedStyle = useAnimatedStyle(() => {
+    return {
+      opacity: withTiming(showPromptChips ? 1 : 0, { 
+        duration: showPromptChips ? 500 : 200,
+      }),
+    }
+  }, [showPromptChips])
 
   const handleShufflePromptSuggestions = useCallback(() => {
     setPromptSuggestions(createPromptBatch())
@@ -690,16 +655,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
 
         openDetails()
       }}
-      onLongPressItem={() => {
-        clearTimeout(timeout)
-        timeout = setTimeout(() => {
-          stopEditProfile()
-        }, 10000)
-        startEditProfile()
-        if (!isEditMode) {
-          setIsEditMode(true)
-        }
-      }}
+      onLongPressItem={undefined}
       onRemoveItem={(item) => {
         if (!item) return
         setRemovingItem(item)
@@ -1267,15 +1223,18 @@ export const MyProfile = ({ userName }: { userName: string }) => {
     [triggerDirectPhotoPicker, setAddingNewRefTo, isSettingsSheetOpen, closeSettingsSheet]
   )
 
-  const promptChipSection = showPromptChips && promptSuggestions.length > 0 ? (
+  const promptChipSection = promptSuggestions.length > 0 ? (
     <Animated.View
-      entering={FadeIn.duration(300).delay(120)}
-      style={{
-        marginTop: GRID_HEIGHT + s.$1,
-        paddingHorizontal: 0,
-        paddingBottom: s.$1half,
-        zIndex: 4,
-      }}
+      style={[
+        {
+          marginTop: GRID_HEIGHT + s.$1,
+          paddingHorizontal: 0,
+          paddingBottom: s.$1half,
+          zIndex: 4,
+        },
+        promptChipsAnimatedStyle,
+      ]}
+      pointerEvents={showPromptChips ? 'auto' : 'none'}
     >
       <View
         style={{
@@ -1381,14 +1340,6 @@ export const MyProfile = ({ userName }: { userName: string }) => {
     </Animated.View>
   ) : null
 
-  const settingsSheetScrim = isSettingsSheetOpen ? (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel="Dismiss profile settings"
-      onPress={() => closeSettingsSheet()}
-      style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 6, backgroundColor: 'transparent' }}
-    />
-  ) : null
 
   return (
     <>
@@ -1397,7 +1348,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
         contentContainerStyle={{
           justifyContent: 'center',
           alignItems: 'stretch',
-          paddingBottom: scrollPaddingBottom,
+          paddingBottom: s.$10,
           gap: s.$4,
           minHeight: '100%',
         }}
@@ -1445,25 +1396,75 @@ export const MyProfile = ({ userName }: { userName: string }) => {
                 height: GRID_HEIGHT,
               }}
             >
-              <FloatingJaggedButton
-                icon="plus"
-                onPress={() => {
-                  setAddingNewRefTo('grid')
-                  try { useAppStore.getState().setAddRefPrompt('') } catch {}
-                }}
-                style={{
-                  position: 'absolute',
-                  right: 0,
-                  bottom: -65,
-                  zIndex: 5,
-                  opacity: hasProfile && !searchMode && !isEditMode ? 1 : 0,
-                }}
-              />
+              <Animated.View
+                style={[
+                  {
+                    position: 'absolute',
+                    right: 0,
+                    bottom: -65,
+                    zIndex: 5,
+                  },
+                  fabAnimatedStyle,
+                ]}
+                pointerEvents={hasProfile && !searchMode && !isEditMode ? 'auto' : 'none'}
+              >
+                <FloatingJaggedButton
+                  icon="plus"
+                  onPress={() => {
+                    setAddingNewRefTo('grid')
+                    try { useAppStore.getState().setAddRefPrompt('') } catch {}
+                  }}
+                />
+              </Animated.View>
+              {isEditMode && (
+                <Animated.View
+                  entering={SlideInDown.duration(350).springify().damping(20).stiffness(120)}
+                  exiting={SlideOutDown.duration(300).easing(Easing.inOut(Easing.cubic))}
+                  style={{
+                    position: 'absolute',
+                    left: 0,
+                    right: 0,
+                    bottom: -75,
+                    zIndex: 5,
+                    flexDirection: 'row',
+                    gap: 12,
+                    justifyContent: 'center',
+                  }}
+                  pointerEvents={isEditMode ? 'auto' : 'none'}
+                >
+                  <Pressable
+                    onPress={openSettingsSheet}
+                    style={({ pressed }) => ({
+                      backgroundColor: c.surface2,
+                      borderRadius: s.$12,
+                      paddingVertical: 14,
+                      paddingHorizontal: 22,
+                      opacity: pressed ? 0.6 : 1,
+                    })}
+                  >
+                    <Text style={{ color: c.muted2, fontSize: 15, fontWeight: '600', fontFamily: 'Inter' }}>
+                      See Settings
+                    </Text>
+                  </Pressable>
+                  <Pressable
+                    onPress={exitEditMode}
+                    style={({ pressed }) => ({
+                      backgroundColor: c.olive,
+                      borderRadius: s.$12,
+                      paddingVertical: 14,
+                      paddingHorizontal: 22,
+                      opacity: pressed ? 0.6 : 1,
+                    })}
+                  >
+                    <Text style={{ color: c.surface, fontSize: 15, fontWeight: '600', fontFamily: 'Inter' }}>
+                      Done
+                    </Text>
+                  </Pressable>
+                </Animated.View>
+              )}
             </View>
 
             {promptChipSection}
-
-            {settingsSheetScrim}
 
           </View>
 
@@ -1496,253 +1497,6 @@ export const MyProfile = ({ userName }: { userName: string }) => {
               selectedRefs={selectedRefs}
               selectedRefItems={finalSelectedRefItems}
             />
-
-            <BottomSheet
-              ref={settingsSheetRef}
-              index={-1}
-              snapPoints={settingsSheetSnapPoints}
-              enablePanDownToClose
-              enableOverDrag={false}
-              onChange={(idx) => {
-                const open = idx >= 0
-                setIsSettingsSheetOpen(open)
-                if (!open) {
-                  const pending = pendingSettingsSheetActionRef.current
-                  pendingSettingsSheetActionRef.current = null
-                  if (pending) {
-                    pending()
-                  }
-                }
-              }}
-              onClose={() => {
-                setIsSettingsSheetOpen(false)
-                const pending = pendingSettingsSheetActionRef.current
-                pendingSettingsSheetActionRef.current = null
-                if (pending) {
-                  pending()
-                }
-              }}
-              backgroundStyle={{ backgroundColor: c.surface, borderRadius: 50 }}
-              handleComponent={null}
-              style={{ borderTopLeftRadius: 50, borderTopRightRadius: 50, overflow: 'hidden' }}
-            >
-              <BottomSheetView
-                onLayout={(event) => {
-                  const height = Math.round(event.nativeEvent.layout.height)
-                  if (height > 0 && Math.abs(height - settingsSheetHeight) > 2) {
-                    setSettingsSheetHeight(height)
-                  }
-                }}
-                style={{ paddingHorizontal: s.$1, paddingVertical: s.$1, gap: s.$075 }}
-              >
-                <View
-                  style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    marginBottom: s.$075,
-                  }}
-                >
-                  <Text
-                    style={{
-                      fontSize: (s.$09 as number) + 4,
-                      fontFamily: 'System',
-                      fontWeight: '700',
-                      color: c.newDark,
-                    }}
-                  >
-                    Profile Settings
-                  </Text>
-                  <Pressable
-                    onPress={() => {
-                      settingsSheetRef.current?.close()
-                      setIsSettingsSheetOpen(false)
-                      setIsEditMode(false)
-                    }}
-                    hitSlop={10}
-                    style={{
-                      width: 32,
-                      height: 32,
-                      borderRadius: 16,
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                  >
-                    <Ionicons name="close" size={18} color={c.muted2} />
-                  </Pressable>
-                </View>
-
-                <Pressable
-                  onPress={() => {
-                    console.log('Edit name')
-                  }}
-                  style={({ pressed }) => ({
-                    backgroundColor: c.surface2,
-                    borderRadius: s.$12,
-                    padding: s.$1,
-                    opacity: pressed ? 0.6 : 1,
-                  })}
-                >
-                  <Text
-                    style={{
-                      color: c.muted2,
-                      fontSize: 11,
-                      fontFamily: 'Inter',
-                      fontWeight: '600',
-                      marginBottom: 4,
-                      textTransform: 'uppercase',
-                    }}
-                  >
-                    Name
-                  </Text>
-                  <Text
-                    style={{
-                      color: c.newDark,
-                      fontSize: 15,
-                      fontFamily: 'Inter',
-                      fontWeight: '500',
-                    }}
-                  >
-                    {displayName}
-                  </Text>
-                </Pressable>
-
-                <Pressable
-                  onPress={() => {
-                    console.log('Edit neighborhood')
-                  }}
-                  style={({ pressed }) => ({
-                    backgroundColor: c.surface2,
-                    borderRadius: s.$12,
-                    padding: s.$1,
-                    opacity: pressed ? 0.6 : 1,
-                  })}
-                >
-                  <Text
-                    style={{
-                      color: c.muted2,
-                      fontSize: 11,
-                      fontFamily: 'Inter',
-                      fontWeight: '600',
-                      marginBottom: 4,
-                      textTransform: 'uppercase',
-                    }}
-                  >
-                    Neighborhood
-                  </Text>
-                  <Text
-                    style={{
-                      color: c.newDark,
-                      fontSize: 15,
-                      fontFamily: 'Inter',
-                      fontWeight: '500',
-                    }}
-                  >
-                    {locationLabel || 'Elsewhere'}
-                  </Text>
-                </Pressable>
-
-                <View
-                  style={{
-                    backgroundColor: c.surface2,
-                    borderRadius: s.$12,
-                    padding: s.$1,
-                  }}
-                >
-                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <View style={{ flex: 1 }}>
-                      <Text
-                        style={{
-                          color: c.newDark,
-                          fontSize: 15,
-                          fontFamily: 'Inter',
-                          fontWeight: '600',
-                          marginBottom: 4,
-                        }}
-                      >
-                        Push Notifications
-                      </Text>
-                      <Text
-                        style={{
-                          color: c.accent,
-                          fontSize: 12,
-                          fontFamily: 'Inter',
-                          fontWeight: '500',
-                        }}
-                      >
-                        Get notified when someone saves your refs
-                      </Text>
-                    </View>
-                    <View
-                      style={{
-                        width: 50,
-                        height: 30,
-                        borderRadius: 15,
-                        backgroundColor: c.accent,
-                        justifyContent: 'center',
-                        paddingHorizontal: 3,
-                      }}
-                    >
-                      <View
-                        style={{
-                          width: 24,
-                          height: 24,
-                          borderRadius: 12,
-                          backgroundColor: c.surface,
-                          alignSelf: 'flex-end',
-                        }}
-                      />
-                    </View>
-                  </View>
-                </View>
-
-                <Pressable
-                  onPress={logout}
-                  style={({ pressed }) => ({
-                    backgroundColor: c.surface2,
-                    borderRadius: s.$12,
-                    padding: s.$1,
-                    opacity: pressed ? 0.6 : 1,
-                  })}
-                >
-                  <Text
-                    style={{
-                      color: c.newDark,
-                      fontSize: 15,
-                      fontFamily: 'Inter',
-                      fontWeight: '600',
-                      textAlign: 'center',
-                    }}
-                  >
-                    Log Out
-                  </Text>
-                </Pressable>
-
-                <Pressable
-                  onPress={() => {
-                    console.log('Delete account')
-                  }}
-                  style={({ pressed }) => ({
-                    backgroundColor: c.surface2,
-                    borderRadius: s.$12,
-                    padding: s.$1,
-                    opacity: pressed ? 0.6 : 1,
-                  })}
-                >
-                  <Text
-                    style={{
-                      color: c.accent,
-                      fontSize: 15,
-                      fontFamily: 'Inter',
-                      fontWeight: '600',
-                      textAlign: 'center',
-                    }}
-                  >
-                    Delete Account
-                  </Text>
-                </Pressable>
-              </BottomSheetView>
-            </BottomSheet>
 
             {/* Direct Photo Form - bypasses NewRefSheet entirely */}
             {showDirectPhotoForm && directPhotoRefFields && (

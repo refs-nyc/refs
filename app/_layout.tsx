@@ -47,6 +47,7 @@ import Referencers from '@/ui/profiles/sheets/ReferencersSheet'
 import { AddRefSheet } from '@/ui/profiles/sheets/AddRefSheet'
 import { NewRefSheet } from '@/ui/profiles/sheets/NewRefSheet'
 import { ProfileDetailsSheet } from '@/ui/profiles/ProfileDetailsSheet'
+import { ProfileSettingsSheet } from '@/ui/profiles/sheets/ProfileSettingsSheet'
 import { CommunityFormSheet } from '@/ui/communities/CommunityFormSheet'
 
 // TODO: this error keeps getting thrown whenever the app fast reloads in development
@@ -219,6 +220,8 @@ function RootLayoutNav() {
       <LogoutSheet bottomSheetRef={logoutSheetRef} />
       {/* profile details sheet (media carousel) */}
       <ProfileDetailsSheet />
+      {/* profile settings sheet */}
+      <ProfileSettingsSheet />
       {/* community form sheet */}
       <CommunityFormSheet />
       <DirectMessageComposer />

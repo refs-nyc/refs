@@ -15,11 +15,13 @@ export const RemoveRefSheet = ({
   handleMoveToBacklog,
   handleRemoveFromProfile,
   item,
+  onClose,
 }: {
   bottomSheetRef: React.RefObject<BottomSheet>
   handleMoveToBacklog: () => Promise<void>
   handleRemoveFromProfile: () => Promise<void>
   item: ExpandedItem | null
+  onClose: () => void
 }) => {
   const insets = useSafeAreaInsets()
   const { removeRefSheetBackdropAnimatedIndex, registerBackdropPress, unregisterBackdropPress } =
@@ -41,9 +43,10 @@ export const RemoveRefSheet = ({
 
   return (
     <BottomSheet
-      enableDynamicSizing={true}
+      enableDynamicSizing={false}
       ref={bottomSheetRef}
       enablePanDownToClose={true}
+      snapPoints={[240]}
       index={-1}
       animatedIndex={removeRefSheetBackdropAnimatedIndex}
       backgroundStyle={{ backgroundColor: c.surface, borderRadius: 50, paddingTop: 0 }}
@@ -57,6 +60,11 @@ export const RemoveRefSheet = ({
       )}
       handleComponent={null}
       keyboardBehavior="interactive"
+      onChange={(index) => {
+        if (index === -1) {
+          onClose()
+        }
+      }}
     >
       <YStack
         gap={s.$2}

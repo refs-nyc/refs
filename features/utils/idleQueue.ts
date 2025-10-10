@@ -3,20 +3,6 @@
  * Runs queued tasks one at a time when the JS thread is idle (or after a short timeout).
  */
 
-type IdleCallback = (deadline?: { didTimeout: boolean; timeRemaining: () => number }) => void
-interface IdleRequestOptions {
-  timeout?: number
-}
-
-declare global {
-  // eslint-disable-next-line no-var
-  var requestIdleCallback:
-    | ((callback: IdleCallback, options?: IdleRequestOptions) => number)
-    | undefined
-  // eslint-disable-next-line no-var
-  var cancelIdleCallback: ((handle: number) => void) | undefined
-}
-
 export type IdleTask = () => void | Promise<void>
 
 interface QueueEntry {

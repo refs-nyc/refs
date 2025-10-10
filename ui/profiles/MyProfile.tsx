@@ -171,12 +171,6 @@ export const MyProfile = ({ userName }: { userName: string }) => {
   }, [stopEditProfile])
 
   useEffect(() => {
-    if (homePagerIndex !== 0 && (isEditMode || editingProfile)) {
-      exitEditMode()
-    }
-  }, [homePagerIndex, isEditMode, editingProfile, exitEditMode])
-
-  useEffect(() => {
     if (!removingItem) return
     requestAnimationFrame(() => {
       removeRefSheetRef.current?.snapToIndex(0)
@@ -213,6 +207,12 @@ export const MyProfile = ({ userName }: { userName: string }) => {
     stopEditProfile()
     stopEditing()
   }, [isEditMode, setIsEditMode, settingsSheetRef, stopEditProfile, stopEditing])
+
+  useEffect(() => {
+    if (homePagerIndex !== 0 && (isEditMode || editingProfile)) {
+      exitEditMode()
+    }
+  }, [homePagerIndex, isEditMode, editingProfile, exitEditMode])
 
   const ownProfile = user?.userName === userName
   // For own profile, always prefer global user state (source of truth)

@@ -11,6 +11,9 @@
 - Messaging bootstrap hydrates from cache instantly and defers the multi-query PocketBase fetch until after interactions, keeping the JS queue free during launch.
 
 ## 2025-??-??
+- Attempted overlay height spacer approach for settings, but it still flashed; backed out.
+- Swapped to a dedicated settings bottom sheet: pencil opens the sheet (`BottomSheet`), settings live there, FAB fades via opacity when edit mode is active, so the grid stays untouched and no more black flash.
+- Refined the settings sheet snap logic to avoid `CONTENT_HEIGHT` snap errors: compute numeric snap points from measured content/fallback heights, keep the 50px radius, and pad the scroll container so the grid stays editable beneath the open sheet.
 - While aligning the profile grid we tried three approaches that did **not** fix the right-edge drift:
   - Added padding directly on the animated grid wrapper (`paddingHorizontal: s.$1 + 6` then `-2`), but the absolute overlay still pinned the inner grid to the right.
   - Offsetting the absolute container with manual `left/right` values and later converting to wrapper padding simply changed the overlay bounds while the `Grid` component continued using its own internal padding, so the tiles never shifted.

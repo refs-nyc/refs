@@ -3,10 +3,10 @@ import { getBacklogItems, getProfileItems, autoMoveBacklogToGrid } from '@/featu
 import type { Profile } from '@/features/types'
 import { ExpandedItem } from '@/features/types'
 import { s, c } from '@/features/style'
-import BottomSheet, { BottomSheetBackdrop, BottomSheetView } from '@gorhom/bottom-sheet'
+import BottomSheet, { BottomSheetBackdrop, BottomSheetTextInput, BottomSheetView } from '@gorhom/bottom-sheet'
 import { useShareIntentContext } from 'expo-share-intent'
 import { useEffect, useRef, useState, useMemo, useCallback } from 'react'
-import { ScrollView, View, Text, Pressable, Keyboard, ActivityIndicator, InteractionManager } from 'react-native'
+import { ScrollView, View, Text, Pressable, Keyboard, ActivityIndicator, InteractionManager, useWindowDimensions, Alert } from 'react-native'
 import { Image } from 'expo-image'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import * as ImagePicker from 'expo-image-picker'
@@ -95,6 +95,7 @@ const AVATAR_PLACEHOLDER_BORDER = '#B0B0B0'
 export const MyProfile = ({ userName }: { userName: string }) => {
   const { hasShareIntent } = useShareIntentContext()
   const insets = useSafeAreaInsets()
+  const { height: windowHeight } = useWindowDimensions()
 
   const cachedEntry = profileMemoryCache.get(userName)
 
@@ -109,9 +110,34 @@ export const MyProfile = ({ userName }: { userName: string }) => {
   const [avatarUploading, setAvatarUploading] = useState(false)
   const [showAvatarPicker, setShowAvatarPicker] = useState(false)
   const [isEditMode, setIsEditMode] = useState(false)
+  const [isSettingsSheetOpen, setIsSettingsSheetOpen] = useState(false)
+  const [settingsSheetHeight, setSettingsSheetHeight] = useState(0)
   const avatarScale = useRef(new RNAnimated.Value(1)).current
   const avatarSwapOpacity = useRef(new RNAnimated.Value(1)).current
+  const settingsSheetRef = useRef<BottomSheet>(null)
+  const pendingSettingsSheetActionRef = useRef<(() => void) | null>(null)
+  const baseScrollPadding = s.$10 as number
+  const fallbackSettingsSheetHeight = useMemo(() => Math.round(windowHeight * 0.45), [windowHeight])
+  const scrollPaddingBottom = useMemo(() => {
+    if (!isSettingsSheetOpen) return baseScrollPadding
 
+    const measuredHeight = settingsSheetHeight > 0 ? settingsSheetHeight : fallbackSettingsSheetHeight
+    const buffer = 24
+
+    return baseScrollPadding + measuredHeight + insets.bottom + buffer
+  }, [baseScrollPadding, fallbackSettingsSheetHeight, insets.bottom, isSettingsSheetOpen, settingsSheetHeight])
+  const settingsSheetSnapPoints = useMemo(() => {
+    const baseHeight = Math.max(settingsSheetHeight, fallbackSettingsSheetHeight)
+    const cappedBase = Math.min(baseHeight, Math.round(windowHeight * 0.92))
+    const expandedCandidate = Math.max(cappedBase + 120, Math.round(windowHeight * 0.78))
+    const cappedExpanded = Math.min(expandedCandidate, Math.round(windowHeight * 0.95))
+
+    if (cappedExpanded <= cappedBase + 40) {
+      return [cappedBase]
+    }
+
+    return [cappedBase, cappedExpanded]
+  }, [fallbackSettingsSheetHeight, settingsSheetHeight, windowHeight])
   // Get optimistic items from store
   const { optimisticItems, user } = useAppStore()
 
@@ -153,6 +179,62 @@ export const MyProfile = ({ userName }: { userName: string }) => {
     detailsSheetRef,
     setDetailsSheetData,
   } = useAppStore()
+  const closeSettingsSheet = useCallback(
+    ({ exitEditMode = false, afterClose }: { exitEditMode?: boolean; afterClose?: () => void } = {}) => {
+      if (!isSettingsSheetOpen) {
+        if (exitEditMode) {
+          setIsEditMode(false)
+          stopEditProfile()
+          stopEditing()
+        }
+        if (afterClose) {
+          afterClose()
+        }
+        pendingSettingsSheetActionRef.current = null
+        return
+      }
+
+      if (afterClose) {
+        pendingSettingsSheetActionRef.current = afterClose
+      }
+
+      settingsSheetRef.current?.close()
+      setIsSettingsSheetOpen(false)
+
+      if (exitEditMode) {
+        setIsEditMode(false)
+        stopEditProfile()
+        stopEditing()
+      }
+    },
+    [isSettingsSheetOpen, stopEditProfile, stopEditing]
+  )
+
+  const enterEditMode = useCallback(() => {
+    if (isEditMode) {
+      if (!isSettingsSheetOpen) {
+        settingsSheetRef.current?.snapToIndex(0)
+        setIsSettingsSheetOpen(true)
+      }
+      return
+    }
+
+    setIsEditMode(true)
+    startEditProfile()
+    setIsSettingsSheetOpen(true)
+    settingsSheetRef.current?.snapToIndex(0)
+  }, [isEditMode, isSettingsSheetOpen, startEditProfile])
+
+  const exitEditMode = useCallback(() => {
+    if (!isEditMode) return
+    pendingSettingsSheetActionRef.current = null
+    settingsSheetRef.current?.close()
+    setIsSettingsSheetOpen(false)
+    setIsEditMode(false)
+    stopEditProfile()
+    stopEditing()
+  }, [isEditMode, stopEditProfile, stopEditing])
+
   const ownProfile = user?.userName === userName
   const effectiveProfile = profile ?? (ownProfile ? (user ?? undefined) : undefined)
   const hasProfile = Boolean(effectiveProfile)
@@ -392,23 +474,39 @@ export const MyProfile = ({ userName }: { userName: string }) => {
                 {/* Edit button */}
                 {ownProfile && !avatarUploading && (
                   <Pressable
-                    onPress={() => setIsEditMode(!isEditMode)}
+                    accessibilityRole="button"
+                    accessibilityLabel={isEditMode ? 'Finish editing profile' : 'Edit profile'}
+                    onPress={() => {
+                      if (isEditMode) {
+                        exitEditMode()
+                        return
+                      }
+                      enterEditMode()
+                    }}
                     hitSlop={8}
                     style={{
                       position: 'absolute',
                       top: 0,
                       right: 0,
-                      width: 24,
-                      height: 24,
-                      borderRadius: 12,
-                      backgroundColor: c.surface2,
-                      borderWidth: 2,
+                      width: 26,
+                      height: 26,
+                      borderRadius: 13,
+                      backgroundColor: isEditMode ? c.olive : AVATAR_PLACEHOLDER_BORDER,
+                      borderWidth: 2.5,
                       borderColor: c.surface,
                       alignItems: 'center',
                       justifyContent: 'center',
+                      shadowColor: '#000',
+                      shadowOpacity: isEditMode ? 0.18 : 0,
+                      shadowRadius: isEditMode ? 4 : 0,
+                      shadowOffset: { width: 0, height: isEditMode ? 2 : 0 },
                     }}
                   >
-                    <Ionicons name="pencil" size={12} color={c.newDark} />
+                    <Ionicons
+                      name={isEditMode ? 'checkmark' : 'pencil'}
+                      size={13}
+                      color={c.surface}
+                    />
                   </Pressable>
                 )}
               </View>
@@ -575,13 +673,22 @@ export const MyProfile = ({ userName }: { userName: string }) => {
       shouldAnimateStartup={justOnboarded}
       isEditMode={isEditMode}
       onPressItem={(item) => {
-        if (!effectiveProfile) return
-        setDetailsSheetData({
-          itemId: item!.id,
-          profileUsername: effectiveProfile.userName,
-          openedFromFeed: false,
-        })
-        detailsSheetRef.current?.snapToIndex(0)
+        if (!effectiveProfile || !item) return
+        const openDetails = () => {
+          setDetailsSheetData({
+            itemId: item.id,
+            profileUsername: effectiveProfile.userName,
+            openedFromFeed: false,
+          })
+          detailsSheetRef.current?.snapToIndex(0)
+        }
+
+        if (isSettingsSheetOpen) {
+          closeSettingsSheet({ afterClose: openDetails })
+          return
+        }
+
+        openDetails()
       }}
       onLongPressItem={() => {
         clearTimeout(timeout)
@@ -589,22 +696,53 @@ export const MyProfile = ({ userName }: { userName: string }) => {
           stopEditProfile()
         }, 10000)
         startEditProfile()
+        if (!isEditMode) {
+          setIsEditMode(true)
+        }
       }}
       onRemoveItem={(item) => {
+        if (!item) return
         setRemovingItem(item)
-        removeRefSheetRef.current?.expand()
+        const openRemoveSheet = () => {
+          removeRefSheetRef.current?.expand()
+        }
+
+        if (isSettingsSheetOpen) {
+          closeSettingsSheet({ afterClose: openRemoveSheet })
+          return
+        }
+
+        openRemoveSheet()
       }}
       onAddItem={(prompt?: string) => {
-        setAddingNewRefTo('grid')
-        if (prompt) useAppStore.getState().setAddRefPrompt(prompt)
+        const proceed = () => {
+          setAddingNewRefTo('grid')
+          if (prompt) useAppStore.getState().setAddRefPrompt(prompt)
+        }
+
+        if (isSettingsSheetOpen) {
+          closeSettingsSheet({ afterClose: proceed })
+          return
+        }
+
+        proceed()
       }}
       onAddItemWithPrompt={(prompt: string, photoPath?: boolean) => {
-        if (photoPath) {
-          triggerDirectPhotoPicker(prompt)
-        } else {
-          setAddingNewRefTo('grid')
-          useAppStore.getState().setAddRefPrompt(prompt)
+        const proceed = () => {
+          if (photoPath) {
+            void triggerDirectPhotoPicker(prompt)
+          } else {
+            setAddingNewRefTo('grid')
+            useAppStore.getState().setAddRefPrompt(prompt)
+          }
         }
+
+        if (isSettingsSheetOpen) {
+          closeSettingsSheet({ afterClose: proceed })
+          return
+        }
+
+        proceed()
       }}
         columns={GRID_COLUMNS}
       items={displayGridItems}
@@ -1094,28 +1232,40 @@ export const MyProfile = ({ userName }: { userName: string }) => {
     }
   }, [setAddingNewRefTo])
 
-  const handlePromptChipPress = useCallback((prompt: PromptSuggestion) => {
-    setPromptSuggestions((current) => {
-      const remainder = current.filter((item) => item.text !== prompt.text)
-      const needed = PROMPT_BATCH_SIZE - remainder.length
-      if (needed <= 0) {
-        return remainder
+  const handlePromptChipPress = useCallback(
+    (prompt: PromptSuggestion) => {
+      setPromptSuggestions((current) => {
+        const remainder = current.filter((item) => item.text !== prompt.text)
+        const needed = PROMPT_BATCH_SIZE - remainder.length
+        if (needed <= 0) {
+          return remainder
+        }
+
+        const exclude = new Set(remainder.map((item) => item.text))
+        const replacements = createPromptBatch(needed, exclude)
+        return [...remainder, ...replacements]
+      })
+
+      const execute = () => {
+        if (prompt.photoPath) {
+          void triggerDirectPhotoPicker(prompt.text)
+          return
+        }
+
+        setAddingNewRefTo('grid')
+        try { useAppStore.getState().setAddRefPrompt(prompt.text) } catch {}
+        // Opening is controlled by NewRefSheet effect
       }
 
-      const exclude = new Set(remainder.map((item) => item.text))
-      const replacements = createPromptBatch(needed, exclude)
-      return [...remainder, ...replacements]
-    })
+      if (isSettingsSheetOpen) {
+        closeSettingsSheet({ afterClose: execute })
+        return
+      }
 
-    if (prompt.photoPath) {
-      void triggerDirectPhotoPicker(prompt.text)
-      return
-    }
-
-    setAddingNewRefTo('grid')
-    try { useAppStore.getState().setAddRefPrompt(prompt.text) } catch {}
-    // Opening is controlled by NewRefSheet effect
-  }, [triggerDirectPhotoPicker, setAddingNewRefTo])
+      execute()
+    },
+    [triggerDirectPhotoPicker, setAddingNewRefTo, isSettingsSheetOpen, closeSettingsSheet]
+  )
 
   const promptChipSection = showPromptChips && promptSuggestions.length > 0 ? (
     <Animated.View
@@ -1231,6 +1381,15 @@ export const MyProfile = ({ userName }: { userName: string }) => {
     </Animated.View>
   ) : null
 
+  const settingsSheetScrim = isSettingsSheetOpen ? (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel="Dismiss profile settings"
+      onPress={() => closeSettingsSheet()}
+      style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 6, backgroundColor: 'transparent' }}
+    />
+  ) : null
+
   return (
     <>
       <ScrollView
@@ -1238,15 +1397,15 @@ export const MyProfile = ({ userName }: { userName: string }) => {
         contentContainerStyle={{
           justifyContent: 'center',
           alignItems: 'stretch',
-          paddingBottom: s.$10,
+          paddingBottom: scrollPaddingBottom,
           gap: s.$4,
           minHeight: '100%',
         }}
         showsVerticalScrollIndicator={false}
-        scrollEnabled={isEditMode}
+        scrollEnabled={isEditMode || isSettingsSheetOpen}
       >
         <View
-          style={{ flex: 1, width: '100%', backgroundColor: c.surface, paddingHorizontal: s.$1 }}
+          style={{ flex: 1, width: '100%', backgroundColor: c.surface, paddingHorizontal: s.$1, position: 'relative' }}
         >
           <Animated.View
             entering={FadeIn.duration(400).delay(100)}
@@ -1304,27 +1463,115 @@ export const MyProfile = ({ userName }: { userName: string }) => {
 
             {promptChipSection}
 
-            {/* Settings section */}
-            {isEditMode && hasProfile && (
-              <View
-                style={{
-                  marginTop: s.$1,
-                  paddingHorizontal: s.$1,
+            {settingsSheetScrim}
+
+          </View>
+
+          {hasProfile && !effectiveProfile && <Heading tag="h1">Profile for {userName} not found</Heading>}
+
+          {searchDismissOverlays}
+        </View>
+
+        {effectiveProfile && (
+          <>
+            <MyBacklogSheet
+              backlogItems={backlogItems}
+              profile={effectiveProfile}
+              user={user}
+              openAddtoBacklog={() => {
+                setAddingNewRefTo('backlog')
+              }}
+            />
+            <RemoveRefSheet
+              bottomSheetRef={removeRefSheetRef}
+              handleMoveToBacklog={handleMoveToBacklog}
+              handleRemoveFromProfile={handleRemoveFromProfile}
+              item={removingItem}
+            />
+
+            {/* Search Results Sheet - render after FloatingJaggedButton so it appears above */}
+            <SearchResultsSheet
+              ref={searchResultsSheetTriggerRef}
+              bottomSheetRef={searchResultsSheetRef}
+              selectedRefs={selectedRefs}
+              selectedRefItems={finalSelectedRefItems}
+            />
+
+            <BottomSheet
+              ref={settingsSheetRef}
+              index={-1}
+              snapPoints={settingsSheetSnapPoints}
+              enablePanDownToClose
+              enableOverDrag={false}
+              onChange={(idx) => {
+                const open = idx >= 0
+                setIsSettingsSheetOpen(open)
+                if (!open) {
+                  const pending = pendingSettingsSheetActionRef.current
+                  pendingSettingsSheetActionRef.current = null
+                  if (pending) {
+                    pending()
+                  }
+                }
+              }}
+              onClose={() => {
+                setIsSettingsSheetOpen(false)
+                const pending = pendingSettingsSheetActionRef.current
+                pendingSettingsSheetActionRef.current = null
+                if (pending) {
+                  pending()
+                }
+              }}
+              backgroundStyle={{ backgroundColor: c.surface, borderRadius: 50 }}
+              handleComponent={null}
+              style={{ borderTopLeftRadius: 50, borderTopRightRadius: 50, overflow: 'hidden' }}
+            >
+              <BottomSheetView
+                onLayout={(event) => {
+                  const height = Math.round(event.nativeEvent.layout.height)
+                  if (height > 0 && Math.abs(height - settingsSheetHeight) > 2) {
+                    setSettingsSheetHeight(height)
+                  }
                 }}
+                style={{ paddingHorizontal: s.$1, paddingVertical: s.$1, gap: s.$075 }}
               >
-                <Text
+                <View
                   style={{
-                    fontSize: (s.$09 as number) + 4,
-                    fontFamily: 'System',
-                    fontWeight: '700',
-                    color: c.newDark,
-                    marginBottom: s.$1,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    marginBottom: s.$075,
                   }}
                 >
-                  Settings
-                </Text>
+                  <Text
+                    style={{
+                      fontSize: (s.$09 as number) + 4,
+                      fontFamily: 'System',
+                      fontWeight: '700',
+                      color: c.newDark,
+                    }}
+                  >
+                    Profile Settings
+                  </Text>
+                  <Pressable
+                    onPress={() => {
+                      settingsSheetRef.current?.close()
+                      setIsSettingsSheetOpen(false)
+                      setIsEditMode(false)
+                    }}
+                    hitSlop={10}
+                    style={{
+                      width: 32,
+                      height: 32,
+                      borderRadius: 16,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    <Ionicons name="close" size={18} color={c.muted2} />
+                  </Pressable>
+                </View>
 
-                {/* Name Field */}
                 <Pressable
                   onPress={() => {
                     console.log('Edit name')
@@ -1333,7 +1580,6 @@ export const MyProfile = ({ userName }: { userName: string }) => {
                     backgroundColor: c.surface2,
                     borderRadius: s.$12,
                     padding: s.$1,
-                    marginBottom: s.$075,
                     opacity: pressed ? 0.6 : 1,
                   })}
                 >
@@ -1361,7 +1607,6 @@ export const MyProfile = ({ userName }: { userName: string }) => {
                   </Text>
                 </Pressable>
 
-                {/* Neighborhood Field */}
                 <Pressable
                   onPress={() => {
                     console.log('Edit neighborhood')
@@ -1370,7 +1615,6 @@ export const MyProfile = ({ userName }: { userName: string }) => {
                     backgroundColor: c.surface2,
                     borderRadius: s.$12,
                     padding: s.$1,
-                    marginBottom: s.$075,
                     opacity: pressed ? 0.6 : 1,
                   })}
                 >
@@ -1398,13 +1642,11 @@ export const MyProfile = ({ userName }: { userName: string }) => {
                   </Text>
                 </Pressable>
 
-                {/* Push Notifications Toggle */}
                 <View
                   style={{
                     backgroundColor: c.surface2,
                     borderRadius: s.$12,
                     padding: s.$1,
-                    marginBottom: s.$075,
                   }}
                 >
                   <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -1454,16 +1696,12 @@ export const MyProfile = ({ userName }: { userName: string }) => {
                   </View>
                 </View>
 
-                {/* Log Out Button */}
                 <Pressable
-                  onPress={() => {
-                    logout()
-                  }}
+                  onPress={logout}
                   style={({ pressed }) => ({
                     backgroundColor: c.surface2,
                     borderRadius: s.$12,
                     padding: s.$1,
-                    marginBottom: s.$075,
                     opacity: pressed ? 0.6 : 1,
                   })}
                 >
@@ -1480,7 +1718,6 @@ export const MyProfile = ({ userName }: { userName: string }) => {
                   </Text>
                 </Pressable>
 
-                {/* Delete Account Button */}
                 <Pressable
                   onPress={() => {
                     console.log('Delete account')
@@ -1504,39 +1741,8 @@ export const MyProfile = ({ userName }: { userName: string }) => {
                     Delete Account
                   </Text>
                 </Pressable>
-              </View>
-            )}
-          </View>
-
-          {hasProfile && !effectiveProfile && <Heading tag="h1">Profile for {userName} not found</Heading>}
-
-          {searchDismissOverlays}
-        </View>
-
-        {effectiveProfile && (
-          <>
-            <MyBacklogSheet
-              backlogItems={backlogItems}
-              profile={effectiveProfile}
-              user={user}
-              openAddtoBacklog={() => {
-                setAddingNewRefTo('backlog')
-              }}
-            />
-            <RemoveRefSheet
-              bottomSheetRef={removeRefSheetRef}
-              handleMoveToBacklog={handleMoveToBacklog}
-              handleRemoveFromProfile={handleRemoveFromProfile}
-              item={removingItem}
-            />
-
-            {/* Search Results Sheet - render after FloatingJaggedButton so it appears above */}
-            <SearchResultsSheet
-              ref={searchResultsSheetTriggerRef}
-              bottomSheetRef={searchResultsSheetRef}
-              selectedRefs={selectedRefs}
-              selectedRefItems={finalSelectedRefItems}
-            />
+              </BottomSheetView>
+            </BottomSheet>
 
             {/* Direct Photo Form - bypasses NewRefSheet entirely */}
             {showDirectPhotoForm && directPhotoRefFields && (

@@ -5,6 +5,7 @@ import { useAppStore } from '@/features/stores'
 import { Avatar } from '@/ui/atoms/Avatar'
 import { c, s } from '@/features/style'
 import Ionicons from '@expo/vector-icons/Ionicons'
+import { promptForNotifications } from '@/ui/notifications/utils'
 
 export function DirectMessageComposer() {
   const {
@@ -98,6 +99,10 @@ export function DirectMessageComposer() {
       }
 
       await sendMessage(user.id, conversationId, trimmed)
+      
+      // Prompt for notifications after first DM (fire-and-forget)
+      const targetName = targetSnapshot?.firstName || targetSnapshot?.name || 'them'
+      promptForNotifications(`Receive a notification when ${targetName} messages you?`).catch(() => {})
     } catch (error) {
       console.warn('Failed to send direct message', error)
       const fallbackName =

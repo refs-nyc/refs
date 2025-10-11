@@ -48,20 +48,10 @@ export const ProfileDetailsSheet = () => {
     getUserByUserName,
     addingRefId,
     referencersContext,
-    detailsPrefetchProfile,
-    detailsPrefetchItems,
   } = useAppStore()
 
-  const [profile, setProfile] = useState<Profile | null>(detailsPrefetchProfile)
-  const [gridItems, setGridItems] = useState<ExpandedItem[]>(() => detailsPrefetchItems ?? [])
-  useEffect(() => {
-    if (detailsPrefetchProfile) {
-      setProfile(detailsPrefetchProfile)
-    }
-    if (detailsPrefetchItems) {
-      setGridItems(detailsPrefetchItems)
-    }
-  }, [detailsPrefetchProfile, detailsPrefetchItems])
+  const [profile, setProfile] = useState<Profile | null>(null)
+  const [gridItems, setGridItems] = useState<ExpandedItem[]>([])
 
   // Use preloaded data for smooth animation, fallback to fetching if needed
   useEffect(() => {
@@ -116,7 +106,7 @@ export const ProfileDetailsSheet = () => {
     }
   }, [clearDetailsSheetData])
 
-  const sheetZIndex = addingRefId || referencersContext ? 900 : 9000
+  const sheetZIndex = addingRefId || referencersContext ? 100 : 9000
 
   return (
     <BottomSheet
@@ -136,7 +126,7 @@ export const ProfileDetailsSheet = () => {
       enableDynamicSizing={false}
       snapPoints={snapPoints}
       enablePanDownToClose={true}
-      keyboardBehavior="interactive"
+      keyboardBehavior="fillParent"
       onChange={handleChange}
       // animationDuration={300}
       enableOverDrag={false}

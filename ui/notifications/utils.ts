@@ -12,6 +12,7 @@ console.info('[push] registration skipped:', errorMessage)
 
 /**
  * Checks notification permission status and prompts user appropriately
+ * - Already has token: Skip (already registered)
  * - undetermined: Show custom sheet, then trigger native prompt
  * - granted: Silently register token
  * - denied: Show sheet directing to iOS settings
@@ -20,6 +21,9 @@ export async function promptForNotifications(message: string) {
   const { user, updateUser, setNotificationPromptMessage } = useAppStore.getState()
   
   if (!user) return
+  
+  // Skip if user already has push token registered
+  if (user.pushToken) return
   
   // Check current permission status
   const { status } = await Notifications.getPermissionsAsync()

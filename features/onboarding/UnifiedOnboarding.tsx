@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { View, Text, Pressable, ScrollView, Dimensions, ActivityIndicator, Keyboard, Platform, KeyboardAvoidingView, Animated, Switch } from 'react-native'
+import { View, Text, Pressable, ScrollView, Dimensions, ActivityIndicator, Keyboard, Platform, KeyboardAvoidingView, Animated } from 'react-native'
 import { router } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { s, c } from '@/features/style'
@@ -9,7 +9,6 @@ import { useAppStore } from '@/features/stores'
 import { pocketbase } from '@/features/pocketbase'
 import { Image } from 'expo-image'
 import Svg, { Circle } from 'react-native-svg'
-import { registerForPushNotificationsAsync } from '@/ui/notifications/utils'
 
 const win = Dimensions.get('window')
 const PASSWORD_MIN_LENGTH = 8
@@ -29,8 +28,6 @@ export function UnifiedOnboarding() {
   const [displayedUsers, setDisplayedUsers] = useState<any[]>([])
   const [allUsers, setAllUsers] = useState<any[]>([])
   const avatarOpacity = useRef(new Animated.Value(1)).current
-  const [pushOptIn, setPushOptIn] = useState(false)
-  const [isRequestingPush, setIsRequestingPush] = useState(false)
 
   // Watch all fields to enable/disable button
   const fullName = watch('fullName')
@@ -44,9 +41,9 @@ export function UnifiedOnboarding() {
       Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
       (e) => {
         setKeyboardHeight(e.endCoordinates.height)
-        // Scroll to show all forms, push toggle, AND the "Looks good" button above keyboard
+        // Scroll to show all forms and the "Looks good" button above keyboard
         setTimeout(() => {
-          scrollViewRef.current?.scrollTo({ y: 180, animated: true })
+          scrollViewRef.current?.scrollTo({ y: 145, animated: true })
         }, 100)
       }
     )
@@ -93,7 +90,7 @@ export function UnifiedOnboarding() {
   }, [])
 
   const onSubmit = async (data: any) => {
-    if (!isFormValid || isSubmitting || !pushOptIn) return
+    if (!isFormValid || isSubmitting) return
     setIsSubmitting(true)
     setServerError('')
 
@@ -465,73 +462,17 @@ export function UnifiedOnboarding() {
             </Text>
           )}
 
-          {/* Push Notification opt-in */}
-          <View
-            style={{
-              marginTop: keyboardHeight > 0 ? (s.$075 as number) - 2 : (s.$1 as number) - 2,
-              marginBottom: 0,
-              padding: s.$1,
-              backgroundColor: c.surface2,
-              borderRadius: s.$12,
-            }}
-          >
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-              <View style={{ flex: 1, paddingRight: s.$1 }}>
-                <Text
-                  style={{
-                    color: c.newDark,
-                    fontSize: s.$09,
-                    fontFamily: 'InterSemiBold',
-                    fontWeight: '600',
-                  }}
-                >
-                  Enable push notifications
-                </Text>
-                <Text
-                  style={{
-                    color: c.muted,
-                    fontSize: s.$08,
-                    marginTop: 4,
-                    fontFamily: 'Inter',
-                  }}
-                >
-                  You can turn these off anytime.
-                </Text>
-              </View>
-              <Switch
-                value={pushOptIn}
-                onValueChange={async (value) => {
-                  setPushOptIn(value)
-                  if (value && !isRequestingPush) {
-                    try {
-                      setIsRequestingPush(true)
-                      await registerForPushNotificationsAsync()
-                    } catch (error) {
-                      console.warn('Push registration failed during onboarding', error)
-                      setPushOptIn(false)
-                    } finally {
-                      setIsRequestingPush(false)
-                    }
-                  }
-                }}
-                trackColor={{ false: `${c.muted}40`, true: c.accent2 }}
-                thumbColor={pushOptIn ? c.accent : c.surface}
-                ios_backgroundColor={`${c.muted}40`}
-              />
-            </View>
-          </View>
-
           {/* Looks good button - styled like a form field */}
           <Pressable
             onPress={handleSubmit(onSubmit)}
-            disabled={!isFormValid || !pushOptIn || isSubmitting}
+            disabled={!isFormValid || isSubmitting}
             style={{
               marginTop: (s.$1 as number) + 6,
               backgroundColor: c.accent,
               paddingVertical: 18,
               borderRadius: s.$12,
               alignItems: 'center',
-              opacity: isFormValid && pushOptIn && !isSubmitting ? 1 : 0.4,
+              opacity: isFormValid && !isSubmitting ? 1 : 0.4,
             }}
           >
             {isSubmitting ? (

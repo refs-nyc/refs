@@ -16,6 +16,7 @@ import { SimplePinataImage } from '@/ui/images/SimplePinataImage'
 import { SearchLoadingSpinner } from '@/ui/atoms/SearchLoadingSpinner'
 import { router } from 'expo-router'
 import { Image } from 'expo-image'
+import { promptForNotifications } from '@/ui/notifications/utils'
 
 const win = Dimensions.get('window')
 const BADGE_OVERHANG = 8
@@ -363,6 +364,11 @@ export function EdgeCorkboardScreen() {
               })
               await joinCommunityChat(conversationId, user.id)
               setConversationPreview(conversationId, null, 0)
+              
+              // Prompt for notifications after joining (fire-and-forget)
+              const chatTitle = item?.expand?.ref?.title || item?.title || 'this chat'
+              promptForNotifications(`Receive notifications for ${chatTitle}?`).catch(() => {})
+              
               if (sb) {
                 const result = await sb
                   .from('community_subscriptions')
@@ -815,6 +821,11 @@ export function EdgeCorkboardScreen() {
                           title: promptLike.expand?.ref?.title || promptLike.title || 'Community chat',
                         })
                         await joinCommunityChat(conversationId, user.id)
+                        
+                        // Prompt for notifications after creating interest (fire-and-forget)
+                        const chatTitle = promptLike.expand?.ref?.title || promptLike.title || 'this chat'
+                        promptForNotifications(`Receive a notification when someone joins ${chatTitle}?`).catch(() => {})
+                        
                         router.push(`/messages/${conversationId}`)
                       } catch (error) {
                         console.warn('Failed to open chat after creating interest', error)

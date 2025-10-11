@@ -671,8 +671,6 @@ export const MyProfile = ({ userName }: { userName: string }) => {
             itemId: item.id,
             profileUsername: effectiveProfile.userName,
             openedFromFeed: false,
-            preloadedProfile: effectiveProfile,
-            preloadedItems: displayGridItems.slice(),
           })
           detailsSheetRef.current?.snapToIndex(0)
         }

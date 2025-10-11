@@ -104,6 +104,23 @@ export const joinCommunityChat = async (conversationId: string, userId: string):
     } catch (error) {
       if (isDuplicateMembershipError(error)) {
         alreadyMember = true
+      } else if (error instanceof ClientResponseError && error.status === 400) {
+        try {
+          const confirm = await pocketbase.collection('memberships').getList(1, 1, {
+            filter: pocketbase.filter('conversation = {:cid} && user = {:uid}', {
+              cid: conversationId,
+              uid: userId,
+            }),
+          })
+          if ((confirm?.items?.length ?? 0) > 0) {
+            alreadyMember = true
+          } else {
+            throw error
+          }
+        } catch (innerError) {
+          if (innerError === error) throw error
+          throw innerError
+        }
       } else {
         throw error
       }

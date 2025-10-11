@@ -13,8 +13,6 @@ export const createUISlice: StateCreator<StoreSlices, [], [], UISlice> = (set, g
   detailsItemId: null,
   detailsProfileUsername: null,
   detailsOpenedFromFeed: false,
-  detailsPrefetchProfile: null,
-  detailsPrefetchItems: null,
   communityFormSheetRef: React.createRef<BottomSheet>(),
   communityFormOnAdded: null,
   settingsSheetRef: React.createRef<BottomSheet>(),
@@ -72,8 +70,6 @@ export const createUISlice: StateCreator<StoreSlices, [], [], UISlice> = (set, g
       detailsItemId: data.itemId,
       detailsProfileUsername: data.profileUsername,
       detailsOpenedFromFeed: data.openedFromFeed,
-      detailsPrefetchProfile: data.preloadedProfile ?? null,
-      detailsPrefetchItems: data.preloadedItems ?? null,
     }))
   },
   clearDetailsSheetData: () => {
@@ -81,8 +77,6 @@ export const createUISlice: StateCreator<StoreSlices, [], [], UISlice> = (set, g
       detailsItemId: null,
       detailsProfileUsername: null,
       detailsOpenedFromFeed: false,
-      detailsPrefetchProfile: null,
-      detailsPrefetchItems: null,
     }))
   },
   openCommunityFormSheet: (onAdded?: (item: any) => void) => {

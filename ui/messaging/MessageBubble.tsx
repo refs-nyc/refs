@@ -21,6 +21,7 @@ export default function MessageBubble({
   onParentMessagePress,
   onReplyPress,
   onExpandReactionsPress,
+  localImageUri,
 }: {
   message: Message
   showSender: boolean
@@ -31,6 +32,7 @@ export default function MessageBubble({
   onParentMessagePress?: () => void
   onReplyPress: (messageId: string) => void
   onExpandReactionsPress: (messageId: string) => void
+  localImageUri?: string
 }) {
   const calendars = useCalendars()
   const { user, reactions, deleteReaction } = useAppStore()
@@ -98,7 +100,13 @@ export default function MessageBubble({
               </View>
             </Pressable>
           )}
-          {message.image && <PressableImage source={message.image} size={s.$15} />}
+          {message.image && (
+            <PressableImage
+              source={message.image}
+              localUri={localImageUri}
+              size={s.$15}
+            />
+          )}
           <Text>{message.text}</Text>
           {messageReactions && (
             <XStack>

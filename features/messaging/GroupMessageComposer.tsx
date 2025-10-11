@@ -17,6 +17,7 @@ import { useAppStore } from '@/features/stores'
 import { Avatar } from '@/ui/atoms/Avatar'
 import { c, s } from '@/features/style'
 import type { Profile } from '@/features/types'
+import { promptForNotifications } from '@/ui/notifications/utils'
 
 const RETRY_DELAY_MS = 2000
 
@@ -152,6 +153,9 @@ export function GroupMessageComposer() {
       const conversationId = await createConversation(false, user.id, memberIds, payload.title)
       setMessagesForConversation(conversationId, [])
       handleSendSuccess(conversationId, payload)
+      
+      // Prompt for notifications after creating group (fire-and-forget)
+      promptForNotifications(`Receive a notification when someone messages in ${payload.title}?`).catch(() => {})
 
       try {
         await sendMessage(user.id, conversationId, payload.message)

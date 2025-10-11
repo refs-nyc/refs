@@ -1,11 +1,11 @@
 import { useAppStore } from '@/features/stores'
 import { Message } from '@/features/types'
 import { c, s } from '@/features/style'
-import { Sheet, XStack } from '@/ui'
 import { Avatar, AvatarStack } from '@/ui/atoms/Avatar'
-import { AvatarPicker } from '@/ui/inputs/AvatarPicker'
 import MessageBubble from '@/ui/messaging/MessageBubble'
 import MessageInput from '@/ui/messaging/MessageInput'
+import { pinataUpload } from '@/features/pinata'
+import * as ImagePicker from 'expo-image-picker'
 import { Link, router } from 'expo-router'
 import { useEffect, useMemo, useRef, useState, lazy, Suspense, useCallback } from 'react'
 import {
@@ -48,14 +48,30 @@ export function MessagesScreen({
     conversationHydration,
     setProfileNavIntent,
     hydrateConversation,
+    showToast,
   } = useAppStore()
 
   const flatListRef = useRef<FlatList<Message>>(null)
   const [message, setMessage] = useState('')
   const [highlightedMessageId, setHighlightedMessageId] = useState('')
   const [replying, setReplying] = useState(false)
-  const [attachmentOpen, setAttachmentOpen] = useState(false)
-  const [imageUrl, setImageUrl] = useState('')
+  type AttachmentDraft = {
+    id: string
+    localUri: string
+    status: 'uploading' | 'ready'
+    remoteUrl?: string
+  }
+
+  const [attachments, setAttachments] = useState<AttachmentDraft[]>([])
+  const [localImageMap, setLocalImageMap] = useState<Record<string, string>>({})
+  const attachmentTimersRef = useRef<Record<string, NodeJS.Timeout>>({})
+
+  useEffect(() => {
+    return () => {
+      Object.values(attachmentTimersRef.current).forEach((timer) => clearTimeout(timer))
+      attachmentTimersRef.current = {}
+    }
+  }, [])
   const [showEmojiPicker, setShowEmojiPicker] = useState(false)
   const [keyboardVisible, setKeyboardVisible] = useState(false)
   const [keyboardHeight, setKeyboardHeight] = useState(0)
@@ -71,6 +87,12 @@ export function MessagesScreen({
     screenOpacity.value = withTiming(1, { duration: 180, easing: Easing.out(Easing.quad) })
   }, [screenOpacity])
 
+  useEffect(() => {
+    setAttachments([])
+    Object.values(attachmentTimersRef.current).forEach((timer) => clearTimeout(timer))
+    attachmentTimersRef.current = {}
+  }, [conversationId])
+
   const headerGap = 5
   const headerPaddingBottom = s.$08 as number
   const headerPaddingHorizontal = s.$1 as number
@@ -83,6 +105,7 @@ export function MessagesScreen({
   useEffect(() => {
     if (!user) return
     if (!conversation) {
+      console.log(`[messages] hydrate conversation ${conversationId}`)
       hydrateConversation(conversationId).catch((error) => {
         console.error('hydrateConversation failed', error)
         router.replace('/messages')
@@ -94,6 +117,7 @@ export function MessagesScreen({
     if (!isMember) {
       router.replace('/messages')
     }
+    console.log(`[messages] conversation ready ${conversationId}`)
   }, [conversation, membershipRecords.length, user?.id, conversationId, hydrateConversation])
 
   const members = useMemo(() => {
@@ -159,30 +183,133 @@ export function MessagesScreen({
     })
   }, [conversationId, conversationMessages.length])
 
-  const isDirectConversation = conversation?.is_direct ?? false
+  const isDirectConversation = Boolean(conversation?.is_direct)
 
-  if (!conversation || !user) return null
+  if (!user) return null
 
   const bottomOffset = keyboardVisible ? keyboardHeight + 3 : insets.bottom + 0
+  const isUploadingAttachment = attachments.some((attachment) => attachment.status === 'uploading')
+  const readyAttachments = attachments.filter(
+    (attachment): attachment is AttachmentDraft & { remoteUrl: string } =>
+      attachment.status === 'ready' && Boolean(attachment.remoteUrl)
+  )
+  const canSendMessage = message.trim().length > 0 || readyAttachments.length > 0
+  const isSendDisabled = !canSendMessage || isUploadingAttachment
 
-  const onMessageSubmit = () => {
-    if (!message.trim()) return
-    sendMessage(
-      user.id,
-      conversationId,
-      message,
-      replying ? highlightedMessageId : undefined,
-      imageUrl || undefined
-    )
+  const onMessageSubmit = async () => {
+    if (!message.trim() && readyAttachments.length === 0) return
+
+    if (message.trim()) {
+      await sendMessage(
+        user.id,
+        conversationId,
+        message,
+        replying ? highlightedMessageId : undefined,
+        undefined
+      )
+    }
+
+    if (readyAttachments.length > 0) {
+      for (const attachment of readyAttachments) {
+        await sendMessage(user.id, conversationId, '', undefined, attachment.remoteUrl)
+      }
+    }
+
     setMessage('')
+    setAttachments([])
     setHighlightedMessageId('')
     setReplying(false)
-    setAttachmentOpen(false)
-    setImageUrl('')
     flatListRef.current?.scrollToIndex({ index: 0, animated: true })
   }
 
-  const onAttachmentPress = () => setAttachmentOpen(true)
+  const onAttachmentPress = useCallback(async () => {
+    try {
+      const permission = await ImagePicker.requestMediaLibraryPermissionsAsync()
+      if (!permission.granted) {
+        showToast('Photo access is required to attach images')
+        return
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        quality: 0.85,
+      })
+
+      if (result.canceled || !result.assets?.length) {
+        return
+      }
+
+      const asset = result.assets[0]
+      const attachmentId = `attachment-${Date.now().toString(36)}-${Math.random()
+        .toString(36)
+        .slice(2, 8)}`
+      setAttachments((prev) => [
+        ...prev,
+        { id: attachmentId, localUri: asset.uri, status: 'uploading' },
+      ])
+      showToast('Attaching photo…')
+
+      try {
+        const uploadedUrl = await pinataUpload(asset, { prefix: 'messages' })
+        let attachmentStillPresent = false
+        setAttachments((prev) =>
+          prev.map((attachment) => {
+            if (attachment.id === attachmentId) {
+              attachmentStillPresent = true
+              return { ...attachment, status: 'ready', remoteUrl: uploadedUrl }
+            }
+            return attachment
+          })
+        )
+
+        if (attachmentStillPresent) {
+          setLocalImageMap((prev) => ({ ...prev, [uploadedUrl]: asset.uri }))
+          if (attachmentTimersRef.current[uploadedUrl]) {
+            clearTimeout(attachmentTimersRef.current[uploadedUrl])
+          }
+          attachmentTimersRef.current[uploadedUrl] = setTimeout(() => {
+            setLocalImageMap((prev) => {
+              if (!prev[uploadedUrl]) return prev
+              const next = { ...prev }
+              delete next[uploadedUrl]
+              return next
+            })
+            delete attachmentTimersRef.current[uploadedUrl]
+          }, 120000)
+          showToast('Photo ready to send')
+        }
+      } catch (error) {
+        console.error('Failed to attach photo', error)
+        showToast('Could not attach photo')
+        setAttachments((prev) => prev.filter((attachment) => attachment.id !== attachmentId))
+      }
+    } catch (error) {
+      console.error('Failed to attach photo', error)
+      showToast('Could not attach photo')
+    }
+  }, [showToast])
+
+  const removeAttachment = useCallback(
+    (attachmentId: string) => {
+      const target = attachments.find((attachment) => attachment.id === attachmentId)
+      setAttachments((prev) => prev.filter((attachment) => attachment.id !== attachmentId))
+      if (target?.remoteUrl) {
+        const remoteUrl = target.remoteUrl
+        setLocalImageMap((prev) => {
+          if (!prev[remoteUrl]) return prev
+          const next = { ...prev }
+          delete next[remoteUrl]
+          return next
+        })
+        if (attachmentTimersRef.current[remoteUrl]) {
+          clearTimeout(attachmentTimersRef.current[remoteUrl])
+          delete attachmentTimersRef.current[remoteUrl]
+        }
+      }
+      showToast('Attachment removed')
+    },
+    [attachments, showToast]
+  )
 
   const onReplyPress = (messageId: string) => {
     setHighlightedMessageId(messageId)
@@ -221,6 +348,7 @@ export function MessagesScreen({
     const parentMessageSender = parentMessage
       ? membershipRecords.find((member) => member.expand?.user.id === parentMessage.sender)?.expand?.user
       : undefined
+    const localImageUri = item.image ? localImageMap[item.image] : undefined
 
     return (
       <MessageBubble
@@ -240,6 +368,7 @@ export function MessagesScreen({
             flatListRef.current?.scrollToIndex({ index: parentMessageIndex, animated: true })
           }
         }}
+        localImageUri={localImageUri}
       />
     )
   }
@@ -329,8 +458,8 @@ export function MessagesScreen({
             >
               {isDirectConversation
                 ? `${firstMemberUser?.firstName ?? ''} ${firstMemberUser?.lastName ?? ''}`.trim() ||
-                  conversation.title
-                : conversation.title}
+                  conversation?.title || 'Conversation'
+                : conversation?.title || 'Conversation'}
             </Text>
           </View>
           {isDirectConversation ? (
@@ -374,20 +503,6 @@ export function MessagesScreen({
         ListFooterComponent={<View style={{ height: headerHeight }} />}
       />
 
-      {attachmentOpen && (
-        <Sheet
-          onChange={(i: number) => {
-            if (i === -1) setAttachmentOpen(false)
-            setImageUrl('')
-          }}
-          style={{ padding: s.$2 }}
-        >
-          <AvatarPicker source={''} onComplete={(uri) => setImageUrl(uri)} onReplace={() => {}}>
-            {null}
-          </AvatarPicker>
-        </Sheet>
-      )}
-
       <View style={{ position: 'absolute', bottom: bottomOffset, left: 0, right: 0, paddingHorizontal: s.$075 }}>
         <MessageInput
           onMessageSubmit={onMessageSubmit}
@@ -405,7 +520,9 @@ export function MessagesScreen({
           }}
           allowAttachment
           onAttachmentPress={onAttachmentPress}
-          disabled={attachmentOpen && !imageUrl}
+          disabled={isSendDisabled}
+          attachments={attachments}
+          onAttachmentClear={removeAttachment}
           compact
         />
       </View>

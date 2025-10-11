@@ -49,7 +49,7 @@ const ChainLinkIcon = () => (
     shadowOpacity: 0.4,
     shadowRadius: 0,
     elevation: 3,
-    backgroundColor: c.surface,
+    backgroundColor: 'transparent',
   }}>
     <Svg width="23" height="26" viewBox="0 0 23 26" fill="none">
       <Path d="M12.9856 16.9807L10.4188 19.5475C9.39762 20.5686 8.01266 21.1423 6.56856 21.1423C5.12445 21.1423 3.7395 20.5686 2.71836 19.5475C1.69722 18.5263 1.12356 17.1414 1.12356 15.6973C1.12356 14.2532 1.69722 12.8682 2.71836 11.8471L5.28516 9.28027M9.13535 5.43008L11.7022 2.86328C12.7233 1.84214 14.1082 1.26847 15.5523 1.26847C16.9965 1.26847 18.3814 1.84214 19.4025 2.86328C20.4237 3.88441 20.9973 5.26937 20.9973 6.71347C20.9973 8.15758 20.4237 9.54253 19.4025 10.5637L16.8357 13.1305M7.34221 14.9236L14.8589 7.40691" stroke={c.surface} strokeWidth="2.04188" strokeLinecap="round" strokeLinejoin="round"/>
@@ -75,6 +75,7 @@ export const RefForm = ({
   onManualTransition,
   onLinkIconClick,
   onFieldEditStart,
+  bottomInset = 0,
 }: {
   existingRefFields: ExistingRefFields | null
   placeholder?: string
@@ -87,6 +88,7 @@ export const RefForm = ({
   onManualTransition?: () => void
   onLinkIconClick?: () => void
   onFieldEditStart?: () => void
+  bottomInset?: number
 }) => {
   // Separate state for each field to prevent unnecessary re-renders
   const [title, setTitle] = useState<string>(existingRefFields?.title || '')
@@ -220,7 +222,7 @@ export const RefForm = ({
         contentContainerStyle={{
         gap: s.$1,
         marginTop: s.$2 - 5,
-        marginBottom: s.$2 + 10,
+        marginBottom: (s.$2 as number) + 10 + bottomInset,
         justifyContent: 'flex-start',
         // Stretch children to container width so inputs never grow wider
         // than the sheet and inadvertently shift the whole layout.

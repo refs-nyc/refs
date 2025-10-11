@@ -588,7 +588,7 @@ export const DetailsCarouselItem = ({ item, index }: { item: ExpandedItem; index
               addRefSheetRef.current?.expand()
             }}
             variant="raised"
-            title="Add Ref +"
+            title="Add"
           />
         </View>
       )}

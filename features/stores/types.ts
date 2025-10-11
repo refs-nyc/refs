@@ -5,7 +5,7 @@ import type { MessageSlice } from './messages'
 import type { UserSlice } from './users'
 import type { UserCacheSlice } from './userCache'
 import type { FeedSlice } from './feed'
-import { ExpandedItem, Item, Profile } from '@/features/types'
+import { Item, Profile } from '@/features/types'
 import BottomSheet from '@gorhom/bottom-sheet'
 import React from 'react'
 
@@ -94,15 +94,7 @@ export type UISlice = {
   detailsItemId: string | null
   detailsProfileUsername: string | null
   detailsOpenedFromFeed: boolean
-  detailsPrefetchProfile: Profile | null
-  detailsPrefetchItems: ExpandedItem[] | null
-  setDetailsSheetData: (data: {
-    itemId: string
-    profileUsername: string
-    openedFromFeed: boolean
-    preloadedProfile?: Profile | null
-    preloadedItems?: ExpandedItem[] | null
-  }) => void
+  setDetailsSheetData: (data: { itemId: string; profileUsername: string; openedFromFeed: boolean }) => void
   clearDetailsSheetData: () => void
   // Community Form Sheet
   communityFormSheetRef: React.RefObject<BottomSheet>

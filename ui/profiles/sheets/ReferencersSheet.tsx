@@ -281,7 +281,7 @@ export default function Referencers({
                   : 'Join the chat'
                 : actionLoading
                 ? 'Working...'
-                : 'Add Ref +'
+                : 'Add'
             }
           />
         </View>

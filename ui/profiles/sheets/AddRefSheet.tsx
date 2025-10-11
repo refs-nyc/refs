@@ -9,9 +9,8 @@ import { NewRefFields } from '@/ui/actions/SearchRef'
 import { SelectItemToReplace } from '@/ui/actions/SelectItemToReplace'
 
 import BottomSheet, { BottomSheetBackdrop } from '@gorhom/bottom-sheet'
-import { useEffect, useState } from 'react'
-import { View } from 'react-native'
-import Animated, { FadeIn, FadeOut } from 'react-native-reanimated'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { View, Keyboard } from 'react-native'
 
 export const AddRefSheet = ({
   bottomSheetRef,
@@ -43,9 +42,37 @@ export const AddRefSheet = ({
     addingRefPrefill,
     setAddingRefPrefill,
     moduleBackdropAnimatedIndex,
-    detailsBackdropAnimatedIndex,
+    registerBackdropPress,
+    unregisterBackdropPress,
   } =
     useAppStore()
+
+  const [sheetIndex, setSheetIndex] = useState(-1)
+  const isSheetActive = sheetIndex >= 0
+  const backdropKeyRef = useRef<string | null>(null)
+
+  const [keyboardVisible, setKeyboardVisible] = useState(false)
+  const [keyboardHeight, setKeyboardHeight] = useState(0)
+
+  useEffect(() => {
+    const handleShow = (event: any) => {
+      setKeyboardVisible(true)
+      setKeyboardHeight(event?.endCoordinates?.height ?? 0)
+    }
+    const handleHide = () => {
+      setKeyboardVisible(false)
+      setKeyboardHeight(0)
+    }
+
+    const subs = [
+      Keyboard.addListener('keyboardWillShow', handleShow),
+      Keyboard.addListener('keyboardDidShow', handleShow),
+      Keyboard.addListener('keyboardWillHide', handleHide),
+      Keyboard.addListener('keyboardDidHide', handleHide),
+    ]
+
+    return () => subs.forEach((sub) => sub.remove())
+  }, [])
 
   useEffect(() => {
     if (addingRefId && addingRefPrefill) {
@@ -56,14 +83,15 @@ export const AddRefSheet = ({
   useEffect(() => {
     if (!addingRefId) {
       setRefFields(null)
-      if (detailsBackdropAnimatedIndex) {
-        detailsBackdropAnimatedIndex.value = -1
+      setSheetIndex(-1)
+      if (moduleBackdropAnimatedIndex) {
+        moduleBackdropAnimatedIndex.value = -1
       }
       return
     }
-
-    if (detailsBackdropAnimatedIndex) {
-      detailsBackdropAnimatedIndex.value = 0
+    setSheetIndex(0)
+    if (moduleBackdropAnimatedIndex) {
+      moduleBackdropAnimatedIndex.value = 0
     }
 
     let cancelled = false
@@ -83,12 +111,12 @@ export const AddRefSheet = ({
 
     return () => {
       cancelled = true
-      if (detailsBackdropAnimatedIndex) {
-        detailsBackdropAnimatedIndex.value = -1
+      if (moduleBackdropAnimatedIndex) {
+        moduleBackdropAnimatedIndex.value = -1
       }
       setAddingRefPrefill(null)
     }
-  }, [addingRefId, getRefById, detailsBackdropAnimatedIndex, setAddingRefPrefill])
+  }, [addingRefId, getRefById, moduleBackdropAnimatedIndex, setAddingRefPrefill])
 
   const [step, setStep] = useState<
     | 'editNewItem'
@@ -106,73 +134,110 @@ export const AddRefSheet = ({
       : step === 'editNewItem'
       ? '69%'
       : '30%'
+  const snapPoint = keyboardVisible ? '100%' : sheetHeight
 
   const disappearsOnIndex = -1
   const appearsOnIndex = 0
   const HANDLE_HEIGHT = s.$2
 
+  const resetSheetState = useCallback(() => {
+    Keyboard.dismiss()
+    setKeyboardVisible(false)
+    setKeyboardHeight(0)
+    setRefFields(null)
+    setAddingRefPrefill(null)
+    setItemToReplace(null)
+    setStagedItemFields(null)
+    setItemData(null)
+    setStep('editNewItem')
+    if (moduleBackdropAnimatedIndex) {
+      moduleBackdropAnimatedIndex.value = -1
+    }
+    if (backdropKeyRef.current) {
+      unregisterBackdropPress(backdropKeyRef.current)
+      backdropKeyRef.current = null
+    }
+  }, [moduleBackdropAnimatedIndex, unregisterBackdropPress, setAddingRefPrefill])
+
+  const prevSheetIndexRef = useRef(sheetIndex)
+
+  useEffect(() => {
+    if (sheetIndex === -1 && prevSheetIndexRef.current !== -1) {
+      resetSheetState()
+      setAddingRefId('')
+    }
+    prevSheetIndexRef.current = sheetIndex
+  }, [resetSheetState, setAddingRefId, sheetIndex])
+
+  useEffect(() => {
+    if (!isSheetActive) {
+      if (backdropKeyRef.current) {
+        unregisterBackdropPress(backdropKeyRef.current)
+        backdropKeyRef.current = null
+      }
+      return
+    }
+
+    const key = registerBackdropPress(() => {
+      setSheetIndex(-1)
+    })
+    backdropKeyRef.current = key
+
+    return () => {
+      unregisterBackdropPress(key)
+      if (backdropKeyRef.current === key) {
+        backdropKeyRef.current = null
+      }
+    }
+  }, [isSheetActive, registerBackdropPress, unregisterBackdropPress])
+
+  const containerZIndex = isSheetActive ? 10000 : 0
+
   return (
-    <BottomSheet
-      enableDynamicSizing={false}
-      ref={bottomSheetRef}
-      enablePanDownToClose={true}
-      snapPoints={[sheetHeight]}
-      index={-1}
-      style={{ zIndex: 10000 }}
-      containerStyle={{ zIndex: 10000 }}
-      animatedIndex={moduleBackdropAnimatedIndex}
-      backgroundStyle={{ backgroundColor: c.olive, borderRadius: 50, paddingTop: 0 }}
-      onAnimate={(fromIndex, toIndex) => {
-        // Dismiss keyboard immediately when sheet starts closing
-        if (fromIndex !== -1 && toIndex === -1) {
-          try {
-            require('react-native').Keyboard.dismiss()
-          } catch (e) {
-            console.warn('Failed to dismiss keyboard:', e)
-          }
-          setRefFields(null)
-          setAddingRefId('')
-          setAddingRefPrefill(null)
-          setItemToReplace(null)
-          setStagedItemFields(null)
-          setItemData(null)
-          setStep('editNewItem')
-          if (detailsBackdropAnimatedIndex) {
-            detailsBackdropAnimatedIndex.value = -1
-          }
-        }
-      }}
-      onChange={(i: number) => {
-        if (i === -1) {
-          setRefFields(null)
-          setAddingRefId('')
-          setAddingRefPrefill(null)
-          setItemToReplace(null)
-          setStagedItemFields(null)
-          setItemData(null)
-          setStep('editNewItem')
-          if (detailsBackdropAnimatedIndex) {
-            detailsBackdropAnimatedIndex.value = -1
-          }
-        }
-      }}
-      backdropComponent={(p) => (
-        <BottomSheetBackdrop
-          {...p}
-          disappearsOnIndex={disappearsOnIndex}
-          appearsOnIndex={appearsOnIndex}
-          pressBehavior={'close'}
-        />
-      )}
-      handleComponent={null}
-      keyboardBehavior="interactive"
+    <View
+      pointerEvents={isSheetActive ? 'auto' : 'none'}
+      style={{ position: 'absolute', top: 0, bottom: 0, left: 0, right: 0, zIndex: containerZIndex }}
+    >
+      <BottomSheet
+        enableDynamicSizing={false}
+        ref={bottomSheetRef}
+        enablePanDownToClose={true}
+        snapPoints={[snapPoint]}
+        index={sheetIndex}
+        style={{ flex: 1 }}
+        containerStyle={{ zIndex: containerZIndex }}
+        animatedIndex={moduleBackdropAnimatedIndex}
+        backgroundStyle={{ backgroundColor: c.olive, borderRadius: 50, paddingTop: 0 }}
+        onChange={(i: number) => {
+          setSheetIndex(i)
+        }}
+        onClose={() => {
+          setSheetIndex(-1)
+        }}
+        backdropComponent={(p) => (
+          <BottomSheetBackdrop
+            {...p}
+            disappearsOnIndex={disappearsOnIndex}
+            appearsOnIndex={appearsOnIndex}
+            pressBehavior={'close'}
+          />
+        )}
+        handleComponent={null}
+      keyboardBehavior="extend"
       keyboardBlurBehavior="restore"
       android_keyboardInputMode="adjustResize"
     >
       {!refFields || !user ? (
         <></>
       ) : step === 'editNewItem' ? (
-        <View style={{ padding: s.$3, paddingTop: s.$3 - 12 }}>
+        <View
+          style={{
+            paddingHorizontal: s.$3,
+            paddingTop: (s.$3 as number) - 12,
+            minHeight: '100%',
+            marginTop: keyboardVisible ? -40 : 0,
+          }}
+        >
           <RefForm
             existingRefFields={refFields}
             canEditRefData={false}
@@ -192,6 +257,7 @@ export const AddRefSheet = ({
               }
             }}
             backlog={false}
+            bottomInset={keyboardVisible ? keyboardHeight + 84 : 0}
           />
         </View>
       ) : step === 'selectItemToReplace' && stagedItemFields ? (
@@ -234,6 +300,7 @@ export const AddRefSheet = ({
       ) : (
         <></>
       )}
-    </BottomSheet>
+      </BottomSheet>
+    </View>
   )
 }

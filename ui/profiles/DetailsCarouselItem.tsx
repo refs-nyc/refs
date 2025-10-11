@@ -109,7 +109,11 @@ const ProfileLabel = ({ profile }: { profile: Profile }) => {
         <Text style={{ fontSize: s.$1, fontWeight: 500, opacity: 0.6, color: c.muted }}>
           {profile.firstName}
         </Text>
-        <Avatar size={s.$1} source={profile.image} />
+        <Avatar
+          size={s.$1}
+          source={profile.image || (profile as any)?.avatar_url}
+          fallback={profile.firstName || profile.name || profile.userName}
+        />
       </XStack>
     </Pressable>
   )
@@ -137,6 +141,7 @@ export const DetailsCarouselItem = ({ item, index }: { item: ExpandedItem; index
     searchingNewRef,
     addRefSheetRef,
     setAddingRefId,
+    setAddingRefPrefill,
     referencersBottomSheetRef,
     setCurrentRefId,
     getItemByIdWithFullExpansion,
@@ -554,14 +559,31 @@ export const DetailsCarouselItem = ({ item, index }: { item: ExpandedItem; index
             width: '75%',
             alignSelf: 'center',
             position: 'absolute',
-            bottom: Math.max(insets.bottom + 5, s.$05 as number),
+            bottom: Math.max(insets.bottom + 15, (s.$05 as number) + 10),
           }}
         >
           <Button
-            style={{ paddingTop: s.$2, paddingBottom: s.$2, width: '100%' }}
-            textStyle={{ fontSize: s.$1, fontWeight: 800 }}
+            style={{
+              width: '100%',
+              paddingVertical: (s.$09 as number) + 2,
+              paddingHorizontal: s.$2,
+              borderRadius: 26,
+            }}
+            textStyle={{ fontSize: s.$1, fontWeight: '600' }}
             onPress={() => {
               // open a dialog for adding this ref to your profile
+              const refRecord = item.expand?.ref as any
+              setAddingRefPrefill({
+                title: refRecord?.title || '',
+                url: refRecord?.url || '',
+                image: refRecord?.image || '',
+                meta:
+                  typeof refRecord?.meta === 'string'
+                    ? refRecord.meta
+                    : refRecord?.meta
+                    ? JSON.stringify(refRecord.meta)
+                    : '',
+              })
               setAddingRefId(item.ref)
               addRefSheetRef.current?.expand()
             }}

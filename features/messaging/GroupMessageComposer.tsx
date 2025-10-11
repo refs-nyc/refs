@@ -12,11 +12,11 @@ import {
 } from 'react-native'
 import BottomSheet, { BottomSheetBackdrop, BottomSheetView } from '@gorhom/bottom-sheet'
 import Ionicons from '@expo/vector-icons/Ionicons'
-import { router } from 'expo-router'
 
 import { useAppStore } from '@/features/stores'
 import { Avatar } from '@/ui/atoms/Avatar'
 import { c, s } from '@/features/style'
+import type { Profile } from '@/features/types'
 
 const RETRY_DELAY_MS = 2000
 
@@ -30,6 +30,7 @@ export function GroupMessageComposer() {
     createConversation,
     sendMessage,
     setMessagesForConversation,
+    showToast,
   } = useAppStore()
 
   const sheetRef = useRef<BottomSheet>(null)
@@ -38,6 +39,8 @@ export function GroupMessageComposer() {
   const pagerRef = useRef<ScrollView>(null)
   const retryTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const pendingPayloadRef = useRef<{ title: string; message: string } | null>(null)
+  const pendingSuccessRef = useRef<((context: { conversationId: string; title: string }) => void) | null>(null)
+  const targetsSnapshotRef = useRef<Profile[]>([])
 
   const [title, setTitle] = useState('')
   const [message, setMessage] = useState('')
@@ -67,6 +70,8 @@ export function GroupMessageComposer() {
       pagerRef.current?.scrollTo({ x: 0, animated: false })
       setActivePage(0)
       pendingPayloadRef.current = null
+      pendingSuccessRef.current = groupComposerOnSuccess
+      targetsSnapshotRef.current = groupComposerTargets.slice()
       clearRetry()
 
       requestAnimationFrame(() => {
@@ -78,12 +83,15 @@ export function GroupMessageComposer() {
     } else {
       clearRetry()
       sheetRef.current?.close()
+      pendingPayloadRef.current = null
+      pendingSuccessRef.current = null
+      targetsSnapshotRef.current = []
     }
 
     return () => {
       clearRetry()
     }
-  }, [groupComposerTargets.length, clearRetry])
+  }, [groupComposerTargets, groupComposerOnSuccess, clearRetry])
 
   useEffect(() => {
     const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
@@ -120,32 +128,27 @@ export function GroupMessageComposer() {
 
   const handleSendSuccess = useCallback(
     (conversationId: string, payload: { title: string; message: string }) => {
-      const successCallback = groupComposerOnSuccess
-      const snapshot = payload
+      const successCallback = pendingSuccessRef.current
 
-      closeGroupComposer()
       pendingPayloadRef.current = null
+      pendingSuccessRef.current = null
       clearRetry()
-      setTimeout(() => {
-        Keyboard.dismiss()
-      }, 0)
       setTitle('')
       setMessage('')
       setSending(false)
-      router.replace(`/messages/${conversationId}`)
-      if (successCallback) successCallback({ conversationId, title: snapshot.title })
+      if (successCallback) successCallback({ conversationId, title: payload.title })
     },
-    [closeGroupComposer, groupComposerOnSuccess, clearRetry]
+    [clearRetry]
   )
 
   const attemptSend = useCallback(async () => {
     if (!user) return
-    if (!groupComposerTargets.length) return
     const payload = pendingPayloadRef.current
-    if (!payload) return
+    const recipients = targetsSnapshotRef.current
+    if (!payload || !recipients.length) return
 
     try {
-      const memberIds = groupComposerTargets.map((member) => member.id)
+      const memberIds = recipients.map((member) => member.id)
       const conversationId = await createConversation(false, user.id, memberIds, payload.title)
       setMessagesForConversation(conversationId, [])
       handleSendSuccess(conversationId, payload)
@@ -154,6 +157,7 @@ export function GroupMessageComposer() {
         await sendMessage(user.id, conversationId, payload.message)
       } catch (error) {
         console.error('Failed to send initial group message', error)
+        showToast(`Failed to send message to ${payload.title}`)
       }
     } catch (error) {
       clearRetry()
@@ -163,12 +167,12 @@ export function GroupMessageComposer() {
     }
   }, [
     user,
-    groupComposerTargets,
     createConversation,
     sendMessage,
     handleSendSuccess,
     clearRetry,
     setMessagesForConversation,
+    showToast,
   ])
 
   const handleSend = useCallback(() => {
@@ -183,9 +187,36 @@ export function GroupMessageComposer() {
     if (!trimmedMessage || sending) return
 
     pendingPayloadRef.current = { title: trimmedTitle, message: trimmedMessage }
+    targetsSnapshotRef.current = groupComposerTargets.slice()
+    pendingSuccessRef.current = groupComposerOnSuccess
     setSending(true)
+    const firstRecipient = groupComposerTargets[0]
+    const fallbackLabel = firstRecipient
+      ? (() => {
+          const base = firstRecipient.firstName || firstRecipient.name || firstRecipient.userName || 'group'
+          const others = groupComposerTargets.length - 1
+          if (others <= 0) return base
+          const suffix = others === 1 ? ' + 1 other' : ` + ${others} others`
+          return `${base}${suffix}`
+        })()
+      : 'group chat'
+    const toastLabel = trimmedTitle || fallbackLabel
+    showToast(`Message sent to ${toastLabel}`)
+    sheetRef.current?.close()
+    closeGroupComposer()
+    Keyboard.dismiss()
     attemptSend()
-  }, [title, message, sending, triggerTitleValidationAnimation, attemptSend])
+  }, [
+    title,
+    message,
+    sending,
+    triggerTitleValidationAnimation,
+    attemptSend,
+    groupComposerTargets,
+    groupComposerOnSuccess,
+    showToast,
+    closeGroupComposer,
+  ])
 
   const titleAnimatedStyle = {
     transform: [
@@ -294,7 +325,11 @@ export function GroupMessageComposer() {
                     <View style={{ flexDirection: 'row' }}>
                       {limitedTargets.map((profile, index) => (
                         <View key={profile.id} style={{ marginLeft: index === 0 ? 0 : -10 }}>
-                          <Avatar source={profile.image} size={s.$4} />
+                          <Avatar
+                            source={profile.image || (profile as any)?.avatar_url}
+                            fallback={profile.firstName || profile.name || profile.userName}
+                            size={s.$4}
+                          />
                         </View>
                       ))}
                     </View>
@@ -381,7 +416,11 @@ export function GroupMessageComposer() {
                       paddingVertical: s.$075,
                     }}
                   >
-                    <Avatar source={profile.image} size={s.$4} />
+                    <Avatar
+                      source={profile.image || (profile as any)?.avatar_url}
+                      fallback={profile.firstName || profile.name || profile.userName}
+                      size={s.$4}
+                    />
                     <View>
                       <Text style={{ fontSize: s.$1, fontWeight: '600', color: c.muted2 }}>
                         {profile.firstName || profile.name || profile.userName}

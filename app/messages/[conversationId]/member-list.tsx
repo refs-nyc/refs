@@ -149,7 +149,11 @@ export default function MemberListScreen() {
                 paddingVertical: s.$09,
               }}
             >
-              <Avatar source={member.image} size={s.$4} />
+              <Avatar
+                source={member.image || (member as any)?.avatar_url}
+                fallback={member.firstName || member.name || member.userName}
+                size={s.$4}
+              />
               <View style={{ marginLeft: s.$075, flex: 1 }}>
                 <Text style={{ fontSize: s.$1, fontWeight: '600', color: c.muted2 }} numberOfLines={1}>
                   {displayName}

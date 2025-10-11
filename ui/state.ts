@@ -13,6 +13,8 @@ export const createUISlice: StateCreator<StoreSlices, [], [], UISlice> = (set, g
   detailsItemId: null,
   detailsProfileUsername: null,
   detailsOpenedFromFeed: false,
+  detailsPrefetchProfile: null,
+  detailsPrefetchItems: null,
   communityFormSheetRef: React.createRef<BottomSheet>(),
   communityFormOnAdded: null,
   settingsSheetRef: React.createRef<BottomSheet>(),
@@ -23,6 +25,7 @@ export const createUISlice: StateCreator<StoreSlices, [], [], UISlice> = (set, g
   referencersContext: null,
   addRefSheetRef: React.createRef(),
   addingRefId: '',
+  addingRefPrefill: null,
   newRefSheetRef: React.createRef(),
   addingNewRefTo: null,
   addRefPrompt: '',
@@ -39,8 +42,14 @@ export const createUISlice: StateCreator<StoreSlices, [], [], UISlice> = (set, g
     }))
   },
   setAddingRefId: (id: string) => {
-    set(() => ({
+    set((state) => ({
       addingRefId: id,
+      addingRefPrefill: id ? state.addingRefPrefill : null,
+    }))
+  },
+  setAddingRefPrefill: (fields) => {
+    set(() => ({
+      addingRefPrefill: fields,
     }))
   },
   setReferencersContext: (ctx) => {
@@ -58,11 +67,13 @@ export const createUISlice: StateCreator<StoreSlices, [], [], UISlice> = (set, g
       currentRefId: id,
     }))
   },
-  setDetailsSheetData: (data: { itemId: string; profileUsername: string; openedFromFeed: boolean }) => {
+  setDetailsSheetData: (data) => {
     set(() => ({
       detailsItemId: data.itemId,
       detailsProfileUsername: data.profileUsername,
       detailsOpenedFromFeed: data.openedFromFeed,
+      detailsPrefetchProfile: data.preloadedProfile ?? null,
+      detailsPrefetchItems: data.preloadedItems ?? null,
     }))
   },
   clearDetailsSheetData: () => {
@@ -70,6 +81,8 @@ export const createUISlice: StateCreator<StoreSlices, [], [], UISlice> = (set, g
       detailsItemId: null,
       detailsProfileUsername: null,
       detailsOpenedFromFeed: false,
+      detailsPrefetchProfile: null,
+      detailsPrefetchItems: null,
     }))
   },
   openCommunityFormSheet: (onAdded?: (item: any) => void) => {
@@ -271,5 +284,22 @@ export const createUISlice: StateCreator<StoreSlices, [], [], UISlice> = (set, g
     set(() => ({
       pendingInterestRemoval: data,
     }))
+  },
+  notificationPromptSheetRef: React.createRef<BottomSheet>(),
+  notificationPromptMessage: null,
+  setNotificationPromptMessage: (message) => {
+    set(() => ({
+      notificationPromptMessage: message,
+    }))
+  },
+  toast: null,
+  showToast: (message: string) => {
+    const id = Date.now()
+    set(() => ({
+      toast: { id, message },
+    }))
+  },
+  clearToast: () => {
+    set(() => ({ toast: null }))
   },
 })

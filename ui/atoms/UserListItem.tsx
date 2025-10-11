@@ -47,7 +47,11 @@ export default function UserListItem({
     >
       <View style={{ width: '100%' }}>
         <XStack style={{ justifyContent: 'flex-start', alignItems: 'center', width: '100%', ...(contentStyle ?? {}) }}>
-          <Avatar source={user.image} size={avatarSize} />
+          <Avatar
+            source={user.image || (user as any)?.avatar_url}
+            fallback={user.firstName || user.name || user.userName}
+            size={avatarSize}
+          />
           <YStack style={{ marginLeft: s.$1, alignItems: 'flex-start', gap: 4 }}>
             <Text
               style={{

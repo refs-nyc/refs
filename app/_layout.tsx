@@ -40,6 +40,7 @@ import { RegisterPushNotifications } from '@/ui/notifications/RegisterPushNotifi
 import { DirectMessageComposer } from '@/features/messaging/DirectMessageComposer'
 import { GroupMessageComposer } from '@/features/messaging/GroupMessageComposer'
 import { useAppStore } from '@/features/stores'
+import { GlobalToast } from '@/ui/feedback/Toast'
 
 import { LogBox } from 'react-native'
 import BottomSheet from '@gorhom/bottom-sheet'
@@ -51,6 +52,7 @@ import { ProfileDetailsSheet } from '@/ui/profiles/ProfileDetailsSheet'
 import { ProfileSettingsSheet } from '@/ui/profiles/sheets/ProfileSettingsSheet'
 import { CommunityFormSheet } from '@/ui/communities/CommunityFormSheet'
 import { RemoveInterestSheet } from '@/ui/communities/RemoveInterestSheet'
+import { NotificationPromptSheet } from '@/ui/notifications/NotificationPromptSheet'
 
 // TODO: this error keeps getting thrown whenever the app fast reloads in development
 // I suspect that pocketbase subscribes to updates and then doesn't unsubscribe when the app is being reloaded
@@ -214,6 +216,8 @@ function RootLayoutNav() {
         />
       </Stack>
       <Saves savesBottomSheetRef={savesBottomSheetRef} />
+      {/* profile details sheet (media carousel) */}
+      <ProfileDetailsSheet />
       {/* list of people who added this ref */}
       <Referencers referencersBottomSheetRef={referencersBottomSheetRef} />
       {/* add ref sheet */}
@@ -221,8 +225,6 @@ function RootLayoutNav() {
       {/* new ref sheet */}
       <NewRefSheet bottomSheetRef={newRefSheetRef} />
       <LogoutSheet bottomSheetRef={logoutSheetRef} />
-      {/* profile details sheet (media carousel) */}
-      <ProfileDetailsSheet />
       {/* profile settings sheet */}
       <ProfileSettingsSheet />
       {/* community form sheet */}
@@ -230,6 +232,8 @@ function RootLayoutNav() {
       <DirectMessageComposer />
       <GroupMessageComposer />
       <RemoveInterestSheet />
+      <NotificationPromptSheet />
+      <GlobalToast />
     </ThemeProvider>
   )
 }

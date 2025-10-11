@@ -12,6 +12,7 @@ import Svg, { Circle } from 'react-native-svg'
 import { registerForPushNotificationsAsync } from '@/ui/notifications/utils'
 
 const win = Dimensions.get('window')
+const PASSWORD_MIN_LENGTH = 8
 
 export function UnifiedOnboarding() {
   const { register: registerUser, updateStagedUser, setJustOnboarded } = useAppStore() as any
@@ -69,7 +70,7 @@ export function UnifiedOnboarding() {
     email &&
     email.includes('@') &&
     password &&
-    password.length >= 6 &&
+    password.length >= PASSWORD_MIN_LENGTH &&
     confirmPassword &&
     password === confirmPassword
 
@@ -103,8 +104,8 @@ export function UnifiedOnboarding() {
         setIsSubmitting(false)
         return
       }
-      if (!data.password || data.password.length < 6) {
-        setServerError('Password must be at least 6 characters')
+      if (!data.password || data.password.length < PASSWORD_MIN_LENGTH) {
+        setServerError(`Password must be at least ${PASSWORD_MIN_LENGTH} characters`)
         setIsSubmitting(false)
         return
       }
@@ -391,7 +392,7 @@ export function UnifiedOnboarding() {
             name="password"
             rules={{
               required: 'Password is required',
-              minLength: { value: 6, message: 'Password must be at least 6 characters' },
+              minLength: { value: PASSWORD_MIN_LENGTH, message: `Password must be at least ${PASSWORD_MIN_LENGTH} characters` },
             }}
             render={({ field: { onChange, onBlur, value, ref } }) => (
               <View>

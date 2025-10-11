@@ -89,7 +89,11 @@ export default function NewGCScreen() {
         <XStack gap={s.$05} style={{ flexWrap: 'wrap' }}>
           {users.map((u) => (
             <Link key={u.id} href={`/user/${u.userName}`}>
-              <Avatar source={u.image} size={s.$3} />
+              <Avatar
+                source={u.image || (u as any)?.avatar_url}
+                fallback={u.firstName || u.name || u.userName}
+                size={s.$3}
+              />
             </Link>
           ))}
         </XStack>

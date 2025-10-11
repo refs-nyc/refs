@@ -31,20 +31,64 @@ export const AddRefSheet = ({
   // the resulting item
   const [itemData, setItemData] = useState<ExpandedItem | null>(null)
 
-  const { user, moveToBacklog, removeItem, addToProfile, getRefById, addingRefId, setAddingRefId } =
+  const {
+    user,
+    moveToBacklog,
+    removeItem,
+    addToProfile,
+    addOptimisticItem,
+    getRefById,
+    addingRefId,
+    setAddingRefId,
+    addingRefPrefill,
+    setAddingRefPrefill,
+    moduleBackdropAnimatedIndex,
+    detailsBackdropAnimatedIndex,
+  } =
     useAppStore()
 
   useEffect(() => {
-    const getRef = async () => {
-      const ref = await getRefById(addingRefId)
-      setRefFields({
-        title: ref.title!,
-        image: ref.image,
-        url: ref.url,
-      })
+    if (addingRefId && addingRefPrefill) {
+      setRefFields({ ...addingRefPrefill })
     }
-    getRef()
-  }, [addingRefId])
+  }, [addingRefId, addingRefPrefill])
+
+  useEffect(() => {
+    if (!addingRefId) {
+      setRefFields(null)
+      if (detailsBackdropAnimatedIndex) {
+        detailsBackdropAnimatedIndex.value = -1
+      }
+      return
+    }
+
+    if (detailsBackdropAnimatedIndex) {
+      detailsBackdropAnimatedIndex.value = 0
+    }
+
+    let cancelled = false
+    ;(async () => {
+      try {
+        const ref = await getRefById(addingRefId)
+        if (cancelled) return
+        setRefFields({
+          title: ref.title!,
+          image: ref.image,
+          url: ref.url,
+        })
+      } catch (error) {
+        if (__DEV__) console.warn('Failed to preload ref data for AddRefSheet', { addingRefId, error })
+      }
+    })()
+
+    return () => {
+      cancelled = true
+      if (detailsBackdropAnimatedIndex) {
+        detailsBackdropAnimatedIndex.value = -1
+      }
+      setAddingRefPrefill(null)
+    }
+  }, [addingRefId, getRefById, detailsBackdropAnimatedIndex, setAddingRefPrefill])
 
   const [step, setStep] = useState<
     | 'editNewItem'
@@ -74,14 +118,27 @@ export const AddRefSheet = ({
       enablePanDownToClose={true}
       snapPoints={[sheetHeight]}
       index={-1}
+      style={{ zIndex: 10000 }}
+      containerStyle={{ zIndex: 10000 }}
+      animatedIndex={moduleBackdropAnimatedIndex}
       backgroundStyle={{ backgroundColor: c.olive, borderRadius: 50, paddingTop: 0 }}
       onAnimate={(fromIndex, toIndex) => {
         // Dismiss keyboard immediately when sheet starts closing
         if (fromIndex !== -1 && toIndex === -1) {
-          try { 
-            require('react-native').Keyboard.dismiss() 
+          try {
+            require('react-native').Keyboard.dismiss()
           } catch (e) {
             console.warn('Failed to dismiss keyboard:', e)
+          }
+          setRefFields(null)
+          setAddingRefId('')
+          setAddingRefPrefill(null)
+          setItemToReplace(null)
+          setStagedItemFields(null)
+          setItemData(null)
+          setStep('editNewItem')
+          if (detailsBackdropAnimatedIndex) {
+            detailsBackdropAnimatedIndex.value = -1
           }
         }
       }}
@@ -89,10 +146,14 @@ export const AddRefSheet = ({
         if (i === -1) {
           setRefFields(null)
           setAddingRefId('')
+          setAddingRefPrefill(null)
           setItemToReplace(null)
           setStagedItemFields(null)
           setItemData(null)
           setStep('editNewItem')
+          if (detailsBackdropAnimatedIndex) {
+            detailsBackdropAnimatedIndex.value = -1
+          }
         }
       }}
       backdropComponent={(p) => (
@@ -125,6 +186,7 @@ export const AddRefSheet = ({
                 setStep('selectItemToReplace')
               } else {
                 const newItem = await addToProfile(addingRefId, fields, false)
+                addOptimisticItem(newItem)
                 setItemData(newItem)
                 setStep('addedToGrid')
               }
@@ -153,6 +215,7 @@ export const AddRefSheet = ({
             await removeItem(itemToReplace.id)
             // add the new item to the grid
             const newItem = await addToProfile(addingRefId, stagedItemFields, false)
+            addOptimisticItem(newItem)
             setItemData(newItem)
             setStep('addedToGrid')
           }}
@@ -161,6 +224,7 @@ export const AddRefSheet = ({
             await moveToBacklog(itemToReplace.id)
             // add the new item to the grid
             const newItem = await addToProfile(addingRefId, stagedItemFields, false)
+            addOptimisticItem(newItem)
             setItemData(newItem)
             setStep('addedToGrid')
           }}

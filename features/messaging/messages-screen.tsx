@@ -163,7 +163,7 @@ export function MessagesScreen({
 
   if (!conversation || !user) return null
 
-  const bottomOffset = keyboardVisible ? keyboardHeight + 3 : insets.bottom + 15
+  const bottomOffset = keyboardVisible ? keyboardHeight + 3 : insets.bottom + 0
 
   const onMessageSubmit = () => {
     if (!message.trim()) return
@@ -245,6 +245,21 @@ export function MessagesScreen({
   }
 
   const firstMemberUser = members[0]?.expand?.user
+  const firstMemberAvatar = firstMemberUser?.image || (firstMemberUser as any)?.avatar_url || ''
+
+  const stackAvatarEntries = useMemo(
+    () =>
+      members.map((m) => {
+        const userRecord = m.expand?.user as any
+        return {
+          source: userRecord?.image || userRecord?.avatar_url || '',
+          fallback: userRecord?.firstName || userRecord?.name || userRecord?.userName || '',
+        }
+      }),
+    [members]
+  )
+  const stackSources = stackAvatarEntries.map((entry) => entry.source)
+  const stackFallbacks = stackAvatarEntries.map((entry) => entry.fallback)
 
   const handleCloseComplete = useCallback(() => {
     if (onClose) {
@@ -282,7 +297,7 @@ export function MessagesScreen({
       <View
         style={{ 
           position: 'absolute', 
-          top: 0, 
+          top: -10, 
           left: 0, 
           right: 0, 
           zIndex: 2,
@@ -327,11 +342,15 @@ export function MessagesScreen({
                 router.push(`/user/${profileUserName}`)
               }}
             >
-              <Avatar source={firstMemberUser?.image} size={s.$4} />
+              <Avatar
+                source={firstMemberAvatar}
+                fallback={firstMemberUser?.firstName || firstMemberUser?.name || firstMemberUser?.userName}
+                size={s.$4}
+              />
             </Pressable>
           ) : (
             <Link href={`/messages/${conversationId}/member-list`}>
-              <AvatarStack sources={members.map((m) => m.expand?.user.image)} size={s.$3} />
+              <AvatarStack sources={stackSources} fallbacks={stackFallbacks} size={s.$3} />
             </Link>
           )}
         </View>
@@ -348,7 +367,7 @@ export function MessagesScreen({
         style={{ flex: 1 }}
         contentContainerStyle={{
           paddingHorizontal: s.$075,
-          paddingTop: bottomOffset + 60,
+          paddingTop: bottomOffset + 70,
           paddingBottom: s.$075,
           justifyContent: 'flex-end',
         }}

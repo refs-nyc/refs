@@ -35,8 +35,6 @@ const ConditionalGridLines = React.memo(() => {
 ConditionalGridLines.displayName = 'ConditionalGridLines'
 
 export const ProfileDetailsSheet = () => {
-  const [profile, setProfile] = useState<Profile | null>(null)
-  const [gridItems, setGridItems] = useState<ExpandedItem[]>([])
   const {
     user,
     detailsSheetRef,
@@ -48,7 +46,22 @@ export const ProfileDetailsSheet = () => {
     registerBackdropPress,
     unregisterBackdropPress,
     getUserByUserName,
+    addingRefId,
+    referencersContext,
+    detailsPrefetchProfile,
+    detailsPrefetchItems,
   } = useAppStore()
+
+  const [profile, setProfile] = useState<Profile | null>(detailsPrefetchProfile)
+  const [gridItems, setGridItems] = useState<ExpandedItem[]>(() => detailsPrefetchItems ?? [])
+  useEffect(() => {
+    if (detailsPrefetchProfile) {
+      setProfile(detailsPrefetchProfile)
+    }
+    if (detailsPrefetchItems) {
+      setGridItems(detailsPrefetchItems)
+    }
+  }, [detailsPrefetchProfile, detailsPrefetchItems])
 
   // Use preloaded data for smooth animation, fallback to fetching if needed
   useEffect(() => {
@@ -58,19 +71,24 @@ export const ProfileDetailsSheet = () => {
         setGridItems([])
         return
       }
-      // Fetch data
-      const profile = await getUserByUserName(detailsProfileUsername)
-      const gridItems = await getProfileItems(profile.userName)
-      setProfile(profile)
-      setGridItems(gridItems)
+      try {
+        const [fetchedProfile, fetchedItems] = await Promise.all([
+          getUserByUserName(detailsProfileUsername),
+          getProfileItems(detailsProfileUsername),
+        ])
+        setProfile(fetchedProfile)
+        setGridItems(fetchedItems)
+      } catch (error) {
+        console.warn('Failed to load profile details', error)
+      }
     }
     initializeData()
-  }, [detailsProfileUsername, user?.userName])
+  }, [detailsProfileUsername, user?.userName, getUserByUserName])
 
   // if the current user is the item creator, then they have editing rights
   const editingRights = profile?.id === user?.id
 
-  const snapPoints = ['70%', '100%']
+  const snapPoints = ['77%', '100%']
 
   useEffect(() => {
     const key = registerBackdropPress(() => {
@@ -98,16 +116,21 @@ export const ProfileDetailsSheet = () => {
     }
   }, [clearDetailsSheetData])
 
+  const sheetZIndex = addingRefId || referencersContext ? 900 : 9000
+
   return (
     <BottomSheet
       ref={detailsSheetRef}
       index={-1}
+      style={{ zIndex: sheetZIndex }}
+      containerStyle={{ zIndex: sheetZIndex }}
       backgroundStyle={{
         backgroundColor: c.surface,
         borderRadius: 50,
         padding: 0,
         overflow: 'hidden',
       }}
+      animatedIndex={detailsBackdropAnimatedIndex}
       backdropComponent={renderBackdrop}
       handleComponent={null}
       enableDynamicSizing={false}

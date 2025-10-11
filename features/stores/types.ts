@@ -5,7 +5,7 @@ import type { MessageSlice } from './messages'
 import type { UserSlice } from './users'
 import type { UserCacheSlice } from './userCache'
 import type { FeedSlice } from './feed'
-import { Item, Profile } from '@/features/types'
+import { ExpandedItem, Item, Profile } from '@/features/types'
 import BottomSheet from '@gorhom/bottom-sheet'
 import React from 'react'
 
@@ -27,6 +27,13 @@ export type ReferencersContext =
     }
   | null
 
+export type RefPrefillFields = {
+  title: string
+  url?: string
+  image?: string
+  meta?: string
+}
+
 export type UISlice = {
   editingProfile: boolean
   addingToList: string
@@ -35,6 +42,7 @@ export type UISlice = {
   currentRefId: string
   addRefSheetRef: React.RefObject<BottomSheet>
   addingRefId: string
+  addingRefPrefill: RefPrefillFields | null
   newRefSheetRef: React.RefObject<BottomSheet>
   settingsSheetRef: React.RefObject<BottomSheet>
   isSettingsSheetOpen: boolean
@@ -46,6 +54,7 @@ export type UISlice = {
   selectedPhoto: string | null
   setAddingNewRefTo: (newState: null | 'grid' | 'backlog') => void
   setAddingRefId: (id: string) => void
+  setAddingRefPrefill: (fields: RefPrefillFields | null) => void
   setCurrentRefId: (id: string) => void
   setReferencersContext: (ctx: ReferencersContext) => void
   setAddingToList: (newState: string) => void
@@ -85,7 +94,15 @@ export type UISlice = {
   detailsItemId: string | null
   detailsProfileUsername: string | null
   detailsOpenedFromFeed: boolean
-  setDetailsSheetData: (data: { itemId: string; profileUsername: string; openedFromFeed: boolean }) => void
+  detailsPrefetchProfile: Profile | null
+  detailsPrefetchItems: ExpandedItem[] | null
+  setDetailsSheetData: (data: {
+    itemId: string
+    profileUsername: string
+    openedFromFeed: boolean
+    preloadedProfile?: Profile | null
+    preloadedItems?: ExpandedItem[] | null
+  }) => void
   clearDetailsSheetData: () => void
   // Community Form Sheet
   communityFormSheetRef: React.RefObject<BottomSheet>
@@ -123,6 +140,14 @@ export type UISlice = {
   removeInterestSheetRef: React.RefObject<BottomSheet>
   pendingInterestRemoval: { item: any; isOwner: boolean; title: string; onConfirm: () => void } | null
   setPendingInterestRemoval: (data: { item: any; isOwner: boolean; title: string; onConfirm: () => void } | null) => void
+  // Notification Prompt Sheet
+  notificationPromptSheetRef: React.RefObject<BottomSheet>
+  notificationPromptMessage: string | null
+  setNotificationPromptMessage: (message: string | null) => void
+  // Global toast notifications
+  toast: { id: number; message: string } | null
+  showToast: (message: string) => void
+  clearToast: () => void
 }
 
 export type StoreSlices = BackdropSlice &

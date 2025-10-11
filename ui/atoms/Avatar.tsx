@@ -1,57 +1,76 @@
-import { SimplePinataImage } from '../images/SimplePinataImage'
+import { useMemo } from 'react'
 import { View, Text } from 'react-native'
-import { c, s } from '@/features/style'
-import Svg, { Circle } from 'react-native-svg'
+import { Image } from 'expo-image'
+import { c } from '@/features/style'
+import { useSignedImageUrl } from '@/ui/images/SimplePinataImage'
 
-export const Avatar = ({ source, size = s.$3 }: { source: string | undefined; size: number }) => {
-  if (!source)
-    return (
-      <View
-        style={{
-          width: size,
-          height: size,
-          borderRadius: size / 2,
-          backgroundColor: 'transparent',
-        }}
-      />
-    )
+type AvatarProps = {
+  source?: string | null
+  size: number
+  fallback?: string | null
+}
+
+const deriveInitial = (text?: string | null) => {
+  const trimmed = (text || '').trim()
+  if (!trimmed) return ''
+  return trimmed[0]?.toUpperCase() ?? ''
+}
+
+export const Avatar = ({ source, size, fallback }: AvatarProps) => {
+  const finalSize = typeof size === 'number' ? size : 32
+  const initial = useMemo(() => deriveInitial(fallback), [fallback])
+  const { source: resolvedSource } = useSignedImageUrl(source, {
+    width: finalSize,
+    height: finalSize,
+  })
+
+  const circleStyle = {
+    width: finalSize,
+    height: finalSize,
+    borderRadius: finalSize / 2,
+    alignItems: 'center' as const,
+    justifyContent: 'center' as const,
+    overflow: 'hidden' as const,
+    backgroundColor: 'rgba(176,176,176,0.35)',
+  }
+
   return (
-    <>
-      <View style={{ width: size, height: size }}>
-        <SimplePinataImage
-          style={{ width: '100%', height: '100%', borderRadius: size / 2, backgroundColor: '#ddd' }}
-          originalSource={source}
-          imageOptions={{ width: size, height: size }}
+    <View style={circleStyle}>
+      {resolvedSource ? (
+        <Image
+          source={resolvedSource}
+          style={{ width: finalSize, height: finalSize, borderRadius: finalSize / 2 }}
+          contentFit="cover"
+          cachePolicy="memory-disk"
+          transition={150}
         />
-      </View>
-    </>
+      ) : initial ? (
+        <Text style={{ color: c.surface, fontWeight: '700' }}>{initial}</Text>
+      ) : null}
+    </View>
   )
 }
 
 export const AvatarStack = ({
   sources,
-  size = s.$3,
+  size = 32,
+  fallbacks,
 }: {
   sources: (string | undefined)[]
-  size: number
+  size?: number | string
+  fallbacks?: (string | undefined)[]
 }) => {
-  let shownSources = sources.filter((s) => s) as string[]
-  if (shownSources.length > 3) shownSources = shownSources.slice(0, 3)
-
+  const finalSize = typeof size === 'number' ? size : Number(size) || 32
+  const shownSources = sources.filter((s): s is string => Boolean(s)).slice(0, 3)
   const others = sources.length - shownSources.length
-  const overlap = size * 0.4
+  const overlap = finalSize * 0.4
 
   return (
     <View style={{ flexDirection: 'column', alignItems: 'flex-end' }}>
       <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-        {shownSources.map((source, index) => (
-          <View
-            key={index}
-            style={{
-              marginLeft: index === 0 ? 0 : -overlap,
-            }}
-          >
-            <Avatar source={source} size={size} />
+        {shownSources.map((src, index) => (
+          <View key={src + index} style={{ marginLeft: index === 0 ? 0 : -overlap }}>
+            <Avatar source={src} fallback={fallbacks?.[index]} size={finalSize} />
           </View>
         ))}
       </View>

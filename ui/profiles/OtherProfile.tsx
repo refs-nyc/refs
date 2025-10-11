@@ -403,6 +403,8 @@ export const OtherProfile = ({ userName, prefetchedUserId }: { userName: string;
                       itemId: item!.id,
                       profileUsername: profile.userName,
                       openedFromFeed: false,
+                      preloadedProfile: profile,
+                      preloadedItems: gridItems.slice(),
                     })
                     detailsSheetRef.current?.snapToIndex(0)
                   }}

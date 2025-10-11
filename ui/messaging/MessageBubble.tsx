@@ -37,6 +37,9 @@ export default function MessageBubble({
 
   const messageReactions = reactions[message.id]
 
+  const senderAvatar = sender?.image || (sender as any)?.avatar_url || ''
+  const senderFallback = sender?.firstName || sender?.name || sender?.userName || null
+
   const timeZone = calendars[0].timeZone || 'America/New_York'
 
   const isMe = message.sender === user?.id
@@ -48,7 +51,7 @@ export default function MessageBubble({
       {sender && showSender && !isMe && (
         <View style={{ alignSelf: 'flex-end' }}>
           <Link href={`/user/${sender.userName}`}>
-            <Avatar source={sender.image} size={s.$3} />
+            <Avatar source={senderAvatar} fallback={senderFallback} size={s.$3} />
           </Link>
         </View>
       )}
@@ -101,6 +104,10 @@ export default function MessageBubble({
             <XStack>
               {messageReactions.map((r) => {
                 const isMine = r.user === user?.id
+                const reactionUser = r.expand?.user as any
+                const reactionUserImage = reactionUser?.image || reactionUser?.avatar_url || ''
+                const reactionFallback =
+                  reactionUser?.firstName || reactionUser?.name || reactionUser?.userName || null
                 return (
                   <Pressable key={r.id} onPress={isMine ? () => deleteReaction(r.id) : null}>
                     <XStack
@@ -111,7 +118,7 @@ export default function MessageBubble({
                       }}
                     >
                       <Text>{r.emoji}</Text>
-                      <Avatar source={r.expand?.user.image} size={s.$1} />
+                      <Avatar source={reactionUserImage} fallback={reactionFallback} size={s.$1} />
                     </XStack>
                   </Pressable>
                 )

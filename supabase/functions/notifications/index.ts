@@ -123,13 +123,23 @@ serve(async (req) => {
     for (const id of notification.recipientIds) {
       const token = tokenMap.get(id)
       if (!token) continue
-      messages.push({
+      const message: Record<string, unknown> = {
         to: token,
         sound: null,
         title: notification.title,
         body: notification.body,
         data: notification.data ?? {},
-      })
+      }
+      
+      // Add iOS-specific threading if threadId is present
+      if (notification.data?.threadId) {
+        message.ios = {
+          _displayInForeground: true,
+          threadId: notification.data.threadId,
+        }
+      }
+      
+      messages.push(message)
     }
   }
 

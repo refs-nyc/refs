@@ -58,6 +58,10 @@
 - Refreshed the app icon to use the venn diagram mark on the `c.surface` background so TestFlight builds reflect the latest brand palette.
 - Supabase now mirrors PocketBase push tokens: added `users.push_token`, and the client updates both stores whenever registration succeeds (or clears).
 - Introduced Supabase Edge Function `notifications` to send Expo pushes given a batch of recipient user IDs; PocketBase hooks (messages/items/memberships) call it for DMs, ref matches, copying from a profile, and community joins.
+- Push notifications now prompt contextually after important actions (first DM, creating/joining chats) using smart permission checking: undetermined shows custom sheet, granted registers silently, denied prompts to open iOS settings. Removed the old push notification toggle from onboarding since permissions are now contextually requested.
+- Implemented notification tap handling: message notifications navigate to conversation, ref activity notifications navigate to actor's profile, community join notifications navigate to group chat.
+- Added iOS notification threading: messages group by conversationId, ref activity groups by refId so users see organized notification stacks instead of spam.
+- Fixed double-notification bug: users who own a ref no longer receive both "copied from your grid" AND "also added this ref" notifications.
 - **CRITICAL ARCHITECTURE: Global Bottom Sheet Dimming**
   - The app uses a centralized dimming system with `NavigationBackdrop` (`zIndex: 1000`) rendered at root level in `_layout.tsx`, positioned between `<Navigation>` and `<Stack>`.
   - All global sheets (Saves, Referencers, AddRefSheet, NewRefSheet, LogoutSheet, ProfileDetailsSheet, ProfileSettingsSheet, CommunityFormSheet, DirectMessageComposer, GroupMessageComposer, RemoveInterestSheet) MUST be rendered at root level in `_layout.tsx` AFTER the NavigationBackdrop.

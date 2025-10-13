@@ -4,6 +4,7 @@ import Constants from 'expo-constants'
 import { registerForPushNotificationsAsync } from './utils'
 import { useAppStore } from '@/features/stores'
 import { supabase } from '@/features/supabase/client'
+import { router } from 'expo-router'
 
 export function RegisterPushNotifications() {
   const [expoPushToken, setExpoPushToken] = useState('')
@@ -70,8 +71,20 @@ export function RegisterPushNotifications() {
         setNotification(notification)
       })
 
-      responseListener.current = Notifications.addNotificationResponseReceivedListener(() => {
-        // no-op for now
+      responseListener.current = Notifications.addNotificationResponseReceivedListener((response) => {
+        const data = response.notification.request.content.data
+        
+        // Handle navigation based on notification type
+        if (data?.type === 'message:new' && data?.conversationId) {
+          // Navigate to the conversation
+          router.push(`/messages/${data.conversationId}`)
+        } else if ((data?.type === 'ref:copied_from_profile' || data?.type === 'ref:match') && data?.actorUserName) {
+          // Navigate to the actor's profile
+          router.push(`/user/${data.actorUserName}`)
+        } else if (data?.type === 'community:joined' && data?.conversationId) {
+          // Navigate to the group chat
+          router.push(`/messages/${data.conversationId}`)
+        }
       })
 
       process.env.NODE_ENV === 'development' && logInformation()

@@ -77,7 +77,11 @@ export default function NewDMScreen() {
           gap={s.$1}
           style={{ alignItems: 'center', justifyContent: 'space-between', padding: s.$1 }}
         >
-          <Avatar source={profile.image} size={s.$4} />
+          <Avatar
+            source={profile.image || (profile as any)?.avatar_url}
+            fallback={profile.firstName || profile.name || profile.userName}
+            size={s.$4}
+          />
         </XStack>
         <MessageInput
           onMessageSubmit={onMessageSubmit}

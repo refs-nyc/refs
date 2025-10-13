@@ -1,6 +1,6 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { View, Text, ScrollView, Pressable, StyleProp, ViewStyle } from 'react-native'
-import Animated, { FadeIn, FadeOut, useSharedValue, useAnimatedStyle, withSequence, withTiming, withSpring } from 'react-native-reanimated'
+import Animated, { useSharedValue, useAnimatedStyle, withSequence, withTiming, withSpring } from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useAppStore } from '@/features/stores'
 import UserListItem from '@/ui/atoms/UserListItem'
@@ -34,8 +34,6 @@ export function WantToMeetPanel({
   )
   const insets = useSafeAreaInsets()
 
-  const [toastMessage, setToastMessage] = useState<string | null>(null)
-  const toastTimerRef = useRef<NodeJS.Timeout | null>(null)
   const countScale = useSharedValue(1)
   const countAnimatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: countScale.value }],
@@ -48,27 +46,10 @@ export function WantToMeetPanel({
     )
   }, [savedUsers.length])
 
-  useEffect(() => {
-    return () => {
-      if (toastTimerRef.current) clearTimeout(toastTimerRef.current)
-    }
-  }, [])
-
-  const showToast = (message: string) => {
-    if (toastTimerRef.current) clearTimeout(toastTimerRef.current)
-    setToastMessage(message)
-    toastTimerRef.current = setTimeout(() => setToastMessage(null), 3000)
-  }
-
   const handleDmPress = () => {
     if (!(selectedUsers.length === 1 && user?.id)) return
     const target = selectedUsers[0]
-    openDMComposer(target, {
-      onSuccess: (profile) => {
-        const displayName = profile.firstName || profile.name || 'user'
-        showToast(`Message sent to ${displayName}`)
-      },
-    })
+    openDMComposer(target)
   }
 
   const handleGroupPress = () => {
@@ -76,8 +57,6 @@ export function WantToMeetPanel({
     openGroupComposer(selectedUsers, {
       onSuccess: ({ title }) => {
         setSelected({})
-        const displayTitle = title?.trim() || 'Group chat'
-        showToast(`Group chat "${displayTitle}" created`)
       },
     })
   }
@@ -251,38 +230,6 @@ export function WantToMeetPanel({
         </View>
       )}
 
-      {showActions && toastMessage && (
-        <Animated.View
-          entering={FadeIn.duration(200)}
-          exiting={FadeOut.duration(200)}
-          style={{ position: 'absolute', left: 10, right: 10, bottom: insets.bottom + 35 }}
-        >
-          <Pressable
-            onPress={() => {
-              setToastMessage(null)
-              router.navigate('/messages')
-            }}
-            style={{
-              backgroundColor: c.accent,
-              paddingVertical: s.$1,
-              paddingHorizontal: s.$1,
-              borderRadius: s.$075 + 10,
-              flexDirection: 'row',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              shadowColor: '#000',
-              shadowOpacity: 0.15,
-              shadowRadius: 8,
-              shadowOffset: { width: 0, height: 4 },
-            }}
-          >
-            <Text style={{ color: c.surface, fontWeight: '700', fontSize: (s.$09 as number) + 2 }}>
-              {toastMessage}
-            </Text>
-            <Ionicons name="arrow-forward" size={18} color={c.surface} />
-          </Pressable>
-        </Animated.View>
-      )}
     </View>
   )
 }

@@ -5,6 +5,7 @@ import { useAppStore } from '@/features/stores'
 import { Avatar } from '@/ui/atoms/Avatar'
 import { c, s } from '@/features/style'
 import Ionicons from '@expo/vector-icons/Ionicons'
+import { promptForNotifications } from '@/ui/notifications/utils'
 
 export function DirectMessageComposer() {
   const {
@@ -18,6 +19,7 @@ export function DirectMessageComposer() {
     sendMessage,
     getDirectConversations,
     setMessagesForConversation,
+    showToast,
   } = useAppStore()
 
   const sheetRef = useRef<BottomSheet>(null)
@@ -58,9 +60,25 @@ export function DirectMessageComposer() {
     const trimmed = message.trim()
     if (!trimmed || sending) return
 
+    const targetSnapshot = dmComposerTarget
+    if (!targetSnapshot?.id) return
+
     setSending(true)
     try {
+      const successCallback = dmComposerOnSuccess
       let conversationId = dmComposerInitialConversationId ?? ''
+
+      const displayName = targetSnapshot.firstName || targetSnapshot.name || targetSnapshot.userName || 'user'
+
+      // Optimistically close the composer and surface feedback immediately
+      sheetRef.current?.close()
+      closeDMComposer()
+      setMessage('')
+      Keyboard.dismiss()
+      showToast(`Message sent to ${displayName}`)
+      if (successCallback && targetSnapshot) {
+        successCallback(targetSnapshot)
+      }
 
       if (!conversationId) {
         const directConversations = await getDirectConversations()
@@ -68,7 +86,7 @@ export function DirectMessageComposer() {
           const otherUserId = conversation.expand?.memberships_via_conversation
             .map((m) => m.expand?.user.id)
             .filter((id) => id !== user.id)[0]
-          if (otherUserId === dmComposerTarget.id) {
+          if (otherUserId === targetSnapshot.id) {
             conversationId = conversation.id
             break
           }
@@ -76,19 +94,20 @@ export function DirectMessageComposer() {
       }
 
       if (!conversationId) {
-        conversationId = await createConversation(true, user.id, [dmComposerTarget.id])
+        conversationId = await createConversation(true, user.id, [targetSnapshot.id])
         setMessagesForConversation(conversationId, [])
       }
 
       await sendMessage(user.id, conversationId, trimmed)
-      const successCallback = dmComposerOnSuccess
-      const targetSnapshot = dmComposerTarget
-      closeDMComposer()
-      setMessage('')
-      Keyboard.dismiss()
-      if (successCallback && targetSnapshot) successCallback(targetSnapshot)
+      
+      // Prompt for notifications after first DM (fire-and-forget)
+      const targetName = targetSnapshot?.firstName || targetSnapshot?.name || 'them'
+      promptForNotifications(`Receive a notification when ${targetName} messages you?`).catch(() => {})
     } catch (error) {
       console.warn('Failed to send direct message', error)
+      const fallbackName =
+        targetSnapshot?.firstName || targetSnapshot?.name || targetSnapshot?.userName || 'user'
+      showToast(`Failed to send message to ${fallbackName}`)
     } finally {
       setSending(false)
     }
@@ -125,7 +144,11 @@ export function DirectMessageComposer() {
               <Text style={{ fontSize: s.$1, fontWeight: '700', color: c.muted2 }}>
                 Message to {dmComposerTarget.firstName || dmComposerTarget.name || ''}
               </Text>
-              <Avatar source={dmComposerTarget.image} size={s.$4} />
+              <Avatar
+                source={dmComposerTarget.image || (dmComposerTarget as any)?.avatar_url}
+                fallback={dmComposerTarget.firstName || dmComposerTarget.name || dmComposerTarget.userName}
+                size={s.$4}
+              />
             </View>
             <View
               style={{

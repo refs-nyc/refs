@@ -7,37 +7,50 @@ import { StyleProp, useWindowDimensions, View, ViewStyle } from 'react-native'
 // Cache for signed URLs to avoid repeated API calls
 const signedUrlCache = new Map<string, { url: string; expires: number }>()
 
-function useSignedImageUrl(originalSource: string, imageOptions: OptimizeImageOptions) {
-  const [loading, setLoading] = useState(true)
-  const [source, setSource] = useState<string | null>(null)
+export function useSignedImageUrl(originalSource: string | null | undefined, imageOptions: OptimizeImageOptions) {
+  const safeSource = originalSource?.trim() || ''
+  const [loading, setLoading] = useState(Boolean(safeSource))
+  const [source, setSource] = useState<string | null>(safeSource || null)
   const { getSignedUrl, signedUrls } = useAppStore()
 
   const url = useMemo(
-    () => constructPinataUrl(originalSource, imageOptions),
-    [originalSource, imageOptions]
+    () => (safeSource ? constructPinataUrl(safeSource, imageOptions) : ''),
+    [safeSource, imageOptions]
   )
+  const cacheKey = url || safeSource
 
   const fetchSignedUrl = useCallback(async () => {
+    if (!safeSource) {
+      setSource(null)
+      setLoading(false)
+      return
+    }
     try {
-      const signedUrl = await getSignedUrl(url)
+      const targetUrl = cacheKey
+      const signedUrl = await getSignedUrl(targetUrl)
       setSource(signedUrl)
       setLoading(false)
       
       // Cache the signed URL
-      signedUrlCache.set(url, {
+      signedUrlCache.set(targetUrl, {
         url: signedUrl,
         expires: Date.now() + 3600000 // 1 hour cache
       })
     } catch (error) {
       // Fallback to original source if signing fails
-      setSource(originalSource)
+      setSource(safeSource)
       setLoading(false)
     }
-  }, [url, originalSource, getSignedUrl])
+  }, [url, safeSource, getSignedUrl])
 
   useEffect(() => {
+    if (!safeSource) {
+      setSource(null)
+      setLoading(false)
+      return
+    }
     // Check local cache first
-    const cached = signedUrlCache.get(url)
+    const cached = signedUrlCache.get(cacheKey)
     if (cached && cached.expires > Date.now()) {
       setSource(cached.url)
       setLoading(false)
@@ -45,15 +58,16 @@ function useSignedImageUrl(originalSource: string, imageOptions: OptimizeImageOp
     }
 
     // Check Zustand store cache
-    if (signedUrls[url] && signedUrls[url].expires + signedUrls[url].date > Date.now()) {
-      setSource(signedUrls[url].signedUrl)
+    const storeEntry = signedUrls[cacheKey]
+    if (storeEntry && storeEntry.expires + storeEntry.date > Date.now()) {
+      setSource(storeEntry.signedUrl)
       setLoading(false)
       return
     }
 
     // Fetch new signed URL
     fetchSignedUrl()
-  }, [url, signedUrls[url], originalSource, fetchSignedUrl])
+  }, [cacheKey, safeSource, signedUrls, fetchSignedUrl])
 
   return { source, loading }
 }
@@ -76,11 +90,11 @@ export const SimplePinataImage = ({
   }), [imageOptions.height, imageOptions.width, scale])
   
   const { source, loading } = useSignedImageUrl(originalSource, imageOptionsWithScale)
-  
+
   if (loading) {
     return <View style={placeholderStyle} />
   }
-  
+
   return (
     <Image 
       {...props} 

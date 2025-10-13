@@ -67,7 +67,11 @@ export const FeedRow: React.FC<FeedRowProps> = ({
       >
         <Pressable onPress={handlePressActor} hitSlop={8}>
           <View>
-            <Avatar source={entry.actor.avatar} size={avatarSize} />
+            <Avatar
+              source={entry.actor.avatar}
+              fallback={entry.actor.displayName}
+              size={avatarSize}
+            />
           </View>
         </Pressable>
 

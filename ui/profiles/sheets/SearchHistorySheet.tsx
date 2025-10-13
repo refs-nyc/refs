@@ -77,8 +77,16 @@ export default function SearchHistorySheet({
   const renderBackdrop = (props: any) => <BottomSheetBackdrop {...props} />
 
   // Optimized thumbnail component for search history
-  const FastThumbnail = ({ source, size = 64 }: { source: string | undefined; size: number }) => {
-    return <Avatar source={source} size={size} />
+  const FastThumbnail = ({
+    source,
+    size = 64,
+    fallback,
+  }: {
+    source: string | undefined
+    size: number
+    fallback?: string
+  }) => {
+    return <Avatar source={source} fallback={fallback} size={size} />
   }
 
   return (
@@ -128,6 +136,7 @@ export default function SearchHistorySheet({
                         key={person.id || idx}
                         size={64}
                         source={person.avatar_url || person.avatar || undefined}
+                        fallback={person.name || person.userName}
                       />
                     ))
                   ) : (

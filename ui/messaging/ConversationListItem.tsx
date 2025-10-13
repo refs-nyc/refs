@@ -54,12 +54,14 @@ export default function ConversationListItem({
   const avatarSlotPadding = 5
   const avatarSlotWidth = directAvatarSize + avatarSlotPadding * 2
 
-  const groupAvatarSources = useMemo(
+  const groupAvatars = useMemo(
     () =>
-      conversation.is_direct
-        ? []
-        : members.map((member) => member.image).filter((src): src is string => !!src),
-    [conversation.is_direct, members]
+      members.map((member) => ({
+        id: member.id,
+        source: member.image || (member as any)?.avatar_url || '',
+        fallback: member.firstName || member.name || member.userName || '',
+      })),
+    [members]
   )
 
   const displayTitle = conversation.is_direct && members[0]
@@ -74,23 +76,27 @@ export default function ConversationListItem({
 
   const renderConversationAvatar = () => {
     if (conversation.is_direct) {
-      const directImage = members.find((member) => member.image)?.image
-      return <Avatar source={directImage} size={directAvatarSize} />
+      const directMember = members[0]
+      const directSource = directMember?.image || (directMember as any)?.avatar_url || ''
+      const directFallback = directMember
+        ? directMember.firstName || directMember.name || directMember.userName
+        : null
+      return <Avatar source={directSource} fallback={directFallback} size={directAvatarSize} />
     }
 
-    if (groupAvatarSources.length <= 1) {
-      const source = groupAvatarSources[0]
-      if (!source) return <View style={{ width: directAvatarSize, height: directAvatarSize }} />
-      return <Avatar source={source} size={directAvatarSize} />
+    if (groupAvatars.length <= 1) {
+      const single = groupAvatars[0]
+      if (!single?.source) return <View style={{ width: directAvatarSize, height: directAvatarSize }} />
+      return <Avatar source={single.source} fallback={single.fallback} size={directAvatarSize} />
     }
 
-    const extraCount = Math.max(groupAvatarSources.length - 3, 0)
+    const extraCount = Math.max(groupAvatars.length - 3, 0)
     const showExtraBadge = extraCount > 0
-    const displayedSources = showExtraBadge
-      ? groupAvatarSources.slice(0, 2)
-      : groupAvatarSources.slice(0, Math.min(groupAvatarSources.length, 3))
+    const displayedAvatars = showExtraBadge
+      ? groupAvatars.slice(0, 2)
+      : groupAvatars.slice(0, Math.min(groupAvatars.length, 3))
 
-    const elements: (string | null)[] = [...displayedSources, ...(showExtraBadge ? [null] : [])]
+    const elements = [...displayedAvatars, ...(showExtraBadge ? [null] : [])]
     const elementCount = elements.length
     const elementSizeMultiplier = elementCount === 2 ? 0.54 : 0.4
     const elementSize = directAvatarSize * elementSizeMultiplier
@@ -101,9 +107,9 @@ export default function ConversationListItem({
 
     return (
       <View style={{ width: directAvatarSize, height: directAvatarSize }}>
-        {elements.map((source, index) => {
+        {elements.map((entry, index) => {
           const left = startOffset + index * (elementSize - overlap)
-          if (!source) {
+          if (!entry) {
             return (
               <View
                 key={`extra-${index}`}
@@ -125,8 +131,8 @@ export default function ConversationListItem({
           }
 
           return (
-            <View key={`${source}-${index}`} style={{ position: 'absolute', top: topOffset, left }}>
-              <Avatar source={source} size={elementSize} />
+            <View key={`${entry.id}-${index}`} style={{ position: 'absolute', top: topOffset, left }}>
+              <Avatar source={entry.source} fallback={entry.fallback} size={elementSize} />
             </View>
           )
         })}

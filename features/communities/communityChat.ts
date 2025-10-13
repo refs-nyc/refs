@@ -3,6 +3,7 @@ import { useAppStore } from '@/features/stores'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { supabase } from '@/features/supabase/client'
 import type { Conversation, ExpandedMembership, Message } from '@/features/types'
+import { ClientResponseError } from 'pocketbase'
 
 type InterestMeta = {
   community?: string
@@ -64,6 +65,30 @@ export const ensureCommunityChat = async (
   return { conversationId: conversation.id, meta: updatedMeta }
 }
 
+const isDuplicateMembershipError = (error: unknown) => {
+  if (!error || typeof error !== 'object') return false
+
+  const candidate = error as Partial<ClientResponseError> & {
+    response?: { data?: Record<string, any> }
+  }
+
+  const data = candidate.data ?? candidate.response?.data
+  if (!data || typeof data !== 'object') return false
+
+  return Object.values(data).some((field: any) => {
+    if (!field || typeof field !== 'object') return false
+    const code = field.code
+    if (typeof code === 'string' && code.includes('not_unique')) {
+      return true
+    }
+    const message = field.message
+    if (typeof message === 'string') {
+      return message.toLowerCase().includes('unique')
+    }
+    return false
+  })
+}
+
 export const joinCommunityChat = async (conversationId: string, userId: string): Promise<void> => {
   let alreadyMember = false
   try {
@@ -74,7 +99,32 @@ export const joinCommunityChat = async (conversationId: string, userId: string):
   } catch {}
 
   if (!alreadyMember) {
-    await pocketbase.collection('memberships').create({ conversation: conversationId, user: userId })
+    try {
+      await pocketbase.collection('memberships').create({ conversation: conversationId, user: userId })
+    } catch (error) {
+      if (isDuplicateMembershipError(error)) {
+        alreadyMember = true
+      } else if (error instanceof ClientResponseError && error.status === 400) {
+        try {
+          const confirm = await pocketbase.collection('memberships').getList(1, 1, {
+            filter: pocketbase.filter('conversation = {:cid} && user = {:uid}', {
+              cid: conversationId,
+              uid: userId,
+            }),
+          })
+          if ((confirm?.items?.length ?? 0) > 0) {
+            alreadyMember = true
+          } else {
+            throw error
+          }
+        } catch (innerError) {
+          if (innerError === error) throw error
+          throw innerError
+        }
+      } else {
+        throw error
+      }
+    }
   }
   await refreshConversation(conversationId)
 

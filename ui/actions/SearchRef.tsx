@@ -74,6 +74,7 @@ export type NewRefFields = {
   image?: string | ImagePickerAsset
   url?: string
   promptContext?: string
+  meta?: string
 }
 
 export const SearchRef = ({

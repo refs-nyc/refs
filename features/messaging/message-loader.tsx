@@ -27,6 +27,7 @@ type ExpandedConversation = ConversationsResponse<{
 
 const CONVERSATION_PAGE_SIZE = 20
 const PREVIEW_BATCH_SIZE = 4
+const MAX_PREFETCH_CONVERSATIONS = 6
 
 const pause = (ms = 0) =>
   new Promise<void>((resolve) => {
@@ -353,20 +354,6 @@ export function MessagesInit() {
       }
     }
 
-    const warmAdditionalPages = async (startPage: number, totalPages: number) => {
-      for (let page = startPage; page <= totalPages; page += 1) {
-        if (cancelledRef.current) break
-        await pause(24)
-        const result = await loadConversationPage(page)
-        if (!result?.items?.length || cancelledRef.current) continue
-        const chunks = chunk(result.items, PREVIEW_BATCH_SIZE)
-        for (const batch of chunks) {
-          if (cancelledRef.current) break
-          await buildPreviewBatch(batch)
-        }
-      }
-    }
-
     const loadReactions = async () => {
       try {
         const reactions = await pocketbase.collection('reactions').getFullList<ExpandedReaction>({ expand: 'user' })
@@ -393,26 +380,23 @@ export function MessagesInit() {
       const firstPage = await loadConversationPage(1)
       if (!firstPage?.items?.length || cancelledRef.current) return
 
-      const firstBatch = firstPage.items.slice(0, PREVIEW_BATCH_SIZE)
+      const limitedItems = firstPage.items.slice(0, MAX_PREFETCH_CONVERSATIONS)
+      const firstBatch = limitedItems.slice(0, PREVIEW_BATCH_SIZE)
       if (firstBatch.length) {
         schedule(() => buildPreviewBatch(firstBatch))
       }
 
-      const remaining = firstPage.items.slice(PREVIEW_BATCH_SIZE)
+      const remaining = limitedItems.slice(PREVIEW_BATCH_SIZE)
       if (remaining.length) {
         const batches = chunk(remaining, PREVIEW_BATCH_SIZE)
         batches.forEach((batch, index) => {
           schedule(() => buildPreviewBatch(batch), 12 * (index + 1))
         })
       }
-
-      if (firstPage.totalPages > 1) {
-        schedule(() => warmAdditionalPages(2, firstPage.totalPages), 32)
-      }
     })
 
-    schedule(loadReactions, 48)
-    schedule(loadSaves, 64)
+    schedule(loadReactions, 96)
+    schedule(loadSaves, 128)
 
     return () => {
       cancelledRef.current = true

@@ -310,6 +310,7 @@ export const NewRefSheet = ({
                 ;(async () => {
                   try {
                     const newItem = await addToProfile(existingRefId, mergedFields, backlog)
+                    useAppStore.getState().replaceOptimisticItem(optimisticItem.id, newItem)
                     setItemData(newItem)
                   } catch (error) {
                     console.error('Failed to add item to profile:', error)

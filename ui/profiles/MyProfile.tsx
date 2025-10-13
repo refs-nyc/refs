@@ -257,40 +257,48 @@ export const MyProfile = ({ userName }: { userName: string }) => {
     return [...gridItems, ...filteredOptimisticItems]
   }, [gridItems, optimisticItems.size]) // Only depend on size, not the actual objects
 
+  const animatedItemsRef = useRef<Set<string>>(new Set())
+  const prevOptimisticIdsRef = useRef<string[]>([])
+
   // Track newly added optimistic items for animation
   useEffect(() => {
-    // Only run if we have optimistic items
-    if (optimisticItems.size === 0) return
-    
-    const optimisticItemsArray = Array.from(optimisticItems.values())
-    
-    // Find optimistic items that aren't in the grid items AND haven't been animated yet
-    const newOptimisticItems = optimisticItemsArray.filter(item => 
-      !gridItems.some(gridItem => gridItem.id === item.id) && 
-      !animatedItemsRef.current.has(item.id)
-    )
-    
-    if (newOptimisticItems.length > 0) {
-      const newItemId = newOptimisticItems[0].id
-      
-      // Mark this item as animated
-      animatedItemsRef.current.add(newItemId)
-      
-      // Set the first new optimistic item as the newly added item
-      setNewlyAddedItemId(newItemId)
-      
-      // Clear the animation after 1.5 seconds but DON'T remove optimistic item yet
-      const timer = setTimeout(() => {
-        setNewlyAddedItemId(null)
-        
-        // Don't remove optimistic item here - let it stay until real item is confirmed
-        // removeOptimisticItem(newItemId)
-        // console.log('🗑️ REMOVED OPTIMISTIC ITEM FROM STORE:', newItemId)
-      }, 1500)
-      
-      return () => clearTimeout(timer)
+    const currentIds = Array.from(optimisticItems.keys())
+    const previousIds = prevOptimisticIdsRef.current
+    prevOptimisticIdsRef.current = currentIds
+
+    if (currentIds.length === 0) {
+      return
     }
-  }, [optimisticItems.size, gridItems.length]) // Only depend on sizes, not the actual objects
+
+    const gridItemIds = new Set(gridItems.map((item) => item.id))
+    const newIds = currentIds.filter((id) => !previousIds.includes(id))
+
+    if (newIds.length === 0) {
+      return
+    }
+
+    let candidateId: string | null = null
+    for (let index = newIds.length - 1; index >= 0; index -= 1) {
+      const id = newIds[index]
+      if (gridItemIds.has(id)) continue
+      if (animatedItemsRef.current.has(id)) continue
+      candidateId = id
+      break
+    }
+
+    if (!candidateId) {
+      return
+    }
+
+    animatedItemsRef.current.add(candidateId)
+    setNewlyAddedItemId(candidateId)
+
+    const timer = setTimeout(() => {
+      setNewlyAddedItemId(null)
+    }, 500)
+
+    return () => clearTimeout(timer)
+  }, [optimisticItems, gridItems])
 
   // Remove optimistic items when real items are confirmed
   useEffect(() => {
@@ -310,19 +318,8 @@ export const MyProfile = ({ userName }: { userName: string }) => {
     })
   }, [gridItems, optimisticItems.size])
 
-  // Cleanup optimistic items when component unmounts to prevent re-animation
-  useEffect(() => {
-    return () => {
-      // When component unmounts, clear any remaining optimistic items
-      const optimisticItemsArray = Array.from(optimisticItems.values())
-      optimisticItemsArray.forEach(item => {
-        removeOptimisticItem(item.id)
-      })
-      
-      // Also clear any animation state
-      setNewlyAddedItemId(null)
-    }
-  }, [optimisticItems.size])
+  // Keep optimistic refs around between submissions so grid tiles stay visible;
+  // no cleanup on size changes so in-flight items persist while uploads finish.
 
   const [newlyAddedItemId, setNewlyAddedItemId] = useState<string | null>(null)
   const [promptSuggestions, setPromptSuggestions] = useState<PromptSuggestion[]>(() => createPromptBatch())
@@ -780,9 +777,6 @@ export const MyProfile = ({ userName }: { userName: string }) => {
       />
     </>
   ) : null
-  
-  // Track which items have already been animated to prevent re-animation on grid refresh
-  const animatedItemsRef = useRef<Set<string>>(new Set())
   
   // Direct photo form state
   const [showDirectPhotoForm, setShowDirectPhotoForm] = useState(false)
@@ -1621,11 +1615,12 @@ export const MyProfile = ({ userName }: { userName: string }) => {
                       // Background database operations
                       ;(async () => {
                         try {
-                          await addToProfile(null, mergedFields, false)
+                          const createdItem = await addToProfile(null, mergedFields, false)
+                          useAppStore.getState().replaceOptimisticItem(optimisticItem.id, createdItem)
                         } catch (error) {
                           console.error('Failed to add item to profile:', error)
                           // Remove optimistic item on failure
-                          removeOptimisticItem(optimisticItem.id)
+                          useAppStore.getState().removeOptimisticItem(optimisticItem.id)
                         }
                       })()
                     }}

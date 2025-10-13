@@ -16,6 +16,7 @@ import { SimplePinataImage } from '@/ui/images/SimplePinataImage'
 import { SearchLoadingSpinner } from '@/ui/atoms/SearchLoadingSpinner'
 import { router } from 'expo-router'
 import { Image } from 'expo-image'
+import { promptForNotifications } from '@/ui/notifications/utils'
 
 const win = Dimensions.get('window')
 const BADGE_OVERHANG = 8
@@ -155,28 +156,58 @@ export function EdgeCorkboardScreen() {
         if (!user?.id) return
         const key = `community_subs:${user.id}:edge-patagonia`
         const sb: any = (supabase as any).client
-        let refIds: string[] | null = null
+
+        let remoteIds: string[] | null = null
+        let remoteFetchSucceeded = false
         if (sb) {
           const resp = await sb
             .from('community_subscriptions')
             .select('ref_id')
             .eq('user_id', user.id)
             .eq('community', 'edge-patagonia')
+
           if (!resp.error && Array.isArray(resp.data)) {
-            refIds = resp.data.map((r: any) => r.ref_id)
-            await AsyncStorage.setItem(key, JSON.stringify(refIds))
+            remoteFetchSucceeded = true
+            remoteIds = resp.data
+              .map((r: any) => r?.ref_id)
+              .filter((id: any): id is string => typeof id === 'string' && id.length > 0)
+          } else if (resp?.error) {
+            if (__DEV__) console.warn('Supabase subscription load failed:', resp.error)
           }
         }
-        if (!refIds) {
+
+        let cachedIds: string[] = []
+        try {
           const raw = await AsyncStorage.getItem(key)
-          if (raw) refIds = JSON.parse(raw)
+          if (raw) {
+            const parsed = JSON.parse(raw)
+            if (Array.isArray(parsed)) {
+              cachedIds = parsed.filter((id: any): id is string => typeof id === 'string' && id.length > 0)
+            }
+          }
+        } catch (storageError) {
+          if (__DEV__) console.warn('Failed to parse cached community subscriptions', storageError)
         }
+
+        const merged = new Set<string>([
+          ...cachedIds,
+          ...((Array.isArray(remoteIds) ? remoteIds : []) as string[]),
+        ])
+        const finalIds = Array.from(merged)
+
+        if (remoteFetchSucceeded) {
+          AsyncStorage.setItem(key, JSON.stringify(finalIds)).catch((error) =>
+            console.warn('Failed to persist merged subscriptions locally:', error)
+          )
+        }
+
         if (cancelled) return
-        if (Array.isArray(refIds)) {
-          const map = new Map<string, boolean>()
-          for (const id of refIds) map.set(id, true)
-          setSubscriptions(map)
+
+        const map = new Map<string, boolean>()
+        for (const id of finalIds) {
+          map.set(id, true)
         }
+        setSubscriptions(map)
       } catch (e) {
         if (__DEV__) console.warn('Subscriptions load failed:', e)
       }
@@ -333,6 +364,11 @@ export function EdgeCorkboardScreen() {
               })
               await joinCommunityChat(conversationId, user.id)
               setConversationPreview(conversationId, null, 0)
+              
+              // Prompt for notifications after joining (fire-and-forget)
+              const chatTitle = item?.expand?.ref?.title || item?.title || 'this chat'
+              promptForNotifications(`Receive notifications for ${chatTitle}?`).catch(() => {})
+              
               if (sb) {
                 const result = await sb
                   .from('community_subscriptions')
@@ -785,6 +821,11 @@ export function EdgeCorkboardScreen() {
                           title: promptLike.expand?.ref?.title || promptLike.title || 'Community chat',
                         })
                         await joinCommunityChat(conversationId, user.id)
+                        
+                        // Prompt for notifications after creating interest (fire-and-forget)
+                        const chatTitle = promptLike.expand?.ref?.title || promptLike.title || 'this chat'
+                        promptForNotifications(`Receive a notification when someone joins ${chatTitle}?`).catch(() => {})
+                        
                         router.push(`/messages/${conversationId}`)
                       } catch (error) {
                         console.warn('Failed to open chat after creating interest', error)

@@ -96,6 +96,7 @@ function handleMessageCreated(record) {
         type: 'message:new',
         conversationId,
         messageId: record.id,
+        threadId: conversationId, // Group by conversation for iOS notification threading
       },
     },
   ])
@@ -111,6 +112,10 @@ function handleItemCreated(record) {
   const ref = $app.dao().findFirstRecordByFilter('refs', `id = "${refId}"`)
   const refTitle = ref?.get('title') || 'a ref'
   const actorName = getUserDisplayName(creatorId)
+  
+  // Get actor's userName for navigation
+  const actor = $app.dao().findFirstRecordByFilter('users', `id = "${creatorId}"`)
+  const actorUserName = actor?.get('userName') || ''
 
   // Notify parent profile owner if applicable
   const parentId = record.get('parent')
@@ -123,12 +128,14 @@ function handleItemCreated(record) {
           type: 'ref:copied_from_profile',
           refId,
           itemId: record.id,
+          actorUserName,
+          threadId: refId, // Group by ref for iOS notification threading
         },
       },
     ])
   }
 
-  // Notify everyone else who has this ref
+  // Notify everyone else who has this ref (excluding parent to avoid double notification)
   const otherItems = $app
     .dao()
     .findRecordsByFilter('items', `ref = "${refId}" && creator != "${creatorId}"`)
@@ -136,7 +143,8 @@ function handleItemCreated(record) {
   const otherCreators = new Set()
   for (const item of otherItems || []) {
     const otherCreator = item.get('creator')
-    if (otherCreator) {
+    // Skip if this is the parent profile owner (they already got a notification)
+    if (otherCreator && otherCreator !== parentId) {
       otherCreators.add(otherCreator)
     }
   }
@@ -150,6 +158,8 @@ function handleItemCreated(record) {
           type: 'ref:match',
           refId,
           itemId: record.id,
+          actorUserName,
+          threadId: refId, // Group by ref for iOS notification threading
         },
       },
     ])
@@ -195,6 +205,7 @@ function handleMembershipCreated(record) {
         type: 'community:joined',
         conversationId,
         userId,
+        threadId: conversationId, // Group by conversation for iOS notification threading
       },
     },
   ])

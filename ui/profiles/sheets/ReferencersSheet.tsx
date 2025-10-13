@@ -26,12 +26,27 @@ export default function Referencers({
     getItemsByRefIds,
     addRefSheetRef,
     setAddingRefId,
+    setAddingRefPrefill,
     currentRefId,
     referencersContext,
     setReferencersContext,
     setProfileNavIntent,
+    moduleBackdropAnimatedIndex,
+    detailsBackdropAnimatedIndex,
   } = useAppStore()
   const [actionLoading, setActionLoading] = useState(false)
+
+  useEffect(() => {
+    if (referencersContext && detailsBackdropAnimatedIndex) {
+      detailsBackdropAnimatedIndex.value = 0
+      return () => {
+        detailsBackdropAnimatedIndex.value = -1
+      }
+    }
+    if (detailsBackdropAnimatedIndex) {
+      detailsBackdropAnimatedIndex.value = -1
+    }
+  }, [referencersContext, detailsBackdropAnimatedIndex])
 
   useEffect(() => {
     const getUsers = async () => {
@@ -102,6 +117,18 @@ export default function Referencers({
     getUsers()
   }, [currentRefId, referencersContext, user?.id])
 
+  useEffect(() => {
+    if (referencersContext && detailsBackdropAnimatedIndex) {
+      detailsBackdropAnimatedIndex.value = 0
+      return () => {
+        detailsBackdropAnimatedIndex.value = -1
+      }
+    }
+    if (detailsBackdropAnimatedIndex) {
+      detailsBackdropAnimatedIndex.value = -1
+    }
+  }, [referencersContext, detailsBackdropAnimatedIndex])
+
   const renderBackdrop = useCallback(
     (p: any) => <BottomSheetBackdrop {...p} disappearsOnIndex={-1} appearsOnIndex={0} />,
     []
@@ -111,6 +138,9 @@ export default function Referencers({
     <BottomSheet
       ref={referencersBottomSheetRef}
       index={-1}
+      style={{ zIndex: 10000 }}
+      containerStyle={{ zIndex: 10000 }}
+      animatedIndex={moduleBackdropAnimatedIndex}
       backdropComponent={renderBackdrop}
       enablePanDownToClose={true}
       enableDynamicSizing={false}
@@ -120,6 +150,9 @@ export default function Referencers({
       onChange={(index) => {
         if (index === -1) {
           setReferencersContext(null)
+          if (detailsBackdropAnimatedIndex) {
+            detailsBackdropAnimatedIndex.value = -1
+          }
         }
       }}
     >
@@ -183,8 +216,13 @@ export default function Referencers({
           }}
         >
           <Button
-            style={{ paddingTop: s.$2, paddingBottom: s.$2, width: '100%' }}
-            textStyle={{ fontSize: s.$1, fontWeight: 800 }}
+            style={{
+              width: '100%',
+              paddingVertical: (s.$09 as number) + 2,
+              paddingHorizontal: s.$2,
+              borderRadius: 26,
+            }}
+            textStyle={{ fontSize: s.$1, fontWeight: '600' }}
             onPress={async () => {
               if (referencersContext?.type === 'community') {
                 if (!currentRefId || !user?.id || actionLoading) return
@@ -215,6 +253,17 @@ export default function Referencers({
                   setActionLoading(false)
                 }
               } else {
+                setAddingRefPrefill({
+                  title: refData?.title || referencersContext?.title || '',
+                  url: refData?.url || '',
+                  image: refData?.image || '',
+                  meta:
+                    typeof refData?.meta === 'string'
+                      ? refData.meta
+                      : refData?.meta
+                      ? JSON.stringify(refData.meta)
+                      : '',
+                })
                 setAddingRefId(currentRefId)
                 addRefSheetRef.current?.expand()
               }
@@ -232,7 +281,7 @@ export default function Referencers({
                   : 'Join the chat'
                 : actionLoading
                 ? 'Working...'
-                : 'Add Ref +'
+                : 'Add'
             }
           />
         </View>

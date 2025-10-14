@@ -1,39 +1,24 @@
 import { StateCreator } from 'zustand'
-import {
-  Conversation,
-  ConversationWithMemberships,
-  ExpandedMembership,
-  ExpandedReaction,
-  ExpandedSave,
-  Message,
-  Reaction,
-  Save,
-} from '../types'
+import { ConversationWithMemberships, ExpandedReaction, ExpandedSave, Message, Reaction, Save } from '../types'
 import { pocketbase } from '../pocketbase'
 import { ClientResponseError } from 'pocketbase'
-import { simpleCache } from '@/features/cache/simpleCache'
+import { queryClient } from '@/core/queryClient'
+import type { InfiniteData } from '@tanstack/react-query'
+import { messagingKeys, type ConversationMessagesPage, type ConversationsPage } from '@/features/queries/messaging'
+import { wantToMeetKeys } from '@/features/queries/wantToMeet'
 import type { StoreSlices } from './types'
 import type { Profile } from '../types'
 
 export const PAGE_SIZE = 10
 
 export type MessageSlice = {
-  conversations: Record<string, Conversation>
-  setConversations: (conversations: Conversation[]) => void
-  updateConversation: (conversation: Conversation) => void
   createConversation: (
     is_direct: boolean,
     creatorId: string,
     otherMemberIds: string[],
     title?: string
   ) => Promise<string>
-  addConversation(conversation: Conversation): void
   getDirectConversations: () => Promise<ConversationWithMemberships[]>
-
-  memberships: Record<string, ExpandedMembership[]>
-  setMemberships: (memberships: ExpandedMembership[]) => void
-  addMembership: (membership: ExpandedMembership) => void
-  updateMembership: (membership: ExpandedMembership) => void
   createMemberships: (userIds: string[], conversationId: string) => Promise<void>
 
   sendMessage: (
@@ -43,29 +28,12 @@ export type MessageSlice = {
     parentMessageId?: string,
     imageUrl?: string
   ) => Promise<void>
-  messagesPerConversation: Record<string, Message[]>
-  setMessagesForConversation: (conversationId: string, messages: Message[]) => void
-  setConversationPreview: (conversationId: string, message: Message | null, unreadCount: number) => void
-  setConversationPreviews: (
-    entries: Array<{ conversationId: string; message: Message | null; unreadCount: number }>
-  ) => void
-  oldestLoadedMessageDate: Record<string, string>
-  setOldestLoadedMessageDate: (conversationId: string, dateString: string) => void
-  addOlderMessages: (conversationId: string, messages: Message[]) => void
-  addNewMessage: (conversationId: string, message: Message) => void
-  firstMessageDate: Record<string, string>
-  setFirstMessageDate: (conversationId: string, dateString: string) => void
-  updateLastRead: (conversationId: string, userId: string) => Promise<void>
-  getNewMessages: (conversationId: string, oldestLoadedMessageDate: string) => Promise<Message[]>
-  conversationHydration: Record<string, 'preview' | 'hydrated'>
-  conversationLoading: Record<string, boolean>
-  loadConversationMessages: (conversationId: string, options?: { force?: boolean }) => Promise<void>
+  updateLastRead: (conversationId: string, userId: string, lastReadDate?: string) => Promise<void>
   conversationUnreadCounts: Record<string, number>
   setConversationUnreadCount: (conversationId: string, count: number) => void
   incrementConversationUnreadCount: (conversationId: string, amount?: number) => void
   resetConversationUnreadCount: (conversationId: string) => void
-
-  hydrateConversation: (conversationId: string) => Promise<void>
+  clearConversationUnreadCounts: () => void
 
   reactions: Record<string, ExpandedReaction[]>
   setReactions: (reactions: ExpandedReaction[]) => void
@@ -74,12 +42,8 @@ export type MessageSlice = {
   deleteReaction: (id: string) => Promise<void>
   removeReaction: (reaction: Reaction) => void
 
-  saves: ExpandedSave[]
-  setSaves: (saves: ExpandedSave[]) => void
   addSave: (userId: string, profileHint?: Partial<Profile>) => Promise<void>
   removeSave: (id: string) => Promise<void>
-  savesHydrated: boolean
-  ensureSavesLoaded: () => Promise<void>
 
   archiveConversation: (userId: string, conversationId: string) => Promise<void>
   unarchiveConversation: (userId: string, conversationId: string) => Promise<void>
@@ -87,23 +51,7 @@ export type MessageSlice = {
 }
 
 export const createMessageSlice: StateCreator<StoreSlices, [], [], MessageSlice> = (set, get) => ({
-  conversations: {},
-  conversationHydration: {},
-  conversationLoading: {},
   conversationUnreadCounts: {},
-  setConversations: (items: Conversation[]) => {
-    const newItems: Record<string, Conversation> = {}
-    items.forEach((item) => {
-      newItems[item.id] = item
-    })
-
-    set({ conversations: newItems })
-  },
-  updateConversation: (conversation) => {
-    set((state) => ({
-      conversations: { ...state.conversations, [conversation.id]: conversation },
-    }))
-  },
   createConversation: async (
     is_direct: boolean,
     creatorId: string,
@@ -125,56 +73,17 @@ export const createMessageSlice: StateCreator<StoreSlices, [], [], MessageSlice>
           pocketbase.collection('memberships').create({ conversation: newConversation.id, user: userId })
         )
       )
-
-      const newMemberships = await pocketbase
-        .collection('memberships')
-        .getFullList<ExpandedMembership>({
-          filter: `conversation = "${newConversation.id}"`,
-          expand: 'user',
-        })
-
-      set((state) => ({
-        conversations: { ...state.conversations, [newConversation.id]: newConversation },
-        memberships: { ...state.memberships, [newConversation.id]: newMemberships },
-      }))
+      queryClient.invalidateQueries({ queryKey: messagingKeys.conversations(creatorId) })
 
       return newConversation.id
     } catch (error) {
       throw new Error()
     }
   },
-  addConversation: (conversation) => {
-    set((state) => ({
-      conversations: { ...state.conversations, [conversation.id]: conversation },
-    }))
-  },
   getDirectConversations: async () => {
     return await pocketbase.collection<ConversationWithMemberships>('conversations').getFullList({
       filter: `is_direct = true`,
       expand: 'memberships_via_conversation.user',
-    })
-  },
-  memberships: {},
-  addMembership: (membership) => {
-    set((state) => {
-      const prev = state.memberships[membership.conversation] || []
-      return {
-        memberships: {
-          ...state.memberships,
-          [membership.conversation]: [...prev, membership],
-        },
-      }
-    })
-  },
-  updateMembership: (membership) => {
-    set((state) => {
-      const prev = state.memberships[membership.conversation] || []
-      return {
-        memberships: {
-          ...state.memberships,
-          [membership.conversation]: prev.map((m) => (m.id === membership.id ? membership : m)),
-        },
-      }
     })
   },
   async createMemberships(userIds, conversationId): Promise<void> {
@@ -185,31 +94,13 @@ export const createMessageSlice: StateCreator<StoreSlices, [], [], MessageSlice>
           .create({ conversation: conversationId, user: userId })
       }
 
-      const newMemberships = await pocketbase
-        .collection('memberships')
-        .getFullList<ExpandedMembership>({
-          filter: `conversation = "${conversationId}"`,
-          expand: 'user',
-        })
-
-      set((state) => ({
-        memberships: { ...state.memberships, [conversationId]: newMemberships },
-      }))
+      const currentUserId = pocketbase.authStore.record?.id
+      if (currentUserId) {
+        queryClient.invalidateQueries({ queryKey: messagingKeys.conversations(currentUserId) })
+      }
     } catch (error) {
       console.error(error)
     }
-  },
-  setMemberships: (memberships) => {
-    const newItems: Record<string, ExpandedMembership[]> = {}
-    memberships.forEach((item) => {
-      if (newItems[item.conversation]) {
-        newItems[item.conversation].push(item)
-      } else {
-        newItems[item.conversation] = [item]
-      }
-    })
-
-    set({ memberships: newItems })
   },
   sendMessage: async (senderId, conversationId, text, parentMessageId, imageUrl) => {
     try {
@@ -221,212 +112,72 @@ export const createMessageSlice: StateCreator<StoreSlices, [], [], MessageSlice>
         image: imageUrl,
       })
 
-      set((state) => {
-        const current = state.messagesPerConversation[conversationId] || []
-        const alreadyExists = current.some((m) => m.id === message.id)
-        const nextMessages = alreadyExists ? current : [message, ...current]
+      set((state) => ({
+        conversationUnreadCounts: {
+          ...state.conversationUnreadCounts,
+          [conversationId]: 0,
+        },
+      }))
 
-        return {
-          messagesPerConversation: {
-            ...state.messagesPerConversation,
-            [conversationId]: nextMessages,
-          },
-          conversationHydration: {
-            ...state.conversationHydration,
-            [conversationId]: nextMessages.length > 1 ? 'hydrated' : (state.conversationHydration[conversationId] ?? 'preview'),
-          },
-          conversationUnreadCounts: {
-            ...state.conversationUnreadCounts,
-            [conversationId]: 0,
-          },
+      queryClient.setQueryData<InfiniteData<ConversationMessagesPage>>(
+        messagingKeys.messages(conversationId),
+        (existing) => {
+          if (!existing) return existing
+          const [firstPage, ...restPages] = existing.pages
+          if (!firstPage) {
+            return {
+              pageParams: existing.pageParams,
+              pages: [
+                {
+                  cursor: undefined,
+                  nextCursor: undefined,
+                  messages: [message],
+                  firstMessageDate: message.created,
+                },
+                ...restPages,
+              ],
+            }
+          }
+
+          if (firstPage.messages.some((entry) => entry.id === message.id)) {
+            return existing
+          }
+
+          return {
+            ...existing,
+            pages: [
+              { ...firstPage, messages: [message, ...firstPage.messages] },
+              ...restPages,
+            ],
+          }
         }
-      })
+      )
+
+      queryClient.invalidateQueries({ queryKey: messagingKeys.conversations(senderId) })
 
       const membership = await pocketbase
         .collection('memberships')
         .getFirstListItem(`conversation = "${conversationId}" && user = "${senderId}"`)
-      await pocketbase
-        .collection('memberships')
-        .update(membership.id, { last_read: message.created })
+      await pocketbase.collection('memberships').update(membership.id, { last_read: message.created })
     } catch (error) {
       console.error(error)
     }
   },
 
-  messagesPerConversation: {},
-  oldestLoadedMessageDate: {},
-  firstMessageDate: {},
-  setMessagesForConversation: (conversationId: string, messages: Message[]) => {
-    set((state) => ({
-      messagesPerConversation: { ...state.messagesPerConversation, [conversationId]: messages },
-      conversationHydration: { ...state.conversationHydration, [conversationId]: 'hydrated' },
-    }))
-  },
-  setConversationPreview: (conversationId: string, message: Message | null, unreadCount: number) => {
-    set((state) => ({
-      messagesPerConversation: {
-        ...state.messagesPerConversation,
-        [conversationId]: message ? [message] : [],
-      },
-      conversationHydration: {
-        ...state.conversationHydration,
-        [conversationId]: 'preview',
-      },
-      conversationUnreadCounts: {
-        ...state.conversationUnreadCounts,
-        [conversationId]: unreadCount,
-      },
-    }))
-  },
-  setConversationPreviews: (entries) => {
-    if (!entries?.length) return
-    set((state) => {
-      const messagesPerConversation = { ...state.messagesPerConversation }
-      const conversationHydration = { ...state.conversationHydration }
-      const conversationUnreadCounts = { ...state.conversationUnreadCounts }
-      for (const { conversationId, message, unreadCount } of entries) {
-        if (!conversationId) continue
-        messagesPerConversation[conversationId] = message ? [message] : []
-        conversationHydration[conversationId] = 'preview'
-        if (typeof unreadCount === 'number') {
-          conversationUnreadCounts[conversationId] = unreadCount
-        }
-      }
-      return {
-        messagesPerConversation,
-        conversationHydration,
-        conversationUnreadCounts,
-      }
-    })
-  },
-  addOlderMessages: (conversationId: string, messages: Message[]) => {
-    set((state) => {
-      const existing = state.messagesPerConversation[conversationId] || []
-      const newMessages = messages.filter((m) => !existing.some((m2) => m2.id === m.id))
-      return {
-        messagesPerConversation: {
-          ...state.messagesPerConversation,
-          [conversationId]: [...existing, ...newMessages],
-        },
-      }
-    })
-  },
-  addNewMessage: (conversationId: string, message: Message) => {
-    const currentUserId = get().user?.id
-    set((state) => {
-      const existing = state.messagesPerConversation[conversationId] || []
-      if (existing.some((m) => m.id === message.id)) {
-        return state
-      }
-      const nextMessages = [message, ...existing]
-      const nextUnread = message.sender === currentUserId
-        ? 0
-        : (state.conversationUnreadCounts[conversationId] || 0) + 1
-
-      return {
-        messagesPerConversation: {
-          ...state.messagesPerConversation,
-          [conversationId]: nextMessages,
-        },
-        conversationHydration: {
-          ...state.conversationHydration,
-          [conversationId]: nextMessages.length > 1 ? 'hydrated' : (state.conversationHydration[conversationId] ?? 'preview'),
-        },
-        conversationUnreadCounts: {
-          ...state.conversationUnreadCounts,
-          [conversationId]: nextUnread,
-        },
-      }
-    })
-  },
-  setOldestLoadedMessageDate: (conversationId: string, dateString: string) => {
-    set((state) => ({
-      oldestLoadedMessageDate: {
-        ...state.oldestLoadedMessageDate,
-        [conversationId]: dateString,
-      },
-    }))
-  },
-  setFirstMessageDate: (conversationId: string, dateString: string) => {
-    set((state) => ({
-      firstMessageDate: { ...state.firstMessageDate, [conversationId]: dateString },
-    }))
-  },
-  loadConversationMessages: async (conversationId: string, options?: { force?: boolean }) => {
-    const { force } = options || {}
-    const { conversationHydration, conversationLoading } = get()
-    if (!force && conversationHydration[conversationId] === 'hydrated') return
-    if (conversationLoading[conversationId]) return
-
-    set((state) => ({
-      conversationLoading: { ...state.conversationLoading, [conversationId]: true },
-    }))
-
+  updateLastRead: async (conversationId: string, userId: string, lastReadDate?: string) => {
     try {
-      const page = await pocketbase.collection('messages').getList<Message>(1, PAGE_SIZE, {
-        filter: `conversation = "${conversationId}"`,
-        sort: '-created',
-      })
+      const membership = await pocketbase
+        .collection('memberships')
+        .getFirstListItem(
+          pocketbase.filter('conversation = {:cid} && user = {:uid}', {
+            cid: conversationId,
+            uid: userId,
+          })
+        )
 
-      const items = page.items || []
-      const oldest = items[items.length - 1]?.created
-      let firstMessageDate = oldest || ''
-
-      if ((page.totalItems ?? items.length) > items.length) {
-        const lastPage = Math.max(page.totalPages ?? 1, 1)
-        const oldestResponse = await pocketbase.collection('messages').getList<Message>(lastPage, 1, {
-          filter: `conversation = "${conversationId}"`,
-          sort: 'created',
-        })
-        firstMessageDate = oldestResponse.items[0]?.created || firstMessageDate
+      if (lastReadDate) {
+        await pocketbase.collection('memberships').update(membership.id, { last_read: lastReadDate })
       }
-
-      set((state) => ({
-        messagesPerConversation: {
-          ...state.messagesPerConversation,
-          [conversationId]: items,
-        },
-        conversationHydration: {
-          ...state.conversationHydration,
-          [conversationId]: 'hydrated',
-        },
-        conversationLoading: {
-          ...state.conversationLoading,
-          [conversationId]: false,
-        },
-        oldestLoadedMessageDate: oldest
-          ? { ...state.oldestLoadedMessageDate, [conversationId]: oldest }
-          : state.oldestLoadedMessageDate,
-        firstMessageDate: firstMessageDate
-          ? { ...state.firstMessageDate, [conversationId]: firstMessageDate }
-          : state.firstMessageDate,
-      }))
-    } catch (error) {
-      console.error('loadConversationMessages failed', error)
-      set((state) => ({
-        conversationLoading: {
-          ...state.conversationLoading,
-          [conversationId]: false,
-        },
-      }))
-      throw error
-    }
-  },
-  updateLastRead: async (conversationId: string, userId: string) => {
-    try {
-      const messagesForConversation = get().messagesPerConversation[conversationId]
-      if (!Array.isArray(messagesForConversation) || messagesForConversation.length === 0) return
-
-      const lastReadDate = messagesForConversation[0]?.created
-      if (!lastReadDate) return
-
-      const membershipsForConversation = get().memberships[conversationId]
-      if (!Array.isArray(membershipsForConversation) || membershipsForConversation.length === 0) return
-
-      const ownMembership = membershipsForConversation.find((m) => m.expand?.user.id === userId)
-      if (!ownMembership?.id) return
-
-      await pocketbase.collection('memberships').update(ownMembership.id, { last_read: lastReadDate })
 
       set((state) => ({
         conversationUnreadCounts: {
@@ -459,45 +210,8 @@ export const createMessageSlice: StateCreator<StoreSlices, [], [], MessageSlice>
       conversationUnreadCounts: { ...state.conversationUnreadCounts, [conversationId]: 0 },
     }))
   },
-  hydrateConversation: async (conversationId: string) => {
-    const { conversations, conversationLoading } = get()
-    if (conversations[conversationId]) return
-    if (conversationLoading[conversationId]) return
-
-    set((state) => ({
-      conversationLoading: { ...state.conversationLoading, [conversationId]: true },
-    }))
-
-    try {
-      const record = await pocketbase
-        .collection('conversations')
-        .getOne<ConversationWithMemberships>(conversationId, {
-          expand: 'memberships_via_conversation.user',
-        })
-
-      const expandedMemberships = (record.expand?.memberships_via_conversation || []).map((membership) => ({
-        ...membership,
-        conversation: membership.conversation ?? record.id,
-      })) as ExpandedMembership[]
-
-      set((state) => ({
-        conversations: { ...state.conversations, [record.id]: record },
-        memberships: { ...state.memberships, [record.id]: expandedMemberships },
-        conversationLoading: { ...state.conversationLoading, [conversationId]: false },
-      }))
-    } catch (error) {
-      set((state) => ({
-        conversationLoading: { ...state.conversationLoading, [conversationId]: false },
-      }))
-      throw error
-    }
-  },
-  getNewMessages: async (conversationId: string, oldestLoadedMessageDate: string) => {
-    const newMessages = await pocketbase.collection('messages').getList<Message>(1, PAGE_SIZE, {
-      filter: `conversation = "${conversationId}" && created < "${oldestLoadedMessageDate}"`,
-      sort: '-created',
-    })
-    return newMessages.items
+  clearConversationUnreadCounts: () => {
+    set(() => ({ conversationUnreadCounts: {} }))
   },
 
   reactions: {},
@@ -563,20 +277,6 @@ export const createMessageSlice: StateCreator<StoreSlices, [], [], MessageSlice>
     }
   },
   saves: [],
-  savesHydrated: false,
-  setSaves: (saves: ExpandedSave[]) => {
-    set(() => ({
-      saves,
-      savesHydrated: true,
-    }))
-
-    const userId = pocketbase.authStore.record?.id
-    if (userId) {
-      void simpleCache.set('saves', saves, userId).catch((error) => {
-        console.warn('Persisting saves cache failed', error)
-      })
-    }
-  },
   addSave: async (userId: string, profileHint?: Partial<Profile>) => {
     const savedBy = pocketbase.authStore.record?.id
     if (!savedBy) {
@@ -584,78 +284,53 @@ export const createMessageSlice: StateCreator<StoreSlices, [], [], MessageSlice>
       return
     }
 
+    const optimisticId = `optimistic-save-${userId}-${Date.now()}`
     const now = new Date().toISOString()
-    let optimisticId: string | null = null
-    if (profileHint) {
-      const deriveName = () => {
-        if (profileHint?.name && profileHint.name.trim()) return profileHint.name.trim()
-        const first = profileHint?.firstName?.trim() || ''
-        const last = profileHint?.lastName?.trim() || ''
-        const combined = `${first} ${last}`.trim()
-        if (combined) return combined
-        return profileHint?.userName || ''
-      }
-
-      const optimisticUser: any = {
-        id: userId,
-        firstName: profileHint?.firstName ?? deriveName().split(' ')[0] ?? '',
-        lastName: profileHint?.lastName ?? deriveName().split(' ').slice(1).join(' '),
-        name: deriveName(),
-        userName: profileHint?.userName ?? '',
-        location: profileHint?.location ?? '',
-        image: profileHint?.image ?? '',
-        avatar_url: profileHint?.avatar_url ?? profileHint?.image ?? '',
-      }
-
-      optimisticId = `temp-save-${userId}-${Date.now()}`
-      const optimisticSave = {
-        id: optimisticId,
-        collectionId: 'saves',
-        collectionName: 'saves',
-        created: now,
-        updated: now,
-        saved_by: savedBy,
-        user: userId,
-        expand: { user: optimisticUser },
-      } as unknown as ExpandedSave
-
-      set((state) => {
-        if (state.saves.some((s) => s.expand?.user?.id === userId || s.id === optimisticId)) {
-          return { saves: state.saves, savesHydrated: true }
-        }
-        return {
-          saves: [...state.saves, optimisticSave],
-          savesHydrated: true,
-        }
-      })
+    const optimisticUser = {
+      id: userId,
+      firstName: profileHint?.firstName ?? '',
+      lastName: profileHint?.lastName ?? '',
+      name: profileHint?.name ?? `${profileHint?.firstName ?? ''} ${profileHint?.lastName ?? ''}`.trim(),
+      userName: profileHint?.userName ?? '',
+      location: profileHint?.location ?? '',
+      image: profileHint?.image ?? '',
+      avatar_url: profileHint?.avatar_url ?? profileHint?.image ?? '',
     }
+    const optimisticSave: ExpandedSave = {
+      id: optimisticId,
+      collectionId: 'saves',
+      collectionName: 'saves',
+      created: now,
+      updated: now,
+      user: userId,
+      saved_by: savedBy,
+      expand: {
+        user: optimisticUser as any,
+      },
+    } as ExpandedSave
+
+    queryClient.setQueryData<ExpandedSave[]>(wantToMeetKeys.list(savedBy), (previous = []) => {
+      if (previous.some((entry) => entry.id === optimisticId || entry.user === userId)) {
+        return previous
+      }
+      return [optimisticSave, ...previous]
+    })
 
     try {
       const created = await pocketbase.collection('saves').create<Save>({ user: userId, saved_by: savedBy })
-      const save = await pocketbase.collection('saves').getOne<ExpandedSave>(created.id, { expand: 'user' })
-      set((state) => {
-        let next = state.saves
-        if (optimisticId) {
-          next = next.filter((s) => s.id !== optimisticId)
+      const expanded = await pocketbase.collection('saves').getOne<ExpandedSave>(created.id, { expand: 'user' })
+      queryClient.setQueryData<ExpandedSave[]>(wantToMeetKeys.list(savedBy), (previous = []) => {
+        const filtered = previous.filter((entry) => entry.id !== optimisticId)
+        if (filtered.some((entry) => entry.id === expanded.id)) {
+          return filtered
         }
-        const alreadyHave = next.some((m) => m.id === save.id)
-        if (!alreadyHave) next = [...next, save]
-        return {
-          saves: next,
-          savesHydrated: true,
-        }
-      })
-      const current = get().saves
-      void simpleCache.set('saves', current, savedBy).catch((error) => {
-        console.warn('Persisting saves cache failed', error)
+        return [expanded, ...filtered]
       })
     } catch (error) {
-      if (optimisticId) {
-        set((state) => ({
-          saves: state.saves.filter((s) => s.id !== optimisticId),
-          savesHydrated: true,
-        }))
-      }
+      queryClient.setQueryData<ExpandedSave[]>(wantToMeetKeys.list(savedBy), (previous = []) =>
+        previous.filter((entry) => entry.id !== optimisticId)
+      )
+
       if (error instanceof ClientResponseError) {
         const duplicate = (error.data?.data as any)?.user?.code === 'validation_not_unique'
         if (duplicate) {
@@ -667,26 +342,13 @@ export const createMessageSlice: StateCreator<StoreSlices, [], [], MessageSlice>
                 { expand: 'user' }
               )
 
-            if (!existing) {
-              throw new Error('Duplicate save lookup returned no record')
-            }
-
-            let nextSaves: ExpandedSave[] = []
-            set((state) => {
-              if (state.saves.some((m) => m.id === existing.id)) {
-                nextSaves = state.saves
-                return { saves: state.saves, savesHydrated: true }
-              }
-              nextSaves = [...state.saves, existing]
-              return { saves: nextSaves, savesHydrated: true }
-            })
-            void simpleCache.set('saves', nextSaves, savedBy).catch((cacheError) => {
-              console.warn('Persisting saves cache failed', cacheError)
+            queryClient.setQueryData<ExpandedSave[]>(wantToMeetKeys.list(savedBy), (previous = []) => {
+              const filtered = previous.filter((entry) => entry.id !== existing.id)
+              return [existing, ...filtered]
             })
             return
           } catch (fetchError) {
             console.error('Failed to hydrate existing save after duplicate response', fetchError)
-            throw fetchError
           }
         }
       }
@@ -696,107 +358,76 @@ export const createMessageSlice: StateCreator<StoreSlices, [], [], MessageSlice>
     }
   },
   removeSave: async (id: string) => {
-    let removed: ExpandedSave | undefined
-    set((state) => {
-      removed = state.saves.find((m) => m.id === id)
-      return {
-        saves: state.saves.filter((m) => m.id !== id),
-        savesHydrated: true,
-      }
-    })
-    try {
-      await pocketbase.collection('saves').delete(id)
-      const userId = pocketbase.authStore.record?.id
-      if (userId) {
-        void simpleCache.set('saves', get().saves, userId).catch((error) => {
-          console.warn('Persisting saves cache failed', error)
-        })
-      }
-    } catch (error) {
-      console.error(error)
-      if (removed) {
-        set((state) => ({
-          saves: [...state.saves, removed!],
-          savesHydrated: true,
-        }))
-      }
-    }
-  },
-  ensureSavesLoaded: async () => {
-    if (get().savesHydrated) return
-
-    const userId = pocketbase.authStore.record?.id
-    if (!userId) {
-      console.warn('ensureSavesLoaded called without auth user')
+    const savedBy = pocketbase.authStore.record?.id
+    if (!savedBy) {
+      console.warn('removeSave called without an authenticated user')
       return
     }
 
-    try {
-      const cached = await simpleCache.get<ExpandedSave[]>('saves', userId)
-      if (cached) {
-        set(() => ({ saves: cached, savesHydrated: true }))
-        return
-      }
-    } catch (error) {
-      console.warn('Reading saves cache failed', error)
-    }
+    let removed: ExpandedSave | undefined
+    queryClient.setQueryData<ExpandedSave[]>(wantToMeetKeys.list(savedBy), (previous = []) => {
+      removed = previous.find((entry) => entry.id === id)
+      return previous.filter((entry) => entry.id !== id)
+    })
 
     try {
-      const fresh = await pocketbase.collection('saves').getFullList<ExpandedSave>({ expand: 'user' })
-      set(() => ({ saves: fresh, savesHydrated: true }))
-      void simpleCache.set('saves', fresh, userId).catch((error) => {
-        console.warn('Persisting saves cache failed', error)
-      })
+      await pocketbase.collection('saves').delete(id)
     } catch (error) {
-      console.error('Failed to fetch saves list', error)
+      if (removed) {
+        queryClient.setQueryData<ExpandedSave[]>(wantToMeetKeys.list(savedBy), (previous = []) => [removed!, ...previous])
+      }
+      throw error
     }
   },
   archiveConversation: async (userId: string, conversationId: string) => {
-    const membership = get().memberships[conversationId].find((m) => m.expand?.user.id === userId)
-    if (membership) {
+    try {
+      const membership = await pocketbase
+        .collection('memberships')
+        .getFirstListItem(
+          pocketbase.filter('conversation = {:cid} && user = {:uid}', {
+            cid: conversationId,
+            uid: userId,
+          })
+        )
+
       await pocketbase.collection('memberships').update(membership.id, { archived: true })
+      queryClient.invalidateQueries({ queryKey: messagingKeys.conversations(userId) })
+    } catch (error) {
+      console.warn('archiveConversation failed', { conversationId, userId, error })
     }
   },
   unarchiveConversation: async (userId: string, conversationId: string) => {
-    const membership = get().memberships[conversationId].find((m) => m.expand?.user.id === userId)
-    if (membership) {
+    try {
+      const membership = await pocketbase
+        .collection('memberships')
+        .getFirstListItem(
+          pocketbase.filter('conversation = {:cid} && user = {:uid}', {
+            cid: conversationId,
+            uid: userId,
+          })
+        )
+
       await pocketbase.collection('memberships').update(membership.id, { archived: false })
+      queryClient.invalidateQueries({ queryKey: messagingKeys.conversations(userId) })
+    } catch (error) {
+      console.warn('unarchiveConversation failed', { conversationId, userId, error })
     }
   },
   leaveConversation: async (conversationId: string, userId: string) => {
     try {
-      const membershipsForConversation = get().memberships[conversationId] || []
-      const membership = membershipsForConversation.find((m) => m.expand?.user.id === userId)
-      if (!membership?.id) return
-
-      await pocketbase.collection('memberships').delete(membership.id)
-
-      set((state) => {
-        const nextMemberships = { ...state.memberships }
-        const existingMemberships = nextMemberships[conversationId] || []
-        const filteredMemberships = existingMemberships.filter((m) => m.id !== membership.id)
-        if (filteredMemberships.length) {
-          nextMemberships[conversationId] = filteredMemberships
-        } else {
-          delete nextMemberships[conversationId]
-        }
-
-        const omitKey = <T extends Record<string, any>>(collection: T): T => {
-          const { [conversationId]: _removed, ...rest } = collection
-          return rest as T
-        }
-
-        return {
-          memberships: nextMemberships,
-          conversations: omitKey(state.conversations),
-          messagesPerConversation: omitKey(state.messagesPerConversation),
-          conversationHydration: omitKey(state.conversationHydration),
-          conversationLoading: omitKey(state.conversationLoading),
-          conversationUnreadCounts: omitKey(state.conversationUnreadCounts),
-          oldestLoadedMessageDate: omitKey(state.oldestLoadedMessageDate),
-          firstMessageDate: omitKey(state.firstMessageDate),
-        }
+      const memberships = await pocketbase.collection('memberships').getFullList({
+        filter: pocketbase.filter('conversation = {:cid} && user = {:uid}', {
+          cid: conversationId,
+          uid: userId,
+        }),
       })
+
+      await Promise.all(
+        memberships.map((membership) => pocketbase.collection('memberships').delete(membership.id))
+      )
+
+      queryClient.invalidateQueries({ queryKey: messagingKeys.conversations(userId) })
+      queryClient.removeQueries({ queryKey: messagingKeys.messages(conversationId) })
     } catch (error) {
       console.warn('leaveConversation failed', { conversationId, userId, error })
       throw error

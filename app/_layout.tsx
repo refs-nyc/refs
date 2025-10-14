@@ -18,11 +18,12 @@ if (!AbortSignal.prototype.throwIfAborted) {
 
 // Disable strict mode warnings caused by carousel
 import { configureReanimatedLogger } from 'react-native-reanimated'
+import { enableFreeze } from 'react-native-screens'
 import { ShareIntentProvider } from 'expo-share-intent'
 
 import { SafeAreaProvider } from 'react-native-safe-area-context'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { StatusBar, useColorScheme } from 'react-native'
 import { Navigation } from '@/ui/navigation/Navigation'
 import { NavigationBackdrop } from '@/ui/navigation/NavigationBackdrop'
@@ -35,6 +36,7 @@ import { DeferredFonts } from '@/ui'
 import { c } from '@/features/style'
 import * as SystemUI from 'expo-system-ui'
 import { KeyboardProvider } from 'react-native-keyboard-controller'
+import { QueryClientProvider } from '@tanstack/react-query'
 
 import { RegisterPushNotifications } from '@/ui/notifications/RegisterPushNotifications'
 import { DirectMessageComposer } from '@/features/messaging/DirectMessageComposer'
@@ -53,6 +55,11 @@ import { ProfileSettingsSheet } from '@/ui/profiles/sheets/ProfileSettingsSheet'
 import { CommunityFormSheet } from '@/ui/communities/CommunityFormSheet'
 import { RemoveInterestSheet } from '@/ui/communities/RemoveInterestSheet'
 import { NotificationPromptSheet } from '@/ui/notifications/NotificationPromptSheet'
+import { queryClient } from '@/core/queryClient'
+import { preloadInitial, startRealtime } from '@/core/preload-controller'
+import { seedBootSnapshots } from '@/core/bootstrap/seedSnapshots'
+import { patchInteractionManager, startJsQueueMonitor } from '@/core/instrumentation/jsQueueMonitor'
+import { enablePerfHarness, markFirstPaint } from '@/core/perf/harness'
 
 // TODO: this error keeps getting thrown whenever the app fast reloads in development
 // I suspect that pocketbase subscribes to updates and then doesn't unsubscribe when the app is being reloaded
@@ -77,6 +84,35 @@ Notifications.setNotificationHandler({
 install()
 polyfillEncoding()
 configureReanimatedLogger({ strict: false })
+enableFreeze(true)
+
+if (__DEV__) {
+  patchInteractionManager({ waitWarnMs: 150, runWarnMs: 50 })
+  startJsQueueMonitor({ intervalMs: 100, warnAtMs: 200 })
+}
+
+const PERF_HARNESS_ENABLED = process.env.EXPO_PUBLIC_PERF_HARNESS === '1'
+const OFF_REALTIME = process.env.EXPO_PUBLIC_OFF_REALTIME === '1'
+const OFF_AUTH_RESTORE = process.env.EXPO_PUBLIC_OFF_AUTH_RESTORE === '1'
+const OFF_ZS_PERSIST = process.env.EXPO_PUBLIC_OFF_ZS_PERSIST === '1'
+const OFF_PRELOAD = process.env.EXPO_PUBLIC_OFF_PRELOAD === '1'
+const OFF_ANALYTICS = process.env.EXPO_PUBLIC_OFF_ANALYTICS === '1'
+
+if (PERF_HARNESS_ENABLED && !OFF_ANALYTICS) {
+  void enablePerfHarness({
+    reactQueryClient: queryClient,
+    enableRequireProbe: true,
+    enableIOTripwires: true,
+    enableLagProbe: true,
+    verbose: true,
+  }).catch((error) => {
+    console.warn('[perf] enablePerfHarness failed', error)
+  })
+}
+
+if (PERF_HARNESS_ENABLED && OFF_ANALYTICS) {
+  console.log('[boot-trace] perfHarness:skipped (analytics flag)')
+}
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync()
@@ -105,12 +141,65 @@ function FontProvider({ children }: { children: React.ReactNode }) {
 
 export default function RootLayout() {
   const { init } = useAppStore()
+  const [bootstrapped, setBootstrapped] = useState(false)
 
   useEffect(() => {
-    // Initialize user store to sync with PocketBase auth - make non-blocking
-    init().catch((error) => {
-      console.error('Failed to initialize app:', error)
+    if (!PERF_HARNESS_ENABLED) return
+    const handle = requestAnimationFrame(() => {
+      markFirstPaint()
     })
+    return () => cancelAnimationFrame(handle)
+  }, [])
+
+  useEffect(() => {
+    let cancelled = false
+
+    const run = async () => {
+      const startedAt = Date.now()
+      console.log('[boot-trace] root.init:start')
+      try {
+        await init()
+        if (cancelled) return
+
+        const { user } = useAppStore.getState()
+        if (OFF_ZS_PERSIST) {
+          console.log('[boot-trace] seedBootSnapshots:skipped')
+        } else {
+          try {
+            await seedBootSnapshots({ userId: user?.id, userName: user?.userName })
+          } catch (error) {
+            console.warn('seedBootSnapshots failed', error)
+          }
+        }
+        if (cancelled) return
+        setBootstrapped(true)
+        console.log('[boot-trace] root.init:completed', Date.now() - startedAt, 'ms')
+        if (OFF_PRELOAD) {
+          console.log('[boot-trace] preloadInitial:skipped')
+        } else {
+          void preloadInitial().catch((error) => {
+            console.warn('preloadInitial failed', error)
+          })
+        }
+        if (OFF_REALTIME) {
+          console.log('[boot-trace] startRealtime:skipped')
+        } else {
+          console.log('[boot-trace] root.startRealtime')
+          startRealtime()
+        }
+      } catch (error) {
+        console.error('Failed to initialize app:', error)
+        if (!cancelled) {
+          setBootstrapped(true)
+        }
+      }
+    }
+
+    run()
+
+    return () => {
+      cancelled = true
+    }
   }, [init])
 
   useEffect(() => {
@@ -120,8 +209,10 @@ export default function RootLayout() {
 
   return (
     <Providers>
-      <RootLayoutNav />
-      <DeferredFonts />
+      <QueryClientProvider client={queryClient}>
+        {bootstrapped ? <RootLayoutNav /> : null}
+        <DeferredFonts />
+      </QueryClientProvider>
     </Providers>
   )
 }

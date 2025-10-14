@@ -262,17 +262,22 @@ export const createFeedSlice: StateCreator<StoreSlices, [], [], FeedSlice> = (se
   feedPrefetchedPage: null,
   feedNetworkEnabled: false,
   ensureFeedHydrated: async ({ refresh = true }: { refresh?: boolean } = {}) => {
+    const startedAt = Date.now()
+    console.log('[boot-trace] feed.ensure:start', { refresh })
     const userId = pocketbase.authStore.record?.id
     if (!userId) {
+      console.log('[boot-trace] feed.ensure:skip:no-user')
       return
     }
 
     const state = get()
     if (state.feedHydrating) {
+      console.log('[boot-trace] feed.ensure:skip:already-hydrating')
       return
     }
 
     if (state.feedHydrated && state.feedEntries.length > 0) {
+      console.log('[boot-trace] feed.ensure:skip:already-hydrated')
       return
     }
 
@@ -323,6 +328,7 @@ export const createFeedSlice: StateCreator<StoreSlices, [], [], FeedSlice> = (se
         const refreshStart = Date.now()
         await get().refreshFeed({ force: true, silent: true })
         const refreshEnd = Date.now()
+        console.log('[boot-trace] feed.ensure:refresh', refreshEnd - refreshStart, 'ms')
         set((state) => ({
           feedEntries: [
             {
@@ -348,18 +354,24 @@ export const createFeedSlice: StateCreator<StoreSlices, [], [], FeedSlice> = (se
       console.warn('Feed: failed to hydrate', error)
     } finally {
       set(() => ({ feedHydrating: false }))
+      console.log('[boot-trace] feed.ensure:complete', Date.now() - startedAt, 'ms')
     }
   },
   refreshFeed: async ({ force = false, silent = false } = {}) => {
+    const startedAt = Date.now()
+    console.log('[boot-trace] feed.refresh:start', { force, silent })
     if (!get().feedNetworkEnabled) {
+      console.log('[boot-trace] feed.refresh:skip:network-disabled')
       return
     }
     const userId = pocketbase.authStore.record?.id
     if (!userId) {
+      console.log('[boot-trace] feed.refresh:skip:no-user')
       return
     }
 
     if (get().feedRefreshing && !force) {
+      console.log('[boot-trace] feed.refresh:skip:already-refreshing')
       return
     }
 
@@ -409,11 +421,21 @@ export const createFeedSlice: StateCreator<StoreSlices, [], [], FeedSlice> = (se
     } catch (error) {
       console.warn('Feed: refresh failed', error)
       set(() => ({ feedRefreshing: false }))
+    } finally {
+      console.log('[boot-trace] feed.refresh:complete', Date.now() - startedAt, 'ms')
     }
   },
   prefetchNextFeedPage: async () => {
+    const startedAt = Date.now()
+    console.log('[boot-trace] feed.prefetch:start')
     const state = get()
     if (!state.feedNetworkEnabled || !state.feedHasMore || state.feedPrefetching || state.feedLoadingMore) {
+      console.log('[boot-trace] feed.prefetch:skip', {
+        network: state.feedNetworkEnabled,
+        hasMore: state.feedHasMore,
+        prefetching: state.feedPrefetching,
+        loading: state.feedLoadingMore,
+      })
       return
     }
 
@@ -442,6 +464,8 @@ export const createFeedSlice: StateCreator<StoreSlices, [], [], FeedSlice> = (se
     } catch (error) {
       console.warn('Feed: prefetch failed', error)
       set(() => ({ feedPrefetching: false }))
+    } finally {
+      console.log('[boot-trace] feed.prefetch:complete', Date.now() - startedAt, 'ms')
     }
   },
   consumePrefetchedFeedPage: () => {
@@ -461,8 +485,15 @@ export const createFeedSlice: StateCreator<StoreSlices, [], [], FeedSlice> = (se
     }))
   },
   fetchMoreFeed: async () => {
+    const startedAt = Date.now()
+    console.log('[boot-trace] feed.fetchMore:start')
     const state = get()
     if (!state.feedNetworkEnabled || !state.feedHasMore || state.feedLoadingMore) {
+      console.log('[boot-trace] feed.fetchMore:skip', {
+        network: state.feedNetworkEnabled,
+        hasMore: state.feedHasMore,
+        loading: state.feedLoadingMore,
+      })
       return
     }
 
@@ -495,6 +526,7 @@ export const createFeedSlice: StateCreator<StoreSlices, [], [], FeedSlice> = (se
       console.warn('Feed: load more failed', error)
     } finally {
       set(() => ({ feedLoadingMore: false }))
+      console.log('[boot-trace] feed.fetchMore:complete', Date.now() - startedAt, 'ms')
     }
   },
   invalidateFeedCache: async () => {

@@ -4,6 +4,9 @@ import { c } from '@/features/style'
 import { useAppStore } from '@/features/stores'
 import { useEffect, useState } from 'react'
 import { Profile } from '@/features/types'
+import { queryClient } from '@/core/queryClient'
+import type { InfiniteData } from '@tanstack/react-query'
+import { messagingKeys, type ConversationMessagesPage } from '@/features/queries/messaging'
 
 export const DMButton = ({
   profile,
@@ -16,7 +19,7 @@ export const DMButton = ({
   disabled?: boolean
   style?: any
 }) => {
-  const { user, getDirectConversations, messagesPerConversation, openDMComposer } = useAppStore()
+  const { user, getDirectConversations, openDMComposer } = useAppStore()
 
   const [existingConversationId, setExistingConversationId] = useState<string | null>(null)
 
@@ -50,8 +53,11 @@ export const DMButton = ({
     if (!profile || !user) return
 
     if (existingConversationId) {
-      const messages = messagesPerConversation[existingConversationId] || []
-      if (messages.length > 0) {
+      const cached = queryClient.getQueryData<InfiniteData<ConversationMessagesPage>>(
+        messagingKeys.messages(existingConversationId)
+      )
+      const hasMessages = cached?.pages?.some((page) => page.messages.length > 0)
+      if (hasMessages) {
         const route = `/messages/${existingConversationId}` as const
         if (fromSaves) router.replace(route)
         else router.push(route)

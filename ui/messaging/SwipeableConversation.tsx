@@ -1,19 +1,19 @@
 import Swipeable from 'react-native-gesture-handler/ReanimatedSwipeable'
 import ConversationListItem from './ConversationListItem'
-import { Conversation } from '@/features/types'
 import { Text, View } from 'react-native'
 import Reanimated, { SharedValue, useAnimatedStyle } from 'react-native-reanimated'
 import { c, s } from '@/features/style'
 import { Pressable } from 'react-native-gesture-handler'
 import { YStack } from '../core/Stacks'
+import type { ConversationPreviewSnapshot } from '@/features/messaging/useConversationPreviews'
 
 export default function SwipeableConversation({
-  conversation,
+  preview,
   isInArchive,
   onArchive,
   timeZone,
 }: {
-  conversation: Conversation
+  preview: ConversationPreviewSnapshot
   isInArchive?: boolean
   onArchive: () => Promise<void>
   timeZone: string
@@ -32,7 +32,7 @@ export default function SwipeableConversation({
         />
       )}
     >
-      <ConversationListItem conversation={conversation} timeZone={timeZone} />
+      <ConversationListItem preview={preview} timeZone={timeZone} />
     </Swipeable>
   )
 }

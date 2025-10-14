@@ -102,9 +102,11 @@ export const FormFieldWithIcon = forwardRef<TextInput, {
           onSubmitEditing={onSubmitEditing}
           blurOnSubmit={false}
           textContentType={
-            type === 'password' ? 'newPassword' : 
-            type === 'passwordConfirm' ? 'password' : 
-            type === 'email' ? 'emailAddress' : 
+            type === 'password' ? 'password' :
+            type === 'passwordConfirm' ? 'newPassword' :
+            type === 'email' ? 'emailAddress' :
+            type === 'userName' ? 'username' :
+            type === 'user' ? 'name' :
             'none'
           }
           autoComplete={

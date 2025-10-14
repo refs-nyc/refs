@@ -2,7 +2,7 @@ import { GridWrapper } from './GridWrapper'
 import { GridItem } from './GridItem'
 import { GridTileWrapper } from './GridTileWrapper'
 import { ExpandedItem } from '@/features/types'
-import { useState, useCallback, useMemo, useEffect, useRef } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import { Text, View, Pressable } from 'react-native'
 import { c } from '@/features/style'
 import Animated, {
@@ -179,9 +179,6 @@ export const Grid = ({
   rows = 4,
   editingRights = false,
   autoRows = false,
-  searchMode = false,
-  selectedRefs = [],
-  setSelectedRefs,
   hideShuffleButton = false,
   screenFocused = false,
   onStartupAnimationComplete,
@@ -205,9 +202,6 @@ export const Grid = ({
   items: any[]
   editingRights?: boolean
   autoRows?: boolean
-  searchMode?: boolean
-  selectedRefs?: string[]
-  setSelectedRefs?: (refs: string[]) => void
   hideShuffleButton?: boolean
   screenFocused?: boolean
   onStartupAnimationComplete?: () => void
@@ -290,30 +284,12 @@ export const Grid = ({
 
   const handleGridItemPress = useCallback(
     (item: any) => {
-      if (searchMode && setSelectedRefs) {
-        const itemId = item.id
-
-        // Use Set for O(1) lookup and manipulation
-        const selectedSet = new Set(selectedRefs)
-
-        if (selectedSet.has(itemId)) {
-          // Remove item
-          selectedSet.delete(itemId)
-        } else {
-          // Add item
-          selectedSet.add(itemId)
-        }
-
-        setSelectedRefs(Array.from(selectedSet))
-      } else if (onPressItem) {
+      if (onPressItem) {
         onPressItem(item)
       }
     },
-    [searchMode, setSelectedRefs, selectedRefs, onPressItem]
+    [onPressItem]
   )
-
-  // Memoize the selected refs set for O(1) lookup
-  const selectedRefsSet = useMemo(() => new Set(selectedRefs), [selectedRefs])
 
   // Create stable callbacks for grid items to avoid hooks violation
   const createItemCallbacks = useCallback((item: any) => ({
@@ -332,7 +308,6 @@ export const Grid = ({
     <View style={{ marginTop: 10 }}>
       <GridWrapper columns={columns} rows={rows} autoRows={autoRows} rowJustify={rowJustify} rowGap={rowGap}>
         {items.map((item, i) => {
-          const isSelected = searchMode && selectedRefsSet.has(item.id)
           const isNewItem = newlyAddedItemId === item.id
           const callbacks = createItemCallbacks(item)
           
@@ -354,32 +329,10 @@ export const Grid = ({
                   topRightAction={topRightActionForItem ? topRightActionForItem(item) : undefined}
                   onTopRightActionPress={() => onTopRightActionPress && onTopRightActionPress(item)}
                   isEditMode={isEditMode}
-                  tileStyle={
-                    searchMode
-                      ? {
-                          opacity: isSelected ? 1 : 0.25,
-                        }
-                      : {}
-                  }
                 >
                   {item.__promptKind
                     ? (item?.expand?.ref?.title || item?.title || '')
                     : <GridItem item={item} i={i} />}
-                  {searchMode && isSelected && (
-                    <View
-                      style={{
-                        position: 'absolute',
-                        top: -2.5,
-                        left: -2.5,
-                        right: -2.5,
-                        bottom: -2.5,
-                        borderWidth: 5,
-                        borderColor: '#A3C9A8',
-                        borderRadius: 8 + 2.5,
-                        pointerEvents: 'none',
-                      }}
-                    />
-                  )}
                 </GridTileWrapper>
               </NewItemAnimationTile>
             </StartupAnimationTile>
@@ -420,7 +373,7 @@ export const Grid = ({
       </GridWrapper>
 
       {/* Shuffle prompts button */}
-      {editingRights && !searchMode && !hideShuffleButton && !isEditMode && showPrompts && items.length < gridSize && (
+      {editingRights && !hideShuffleButton && !isEditMode && showPrompts && items.length < gridSize && (
         <Animated.View style={buttonAnimatedStyle}>
           <Pressable
             onPress={handleShufflePrompts}

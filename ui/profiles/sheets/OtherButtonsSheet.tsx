@@ -7,6 +7,7 @@ import { Heading } from '@/ui/typo/Heading'
 import BottomSheet, { BottomSheetBackdrop } from '@gorhom/bottom-sheet'
 import { Pressable, StyleSheet, Text, View } from 'react-native'
 import { useEffect, useState } from 'react'
+import { useWantToMeet } from '@/features/queries/wantToMeet'
 
 export const OtherButtonsSheet = ({
   bottomSheetRef,
@@ -17,9 +18,10 @@ export const OtherButtonsSheet = ({
   profile: Profile
   openBacklogSheet: () => void
 }) => {
-  const { moduleBackdropAnimatedIndex, saves, addSave, removeSave } = useAppStore()
+  const { user, moduleBackdropAnimatedIndex, addSave, removeSave } = useAppStore()
+  const { data: saves = [] } = useWantToMeet(user?.id)
 
-  const saveId = saves.find((s) => s.expand.user.id === profile?.id)?.id
+  const saveId = saves.find((entry) => entry.expand?.user?.id === profile?.id)?.id
   const [optimisticSaved, setOptimisticSaved] = useState(false)
 
   useEffect(() => {

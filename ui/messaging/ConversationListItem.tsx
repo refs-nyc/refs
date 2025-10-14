@@ -1,54 +1,45 @@
-import { useEffect, useMemo, useState } from 'react'
-import { useAppStore } from '@/features/stores'
-import { Conversation } from '@/features/types'
-import { s, c } from '@/features/style'
+import { useCallback, useMemo } from 'react'
 import { View, Text } from 'react-native'
+import { Pressable } from 'react-native-gesture-handler'
+import { router } from 'expo-router'
+import { useQueryClient } from '@tanstack/react-query'
+
+import { useAppStore } from '@/features/stores'
+import { s, c } from '@/features/style'
 import { XStack, YStack } from '../core/Stacks'
 import { Avatar } from '../atoms/Avatar'
 import { formatTimestamp } from '@/features/messaging/utils'
-import { Pressable } from 'react-native-gesture-handler'
-import { router } from 'expo-router'
+import type { ConversationPreviewSnapshot } from '@/features/messaging/useConversationPreviews'
+import type { Message } from '@/features/types'
+import {
+  messagingKeys,
+  fetchConversation,
+  fetchConversationMessages,
+  type ConversationsPage,
+  type ConversationMessagesPage,
+} from '@/features/queries/messaging'
 
 export default function ConversationListItem({
-  conversation,
+  preview,
   timeZone,
 }: {
-  conversation: Conversation
+  preview: ConversationPreviewSnapshot
   timeZone: string
 }): JSX.Element | null {
-  const { user, memberships, messagesPerConversation } = useAppStore()
-
-  const liveMessages = messagesPerConversation[conversation.id] || []
-  const liveMemberships = memberships[conversation.id] || []
-
-  const [cachedMessages, setCachedMessages] = useState(liveMessages)
-  useEffect(() => {
-    if (liveMessages.length) setCachedMessages(liveMessages)
-  }, [liveMessages])
-  const messages = liveMessages.length ? liveMessages : cachedMessages
-
-  const [cachedMemberships, setCachedMemberships] = useState(liveMemberships)
-  useEffect(() => {
-    if (liveMemberships.length) setCachedMemberships(liveMemberships)
-  }, [liveMemberships])
-  const conversationMemberships = liveMemberships.length ? liveMemberships : cachedMemberships
-
+  const user = useAppStore((state) => state.user)
+  const queryClient = useQueryClient()
   if (!user) return null
 
-  const lastMessage = messages[0]
-  const time = lastMessage?.created
-    ? lastMessage.created.slice(0, lastMessage.created.length - 1)
-    : ''
+  const conversation = preview.conversation
+  const conversationId = conversation.id
+  const lastMessage = preview.latestMessage
+  const time = lastMessage?.created ? lastMessage.created.slice(0, -1) : ''
 
-  const members = conversationMemberships
-    .filter((m) => m.expand?.user && m.expand.user.id !== user.id)
-    .map((m) => m.expand!.user)
-  const ownMembership = conversationMemberships.find((m) => m.expand?.user.id === user.id)
-
-  const lastMessageDate = lastMessage?.created ? new Date(lastMessage.created) : null
-  const lastReadDate = ownMembership?.last_read ? new Date(ownMembership.last_read) : null
-  const newMessages =
-    !!lastMessageDate && !!lastReadDate && lastMessageDate > lastReadDate && lastMessage?.sender !== user?.id
+  const members = preview.memberships
+    .filter((membership) => membership.expand?.user && membership.expand.user.id !== user.id)
+    .map((membership) => membership.expand!.user)
+  const unreadCount = preview.unreadCount ?? 0
+  const hasUnread = unreadCount > 0
 
   const directAvatarSize = s.$5 as number
   const avatarSlotPadding = 5
@@ -64,18 +55,16 @@ export default function ConversationListItem({
     [members]
   )
 
-  const displayTitle = conversation.is_direct && members[0]
+  const isDirect = Boolean(conversation.is_direct)
+
+  const displayTitle = isDirect && members[0]
     ? `${members[0].firstName ?? ''} ${members[0].lastName ?? ''}`.trim() || members[0].userName || conversation.title
     : conversation.title || 'Group chat'
 
-  const displaySubtitle = lastMessage?.text
-    ? lastMessage.text
-    : conversation.is_direct
-    ? ''
-    : 'Start the conversation'
+  const displaySubtitle = deriveSubtitle(lastMessage, isDirect)
 
   const renderConversationAvatar = () => {
-    if (conversation.is_direct) {
+    if (isDirect) {
       const directMember = members[0]
       const directSource = directMember?.image || (directMember as any)?.avatar_url || ''
       const directFallback = directMember
@@ -142,12 +131,37 @@ export default function ConversationListItem({
 
   const indicatorSize = s.$075 as number
   const textMarginBase = s.$075 as number
-  const textMarginLeft = newMessages
+  const textMarginLeft = hasUnread
     ? textMarginBase + indicatorSize + textMarginBase + avatarSlotPadding
     : textMarginBase + avatarSlotPadding
 
+  const handlePress = useCallback(() => {
+    queryClient
+      .prefetchQuery({
+        queryKey: messagingKeys.conversation(conversationId),
+        queryFn: () => fetchConversation(conversationId),
+        staleTime: 60_000,
+        gcTime: 30 * 60_000,
+      })
+      .catch(() => {})
+
+    queryClient
+      .prefetchInfiniteQuery<ConversationMessagesPage>({
+        queryKey: messagingKeys.messages(conversationId),
+        queryFn: ({ pageParam }) =>
+          fetchConversationMessages(conversationId, pageParam as string | undefined),
+        initialPageParam: undefined as string | undefined,
+        getNextPageParam: (lastPage: ConversationMessagesPage) => lastPage.nextCursor,
+        staleTime: 30_000,
+        gcTime: 30 * 60_000,
+      })
+      .catch(() => {})
+
+    router.push(`/messages/${conversationId}`)
+  }, [conversationId, queryClient])
+
   return (
-    <Pressable onPress={() => router.push(`/messages/${conversation.id}`)}>
+    <Pressable onPress={handlePress}>
       <XStack
         style={{
           alignItems: 'center',
@@ -159,7 +173,7 @@ export default function ConversationListItem({
         }}
       >
         <XStack gap={0} style={{ alignItems: 'center', maxWidth: '80%' }}>
-          {newMessages && (
+          {hasUnread && (
             <View
               style={{
                 width: indicatorSize,
@@ -202,4 +216,20 @@ export default function ConversationListItem({
       </XStack>
     </Pressable>
   )
+}
+
+function deriveSubtitle(message: Message | null | undefined, isDirect: boolean) {
+  if (!message) {
+    return isDirect ? '' : 'Start the conversation'
+  }
+
+  if (message.text && message.text.trim().length > 0) {
+    return message.text
+  }
+
+  if (message.image) {
+    return 'Shared a photo'
+  }
+
+  return ''
 }

@@ -127,61 +127,7 @@ export const createUISlice: StateCreator<StoreSlices, [], [], UISlice> = (set, g
       editingProfile: true,
     }))
   },
-  // Search-related state
-  searchMode: false,
-  selectedRefs: [],
-  selectedRefItems: [],
-  cachedSearchResults: [],
-  cachedSearchTitle: '',
-  cachedSearchSubtitle: '',
-  cachedRefTitles: [] as string[],
-  cachedRefImages: [] as string[],
   closeActiveBottomSheet: null as (() => void) | null,
-  isSearchResultsSheetOpen: false,
-  returningFromSearchNavigation: false, // Track when returning from search navigation
-  setSearchMode: (mode: boolean) => {
-    set(() => ({
-      searchMode: mode,
-    }))
-  },
-  setSelectedRefs: (refs: string[]) => {
-    set(() => ({
-      selectedRefs: refs,
-    }))
-  },
-  setSelectedRefItems: (items: any[]) => {
-    set(() => ({
-      selectedRefItems: items,
-    }))
-  },
-  setCachedSearchResults: (results: any[], title: string, subtitle: string, refTitles?: string[], refImages?: string[]) => {
-    set(() => ({
-      cachedSearchResults: results,
-      cachedSearchTitle: title,
-      cachedSearchSubtitle: subtitle,
-      cachedRefTitles: refTitles || [],
-      cachedRefImages: refImages || [],
-    }))
-  },
-  clearCachedSearchResults: () => {
-    set(() => ({
-      cachedSearchResults: [],
-      cachedSearchTitle: '',
-      cachedSearchSubtitle: '',
-      cachedRefTitles: [],
-      cachedRefImages: [],
-    }))
-  },
-  setSearchResultsSheetOpen: (open: boolean) => {
-    set(() => ({
-      isSearchResultsSheetOpen: open,
-    }))
-  },
-  setReturningFromSearchNavigation: (returning: boolean) => {
-    set(() => ({
-      returningFromSearchNavigation: returning,
-    }))
-  },
   setCloseActiveBottomSheet: (closeFunction: (() => void) | null) => {
     set(() => ({
       closeActiveBottomSheet: closeFunction,

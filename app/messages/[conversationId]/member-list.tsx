@@ -5,31 +5,29 @@ import { c, s } from '@/features/style'
 import { Avatar } from '@/ui/atoms/Avatar'
 import { Ionicons } from '@expo/vector-icons'
 import { router, useLocalSearchParams } from 'expo-router'
-import {
-  View,
-  Text,
-  Pressable,
-  ScrollView,
-  Alert,
-  ActivityIndicator,
-} from 'react-native'
+import { View, Text, Pressable, ScrollView, Alert, ActivityIndicator } from 'react-native'
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
+import { useQuery } from '@tanstack/react-query'
+import { messagingKeys, fetchConversation } from '@/features/queries/messaging'
 
 export default function MemberListScreen() {
   const { conversationId } = useLocalSearchParams()
-  const {
-    memberships,
-    conversations,
-    user,
-    setProfileNavIntent,
-    leaveConversation,
-  } = useAppStore()
+  const { user, setProfileNavIntent, leaveConversation } = useAppStore()
   const [leaving, setLeaving] = useState(false)
   const insets = useSafeAreaInsets()
 
   const conversationKey = Array.isArray(conversationId) ? conversationId[0] : conversationId
-  const conversation = conversationKey ? conversations[conversationKey] : undefined
-  const membershipRecords = conversationKey ? memberships[conversationKey] || [] : []
+  const conversationQuery = useQuery({
+    queryKey: conversationKey ? messagingKeys.conversation(conversationKey) : ['messaging', 'conversation', 'missing'],
+    queryFn: () => fetchConversation(conversationKey!),
+    enabled: Boolean(conversationKey),
+    staleTime: 60_000,
+    gcTime: 30 * 60_000,
+  })
+
+  const conversation = conversationQuery.data?.conversation
+  const membershipRecords = conversationQuery.data?.memberships ?? []
+  const loadingMembers = conversationQuery.isLoading || conversationQuery.isFetching
 
   const members = useMemo(() => {
     return membershipRecords
@@ -180,7 +178,7 @@ export default function MemberListScreen() {
           )
         })}
 
-        {!members.length && (
+        {loadingMembers && (
           <View style={{ alignItems: 'center', paddingVertical: s.$2 }}>
             <ActivityIndicator color={c.grey1} />
           </View>

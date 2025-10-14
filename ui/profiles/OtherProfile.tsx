@@ -17,23 +17,57 @@ import { pocketbase } from '@/features/pocketbase'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { Image } from 'expo-image'
 import Svg, { Circle } from 'react-native-svg'
+import { enqueueIdleTask } from '@/features/utils/idleQueue'
+import { fetchProfileData } from '@/features/queries/profile'
 
 export const OtherProfile = ({ userName, prefetchedUserId }: { userName: string; prefetchedUserId?: string }) => {
   const [profile, setProfile] = useState<Profile>()
   const [gridItems, setGridItems] = useState<ExpandedItem[]>([])
   const [backlogItems, setBacklogItems] = useState<ExpandedItem[]>([])
   const [loading, setLoading] = useState<boolean>(true)
+  const forceNetworkRefreshQueuedRef = useRef(false)
 
   const {
     user,
     stopEditing,
-    getUserByUserName,
     otherProfileBackdropAnimatedIndex,
     detailsSheetRef,
     setDetailsSheetData,
     registerBackdropPress,
     unregisterBackdropPress,
   } = useAppStore()
+
+  const queueForceNetworkRefresh = useCallback(
+    (userId: string) => {
+      if (forceNetworkRefreshQueuedRef.current) return
+      forceNetworkRefreshQueuedRef.current = true
+
+      enqueueIdleTask(async () => {
+        try {
+          const fresh = await fetchProfileData(userName, { forceNetwork: true, userId })
+          setProfile(fresh.profile)
+          setGridItems(fresh.gridItems)
+          setBacklogItems(fresh.backlogItems)
+          const profileWithUserId = { ...fresh.profile, _cachedUserId: fresh.profile.id }
+          Promise.all([
+            simpleCache.set('profile', profileWithUserId, fresh.profile.id),
+            simpleCache.set('grid_items', fresh.gridItems, fresh.profile.id),
+            simpleCache.set('backlog_items', fresh.backlogItems, fresh.profile.id),
+          ]).catch((error) => {
+            console.warn('OtherProfile cache refresh failed', error)
+          })
+        } catch (error) {
+          if (__DEV__) {
+            console.warn('[boot-trace] otherProfile.forceNetworkRefresh failed', error)
+          }
+          forceNetworkRefreshQueuedRef.current = false
+        } finally {
+          forceNetworkRefreshQueuedRef.current = false
+        }
+      }, `profile:forceNetworkRefresh:${userId}`)
+    },
+    [userName]
+  )
 
   const refreshGrid = async (userName: string, hintedUserId?: string) => {
     setLoading(true)
@@ -50,6 +84,7 @@ export const OtherProfile = ({ userName, prefetchedUserId }: { userName: string;
           setGridItems(cachedGridItems as ExpandedItem[])
           setBacklogItems(cachedBacklogItems as ExpandedItem[])
           setLoading(false)
+          queueForceNetworkRefresh(userId)
           return true
         }
         return false
@@ -115,8 +150,10 @@ export const OtherProfile = ({ userName, prefetchedUserId }: { userName: string;
 
       // If we didn't find cached data, fall back to the original approach
       // Get user ID for cache keys
-      const user = await pocketbase.collection('users').getFirstListItem(`userName = "${userName}"`)
-      const userId = user.id
+      const profileRecord = await pocketbase
+        .collection<Profile>('users')
+        .getFirstListItem(`userName = "${userName}"`)
+      const userId = profileRecord.id
       
       // Check cache first (read-only, safe operation)
       const [profile, gridItems, backlogItems] = await Promise.all([
@@ -136,18 +173,17 @@ export const OtherProfile = ({ userName, prefetchedUserId }: { userName: string;
       }
       
       // Fetch fresh data
-      const [freshProfile, freshGridItems, freshBacklogItems] = await Promise.all([
-        getUserByUserName(userName),
-        getProfileItems(userName),
-        getBacklogItems(userName),
+      const [freshGridItems, freshBacklogItems] = await Promise.all([
+        getProfileItems({ userName, userId }),
+        getBacklogItems({ userName, userId }),
       ])
       
-      setProfile(freshProfile)
+      setProfile(profileRecord)
       setGridItems(freshGridItems)
       setBacklogItems(freshBacklogItems as ExpandedItem[])
 
       // Cache the fresh data
-      const profileWithUserId = { ...freshProfile, _cachedUserId: userId }
+      const profileWithUserId = { ...profileRecord, _cachedUserId: userId }
       Promise.all([
         simpleCache.set('profile', profileWithUserId, userId),
         simpleCache.set('grid_items', freshGridItems, userId),
@@ -163,9 +199,11 @@ export const OtherProfile = ({ userName, prefetchedUserId }: { userName: string;
       }
 
       setLoading(false)
+      forceNetworkRefreshQueuedRef.current = false
     } catch (error) {
       console.error(error)
       setLoading(false)
+      forceNetworkRefreshQueuedRef.current = false
     }
   }
 

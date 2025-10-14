@@ -46,6 +46,7 @@ export const Feed = () => {
     hydrationAttemptedRef.current = true
 
     const timeout = setTimeout(() => {
+      console.log('[boot-trace] feed.component:ensureFeedHydrated')
       ensureFeedHydrated({ refresh: false })
         .catch((error: unknown) => {
           console.warn('Feed hydration failed', error)

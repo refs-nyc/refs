@@ -2,6 +2,8 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { BackHandler, Keyboard, Pressable, Text, TextInput, View, ScrollView } from 'react-native'
 import BottomSheet, { BottomSheetBackdrop, BottomSheetView } from '@gorhom/bottom-sheet'
 import { useAppStore } from '@/features/stores'
+import { queryClient } from '@/core/queryClient'
+import { messagingKeys } from '@/features/queries/messaging'
 import { Avatar } from '@/ui/atoms/Avatar'
 import { c, s } from '@/features/style'
 import Ionicons from '@expo/vector-icons/Ionicons'
@@ -18,7 +20,6 @@ export function DirectMessageComposer() {
     createConversation,
     sendMessage,
     getDirectConversations,
-    setMessagesForConversation,
     showToast,
   } = useAppStore()
 
@@ -95,8 +96,9 @@ export function DirectMessageComposer() {
 
       if (!conversationId) {
         conversationId = await createConversation(true, user.id, [targetSnapshot.id])
-        setMessagesForConversation(conversationId, [])
       }
+
+      queryClient.invalidateQueries({ queryKey: messagingKeys.conversations(user.id) })
 
       await sendMessage(user.id, conversationId, trimmed)
       

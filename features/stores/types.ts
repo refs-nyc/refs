@@ -68,25 +68,7 @@ export type UISlice = {
   // Background loading state
   isBackgroundLoading: boolean
   setBackgroundLoading: (loading: boolean) => void
-  // Search-related state
-  searchMode: boolean
-  selectedRefs: string[]
-  selectedRefItems: any[]
-  cachedSearchResults: any[]
-  cachedSearchTitle: string
-  cachedSearchSubtitle: string
-  cachedRefTitles: string[]
-  cachedRefImages: string[]
   closeActiveBottomSheet: (() => void) | null
-  isSearchResultsSheetOpen: boolean
-  returningFromSearchNavigation: boolean // Track when returning from search navigation
-  setSearchMode: (mode: boolean) => void
-  setSelectedRefs: (refs: string[]) => void
-  setSelectedRefItems: (items: any[]) => void
-  setCachedSearchResults: (results: any[], title: string, subtitle: string, refTitles?: string[], refImages?: string[]) => void
-  clearCachedSearchResults: () => void
-  setSearchResultsSheetOpen: (open: boolean) => void
-  setReturningFromSearchNavigation: (returning: boolean) => void
   setCloseActiveBottomSheet: (closeFunction: (() => void) | null) => void
   logoutSheetRef: React.RefObject<BottomSheet>
   // Profile Details Sheet

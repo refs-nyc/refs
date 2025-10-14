@@ -66,3 +66,8 @@ persistQueryClient({
   persister,
   maxAge: 24 * 60 * 60 * 1000,
 })
+
+export function clearPersistedQueryClient(): void {
+  queryClient.clear()
+  storage.clearAll()
+}

@@ -5,6 +5,7 @@ import { ClientResponseError } from 'pocketbase'
 import type { StoreSlices } from './types'
 import { pocketbase } from '../pocketbase'
 import { updateShowInDirectory } from './items'
+import { clearPersistedQueryClient } from '@/core/queryClient'
 const OFF_AUTH_RESTORE = process.env.EXPO_PUBLIC_OFF_AUTH_RESTORE === '1'
 
 export type DirectoryUser = {
@@ -312,6 +313,8 @@ export const createUserSlice: StateCreator<StoreSlices, [], [], UserSlice> = (se
     if (typeof resetFeed === 'function') {
       resetFeed()
     }
+
+    clearPersistedQueryClient()
 
     pocketbase.realtime.unsubscribe()
     pocketbase.authStore.clear()

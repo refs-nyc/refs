@@ -9,9 +9,11 @@ import type {
 } from '@/features/queries/messaging'
 
 const SNAPSHOT_PREFIX = 'snapshot'
-const SNAPSHOT_VERSION = 1
+const SNAPSHOT_VERSION = 2
 const CHUNK_THRESHOLD_BYTES = 48 * 1024 // ~48KB guardrail per chunk
 const CHUNK_META_PREFIX = '__chunk__:'
+const MAX_SNAPSHOT_BYTES = 80 * 1024
+const MAX_SNAPSHOT_AGE_MS = 14 * 24 * 60 * 60 * 1000
 
 type SnapshotEnvelope<T> = {
   version: number
@@ -92,10 +94,18 @@ export async function getSnapshot<K extends SnapshotKey>(
       await safeRemoveWithChunks(storageKey)
       return null
     }
-    return parseEnvelope(joined, storageKey)
+    const envelope = parseEnvelope<SnapshotInput<K>>(joined, storageKey)
+    if (!envelope) {
+      await safeRemoveWithChunks(storageKey)
+    }
+    return envelope
   }
 
-  return parseEnvelope(payload, storageKey)
+  const envelope = parseEnvelope<SnapshotInput<K>>(payload, storageKey)
+  if (!envelope) {
+    await safeRemoveWithChunks(storageKey)
+  }
+  return envelope
 }
 
 type SnapshotRequest<K extends SnapshotKey = SnapshotKey> = {
@@ -161,13 +171,19 @@ export async function getSnapshots(
         continue
       }
       envelope = parseEnvelope(payload, storageKey)
+      if (!envelope) {
+        await safeRemoveWithChunks(storageKey)
+        continue
+      }
     } else {
       envelope = parseEnvelope(raw, storageKey)
+      if (!envelope) {
+        await safeRemoveWithChunks(storageKey)
+        continue
+      }
     }
 
-    if (envelope) {
-      result.set(key, envelope)
-    }
+    result.set(key, envelope)
   }
 
   return result
@@ -188,6 +204,17 @@ export async function putSnapshot<K extends SnapshotKey>(
 
   const serialized = JSON.stringify(envelope)
   const storageKey = descriptor.storageKey
+
+  if (serialized.length > MAX_SNAPSHOT_BYTES) {
+    await safeRemoveWithChunks(storageKey)
+    if (__DEV__) {
+      console.warn('[snapshot] skipped putSnapshot (oversize)', {
+        key: storageKey,
+        size: serialized.length,
+      })
+    }
+    return
+  }
 
   if (serialized.length <= CHUNK_THRESHOLD_BYTES) {
     await AsyncStorage.setItem(storageKey, serialized)
@@ -247,6 +274,10 @@ async function safeRemoveWithChunks(base: string) {
 }
 
 function parseEnvelope<T>(raw: string, key: string): SnapshotReadResult<T> | null {
+  if (!raw || raw.length > MAX_SNAPSHOT_BYTES) {
+    return null
+  }
+
   try {
     const envelope = JSON.parse(raw) as SnapshotEnvelope<T>
     if (typeof envelope !== 'object' || envelope === null) {
@@ -255,9 +286,100 @@ function parseEnvelope<T>(raw: string, key: string): SnapshotReadResult<T> | nul
     if (envelope.version !== SNAPSHOT_VERSION) {
       return null
     }
+    if (typeof envelope.timestamp !== 'number') {
+      return null
+    }
+    if (Date.now() - envelope.timestamp > MAX_SNAPSHOT_AGE_MS) {
+      return null
+    }
     return { ...envelope, key }
   } catch (error) {
-    void AsyncStorage.removeItem(key)
     return null
+  }
+}
+
+let snapshotMigrationRan = false
+
+export async function migrateSnapshots(): Promise<void> {
+  if (snapshotMigrationRan) return
+  snapshotMigrationRan = true
+
+  try {
+    const keys = await AsyncStorage.getAllKeys()
+    if (!keys.length) return
+
+    const snapshotKeysToInspect = keys.filter(
+      (key) => key.startsWith(`${SNAPSHOT_PREFIX}:`) && !key.includes('#')
+    )
+
+    const now = Date.now()
+
+    for (const storageKey of snapshotKeysToInspect) {
+      const value = await AsyncStorage.getItem(storageKey)
+      if (!value) {
+        continue
+      }
+
+      let payload = value
+      if (payload.startsWith(CHUNK_META_PREFIX)) {
+        const metaRaw = payload.slice(CHUNK_META_PREFIX.length)
+        try {
+          const meta = JSON.parse(metaRaw) as { chunkCount: number }
+          if (!meta?.chunkCount || meta.chunkCount <= 0) {
+            await safeRemoveWithChunks(storageKey)
+            continue
+          }
+          const chunkKeys = chunkRange(storageKey, meta.chunkCount)
+          const chunkPairs = await AsyncStorage.multiGet(chunkKeys)
+          payload = chunkPairs
+            .map(([, chunkValue]) => chunkValue ?? '')
+            .join('')
+          if (!payload) {
+            await safeRemoveWithChunks(storageKey)
+            continue
+          }
+        } catch (error) {
+          await safeRemoveWithChunks(storageKey)
+          continue
+        }
+      }
+
+      if (payload.length > MAX_SNAPSHOT_BYTES) {
+        await safeRemoveWithChunks(storageKey)
+        continue
+      }
+
+      let envelope: SnapshotEnvelope<unknown> | null = null
+      try {
+        envelope = JSON.parse(payload) as SnapshotEnvelope<unknown>
+      } catch (error) {
+        await safeRemoveWithChunks(storageKey)
+        continue
+      }
+
+      if (!envelope || typeof envelope !== 'object') {
+        await safeRemoveWithChunks(storageKey)
+        continue
+      }
+
+      if (envelope.version !== SNAPSHOT_VERSION) {
+        await safeRemoveWithChunks(storageKey)
+        continue
+      }
+
+      if (typeof envelope.timestamp !== 'number') {
+        await safeRemoveWithChunks(storageKey)
+        continue
+      }
+
+      if (now - envelope.timestamp > MAX_SNAPSHOT_AGE_MS) {
+        await safeRemoveWithChunks(storageKey)
+        continue
+      }
+    }
+  } catch (error) {
+    if (__DEV__) {
+      console.warn('[snapshot] migrateSnapshots failed', error)
+    }
   }
 }

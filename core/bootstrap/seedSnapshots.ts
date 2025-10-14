@@ -9,6 +9,7 @@ import {
   ProfileSnapshot,
   WantToMeetSnapshot,
   MessagesSnapshot,
+  migrateSnapshots,
 } from '@/features/cache/snapshotStore'
 import { directoryKeys, type DirectoryPage } from '@/features/queries/directory'
 import {
@@ -38,6 +39,8 @@ export async function seedBootSnapshots(context: SeedContext = {}): Promise<void
   const communityId = context.communityId || DEFAULT_COMMUNITY
   const userId = context.userId ?? undefined
   const userName = context.userName ?? undefined
+
+  await migrateSnapshots()
 
   const requests: SnapshotMapEntry[] = [
     { key: 'directoryFirstPage', descriptor: snapshotKeys.directoryFirstPage(communityId) },

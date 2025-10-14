@@ -82,13 +82,14 @@ export const fetchProfileHeaderSafe = async (
   const { userId: providedUserId, forceNetwork } = options
   const cacheKey = profileKeys.header(userName)
 
-  if (!forceNetwork) {
-    const cached = queryClient.getQueryData<ProfileHeader>(cacheKey)
-    if (cached) {
-      return cached
-    }
+  const cachedHeader = queryClient.getQueryData<ProfileHeader>(cacheKey)
 
-    const snapshotUserId = providedUserId ?? cached?.id
+  if (!forceNetwork && cachedHeader) {
+    return cachedHeader
+  }
+
+  if (!forceNetwork) {
+    const snapshotUserId = providedUserId ?? cachedHeader?.id
     if (snapshotUserId) {
       const snapshot = (await getSnapshot(
         'profileSelfHeader',
@@ -103,8 +104,7 @@ export const fetchProfileHeaderSafe = async (
 
   let resolvedUserId = providedUserId
   if (!resolvedUserId) {
-    const existing = queryClient.getQueryData<ProfileHeader>(cacheKey)
-    resolvedUserId = existing?.id
+    resolvedUserId = cachedHeader?.id
   }
 
   const fetchStartedAt = PERF_TRACE ? Date.now() : 0

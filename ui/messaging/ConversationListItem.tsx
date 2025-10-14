@@ -15,6 +15,8 @@ import {
   messagingKeys,
   fetchConversation,
   fetchConversationMessages,
+  type ConversationsPage,
+  type ConversationMessagesPage,
 } from '@/features/queries/messaging'
 
 export default function ConversationListItem({
@@ -144,12 +146,12 @@ export default function ConversationListItem({
       .catch(() => {})
 
     queryClient
-      .prefetchInfiniteQuery({
+      .prefetchInfiniteQuery<ConversationMessagesPage>({
         queryKey: messagingKeys.messages(conversationId),
         queryFn: ({ pageParam }) =>
           fetchConversationMessages(conversationId, pageParam as string | undefined),
         initialPageParam: undefined as string | undefined,
-        getNextPageParam: (lastPage) => lastPage.nextCursor,
+        getNextPageParam: (lastPage: ConversationMessagesPage) => lastPage.nextCursor,
         staleTime: 30_000,
         gcTime: 30 * 60_000,
       })

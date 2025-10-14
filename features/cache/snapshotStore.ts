@@ -20,7 +20,7 @@ type SnapshotEnvelope<T> = {
   data: T
 }
 
-type SnapshotReadResult<T> = SnapshotEnvelope<T> & { key: string }
+export type SnapshotReadResult<T> = SnapshotEnvelope<T> & { key: string }
 
 type SnapshotDescriptor = {
   storageKey: string

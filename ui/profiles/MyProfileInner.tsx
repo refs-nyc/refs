@@ -263,8 +263,11 @@ export const MyProfile = ({ userName }: { userName: string }) => {
     if (!queryClientAny.__profileRQPatched) {
       const originalSet = queryClientAny.setQueryData.bind(queryClientAny)
       queryClientAny.__profileRQPatched = true
-      queryClientAny.setQueryData = (key: unknown, value: unknown, ...rest: any[]) => {
-        const size = (() => {
+      const patchedSetQueryData: typeof queryClientAny.setQueryData = (...args) => {
+        const key = args[0]
+        const value = args[1]
+
+        const approxSize = (() => {
           try {
             const json = JSON.stringify(value)
             return json ? json.length : -1
@@ -272,17 +275,22 @@ export const MyProfile = ({ userName }: { userName: string }) => {
             return -1
           }
         })()
+
         let keyString: string | undefined
         try {
           keyString = JSON.stringify(key)
         } catch (error) {
           keyString = undefined
         }
-        if (keyString?.includes('"profile"') && size > 80_000) {
-          console.warn('[RQ HEAVY WRITE]', key, 'size≈', size)
+
+        if (keyString?.includes('"profile"') && approxSize > 80_000) {
+          console.warn('[RQ HEAVY WRITE]', key, 'size≈', approxSize)
         }
-        return originalSet(key, value, ...rest)
+
+        return originalSet(...args)
       }
+
+      queryClientAny.setQueryData = patchedSetQueryData
     }
   }
 

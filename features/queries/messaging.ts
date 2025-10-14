@@ -32,48 +32,20 @@ export type ConversationsPage = {
 
 const pause = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms))
 
-const sanitizeUser = (user: ExpandedMembership['expand'] extends { user: infer U } ? U : never) =>
-  user
-    ? {
-        id: user.id,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        name: user.name,
-        userName: user.userName,
-        image: user.image,
-        avatar_url: (user as any).avatar_url,
-      }
-    : undefined
-
-const sanitizeMembership = (membership: ExpandedMembership): ExpandedMembership => {
-  const sanitizedUser = sanitizeUser(membership.expand?.user as any)
-  return {
-    id: membership.id,
-    collectionId: membership.collectionId,
-    collectionName: membership.collectionName,
-    conversation: membership.conversation,
-    user: membership.user,
-    role: membership.role,
-    last_read: membership.last_read,
-    created: membership.created,
-    updated: membership.updated,
-    expand: sanitizedUser ? ({ user: sanitizedUser } as any) : undefined,
-  } as ExpandedMembership
-}
-
 const normalizeMemberships = (
   conversation: ConversationWithMemberships,
   override?: ExpandedMembership
 ): ExpandedMembership[] => {
-  const base = (conversation.expand?.memberships_via_conversation || []).map((membership) =>
-    sanitizeMembership({
-      ...membership,
-      conversation: membership.conversation ?? conversation.id,
-    } as ExpandedMembership)
-  )
+  const base = (conversation.expand?.memberships_via_conversation || []).map((membership) => ({
+    ...membership,
+    conversation: membership.conversation ?? conversation.id,
+  })) as ExpandedMembership[]
 
   if (override) {
-    const sanitizedOverride = sanitizeMembership(override)
+    const sanitizedOverride = {
+      ...override,
+      conversation: override.conversation ?? conversation.id,
+    } as ExpandedMembership
     const existingIndex = base.findIndex((item) => item.id === sanitizedOverride.id)
     if (existingIndex >= 0) {
       base[existingIndex] = sanitizedOverride
@@ -84,16 +56,6 @@ const normalizeMemberships = (
 
   return base
 }
-
-const sanitizeConversationRecord = (conversation: ConversationWithMemberships): Conversation => ({
-  id: conversation.id,
-  collectionId: (conversation as any).collectionId,
-  collectionName: (conversation as any).collectionName,
-  title: conversation.title,
-  is_direct: conversation.is_direct,
-  updated: conversation.updated,
-  created: conversation.created,
-}) as Conversation
 
 const buildPreview = async (
   conversation: ConversationWithMemberships,
@@ -133,7 +95,7 @@ const buildPreview = async (
   }
 
   return {
-    conversation: sanitizeConversationRecord(conversation),
+    conversation,
     memberships,
     latestMessage,
     unreadCount,
@@ -170,7 +132,7 @@ export async function fetchConversationsPage(
     for (const conversation of items) {
       const memberships = normalizeMemberships(conversation)
       entries.push({
-        conversation: sanitizeConversationRecord(conversation),
+        conversation,
         memberships,
         latestMessage: null,
         unreadCount: 0,

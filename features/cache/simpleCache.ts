@@ -1,4 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
+import { isIdleTaskContext } from '@/features/utils/idleQueue'
 
 // Simple cache with fixed TTLs
 const CACHE_TTLS = {
@@ -25,6 +26,10 @@ class SimpleCache {
   private static instance: SimpleCache
   private cachePrefix = 'simple_cache_'
 
+  private writeQueue: Array<{ cacheKey: string; payload: string }> = []
+  private writing = false
+  private flushTimer: ReturnType<typeof setTimeout> | null = null
+
   static getInstance(): SimpleCache {
     if (!SimpleCache.instance) {
       SimpleCache.instance = new SimpleCache()
@@ -36,47 +41,127 @@ class SimpleCache {
     return userId ? `${this.cachePrefix}${key}_${userId}` : `${this.cachePrefix}${key}`
   }
 
+  private scheduleFlush() {
+    if (this.flushTimer || this.writing || this.writeQueue.length === 0) {
+      return
+    }
+
+    this.flushTimer = setTimeout(() => {
+      this.flushTimer = null
+      void this.flushQueue()
+    }, FLUSH_INTERVAL_MS)
+  }
+
+  private async writeToStorage(cacheKey: string, payload: string) {
+    const started = Date.now()
+    await AsyncStorage.setItem(cacheKey, payload)
+    if (__DEV__) {
+      const duration = Date.now() - started
+      const sizeKb = Math.round((payload.length / 1024) * 10) / 10
+      console.log(`💾 Cache set: ${cacheKey} (${sizeKb} KB, ${duration} ms)`) // eslint-disable-line no-console
+    }
+  }
+
+  private enqueueWrite(cacheKey: string, payload: string, options?: { priority?: 'high' }) {
+    const existingIndex = this.writeQueue.findIndex((entry) => entry.cacheKey === cacheKey)
+    if (existingIndex >= 0) {
+      this.writeQueue.splice(existingIndex, 1)
+    }
+
+    if (options?.priority === 'high') {
+      this.writeQueue.unshift({ cacheKey, payload })
+    } else {
+      this.writeQueue.push({ cacheKey, payload })
+    }
+  }
+
+  private requestFlush({ immediate = false }: { immediate?: boolean } = {}) {
+    if (this.writing || this.writeQueue.length === 0) {
+      return
+    }
+
+    if (immediate) {
+      void this.flushQueue()
+      return
+    }
+
+    this.scheduleFlush()
+  }
+
+  private async flushQueue() {
+    if (this.writing) return
+    this.writing = true
+
+    try {
+      let processed = 0
+      while (this.writeQueue.length && processed < FLUSH_BATCH_SIZE) {
+        const { cacheKey, payload } = this.writeQueue.shift()!
+        try {
+          await this.writeToStorage(cacheKey, payload)
+        } catch (error) {
+          console.warn('Cache write failed:', error)
+        }
+        processed += 1
+      }
+    } finally {
+      this.writing = false
+      if (this.writeQueue.length) {
+        this.scheduleFlush()
+      }
+    }
+  }
+
   // Read from cache (safe operation)
   async get<T>(key: CacheKey, userId?: string): Promise<T | null> {
+    const cacheKey = this.getKey(key, userId)
+
     try {
-      const cacheKey = this.getKey(key, userId)
+      const started = Date.now()
       const cached = await AsyncStorage.getItem(cacheKey)
-      
+
       if (!cached) {
         return null
       }
 
       const entry: CacheEntry<T> = JSON.parse(cached)
-      
-      // Check if expired
+
       if (Date.now() > entry.expires) {
         await AsyncStorage.removeItem(cacheKey)
         return null
       }
 
-      console.log(`📖 Cache hit: ${cacheKey}`)
+      if (__DEV__) {
+        const duration = Date.now() - started
+        const sizeKb = Math.round((cached.length / 1024) * 10) / 10
+        console.log(`📖 Cache hit: ${cacheKey} (${sizeKb} KB, ${duration} ms)`) // eslint-disable-line no-console
+      }
+
       return entry.data
     } catch (error) {
-      console.warn('Cache read failed:', error)
+      console.warn('Cache read failed:', { cacheKey, error })
       return null
     }
   }
 
   // Write to cache (only after successful operations)
   async set<T>(key: CacheKey, data: T, userId?: string): Promise<void> {
-    try {
-      const cacheKey = this.getKey(key, userId)
-      const entry: CacheEntry<T> = {
-        data,
-        expires: Date.now() + CACHE_TTLS[key]
-      }
-      
-      await AsyncStorage.setItem(cacheKey, JSON.stringify(entry))
-      console.log(`💾 Cache set: ${cacheKey}`)
-    } catch (error) {
-      console.warn('Cache write failed:', error)
-      // Don't throw - cache failures shouldn't break the app
+    const cacheKey = this.getKey(key, userId)
+
+    const entry: CacheEntry<T> = {
+      data,
+      expires: Date.now() + CACHE_TTLS[key],
     }
+
+    const payload = JSON.stringify(entry)
+
+    if (isIdleTaskContext()) {
+      this.enqueueWrite(cacheKey, payload, { priority: 'high' })
+      this.requestFlush({ immediate: true })
+      return
+    }
+
+    this.enqueueWrite(cacheKey, payload)
+    this.requestFlush()
   }
 
   // Clear cache for a user (when data changes)
@@ -107,3 +192,6 @@ class SimpleCache {
 export const simpleCache = SimpleCache.getInstance()
 export { CACHE_TTLS }
 export type { CacheKey }
+
+const FLUSH_INTERVAL_MS = 20
+const FLUSH_BATCH_SIZE = 2

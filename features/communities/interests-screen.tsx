@@ -7,6 +7,7 @@ import { CommunitiesFeedScreen } from '@/features/communities/feed-screen'
 import { WantToMeetPanel } from '@/features/communities/want-to-meet-screen'
 import { Badge } from '@/ui/atoms/Badge'
 import Animated, { interpolate, useAnimatedStyle, useSharedValue, withTiming, withSequence, withSpring, Extrapolation } from 'react-native-reanimated'
+import { useWantToMeet } from '@/features/queries/wantToMeet'
 
 type DirectoryTab = 'everyone' | 'wantToMeet'
 
@@ -16,10 +17,11 @@ const tabs: Array<{ key: DirectoryTab; label: string }> = [
 ]
 
 export function CommunityInterestsScreen() {
-  const { saves } = useAppStore()
+  const { user } = useAppStore()
+  const { data: wantToMeet = [] } = useWantToMeet(user?.id)
   const insets = useSafeAreaInsets()
   const [activeTab, setActiveTab] = useState<DirectoryTab>('everyone')
-  const wantToMeetCount = saves.length
+  const wantToMeetCount = wantToMeet.length
   const wantToMeetActive = activeTab === 'wantToMeet'
   const flipProgress = useSharedValue(0)
   const badgeScale = useSharedValue(1)

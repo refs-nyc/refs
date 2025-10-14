@@ -1,6 +1,6 @@
 import { Profile } from '@/ui'
 import React, { useEffect, useMemo, useRef } from 'react'
-import { Dimensions, InteractionManager, View } from 'react-native'
+import { Dimensions, View } from 'react-native'
 import Svg, { Path, G } from 'react-native-svg'
 import { useAppStore } from '@/features/stores'
 import { CommunityInterestsScreen } from '@/features/communities/interests-screen'
@@ -22,7 +22,6 @@ export function UserProfileScreen({ userName, prefetchedUserId }: { userName: st
     consumeProfileNavIntent,
     directoriesFilterTab,
     setDirectoriesFilterTab,
-    setDirectoryUsers,
     moduleBackdropAnimatedIndex,
     detailsBackdropAnimatedIndex,
     otherProfileBackdropAnimatedIndex,
@@ -157,92 +156,6 @@ export function UserProfileScreen({ userName, prefetchedUserId }: { userName: st
   })
 
   // Simple preloader that runs once when component mounts
-  useEffect(() => {
-    let cancelled = false
-
-    const schedule = InteractionManager.runAfterInteractions(() => {
-      setTimeout(async () => {
-        if (cancelled) return
-        try {
-          if (user?.userName === userName) {
-            await import('@/features/stores/items').then(({ getProfileItems }) =>
-              getProfileItems(userName)
-            )
-          }
-
-          const { pocketbase } = await import('@/features/pocketbase')
-          const { simpleCache } = await import('@/features/cache/simpleCache')
-
-          const cachedDirectory = await simpleCache.get('directory_users')
-          if (!cachedDirectory || !Array.isArray(cachedDirectory) || cachedDirectory.length === 0) {
-            const res = await pocketbase.collection('users').getList(1, 20, {
-              filter: 'show_in_directory = true',
-              fields: 'id,userName,firstName,lastName,name,location,image,avatar_url',
-              sort: '-created',
-            })
-
-            const userIds = res.items.map((u: any) => u.id)
-            if (userIds.length > 0) {
-              const orFilter = userIds.map((id: string) => `creator = "${id}"`).join(' || ')
-              const itemsRes = await pocketbase.collection('items').getList(1, Math.max(3 * userIds.length, 60), {
-                filter: `(${orFilter}) && backlog = false && list = false && parent = null`,
-                fields: 'id,image,creator,created,expand.ref(image)',
-                expand: 'ref',
-                sort: '-created',
-              })
-
-              const byCreator = new Map<string, any[]>()
-              for (const it of itemsRes.items as any[]) {
-                const creatorId = it.creator
-                if (!creatorId) continue
-                const arr = byCreator.get(creatorId) || []
-                if (arr.length < 3) {
-                  arr.push(it)
-                  byCreator.set(creatorId, arr)
-                }
-              }
-
-              const mapped = res.items
-                .map((r: any) => {
-                  const creatorId = r.id
-                  const creatorItems = byCreator.get(creatorId) || []
-                  const images = creatorItems
-                    .slice(0, 3)
-                    .map((it) => it?.image || it?.expand?.ref?.image)
-                    .filter(Boolean)
-                  const latest = creatorItems[0]?.created ? new Date(creatorItems[0].created).getTime() : 0
-                  return {
-                    id: r.id,
-                    userName: r.userName,
-                    name: (r.firstName || r.name || r.userName || '').trim(),
-                    neighborhood: (r.location || '').trim() || 'Elsewhere',
-                    avatar_url: r.image || r.avatar_url || '',
-                    topRefs: images,
-                    _latest: latest,
-                  }
-                })
-                .filter((u) => u.userName !== user?.userName)
-
-              await simpleCache.set('directory_users', mapped)
-              setDirectoryUsers(mapped)
-            }
-          } else if (!cancelled) {
-            setDirectoryUsers(cachedDirectory as any)
-          }
-        } catch (error) {
-          if (!cancelled) {
-            console.warn('Preloading failed:', error)
-          }
-        }
-      }, 0)
-    })
-
-    return () => {
-      cancelled = true
-      schedule.cancel?.()
-    }
-  }, [userName, user?.userName, setDirectoryUsers])
-
   // Define Dots component before conditional returns to prevent hook ordering issues
   const Dots = useMemo(() => {
     const Indicator = ({ index }: { index: number }) => {

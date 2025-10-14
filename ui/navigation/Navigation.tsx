@@ -26,7 +26,6 @@ export const Navigation = ({
 
   const {
     user,
-    cachedSearchResults,
     logoutSheetRef,
     homePagerIndex,
     directoriesFilterTab,
@@ -44,14 +43,6 @@ export const Navigation = ({
   const handleBackPress = () => {
     const routerCanGoBack = typeof (router as any).canGoBack === 'function' ? (router as any).canGoBack() : false
     const navCanGoBack = navigation?.canGoBack?.() ?? false
-
-    // If we have cached search results, navigate back to profile to restore them
-    if (cachedSearchResults.length > 0 && user?.userName) {
-      setHomePagerIndex(0)
-      setProfileNavIntent({ targetPagerIndex: 0, source: 'other' })
-      router.push(`/user/${user.userName}`)
-      return
-    }
 
     if (routerCanGoBack || navCanGoBack) {
       if (routerCanGoBack) {

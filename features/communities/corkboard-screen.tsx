@@ -53,7 +53,6 @@ export function EdgeCorkboardScreen() {
     setCurrentRefId,
     referencersBottomSheetRef,
     setReferencersContext,
-    setConversationPreview,
     openCommunityFormSheet,
     removeInterestSheetRef,
     setPendingInterestRemoval,
@@ -294,10 +293,7 @@ export function EdgeCorkboardScreen() {
     const task = InteractionManager.runAfterInteractions(async () => {
       await load()
       if (cancelled) return
-      try {
-        unsub = await pocketbase.collection('refs').subscribe('*', handleEvent)
-      } catch {}
-      if (cancelled) return
+      // TODO: replace legacy wildcard realtime with scoped channel or user-driven polling.
       await loadUserSubscriptions()
     })
 
@@ -363,7 +359,6 @@ export function EdgeCorkboardScreen() {
                 title: item?.expand?.ref?.title || item?.title || 'Community chat',
               })
               await joinCommunityChat(conversationId, user.id)
-              setConversationPreview(conversationId, null, 0)
               
               // Prompt for notifications after joining (fire-and-forget)
               const chatTitle = item?.expand?.ref?.title || item?.title || 'this chat'

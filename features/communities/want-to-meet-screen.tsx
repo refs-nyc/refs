@@ -7,8 +7,9 @@ import UserListItem from '@/ui/atoms/UserListItem'
 import { s, c } from '@/features/style'
 import { Ionicons } from '@expo/vector-icons'
 import { router } from 'expo-router'
-import type { Profile } from '@/features/types'
+import type { ExpandedSave, Profile } from '@/features/types'
 import { EdgeCorkboardScreen } from '@/features/communities/corkboard-screen'
+import { useWantToMeet } from '@/features/queries/wantToMeet'
 
 type WantToMeetPanelProps = {
   showHeader?: boolean
@@ -25,8 +26,22 @@ export function WantToMeetPanel({
   containerStyle,
   showActions = true,
 }: WantToMeetPanelProps) {
-  const { saves, removeSave, user, openDMComposer, openGroupComposer, setProfileNavIntent } = useAppStore()
-  const savedUsers = useMemo<Profile[]>(() => saves.map((s) => s.expand.user as Profile), [saves])
+  const {
+    addSave,
+    removeSave,
+    user,
+    openDMComposer,
+    openGroupComposer,
+    setProfileNavIntent,
+  } = useAppStore()
+  const userId = user?.id
+  const { data: querySaves = [], isLoading: isPending } = useWantToMeet(userId)
+
+  const currentSaves = useMemo(() => {
+    if (!userId) return []
+    return querySaves
+  }, [querySaves, userId])
+  const savedUsers = useMemo<Profile[]>(() => currentSaves.map((s) => s.expand.user as Profile), [currentSaves])
   const [selected, setSelected] = useState<Record<string, boolean>>({})
   const selectedUsers = useMemo(
     () => savedUsers.filter((u) => (u?.id ? selected[u.id] : false)),
@@ -45,6 +60,24 @@ export function WantToMeetPanel({
       withSpring(1, { damping: 12, stiffness: 180 })
     )
   }, [savedUsers.length])
+
+  useEffect(() => {
+    if (!savedUsers.length) {
+      setSelected((prev) => (Object.keys(prev).length ? {} : prev))
+      return
+    }
+    setSelected((prev) => {
+      const next = { ...prev }
+      let changed = false
+      for (const key of Object.keys(next)) {
+        if (next[key] && !savedUsers.some((u) => u.id === key)) {
+          changed = true
+          delete next[key]
+        }
+      }
+      return changed ? next : prev
+    })
+  }, [savedUsers])
 
   const handleDmPress = () => {
     if (!(selectedUsers.length === 1 && user?.id)) return
@@ -107,7 +140,7 @@ export function WantToMeetPanel({
         >
           {savedUsers.map((u, idx) => {
             const isSelected = !!selected[u.id]
-            const matchingSave = saves.find((s) => s.user === u.id || s.expand?.user?.id === u.id)
+            const matchingSave = currentSaves.find((s) => s.user === u.id || s.expand?.user?.id === u.id)
 
             return (
               <View key={u.id} style={{ marginBottom: idx === savedUsers.length - 1 ? 0 : s.$075, position: 'relative' }}>
@@ -179,9 +212,14 @@ export function WantToMeetPanel({
               </View>
             )
           })}
-          {savedUsers.length === 0 && (
+          {savedUsers.length === 0 && !isPending && (
             <View style={{ alignItems: 'center', paddingVertical: s.$3 }}>
               <Text style={{ color: c.muted }}>No saved users yet.</Text>
+            </View>
+          )}
+          {isPending && savedUsers.length === 0 && (
+            <View style={{ alignItems: 'center', paddingVertical: s.$3 }}>
+              <Text style={{ color: c.muted }}>Loading…</Text>
             </View>
           )}
         </ScrollView>

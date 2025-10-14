@@ -5,7 +5,7 @@ import { SwipeToGoBack } from '@/ui/SwipeToGoBack'
 import { useNavigation } from '@react-navigation/native'
 
 export default function Screen() {
-  const { user, cachedSearchResults, setHomePagerIndex, setProfileNavIntent, homePagerIndex, directoriesFilterTab } = useAppStore()
+  const { user, setHomePagerIndex, setProfileNavIntent, homePagerIndex, directoriesFilterTab } = useAppStore()
   const router = useRouter()
   const navigation = useNavigation<any>()
 
@@ -26,14 +26,6 @@ export default function Screen() {
       } else {
         navigation.goBack()
       }
-      return
-    }
-
-    // If we have cached search results, navigate back to profile to restore them
-    if (cachedSearchResults.length > 0 && user?.userName) {
-      setHomePagerIndex(0)
-      setProfileNavIntent({ targetPagerIndex: 0, source: 'other' })
-      router.push(`/user/${user.userName}`)
       return
     }
 

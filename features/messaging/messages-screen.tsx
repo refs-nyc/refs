@@ -1,3 +1,13 @@
+import { useEffect, useMemo, useRef, useState, lazy, Suspense, useCallback } from 'react'
+import { FlatList, Keyboard, Platform, Pressable, Text, View } from 'react-native'
+import Ionicons from '@expo/vector-icons/Ionicons'
+import { useQuery, type InfiniteData } from '@tanstack/react-query'
+import Animated, { useSharedValue, useAnimatedStyle, withTiming, Easing, runOnJS } from 'react-native-reanimated'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { Link, router } from 'expo-router'
+import * as ImagePicker from 'expo-image-picker'
+import { useFocusEffect } from '@react-navigation/native'
+
 import { useAppStore } from '@/features/stores'
 import { Message } from '@/features/types'
 import { c, s } from '@/features/style'
@@ -5,22 +15,13 @@ import { Avatar, AvatarStack } from '@/ui/atoms/Avatar'
 import MessageBubble from '@/ui/messaging/MessageBubble'
 import MessageInput from '@/ui/messaging/MessageInput'
 import { pinataUpload } from '@/features/pinata'
-import * as ImagePicker from 'expo-image-picker'
-import { Link, router } from 'expo-router'
-import { useEffect, useMemo, useRef, useState, lazy, Suspense, useCallback } from 'react'
-import {
-  FlatList,
-  Keyboard,
-  Platform,
-  Pressable,
-  Text,
-  View,
-} from 'react-native'
-import Ionicons from '@expo/vector-icons/Ionicons'
-const EmojiPicker = lazy(() => import('rn-emoji-keyboard'))
 import { randomColors } from './utils'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import Animated, { useSharedValue, useAnimatedStyle, withTiming, Easing, runOnJS } from 'react-native-reanimated'
+import { useConversationMessages } from '@/features/messaging/useConversationMessages'
+import { messagingKeys, fetchConversation, type ConversationMessagesPage } from '@/features/queries/messaging'
+import { patchConversationPreview } from '@/features/queries/messaging-cache'
+import { queryClient } from '@/core/queryClient'
+import { pocketbase } from '@/features/pocketbase'
+const EmojiPicker = lazy(() => import('rn-emoji-keyboard'))
 
 export function MessagesScreen({
   conversationId,
@@ -33,23 +34,157 @@ export function MessagesScreen({
 }) {
   const {
     user,
-    conversations,
-    memberships,
-    messagesPerConversation,
     sendMessage,
     sendReaction,
-    oldestLoadedMessageDate,
-    setOldestLoadedMessageDate,
-    addOlderMessages,
-    firstMessageDate,
     updateLastRead,
-    getNewMessages,
-    loadConversationMessages,
-    conversationHydration,
     setProfileNavIntent,
-    hydrateConversation,
     showToast,
   } = useAppStore()
+
+  const realtimeLockRef = useRef(false)
+  const realtimeReleaseRef = useRef<NodeJS.Timeout | null>(null)
+  const sendMutexRef = useRef(false)
+
+  const {
+    messages: queryMessages,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useConversationMessages(conversationId, {
+    enabled: Boolean(user?.id),
+  })
+
+  const applyRealtimeMessage = useCallback(
+    async (record: Message, action: 'create' | 'update' | 'delete') => {
+      queryClient.setQueryData<InfiniteData<ConversationMessagesPage>>(
+        messagingKeys.messages(conversationId),
+        (existing) => {
+          if (!existing) return existing
+
+          const pages = existing.pages.map((page) => {
+            if (!page.messages.length) return page
+            if (action === 'delete') {
+              return {
+                ...page,
+                messages: page.messages.filter((message) => message.id !== record.id),
+              }
+            }
+
+            if (action === 'update') {
+              return {
+                ...page,
+                messages: page.messages.map((message) => (message.id === record.id ? { ...message, ...record } : message)),
+              }
+            }
+
+            // create
+            if (page === existing.pages[0]) {
+              if (page.messages.some((message) => message.id === record.id)) {
+                return page
+              }
+              return {
+                ...page,
+                messages: [record, ...page.messages],
+              }
+            }
+
+            return page
+          })
+
+          return { ...existing, pages }
+        }
+      )
+
+      if (user?.id) {
+        if (action === 'delete') {
+          // fallback to invalidate conversation preview when latest message removed
+          queryClient.invalidateQueries({ queryKey: messagingKeys.conversations(user.id) })
+        } else {
+          patchConversationPreview(user.id, conversationId, (entry) => {
+            if (!entry) return entry
+            return {
+              ...entry,
+              latestMessage: record,
+            }
+          })
+        }
+      }
+    },
+    [conversationId, user?.id]
+  )
+
+  useFocusEffect(
+    useCallback(() => {
+      let cancelled = false
+      let unsubscribe: (() => void) | null = null
+
+      const subscribe = async () => {
+        try {
+          const startedAt = Date.now()
+          console.log('[boot-trace] messages.thread.subscribe:start', conversationId)
+          const sub = await pocketbase.collection('messages').subscribe<Message>(
+            '*',
+            async (event) => {
+              if (event.record?.conversation !== conversationId) return
+              if (event.action !== 'create' && event.action !== 'update' && event.action !== 'delete') return
+
+              if (realtimeLockRef.current) {
+                return
+              }
+              realtimeLockRef.current = true
+
+              try {
+                await applyRealtimeMessage(event.record, event.action)
+              } finally {
+                if (realtimeReleaseRef.current) {
+                  clearTimeout(realtimeReleaseRef.current)
+                }
+                realtimeReleaseRef.current = setTimeout(() => {
+                  realtimeLockRef.current = false
+                }, 1200)
+              }
+            },
+            {
+              fields: 'id,conversation,sender,created',
+            }
+          )
+          console.log('[boot-trace] messages.thread.subscribe:established', conversationId, Date.now() - startedAt, 'ms')
+
+          if (cancelled) {
+            sub?.()
+          } else {
+            unsubscribe = sub
+          }
+        } catch (error) {
+          console.warn('[messages] realtime subscription failed', error)
+        }
+      }
+
+      void subscribe()
+
+      return () => {
+        cancelled = true
+        if (unsubscribe) {
+          try {
+            unsubscribe()
+          } catch {}
+        }
+        if (realtimeReleaseRef.current) {
+          clearTimeout(realtimeReleaseRef.current)
+          realtimeReleaseRef.current = null
+        }
+        realtimeLockRef.current = false
+      }
+    }, [applyRealtimeMessage, conversationId])
+  )
+
+  const conversationQuery = useQuery({
+    queryKey: messagingKeys.conversation(conversationId),
+    queryFn: () => fetchConversation(conversationId),
+    staleTime: 60_000,
+    gcTime: 30 * 60_000,
+    enabled: Boolean(conversationId),
+  })
 
   const flatListRef = useRef<FlatList<Message>>(null)
   const [message, setMessage] = useState('')
@@ -99,17 +234,13 @@ export function MessagesScreen({
   // Use a fixed header height to prevent jumping on mount
   const headerHeight = insets.top + headerGap + headerPaddingBottom + (s.$4 as number)
 
-  const conversation = conversations[conversationId]
-  const membershipRecords = memberships[conversationId] || []
+  const conversation = conversationQuery.data?.conversation
+  const membershipRecords = conversationQuery.data?.memberships ?? []
 
   useEffect(() => {
     if (!user) return
-    if (!conversation) {
-      console.log(`[messages] hydrate conversation ${conversationId}`)
-      hydrateConversation(conversationId).catch((error) => {
-        console.error('hydrateConversation failed', error)
-        router.replace('/messages')
-      })
+    if (!conversationQuery.data && !conversationQuery.isLoading) {
+      router.replace('/messages')
       return
     }
     if (!membershipRecords.length) return
@@ -117,26 +248,15 @@ export function MessagesScreen({
     if (!isMember) {
       router.replace('/messages')
     }
-    console.log(`[messages] conversation ready ${conversationId}`)
-  }, [conversation, membershipRecords.length, user?.id, conversationId, hydrateConversation])
+  }, [conversationQuery.data, conversationQuery.isLoading, membershipRecords.length, user?.id, conversationId])
 
   const members = useMemo(() => {
     if (!user) return membershipRecords
     return membershipRecords.filter((m) => m.expand?.user.id !== user.id)
   }, [membershipRecords, user?.id])
 
-  const conversationMessages = messagesPerConversation[conversationId] || []
+  const conversationMessages = queryMessages
   const highlightedMessage = conversationMessages.find((m) => m.id === highlightedMessageId)
-  const hydrationState = conversationHydration[conversationId]
-
-  useEffect(() => {
-    if (hydrationState !== 'hydrated') {
-      loadConversationMessages(conversationId).catch((error) => {
-        console.error('Failed to hydrate conversation', error)
-      })
-    }
-  }, [conversationId, hydrationState, loadConversationMessages])
-
   const colorMap = useMemo(() => {
     const colors = randomColors(members.length)
     return members.reduce((acc, member, index) => {
@@ -148,8 +268,8 @@ export function MessagesScreen({
   useEffect(() => {
     if (!conversationMessages.length) return
     if (!user) return
-    updateLastRead(conversationId, user.id)
-  }, [conversationId, conversationMessages.length, updateLastRead, user?.id])
+    updateLastRead(conversationId, user.id, conversationMessages[0]?.created)
+  }, [conversationId, conversationMessages, updateLastRead, user?.id])
 
   useEffect(() => {
     const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow'
@@ -198,28 +318,37 @@ export function MessagesScreen({
 
   const onMessageSubmit = async () => {
     if (!message.trim() && readyAttachments.length === 0) return
+    if (sendMutexRef.current) return
 
-    if (message.trim()) {
-      await sendMessage(
-        user.id,
-        conversationId,
-        message,
-        replying ? highlightedMessageId : undefined,
-        undefined
-      )
-    }
+    sendMutexRef.current = true
 
-    if (readyAttachments.length > 0) {
-      for (const attachment of readyAttachments) {
-        await sendMessage(user.id, conversationId, '', undefined, attachment.remoteUrl)
+    try {
+      if (message.trim()) {
+        await sendMessage(
+          user.id,
+          conversationId,
+          message,
+          replying ? highlightedMessageId : undefined,
+          undefined
+        )
       }
-    }
 
-    setMessage('')
-    setAttachments([])
-    setHighlightedMessageId('')
-    setReplying(false)
-    flatListRef.current?.scrollToIndex({ index: 0, animated: true })
+      if (readyAttachments.length > 0) {
+        for (const attachment of readyAttachments) {
+          await sendMessage(user.id, conversationId, '', undefined, attachment.remoteUrl)
+        }
+      }
+
+      setMessage('')
+      setAttachments([])
+      setHighlightedMessageId('')
+      setReplying(false)
+      flatListRef.current?.scrollToIndex({ index: 0, animated: true })
+    } finally {
+      setTimeout(() => {
+        sendMutexRef.current = false
+      }, 350)
+    }
   }
 
   const onAttachmentPress = useCallback(async () => {
@@ -321,26 +450,10 @@ export function MessagesScreen({
     setShowEmojiPicker(true)
   }
 
-  const loadMoreMessages = async () => {
-    const oldestLoaded = oldestLoadedMessageDate[conversationId]
-    const firstLoaded = firstMessageDate[conversationId]
-
-    if (!oldestLoaded || !firstLoaded) {
-      await loadConversationMessages(conversationId, { force: true }).catch((error) => {
-        console.error('Failed to load messages', error)
-      })
-      return
-    }
-
-    if (oldestLoaded === firstLoaded) return
-
-    const newMessages = await getNewMessages(conversationId, oldestLoaded)
-    const oldestMessage = newMessages[newMessages.length - 1]
-    if (oldestMessage?.created) {
-      setOldestLoadedMessageDate(conversationId, oldestMessage.created)
-    }
-    addOlderMessages(conversationId, newMessages)
-  }
+  const loadMoreMessages = useCallback(() => {
+    if (!hasNextPage || isFetchingNextPage) return
+    void fetchNextPage()
+  }, [fetchNextPage, hasNextPage, isFetchingNextPage])
 
   const renderMessage = ({ item }: { item: Message }) => {
     const parentMessageIndex = conversationMessages.findIndex((m) => m.id === item.replying_to)

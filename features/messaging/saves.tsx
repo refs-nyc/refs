@@ -1,4 +1,7 @@
 import { useAppStore } from '@/features/stores'
+import { useConversationPreviews } from '@/features/messaging/useConversationPreviews'
+import type { ConversationPreviewSnapshot } from '@/features/messaging/useConversationPreviews'
+import { useWantToMeet } from '@/features/queries/wantToMeet'
 import { c, s } from '@/features/style'
 import { Button, XStack, YStack } from '@/ui'
 import { Heading } from '@/ui/typo/Heading'
@@ -6,10 +9,9 @@ import { DMButton } from '@/ui/profiles/DMButton'
 import { Ionicons } from '@expo/vector-icons'
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet'
 import { Link, router } from 'expo-router'
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Pressable, Text, TextInput, View, useWindowDimensions } from 'react-native'
 import Animated, { useSharedValue, useAnimatedStyle, withTiming } from 'react-native-reanimated'
-import { Conversation } from '@/features/types'
 import SwipeableUser from '@/ui/atoms/SwipeableUser'
 import { t } from '@/features/style'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -20,7 +22,9 @@ const HEADER_TOP_PADDING = 24 // px, adjust as needed
 const BUTTON_BOTTOM_PADDING = 20 // px, adjust as needed
 
 export default function SavesList() {
-  const { saves, createMemberships, removeSave, conversations, memberships } = useAppStore()
+  const { user, createMemberships, removeSave } = useAppStore()
+  const { data: saves = [] } = useWantToMeet(user?.id)
+  const { previews } = useConversationPreviews()
   const { width } = useWindowDimensions()
   const buttonGap = s.$1
   const contentWidth = width - 2 * s.$3
@@ -30,20 +34,32 @@ export default function SavesList() {
   const [step, setStep] = useState<Step>('select')
   const [searchTerm, setSearchTerm] = useState('')
 
-  const [filteredChats, setFilteredChats] = useState<Conversation[]>([
-    ...Object.values(conversations).filter((c) => !c.is_direct),
-  ])
+  const [filteredChats, setFilteredChats] = useState<ConversationPreviewSnapshot[]>([])
 
   const insets = useSafeAreaInsets()
 
-  const onSearchTermChange = (searchTerm: string) => {
-    setSearchTerm(searchTerm)
-    setFilteredChats([
-      ...Object.values(conversations).filter(
-        (c) => !c.is_direct && c.title && c.title.toLowerCase().includes(searchTerm.toLowerCase())
-      ),
-    ])
+  const groupPreviews = useMemo(
+    () => previews.filter((entry) => !entry.conversation.is_direct),
+    [previews]
+  )
+
+  const onSearchTermChange = (next: string) => {
+    setSearchTerm(next)
   }
+
+  useEffect(() => {
+    const query = searchTerm.trim().toLowerCase()
+    if (!query) {
+      setFilteredChats(groupPreviews)
+      return
+    }
+
+    const matches = groupPreviews.filter((entry) => {
+      const title = entry.conversation.title || ''
+      return title.toLowerCase().includes(query)
+    })
+    setFilteredChats(matches)
+  }, [groupPreviews, searchTerm])
 
   useEffect(() => {
     for (const save of saves) {
@@ -196,9 +212,9 @@ export default function SavesList() {
               </Link>
               {filteredChats.map((gc) => (
                 <Pressable
-                  key={gc.id}
+                  key={gc.conversation.id}
                   onPress={() => {
-                    onAddToGroupChat(gc.id)
+                    onAddToGroupChat(gc.conversation.id)
                   }}
                 >
                   <XStack
@@ -214,13 +230,13 @@ export default function SavesList() {
                       style={{ color: c.white, width: '65%' }}
                       numberOfLines={2}
                     >
-                      {gc.title}
+                      {gc.conversation.title || 'Group chat'}
                     </Heading>
                     <Button
                       variant="smallWhiteOutline"
                       onPress={() => {}}
                       style={{ width: '30%' }}
-                      title={`${memberships[gc.id].length} members`}
+                      title={`${gc.memberships.length} members`}
                     />
                   </XStack>
                 </Pressable>

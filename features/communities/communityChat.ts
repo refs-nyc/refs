@@ -1,9 +1,11 @@
 import { pocketbase } from '@/features/pocketbase'
-import { useAppStore } from '@/features/stores'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { supabase } from '@/features/supabase/client'
-import type { Conversation, ExpandedMembership, Message } from '@/features/types'
+import type { ConversationWithMemberships, Message } from '@/features/types'
 import { ClientResponseError } from 'pocketbase'
+import { queryClient } from '@/core/queryClient'
+import { messagingKeys, buildConversationPreview } from '@/features/queries/messaging'
+import { patchConversationPreview, upsertConversationPreview, removeConversationPreview } from '@/features/queries/messaging-cache'
 
 type InterestMeta = {
   community?: string
@@ -126,7 +128,7 @@ export const joinCommunityChat = async (conversationId: string, userId: string):
       }
     }
   }
-  await refreshConversation(conversationId)
+  const previewEntry = await refreshConversation(conversationId)
 
   // Format timestamp to match PocketBase's format: 'yyyy-MM-dd HH:mm:ss.SSSZ'
   // Example: '2025-10-08T01:11:00.000Z' -> '2025-10-08 01:11:00.000Z'
@@ -141,23 +143,18 @@ export const joinCommunityChat = async (conversationId: string, userId: string):
     text: 'started a chat',
     created: pbTimestamp,
   }
-  const store = useAppStore.getState()
-  try {
-    store.setConversationPreview(conversationId, preview, 0)
-  } catch (error) {
-    console.warn('Failed to set conversation preview after joining chat', error)
-  }
 
-  // Bump to top by refreshing membership order and conversations map
-  useAppStore.setState((state) => {
-    const conversation = state.conversations[conversationId]
-    if (!conversation) return state
-
-    // Store the last bumped chat id for the conversation screen to prioritize
+  patchConversationPreview(userId, conversationId, (entry) => {
+    const base = entry ?? previewEntry
+    if (!base) return entry
     return {
-      lastInterestConversationId: conversationId,
-    } as Partial<typeof state & { lastInterestConversationId: string }>
+      ...base,
+      latestMessage: preview,
+      unreadCount: 0,
+    }
   })
+
+  queryClient.invalidateQueries({ queryKey: messagingKeys.conversations(userId) })
 }
 
 export const leaveCommunityChat = async (conversationId: string, userId: string) => {
@@ -171,7 +168,8 @@ export const leaveCommunityChat = async (conversationId: string, userId: string)
   } catch (error) {
     console.warn('Failed to leave community chat', error)
   }
-  await refreshConversation(conversationId)
+  removeConversationPreview(userId, conversationId)
+  queryClient.invalidateQueries({ queryKey: messagingKeys.conversations(userId) })
 }
 
 const findInterestByChatId = async (conversationId: string) => {
@@ -221,24 +219,22 @@ export const leaveCommunityChatAndUnsubscribe = async (conversationId: string, u
 }
 
 const refreshConversation = async (conversationId: string) => {
-  try {
-    const [conversation, memberships] = await Promise.all([
-      pocketbase.collection('conversations').getOne<Conversation>(conversationId),
-      pocketbase.collection('memberships').getFullList<ExpandedMembership>({
-        filter: pocketbase.filter('conversation = {:cid}', { cid: conversationId }),
-        expand: 'user',
-      }),
-    ])
+  const authUserId = pocketbase.authStore.record?.id
+  if (!authUserId) return null
 
-    useAppStore.setState((state) => ({
-      conversations: { ...state.conversations, [conversationId]: conversation },
-      memberships: { ...state.memberships, [conversationId]: memberships },
-      conversationHydration: {
-        ...state.conversationHydration,
-        [conversationId]: state.conversationHydration[conversationId] ?? 'preview',
-      },
-    }))
+  try {
+    const conversation = await pocketbase
+      .collection('conversations')
+      .getOne<ConversationWithMemberships>(conversationId, {
+        expand: 'memberships_via_conversation.user',
+      })
+
+    const preview = await buildConversationPreview(conversation, authUserId)
+    upsertConversationPreview(authUserId, preview)
+    return preview
   } catch (error) {
     console.warn('Failed to refresh conversation after membership change', error)
+    queryClient.invalidateQueries({ queryKey: messagingKeys.conversations(authUserId) })
+    return null
   }
 }

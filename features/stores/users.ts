@@ -5,7 +5,7 @@ import { ClientResponseError } from 'pocketbase'
 import type { StoreSlices } from './types'
 import { pocketbase } from '../pocketbase'
 import { updateShowInDirectory } from './items'
-import { simpleCache } from '@/features/cache/simpleCache'
+const OFF_AUTH_RESTORE = process.env.EXPO_PUBLIC_OFF_AUTH_RESTORE === '1'
 
 export type DirectoryUser = {
   id: string
@@ -21,8 +21,6 @@ export type UserSlice = {
   stagedUser: Partial<Profile> & { password?: string; passwordConfirm?: string }
   user: Profile | null
   isInitialized: boolean
-  directoryUsers: DirectoryUser[]
-  setDirectoryUsers: (users: DirectoryUser[]) => void
   register: () => Promise<ExpandedProfile>
   updateUser: (fields: Partial<Profile>) => Promise<Profile>
   updateStagedUser: (formFields: Partial<Profile> & { password?: string; passwordConfirm?: string }) => void
@@ -40,47 +38,29 @@ export const createUserSlice: StateCreator<StoreSlices, [], [], UserSlice> = (se
   stagedUser: {},
   user: null, // user is ALWAYS the user of the app, this is only set if the user is logged in
   isInitialized: false,
-  directoryUsers: [],
-  setDirectoryUsers: (users) => {
-    set(() => ({ directoryUsers: users }))
-  },
   //
   //
   //
   init: async () => {
+    const startedAt = Date.now()
+    console.log('[boot-trace] user.init:start')
     try {
       const primeBackgroundData = () => {
-        const ensureSaves = get().ensureSavesLoaded
         const warmFeedFromCache = get().ensureFeedHydrated
         const refreshFeed = get().refreshFeed
-        const pushDirectoryCacheToStore = async () => {
-          try {
-            const cached = await simpleCache.get<DirectoryUser[]>('directory_users')
-            if (Array.isArray(cached) && cached.length > 0) {
-              get().setDirectoryUsers(cached)
-            }
-          } catch (error) {
-            console.warn('Directory cache hydration failed', error)
-          }
-        }
-
         setTimeout(() => {
-          if (typeof ensureSaves === 'function') {
-            ensureSaves().catch((error: unknown) => {
-              console.warn('Initial saves hydration failed', error)
-            })
-          }
-
+          const feedStart = Date.now()
           if (typeof warmFeedFromCache === 'function') {
             warmFeedFromCache({ refresh: false }).catch((error: unknown) => {
               console.warn('Initial feed cache hydration failed', error)
             })
           }
 
-          void pushDirectoryCacheToStore()
-
           if (typeof refreshFeed === 'function') {
             // First feed refresh happens when the sheet/home feed triggers it.
+          }
+          if (__DEV__) {
+            console.log('[boot-trace] user.init:primeBackgroundData scheduled', Date.now() - feedStart, 'ms')
           }
         }, 0)
       }
@@ -94,7 +74,7 @@ export const createUserSlice: StateCreator<StoreSlices, [], [], UserSlice> = (se
 
 
       // If PocketBase has a valid auth store, sync it with our store
-      if (pocketbase.authStore.isValid && pocketbase.authStore.record) {
+      if (!OFF_AUTH_RESTORE && pocketbase.authStore.isValid && pocketbase.authStore.record) {
         try {
           // Optimize by not expanding items on init - load them separately if needed
           const record = await pocketbase
@@ -134,6 +114,7 @@ export const createUserSlice: StateCreator<StoreSlices, [], [], UserSlice> = (se
         profileNavIntent: null,
       }))
     }
+    console.log('[boot-trace] user.init:complete', Date.now() - startedAt, 'ms')
   },
   //
   //
@@ -253,12 +234,6 @@ export const createUserSlice: StateCreator<StoreSlices, [], [], UserSlice> = (se
 
       set(() => ({
         user: record,
-        // Clear cached search results on register
-        cachedSearchResults: [],
-        cachedSearchTitle: '',
-        cachedSearchSubtitle: '',
-        cachedRefTitles: [],
-        cachedRefImages: [],
       }))
       return record
     } catch (error) {
@@ -273,14 +248,8 @@ export const createUserSlice: StateCreator<StoreSlices, [], [], UserSlice> = (se
     const response = await pocketbase
       .collection<UsersRecord>('users')
       .authWithPassword(email, password)
-    set((state) => ({
+    set(() => ({
       user: response.record,
-      // Clear cached search results on login
-      cachedSearchResults: [],
-      cachedSearchTitle: '',
-      cachedSearchSubtitle: '',
-      cachedRefTitles: [],
-      cachedRefImages: [],
     }))
     return response.record
   },
@@ -307,14 +276,8 @@ export const createUserSlice: StateCreator<StoreSlices, [], [], UserSlice> = (se
       // Authenticate with PocketBase
       await pocketbase.collection('users').authWithPassword(record.email, password)
 
-      set((state) => ({
+      set(() => ({
         user: record,
-        // Clear cached search results on login
-        cachedSearchResults: [],
-        cachedSearchTitle: '',
-        cachedSearchSubtitle: '',
-        cachedRefTitles: [],
-        cachedRefImages: [],
       }))
       return record
     } catch (error) {
@@ -339,16 +302,10 @@ export const createUserSlice: StateCreator<StoreSlices, [], [], UserSlice> = (se
   //
   //
   logout: () => {
-    set((state) => ({
+    set(() => ({
       user: null,
       stagedUser: {},
       isInitialized: true,
-      // Clear cached search results on logout
-      cachedSearchResults: [],
-      cachedSearchTitle: '',
-      cachedSearchSubtitle: '',
-      cachedRefTitles: [],
-      cachedRefImages: [],
     }))
 
     const resetFeed = get().resetFeed

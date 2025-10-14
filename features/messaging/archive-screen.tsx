@@ -4,41 +4,33 @@ import { c, s } from '../style'
 import { useAppStore } from '@/features/stores'
 import SwipeableConversation from '@/ui/messaging/SwipeableConversation'
 import { router } from 'expo-router'
-import { Conversation } from '@/features/types'
 import { useCalendars } from 'expo-localization'
+import { useConversationPreviews } from '@/features/messaging/useConversationPreviews'
+import type { ConversationPreviewSnapshot } from '@/features/messaging/useConversationPreviews'
 
 export function ArchiveScreen() {
-  const { user } = useAppStore()
-  const { conversations, memberships, messagesPerConversation, unarchiveConversation } =
-    useAppStore()
+  const { user, unarchiveConversation } = useAppStore()
+  const { previews } = useConversationPreviews()
   const calendars = useCalendars()
   const timeZone = calendars[0]?.timeZone || 'America/New_York'
 
-  const archivedConversations = useMemo(() => {
-    const result: Conversation[] = []
-    for (const conversationId in conversations) {
-      const conversation = conversations[conversationId]
-      const conversationMemberships = memberships[conversationId] || []
-      const membership = conversationMemberships.find((m) => m.expand?.user.id === user?.id)
-      const hasMessages = (messagesPerConversation[conversationId] || []).length > 0
-      if (membership?.archived && hasMessages) {
-        result.push(conversation)
-      }
-    }
+  const archivedConversations = useMemo<ConversationPreviewSnapshot[]>(() => {
+    if (!user?.id) return []
+    const archived = previews.filter((entry) => {
+      const membership = entry.memberships.find((member) => member.expand?.user.id === user.id)
+      return Boolean(membership?.archived)
+    })
 
-    const getLastMessageDate = (conversation: Conversation) => {
-      const conversationMessages = messagesPerConversation[conversation.id] || []
-      const lastMessage = conversationMessages[0]
-      return lastMessage?.created ? new Date(lastMessage.created).getTime() : 0
-    }
+    return archived.sort((a, b) => {
+      const aTime = a.latestMessage?.created ? new Date(a.latestMessage.created).getTime() : 0
+      const bTime = b.latestMessage?.created ? new Date(b.latestMessage.created).getTime() : 0
+      return bTime - aTime
+    })
+  }, [previews, user?.id])
 
-    result.sort((a, b) => getLastMessageDate(b) - getLastMessageDate(a))
-    return result
-  }, [conversations, memberships, messagesPerConversation, user?.id])
-
-  const onUnarchive = async (conversation: Conversation) => {
-    if (user) {
-      await unarchiveConversation(user.id, conversation.id)
+  const onUnarchive = async (conversationId: string) => {
+    if (user?.id) {
+      await unarchiveConversation(user.id, conversationId)
     }
   }
 
@@ -63,12 +55,12 @@ export function ArchiveScreen() {
       </View>
       <FlatList
         data={archivedConversations}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => item.conversation.id}
         renderItem={({ item }) => (
           <View style={{ paddingHorizontal: s.$1, paddingVertical: s.$05 }}>
             <SwipeableConversation
-              conversation={item}
-              onArchive={() => onUnarchive(item)}
+              preview={item}
+              onArchive={() => onUnarchive(item.conversation.id)}
               isInArchive
               timeZone={timeZone}
             />

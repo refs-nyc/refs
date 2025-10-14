@@ -1,33 +1,31 @@
-import React, { useCallback, useEffect, useRef, useState, useMemo } from 'react'
-import { View, Text, Pressable, FlatList, Dimensions, ScrollView } from 'react-native'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { View, Text, Pressable, FlatList, ScrollView, ActivityIndicator } from 'react-native'
 import Animated, { useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated'
+import { useIsFocused } from '@react-navigation/native'
 import { s, c, t } from '@/features/style'
 import { router, usePathname } from 'expo-router'
-import { Grid } from '@/ui/grid/Grid'
-// import { Button } from '@/ui/buttons/Button'
-// import BottomSheet from '@gorhom/bottom-sheet'
-// import { CommunityFormSheet } from '@/ui/communities/CommunityFormSheet'
 import { Image } from 'expo-image'
-import { pocketbase } from '@/features/pocketbase'
 import { useAppStore } from '@/features/stores'
 import type { DirectoryUser } from '@/features/stores/users'
-import type { Profile } from '@/features/types'
-import { simpleCache } from '@/features/cache/simpleCache'
+import type { ExpandedItem, Profile } from '@/features/types'
 import Svg, { Circle, Path } from 'react-native-svg'
-import AsyncStorage from '@react-native-async-storage/async-storage'
 import { enqueueIdleTask, IdleTaskHandle } from '@/features/utils/idleQueue'
+import { InfiniteData, useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query'
+import { directoryKeys, fetchDirectoryPage, fetchDirectoryTopRefs } from '@/features/queries/directory'
+import { profileKeys, fetchProfileData, type ProfileData } from '@/features/queries/profile'
+import { communityInterestsKeys, fetchCommunityInterestSummary } from '@/features/queries/communityInterests'
+import { useWantToMeet } from '@/features/queries/wantToMeet'
 
 const DIRECTORY_TICKER_COLOR = c.accent
 // Listen for interests added from the CommunityInterestsScreen and update chips instantly
 if (typeof globalThis !== 'undefined' && (globalThis as any).addEventListener) {
   try {
-    (globalThis as any).removeEventListener?.('refs:new-interest', () => {})
+    ;(globalThis as any).removeEventListener?.('refs:new-interest', () => {})
     ;(globalThis as any).addEventListener('refs:new-interest', (e: any) => {
       try {
         const detail = e?.detail
         if (!detail?.id) return
-        // This handler will be overridden in the component scope via pocketbase subscription too
-        // Kept here as a safety no-op; component adds PB-based handler below
+        // Handler is overridden within component scope; kept as safety no-op.
       } catch {}
     })
   } catch {}
@@ -43,9 +41,15 @@ type FeedUser = {
   _latest?: number
 }
 
-// Memoized row component to prevent unnecessary re-renders
+const normalizeProfileRecord = (
+  record?: Profile | (Profile & { _cachedUserId?: string }) | null
+): Profile | undefined => {
+  if (!record) return undefined
+  const { _cachedUserId, ...rest } = record as Profile & { _cachedUserId?: string }
+  return rest as Profile
+}
+
 const BookmarkIcon = ({ filled }: { filled: boolean }) => {
-  // Slightly wider with a thinner stroke
   const width = 36
   const height = 48
   const stroke = c.accent
@@ -63,15 +67,7 @@ const BookmarkIcon = ({ filled }: { filled: boolean }) => {
   )
 }
 
-const OnboardingPill = ({
-  userName,
-  fullName,
-  avatarUri,
-}: {
-  userName: string
-  fullName: string
-  avatarUri?: string
-}) => {
+const OnboardingPill = ({ userName, fullName, avatarUri }: { userName: string; fullName: string; avatarUri?: string }) => {
   const pillScale = useSharedValue(1)
   const setProfileNavIntent = useAppStore((state) => state.setProfileNavIntent)
   const homePagerIndex = useAppStore((state) => state.homePagerIndex)
@@ -101,13 +97,8 @@ const OnboardingPill = ({
     setProfileNavIntent({ targetPagerIndex: targetIndex, source: 'directory', animate: !alreadyOnGrid })
 
     const expectedPath = `/user/${userName}`
-    // Always push to create navigation history for proper back gesture
-    // Add timestamp to force new stack entry
     if (!pathname || pathname !== expectedPath) {
-      router.push({
-        pathname: '/user/[userName]',
-        params: { userName, _t: Date.now().toString() }
-      })
+      router.push({ pathname: '/user/[userName]', params: { userName, _t: Date.now().toString() } })
     }
   }, [homePagerIndex, pathname, setProfileNavIntent, userName])
 
@@ -118,52 +109,45 @@ const OnboardingPill = ({
           {
             backgroundColor: c.surface,
             borderRadius: s.$1,
+            paddingHorizontal: s.$1,
             paddingVertical: s.$075,
-            paddingHorizontal: s.$075,
-            marginBottom: s.$075,
+            marginBottom: s.$1,
             flexDirection: 'row',
             alignItems: 'center',
-            justifyContent: 'space-between',
-            borderWidth: 2,
-            borderColor: c.prompt,
-            borderStyle: 'dashed',
+            gap: s.$075,
+            elevation: 2,
+            shadowColor: '#000',
+            shadowOpacity: 0.08,
+            shadowRadius: 8,
+            shadowOffset: { width: 0, height: 4 },
           },
           pillAnimatedStyle,
         ]}
       >
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-          <View
-            style={{
-              width: 60,
-              height: 60,
-              borderRadius: 30,
-              borderWidth: 1.5,
-              borderColor: `${c.prompt}1A`, // 10% opacity
-              justifyContent: 'center',
-              alignItems: 'center',
-              overflow: 'hidden',
-              backgroundColor: c.surface,
-            }}
-          >
-            {hasAvatar ? (
-              <Image
-                source={avatarUri}
-                style={{ width: '100%', height: '100%', borderRadius: 30 }}
-                contentFit="cover"
-                transition={150}
-              />
-            ) : (
-              <Text style={{ color: c.prompt, fontSize: 28, fontWeight: '600' }}>+</Text>
-            )}
-          </View>
-          <View style={{ marginLeft: 3, gap: 2 }}>
-            <Text style={{ color: c.prompt, fontWeight: '700', fontSize: (s.$09 as number) + 1 }} numberOfLines={1} ellipsizeMode="tail">
-              {fullName}
-            </Text>
-            <Text style={{ color: c.accent, fontFamily: 'InterMedium', fontSize: 12, fontWeight: '500' }}>
-              Add a profile photo and 3 refs to appear
-            </Text>
-          </View>
+        <View
+          style={{
+            width: 48,
+            height: 48,
+            borderRadius: 24,
+            backgroundColor: hasAvatar ? 'transparent' : c.surface2,
+            alignItems: 'center',
+            justifyContent: 'center',
+            overflow: 'hidden',
+          }}
+        >
+          {hasAvatar && avatarUri ? (
+            <Image source={avatarUri} style={{ width: 48, height: 48 }} contentFit="cover" />
+          ) : (
+            <Text style={{ color: c.muted, fontFamily: 'Inter', fontSize: s.$1 }}>+</Text>
+          )}
+        </View>
+        <View style={{ flex: 1 }}>
+          <Text style={{ color: c.newDark, fontSize: (s.$09 as number) + 2, fontFamily: 'InterBold', fontWeight: '700' }}>
+            Finish your profile
+          </Text>
+          <Text style={{ color: c.muted, fontSize: s.$09, fontFamily: 'Inter', fontWeight: '400' }}>
+            Add a photo and refs so {fullName} shows up here
+          </Text>
         </View>
       </Animated.View>
     </Pressable>
@@ -190,7 +174,7 @@ const DirectoryRow = React.memo(({
   innerLeftPadding?: number
 }) => {
   const bookmarkScale = useSharedValue(1)
-  
+
   const bookmarkAnimatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: bookmarkScale.value }],
   }))
@@ -202,7 +186,6 @@ const DirectoryRow = React.memo(({
     onToggleSave()
   }, [onToggleSave])
 
-  // Compute overlap with current user (by ref ids in this community)
   const overlapLabel = useMemo(() => {
     if (!currentUserId) return null
     const mine = userInterestMap.get(currentUserId)
@@ -220,7 +203,7 @@ const DirectoryRow = React.memo(({
     const suffix = count > 1 ? ` +${count - 1}` : ''
     return `${first || `${count} shared`}${suffix}`
   }, [currentUserId, userInterestMap, refTitleMap, u.id])
-  
+
   return (
     <Pressable
       key={u.id}
@@ -240,26 +223,14 @@ const DirectoryRow = React.memo(({
         {u.avatar_url ? (
           <Image
             source={u.avatar_url}
-            style={{
-              width: 60,
-              height: 60,
-              borderRadius: 30,
-              backgroundColor: c.surface2,
-            }}
-            contentFit={'cover'}
+            style={{ width: 60, height: 60, borderRadius: 30, backgroundColor: c.surface2 }}
+            contentFit="cover"
             cachePolicy="memory-disk"
             transition={0}
             priority="high"
           />
         ) : (
-          <View
-            style={{
-              width: 60,
-              height: 60,
-              borderRadius: 30,
-              backgroundColor: 'transparent',
-            }}
-          />
+          <View style={{ width: 60, height: 60, borderRadius: 30, backgroundColor: 'transparent' }} />
         )}
         <View style={{ flex: 1, marginLeft: 5, gap: 4 }}>
           <Text style={{ color: c.black, fontWeight: '700', fontSize: (s.$09 as number) + 1 }} numberOfLines={1} ellipsizeMode="tail">
@@ -311,11 +282,6 @@ const DirectoryRow = React.memo(({
 
 DirectoryRow.displayName = 'DirectoryRow'
 
-// Ensure we only schedule profile preloading once per app session
-const win = Dimensions.get('window')
-const BASE_DIRECTORY_LIST_HEIGHT = Math.max(360, Math.min(560, win.height - 220))
-const DIRECTORY_LIST_HEIGHT = Math.max(200, BASE_DIRECTORY_LIST_HEIGHT - 50)
-
 const normalizeDirectoryUsers = (list: FeedUser[], currentUserName?: string) => {
   if (!Array.isArray(list)) return []
   const seen = new Set<string>()
@@ -324,12 +290,11 @@ const normalizeDirectoryUsers = (list: FeedUser[], currentUserName?: string) => 
   for (const user of list) {
     if (!user) continue
     if (user.userName && user.userName === currentUserName) continue
-    if (!Array.isArray(user.topRefs) || user.topRefs.length === 0) continue
 
     const rawId = user.id ?? user.userName
-    if (rawId == null) continue
+    if (!rawId) continue
     const stringId = String(rawId)
-    if (!stringId || seen.has(stringId)) continue
+    if (seen.has(stringId)) continue
 
     seen.add(stringId)
     normalized.push({ ...user, id: stringId })
@@ -338,13 +303,7 @@ const normalizeDirectoryUsers = (list: FeedUser[], currentUserName?: string) => 
   return normalized
 }
 
-const haveSameIds = (a: FeedUser[], b: FeedUser[]) => {
-  if (a.length !== b.length) return false
-  for (let i = 0; i < a.length; i += 1) {
-    if (a[i]?.id !== b[i]?.id) return false
-  }
-  return true
-}
+type DirectoryPage = Awaited<ReturnType<typeof fetchDirectoryPage>>
 
 export function CommunitiesFeedScreen({
   showHeader = true,
@@ -359,189 +318,327 @@ export function CommunitiesFeedScreen({
   embedded?: boolean
   embeddedPadding?: number
 }) {
-  // Directories screen: paginated list of all users
   const {
     setProfileNavIntent,
     setDirectoriesFilterTab,
     user,
-    directoryUsers,
-    setDirectoryUsers,
-    saves,
     addSave,
     removeSave,
     gridItemCount,
   } = useAppStore()
-  const directoryUsersNormalized = useMemo(
-    () => normalizeDirectoryUsers((directoryUsers as FeedUser[]) || [], user?.userName),
-    [directoryUsers, user?.userName]
-  )
-  const directoryUsersNormalizedRef = useRef<FeedUser[]>(directoryUsersNormalized)
-  const pendingStoreUpdateRef = useRef<FeedUser[] | null>(null)
-  const [users, setUsers] = useState<FeedUser[]>(directoryUsersNormalized)
-  // const [communityItems, setCommunityItems] = useState<any[]>([])
-  // const communityFormRef = useRef<BottomSheet>(null)
-  const [outerScrollEnabled, setOuterScrollEnabled] = useState(true)
+
+  const homePagerIndex = useAppStore((state) => state.homePagerIndex)
+  const isFocused = useIsFocused()
+
+  const { data: savedEntries = [] } = useWantToMeet(user?.id)
+
+  const queryClient = useQueryClient()
   const [topInterests, setTopInterests] = useState<{ refId: string; title: string; count: number; created?: string }[]>([])
   const [selectedInterests, setSelectedInterests] = useState<string[]>([])
   const [userInterestMap, setUserInterestMap] = useState<Map<string, Set<string>>>(new Map())
   const [refTitleMap, setRefTitleMap] = useState<Map<string, string>>(new Map())
-  const [page, setPage] = useState(1)
-  const [isLoading, setIsLoading] = useState(false)
-  const [hasMore, setHasMore] = useState(true)
-  const [hasInitialData, setHasInitialData] = useState(false)
-  const perPage = 50 // Increased from 30 to show more entries
-  const pbRef = useRef<typeof pocketbase | null>(null)
-  const getPB = () => {
-    if (!pbRef.current) pbRef.current = pocketbase
-    return pbRef.current
-  }
+  const saveMapRef = useRef(new Map<string, string>())
+  const [optimisticSaved, setOptimisticSaved] = useState<Map<string, boolean>>(new Map())
 
   const warmedProfileIdsRef = useRef<Set<string>>(new Set())
   const warmupHandlesRef = useRef<Map<string, IdleTaskHandle>>(new Map())
+  const warmupsLaunchedRef = useRef(0)
 
-  const queueProfileWarmups = useCallback((feedUsers: FeedUser[]) => {
-    const warmed = warmedProfileIdsRef.current
-    const handles = warmupHandlesRef.current
+  const pendingWarmupsRef = useRef<FeedUser[]>([])
+  const pendingWarmupIdsRef = useRef(new Set<string>())
+  const activeWarmupsRef = useRef(0)
+  const warmupsEnabledRef = useRef(false)
+  const schedulePendingWarmupsRef = useRef<() => void>(() => {})
 
-    feedUsers.forEach((feedUser) => {
+  const WARMUP_CONCURRENCY = 1
+
+  const MAX_DIRECTORY_WARMUPS = 2
+  const WARMUP_ENABLE_DELAY_MS = 650
+  const topRefQueueRef = useRef<string[]>([])
+  const topRefHydratingRef = useRef(false)
+  const hydratedTopRefsRef = useRef(new Set<string>())
+  const warmupEnableTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const shouldWarmup = !embedded && isFocused && homePagerIndex === 1
+
+  const {
+    data,
+    isLoading: isDirectoryLoading,
+    isFetchingNextPage,
+    fetchNextPage,
+    hasNextPage,
+  } = useInfiniteQuery({
+    queryKey: directoryKeys.all,
+    initialPageParam: 1,
+    queryFn: ({ pageParam }) => fetchDirectoryPage((pageParam as number) ?? 1),
+    getNextPageParam: (lastPage: DirectoryPage, pages: DirectoryPage[]) =>
+      lastPage.hasMore ? pages.length + 1 : undefined,
+    staleTime: 60_000,
+    gcTime: 30 * 60_000,
+  })
+
+  const seedProfileQuery = useCallback(
+    (userName: string, profileRecord?: Profile, gridItems?: ExpandedItem[], backlogItems?: ExpandedItem[]) => {
+      if (!profileRecord || !Array.isArray(gridItems) || !Array.isArray(backlogItems)) return
+      const profileData: ProfileData = {
+        profile: profileRecord,
+        gridItems,
+        backlogItems,
+      }
+      queryClient.setQueryData<ProfileData>(profileKeys.detail(userName), profileData)
+    },
+    [queryClient]
+  )
+
+  const startWarmup = useCallback(
+    (feedUser: FeedUser) => {
       const userId = feedUser.id
-      if (!userId || !feedUser.userName) return
-      if (warmed.has(userId) || handles.has(userId)) return
+      if (!userId) return
+
+      const handles = warmupHandlesRef.current
+      const warmed = warmedProfileIdsRef.current
+
+      activeWarmupsRef.current += 1
+      warmupsLaunchedRef.current += 1
 
       const handle = enqueueIdleTask(async () => {
-        handles.delete(userId)
-
-        const cachedProfile = await simpleCache.get('profile', userId)
-        if (cachedProfile) {
-          warmed.add(userId)
-          return
-        }
-
         try {
-          const profileRecord = await pocketbase.collection('users').getOne(userId)
-          const [gridItemsRecord, backlogItemsRecord] = await Promise.all([
-            pocketbase.collection('items').getList(1, 6, {
-              filter: pocketbase.filter(
-                'creator.userName = {:userName} && backlog = false && parent = null',
-                { userName: feedUser.userName }
-              ),
-              expand: 'ref',
-              sort: '-created',
-            }),
-            pocketbase.collection('items').getList(1, 6, {
-              filter: pocketbase.filter(
-                'creator.userName = {:userName} && backlog = true && parent = null',
-                { userName: feedUser.userName }
-              ),
-              expand: 'ref',
-              sort: '-created',
-            }),
-          ])
+          const startedAt = Date.now()
+          if (__DEV__) {
+            console.log('[boot-trace] directoryWarmup:start', {
+              userId,
+              userName: feedUser.userName,
+            })
+          }
 
-          const profileWithUserId = { ...profileRecord, _cachedUserId: userId }
+          const existing = queryClient.getQueryData<ProfileData>(profileKeys.detail(feedUser.userName))
+          if (existing) {
+            warmed.add(userId)
+            return
+          }
 
-          await Promise.all([
-            simpleCache.set('profile', profileWithUserId, userId),
-            simpleCache.set('grid_items', gridItemsRecord.items, userId),
-            simpleCache.set('backlog_items', backlogItemsRecord.items, userId),
-          ])
+          const fetched = await fetchProfileData(feedUser.userName)
+          const normalizedProfile = normalizeProfileRecord(fetched.profile)
+
+          if (__DEV__) {
+            console.log('[boot-trace] directoryWarmup:complete', {
+              userId,
+              userName: feedUser.userName,
+              duration: Date.now() - startedAt,
+              grid: fetched.gridItems.length,
+              backlog: fetched.backlogItems.length,
+            })
+          }
+          if (normalizedProfile) {
+            seedProfileQuery(
+              feedUser.userName,
+              normalizedProfile,
+              fetched.gridItems as ExpandedItem[],
+              fetched.backlogItems as ExpandedItem[]
+            )
+          }
 
           warmed.add(userId)
         } catch (error) {
           if (__DEV__) {
             console.warn('Profile warmup failed:', feedUser.userName, error)
           }
+        } finally {
+          handles.delete(userId)
+          activeWarmupsRef.current = Math.max(0, activeWarmupsRef.current - 1)
+          schedulePendingWarmupsRef.current()
         }
-      })
+      }, `directoryWarmup:${feedUser.userName}`)
 
       handles.set(userId, handle)
-    })
+    },
+    [seedProfileQuery]
+  )
+
+  const schedulePendingWarmups = useCallback(() => {
+    if (!warmupsEnabledRef.current) return
+
+    while (
+      warmupsLaunchedRef.current < MAX_DIRECTORY_WARMUPS &&
+      activeWarmupsRef.current < WARMUP_CONCURRENCY &&
+      pendingWarmupsRef.current.length
+    ) {
+      const next = pendingWarmupsRef.current.shift()
+      if (!next) {
+        continue
+      }
+      if (next.id) {
+        pendingWarmupIdsRef.current.delete(next.id)
+      }
+      startWarmup(next)
+    }
+  }, [startWarmup])
+
+  useEffect(() => {
+    schedulePendingWarmupsRef.current = schedulePendingWarmups
+  }, [schedulePendingWarmups])
+
+  const queueProfileWarmups = useCallback((feedUsers: FeedUser[]) => {
+    const warmed = warmedProfileIdsRef.current
+    const handles = warmupHandlesRef.current
+    const pendingIds = pendingWarmupIdsRef.current
+
+    for (const feedUser of feedUsers) {
+      if (warmupsLaunchedRef.current + pendingWarmupsRef.current.length >= MAX_DIRECTORY_WARMUPS) {
+        break
+      }
+
+      const userId = feedUser.id
+      if (!userId || !feedUser.userName) continue
+      if (warmed.has(userId) || handles.has(userId) || pendingIds.has(userId)) continue
+
+      pendingWarmupsRef.current.push(feedUser)
+      pendingIds.add(userId)
+    }
+
+    schedulePendingWarmupsRef.current()
   }, [])
+
+  useEffect(() => {
+    if (warmupEnableTimeoutRef.current) {
+      clearTimeout(warmupEnableTimeoutRef.current)
+      warmupEnableTimeoutRef.current = null
+    }
+
+    if (shouldWarmup) {
+      warmupsEnabledRef.current = false
+      warmupEnableTimeoutRef.current = setTimeout(() => {
+        warmupsEnabledRef.current = true
+        schedulePendingWarmupsRef.current()
+      }, WARMUP_ENABLE_DELAY_MS)
+    } else {
+      warmupsEnabledRef.current = false
+    }
+
+    return () => {
+      if (warmupEnableTimeoutRef.current) {
+        clearTimeout(warmupEnableTimeoutRef.current)
+        warmupEnableTimeoutRef.current = null
+      }
+    }
+  }, [shouldWarmup])
 
   useEffect(() => {
     return () => {
+      if (warmupEnableTimeoutRef.current) {
+        clearTimeout(warmupEnableTimeoutRef.current)
+        warmupEnableTimeoutRef.current = null
+      }
       warmupHandlesRef.current.forEach((handle) => handle.cancel())
       warmupHandlesRef.current.clear()
+      pendingWarmupsRef.current.length = 0
+      pendingWarmupIdsRef.current.clear()
+      activeWarmupsRef.current = 0
+      warmupsEnabledRef.current = false
+      schedulePendingWarmupsRef.current = () => {}
+      topRefQueueRef.current.length = 0
+      topRefHydratingRef.current = false
+      warmupsLaunchedRef.current = 0
     }
   }, [])
 
-  const commitUsers = useCallback(
-    (value: FeedUser[] | ((prev: FeedUser[]) => FeedUser[])) => {
-      setUsers((prev) => {
-        const next =
-          typeof value === 'function'
-            ? (value as (prev: FeedUser[]) => FeedUser[])(prev)
-            : value
-        const normalized = normalizeDirectoryUsers(next as FeedUser[], user?.userName)
-        pendingStoreUpdateRef.current = normalized
-        return normalized
-      })
-    },
-    [user?.userName]
-  )
+  const directoryData = data as InfiniteData<DirectoryPage> | undefined
+
+  const rawDirectoryUsers = useMemo<FeedUser[]>(() => {
+    const aggregated = new Map<string, FeedUser>()
+    for (const page of directoryData?.pages ?? []) {
+      for (const entry of page.users) {
+        aggregated.set(entry.id, {
+          id: entry.id,
+          userName: entry.userName,
+          name: entry.name,
+          neighborhood: entry.neighborhood,
+          avatar_url: entry.avatarUrl,
+          topRefs: entry.topRefs ?? [],
+          _latest: entry.latest,
+        })
+      }
+    }
+    return Array.from(aggregated.values())
+  }, [directoryData])
+
+  const processedUsers = useMemo(() => {
+    const normalized = normalizeDirectoryUsers(rawDirectoryUsers, user?.userName)
+    normalized.sort((a, b) => (b._latest ?? 0) - (a._latest ?? 0))
+    return normalized
+  }, [rawDirectoryUsers, user?.userName])
+
 
   useEffect(() => {
-    // Keep local state in sync if another part of the app updates the store
-    if (haveSameIds(directoryUsersNormalized, directoryUsersNormalizedRef.current)) {
-      directoryUsersNormalizedRef.current = directoryUsersNormalized
-      return
+    if (!shouldWarmup) return
+    queueProfileWarmups(processedUsers)
+  }, [processedUsers, queueProfileWarmups, shouldWarmup])
+
+  const flushTopRefQueue = useCallback(() => {
+    if (!shouldWarmup) return
+    if (topRefHydratingRef.current) return
+    topRefHydratingRef.current = true
+
+    const run = async () => {
+      while (topRefQueueRef.current.length) {
+        const batch = topRefQueueRef.current.splice(0, 3)
+        try {
+          const map = await fetchDirectoryTopRefs(batch)
+          queryClient.setQueryData<InfiniteData<DirectoryPage>>(directoryKeys.all, (existing) => {
+            if (!existing) return existing
+            return {
+              ...existing,
+              pages: existing.pages.map((page) => ({
+                ...page,
+                users: page.users.map((entry) => {
+                  const update = map.get(entry.id)
+                  if (!update) return entry
+                  return {
+                    ...entry,
+                    topRefs: update.refs,
+                    latest: update.latest ?? entry.latest,
+                  }
+                }),
+              })),
+            }
+          })
+        } catch (error) {
+          console.warn('Directory topRefs hydration failed', error)
+        }
+      }
+      topRefHydratingRef.current = false
     }
-    directoryUsersNormalizedRef.current = directoryUsersNormalized
-    setUsers(directoryUsersNormalized)
-  }, [directoryUsersNormalized])
 
-  const mapUsersWithItems = useCallback((userRecords: any[], itemsByCreator: Map<string, any[]>) => {
-    console.log(`📊 mapUsersWithItems called with ${userRecords.length} users (pre-filtered by show_in_directory)`)
-    const result: (FeedUser & { _latest?: number })[] = []
-    for (const r of userRecords) {
-      const creatorId = r.id
-      const creatorItems = itemsByCreator.get(creatorId) || []
-      
-      // No filtering needed - users are pre-filtered by show_in_directory flag
-      // Just map to display format
-      const images = creatorItems
-        .slice(0, 3)
-        .map((it) => it?.image || it?.expand?.ref?.image)
-        .filter(Boolean)
-      const latest = creatorItems[0]?.created ? new Date(creatorItems[0].created).getTime() : 0
-      const first = (r.firstName || '').trim()
-      const last = (r.lastName || '').trim()
-      const combinedName = `${first} ${last}`.trim()
-      const displayName = combinedName || r.firstName || r.name || r.userName
-      const neighborhood = (r.location || '').trim() || 'Elsewhere'
+    run().catch((error) => {
+      console.warn('Directory topRefs hydration loop failed', error)
+      topRefHydratingRef.current = false
+    })
+  }, [queryClient, shouldWarmup])
 
-      result.push({
-        id: r.id,
-        userName: r.userName,
-        name: displayName,
-        neighborhood,
-        // Prefer `image` as source of truth, fallback to `avatar_url` if present
-        avatar_url: r.image || r.avatar_url || '',
-        topRefs: images,
-        _latest: latest,
-      } as any)
-    }
-    return result as FeedUser[]
-  }, [])
-
-  // Memoize the processed users to prevent recalculation during scroll
-  const processedUsers = useMemo(() => {
-    // Simply return the users array - no processing needed
-    // This should be a pure pass-through for cached data
-    return users
-  }, [users]) // Depend on the actual array since we're not processing it
-
-  const saveMapRef = useRef(new Map<string, string>())
-  const [optimisticSaved, setOptimisticSaved] = useState<Map<string, boolean>>(new Map())
+  useEffect(() => {
+    if (!shouldWarmup) return
+    const pending = processedUsers.filter((entry) => {
+      if ((entry.topRefs?.length || 0) >= 3) return false
+      return !hydratedTopRefsRef.current.has(entry.id)
+    })
+    if (!pending.length) return
+    pending.forEach((entry) => {
+      hydratedTopRefsRef.current.add(entry.id)
+      if (!topRefQueueRef.current.includes(entry.id)) {
+        topRefQueueRef.current.push(entry.id)
+      }
+    })
+    flushTopRefQueue()
+  }, [processedUsers, flushTopRefQueue, shouldWarmup])
 
   useEffect(() => {
     const map = new Map<string, string>()
-    for (const save of saves) {
+    for (const save of savedEntries) {
       const savedUserId = save.expand?.user?.id || (save as any).user
       if (savedUserId) map.set(savedUserId, save.id)
     }
     saveMapRef.current = map
-  }, [saves])
+  }, [savedEntries])
 
   const isUserSaved = useCallback(
     (userId: string) => {
@@ -601,7 +698,10 @@ export function CommunitiesFeedScreen({
     [addSave, removeSave]
   )
 
-  // Directory list filtered by selected interest chips (AND match)
+  const toggleChip = useCallback((refId: string) => {
+    setSelectedInterests((prev) => (prev.includes(refId) ? prev.filter((id) => id !== refId) : [...prev, refId]))
+  }, [])
+
   const displayedUsers = useMemo(() => {
     if (selectedInterests.length === 0) return processedUsers
     return processedUsers.filter((u) => {
@@ -614,274 +714,36 @@ export function CommunitiesFeedScreen({
     })
   }, [processedUsers, selectedInterests, userInterestMap])
 
-  const fetchPage = useCallback(async (targetPage: number, options?: { skipCache?: boolean }) => {
-    if (isLoading || !hasMore) return
-    setIsLoading(true)
-    
-    try {
-      // Check cache for first page only
-      const skipCache = options?.skipCache ?? false
-      if (targetPage === 1 && !skipCache) {
-        const cachedUsers = await simpleCache.get('directory_users')
-        if (cachedUsers && Array.isArray(cachedUsers) && cachedUsers.length > 0) {
-          console.log(`📖 Checking cached directory users (${cachedUsers.length} in cache)...`)
-          // Filter cached users to ensure they have avatar AND 3+ items
-          const filteredCached = (cachedUsers as FeedUser[]).filter(u => {
-            const hasAvatar = Boolean(u.avatar_url && u.avatar_url.trim())
-            const hasEnoughItems = (u.topRefs?.length || 0) >= 3
-            if (!hasAvatar || !hasEnoughItems) {
-              console.log(`🚫 Cached user ${u.userName} doesn't meet criteria: hasAvatar=${hasAvatar} (avatar_url="${u.avatar_url}"), itemCount=${u.topRefs?.length || 0}`)
-            }
-            return hasAvatar && hasEnoughItems
-          })
-          
-          if (filteredCached.length > 0) {
-            console.log(`✅ Using ${filteredCached.length} users from cache as placeholder`)
-            commitUsers(filteredCached)
-            setHasInitialData(true)
-            setPage(1)
-            setHasMore(true)
-            // Keep loading indicator true so the fresh fetch below can update state
-          }
-
-          // If we filtered out ANY users, invalidate cache and fetch fresh
-          if (filteredCached.length < (cachedUsers as FeedUser[]).length) {
-            console.log(`🗑️ Cache is stale (${(cachedUsers as FeedUser[]).length} users → ${filteredCached.length} after filtering). Clearing and fetching fresh data...`)
-            await AsyncStorage.removeItem('simple_cache_directory_users')
-            // Continue to fetch fresh data below (don't return early)
-          } else if (filteredCached.length > 0) {
-            // Cache is good and we already committed it – no need to hit the network
-            setIsLoading(false)
-            return
-          }
-        }
-      }
-      
-      const pb = getPB()
-      // NEW: Filter by show_in_directory flag instead of fetching all users and filtering
-      console.log(`🔍 Fetching directory users page ${targetPage} with filter: show_in_directory = true`)
-      const res = await pb.collection('users').getList(targetPage, perPage, {
-        filter: 'show_in_directory = true',
-        fields: 'id,userName,firstName,lastName,name,location,image,avatar_url',
-        sort: '-created',
-      })
-      console.log(`📊 Directory query returned ${res.items.length} users (total: ${res.totalItems})`)
-      if (res.items.length > 0) {
-        console.log(`   First user: ${res.items[0].userName}`)
-      }
-
-      // Fetch top 3 items for display purposes only (no filtering needed)
-      const userIds = res.items.map((u: any) => u.id)
-      if (userIds.length === 0) {
-        console.log('⚠️ No users returned from directory query')
-        setHasMore(false)
-        setIsLoading(false)
-        return
-      }
-
-      const orFilter = userIds.map((id: string) => `creator = "${id}"`).join(' || ')
-      // Only need 3 items per user for display (not filtering)
-      const perPageItems = Math.max(3 * userIds.length, 60)
-      const itemsRes = await pb.collection('items').getList(1, perPageItems, {
-        filter: `(${orFilter}) && backlog = false && list = false && parent = null`,
-        fields: 'id,image,creator,created,expand.ref(image)',
-        expand: 'ref',
-        sort: '-created',
-      })
-
-      // Group items by creator for display
-      const byCreator = new Map<string, any[]>()
-      for (const it of itemsRes.items as any[]) {
-        const creatorId = it.creator
-        if (!creatorId) continue
-        const arr = byCreator.get(creatorId) || []
-        if (arr.length < 3) {
-          arr.push(it)
-          byCreator.set(creatorId, arr)
-        }
-      }
-
-      const mapped = mapUsersWithItems(res.items, byCreator)
-      // Filter out the current user from the directory list
-      const filteredMapped = mapped.filter(u => u.userName !== user?.userName)
-      
-      const filteredWithRefs = normalizeDirectoryUsers(filteredMapped, user?.userName)
-      const nextUsers = targetPage === 1 ? filteredWithRefs : [...users, ...filteredWithRefs]
-      commitUsers(nextUsers)
-      queueProfileWarmups(filteredMapped)
-      // Allow loading all pages; don't artificially cap at 50
-      setHasMore(res.page < res.totalPages)
-      setPage(res.page)
-      
-      // Set initial data flag when we successfully fetch data
-      if (targetPage === 1) {
-        setHasInitialData(true)
-      }
-      
-      // Cache first page data for quick access (silent operation)
-      simpleCache.set('directory_users', nextUsers).catch(error => {
-        console.warn('Directory cache write failed:', error)
-      })
-    } catch (e) {
-      console.error('❌ Directory fetch error:', e)
-      console.error('   Error details:', JSON.stringify(e, null, 2))
-      setHasMore(false)
-    } finally {
-      setIsLoading(false)
-    }
-  }, [hasMore, isLoading, user, mapUsersWithItems, users, commitUsers])
+  const COMMUNITY = 'edge-patagonia'
+  const interestQuery = useQuery({
+    queryKey: communityInterestsKeys.summary(COMMUNITY),
+    queryFn: () => fetchCommunityInterestSummary(COMMUNITY),
+    staleTime: 60_000,
+    gcTime: 30 * 60_000,
+  })
 
   useEffect(() => {
-    let cancelled = false
-
-    const hydrate = async () => {
-      try {
-        if (directoryUsersNormalized.length > 0) {
-          setHasInitialData(true)
-          return
-        }
-
-        const cachedUsers = await simpleCache.get('directory_users')
-        if (cancelled) return
-
-        if (cachedUsers && Array.isArray(cachedUsers) && cachedUsers.length > 0) {
-          console.log('🔍 Hydrate: Filtering cached users...')
-          // Filter cached users to ensure they have avatar AND 3+ items
-          const filteredCached = (cachedUsers as FeedUser[]).filter(u => {
-            const hasAvatar = Boolean(u.avatar_url && u.avatar_url.trim())
-            const hasEnoughItems = (u.topRefs?.length || 0) >= 3
-            return hasAvatar && hasEnoughItems
-          })
-          
-          // If cache has stale data, clear it and fetch fresh
-          if (filteredCached.length < cachedUsers.length) {
-            console.log(`🗑️ Hydrate: Cache is stale (${cachedUsers.length} → ${filteredCached.length}). Fetching fresh...`)
-            await AsyncStorage.removeItem('simple_cache_directory_users')
-            await fetchPage(1, { skipCache: true })
-          } else if (filteredCached.length > 0) {
-            console.log(`✅ Hydrate: Using ${filteredCached.length} valid cached users`)
-            commitUsers(filteredCached)
-            queueProfileWarmups(filteredCached)
-            setHasInitialData(true)
-          } else {
-            // No valid users in cache, fetch fresh
-            await fetchPage(1, { skipCache: true })
-          }
-          return
-        }
-
-        await fetchPage(1, { skipCache: true })
-      } catch (error) {
-        console.warn('Directory initial load failed:', error)
-      }
-    }
-
-    hydrate()
-
-    return () => {
-      cancelled = true
-    }
-  }, [commitUsers, directoryUsersNormalized, fetchPage, queueProfileWarmups])
+    if (!interestQuery.data) return
+    const { topInterests: summary, userInterestPairs, refTitlePairs } = interestQuery.data
+    setTopInterests(summary.slice(0, 30))
+    setUserInterestMap(new Map(userInterestPairs.map(([userId, refs]) => [userId, new Set(refs)])))
+    setRefTitleMap(new Map(refTitlePairs))
+  }, [interestQuery.data])
 
   useEffect(() => {
-    const candidate = pendingStoreUpdateRef.current
-    pendingStoreUpdateRef.current = null
-    if (!candidate) return
-    if (!haveSameIds(candidate, directoryUsersNormalizedRef.current)) {
-      setDirectoryUsers(candidate as DirectoryUser[])
-      directoryUsersNormalizedRef.current = candidate
-    }
-  }, [setDirectoryUsers, users])
-
-  // Load popular interests and user->interest map for filtering
-  useEffect(() => {
-    let mounted = true
-    const COMMUNITY = 'edge-patagonia'
-    ;(async () => {
-      try {
-        const items = await pocketbase.collection('items').getFullList({
-          filter: pocketbase.filter('ref.meta ~ {:community} && backlog = false && parent = null', { community: COMMUNITY }),
-          expand: 'ref,creator',
-          sort: '-created',
-        })
-        if (!mounted) return
-        const countByRef = new Map<string, { ref: any; count: number }>()
-        const map = new Map<string, Set<string>>()
-        for (const it of items as any[]) {
-          const ref = it.expand?.ref
-          const creator = it.expand?.creator || { id: it.creator }
-          if (!ref || !creator?.id) continue
-          const refId = ref.id
-          const entry = countByRef.get(refId) || { ref, count: 0 }
-          entry.count += 1
-          countByRef.set(refId, entry)
-          const set = map.get(creator.id) || new Set<string>()
-          set.add(refId)
-          map.set(creator.id, set)
-        }
-        const list = Array.from(countByRef.values()).map(({ ref, count }) => ({
-          refId: ref.id,
-          title: ref.title,
-          count,
-          created: ref.created,
-        }))
-        list.sort((a, b) => (b.count - a.count) || (b.created || '').localeCompare(a.created || ''))
-        setTopInterests(list.slice(0, 30))
-        setUserInterestMap(map)
-        // Build quick title map for overlap labeling
-        const titleMap = new Map<string, string>()
-        for (const { ref } of countByRef.values()) {
-          titleMap.set(ref.id, ref.title)
-        }
-        setRefTitleMap(titleMap)
-      } catch (e) {
-        console.warn('Failed to load interest ticker', e)
-      }
-    })()
-    return () => { mounted = false }
+    // TODO: replace legacy wildcard realtime with scoped channel or lazy polling once Directory is visible.
+    return () => {}
   }, [])
 
-  const toggleChip = useCallback((refId: string) => {
-    setSelectedInterests((prev) => (prev.includes(refId) ? prev.filter((id) => id !== refId) : [...prev, refId]))
-  }, [])
-
-  // Accept live additions of interests (chips) from CommunityInterestsScreen via event
-  useEffect(() => {
-    let mounted = true
-    const COMMUNITY = 'edge-patagonia'
-    const handler = async (e: any) => {
-      try {
-        const r = e?.record
-        if (!r || typeof r?.meta !== 'string' || !r.meta.includes(COMMUNITY)) return
-        // Add to topInterests if not present
-        setTopInterests((prev) => {
-          if (prev.some((ti) => ti.refId === r.id)) return prev
-          const entry = { refId: r.id, title: r.title, count: 0, created: r.created }
-          const next = [entry, ...prev]
-          return next.slice(0, 30)
-        })
-      } catch {}
-    }
-    ;(async () => {
-      try { await pocketbase.collection('refs').subscribe('*', handler) } catch {}
-    })()
-    return () => { try { pocketbase.collection('refs').unsubscribe('*') } catch {} }
-  }, [])
-
-  // Community interests grid removed from this screen
-
-  // Memoize the onPress callback to prevent recreation on every render
-  const handleUserPress = useCallback((userName: string, userId: string) => {
-    if (!userName || !userId) return
-    setDirectoriesFilterTab('people')
-    setProfileNavIntent({ targetPagerIndex: 1, directoryFilter: 'people', source: 'directory' })
-    router.push({
-      pathname: '/user/[userName]',
-      params: { userName, userId, fromDirectory: '1' },
-    })
-  }, [setDirectoriesFilterTab, setProfileNavIntent])
-
-  // Community tile press handler not used in this screen
+  const handleUserPress = useCallback(
+    (userName: string, userId: string) => {
+      if (!userName || !userId) return
+      setDirectoriesFilterTab('people')
+      setProfileNavIntent({ targetPagerIndex: 1, directoryFilter: 'people', source: 'directory' })
+      router.push({ pathname: '/user/[userName]', params: { userName, userId, fromDirectory: '1' } })
+    },
+    [setDirectoriesFilterTab, setProfileNavIntent]
+  )
 
   const renderItem = useCallback(
     ({ item }: { item: FeedUser; index: number }) => {
@@ -901,7 +763,6 @@ export function CommunitiesFeedScreen({
     [handleUserPress, toggleSaveForUser, isUserSaved, userInterestMap, refTitleMap, user?.id]
   )
 
-  // Compute user's display name for onboarding pill
   const userDisplayName = useMemo(() => {
     if (!user) return ''
     const first = (user.firstName || '').trim()
@@ -924,13 +785,11 @@ export function CommunitiesFeedScreen({
     return ''
   }, [user])
 
-  // Show onboarding pill until user has at least 3 refs
   const showOnboardingPill = gridItemCount < 3 && user?.userName
 
   return (
     <View style={{ flex: 1, backgroundColor: c.surface }}>
       {showHeader && (
-        // Header: independent from list scroll; surface background
         <View style={{ paddingVertical: s.$1, alignItems: 'flex-start', justifyContent: 'center', marginTop: 7, paddingLeft: s.$1 + 6, marginBottom: 0 }}>
           <Text style={{ color: c.newDark, fontSize: (s.$09 as number) + 4, fontFamily: 'System', fontWeight: '700', textAlign: 'left', lineHeight: s.$1half }}>
             Directory
@@ -941,7 +800,6 @@ export function CommunitiesFeedScreen({
         </View>
       )}
 
-      {/* Ticker filter chips (popular interests) as subheader under viewing */}
       {hideInterestChips
         ? null
         : (
@@ -983,54 +841,53 @@ export function CommunitiesFeedScreen({
           </View>
         )}
 
-            {/* Optional menu directly above the directory list */}
-            {aboveListComponent ? (
-              <View style={{ paddingHorizontal: embedded ? 0 : (s.$1 as number) + 6, marginBottom: 10 }}>
-                {aboveListComponent}
-              </View>
-            ) : null}
+      {aboveListComponent ? (
+        <View style={{ paddingHorizontal: embedded ? 0 : (s.$1 as number) + 6, marginBottom: 10 }}>
+          {aboveListComponent}
+        </View>
+      ) : null}
 
-            {/* Natural scrolling list without surface2 backdrop */}
-            <View>
-              <FlatList
-                ListHeaderComponent={
-                  showOnboardingPill ? (
-                    <OnboardingPill
-                      userName={user?.userName || ''}
-                      fullName={userDisplayName}
-                      avatarUri={userAvatarUri}
-                    />
-                  ) : null
-                }
-                contentContainerStyle={{
-                  paddingLeft: embedded ? embeddedPadding : (s.$1 as number) + 6,
-                  paddingRight: embedded ? embeddedPadding : (s.$1 as number) + 6,
-                  paddingTop: 10,
-                  paddingBottom: 150,
-                }}
-                data={displayedUsers}
-                keyExtractor={(u) => u.id}
-                renderItem={renderItem}
-                initialNumToRender={10}
-                maxToRenderPerBatch={5}
-                windowSize={10}
-                removeClippedSubviews={false}
-                onEndReached={() => {
-                  if (isLoading || !hasMore) return
-                  void fetchPage(page + 1, { skipCache: true })
-                }}
-                onEndReachedThreshold={0.6}
-                showsVerticalScrollIndicator={false}
-                alwaysBounceVertical={true}
-                bounces={true}
-                nestedScrollEnabled={true}
-                scrollEnabled={true}
-                scrollEventThrottle={16}
-                getItemLayout={(data, index) => ({ length: 90, offset: 90 * index, index })}
-                updateCellsBatchingPeriod={50}
-                disableVirtualization={false}
-              />
-            </View>
+      <View>
+        <FlatList
+          ListHeaderComponent={
+            showOnboardingPill ? (
+              <OnboardingPill userName={user?.userName || ''} fullName={userDisplayName} avatarUri={userAvatarUri} />
+            ) : null
+          }
+          contentContainerStyle={{
+            paddingLeft: embedded ? embeddedPadding : (s.$1 as number) + 6,
+            paddingRight: embedded ? embeddedPadding : (s.$1 as number) + 6,
+            paddingTop: 10,
+            paddingBottom: 150,
+          }}
+          data={displayedUsers}
+          keyExtractor={(u) => u.id}
+          renderItem={renderItem}
+          initialNumToRender={10}
+          maxToRenderPerBatch={6}
+          windowSize={10}
+          removeClippedSubviews={false}
+          onEndReached={() => {
+            if (!hasNextPage || isFetchingNextPage) return
+            void fetchNextPage()
+          }}
+          onEndReachedThreshold={0.6}
+          showsVerticalScrollIndicator={false}
+          alwaysBounceVertical={true}
+          bounces={true}
+          nestedScrollEnabled={true}
+          scrollEnabled={true}
+          scrollEventThrottle={16}
+          getItemLayout={(data, index) => ({ length: 90, offset: 90 * index, index })}
+          updateCellsBatchingPeriod={50}
+          disableVirtualization={false}
+          ListFooterComponent={
+            isFetchingNextPage ? (
+              <ActivityIndicator style={{ marginVertical: s.$1 }} color={c.accent} />
+            ) : null
+          }
+        />
+      </View>
     </View>
   )
 }

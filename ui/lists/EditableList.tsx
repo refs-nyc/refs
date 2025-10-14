@@ -31,7 +31,10 @@ export const EditableList = ({
   // Function to find the next available list number
   const getNextListNumber = async (): Promise<number> => {
     try {
-      const gridItems = await getProfileItems(user?.userName!)
+      const gridItems = await getProfileItems({
+        userName: user?.userName!,
+        userId: user?.id,
+      })
       const existingLists = gridItems.filter(item => item.list)
       const listNumbers = existingLists
         .map(item => {

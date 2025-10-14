@@ -631,31 +631,75 @@ export const createItemSlice: StateCreator<StoreSlices, [], [], ItemSlice> = (se
   },
 })
 
-export const getProfileItems = async (userName: string) => {
-  // Optimize by limiting to first 50 items and using more efficient expand
-  const items = await pocketbase.collection<ExpandedItem>('items').getList(1, 50, {
-    filter: pocketbase.filter(
-      'creator.userName = {:userName} && backlog = false && parent = null',
-      {
-        userName,
-      }
-    ),
-    expand: 'ref, creator', // Simplified expand to reduce query complexity
-    sort: '-created',
-  })
-  return gridSort(items.items)
+export type ProfileItemsRequest = {
+  userName: string
+  userId?: string
+  forceNetwork?: boolean
 }
 
-export const getBacklogItems = async (userName: string) => {
-  // Optimize by limiting to first 50 items
-  const items = await pocketbase.collection('items').getList(1, 50, {
-    filter: pocketbase.filter('creator.userName = {:userName} && backlog = true && parent = null', {
-      userName,
-    }),
+const resolveProfileUserId = (userId: string | undefined, userName: string): string | undefined => {
+  if (userId) return userId
+  const authRecord = pocketbase.authStore.record
+  if (authRecord?.userName === userName) {
+    return authRecord.id
+  }
+  return undefined
+}
+
+export const getProfileItems = async ({ userName, userId, forceNetwork = false }: ProfileItemsRequest) => {
+  const effectiveUserId = resolveProfileUserId(userId, userName)
+
+  if (!forceNetwork && effectiveUserId) {
+    const cached = await simpleCache.get<ExpandedItem[]>('grid_items', effectiveUserId)
+    if (Array.isArray(cached) && cached.length > 0) {
+      return cached
+    }
+  }
+
+  const items = await pocketbase.collection<ExpandedItem>('items').getList(1, 12, {
+    filter: effectiveUserId
+      ? pocketbase.filter('creator = {:userId} && backlog = false && parent = null', {
+          userId: effectiveUserId,
+        })
+      : pocketbase.filter('creator.userName = {:userName} && backlog = false && parent = null', {
+          userName,
+        }),
     expand: 'ref',
     sort: '-created',
   })
-  return items.items.sort(createdSort)
+  const sorted = gridSort(items.items)
+  if (effectiveUserId) {
+    void simpleCache.set('grid_items', sorted, effectiveUserId)
+  }
+  return sorted
+}
+
+export const getBacklogItems = async ({ userName, userId, forceNetwork = false }: ProfileItemsRequest) => {
+  const effectiveUserId = resolveProfileUserId(userId, userName)
+
+  if (!forceNetwork && effectiveUserId) {
+    const cached = await simpleCache.get<ExpandedItem[]>('backlog_items', effectiveUserId)
+    if (Array.isArray(cached)) {
+      return cached
+    }
+  }
+
+  const items = await pocketbase.collection('items').getList(1, 20, {
+    filter: effectiveUserId
+      ? pocketbase.filter('creator = {:userId} && backlog = true && parent = null', {
+          userId: effectiveUserId,
+        })
+      : pocketbase.filter('creator.userName = {:userName} && backlog = true && parent = null', {
+          userName,
+        }),
+    expand: 'ref',
+    sort: '-created',
+  })
+  const sorted = items.items.sort(createdSort)
+  if (effectiveUserId) {
+    void simpleCache.set('backlog_items', sorted, effectiveUserId)
+  }
+  return sorted
 }
 
 // Function to automatically move items from backlog to grid when there's space
@@ -665,8 +709,16 @@ export const autoMoveBacklogToGrid = async (
   existingBacklogItems?: ExpandedItem[]
 ) => {
   try {
-    const gridItems = existingGridItems ?? (await getProfileItems(userName))
-    const backlogItems = existingBacklogItems ?? (await getBacklogItems(userName))
+    const gridItems =
+      existingGridItems ??
+      (await getProfileItems({
+        userName,
+      }))
+    const backlogItems =
+      existingBacklogItems ??
+      (await getBacklogItems({
+        userName,
+      }))
     
     // If grid is full, no need to move anything
     if (gridItems.length >= 12) {

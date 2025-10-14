@@ -14,6 +14,8 @@ import BottomSheet, { BottomSheetBackdrop, BottomSheetView } from '@gorhom/botto
 import Ionicons from '@expo/vector-icons/Ionicons'
 
 import { useAppStore } from '@/features/stores'
+import { queryClient } from '@/core/queryClient'
+import { messagingKeys } from '@/features/queries/messaging'
 import { Avatar } from '@/ui/atoms/Avatar'
 import { c, s } from '@/features/style'
 import type { Profile } from '@/features/types'
@@ -30,7 +32,6 @@ export function GroupMessageComposer() {
     moduleBackdropAnimatedIndex,
     createConversation,
     sendMessage,
-    setMessagesForConversation,
     showToast,
   } = useAppStore()
 
@@ -151,7 +152,7 @@ export function GroupMessageComposer() {
     try {
       const memberIds = recipients.map((member) => member.id)
       const conversationId = await createConversation(false, user.id, memberIds, payload.title)
-      setMessagesForConversation(conversationId, [])
+      queryClient.invalidateQueries({ queryKey: messagingKeys.conversations(user.id) })
       handleSendSuccess(conversationId, payload)
       
       // Prompt for notifications after creating group (fire-and-forget)
@@ -175,7 +176,6 @@ export function GroupMessageComposer() {
     sendMessage,
     handleSendSuccess,
     clearRetry,
-    setMessagesForConversation,
     showToast,
   ])
 

@@ -9,6 +9,7 @@ import { ProfileDetailsProvider } from './profileDetailsStore'
 import { GridLines } from '../display/Gridlines'
 import React from 'react'
 import { View } from 'react-native'
+import { simpleCache } from '@/features/cache/simpleCache'
 
 // --- Helper Components for State Isolation ---
 
@@ -62,12 +63,21 @@ export const ProfileDetailsSheet = () => {
         return
       }
       try {
-        const [fetchedProfile, fetchedItems] = await Promise.all([
-          getUserByUserName(detailsProfileUsername),
-          getProfileItems(detailsProfileUsername),
-        ])
+        const fetchedProfile = await getUserByUserName(detailsProfileUsername)
+        const fetchedItems = await getProfileItems({
+          userName: detailsProfileUsername,
+          userId: fetchedProfile.id,
+          forceNetwork: true,
+        })
         setProfile(fetchedProfile)
         setGridItems(fetchedItems)
+        const profileWithUserId = { ...fetchedProfile, _cachedUserId: fetchedProfile.id }
+        Promise.all([
+          simpleCache.set('profile', profileWithUserId, fetchedProfile.id),
+          simpleCache.set('grid_items', fetchedItems, fetchedProfile.id),
+        ]).catch((error) => {
+          console.warn('ProfileDetailsSheet cache sync failed', error)
+        })
       } catch (error) {
         console.warn('Failed to load profile details', error)
       }

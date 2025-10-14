@@ -6,7 +6,7 @@ import { useNavigation } from '@react-navigation/native'
 import { useRef, useCallback } from 'react'
 
 export default function Page() {
-  const { user, cachedSearchResults, setHomePagerIndex, setProfileNavIntent, homePagerIndex, directoriesFilterTab } = useAppStore()
+  const { user, setHomePagerIndex, setProfileNavIntent, homePagerIndex, directoriesFilterTab } = useAppStore()
   const router = useRouter()
   const navigation = useNavigation<any>()
   const { conversationId } = useLocalSearchParams()
@@ -27,14 +27,6 @@ export default function Page() {
       return
     }
 
-    // If we have cached search results, navigate back to profile to restore them
-    if (cachedSearchResults.length > 0 && user?.userName) {
-      setHomePagerIndex(0)
-      setProfileNavIntent({ targetPagerIndex: 0, source: 'other' })
-      router.push(`/user/${user.userName}`)
-      return
-    }
-
     // Last resort fallback
     if (user?.userName) {
       const fallbackIndex = homePagerIndex ?? 0
@@ -47,16 +39,7 @@ export default function Page() {
       router.replace(`/user/${user.userName}`)
       return
     }
-  }, [
-    cachedSearchResults.length,
-    directoriesFilterTab,
-    homePagerIndex,
-    navigation,
-    router,
-    setHomePagerIndex,
-    setProfileNavIntent,
-    user?.userName,
-  ])
+  }, [directoriesFilterTab, homePagerIndex, navigation, router, setHomePagerIndex, setProfileNavIntent, user?.userName])
 
   const requestClose = useCallback(() => {
     if (closeHandlerRef.current) {

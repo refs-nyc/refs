@@ -186,7 +186,7 @@ export const SimplePinataImage = ({
       {...props}
       contentFit="cover"
       source={source || originalSource}
-      cachePolicy="immutable"
+      cachePolicy="memory"
       priority="normal"
     />
   )

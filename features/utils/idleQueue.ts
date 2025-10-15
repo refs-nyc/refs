@@ -261,10 +261,9 @@ export const enqueueIdleTask = (task: IdleTask, options?: EnqueueOptions): IdleT
       }
     } else if (resolved.priority === 'low') {
       entry.cancelled = true
-      const source = resolved.priority === 'high' ? highQueue : lowQueue
-      const index = source.indexOf(entry)
+      const index = lowQueue.indexOf(entry)
       if (index >= 0) {
-        source.splice(index, 1)
+        lowQueue.splice(index, 1)
       }
       if (__DEV__) {
         console.warn('[idleQueue] rejected low-priority job', entry.label)

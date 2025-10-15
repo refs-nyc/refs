@@ -38,17 +38,13 @@ type CompactOptions = {
   compact?: boolean
 }
 
-const compactUser = (user: UsersRecord | undefined) => {
+const compactUser = (user: UsersRecord | undefined): UsersRecord | undefined => {
   if (!user) return undefined
-  const withAvatar = normalizeAvatarFields(user)
+  const withAvatar = normalizeAvatarFields(user) ?? user
   return {
-    id: user.id,
-    userName: user.userName,
-    firstName: user.firstName,
-    lastName: user.lastName,
-    name: user.name,
-    image: withAvatar?.image,
-    avatar_url: withAvatar?.avatar_url,
+    ...user,
+    image: withAvatar.image,
+    avatar_url: (withAvatar as any)?.avatar_url ?? withAvatar.image,
   }
 }
 

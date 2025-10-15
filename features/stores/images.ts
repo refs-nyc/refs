@@ -178,7 +178,7 @@ export const createImageSlice: StateCreator<StoreSlices, [], [], ImageSlice> = (
       }
 
       const pool = state.promisePool.current
-      if (pool[url]) {
+      if (Object.prototype.hasOwnProperty.call(pool, url)) {
         signatureCounters.pendingHit += 1
         try {
           const entry = await pool[url]

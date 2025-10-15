@@ -705,35 +705,25 @@ export const getBacklogItems = async ({ userName, userId, forceNetwork = false }
 }
 
 const compactGridItem = (item: ExpandedItem): ExpandedItem => {
-  const { expand } = item
-  const ref = expand?.ref
-  const compactRef = ref
-    ? {
-        id: ref.id,
-        title: ref.title,
-        subtitle: (ref as any)?.subtitle ?? undefined,
-        image: ref.image,
-        link: (ref as any)?.link ?? undefined,
-        caption: (ref as any)?.caption ?? undefined,
-      }
-    : undefined
+  const ref = item.expand?.ref
+  if (!ref) {
+    return item
+  }
+
+  const compactRef = {
+    ...ref,
+    subtitle: (ref as any)?.subtitle ?? undefined,
+    link: (ref as any)?.link ?? undefined,
+    caption: (ref as any)?.caption ?? undefined,
+  }
 
   return {
-    id: item.id,
-    text: item.text,
-    title: item.title,
-    image: item.image,
-    list: item.list,
-    backlog: item.backlog,
-    order: item.order,
-    creator: item.creator,
-    ref: item.ref,
-    updated: item.updated,
-    created: item.created,
-    promptContext: (item as any)?.promptContext,
-    __promptKind: (item as any)?.__promptKind,
-    expand: compactRef ? ({ ref: compactRef } as ExpandedItem['expand']) : undefined,
-  } as ExpandedItem
+    ...item,
+    expand: {
+      ...item.expand,
+      ref: compactRef,
+    } as ExpandedItem['expand'],
+  }
 }
 
 // Function to automatically move items from backlog to grid when there's space

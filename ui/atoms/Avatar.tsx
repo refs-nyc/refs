@@ -46,7 +46,7 @@ export const Avatar = ({ source, size, fallback }: AvatarProps) => {
           source={resolvedSource}
           style={{ width: bucket, height: bucket, borderRadius: bucket / 2 }}
           contentFit="cover"
-          cachePolicy="memory-disk"
+          cachePolicy="memory"
           transition={150}
         />
       ) : initial ? (

@@ -10,6 +10,8 @@ import { router } from 'expo-router'
 import type { ExpandedSave, Profile } from '@/features/types'
 import { EdgeCorkboardScreen } from '@/features/communities/corkboard-screen'
 import { useWantToMeet } from '@/features/queries/wantToMeet'
+import { useFocusEffect } from '@react-navigation/native'
+import { prefetchWantToMeetList } from '@/core/preload-controller'
 
 type WantToMeetPanelProps = {
   showHeader?: boolean
@@ -36,6 +38,17 @@ export function WantToMeetPanel({
   } = useAppStore()
   const userId = user?.id
   const { data: querySaves = [], isLoading: isPending } = useWantToMeet(userId)
+
+  useFocusEffect(
+    React.useCallback(() => {
+      if (!userId) return
+      prefetchWantToMeetList(userId).catch((error) => {
+        if (__DEV__) {
+          console.warn('[wantToMeet] prefetchWantToMeetList failed', error)
+        }
+      })
+    }, [userId])
+  )
 
   const currentSaves = useMemo(() => {
     if (!userId) return []

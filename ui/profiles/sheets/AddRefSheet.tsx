@@ -159,6 +159,11 @@ export const AddRefSheet = ({
     }
   }, [moduleBackdropAnimatedIndex, unregisterBackdropPress, setAddingRefPrefill])
 
+  const closeSheet = useCallback(() => {
+    setAddingRefId('')
+    setSheetIndex(-1)
+  }, [setAddingRefId])
+
   const prevSheetIndexRef = useRef(sheetIndex)
 
   useEffect(() => {
@@ -179,7 +184,7 @@ export const AddRefSheet = ({
     }
 
     const key = registerBackdropPress(() => {
-      setSheetIndex(-1)
+      closeSheet()
     })
     backdropKeyRef.current = key
 
@@ -189,7 +194,7 @@ export const AddRefSheet = ({
         backdropKeyRef.current = null
       }
     }
-  }, [isSheetActive, registerBackdropPress, unregisterBackdropPress])
+  }, [closeSheet, isSheetActive, registerBackdropPress, unregisterBackdropPress])
 
   const containerZIndex = isSheetActive ? 10000 : 0
 
@@ -211,9 +216,7 @@ export const AddRefSheet = ({
         onChange={(i: number) => {
           setSheetIndex(i)
         }}
-        onClose={() => {
-          setSheetIndex(-1)
-        }}
+        onClose={closeSheet}
         backdropComponent={(p) => (
           <BottomSheetBackdrop
             {...p}

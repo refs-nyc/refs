@@ -19,11 +19,15 @@ export const constructPinataUrl = (url: string, imageOptions: OptimizeImageOptio
 
 export type SignedUrlEntry = { expires: number; date: number; signedUrl: string }
 
-export async function pinataSignedUrl(url: string): Promise<SignedUrlEntry> {
+export type PinataSignedUrlOptions = {
+  signal?: AbortSignal
+}
+
+export async function pinataSignedUrl(url: string, options: PinataSignedUrlOptions = {}): Promise<SignedUrlEntry> {
   const date = Date.now()
   const expires = 500000
 
-  const options = {
+  const requestOptions = {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${process.env.EXPO_PUBLIC_PIN_JWT}`,
@@ -35,10 +39,11 @@ export async function pinataSignedUrl(url: string): Promise<SignedUrlEntry> {
       date,
       method: 'GET',
     }),
+    signal: options.signal,
   }
 
   try {
-    const response = await fetch('https://api.pinata.cloud/v3/files/sign', options)
+    const response = await fetch('https://api.pinata.cloud/v3/files/sign', requestOptions)
     const value = await response.json()
     return { date, expires, signedUrl: value.data as string }
   } catch (error) {

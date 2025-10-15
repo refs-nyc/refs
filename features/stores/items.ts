@@ -652,7 +652,7 @@ export const getProfileItems = async ({ userName, userId, forceNetwork = false }
   if (!forceNetwork && effectiveUserId) {
     const cached = await simpleCache.get<ExpandedItem[]>('grid_items', effectiveUserId)
     if (Array.isArray(cached) && cached.length > 0) {
-      return cached
+      return cached.map(compactGridItem)
     }
   }
 
@@ -667,11 +667,13 @@ export const getProfileItems = async ({ userName, userId, forceNetwork = false }
     expand: 'ref',
     sort: '-created',
   })
-  const sorted = gridSort(items.items)
+  const rawItems = items.items as unknown as ExpandedItem[]
+  const sorted = gridSort([...rawItems])
+  const compacted = sorted.map(compactGridItem)
   if (effectiveUserId) {
-    void simpleCache.set('grid_items', sorted, effectiveUserId)
+    void simpleCache.set('grid_items', compacted, effectiveUserId)
   }
-  return sorted
+  return compacted
 }
 
 export const getBacklogItems = async ({ userName, userId, forceNetwork = false }: ProfileItemsRequest) => {
@@ -680,7 +682,7 @@ export const getBacklogItems = async ({ userName, userId, forceNetwork = false }
   if (!forceNetwork && effectiveUserId) {
     const cached = await simpleCache.get<ExpandedItem[]>('backlog_items', effectiveUserId)
     if (Array.isArray(cached)) {
-      return cached
+      return cached.map(compactGridItem)
     }
   }
 
@@ -695,11 +697,35 @@ export const getBacklogItems = async ({ userName, userId, forceNetwork = false }
     expand: 'ref',
     sort: '-created',
   })
-  const sorted = items.items.sort(createdSort)
+  const rawItems = items.items as unknown as ExpandedItem[]
+  const sorted = [...rawItems].sort(createdSort)
+  const compacted = sorted.map(compactGridItem)
   if (effectiveUserId) {
-    void simpleCache.set('backlog_items', sorted, effectiveUserId)
+    void simpleCache.set('backlog_items', compacted, effectiveUserId)
   }
-  return sorted
+  return compacted
+}
+
+const compactGridItem = (item: ExpandedItem): ExpandedItem => {
+  const ref = item.expand?.ref
+  if (!ref) {
+    return item
+  }
+
+  const compactRef = {
+    ...ref,
+    subtitle: (ref as any)?.subtitle ?? undefined,
+    link: (ref as any)?.link ?? undefined,
+    caption: (ref as any)?.caption ?? undefined,
+  }
+
+  return {
+    ...item,
+    expand: {
+      ...item.expand,
+      ref: compactRef,
+    } as ExpandedItem['expand'],
+  }
 }
 
 // Function to automatically move items from backlog to grid when there's space

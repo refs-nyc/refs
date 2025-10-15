@@ -17,6 +17,7 @@ import { SearchLoadingSpinner } from '@/ui/atoms/SearchLoadingSpinner'
 import { router } from 'expo-router'
 import { Image } from 'expo-image'
 import { promptForNotifications } from '@/ui/notifications/utils'
+import { useFocusEffect } from '@react-navigation/native'
 
 const win = Dimensions.get('window')
 const BADGE_OVERHANG = 8
@@ -108,7 +109,8 @@ export function EdgeCorkboardScreen() {
   }, [memberAvatars])
 
 
-  useEffect(() => {
+  useFocusEffect(
+    React.useCallback(() => {
     let unsub: any | null = null
     let cancelled = false
     const COMMUNITY = 'edge-patagonia'
@@ -297,14 +299,17 @@ export function EdgeCorkboardScreen() {
       await loadUserSubscriptions()
     })
 
-    return () => {
-      cancelled = true
-      task.cancel()
-      if (typeof unsub === 'function') {
-        try { unsub() } catch {}
+      return () => {
+        cancelled = true
+        task.cancel()
+        if (typeof unsub === 'function') {
+          try {
+            unsub()
+          } catch {}
+        }
       }
-    }
-  }, [user?.id])
+    }, [user?.id])
+  )
 
   const computeFilteredItems = useCallback(
     (tab: 'all' | 'mine', subs: Map<string, boolean>, items: any[]): any[] => {

@@ -4,6 +4,7 @@ import { View, Text } from 'react-native'
 import { Pressable } from 'react-native-gesture-handler'
 import { XStack, YStack } from '../core/Stacks'
 import { Avatar } from './Avatar'
+import { AVATAR_PX, nearestBucket } from '@/ui/images/avatar-sizes'
 
 export default function UserListItem({
   user,
@@ -29,7 +30,7 @@ export default function UserListItem({
   const mainColor = primaryColor ?? (whiteText ? c.surface : c.black)
   const subColor = secondaryColor ?? (whiteText ? c.surface : c.newDark)
   const nameFontSize = small ? 14 : (s.$09 as number) + 1
-  const avatarSize = small ? (s.$4 as number) : 60
+  const avatarSize = small ? nearestBucket(s.$4 as number) : AVATAR_PX
 
   const locationText = (user.location || '').trim() || 'Elsewhere'
 

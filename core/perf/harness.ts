@@ -23,7 +23,7 @@ export const bootInvariant = {
   prePaint: true,
   markPaint() {
     this.prePaint = false
-    console.log('[perf] first-paint marked')
+    harnessLog('[perf] first-paint marked')
   },
 }
 
@@ -44,6 +44,19 @@ const stack = (lines = 8) =>
   new Error().stack?.split('\n').slice(2, 2 + lines).join('\n') ?? '(no stack)'
 
 const LOG_STACKS = process.env.EXPO_PUBLIC_PERF_VERBOSE === '1'
+const HARNESS_LOGS_ENABLED = __DEV__ || process.env.EXPO_PUBLIC_PERF_HARNESS === '1'
+
+const harnessLog = (...args: Parameters<typeof console.log>) => {
+  if (HARNESS_LOGS_ENABLED) {
+    console.log(...args)
+  }
+}
+
+const harnessWarn = (...args: Parameters<typeof console.warn>) => {
+  if (HARNESS_LOGS_ENABLED) {
+    console.warn(...args)
+  }
+}
 
 let requirePatched = false
 function patchRequireProbe(maxRequireMs = 50, verbose = false) {
@@ -55,9 +68,9 @@ function patchRequireProbe(maxRequireMs = 50, verbose = false) {
     const mod = original(id)
     const dt = Date.now() - t0
     if (dt > maxRequireMs) {
-      console.warn(`[REQUIRE SLOW] ${id} ${dt}ms\n${stack(6)}`)
+      harnessWarn(`[REQUIRE SLOW] ${id} ${dt}ms\n${stack(6)}`)
     } else if (verbose && dt > 0 && (id.includes('pocketbase') || id.includes('polyfill'))) {
-      console.log(`[require] ${id} ${dt}ms`)
+      harnessLog(`[require] ${id} ${dt}ms`)
     }
     return mod
   }
@@ -74,7 +87,7 @@ function patchJSONTripwires(maxBytes = 50_000) {
     const serialized = originalStringify(value, ...rest)
     if (serialized && serialized.length > maxBytes) {
       const prefix = bootInvariant.prePaint ? '[JSON BIG pre-paint]' : '[JSON BIG]'
-      console.warn(`${prefix} stringify ${serialized.length}B\n${stack(6)}`)
+      harnessWarn(`${prefix} stringify ${serialized.length}B\n${stack(6)}`)
     }
     return serialized
   }
@@ -85,7 +98,7 @@ function patchJSONTripwires(maxBytes = 50_000) {
     const duration = Date.now() - started
     if (value && value.length > maxBytes) {
       const prefix = bootInvariant.prePaint ? '[JSON BIG pre-paint]' : '[JSON BIG]'
-      console.warn(`${prefix} parse ${value.length}B in ${duration}ms\n${stack(6)}`)
+      harnessWarn(`${prefix} parse ${value.length}B in ${duration}ms\n${stack(6)}`)
     }
     return parsed
   }
@@ -114,7 +127,7 @@ async function patchAsyncStorageTripwires(maxBytes = 50_000) {
     const result = await originalSetItem(key, value)
     const duration = Date.now() - started
     if (size > maxBytes || duration > 50) {
-      console.warn(`[AS WRITE ${prefix}] key=${key} size=${size}B took ${duration}ms\n${stack(6)}`)
+      harnessWarn(`[AS WRITE ${prefix}] key=${key} size=${size}B took ${duration}ms\n${stack(6)}`)
     }
     return result
   }
@@ -125,7 +138,7 @@ async function patchAsyncStorageTripwires(maxBytes = 50_000) {
     const duration = Date.now() - started
     if ((result?.length ?? 0) > maxBytes || duration > 50) {
       const prefix = bootInvariant.prePaint ? 'pre-paint ' : ''
-      console.warn(`[AS READ ${prefix}] key=${key} size=${result?.length ?? 0}B took ${duration}ms\n${stack(6)}`)
+      harnessWarn(`[AS READ ${prefix}] key=${key} size=${result?.length ?? 0}B took ${duration}ms\n${stack(6)}`)
     }
     return result
   }
@@ -148,7 +161,7 @@ function startLagProbe(thresholdMs = 250) {
         ` pending=${idleStats?.pending ?? 'na'} last=${idleStats?.lastLabel ?? 'na'} duration=${Math.round(
           idleStats?.lastDuration ?? 0
         )}ms`
-      console.warn(LOG_STACKS ? `${base}\n${stack(3)}` : base)
+      harnessWarn(LOG_STACKS ? `${base}\n${stack(3)}` : base)
     }
     last = current
     setTimeout(tick, 16)
@@ -163,7 +176,7 @@ export function effectProbe(name: string, fn: () => any, deps: React.DependencyL
     const duration = Date.now() - started
     if (duration > 50) {
       const prefix = bootInvariant.prePaint ? 'pre-paint ' : ''
-      console.warn(`[EFFECT SLOW ${prefix}] ${name} ${duration}ms\n${stack(6)}`)
+      harnessWarn(`[EFFECT SLOW ${prefix}] ${name} ${duration}ms\n${stack(6)}`)
     }
     return result
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -181,7 +194,7 @@ function patchReactQuerySetQueryData(client: QueryClient, maxBytes = 80_000) {
     } catch {}
     if (approx > maxBytes) {
       const prefix = bootInvariant.prePaint ? 'pre-paint ' : ''
-      console.warn(`[RQ HEAVY WRITE ${prefix}] key=${safeKey(key)} size≈${approx}\n${stack(6)}`)
+      harnessWarn(`[RQ HEAVY WRITE ${prefix}] key=${safeKey(key)} size≈${approx}\n${stack(6)}`)
     }
     return originalSet(key, value, ...rest)
   }
@@ -218,7 +231,7 @@ export async function enablePerfHarness(options: PerfHarnessOptions = {}) {
 
   setTimeout(() => {
     if (!bootInvariant.prePaint) return
-    console.log('[perf] auto-ending boot pre-paint window')
+    harnessLog('[perf] auto-ending boot pre-paint window')
     bootInvariant.prePaint = false
   }, bootWindowMs)
 }
@@ -228,7 +241,7 @@ export const mark = (label: string) => perfMarks.set(label, Date.now())
 export const done = (label: string) => {
   const started = perfMarks.get(label)
   const duration = typeof started === 'number' ? Date.now() - started : 0
-  console.log(`[boot] ${label} ${duration}ms`)
+  harnessLog(`[boot] ${label} ${duration}ms`)
   return duration
 }
 

@@ -1,5 +1,6 @@
 import { pocketbase } from '@/features/pocketbase'
 import { QUERY_WINDOWS } from '@/features/queries/queryConfig'
+import { normalizeAvatarFields } from '@/features/users/avatar'
 
 export type RawUser = {
   id: string
@@ -33,6 +34,7 @@ export const directoryKeys = {
 const DIRECTORY_PAGE_SIZE = 50
 
 export const mapUserRecord = (record: RawUser): DirectoryEntry => {
+  const normalized = normalizeAvatarFields(record)
   const first = (record.firstName || '').trim()
   const last = (record.lastName || '').trim()
   const combined = `${first} ${last}`.trim()
@@ -43,7 +45,7 @@ export const mapUserRecord = (record: RawUser): DirectoryEntry => {
     userName: record.userName,
     name: displayName,
     neighborhood: (record.location || '').trim() || 'Elsewhere',
-    avatarUrl: (record.image || record.avatar_url || '').trim(),
+    avatarUrl: (normalized?.image || normalized?.avatar_url || '').trim(),
     topRefs: [],
     latest: record.updated ? new Date(record.updated).getTime() : undefined,
   }

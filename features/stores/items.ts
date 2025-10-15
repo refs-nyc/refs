@@ -667,7 +667,8 @@ export const getProfileItems = async ({ userName, userId, forceNetwork = false }
     expand: 'ref',
     sort: '-created',
   })
-  const sorted = gridSort(items.items)
+  const rawItems = items.items as unknown as ExpandedItem[]
+  const sorted = gridSort([...rawItems])
   const compacted = sorted.map(compactGridItem)
   if (effectiveUserId) {
     void simpleCache.set('grid_items', compacted, effectiveUserId)
@@ -696,7 +697,8 @@ export const getBacklogItems = async ({ userName, userId, forceNetwork = false }
     expand: 'ref',
     sort: '-created',
   })
-  const sorted = items.items.sort(createdSort)
+  const rawItems = items.items as unknown as ExpandedItem[]
+  const sorted = [...rawItems].sort(createdSort)
   const compacted = sorted.map(compactGridItem)
   if (effectiveUserId) {
     void simpleCache.set('backlog_items', compacted, effectiveUserId)

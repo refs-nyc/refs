@@ -38,19 +38,18 @@ type CompactOptions = {
   compact?: boolean
 }
 
-const compactUser = (user: UsersRecord | undefined): UsersRecord | undefined => {
-  if (!user) return undefined
-  const withAvatar = normalizeAvatarFields(user) ?? user
+const compactUser = (user: UsersRecord): UsersRecord => {
+  const normalized = normalizeAvatarFields(user) ?? user
   return {
     ...user,
-    image: withAvatar.image,
-    avatar_url: (withAvatar as any)?.avatar_url ?? withAvatar.image,
+    image: normalized.image ?? user.image,
+    avatar_url: (normalized as any)?.avatar_url ?? (user as any)?.avatar_url ?? normalized.image ?? user.image,
   }
 }
 
 const compactMembership = (membership: ExpandedMembership): ExpandedMembership => {
   const { expand, ...rest } = membership
-  const compact = expand?.user ? { user: compactUser(expand.user) } : undefined
+  const compact = expand?.user ? { user: compactUser(expand.user as UsersRecord) } : undefined
   return {
     ...rest,
     expand: compact,

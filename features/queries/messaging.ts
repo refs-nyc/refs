@@ -48,17 +48,13 @@ const compactUser = (user: UsersRecord): UsersRecord => {
 }
 
 const compactMembership = (membership: ExpandedMembership): ExpandedMembership => {
-  const { expand, ...rest } = membership
-  if (expand?.user) {
-    const userRecord = compactUser(expand.user as UsersRecord)
-    return {
-      ...rest,
-      expand: { user: userRecord },
-    }
+  if (!membership.expand?.user) {
+    return membership
   }
+  const userRecord = compactUser(membership.expand.user as UsersRecord)
   return {
-    ...rest,
-    expand: undefined,
+    ...membership,
+    expand: { user: userRecord },
   }
 }
 

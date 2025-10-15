@@ -177,6 +177,8 @@ Follow-up (perf harness diagnostics):
 - Deferred want-to-meet and messaging preloads until their screens request them; boot no longer enqueues those hydrator jobs, so the queue only runs the directory warmup and stays responsive after first paint.
 - Messaging and want-to-meet screens now call the new prefetch helpers via `useFocusEffect`, so the data loads only when those views are visible (and we still reuse the lightweight snapshot when returning).
 - Pinata image signing no longer blocks boot: `useSignedImageUrl` now renders the original thumb immediately and defers signature fetches through the idle queue, so high-res URLs hydrate lazily without monopolising the JS thread.
+- Throttled Pinata signature traffic (two concurrent requests max) and deduped idle-queue work so we never schedule dozens of signing jobs at once.
+- Moved community-subscription Supabase fetches behind the corkboard screen focus effect; they only run once the user opens the community view instead of during profile boot.
 - Added a dev-only `installBootFetchLogger` wrapper that records every network response during the first 5 s and flags payloads over 1 MB, giving us hard evidence of boot bandwidth before we clamp endpoints.
 - Centralized image thumbnailing (`features/media/thumb.ts`) and routed grid tiles/avatars through it so boot requests pull 200×200 WebP assets instead of full-res originals.
 - Dropped hydrator queue concurrency to 1 to stop parallel JSON writes; now only one boot job can run at a time pending further gating.

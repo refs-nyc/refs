@@ -10,6 +10,31 @@ export type OptimizeImageOptions = {
 
 type SignedUrls = Record<string, SignedUrlEntry>
 
+const MAX_PARALLEL_SIGNATURES = 2
+let activeSignatureRequests = 0
+const signatureQueue: Array<() => void> = []
+
+const acquireSignatureSlot = () =>
+  new Promise<void>((resolve) => {
+    if (activeSignatureRequests < MAX_PARALLEL_SIGNATURES) {
+      activeSignatureRequests += 1
+      resolve()
+    } else {
+      signatureQueue.push(() => {
+        activeSignatureRequests += 1
+        resolve()
+      })
+    }
+  })
+
+const releaseSignatureSlot = () => {
+  activeSignatureRequests = Math.max(0, activeSignatureRequests - 1)
+  const next = signatureQueue.shift()
+  if (next) {
+    next()
+  }
+}
+
 // when we load a view with a lot of images, we have a lot of async requests
 // this is a pool of promises that we can use to store the promises for each image
 // so that if we request the same image twice, we don't make two requests
@@ -48,7 +73,14 @@ export const createImageSlice: StateCreator<StoreSlices, [], [], ImageSlice> = (
     if (cachedPromise) {
       promiseToAwait = cachedPromise
     } else {
-      promiseToAwait = pinataSignedUrl(url)
+      promiseToAwait = (async () => {
+        await acquireSignatureSlot()
+        try {
+          return await pinataSignedUrl(url)
+        } finally {
+          releaseSignatureSlot()
+        }
+      })()
       currentPromisePool[url] = promiseToAwait
     }
 

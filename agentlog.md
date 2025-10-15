@@ -184,11 +184,20 @@ Follow-up (perf harness diagnostics):
 - Dropped hydrator queue concurrency to 1 to stop parallel JSON writes; now only one boot job can run at a time pending further gating.
 - Evidence: perf harness still flags long tasks (~95 s) tied to `hydrate:wantToMeet`, proving we must defer/trim that hydrator next. Messaging writes are now below the JSON-tripwire threshold and no longer emit `[JSON BIG]`.
 - Priorities (active):
-  1. Move want-to-meet + messaging boot hydrators behind screen visibility and idle scheduling; add byte/time guards so they never block first paint.
-  2. Introduce `bootFetch` logger/cap for first-screen network, gather host/byte totals, and enforce the 400 KB budget.
-  3. Tighten PocketBase queries (use `fields`, avoid `expand`) so DTOs are lean at the source.
-  4. Audit onboarding/login inputs to ensure no `autoFocus` spins up SafariViewService at boot.
-  5. Eliminate bridge logging noise observed in production (hunt for dev-only inspector hooks or third-party logging).
+- Dropped hydrator queue concurrency to 1 to stop parallel JSON writes; now only one boot job can run at a time pending further gating.
+- Evidence: cold + warm boots now unblock in ~1–2 s; any residual lag is idle signing work rather than boot hydrators.
+
+### 2025-10-15 (perf summary for next agent)
+- Boot-paint workflow: hydrate directory + self-profile only; messaging and want-to-meet prefetch helpers run on screen focus (`useFocusEffect`). Boot shouldn’t enqueue any other hydrators.
+- Snapshot budget: capped at 40 KB. If a serialized payload exceeds the guardrail we skip the write and log `[preload] … skipped (oversize)`.
+- Thumbnail delivery: `features/media/thumb.ts` builds 200×200 WebP URLs; grid tiles/avatars call `getThumbUrl` so initial paint uses lightweight assets.
+- Image signing: `SimplePinataImage` defers signatures to idle jobs, skips signing when the max dimension ≤ 80px, and uses AbortControllers so route blur/scroll cancels in-flight work. `features/stores/images.ts` enforces a global token bucket (max 2 running, 8 queued), dedupes requests, debounces rewinds, and persists an AsyncStorage LRU (100 entries).
+- Feed/D directory warmups: run only when those screens mount; `community_subscriptions` Supabase reads live behind the corkboard focus effect.
+- Diagnostics: enable `EXPO_PUBLIC_PERF_HARNESS=1` for cold boots; the harness prints `[boot:net]` within the first 5 s and idle queue stats when drain completes. Expect total boot bytes ≈3–4 KB (thumbnails + small API responses).
+- Remaining watch-outs:
+  * If idle logs show `image:signed` flooding again, check that new screens use `SimplePinataImage` and don’t call `getSignedUrl` directly.
+  * Keep symbolication/dev logging wrapped in `__DEV__` so release builds stay quiet.
+  * RCTView shadow warning: ensure any view with `shadow*` props has `backgroundColor` set (or move the shadow to a small wrapper) to avoid layout cost.
 ## Harness
 /* eslint-disable no-console */
 /**

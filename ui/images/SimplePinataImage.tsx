@@ -1,12 +1,37 @@
-import { useState, useEffect, useMemo, useCallback } from 'react'
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { Image, type ImageProps } from 'expo-image'
 import { constructPinataUrl, type OptimizeImageOptions } from '@/features/pinata'
 import { useAppStore } from '@/features/stores'
 import { StyleProp, useWindowDimensions, View, ViewStyle } from 'react-native'
 import { enqueueIdleTask, isIdleTaskContext } from '@/features/utils/idleQueue'
 
+const SIGNATURE_SKIP_THRESHOLD = 80
+const CACHE_TTL_MS = 60 * 60 * 1000 // 1 hour
+
 // Cache for signed URLs to avoid repeated API calls
 const signedUrlCache = new Map<string, { url: string; expires: number }>()
+
+type CacheEntry = {
+  url: string
+  expires: number
+}
+
+const getCacheEntry = (key: string): CacheEntry | null => {
+  const entry = signedUrlCache.get(key)
+  if (!entry) return null
+  if (entry.expires <= Date.now()) {
+    signedUrlCache.delete(key)
+    return null
+  }
+  return entry
+}
+
+const storeCacheEntry = (key: string, url: string) => {
+  signedUrlCache.set(key, {
+    url,
+    expires: Date.now() + CACHE_TTL_MS,
+  })
+}
 
 export function useSignedImageUrl(originalSource: string | null | undefined, imageOptions: OptimizeImageOptions) {
   const safeSource = originalSource?.trim() || ''
@@ -14,45 +39,60 @@ export function useSignedImageUrl(originalSource: string | null | undefined, ima
   const [source, setSource] = useState<string | null>(safeSource || null)
   const { getSignedUrl, signedUrls } = useAppStore()
 
-  const url = useMemo(
-    () => (safeSource ? constructPinataUrl(safeSource, imageOptions) : ''),
-    [safeSource, imageOptions]
-  )
+  const url = useMemo(() => (safeSource ? constructPinataUrl(safeSource, imageOptions) : ''), [safeSource, imageOptions])
   const cacheKey = url || safeSource
 
-  const fetchSignedUrl = useCallback(async () => {
-    if (!safeSource) {
-      setSource(null)
-      setLoading(false)
-      return
-    }
+  const controllerRef = useRef<AbortController | null>(null)
+  const shouldSign = useMemo(() => {
+    const maxDimension = Math.max(imageOptions.width, imageOptions.height)
+    return maxDimension > SIGNATURE_SKIP_THRESHOLD
+  }, [imageOptions.height, imageOptions.width])
 
-    try {
-      const targetUrl = cacheKey
-      const signedUrl = await getSignedUrl(targetUrl)
-      setSource(signedUrl)
-      setLoading(false)
+  const fetchSignedUrl = useCallback(
+    async (signal: AbortSignal) => {
+      if (!safeSource) {
+        setSource(null)
+        setLoading(false)
+        return
+      }
 
-      signedUrlCache.set(targetUrl, {
-        url: signedUrl,
-        expires: Date.now() + 3600000,
-      })
-    } catch (error) {
-      // Fall back to the unsigned source; screen will still render while we retry later.
-      setSource(safeSource)
-      setLoading(false)
-    }
-  }, [cacheKey, safeSource, getSignedUrl])
+      try {
+        const targetUrl = cacheKey
+        const signedUrl = await getSignedUrl(targetUrl, { signal, reason: 'SimplePinataImage', skip: !shouldSign })
+        if (signal.aborted) return
+        setSource(signedUrl)
+        setLoading(false)
+        if (shouldSign) {
+          storeCacheEntry(targetUrl, signedUrl)
+        }
+      } catch (error) {
+        if (signal.aborted) return
+        // Fall back to the unsigned source; screen will still render while we retry later.
+        setSource(safeSource)
+        setLoading(false)
+      }
+    },
+    [cacheKey, safeSource, getSignedUrl, shouldSign]
+  )
 
   useEffect(() => {
+    controllerRef.current?.abort()
+    controllerRef.current = null
+
     if (!safeSource) {
       setSource(null)
       setLoading(false)
       return
     }
 
-    const cached = signedUrlCache.get(cacheKey)
-    if (cached && cached.expires > Date.now()) {
+    if (!shouldSign) {
+      setSource(cacheKey || safeSource)
+      setLoading(false)
+      return
+    }
+
+    const cached = getCacheEntry(cacheKey)
+    if (cached) {
       setSource(cached.url)
       setLoading(false)
       return
@@ -62,14 +102,18 @@ export function useSignedImageUrl(originalSource: string | null | undefined, ima
     if (storeEntry && storeEntry.expires + storeEntry.date > Date.now()) {
       setSource(storeEntry.signedUrl)
       setLoading(false)
+      storeCacheEntry(cacheKey, storeEntry.signedUrl)
       return
     }
 
     setSource(safeSource)
     setLoading(false)
 
+    const controller = new AbortController()
+    controllerRef.current = controller
+
     const scheduleFetch = () => {
-      fetchSignedUrl().catch(() => {})
+      fetchSignedUrl(controller.signal).catch(() => {})
     }
 
     if (isIdleTaskContext()) {
@@ -79,7 +123,12 @@ export function useSignedImageUrl(originalSource: string | null | undefined, ima
         scheduleFetch()
       }, `image:signed:${cacheKey}`)
     }
-  }, [cacheKey, safeSource, signedUrls, fetchSignedUrl])
+
+    return () => {
+      controller.abort()
+      controllerRef.current = null
+    }
+  }, [cacheKey, safeSource, signedUrls, fetchSignedUrl, shouldSign])
 
   return { source, loading }
 }
@@ -95,12 +144,15 @@ export const SimplePinataImage = ({
   imageOptions: OptimizeImageOptions
 } & Omit<ImageProps, 'source'>) => {
   const scale = useWindowDimensions().scale
-  
-  const imageOptionsWithScale = useMemo(() => ({
-    height: imageOptions.height * scale,
-    width: imageOptions.width * scale,
-  }), [imageOptions.height, imageOptions.width, scale])
-  
+
+  const imageOptionsWithScale = useMemo(
+    () => ({
+      height: imageOptions.height * scale,
+      width: imageOptions.width * scale,
+    }),
+    [imageOptions.height, imageOptions.width, scale]
+  )
+
   const { source, loading } = useSignedImageUrl(originalSource, imageOptionsWithScale)
 
   if (loading) {
@@ -108,12 +160,11 @@ export const SimplePinataImage = ({
   }
 
   return (
-    <Image 
-      {...props} 
-      contentFit={'cover'} 
+    <Image
+      {...props}
+      contentFit="cover"
       source={source || originalSource}
-      // Add performance optimizations
-      cachePolicy="memory-disk"
+      cachePolicy="immutable"
       priority="normal"
     />
   )

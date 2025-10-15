@@ -4,6 +4,7 @@ import type {
   ExpandedMembership,
   Message,
 } from '@/features/types'
+import type { UsersRecord } from '@/features/pocketbase/pocketbase-types'
 
 const CONVERSATION_PAGE_SIZE = 10
 const PREVIEW_CONCURRENCY = 2
@@ -32,14 +33,63 @@ export type ConversationsPage = {
 
 const pause = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms))
 
+type CompactOptions = {
+  compact?: boolean
+}
+
+const compactUser = (user: UsersRecord | undefined) => {
+  if (!user) return undefined
+  return {
+    id: user.id,
+    userName: user.userName,
+    firstName: user.firstName,
+    lastName: user.lastName,
+    name: user.name,
+    image: user.image,
+    avatar_url: (user as any)?.avatar_url ?? undefined,
+  }
+}
+
+const compactMembership = (membership: ExpandedMembership): ExpandedMembership => {
+  const { expand, ...rest } = membership
+  const compact = expand?.user ? { user: compactUser(expand.user) } : undefined
+  return {
+    ...rest,
+    expand: compact,
+  }
+}
+
+const compactConversation = (conversation: ConversationWithMemberships): ConversationWithMemberships => {
+  if (!conversation.expand?.memberships_via_conversation) {
+    return { ...conversation }
+  }
+
+  return {
+    ...conversation,
+    expand: {
+      memberships_via_conversation: conversation.expand.memberships_via_conversation.map((membership) =>
+        compactMembership({
+          ...membership,
+          conversation: membership.conversation ?? conversation.id,
+        })
+      ) as ExpandedMembership[],
+    },
+  }
+}
+
 const normalizeMemberships = (
   conversation: ConversationWithMemberships,
-  override?: ExpandedMembership
+  override?: ExpandedMembership,
+  options: CompactOptions = {}
 ): ExpandedMembership[] => {
-  const base = (conversation.expand?.memberships_via_conversation || []).map((membership) => ({
-    ...membership,
-    conversation: membership.conversation ?? conversation.id,
-  })) as ExpandedMembership[]
+  const { compact } = options
+  const base = (conversation.expand?.memberships_via_conversation || []).map((membership) => {
+    const normalized: ExpandedMembership = {
+      ...membership,
+      conversation: membership.conversation ?? conversation.id,
+    }
+    return compact ? compactMembership(normalized) : normalized
+  }) as ExpandedMembership[]
 
   if (override) {
     const sanitizedOverride = {
@@ -94,9 +144,11 @@ const buildPreview = async (
     })
   }
 
+  const compactedMemberships = memberships.map(compactMembership)
+
   return {
-    conversation,
-    memberships,
+    conversation: compactConversation(conversation),
+    memberships: compactedMemberships,
     latestMessage,
     unreadCount,
   }
@@ -108,12 +160,18 @@ export async function fetchConversationsPage(
   options?: { hydrate?: boolean }
 ): Promise<ConversationsPage> {
   const hydrate = options?.hydrate !== false
+  const fetchOptions = hydrate
+    ? {
+        sort: '-created',
+        expand: 'memberships_via_conversation.user',
+      }
+    : {
+        sort: '-created',
+        fields: 'id,title,is_direct,created,updated',
+      }
   const response = await pocketbase
     .collection('conversations')
-    .getList<ConversationWithMemberships>(page, CONVERSATION_PAGE_SIZE, {
-      sort: '-created',
-      expand: 'memberships_via_conversation.user',
-    })
+    .getList<ConversationWithMemberships>(page, CONVERSATION_PAGE_SIZE, fetchOptions as any)
 
   const items = response.items ?? []
   const entries: ConversationPreviewEntry[] = []
@@ -130,10 +188,10 @@ export async function fetchConversationsPage(
     }
   } else {
     for (const conversation of items) {
-      const memberships = normalizeMemberships(conversation)
+      const compact = compactConversation(conversation)
       entries.push({
-        conversation,
-        memberships,
+        conversation: compact,
+        memberships: [],
         latestMessage: null,
         unreadCount: 0,
       })

@@ -18,7 +18,7 @@ import { pocketbase } from '@/features/pocketbase'
 import { withTiming, clearTimingSamples, getTimingReport } from '@/features/queries/instrumentation'
 import { enqueueIdleTask, getIdleQueueStats } from '@/features/utils/idleQueue'
 import { enqueueHydratorJob } from '@/core/hydratorQueue'
-import { putSnapshot, snapshotKeys } from '@/features/cache/snapshotStore'
+import { putSnapshot, snapshotKeys, MAX_SNAPSHOT_BYTES } from '@/features/cache/snapshotStore'
 import { DEFAULT_COMMUNITY } from '@/core/bootstrap/seedSnapshots'
 
 type DirectoryPage = Awaited<ReturnType<typeof fetchDirectoryPage>>
@@ -185,7 +185,9 @@ const hydrateProfileSelf = async (userId: string, userName: string) => {
   logProfileHydratorPerf('total', totalStartedAt)
 }
 
-const hydrateWantToMeetList = async (userId: string) => {
+export const BOOT_SNAPSHOT_MAX_BYTES = MAX_SNAPSHOT_BYTES
+
+export async function prefetchWantToMeetList(userId: string) {
   if (!userId) return
   const key = wantToMeetKeys.list(userId)
   if (isQueryFresh(key, 30_000)) {
@@ -200,7 +202,7 @@ const hydrateWantToMeetList = async (userId: string) => {
   })
 }
 
-const hydrateMessagesFirstPage = async (userId: string) => {
+export async function prefetchMessagesFirstPage(userId: string) {
   if (!userId) return
   const key = messagingKeys.conversations(userId)
   if (isQueryFresh(key, 30_000)) {
@@ -212,6 +214,28 @@ const hydrateMessagesFirstPage = async (userId: string) => {
   const infinite: InfiniteData<ConversationsPage> = {
     pageParams: [1],
     pages: [page],
+  }
+
+  const approxBytes = (() => {
+    try {
+      return JSON.stringify(infinite).length
+    } catch (error) {
+      if (__DEV__) {
+        console.warn('[preload] hydrateMessagesFirstPage size probe failed', error)
+      }
+      return Number.MAX_SAFE_INTEGER
+    }
+  })()
+
+  if (approxBytes > MAX_SNAPSHOT_BYTES) {
+    if (__DEV__) {
+      console.warn('[preload] hydrateMessagesFirstPage skipped (oversize)', {
+        userId,
+        approxBytes,
+        conversations: page.entries.length,
+      })
+    }
+    return
   }
 
   queryClient.setQueryData(key, infinite, { updatedAt })
@@ -247,19 +271,9 @@ export async function preloadInitial() {
       run: () => withTiming('hydrate:profile:self', () => hydrateProfileSelf(userId, userName)),
     })
 
-    enqueueHydratorJob({
-      key: `wantToMeet:list:${userId}`,
-      label: 'hydrate:wantToMeet',
-      priority: 5,
-      run: () => withTiming('hydrate:wantToMeet', () => hydrateWantToMeetList(userId)),
-    })
-
-    enqueueHydratorJob({
-      key: `messages:threads:firstPage:${userId}`,
-      label: 'hydrate:messages:firstPage',
-      priority: 5,
-      run: () => withTiming('hydrate:messages:firstPage', () => hydrateMessagesFirstPage(userId)),
-    })
+    // Messaging and want-to-meet preloads now defer until their screens mount to
+    // keep the boot JS queue clear. Screens call `prefetchWantToMeetList` /
+    // `prefetchMessagesFirstPage` on demand.
   }
 
   setTimeout(() => {

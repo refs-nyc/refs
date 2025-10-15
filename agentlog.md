@@ -171,6 +171,22 @@ Follow-up (perf harness diagnostics):
 - Extended the JS queue monitor to include module ids/names (when Metro exposes them) and dump the first unresolved id, revealing that the 12–13 s stall still originates from the `commitHookEffectListMount` path (module ~12986) rather than the idle queue jobs we now label.
 - Attempted to query Metro's module registry directly (`logModuleMap`) to resolve ids → file paths, but the registry executes module factories; when we probed it the native bridge threw "Tried to register two views with the same name" (id 361768). Rolled back that helper to keep boot stable.
 - Next step: use Metro's symbolication endpoint (`/symbolicate`) or a bundle sourcemap dump to resolve module 12986/78163 to file paths without executing the modules.
+- Raised the snapshot guardrail to 40 KB and refuse to run the messaging hydrator when the serialized payload exceeds that budget; React Query snapshots now skip the write and log `[preload] hydrateMessagesFirstPage skipped (oversize)` instead of blocking the bridge for seconds.
+- Slimmed boot caches: compacted profile grid/backlog items down to the fields we render (id/title/thumb metadata) before persisting, and trimmed conversation/membership DTOs so the non-hydrated messaging page stores only ids, titles, and lightweight participant info.
+- Trimmed want-to-meet boot fetches to a single 20-item page with just the user fields needed for the sheet (id/name/avatar), replacing the previous `getFullList` + full user expand that pulled entire records.
+- Deferred want-to-meet and messaging preloads until their screens request them; boot no longer enqueues those hydrator jobs, so the queue only runs the directory warmup and stays responsive after first paint.
+- Messaging and want-to-meet screens now call the new prefetch helpers via `useFocusEffect`, so the data loads only when those views are visible (and we still reuse the lightweight snapshot when returning).
+- Pinata image signing no longer blocks boot: `useSignedImageUrl` now renders the original thumb immediately and defers signature fetches through the idle queue, so high-res URLs hydrate lazily without monopolising the JS thread.
+- Added a dev-only `installBootFetchLogger` wrapper that records every network response during the first 5 s and flags payloads over 1 MB, giving us hard evidence of boot bandwidth before we clamp endpoints.
+- Centralized image thumbnailing (`features/media/thumb.ts`) and routed grid tiles/avatars through it so boot requests pull 200×200 WebP assets instead of full-res originals.
+- Dropped hydrator queue concurrency to 1 to stop parallel JSON writes; now only one boot job can run at a time pending further gating.
+- Evidence: perf harness still flags long tasks (~95 s) tied to `hydrate:wantToMeet`, proving we must defer/trim that hydrator next. Messaging writes are now below the JSON-tripwire threshold and no longer emit `[JSON BIG]`.
+- Priorities (active):
+  1. Move want-to-meet + messaging boot hydrators behind screen visibility and idle scheduling; add byte/time guards so they never block first paint.
+  2. Introduce `bootFetch` logger/cap for first-screen network, gather host/byte totals, and enforce the 400 KB budget.
+  3. Tighten PocketBase queries (use `fields`, avoid `expand`) so DTOs are lean at the source.
+  4. Audit onboarding/login inputs to ensure no `autoFocus` spins up SafariViewService at boot.
+  5. Eliminate bridge logging noise observed in production (hunt for dev-only inspector hooks or third-party logging).
 ## Harness
 /* eslint-disable no-console */
 /**

@@ -3,6 +3,7 @@ import { Image, type ImageProps } from 'expo-image'
 import { constructPinataUrl, type OptimizeImageOptions } from '@/features/pinata'
 import { useAppStore } from '@/features/stores'
 import { StyleProp, useWindowDimensions, View, ViewStyle } from 'react-native'
+import { enqueueIdleTask, isIdleTaskContext } from '@/features/utils/idleQueue'
 
 // Cache for signed URLs to avoid repeated API calls
 const signedUrlCache = new Map<string, { url: string; expires: number }>()
@@ -25,23 +26,23 @@ export function useSignedImageUrl(originalSource: string | null | undefined, ima
       setLoading(false)
       return
     }
+
     try {
       const targetUrl = cacheKey
       const signedUrl = await getSignedUrl(targetUrl)
       setSource(signedUrl)
       setLoading(false)
-      
-      // Cache the signed URL
+
       signedUrlCache.set(targetUrl, {
         url: signedUrl,
-        expires: Date.now() + 3600000 // 1 hour cache
+        expires: Date.now() + 3600000,
       })
     } catch (error) {
-      // Fallback to original source if signing fails
+      // Fall back to the unsigned source; screen will still render while we retry later.
       setSource(safeSource)
       setLoading(false)
     }
-  }, [url, safeSource, getSignedUrl])
+  }, [cacheKey, safeSource, getSignedUrl])
 
   useEffect(() => {
     if (!safeSource) {
@@ -49,7 +50,7 @@ export function useSignedImageUrl(originalSource: string | null | undefined, ima
       setLoading(false)
       return
     }
-    // Check local cache first
+
     const cached = signedUrlCache.get(cacheKey)
     if (cached && cached.expires > Date.now()) {
       setSource(cached.url)
@@ -57,7 +58,6 @@ export function useSignedImageUrl(originalSource: string | null | undefined, ima
       return
     }
 
-    // Check Zustand store cache
     const storeEntry = signedUrls[cacheKey]
     if (storeEntry && storeEntry.expires + storeEntry.date > Date.now()) {
       setSource(storeEntry.signedUrl)
@@ -65,8 +65,20 @@ export function useSignedImageUrl(originalSource: string | null | undefined, ima
       return
     }
 
-    // Fetch new signed URL
-    fetchSignedUrl()
+    setSource(safeSource)
+    setLoading(false)
+
+    const scheduleFetch = () => {
+      fetchSignedUrl().catch(() => {})
+    }
+
+    if (isIdleTaskContext()) {
+      scheduleFetch()
+    } else {
+      enqueueIdleTask(async () => {
+        scheduleFetch()
+      }, `image:signed:${cacheKey}`)
+    }
   }, [cacheKey, safeSource, signedUrls, fetchSignedUrl])
 
   return { source, loading }

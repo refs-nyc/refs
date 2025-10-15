@@ -1,11 +1,14 @@
+import * as React from 'react'
 import { View, DimensionValue, Pressable, Text, FlatList } from 'react-native'
 import { useCalendars } from 'expo-localization'
+import { useFocusEffect } from '@react-navigation/native'
 
 import { c, s } from '../style'
 import { useAppStore } from '@/features/stores'
 import SwipeableConversation from '@/ui/messaging/SwipeableConversation'
 import { router } from 'expo-router'
 import { useConversationPreviews } from '@/features/messaging/useConversationPreviews'
+import { prefetchMessagesFirstPage } from '@/core/preload-controller'
 
 export function ConversationsScreen() {
   const { archiveConversation, user } = useAppStore()
@@ -13,6 +16,17 @@ export function ConversationsScreen() {
     useConversationPreviews()
   const calendars = useCalendars()
   const timeZone = calendars[0]?.timeZone || 'America/New_York'
+
+  useFocusEffect(
+    React.useCallback(() => {
+      if (!user?.id) return
+      prefetchMessagesFirstPage(user.id).catch((error) => {
+        if (__DEV__) {
+          console.warn('[messages] prefetchMessagesFirstPage failed', error)
+        }
+      })
+    }, [user?.id])
+  )
 
   const handleArchive = async (conversationId: string) => {
     if (!user?.id) return

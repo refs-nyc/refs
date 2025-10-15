@@ -7,7 +7,7 @@ type HydratorJob = {
   run: () => Promise<void> | void
 }
 
-const MAX_CONCURRENCY = 2
+const MAX_CONCURRENCY = 1
 const MAX_QUEUE_SIZE = 24
 
 const queue: HydratorJob[] = []

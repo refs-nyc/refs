@@ -12,7 +12,7 @@ const SNAPSHOT_PREFIX = 'snapshot'
 const SNAPSHOT_VERSION = 2
 const CHUNK_THRESHOLD_BYTES = 48 * 1024 // ~48KB guardrail per chunk
 const CHUNK_META_PREFIX = '__chunk__:'
-const MAX_SNAPSHOT_BYTES = 80 * 1024
+export const MAX_SNAPSHOT_BYTES = 40 * 1024
 const MAX_SNAPSHOT_AGE_MS = 14 * 24 * 60 * 60 * 1000
 
 type SnapshotEnvelope<T> = {

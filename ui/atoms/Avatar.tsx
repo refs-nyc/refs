@@ -3,6 +3,7 @@ import { View, Text } from 'react-native'
 import { Image } from 'expo-image'
 import { c } from '@/features/style'
 import { useSignedImageUrl } from '@/ui/images/SimplePinataImage'
+import { getAvatarThumbUrl } from '@/features/media/thumb'
 
 type AvatarProps = {
   source?: string | null
@@ -19,7 +20,8 @@ const deriveInitial = (text?: string | null) => {
 export const Avatar = ({ source, size, fallback }: AvatarProps) => {
   const finalSize = typeof size === 'number' ? size : 32
   const initial = useMemo(() => deriveInitial(fallback), [fallback])
-  const { source: resolvedSource } = useSignedImageUrl(source, {
+  const thumbSource = getAvatarThumbUrl(source, finalSize)
+  const { source: resolvedSource } = useSignedImageUrl(thumbSource ?? source, {
     width: finalSize,
     height: finalSize,
   })

@@ -60,6 +60,7 @@ import { preloadInitial, startRealtime } from '@/core/preload-controller'
 import { seedBootSnapshots } from '@/core/bootstrap/seedSnapshots'
 import { patchInteractionManager, startJsQueueMonitor } from '@/core/instrumentation/jsQueueMonitor'
 import { enablePerfHarness, markFirstPaint } from '@/core/perf/harness'
+import { installBootFetchLogger } from '@/core/boot/bootFetch'
 
 // TODO: this error keeps getting thrown whenever the app fast reloads in development
 // I suspect that pocketbase subscribes to updates and then doesn't unsubscribe when the app is being reloaded
@@ -108,6 +109,10 @@ if (PERF_HARNESS_ENABLED && !OFF_ANALYTICS) {
   }).catch((error) => {
     console.warn('[perf] enablePerfHarness failed', error)
   })
+}
+
+if (__DEV__) {
+  installBootFetchLogger({ windowMs: 5000, capBytes: 1_000_000 })
 }
 
 if (PERF_HARNESS_ENABLED && OFF_ANALYTICS) {

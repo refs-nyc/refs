@@ -4,6 +4,7 @@ import { Image } from 'expo-image'
 import { c } from '@/features/style'
 import { useSignedImageUrl } from '@/ui/images/SimplePinataImage'
 import { getAvatarThumbUrl } from '@/features/media/thumb'
+import { nearestBucket, currentDpr } from '@/ui/images/avatar-sizes'
 
 type AvatarProps = {
   source?: string | null
@@ -19,17 +20,19 @@ const deriveInitial = (text?: string | null) => {
 
 export const Avatar = ({ source, size, fallback }: AvatarProps) => {
   const finalSize = typeof size === 'number' ? size : 32
+  const bucket = nearestBucket(finalSize)
+  const deviceScale = currentDpr()
   const initial = useMemo(() => deriveInitial(fallback), [fallback])
-  const thumbSource = getAvatarThumbUrl(source, finalSize)
+  const thumbSource = getAvatarThumbUrl(source, bucket)
   const { source: resolvedSource } = useSignedImageUrl(thumbSource ?? source, {
-    width: finalSize,
-    height: finalSize,
+    width: bucket * deviceScale,
+    height: bucket * deviceScale,
   })
 
   const circleStyle = {
-    width: finalSize,
-    height: finalSize,
-    borderRadius: finalSize / 2,
+    width: bucket,
+    height: bucket,
+    borderRadius: bucket / 2,
     alignItems: 'center' as const,
     justifyContent: 'center' as const,
     overflow: 'hidden' as const,
@@ -41,7 +44,7 @@ export const Avatar = ({ source, size, fallback }: AvatarProps) => {
       {resolvedSource ? (
         <Image
           source={resolvedSource}
-          style={{ width: finalSize, height: finalSize, borderRadius: finalSize / 2 }}
+          style={{ width: bucket, height: bucket, borderRadius: bucket / 2 }}
           contentFit="cover"
           cachePolicy="memory-disk"
           transition={150}

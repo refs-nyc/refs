@@ -5,6 +5,7 @@ import type {
   Message,
 } from '@/features/types'
 import type { UsersRecord } from '@/features/pocketbase/pocketbase-types'
+import { normalizeAvatarFields } from '@/features/users/avatar'
 
 const CONVERSATION_PAGE_SIZE = 10
 const PREVIEW_CONCURRENCY = 2
@@ -39,14 +40,15 @@ type CompactOptions = {
 
 const compactUser = (user: UsersRecord | undefined) => {
   if (!user) return undefined
+  const withAvatar = normalizeAvatarFields(user)
   return {
     id: user.id,
     userName: user.userName,
     firstName: user.firstName,
     lastName: user.lastName,
     name: user.name,
-    image: user.image,
-    avatar_url: (user as any)?.avatar_url ?? undefined,
+    image: withAvatar?.image,
+    avatar_url: withAvatar?.avatar_url,
   }
 }
 

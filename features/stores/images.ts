@@ -22,6 +22,10 @@ const MAX_PENDING_SIGNATURES = 8
 const LRU_MAX_ENTRIES = 100
 const LRU_STORAGE_KEY = 'signedUrlCache.v1'
 const RECENT_REQUEST_DEBOUNCE_MS = 400
+const SIGNATURE_TIMEOUT_MS = 3500
+const SIGNATURE_MAX_ATTEMPTS = 3
+const SIGNATURE_RETRY_BASE_DELAY_MS = 450
+const SIGNATURE_RETRY_JITTER_MS = 250
 
 const promisePool = createRef<Record<string, Promise<SignedUrlEntry>>>() as MutableRefObject<Record<string, Promise<SignedUrlEntry>>>
 promisePool.current = {}
@@ -34,6 +38,7 @@ const signatureWaiters: Array<() => void> = []
 const recentlySettled = new Map<string, number>()
 
 const yieldToMain = () => new Promise<void>((resolve) => setTimeout(resolve, 0))
+const delay = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms))
 const now = () => Date.now()
 
 const isExpired = (entry: SignedUrlEntry) => entry.expires + entry.date < now()
@@ -42,6 +47,27 @@ const logSignatureMetric = (event: string, detail: Record<string, unknown>) => {
   if (__DEV__) {
     console.log(`[sig] ${event}`, detail)
   }
+}
+
+const signatureCounters = {
+  cacheHit: 0,
+  pendingHit: 0,
+  fetch: 0,
+  aborted: 0,
+  timeout: 0,
+  retry: 0,
+}
+
+let summaryScheduled = false
+const scheduleSignatureSummary = () => {
+  if (!__DEV__ || summaryScheduled) return
+  summaryScheduled = true
+  const scheduler = typeof requestAnimationFrame === 'function' ? requestAnimationFrame : (cb: () => void) => setTimeout(cb, 0)
+  scheduler(() => {
+    setTimeout(() => {
+      console.log('[sig] summary', signatureCounters)
+    }, 0)
+  })
 }
 
 const acquireSignatureSlot = (): Promise<boolean> =>
@@ -142,14 +168,18 @@ export const createImageSlice: StateCreator<StoreSlices, [], [], ImageSlice> = (
         return url
       }
 
+      scheduleSignatureSummary()
+
       const state = get()
       const cachedSignedUrl = state.signedUrls[url]
       if (cachedSignedUrl && !isExpired(cachedSignedUrl)) {
+        signatureCounters.cacheHit += 1
         return cachedSignedUrl.signedUrl
       }
 
       const pool = state.promisePool.current
       if (pool[url]) {
+        signatureCounters.pendingHit += 1
         try {
           const entry = await pool[url]
           if (!isExpired(entry)) {
@@ -180,9 +210,61 @@ export const createImageSlice: StateCreator<StoreSlices, [], [], ImageSlice> = (
             running: activeSignatureRequests,
             pending: signatureWaiters.length,
           })
-          const entry = await pinataSignedUrl(url, { signal: options.signal })
-          recentlySettled.set(url, now())
-          return entry
+          const attemptSignature = async (): Promise<SignedUrlEntry> => {
+            const timeoutController = new AbortController()
+            let timedOut = false
+
+            const upstreamSignal = options.signal
+            const onUpstreamAbort = () => timeoutController.abort()
+            upstreamSignal?.addEventListener('abort', onUpstreamAbort)
+
+            const timeoutId = setTimeout(() => {
+              timedOut = true
+              timeoutController.abort()
+            }, SIGNATURE_TIMEOUT_MS)
+
+            signatureCounters.fetch += 1
+            try {
+              return await pinataSignedUrl(url, { signal: timeoutController.signal })
+            } catch (error) {
+              if (timedOut) {
+                signatureCounters.timeout += 1
+              } else if (upstreamSignal?.aborted) {
+                signatureCounters.aborted += 1
+              }
+              throw error
+            } finally {
+              clearTimeout(timeoutId)
+              upstreamSignal?.removeEventListener('abort', onUpstreamAbort)
+            }
+          }
+
+          let lastError: unknown
+          for (let attempt = 0; attempt < SIGNATURE_MAX_ATTEMPTS; attempt += 1) {
+            try {
+              if (attempt > 0) {
+                signatureCounters.retry += 1
+              }
+              const entry = await attemptSignature()
+              recentlySettled.set(url, now())
+              return entry
+            } catch (error) {
+              lastError = error
+              if (options.signal?.aborted) {
+                throw error
+              }
+              const shouldRetry = attempt < SIGNATURE_MAX_ATTEMPTS - 1
+              if (!shouldRetry) {
+                throw error
+              }
+              const jitter =
+                SIGNATURE_RETRY_BASE_DELAY_MS +
+                Math.random() * SIGNATURE_RETRY_JITTER_MS +
+                attempt * SIGNATURE_RETRY_BASE_DELAY_MS
+              await delay(jitter)
+            }
+          }
+          throw lastError
         } finally {
           releaseSignatureSlot()
         }

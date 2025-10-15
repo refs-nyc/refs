@@ -7,9 +7,11 @@ import { enqueueIdleTask, isIdleTaskContext } from '@/features/utils/idleQueue'
 
 const SIGNATURE_SKIP_THRESHOLD = 80
 const CACHE_TTL_MS = 60 * 60 * 1000 // 1 hour
+const MEMORY_CACHE_MAX_ENTRIES = 100
 
 // Cache for signed URLs to avoid repeated API calls
 const signedUrlCache = new Map<string, { url: string; expires: number }>()
+const memoryCacheOrder: string[] = []
 
 type CacheEntry = {
   url: string
@@ -21,8 +23,17 @@ const getCacheEntry = (key: string): CacheEntry | null => {
   if (!entry) return null
   if (entry.expires <= Date.now()) {
     signedUrlCache.delete(key)
+    const index = memoryCacheOrder.indexOf(key)
+    if (index !== -1) {
+      memoryCacheOrder.splice(index, 1)
+    }
     return null
   }
+  const index = memoryCacheOrder.indexOf(key)
+  if (index !== -1) {
+    memoryCacheOrder.splice(index, 1)
+  }
+  memoryCacheOrder.push(key)
   return entry
 }
 
@@ -31,6 +42,17 @@ const storeCacheEntry = (key: string, url: string) => {
     url,
     expires: Date.now() + CACHE_TTL_MS,
   })
+  const index = memoryCacheOrder.indexOf(key)
+  if (index !== -1) {
+    memoryCacheOrder.splice(index, 1)
+  }
+  memoryCacheOrder.push(key)
+  while (memoryCacheOrder.length > MEMORY_CACHE_MAX_ENTRIES) {
+    const evicted = memoryCacheOrder.shift()
+    if (evicted) {
+      signedUrlCache.delete(evicted)
+    }
+  }
 }
 
 export function useSignedImageUrl(originalSource: string | null | undefined, imageOptions: OptimizeImageOptions) {
@@ -121,7 +143,7 @@ export function useSignedImageUrl(originalSource: string | null | undefined, ima
     } else {
       enqueueIdleTask(async () => {
         scheduleFetch()
-      }, `image:signed:${cacheKey}`)
+      }, { label: `image:signed:${cacheKey}`, priority: 'high' })
     }
 
     return () => {

@@ -41,7 +41,7 @@ export default function ConversationListItem({
   const unreadCount = preview.unreadCount ?? 0
   const hasUnread = unreadCount > 0
 
-  const directAvatarSize = s.$5 as number
+  const directAvatarSize = nearestBucket((s.$5 as number) ?? AVATAR_PX)
   const avatarSlotPadding = 5
   const avatarSlotWidth = directAvatarSize + avatarSlotPadding * 2
 
@@ -233,3 +233,4 @@ function deriveSubtitle(message: Message | null | undefined, isDirect: boolean) 
 
   return ''
 }
+import { AVATAR_PX, nearestBucket } from '@/ui/images/avatar-sizes'

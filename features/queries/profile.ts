@@ -9,6 +9,7 @@ import {
   snapshotKeys,
   type SnapshotReadResult,
 } from '@/features/cache/snapshotStore'
+import { normalizeAvatarFields } from '@/features/users/avatar'
 
 const PERF_TRACE = process.env.EXPO_PUBLIC_PERF_HARNESS === '1'
 
@@ -57,17 +58,20 @@ type FetchProfileHeaderOptions = {
   forceNetwork?: boolean
 }
 
-export const extractProfileHeader = (record: Profile): ProfileHeader => ({
-  id: record.id,
-  userName: record.userName,
-  firstName: record.firstName,
-  lastName: record.lastName,
-  name: record.name,
-  location: record.location,
-  image: record.image,
-  avatar_url: (record as any).avatar_url,
-  updated: record.updated,
-})
+export const extractProfileHeader = (record: Profile): ProfileHeader => {
+  const normalized = normalizeAvatarFields(record)
+  return {
+    id: record.id,
+    userName: record.userName,
+    firstName: record.firstName,
+    lastName: record.lastName,
+    name: record.name,
+    location: record.location,
+    image: normalized?.image,
+    avatar_url: normalized?.avatar_url,
+    updated: record.updated,
+  }
+}
 
 export const persistProfileHeaderSnapshot = async (userId: string, header: ProfileHeader) => {
   await putSnapshot('profileSelfHeader', snapshotKeys.profileSelfHeader(userId), header, {

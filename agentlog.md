@@ -187,6 +187,13 @@ Follow-up (perf harness diagnostics):
 - Dropped hydrator queue concurrency to 1 to stop parallel JSON writes; now only one boot job can run at a time pending further gating.
 - Evidence: cold + warm boots now unblock in ~1–2 s; any residual lag is idle signing work rather than boot hydrators.
 
+## 2025-10-15
+- Rebuilt `enqueueIdleTask` with explicit high/low lanes, pending budget (≤12), and 300 ms long-task alerts so visible work always drains before background warmups. High-priority callers (e.g., `SimplePinataImage`) now tag their jobs explicitly while low-priority hydrators stay in the default lane.
+- Added signature fetch guardrails: 3.5 s timeout + jittered backoff (up to 3 attempts), per-event counters (`cacheHit`, `pendingHit`, `fetch`, `retry`, `timeout`, `aborted`), and a DEV-only post-paint summary to keep an eye on the pipeline without shipping noisy logs.
+- Limited the in-memory signed URL cache to 100 entries with true LRU eviction so image warmups can’t balloon past the AsyncStorage budget.
+- Hardened the perf harness logging so `[perf]`, `[lag]`, and heavy-write tripwires only print in DEV or when `EXPO_PUBLIC_PERF_HARNESS=1`, keeping release builds silent by default.
+- Normalized avatar fields across directory, want-to-meet, and messaging fetches so every profile exposes a canonical `image`/`avatar_url`, restored the missing want-to-meet/message preview avatars, and introduced shared avatar sizing buckets (`AVATAR_PX = 60`) wired through `Avatar`, `UserListItem`, and messaging rows for consistent rendering.
+
 ### 2025-10-15 (perf summary for next agent)
 - Boot-paint workflow: hydrate directory + self-profile only; messaging and want-to-meet prefetch helpers run on screen focus (`useFocusEffect`). Boot shouldn’t enqueue any other hydrators.
 - Snapshot budget: capped at 40 KB. If a serialized payload exceeds the guardrail we skip the write and log `[preload] … skipped (oversize)`.

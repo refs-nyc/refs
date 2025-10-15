@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { pocketbase } from '@/features/pocketbase'
 import type { ExpandedSave } from '@/features/types'
 import type { UsersRecord } from '@/features/pocketbase/pocketbase-types'
+import { normalizeAvatarFields } from '@/features/users/avatar'
 
 type CompactSave = ExpandedSave & {
   expand?: {
@@ -30,7 +31,12 @@ export async function fetchWantToMeet(userId: string): Promise<ExpandedSave[]> {
       'id,created,saved_by,user,expand.user.id,expand.user.userName,expand.user.firstName,expand.user.lastName,expand.user.name,expand.user.image,expand.user.avatar_url',
   })
 
-  return saves.items as ExpandedSave[]
+  return saves.items.map((save) => {
+    if (save.expand?.user) {
+      save.expand.user = normalizeAvatarFields(save.expand.user) as any
+    }
+    return save as ExpandedSave
+  })
 }
 
 export function useWantToMeet(userId?: string) {

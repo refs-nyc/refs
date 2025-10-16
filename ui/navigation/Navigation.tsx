@@ -78,13 +78,12 @@ export const Navigation = ({
     return { opacity }
   }, [removeRefSheetBackdropAnimatedIndex])
 
-  if (!user) return null
-  if (inMessageThread) return null
-
   const onBackPress = useMemo(
     () => withInteraction('navigation:back-button', handleBackPress),
     [handleBackPress]
   )
+
+  if (!user || inMessageThread) return null
 
   return (
     <View style={{ display: 'flex', flexDirection: 'row', paddingLeft: 2, backgroundColor: c.surface }}>

@@ -177,6 +177,22 @@ export default function Screen() {
                 </Text>
               )}
             </Pressable>
+
+            {/* Forgot password link */}
+            <Pressable
+              onPress={() => router.push('/user/forgot-password')}
+              style={{ alignItems: 'center', paddingVertical: 8, marginTop: 4 }}
+            >
+              <Text
+                style={{
+                  color: c.muted,
+                  fontSize: s.$09 - 2,
+                  fontFamily: 'Inter',
+                }}
+              >
+                Forgot password?
+              </Text>
+            </Pressable>
           </View>
         </View>
 

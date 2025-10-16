@@ -9,6 +9,7 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": false,
     "jsEngine": "jsc",
+    "deepLinks": ["refsnyc://reset-password"],
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "refsnyc.app",

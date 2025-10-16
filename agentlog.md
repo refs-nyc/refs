@@ -209,6 +209,18 @@ Follow-up (perf harness diagnostics):
   * If idle logs show `image:signed` flooding again, check that new screens use `SimplePinataImage` and don’t call `getSignedUrl` directly.
   * Keep symbolication/dev logging wrapped in `__DEV__` so release builds stay quiet.
   * RCTView shadow warning: ensure any view with `shadow*` props has `backgroundColor` set (or move the shadow to a small wrapper) to avoid layout cost.
+## 2025-10-16
+- Implemented complete password reset flow using PocketBase's built-in `requestPasswordReset` and `confirmPasswordReset` APIs.
+- Added deep link configuration (`refsnyc://reset-password`) to `app.json` for email-to-app navigation.
+- Created `/app/user/forgot-password.tsx`: Clean request screen where users enter email to receive reset link. Always shows success message (prevents account enumeration). Supports email prefilling via route params.
+- Created `/app/user/reset-password.tsx`: Token handler screen that validates reset tokens, lets users set new password with confirmation, shows friendly errors for expired/invalid tokens, and auto-redirects to login on success.
+- Updated `/app/user/login.tsx`: Added subtle "Forgot password?" link below login button, styled consistently with existing "Register instead" pattern.
+- Updated `/features/onboarding/UnifiedOnboarding.tsx`: Changed "Change Password" to "Reset Password" in duplicate email error, now navigates to forgot-password screen with email prefilled for seamless UX. Replaced generic Button component with styled Pressable buttons using c.surface2 background, c.grey1 border, rounded corners (s.$12), and c.newDark text to match form styling throughout the app.
+- All screens follow existing design patterns: same KeyboardAvoidingView structure, FormFieldWithIcon components, react-hook-form validation, consistent spacing/colors (c.accent, c.surface, c.muted, c.newDark), matching typography (InterBold/InterSemiBold), and fixed bottom navigation links.
+- Security: No account enumeration (always success), silent error handling, 8+ char password requirement, token expiration handled by PocketBase.
+- Created `/docs/password-reset-setup.md` with PocketBase SMTP setup, email template configuration, testing instructions, and troubleshooting guide.
+- Improved form validation UX: All validation errors (email, password, confirmPassword, fullName) now only appear after user blurs/clicks away from field, not while actively typing. Applied `formState.touchedFields` check across login, registration, forgot-password, and reset-password screens for cleaner inline validation feedback.
+
 ## Harness
 /* eslint-disable no-console */
 /**

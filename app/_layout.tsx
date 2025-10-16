@@ -286,6 +286,7 @@ function RootLayoutNav() {
             animation: 'none',
             gestureEnabled: false,
             headerShown: false,
+            freezeOnBlur: true,
           }}
         />
         <Stack.Screen
@@ -308,6 +309,7 @@ function RootLayoutNav() {
             gestureDirection: 'vertical',
             headerShown: false,
             animationDuration: 300,
+            contentStyle: { backgroundColor: 'transparent' },
           }}
         />
       </Stack>

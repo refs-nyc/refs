@@ -66,7 +66,7 @@ export default function Screen() {
   }
 
   return (
-    <SwipeToGoBack onSwipeComplete={handleBackPress}>
+    <SwipeToGoBack onSwipeComplete={handleBackPress} interactionLabel="profile:swipe-back">
       <UserProfileScreen userName={userNameParam} prefetchedUserId={userIdParam} />
     </SwipeToGoBack>
   )

@@ -15,6 +15,7 @@ import { directoryKeys, fetchDirectoryPage, fetchDirectoryTopRefs } from '@/feat
 import { profileKeys, fetchProfileData, type ProfileData } from '@/features/queries/profile'
 import { communityInterestsKeys, fetchCommunityInterestSummary } from '@/features/queries/communityInterests'
 import { useWantToMeet } from '@/features/queries/wantToMeet'
+import { Avatar } from '@/ui/atoms/Avatar'
 
 const DIRECTORY_TICKER_COLOR = c.accent
 // Listen for interests added from the CommunityInterestsScreen and update chips instantly
@@ -163,6 +164,7 @@ const DirectoryRow = React.memo(({
   refTitleMap,
   currentUserId,
   innerLeftPadding,
+  isVisible,
 }: {
   u: FeedUser
   onPress: () => void
@@ -172,6 +174,7 @@ const DirectoryRow = React.memo(({
   refTitleMap: Map<string, string>
   currentUserId?: string
   innerLeftPadding?: number
+  isVisible?: boolean
 }) => {
   const bookmarkScale = useSharedValue(1)
 
@@ -220,18 +223,7 @@ const DirectoryRow = React.memo(({
       onPress={onPress}
     >
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 }}>
-        {u.avatar_url ? (
-          <Image
-            source={u.avatar_url}
-            style={{ width: 60, height: 60, borderRadius: 30, backgroundColor: c.surface2 }}
-            contentFit="cover"
-            cachePolicy="memory-disk"
-            transition={0}
-            priority="high"
-          />
-        ) : (
-          <View style={{ width: 60, height: 60, borderRadius: 30, backgroundColor: 'transparent' }} />
-        )}
+        <Avatar source={u.avatar_url} fallback={u.name} size={60} priority={isVisible ? 'must' : 'low'} />
         <View style={{ flex: 1, marginLeft: 5, gap: 4 }}>
           <Text style={{ color: c.black, fontWeight: '700', fontSize: (s.$09 as number) + 1 }} numberOfLines={1} ellipsizeMode="tail">
             {u.name}
@@ -277,6 +269,7 @@ const DirectoryRow = React.memo(({
 }, (prevProps, nextProps) => {
   if (prevProps.u.id !== nextProps.u.id) return false
   if (prevProps.isSaved !== nextProps.isSaved) return false
+  if (prevProps.isVisible !== nextProps.isVisible) return false
   return true
 })
 
@@ -562,11 +555,25 @@ export function CommunitiesFeedScreen({
     return Array.from(aggregated.values())
   }, [directoryData])
 
-  const processedUsers = useMemo(() => {
-    const normalized = normalizeDirectoryUsers(rawDirectoryUsers, user?.userName)
-    normalized.sort((a, b) => (b._latest ?? 0) - (a._latest ?? 0))
-    return normalized
-  }, [rawDirectoryUsers, user?.userName])
+const processedUsers = useMemo(() => {
+  const normalized = normalizeDirectoryUsers(rawDirectoryUsers, user?.userName)
+  normalized.sort((a, b) => (b._latest ?? 0) - (a._latest ?? 0))
+  return normalized
+}, [rawDirectoryUsers, user?.userName])
+
+const [visibleUserIds, setVisibleUserIds] = useState<string[]>([])
+const visibleUserSet = useMemo(() => new Set(visibleUserIds), [visibleUserIds])
+
+const onViewableItemsChanged = useCallback(
+  ({ viewableItems }: { viewableItems: Array<{ item?: FeedUser | null }> }) => {
+    const ids = viewableItems
+      .map((entry) => entry.item?.id)
+      .filter((id): id is string => typeof id === 'string')
+    setVisibleUserIds(ids)
+  },
+  []
+)
+const viewabilityConfig = useRef({ itemVisiblePercentThreshold: 60 }).current
 
 
   useEffect(() => {
@@ -747,6 +754,7 @@ export function CommunitiesFeedScreen({
 
   const renderItem = useCallback(
     ({ item }: { item: FeedUser; index: number }) => {
+      const userVisible = visibleUserSet.has(item.id)
       return (
         <DirectoryRow
           u={item}
@@ -757,10 +765,11 @@ export function CommunitiesFeedScreen({
           refTitleMap={refTitleMap}
           currentUserId={user?.id}
           innerLeftPadding={0}
+          isVisible={userVisible}
         />
       )
     },
-    [handleUserPress, toggleSaveForUser, isUserSaved, userInterestMap, refTitleMap, user?.id]
+    [handleUserPress, toggleSaveForUser, isUserSaved, userInterestMap, refTitleMap, user?.id, visibleUserSet]
   )
 
   const userDisplayName = useMemo(() => {
@@ -867,6 +876,9 @@ export function CommunitiesFeedScreen({
           maxToRenderPerBatch={6}
           windowSize={10}
           removeClippedSubviews={false}
+          extraData={visibleUserIds}
+          onViewableItemsChanged={onViewableItemsChanged}
+          viewabilityConfig={viewabilityConfig}
           onEndReached={() => {
             if (!hasNextPage || isFetchingNextPage) return
             void fetchNextPage()

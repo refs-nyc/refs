@@ -58,7 +58,7 @@ export default function Page() {
   if (typeof conversationId !== 'string') return null
 
   return (
-    <SwipeToGoBack onSwipeComplete={requestClose}>
+    <SwipeToGoBack onSwipeComplete={requestClose} interactionLabel="messages:swipe-back">
       <MessagesScreen
         conversationId={conversationId}
         onClose={performNavigation}

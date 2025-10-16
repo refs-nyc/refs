@@ -141,7 +141,7 @@ Restructure prefetchMessaging to keep the existing skeleton load but hydrate onl
 Remove the redundant prefetchDirectoryTopRefs call once the new warmup flow populates directoryKeys.all, and make the MyProfile “force refresh” consume that cached data (only falling back to forceNetwork if the query cache is stale)."
 
 ## 2025-10-13
-- Wired the perf harness into the codebase (`core/perf/harness.ts`) and gated it with `EXPO_PUBLIC_PERF_HARNESS`. Harness instruments boot invariants, require-time cost, JSON/AsyncStorage payload size, React Query writes, effect timings, and JS event-loop lag.
+- Wired the perf harness into the codebase (`core/perf/harness.ts`) and gated it withEXPO_PUBLIC_PERF_HARNESS ``. Harness instruments boot invariants, require-time cost, JSON/AsyncStorage payload size, React Query writes, effect timings, and JS event-loop lag.
 - Running with the harness enabled immediately surfaced:
   - `[RQ HEAVY WRITE]` & `[JSON BIG stringify]` at `hydrateMessagesFirstPage` → `queryClient.setQueryData` writing ~117 KB conversation blobs.
   - `[JSON BIG stringify]` & `[JSON BIG parse]` in `snapshotStore.putSnapshot/getSnapshots` → same payload persisted via AsyncStorage during boot.
@@ -193,6 +193,10 @@ Follow-up (perf harness diagnostics):
 - Limited the in-memory signed URL cache to 100 entries with true LRU eviction so image warmups can’t balloon past the AsyncStorage budget.
 - Hardened the perf harness logging so `[perf]`, `[lag]`, and heavy-write tripwires only print in DEV or when `EXPO_PUBLIC_PERF_HARNESS=1`, keeping release builds silent by default.
 - Normalized avatar fields across directory, want-to-meet, and messaging fetches so every profile exposes a canonical `image`/`avatar_url`, restored the missing want-to-meet/message preview avatars, and introduced shared avatar sizing buckets (`AVATAR_PX = 60`) wired through `Avatar`, `UserListItem`, and messaging rows for consistent rendering.
+- Added a global interaction gate: swipe gestures (profile pager, back swipe, messages modal) now flip the gate while running. Idle queue jobs and image signing skip/requeue during that window so interactions stay smooth. Avatar signing only escalates to “must” priority for rows that are actually visible, tracked via `onViewableItemsChanged` in the directory list.
+- Slimmed the interaction guard: only back swipes and the messages modal toggle the gate (pager/tab flips no longer pay the overhead). Idle queue now runs up to two jobs per frame/concurrency, defers low-priority work during interactions with a 16 ms requeue, and keeps cached data warm while closing the modal.
+- Directory & corkboard tabs update immediately from cached state; post-flip warmups run after the transition, and profile force-refreshes only kick in when stale, idle, and at least 60 s after the previous refresh.
+- Added lazy gate accessor in `idleQueue` so queue can run before the store file loads, restored Expo `Image` import for the onboarding pill, and scoped gesture logging helpers to dev/harness builds only.
 
 ### 2025-10-15 (perf summary for next agent)
 - Boot-paint workflow: hydrate directory + self-profile only; messaging and want-to-meet prefetch helpers run on screen focus (`useFocusEffect`). Boot shouldn’t enqueue any other hydrators.

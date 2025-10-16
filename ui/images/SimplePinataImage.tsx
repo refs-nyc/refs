@@ -55,11 +55,16 @@ const storeCacheEntry = (key: string, url: string) => {
   }
 }
 
-export function useSignedImageUrl(originalSource: string | null | undefined, imageOptions: OptimizeImageOptions) {
+export function useSignedImageUrl(
+  originalSource: string | null | undefined,
+  imageOptions: OptimizeImageOptions,
+  options: { priority?: 'must' | 'low'; reason?: string } = {}
+) {
   const safeSource = originalSource?.trim() || ''
   const [loading, setLoading] = useState(Boolean(safeSource))
   const [source, setSource] = useState<string | null>(safeSource || null)
   const { getSignedUrl, signedUrls } = useAppStore()
+  const priority = options.priority ?? 'low'
 
   const url = useMemo(() => (safeSource ? constructPinataUrl(safeSource, imageOptions) : ''), [safeSource, imageOptions])
   const cacheKey = url || safeSource
@@ -80,7 +85,11 @@ export function useSignedImageUrl(originalSource: string | null | undefined, ima
 
       try {
         const targetUrl = cacheKey
-        const signedUrl = await getSignedUrl(targetUrl, { signal, reason: 'SimplePinataImage', skip: !shouldSign })
+        const signedUrl = await getSignedUrl(targetUrl, {
+          signal,
+          reason: options.reason ?? (priority === 'must' ? 'must' : 'SimplePinataImage'),
+          skip: !shouldSign,
+        })
         if (signal.aborted) return
         setSource(signedUrl)
         setLoading(false)
@@ -138,12 +147,12 @@ export function useSignedImageUrl(originalSource: string | null | undefined, ima
       fetchSignedUrl(controller.signal).catch(() => {})
     }
 
-    if (isIdleTaskContext()) {
+    if (isIdleTaskContext() || priority === 'must') {
       scheduleFetch()
     } else {
       enqueueIdleTask(async () => {
         scheduleFetch()
-      }, { label: `image:signed:${cacheKey}`, priority: 'high' })
+      }, { label: `image:signed:${cacheKey}`, priority: 'low' })
     }
 
     return () => {

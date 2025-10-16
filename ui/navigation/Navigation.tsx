@@ -10,6 +10,7 @@ import { Ionicons } from '@expo/vector-icons'
 import BottomSheet from '@gorhom/bottom-sheet'
 import { useNavigation } from '@react-navigation/native'
 import Animated, { Extrapolation, interpolate, useAnimatedStyle } from 'react-native-reanimated'
+import { withInteraction } from '@/features/perf/interactions'
 
 export const Navigation = ({
   savesBottomSheetRef,
@@ -80,6 +81,11 @@ export const Navigation = ({
   if (!user) return null
   if (inMessageThread) return null
 
+  const onBackPress = useMemo(
+    () => withInteraction('navigation:back-button', handleBackPress),
+    [handleBackPress]
+  )
+
   return (
     <View style={{ display: 'flex', flexDirection: 'row', paddingLeft: 2, backgroundColor: c.surface }}>
       <Animated.View
@@ -101,7 +107,7 @@ export const Navigation = ({
           <View style={{ flexDirection: 'row', alignItems: 'center', position: 'relative' }}>
             {!isHomePage && (
               <Pressable
-                onPress={handleBackPress}
+                onPress={onBackPress}
                 style={{
                   position: 'absolute',
                   left: -15,

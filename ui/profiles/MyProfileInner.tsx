@@ -155,6 +155,8 @@ const PROMPT_BATCH_SIZE = 6
 
 const PROFILE_FORCE_REFRESH_THRESHOLD_MS = 3 * 60 * 1000
 
+const profileForceRefreshTimestamps = new Map<string, number>()
+
 const shufflePromptList = (source: PromptSuggestion[]) => {
   const shuffled = [...source]
   for (let i = shuffled.length - 1; i > 0; i -= 1) {
@@ -220,6 +222,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
   // Get optimistic items from store
   const { optimisticItems } = useAppStore()
   const profileRefreshTrigger = useAppStore((state) => state.profileRefreshTrigger)
+  const interactionGateActive = useAppStore((state) => state.interactionGateActive)
 
   const {
     getUserByUserName,
@@ -1194,6 +1197,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
     if (gridItems.length === 0) return
     if (gridItems.length >= GRID_CAPACITY) return
     if (forceNetworkRefreshQueuedRef.current) return
+    if (interactionGateActive) return
     if (PERF_TRACE) {
       console.log('[profile][perf] forceRefresh:eligible', {
         gridCount: gridItems.length,
@@ -1210,15 +1214,31 @@ export const MyProfile = ({ userName }: { userName: string }) => {
       cachedEntry && Date.now() - cachedEntry.timestamp < PROFILE_FORCE_REFRESH_THRESHOLD_MS
     )
 
-    if (hasFreshData || hasRecentWarmup) {
+    const now = Date.now()
+    const lastRefresh = profileForceRefreshTimestamps.get(profile.id)
+    const isStale = state?.isInvalidated ?? false
+
+    if (hasFreshData || hasRecentWarmup || !isStale) {
       if (PERF_TRACE) {
         console.log('[profile][perf] forceRefresh:skipped:fresh', {
           hasFreshData,
           hasRecentWarmup,
+          isStale,
         })
       }
       return
     }
+
+    if (lastRefresh && now - lastRefresh < 60_000) {
+      if (PERF_TRACE) {
+        console.log('[profile][perf] forceRefresh:skipped:debounced', {
+          lastRefresh,
+        })
+      }
+      return
+    }
+
+    profileForceRefreshTimestamps.set(profile.id, now)
 
     forceNetworkRefreshQueuedRef.current = true
     enqueueIdleTask(async () => {
@@ -1246,7 +1266,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
         }
       }
     }, 'profile:forceNetworkRefresh')
-  }, [applyProfileData, gridItems.length, profile?.id, queryClient, userName])
+  }, [applyProfileData, gridItems.length, interactionGateActive, profile?.id, queryClient, user?.id, userName])
 
   useProfileEffect('profile.loadingStateEffect', () => {
     if (!profileData && isProfileLoading) {

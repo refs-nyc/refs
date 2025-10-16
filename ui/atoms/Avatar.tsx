@@ -10,6 +10,7 @@ type AvatarProps = {
   source?: string | null
   size: number
   fallback?: string | null
+  priority?: 'must' | 'low'
 }
 
 const deriveInitial = (text?: string | null) => {
@@ -18,16 +19,20 @@ const deriveInitial = (text?: string | null) => {
   return trimmed[0]?.toUpperCase() ?? ''
 }
 
-export const Avatar = ({ source, size, fallback }: AvatarProps) => {
+export const Avatar = ({ source, size, fallback, priority = 'low' }: AvatarProps) => {
   const finalSize = typeof size === 'number' ? size : 32
   const bucket = nearestBucket(finalSize)
   const deviceScale = currentDpr()
   const initial = useMemo(() => deriveInitial(fallback), [fallback])
   const thumbSource = getAvatarThumbUrl(source, bucket)
-  const { source: resolvedSource } = useSignedImageUrl(thumbSource ?? source, {
-    width: bucket * deviceScale,
-    height: bucket * deviceScale,
-  })
+  const { source: resolvedSource } = useSignedImageUrl(
+    thumbSource ?? source,
+    {
+      width: bucket * deviceScale,
+      height: bucket * deviceScale,
+    },
+    { priority }
+  )
 
   const circleStyle = {
     width: bucket,

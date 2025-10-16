@@ -18,9 +18,9 @@ const tabs: Array<{ key: DirectoryTab; label: string }> = [
 
 export function CommunityInterestsScreen() {
   const { user } = useAppStore()
+  const [activeTab, setActiveTab] = useState<DirectoryTab>('everyone')
   const { data: wantToMeet = [] } = useWantToMeet(user?.id)
   const insets = useSafeAreaInsets()
-  const [activeTab, setActiveTab] = useState<DirectoryTab>('everyone')
   const wantToMeetCount = wantToMeet.length
   const wantToMeetActive = activeTab === 'wantToMeet'
   const flipProgress = useSharedValue(0)
@@ -70,7 +70,10 @@ export function CommunityInterestsScreen() {
         return (
           <Pressable
                 key={tab.key}
-                onPress={() => setActiveTab(tab.key)}
+                onPress={() => {
+                  if (tab.key === activeTab) return
+                  setActiveTab(tab.key)
+                }}
                 style={{
                   minWidth: 0,
                   paddingVertical: 4,

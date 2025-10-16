@@ -5,6 +5,10 @@ import { c, s } from '@/features/style'
 import { Text, View, Pressable, useWindowDimensions, ActivityIndicator } from 'react-native'
 import Ionicons from '@expo/vector-icons/Ionicons'
 import * as Location from 'expo-location'
+import * as ImagePicker from 'expo-image-picker'
+import { Image } from 'expo-image'
+import { pinataUpload } from '@/features/pinata'
+import Svg, { Circle } from 'react-native-svg'
 
 export const ProfileSettingsSheet = () => {
   const {
@@ -30,6 +34,7 @@ export const ProfileSettingsSheet = () => {
   const [isSavingName, setIsSavingName] = useState(false)
   const [isSavingLocation, setIsSavingLocation] = useState(false)
   const [isLoadingLocation, setIsLoadingLocation] = useState(false)
+  const [avatarUploading, setAvatarUploading] = useState(false)
 
   const settingsSheetSnapPoints = useMemo(() => {
     const baseHeight = Math.max(settingsSheetHeight, Math.round(windowHeight * 0.45))
@@ -97,6 +102,35 @@ export const ProfileSettingsSheet = () => {
       console.error('Failed to update location:', error)
     } finally {
       setIsSavingLocation(false)
+    }
+  }
+
+  const handleChangeAvatar = async () => {
+    if (avatarUploading) return
+
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+      })
+
+      if (!result.canceled && result.assets[0]) {
+        const asset = result.assets[0]
+        setAvatarUploading(true)
+
+        try {
+          const imageUrl = await pinataUpload(asset)
+          await updateUser({ image: imageUrl })
+        } catch (error) {
+          console.error('Failed to upload avatar:', error)
+        } finally {
+          setAvatarUploading(false)
+        }
+      }
+    } catch (error) {
+      console.error('Failed to pick image:', error)
     }
   }
 
@@ -267,6 +301,102 @@ export const ProfileSettingsSheet = () => {
             }}
           >
             <Ionicons name="close" size={18} color={c.muted2} />
+          </Pressable>
+        </View>
+
+        {/* Avatar Picker */}
+        <View
+          style={{
+            backgroundColor: c.surface2,
+            borderRadius: s.$12,
+            padding: s.$1,
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <Pressable
+            onPress={handleChangeAvatar}
+            disabled={avatarUploading}
+            style={{ alignItems: 'center', justifyContent: 'center' }}
+          >
+            <View style={{ position: 'relative' }}>
+              {user?.image ? (
+                <Image
+                  source={user.image}
+                  style={{
+                    width: 80,
+                    height: 80,
+                    borderRadius: 40,
+                    backgroundColor: c.surface,
+                  }}
+                  contentFit="cover"
+                  cachePolicy="memory-disk"
+                />
+              ) : (
+                <View
+                  style={{
+                    width: 80,
+                    height: 80,
+                    borderRadius: 40,
+                    backgroundColor: c.surface,
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                  }}
+                >
+                  <Svg width={64} height={40} viewBox="0 0 64 40">
+                    <Circle cx="24" cy="20" r="16" stroke={c.muted} strokeWidth={2} fill="none" />
+                    <Circle cx="40" cy="20" r="16" stroke={c.muted} strokeWidth={2} fill="none" />
+                  </Svg>
+                </View>
+              )}
+              {avatarUploading && (
+                <View
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    backgroundColor: 'rgba(242,238,230,0.7)',
+                    borderRadius: 40,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <ActivityIndicator size="small" color={c.olive} />
+                </View>
+              )}
+              {!avatarUploading && (
+                <View
+                  style={{
+                    position: 'absolute',
+                    bottom: -2,
+                    right: -2,
+                    width: 28,
+                    height: 28,
+                    borderRadius: 14,
+                    backgroundColor: c.accent,
+                    borderWidth: 3,
+                    borderColor: c.surface2,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <Ionicons name="camera" size={14} color={c.surface} />
+                </View>
+              )}
+            </View>
+            <Text
+              style={{
+                color: c.accent,
+                fontSize: 13,
+                fontFamily: 'Inter',
+                fontWeight: '600',
+                marginTop: 8,
+              }}
+            >
+              {avatarUploading ? 'Uploading...' : 'Change Photo'}
+            </Text>
           </Pressable>
         </View>
 

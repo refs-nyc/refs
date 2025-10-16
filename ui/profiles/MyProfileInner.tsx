@@ -18,6 +18,7 @@ import { DEFAULT_TILE_SIZE } from '../grid/GridTile'
 import { Grid } from '../grid/Grid'
 import { Button } from '../buttons/Button'
 import Ionicons from '@expo/vector-icons/Ionicons'
+import Svg, { Circle, G, Path } from 'react-native-svg'
 
 import { Heading } from '../typo/Heading'
 import { MyBacklogSheet } from './sheets/MyBacklogSheet'
@@ -829,7 +830,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
                     </View>
                   )}
                 </View>
-                {/* Edit button */}
+                {/* Edit button - duotone style matching FloatingJaggedButton */}
                 {ownProfile && !avatarUploading && (
                   <Pressable
                     accessibilityRole="button"
@@ -846,44 +847,72 @@ export const MyProfile = ({ userName }: { userName: string }) => {
                       position: 'absolute',
                       bottom: -10,
                       right: -12,
-                      width: 36,
-                      height: 36,
-                      borderRadius: 18,
-                      backgroundColor: c.surface2,
-                      borderWidth: 4.5,
-                      borderColor: c.surface,
-                      alignItems: 'center',
-                      justifyContent: 'center',
+                      shadowColor: '#000',
+                      shadowOffset: { width: 0, height: 2 },
+                      shadowOpacity: 0.25,
+                      shadowRadius: 3,
+                      elevation: 3,
                     }}
                   >
-                    <Ionicons
-                      name="pencil-sharp"
-                      size={18}
-                      color={c.newDark}
-                    />
+                    <Svg width={36} height={36} viewBox="0 0 36 36">
+                      {/* Drop shadow circle (offset down) */}
+                      <Circle
+                        cx={18}
+                        cy={18.4}
+                        r={16}
+                        fill="rgba(0,0,0,0.25)"
+                      />
+                      {/* White outline ring for 3D effect */}
+                      <Circle
+                        cx={18}
+                        cy={18}
+                        r={17}
+                        fill="none"
+                        stroke="rgba(255,255,255,0.3)"
+                        strokeWidth={1.6}
+                      />
+                      {/* Outer surface border ring */}
+                      <Circle
+                        cx={18}
+                        cy={18}
+                        r={16}
+                        fill={c.surface2}
+                      />
+                      {/* Inner surface circle (main button) */}
+                      <Circle
+                        cx={18}
+                        cy={18}
+                        r={13}
+                        fill={c.surface}
+                      />
+                      {/* Icon - pencil path */}
+                      <G transform="translate(18 18) scale(0.68) translate(-12 -12)">
+                        <Path
+                          d="M19.5 7.5L16.5 4.5L4.5 16.5V19.5H7.5L19.5 7.5Z"
+                          fill={c.newDark}
+                          stroke={c.newDark}
+                          strokeWidth={1}
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                        <Path
+                          d="M16.5 7.5L19.5 4.5"
+                          fill="none"
+                          stroke={c.newDark}
+                          strokeWidth={1.5}
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </G>
+                    </Svg>
                   </Pressable>
                 )}
               </View>
             </RNAnimated.View>
           )
 
-          const avatarNode = ownProfile ? (
-            <Pressable
-              onPressIn={() => {
-                if (avatarUploading) return
-                bounceAvatar()
-              }}
-              onPress={handleAvatarPress}
-              hitSlop={12}
-              disabled={avatarUploading}
-            >
-              {container}
-            </Pressable>
-          ) : (
-            container
-          )
-
-          return <View style={{ paddingRight: 6 }}>{avatarNode}</View>
+          // Avatar is no longer clickable for own profile - use settings sheet to change
+          return <View style={{ paddingRight: 6 }}>{container}</View>
         })()}
       </View>
     </View>

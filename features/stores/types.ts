@@ -123,6 +123,15 @@ export type UISlice = {
   toast: { id: number; message: string } | null
   showToast: (message: string) => void
   clearToast: () => void
+  // Other Profile Avatar Zoom
+  avatarZoomVisible: boolean
+  avatarZoomImageUrl: string | null
+  openAvatarZoom: (imageUrl: string) => void
+  closeAvatarZoom: () => void
+  // Remove Ref Sheet (MyProfile)
+  removeRefSheetRef: React.RefObject<BottomSheet>
+  pendingRefRemoval: { item: any; onMoveToBacklog: () => Promise<void>; onRemove: () => Promise<void> } | null
+  setPendingRefRemoval: (data: { item: any; onMoveToBacklog: () => Promise<void>; onRemove: () => Promise<void> } | null) => void
 }
 
 export type StoreSlices = BackdropSlice &

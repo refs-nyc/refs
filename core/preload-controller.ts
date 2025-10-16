@@ -28,7 +28,7 @@ let realtimeStarted = false
 let authSubscription: (() => void) | null = null
 
 const INLINE_CONVERSATION_HYDRATE_COUNT = 3
-const STALE_THRESHOLD_MS = 45_000
+const STALE_THRESHOLD_MS = 5 * 60_000
 const PERF_TRACE = process.env.EXPO_PUBLIC_PERF_HARNESS === '1'
 
 const logProfileHydratorPerf = (

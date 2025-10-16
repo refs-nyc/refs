@@ -26,7 +26,7 @@ export type ConversationPreviewResult = {
   refetch: () => Promise<void>
 }
 
-export function useConversationPreviews(): ConversationPreviewResult {
+export function useConversationPreviews(enabled = true): ConversationPreviewResult {
   const { user, setConversationUnreadCount, clearConversationUnreadCounts } = useAppStore()
   const userId = user?.id
 
@@ -35,22 +35,23 @@ export function useConversationPreviews(): ConversationPreviewResult {
     queryFn: ({ pageParam = 1 }) => fetchConversationsPage(userId!, pageParam as number),
     initialPageParam: 1,
     getNextPageParam: (lastPage) => (lastPage.hasMore ? lastPage.nextPage : undefined),
-    enabled: Boolean(userId),
+    enabled: Boolean(userId) && enabled,
     staleTime: QUERY_WINDOWS.messagingPreviews.staleTime,
     gcTime: QUERY_WINDOWS.messagingPreviews.gcTime,
-    refetchInterval: userId ? 15_000 : false,
+    refetchInterval: userId && enabled ? 15_000 : false,
     refetchIntervalInBackground: false,
     refetchOnWindowFocus: true,
   })
 
   useEffect(() => {
+    if (!enabled) return
     if (!__DEV__ || !query.data) return
     const total = query.data.pages.reduce((accumulator, page) => accumulator + page.entries.length, 0)
     console.log('[boot-trace] messaging.previews:pages', {
       pages: query.data.pages.length,
       total,
     })
-  }, [query.data])
+  }, [enabled, query.data])
 
   const previews = useMemo<ConversationPreviewSnapshot[]>(() => {
     const pages = query.data?.pages
@@ -67,6 +68,7 @@ export function useConversationPreviews(): ConversationPreviewResult {
   }, [query.data?.pages])
 
   useEffect(() => {
+    if (!enabled) return
     if (!userId) {
       clearConversationUnreadCounts()
       return
@@ -77,14 +79,16 @@ export function useConversationPreviews(): ConversationPreviewResult {
     previews.forEach((entry: ConversationPreviewSnapshot) => {
       setConversationUnreadCount(entry.conversation.id, entry.unreadCount ?? 0)
     })
-  }, [clearConversationUnreadCounts, previews, setConversationUnreadCount, userId])
+  }, [clearConversationUnreadCounts, enabled, previews, setConversationUnreadCount, userId])
 
   const fetchNextPage = async () => {
+    if (!enabled) return
     if (!query.hasNextPage || query.isFetchingNextPage) return
     await query.fetchNextPage()
   }
 
   const refetch = async () => {
+    if (!enabled) return
     await query.refetch()
   }
 

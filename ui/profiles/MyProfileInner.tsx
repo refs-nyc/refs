@@ -21,7 +21,6 @@ import Ionicons from '@expo/vector-icons/Ionicons'
 
 import { Heading } from '../typo/Heading'
 import { MyBacklogSheet } from './sheets/MyBacklogSheet'
-import { RemoveRefSheet } from './sheets/RemoveRefSheet'
 import { RefForm } from '../actions/RefForm'
 import Animated, { FadeIn, FadeOut, SlideInDown, SlideOutDown, Easing, useAnimatedStyle, withTiming } from 'react-native-reanimated'
 import { Animated as RNAnimated, Easing as RNEasing } from 'react-native'
@@ -217,10 +216,9 @@ export const MyProfile = ({ userName }: { userName: string }) => {
   const [showAvatarPicker, setShowAvatarPicker] = useState(false)
   const avatarScale = useRef(new RNAnimated.Value(1)).current
   const avatarSwapOpacity = useRef(new RNAnimated.Value(1)).current
-  const removeRefSheetRef = useRef<BottomSheet>(null)
   const bottomSheetRef = useRef<BottomSheet>(null)
   // Get optimistic items from store
-  const { optimisticItems } = useAppStore()
+  const { optimisticItems, setPendingRefRemoval } = useAppStore()
   const profileRefreshTrigger = useAppStore((state) => state.profileRefreshTrigger)
   const interactionGateActive = useAppStore((state) => state.interactionGateActive)
 
@@ -482,12 +480,81 @@ export const MyProfile = ({ userName }: { userName: string }) => {
     }
   }, [stopEditProfile])
 
-  useProfileEffect('profile.snapRemoveRefSheet', () => {
+  useProfileEffect('profile.openRemoveRefSheet', () => {
     if (!removingItem) return
-    requestAnimationFrame(() => {
-      removeRefSheetRef.current?.snapToIndex(0)
+    
+    const handleMoveToBacklog = async () => {
+      try {
+        const { optimisticItems, removeOptimisticItem, decrementGridItemCount } = useAppStore.getState()
+        
+        const isOptimistic = removingItem.id.startsWith('temp-') || optimisticItems.has(removingItem.id)
+        
+        if (isOptimistic) {
+          removeOptimisticItem(removingItem.id)
+          decrementGridItemCount()
+        } else {
+          setGridItems(prev => prev.filter(item => item.id !== removingItem.id))
+          decrementGridItemCount()
+
+          updateProfileCache((current) => ({
+            ...current,
+            gridItems: current.gridItems.filter((item) => item.id !== removingItem.id),
+          }))
+
+          ;(async () => {
+            try {
+              await moveToBacklog(removingItem.id)
+              invalidateProfile()
+            } catch (error) {
+              console.error('Failed to move item to backlog:', error)
+              invalidateProfile()
+            }
+          })()
+        }
+        
+        setRemovingItem(null)
+      } catch (error) {
+        console.error(error)
+      }
+    }
+
+    const handleRemoveFromProfile = async () => {
+      const { optimisticItems, removeOptimisticItem, decrementGridItemCount } = useAppStore.getState()
+      
+      const isOptimistic = removingItem.id.startsWith('temp-') || optimisticItems.has(removingItem.id)
+      
+      if (isOptimistic) {
+        removeOptimisticItem(removingItem.id)
+        decrementGridItemCount()
+      } else {
+        setGridItems(prev => prev.filter(item => item.id !== removingItem.id))
+        decrementGridItemCount()
+
+        updateProfileCache((current) => ({
+          ...current,
+          gridItems: current.gridItems.filter((item) => item.id !== removingItem.id),
+        }))
+
+        ;(async () => {
+          try {
+            await removeItem(removingItem.id)
+            invalidateProfile()
+          } catch (error) {
+            console.error('Failed to remove item:', error)
+            invalidateProfile()
+          }
+        })()
+      }
+      
+      setRemovingItem(null)
+    }
+
+    setPendingRefRemoval({
+      item: removingItem,
+      onMoveToBacklog: handleMoveToBacklog,
+      onRemove: handleRemoveFromProfile,
     })
-  }, [removingItem])
+  }, [removingItem, setPendingRefRemoval])
   const closeSettingsSheet = useCallback(
     ({ afterClose }: { exitEditMode?: boolean; afterClose?: () => void } = {}) => {
       setIsSettingsSheetOpen(false)
@@ -1198,6 +1265,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
     if (gridItems.length >= GRID_CAPACITY) return
     if (forceNetworkRefreshQueuedRef.current) return
     if (interactionGateActive) return
+    if (homePagerIndex !== 0) return
     if (PERF_TRACE) {
       console.log('[profile][perf] forceRefresh:eligible', {
         gridCount: gridItems.length,
@@ -1266,94 +1334,13 @@ export const MyProfile = ({ userName }: { userName: string }) => {
         }
       }
     }, 'profile:forceNetworkRefresh')
-  }, [applyProfileData, gridItems.length, interactionGateActive, profile?.id, queryClient, user?.id, userName])
+  }, [applyProfileData, gridItems.length, homePagerIndex, interactionGateActive, profile?.id, queryClient, user?.id, userName])
 
   useProfileEffect('profile.loadingStateEffect', () => {
     if (!profileData && isProfileLoading) {
       setLoading(true)
     }
   }, [profileData, isProfileLoading])
-
-  const handleMoveToBacklog = async () => {
-    if (!removingItem) return
-    try {
-      removeRefSheetRef.current?.close()
-      
-      const { optimisticItems, removeOptimisticItem, decrementGridItemCount } = useAppStore.getState()
-      
-      // Check if this is an optimistic item
-      const isOptimistic = removingItem.id.startsWith('temp-') || optimisticItems.has(removingItem.id)
-      
-      if (isOptimistic) {
-        // Remove from optimistic items immediately
-        removeOptimisticItem(removingItem.id)
-        decrementGridItemCount()
-      } else {
-        // For real items, remove from local grid immediately
-        setGridItems(prev => prev.filter(item => item.id !== removingItem.id))
-        decrementGridItemCount()
-
-        updateProfileCache((current) => ({
-          ...current,
-          gridItems: current.gridItems.filter((item) => item.id !== removingItem.id),
-        }))
-
-        // Background database operation
-        ;(async () => {
-          try {
-            await moveToBacklog(removingItem.id)
-            invalidateProfile()
-          } catch (error) {
-            console.error('Failed to move item to backlog:', error)
-            invalidateProfile()
-          }
-        })()
-      }
-      
-      setRemovingItem(null)
-    } catch (error) {
-      console.error(error)
-    }
-  }
-
-  const handleRemoveFromProfile = async () => {
-    if (!removingItem) return
-    removeRefSheetRef.current?.close()
-    
-    const { optimisticItems, removeOptimisticItem, decrementGridItemCount } = useAppStore.getState()
-    
-    // Check if this is an optimistic item
-    const isOptimistic = removingItem.id.startsWith('temp-') || optimisticItems.has(removingItem.id)
-    
-    if (isOptimistic) {
-      // Remove from optimistic items immediately
-      removeOptimisticItem(removingItem.id)
-      decrementGridItemCount()
-    } else {
-      // For real items, remove from local grid immediately
-      setGridItems(prev => prev.filter(item => item.id !== removingItem.id))
-      decrementGridItemCount()
-
-      updateProfileCache((current) => ({
-        ...current,
-        gridItems: current.gridItems.filter((item) => item.id !== removingItem.id),
-        backlogItems: current.backlogItems.filter((item) => item.id !== removingItem.id),
-      }))
-
-      // Background database operation
-      ;(async () => {
-        try {
-          await removeItem(removingItem.id)
-          invalidateProfile()
-        } catch (error) {
-          console.error('Failed to remove item:', error)
-          invalidateProfile()
-        }
-      })()
-    }
-    
-    setRemovingItem(null)
-  }
 
   useProfileEffect('profile.shareIntentEffect', () => {
     if (hasShareIntent) {
@@ -1704,13 +1691,6 @@ export const MyProfile = ({ userName }: { userName: string }) => {
               openAddtoBacklog={() => {
                 setAddingNewRefTo('backlog')
               }}
-            />
-            <RemoveRefSheet
-              bottomSheetRef={removeRefSheetRef}
-              handleMoveToBacklog={handleMoveToBacklog}
-              handleRemoveFromProfile={handleRemoveFromProfile}
-              item={removingItem}
-              onClose={() => setRemovingItem(null)}
             />
 
             {/* Direct Photo Form - bypasses NewRefSheet entirely */}

@@ -55,6 +55,8 @@ import { ProfileSettingsSheet } from '@/ui/profiles/sheets/ProfileSettingsSheet'
 import { CommunityFormSheet } from '@/ui/communities/CommunityFormSheet'
 import { RemoveInterestSheet } from '@/ui/communities/RemoveInterestSheet'
 import { NotificationPromptSheet } from '@/ui/notifications/NotificationPromptSheet'
+import { OtherProfileAvatarZoom } from '@/ui/profiles/OtherProfileAvatarZoom'
+import { RemoveRefSheetGlobal } from '@/ui/profiles/sheets/RemoveRefSheetGlobal'
 import { queryClient } from '@/core/queryClient'
 import { preloadInitial, startRealtime } from '@/core/preload-controller'
 import { seedBootSnapshots } from '@/core/bootstrap/seedSnapshots'
@@ -331,6 +333,8 @@ function RootLayoutNav() {
       <GroupMessageComposer />
       <RemoveInterestSheet />
       <NotificationPromptSheet />
+      <OtherProfileAvatarZoom />
+      <RemoveRefSheetGlobal />
       <GlobalToast />
     </ThemeProvider>
   )

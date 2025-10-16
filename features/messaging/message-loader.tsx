@@ -6,14 +6,16 @@ import { useAppStore } from '@/features/stores'
 import type { Message, Reaction } from '@/features/types'
 import { messagingKeys } from '@/features/queries/messaging'
 import { useConversationPreviews } from '@/features/messaging/useConversationPreviews'
+import { useIsFocused } from '@react-navigation/native'
 
 export function MessagesInit() {
   const { user } = useAppStore()
+  const isFocused = useIsFocused()
 
-  useConversationPreviews()
+  useConversationPreviews(isFocused)
 
   useEffect(() => {
-    if (!user?.id) return
+    if (!user?.id || !isFocused) return
 
     const startedAt = Date.now()
     console.log('[boot-trace] messaging.reactions:start')
@@ -48,10 +50,10 @@ export function MessagesInit() {
         .catch(() => {})
       console.log('[boot-trace] messaging.reactions:cleanup', Date.now() - startedAt, 'ms')
     }
-  }, [user?.id])
+  }, [user?.id, isFocused])
 
   useEffect(() => {
-    if (!user?.id) return
+    if (!user?.id || !isFocused) return
 
     const startedAt = Date.now()
     console.log('[boot-trace] messaging.memberships:start')
@@ -83,7 +85,7 @@ export function MessagesInit() {
         .catch(() => {})
       console.log('[boot-trace] messaging.memberships:cleanup', Date.now() - startedAt, 'ms')
     }
-  }, [user?.id])
+  }, [user?.id, isFocused])
 
   return null
 }

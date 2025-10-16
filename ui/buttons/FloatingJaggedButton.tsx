@@ -33,6 +33,8 @@ export default function FloatingJaggedButton({
           shadowOpacity: 0.25,
           shadowRadius: 5, // Figma blur: 5
           elevation: 5,
+          backgroundColor: c.surface,
+          borderRadius: 50,
         }}
         onPressIn={handlePressIn}
         onPressOut={handlePressOut}

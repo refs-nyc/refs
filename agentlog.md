@@ -219,7 +219,32 @@ Follow-up (perf harness diagnostics):
 - All screens follow existing design patterns: same KeyboardAvoidingView structure, FormFieldWithIcon components, react-hook-form validation, consistent spacing/colors (c.accent, c.surface, c.muted, c.newDark), matching typography (InterBold/InterSemiBold), and fixed bottom navigation links.
 - Security: No account enumeration (always success), silent error handling, 8+ char password requirement, token expiration handled by PocketBase.
 - Created `/docs/password-reset-setup.md` with PocketBase SMTP setup, email template configuration, testing instructions, and troubleshooting guide.
-- Improved form validation UX: All validation errors (email, password, confirmPassword, fullName) now only appear after user blurs/clicks away from field, not while actively typing. Applied `formState.touchedFields` check across login, registration, forgot-password, and reset-password screens for cleaner inline validation feedback.
+- Improved form validation UX: All validation errors (email, password, confirmPassword, fullName) now only appear after user blurs/clicks away from field, not while actively typing. Changed react-hook-form `mode` from `'onChange'` to `'onBlur'` across all auth screens for cleaner validation without interrupting typing.
+- **Fixed OtherProfile avatar zoom dimming bug (double dimmer + zIndex issue):**
+  - **Problem identified:** When tapping another user's avatar to zoom, two issues occurred:
+    1. Avatar appeared dimmed/behind the backdrop (trapped under NavigationBackdrop at zIndex: 1000)
+    2. Background was darker than header (double dimming: local rgba(0,0,0,0.5) overlay + global NavigationBackdrop = 75% darkness, with header sitting between layers)
+  - **Root cause:** Avatar zoom overlay was rendering inside `OtherProfile.tsx` component (lines 474-509) instead of at root level in `_layout.tsx`, violating the architecture documented in agentlog lines 68-76 which states "NEVER render confirmation sheets or any global UI inside screen components—they will be trapped under the NavigationBackdrop and appear dimmed."
+  - **Solution implemented:**
+    1. Created new `OtherProfileAvatarZoom.tsx` component with proper zIndex (10000) to render above NavigationBackdrop
+    2. Added store state to `ui/state.ts` and `features/stores/types.ts`: `avatarZoomVisible`, `avatarZoomImageUrl`, `openAvatarZoom(imageUrl)`, `closeAvatarZoom()`
+    3. Moved component to `_layout.tsx` after NotificationPromptSheet (rendered at root level)
+    4. Updated `OtherProfile.tsx`: removed local overlay (lines 393-428), removed local dimmer `rgba(0,0,0,0.5)`, changed avatar tap to call `openAvatarZoom(remoteAvatar)`
+    5. Component uses global `otherProfileBackdropAnimatedIndex` for coordinated dimming with NavigationBackdrop
+    6. Added `zIndex: 10000` to overlay wrapper to ensure it renders above NavigationBackdrop (zIndex: 1000)
+  - **Result:** Avatar now appears bright and centered above a single 50% dimmed backdrop, consistent with all other global sheets. No double dimming, proper z-ordering, follows architecture.
+- **Fixed RemoveRefSheet (MyProfile) dimming bug (same root cause):**
+  - **Problem:** When removing/deleting a ref from MyProfile grid, the RemoveRefSheet appeared dimmed/behind the NavigationBackdrop.
+  - **Root cause:** RemoveRefSheet was rendered inside `MyProfileInner.tsx` (line 1709) instead of at root level in `_layout.tsx`, violating the same architecture rule.
+  - **Solution implemented:**
+    1. Created `RemoveRefSheetGlobal.tsx` wrapper component that reads from store state
+    2. Added store state to `ui/state.ts` and `features/stores/types.ts`: `removeRefSheetRef` (ref), `pendingRefRemoval` (data), `setPendingRefRemoval()`
+    3. Moved inline handler functions (`handleMoveToBacklog`, `handleRemoveFromProfile`) from component to store-triggered callbacks in `useProfileEffect`
+    4. Rendered `RemoveRefSheetGlobal` at root level in `_layout.tsx` after OtherProfileAvatarZoom
+    5. Updated MyProfileInner to call `setPendingRefRemoval({ item, onMoveToBacklog, onRemove })` instead of opening local sheet
+    6. Removed local `removeRefSheetRef` ref, removed duplicate handler functions (lines 1346-1425), removed `<RemoveRefSheet>` rendering (line 1696-1702)
+  - **Result:** RemoveRefSheet now renders at root level with proper zIndex (10000), appears bright above NavigationBackdrop, follows global sheet architecture.
+  - **Follow-up fix:** Removed local dimmer from `Navigation.tsx` (lines 75-79, 90-93) that was creating double-dimming effect on the header bar. Navigation.tsx had a `removeRefDimStyle` that added another 50% opacity layer on top of NavigationBackdrop's global dimming, causing header to be 75% dark while background was 50% dark. Now uses only the global NavigationBackdrop dimming for consistent 50% opacity everywhere.
 
 ## Harness
 /* eslint-disable no-console */

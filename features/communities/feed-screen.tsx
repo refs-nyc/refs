@@ -366,7 +366,7 @@ export function CommunitiesFeedScreen({
     queryFn: ({ pageParam }) => fetchDirectoryPage((pageParam as number) ?? 1),
     getNextPageParam: (lastPage: DirectoryPage, pages: DirectoryPage[]) =>
       lastPage.hasMore ? pages.length + 1 : undefined,
-    staleTime: 60_000,
+    staleTime: 5 * 60_000,
     gcTime: 30 * 60_000,
   })
 

@@ -242,4 +242,27 @@ export const createUISlice: StateCreator<StoreSlices, [], [], UISlice> = (set, g
   clearToast: () => {
     set(() => ({ toast: null }))
   },
+  // Other Profile Avatar Zoom
+  avatarZoomVisible: false,
+  avatarZoomImageUrl: null,
+  openAvatarZoom: (imageUrl: string) => {
+    set(() => ({
+      avatarZoomVisible: true,
+      avatarZoomImageUrl: imageUrl,
+    }))
+  },
+  closeAvatarZoom: () => {
+    set(() => ({
+      avatarZoomVisible: false,
+      avatarZoomImageUrl: null,
+    }))
+  },
+  // Remove Ref Sheet (MyProfile)
+  removeRefSheetRef: React.createRef<BottomSheet>(),
+  pendingRefRemoval: null,
+  setPendingRefRemoval: (data) => {
+    set(() => ({
+      pendingRefRemoval: data,
+    }))
+  },
 })

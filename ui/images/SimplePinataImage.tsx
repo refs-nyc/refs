@@ -8,6 +8,8 @@ import { enqueueIdleTask, isIdleTaskContext } from '@/features/utils/idleQueue'
 const SIGNATURE_SKIP_THRESHOLD = 80
 const CACHE_TTL_MS = 60 * 60 * 1000 // 1 hour
 const MEMORY_CACHE_MAX_ENTRIES = 100
+const UNSIGNED_RETRY_DELAY_MS = 400
+const UNSIGNED_RETRY_LIMIT = 3
 
 // Cache for signed URLs to avoid repeated API calls
 const signedUrlCache = new Map<string, { url: string; expires: number }>()
@@ -65,11 +67,29 @@ export function useSignedImageUrl(
   const [source, setSource] = useState<string | null>(safeSource || null)
   const { getSignedUrl, signedUrls } = useAppStore()
   const priority = options.priority ?? 'low'
+  const reason = useMemo(
+    () => options.reason ?? (priority === 'must' ? 'must' : 'SimplePinataImage'),
+    [options.reason, priority]
+  )
 
   const url = useMemo(() => (safeSource ? constructPinataUrl(safeSource, imageOptions) : ''), [safeSource, imageOptions])
   const cacheKey = url || safeSource
 
   const controllerRef = useRef<AbortController | null>(null)
+  const retryTokenRef = useRef<{ key: string; count: number }>({ key: '', count: 0 })
+  const retryTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const [retryToken, setRetryToken] = useState(0)
+  const isMountedRef = useRef(true)
+
+  useEffect(() => {
+    return () => {
+      isMountedRef.current = false
+      if (retryTimeoutRef.current) {
+        clearTimeout(retryTimeoutRef.current)
+        retryTimeoutRef.current = null
+      }
+    }
+  }, [])
   const shouldSign = useMemo(() => {
     const maxDimension = Math.max(imageOptions.width, imageOptions.height)
     return maxDimension > SIGNATURE_SKIP_THRESHOLD
@@ -87,12 +107,43 @@ export function useSignedImageUrl(
         const targetUrl = cacheKey
         const signedUrl = await getSignedUrl(targetUrl, {
           signal,
-          reason: options.reason ?? (priority === 'must' ? 'must' : 'SimplePinataImage'),
+          reason,
           skip: !shouldSign,
         })
         if (signal.aborted) return
+        const needsRetry =
+          shouldSign &&
+          signedUrl === targetUrl &&
+          targetUrl.includes('mypinata.cloud')
+
         setSource(signedUrl)
         setLoading(false)
+
+        if (needsRetry) {
+          const state = retryTokenRef.current
+          if (state.key !== cacheKey) {
+            retryTokenRef.current = { key: cacheKey, count: 0 }
+          }
+          if (retryTokenRef.current.count < UNSIGNED_RETRY_LIMIT && isMountedRef.current) {
+            retryTokenRef.current.count += 1
+            if (!retryTimeoutRef.current) {
+              retryTimeoutRef.current = setTimeout(() => {
+                retryTimeoutRef.current = null
+                if (isMountedRef.current) {
+                  setRetryToken((token) => token + 1)
+                }
+              }, UNSIGNED_RETRY_DELAY_MS * retryTokenRef.current.count)
+            }
+          }
+          return
+        }
+
+        retryTokenRef.current = { key: cacheKey, count: 0 }
+        if (retryTimeoutRef.current) {
+          clearTimeout(retryTimeoutRef.current)
+          retryTimeoutRef.current = null
+        }
+
         if (shouldSign) {
           storeCacheEntry(targetUrl, signedUrl)
         }
@@ -103,12 +154,19 @@ export function useSignedImageUrl(
         setLoading(false)
       }
     },
-    [cacheKey, safeSource, getSignedUrl, shouldSign]
+    [cacheKey, safeSource, getSignedUrl, shouldSign, reason]
   )
 
   useEffect(() => {
     controllerRef.current?.abort()
     controllerRef.current = null
+    if (retryTokenRef.current.key !== cacheKey) {
+      retryTokenRef.current = { key: cacheKey, count: 0 }
+      if (retryTimeoutRef.current) {
+        clearTimeout(retryTimeoutRef.current)
+        retryTimeoutRef.current = null
+      }
+    }
 
     if (!safeSource) {
       setSource(null)
@@ -159,7 +217,7 @@ export function useSignedImageUrl(
       controller.abort()
       controllerRef.current = null
     }
-  }, [cacheKey, safeSource, signedUrls, fetchSignedUrl, shouldSign])
+  }, [cacheKey, safeSource, signedUrls, fetchSignedUrl, shouldSign, priority, retryToken])
 
   return { source, loading }
 }

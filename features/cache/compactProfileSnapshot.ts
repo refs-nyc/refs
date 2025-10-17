@@ -78,6 +78,8 @@ const expandedFromCompact = (item: CompactItem): ExpandedItem => {
     promptContext: item.promptContext ?? '',
     created: updatedIso,
     updated: updatedIso,
+    creator: '',
+    parent: null,
     expand: {
       ref: {
         id: item.ref,
@@ -89,8 +91,18 @@ const expandedFromCompact = (item: CompactItem): ExpandedItem => {
         created: updatedIso,
         updated: updatedIso,
       },
-      creator: null as any,
-      items_via_parent: [] as any,
+      creator: {
+        id: '',
+        collectionId: Collections.Users,
+        collectionName: Collections.Users,
+        email: '',
+        emailVisibility: false,
+        username: '',
+        verified: false,
+        created: updatedIso,
+        updated: updatedIso,
+      },
+      items_via_parent: [],
     },
   }
 }

@@ -15,20 +15,39 @@ import Animated, {
 
 const PROMPTS = [
   { text: 'Link you shared recently', photoPath: false },
-  { text: 'free space', photoPath: false },
+  { text: 'Free space', photoPath: false },
   { text: 'Place you feel like yourself', photoPath: false },
   { text: 'Example of perfect design', photoPath: false },
-  { text: 'something you want to do more of', photoPath: false },
+  { text: 'Nascent hobby', photoPath: false },
   { text: 'Piece from a museum', photoPath: true },
   { text: 'Most-rewatched movie', photoPath: false },
   { text: 'Tradition you love', photoPath: true },
-  { text: 'Meme', photoPath: true },
-  { text: 'Neighborhood spot', photoPath: false },
+  { text: 'Meme slot', photoPath: true },
+  { text: 'Neighborhood haunt', photoPath: false },
   { text: 'What you put on aux', photoPath: false },
-  { text: 'halloween pic', photoPath: true },
-  { text: 'Rabbit Hole', photoPath: false },
-  { text: 'a preferred publication', photoPath: false },
-  { text: 'something on your reading list', photoPath: false },
+  { text: 'Halloween pic', photoPath: true },
+  { text: 'Rabbit hole', photoPath: false },
+  { text: 'A preferred publication', photoPath: false },
+  { text: 'Something on your reading list', photoPath: false },
+  { text: 'Favorite view', photoPath: true },
+  { text: "Material you're drawn to", photoPath: true },
+  { text: 'A tool you actually love using', photoPath: false },
+  { text: 'Someone who shaped your taste', photoPath: true },
+  { text: 'Ritual that grounds you', photoPath: true },
+  { text: "Image that's been stuck in your head", photoPath: true },
+  { text: 'Sense of style in a single pic', photoPath: true },
+  { text: 'Day you felt alive', photoPath: true },
+  { text: 'Something on your wall', photoPath: true },
+  { text: 'Something you cooked', photoPath: true },
+  { text: 'When the gang looked beautiful', photoPath: true },
+  { text: "Quietest place you've been", photoPath: true },
+  { text: 'Coolest thing in your immediate vicinity', photoPath: true },
+  { text: 'Evidence of a good time', photoPath: true },
+  { text: 'Screenshot that says it all', photoPath: true },
+  { text: 'Photo of a project mid-life', photoPath: true },
+  { text: 'Favorite street corner', photoPath: true },
+  { text: 'Personal website/twitter square', photoPath: true },
+  { text: 'Recently read', photoPath: false },
 ]
 
 // Fisher-Yates shuffle function
@@ -343,8 +362,10 @@ export const Grid = ({
 
         {/* Prompt placeholders for empty slots (skip when autoRows to avoid forcing min grid size) */}
         {!autoRows && fillerCount > 0 && Array.from({ length: fillerCount }).map((_, i) => {
-          const promptIndex = i % PROMPTS.length
-          const prompt = PROMPTS[promptIndex]
+          const promptIndex = i % shuffledPrompts.length
+          const promptText = shuffledPrompts[promptIndex] || ''
+          const originalPrompt = PROMPTS.find(p => p.text === promptText)
+          const photoPath = originalPrompt?.photoPath || false
           const totalIndex = items.length + i
           const shouldShowPrompt = shouldShowPromptTiles
           
@@ -360,11 +381,11 @@ export const Grid = ({
             >
               <GridTileWrapper
                 type={shouldShowPrompt ? "prompt" : "placeholder"}
-                onPress={() => shouldShowPrompt && onAddItemWithPrompt && onAddItemWithPrompt(prompt.text, prompt.photoPath)}
+                onPress={() => shouldShowPrompt && onAddItemWithPrompt && onAddItemWithPrompt(promptText, photoPath)}
                 isShuffling={isShuffling}
               >
                 <Text style={{ fontSize: 14 }}>
-                  {shouldShowPrompt ? prompt.text : ''}
+                  {shouldShowPrompt ? promptText : ''}
                 </Text>
               </GridTileWrapper>
             </StartupAnimationTile>

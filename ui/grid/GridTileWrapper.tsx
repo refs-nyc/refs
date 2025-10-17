@@ -193,7 +193,7 @@ export const GridTileWrapper = ({
         </Text>
       ) : type === 'prompt' ? (
         <Animated.Text style={[
-          { color: promptTextColor || '#B0B0B0', fontSize: 14, textAlign: 'center', paddingHorizontal: 1, fontWeight: '500' },
+          { color: promptTextColor || '#B0B0B0', fontSize: 14, textAlign: 'center', paddingHorizontal: 5, fontWeight: '500' },
           textAnimatedStyle
         ]}>
           {children}

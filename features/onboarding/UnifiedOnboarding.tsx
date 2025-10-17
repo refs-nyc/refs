@@ -15,7 +15,11 @@ const PASSWORD_MIN_LENGTH = 8
 
 export function UnifiedOnboarding() {
   const { register: registerUser, updateStagedUser, setJustOnboarded } = useAppStore() as any
-  const form = useForm({ mode: 'onChange', shouldUnregister: false })
+  const form = useForm({
+    mode: 'onBlur',
+    reValidateMode: 'onBlur',
+    shouldUnregister: false,
+  })
   const { control, handleSubmit, formState, getValues, watch, setFocus } = form
   const insets = useSafeAreaInsets()
   const [isSubmitting, setIsSubmitting] = useState(false)

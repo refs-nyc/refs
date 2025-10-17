@@ -19,7 +19,11 @@ const EmailStep = ({ carouselRef }: { carouselRef: React.RefObject<ICarouselInst
     control,
     handleSubmit,
     formState: { errors, isValid },
-  } = useForm({ mode: 'onChange' })
+  } = useForm({
+    mode: 'onBlur',
+    reValidateMode: 'onBlur',
+    defaultValues: { email: '' },
+  })
   const { getUserByEmail, updateStagedUser } = useAppStore()
 
   return (

@@ -5,16 +5,18 @@ import { useShareIntentContext } from 'expo-share-intent'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { useAppStore } from '@/features/stores'
-import { ExpandedItem, StagedItemFields } from '@/features/types'
+import { ExpandedItem, StagedItemFields, Profile } from '@/features/types'
 import { c, s } from '@/features/style'
 
 import { RefForm } from '@/ui/actions/RefForm'
 import { SearchRef, NewRefFields } from '@/ui/actions/SearchRef'
 import { SelectItemToReplace } from '@/ui/actions/SelectItemToReplace'
 import { ChooseReplaceItemMethod } from '@/ui/actions/ChooseReplaceItemMethod'
-import { AddedNewRefConfirmation } from '@/ui/actions/AddedNewRefConfirmation'
 import { UserLists } from '@/ui/actions/UserLists'
 import { EditableList } from '@/ui/lists/EditableList'
+import { persistBacklogSnapshot, persistGridSnapshot, getProfileCacheEntryByUserId } from '@/features/cache/profileCache'
+import { gridSort } from '@/features/stores/itemFormatters'
+import { markProfileGridDirty } from '@/features/stores/items'
 
 
 const SNAP_POINTS = ['80%'] as const
@@ -55,9 +57,7 @@ const useNewRefSheetController = () => {
   const isOpen = addingNewRefTo !== null
   const isBacklog = addingNewRefTo === 'backlog'
 
-  const [step, setStep] = useState<'search' | 'add' | 'selectReplace' | 'chooseReplaceMethod' | 'addedToGrid' | 'addedToBacklog' | 'addToList' | 'editList'>(
-    'search'
-  )
+  const [step, setStep] = useState<'search' | 'add' | 'selectReplace' | 'chooseReplaceMethod' | 'addToList' | 'editList'>('search')
   const [existingRefId, setExistingRefId] = useState<string | null>(null)
   const [refFields, setRefFields] = useState<NewRefFields | null>(null)
   const [stagedItemFields, setStagedItemFields] = useState<StagedItemFields | null>(null)
@@ -85,6 +85,44 @@ const useNewRefSheetController = () => {
     setCaptionFocused(false)
   }, [])
 
+  const persistOptimisticSnapshot = useCallback(async (item: ExpandedItem, backlogTarget: boolean) => {
+    try {
+      const { user } = useAppStore.getState()
+      if (!user?.id) return
+      const cacheEntry = getProfileCacheEntryByUserId(user.id)
+      const resolvedProfile: Profile | undefined = cacheEntry?.profile ?? (user as Profile | undefined)
+
+      if (!backlogTarget) {
+        const base = cacheEntry?.gridItems ?? []
+        const filtered = base.filter((existing) => existing.id !== item.id)
+        const next = gridSort([...filtered, item])
+        await persistGridSnapshot({
+          userId: user.id,
+          userName: user.userName,
+          gridItems: next,
+          profile: resolvedProfile,
+          backlogItems: cacheEntry?.backlogItems,
+        })
+        markProfileGridDirty(user.id)
+      } else {
+        const base = cacheEntry?.backlogItems ?? []
+        const filtered = base.filter((existing) => existing.id !== item.id)
+        const next = [...filtered, item]
+        await persistBacklogSnapshot({
+          userId: user.id,
+          userName: user.userName,
+          backlogItems: next,
+          profile: resolvedProfile,
+          gridItems: cacheEntry?.gridItems,
+        })
+      }
+    } catch (error) {
+      if (__DEV__) {
+        console.warn('[new-ref] persist optimistic snapshot failed', error)
+      }
+    }
+  }, [])
+
 
   const finalizeClose = useCallback(() => {
     resetState()
@@ -96,11 +134,27 @@ const useNewRefSheetController = () => {
     isClosingRef.current = false
   }, [resetState, resetShareIntent, setAddRefPrompt, setAddingNewRefTo])
 
-  const closeSheet = useCallback(() => {
-    if (isClosingRef.current) return
-    isClosingRef.current = true
-    setSheetIndex(-1)
-  }, [])
+  const closeSheet = useCallback(
+    (options?: { immediate?: boolean; reason?: 'submit' | 'cancel' }) => {
+      if (isClosingRef.current) return
+      isClosingRef.current = true
+      const dropSheet = () => {
+        if (options?.reason === 'submit') {
+          newRefSheetRef.current?.close()
+        } else {
+          newRefSheetRef.current?.close()
+        }
+      }
+
+      if (options?.reason === 'submit') {
+        setTimeout(dropSheet, 80)
+        return
+      }
+
+      dropSheet()
+    },
+    [newRefSheetRef]
+  )
 
   useEffect(() => {
     const targetIndex = clampIndex(desiredIndex < 0 ? SNAP_POINTS.length - 1 : desiredIndex)
@@ -148,12 +202,8 @@ const useNewRefSheetController = () => {
       if (clamped >= 0) {
         setShouldRenderContent(true)
       }
-      if (clamped === -1) {
-        setShouldRenderContent(false)
-        finalizeClose()
-      }
     },
-    [finalizeClose]
+    []
   )
 
   const handleAddToProfile = useCallback(
@@ -195,13 +245,14 @@ const useNewRefSheetController = () => {
       }
 
       addOptimisticItem(optimistic)
-      closeSheet()
+      void persistOptimisticSnapshot(optimistic, backlog)
+      closeSheet({ reason: 'submit' })
 
       try {
         const newItem = await addToProfile(options.existingRefId, merged, backlog)
         replaceOptimisticItem(optimistic.id, newItem)
         setItemData(newItem)
-        setStep(backlog ? 'addedToBacklog' : 'addedToGrid')
+        void persistOptimisticSnapshot(newItem, backlog)
       } catch (error) {
         console.error('Failed to add to profile', error)
         removeOptimisticItem(optimistic.id)
@@ -290,6 +341,7 @@ const useNewRefSheetController = () => {
     onAddRef,
     onAddPhototoList,
     closeSheet,
+    finalizeClose,
     newRefSheetRef,
     addRefPrompt,
     setAddRefPrompt,
@@ -329,6 +381,7 @@ export const NewRefSheet = () => {
     onAddRef,
     onAddPhototoList,
     closeSheet,
+    finalizeClose,
     newRefSheetRef,
     addRefPrompt,
     setAddRefPrompt,
@@ -371,6 +424,7 @@ export const NewRefSheet = () => {
         />
       )}
       onChange={handleSheetChange}
+      onClose={finalizeClose}
     >
       {shouldRenderContent && (
         <BottomSheetView
@@ -418,8 +472,8 @@ export const NewRefSheet = () => {
               }}
               onAddToBacklog={async () => {
                 await onAddRef({ ...stagedItemFields, list: false })
-                setStep('addedToBacklog')
-              }}
+        closeSheet()
+      }}
             />
           )}
 
@@ -437,10 +491,6 @@ export const NewRefSheet = () => {
                 await onAddRef(stagedItemFields)
               }}
             />
-          )}
-
-          {(step === 'addedToGrid' || step === 'addedToBacklog') && itemData && (
-            <AddedNewRefConfirmation itemData={itemData} />
           )}
 
           {step === 'addToList' && itemData && (

@@ -9,7 +9,7 @@ import { ensureCommunityChat, joinCommunityChat } from '@/features/communities/c
 import { Heading } from '@/ui/typo/Heading'
 import BottomSheet, { BottomSheetBackdrop, BottomSheetScrollView } from '@gorhom/bottom-sheet'
 import { router } from 'expo-router'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useState, useRef } from 'react'
 import { Text, View, Image, InteractionManager } from 'react-native'
 import { useAppStore } from '@/features/stores'
 
@@ -33,8 +33,65 @@ export default function Referencers({
     setProfileNavIntent,
     moduleBackdropAnimatedIndex,
     detailsBackdropAnimatedIndex,
+    setReferencersSheetApi,
   } = useAppStore()
   const [actionLoading, setActionLoading] = useState(false)
+  const closeWaitersRef = useRef(new Set<() => void>())
+  const sheetOpenRef = useRef(false)
+
+  const flushWaiters = useCallback(() => {
+    if (closeWaitersRef.current.size === 0) return
+    const waiters = Array.from(closeWaitersRef.current)
+    closeWaitersRef.current.clear()
+    waiters.forEach((resolver) => resolver())
+  }, [])
+
+  const closeAsync = useCallback(() => {
+    if (!sheetOpenRef.current) {
+      return Promise.resolve()
+    }
+    referencersBottomSheetRef.current?.close()
+    return new Promise<void>((resolve) => {
+      const timeout = setTimeout(() => {
+        closeWaitersRef.current.delete(resolver)
+        resolve()
+      }, 700)
+      const resolver = () => {
+        clearTimeout(timeout)
+        closeWaitersRef.current.delete(resolver)
+        resolve()
+      }
+      closeWaitersRef.current.add(resolver)
+    })
+  }, [referencersBottomSheetRef])
+
+  useEffect(() => {
+    const api = {
+      closeAsync,
+      isOpen: () => sheetOpenRef.current,
+    }
+    setReferencersSheetApi(api)
+    return () => {
+      setReferencersSheetApi(null)
+      flushWaiters()
+    }
+  }, [closeAsync, flushWaiters, setReferencersSheetApi])
+
+  useEffect(() => () => flushWaiters(), [flushWaiters])
+
+  const handleSheetChange = useCallback(
+    (index: number) => {
+      sheetOpenRef.current = index >= 0
+      if (index === -1) {
+        flushWaiters()
+        setReferencersContext(null)
+        if (detailsBackdropAnimatedIndex) {
+          detailsBackdropAnimatedIndex.value = -1
+        }
+      }
+    },
+    [detailsBackdropAnimatedIndex, flushWaiters, setReferencersContext]
+  )
 
   useEffect(() => {
     if (referencersContext && detailsBackdropAnimatedIndex) {
@@ -147,14 +204,7 @@ export default function Referencers({
       snapPoints={['80%']}
       backgroundStyle={{ backgroundColor: c.surface, borderRadius: s.$4 }}
       handleIndicatorStyle={{ backgroundColor: 'transparent' }}
-      onChange={(index) => {
-        if (index === -1) {
-          setReferencersContext(null)
-          if (detailsBackdropAnimatedIndex) {
-            detailsBackdropAnimatedIndex.value = -1
-          }
-        }
-      }}
+      onChange={handleSheetChange}
     >
       <View style={{ paddingHorizontal: s.$3, paddingVertical: s.$1, height: '100%' }}>
         <View style={{ flexDirection: 'row', alignItems: 'flex-start', paddingBottom: s.$1 }}>

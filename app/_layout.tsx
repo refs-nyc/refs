@@ -24,13 +24,13 @@ import { ShareIntentProvider } from 'expo-share-intent'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { useEffect, useRef, useState } from 'react'
-import { StatusBar, useColorScheme } from 'react-native'
+import { StatusBar, useColorScheme, Linking, InteractionManager } from 'react-native'
 import { Navigation } from '@/ui/navigation/Navigation'
 import { NavigationBackdrop } from '@/ui/navigation/NavigationBackdrop'
 import { LogoutSheet } from '@/ui/navigation/LogoutSheet'
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native'
 import { useFonts } from 'expo-font'
-import { SplashScreen, Stack } from 'expo-router'
+import { SplashScreen, Stack, router } from 'expo-router'
 import * as Notifications from 'expo-notifications'
 import { DeferredFonts } from '@/ui'
 import { c } from '@/features/style'
@@ -241,7 +241,70 @@ const Providers = ({ children }: { children: React.ReactNode }) => {
 function RootLayoutNav() {
   const savesBottomSheetRef = useRef<BottomSheet>(null)
   const colorScheme = useColorScheme()
-  const { referencersBottomSheetRef, addRefSheetRef, newRefSheetRef, logoutSheetRef } = useAppStore()
+  const { referencersBottomSheetRef, addRefSheetRef, newRefSheetRef, logoutSheetRef, user, joinChatByInvite, showToast, setPendingInviteToken, pendingInviteToken } = useAppStore()
+
+  // Handle invite link deep linking
+  useEffect(() => {
+    // Handle initial URL (app opened from link)
+    Linking.getInitialURL().then((url) => {
+      if (url) {
+        handleInviteLink(url)
+      }
+    })
+
+    // Handle URL while app is running (link clicked while app is open)
+    const subscription = Linking.addEventListener('url', (event) => {
+      handleInviteLink(event.url)
+    })
+
+    return () => {
+      subscription.remove()
+    }
+  }, [user?.id])
+
+  // Consume pending invite token after login
+  useEffect(() => {
+    if (user?.id && pendingInviteToken) {
+      InteractionManager.runAfterInteractions(() => {
+        joinInvite(pendingInviteToken)
+      })
+    }
+  }, [user?.id, pendingInviteToken])
+
+  const handleInviteLink = (url: string) => {
+    // Parse refsnyc://invite/g/<token>
+    const match = url.match(/refsnyc:\/\/invite\/g\/([^/?]+)/)
+    if (!match) return
+
+    const token = match[1]
+    if (!token) return
+
+    if (!user?.id) {
+      // Not authenticated - store token and redirect to login
+      setPendingInviteToken(token)
+      showToast('Log in to join this chat')
+      router.push('/user/login')
+      return
+    }
+
+    // Authenticated - join immediately
+    InteractionManager.runAfterInteractions(() => {
+      joinInvite(token)
+    })
+  }
+
+  const joinInvite = async (token: string) => {
+    try {
+      showToast('Joining chat...')
+      const { chatId, title } = await joinChatByInvite(token)
+      setPendingInviteToken(null)
+      router.push(`/messages/${chatId}`)
+      showToast(`Joined ${title}`)
+    } catch (error) {
+      setPendingInviteToken(null)
+      showToast(error instanceof Error ? error.message : 'Unable to join chat')
+    }
+  }
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>

@@ -28,6 +28,11 @@ export type ReferencersContext =
     }
   | null
 
+export type ReferencersSheetApi = {
+  closeAsync: () => Promise<void>
+  isOpen: () => boolean
+}
+
 export type RefPrefillFields = {
   title: string
   url?: string
@@ -40,6 +45,7 @@ export type UISlice = {
   addingToList: string
   addingItem: Item | null
   referencersBottomSheetRef: React.RefObject<BottomSheet>
+  referencersSheetApi: ReferencersSheetApi | null
   currentRefId: string
   addRefSheetRef: React.RefObject<BottomSheet>
   addingRefId: string
@@ -57,6 +63,7 @@ export type UISlice = {
   setAddingRefId: (id: string) => void
   setAddingRefPrefill: (fields: RefPrefillFields | null) => void
   setCurrentRefId: (id: string) => void
+  setReferencersSheetApi: (api: ReferencersSheetApi | null) => void
   setReferencersContext: (ctx: ReferencersContext) => void
   setAddingToList: (newState: string) => void
   setAddRefPrompt: (prompt: string) => void
@@ -132,6 +139,9 @@ export type UISlice = {
   removeRefSheetRef: React.RefObject<BottomSheet>
   pendingRefRemoval: { item: any; onMoveToBacklog: () => Promise<void>; onRemove: () => Promise<void> } | null
   setPendingRefRemoval: (data: { item: any; onMoveToBacklog: () => Promise<void>; onRemove: () => Promise<void> } | null) => void
+  // Invite link deep linking
+  pendingInviteToken: string | null
+  setPendingInviteToken: (token: string | null) => void
 }
 
 export type StoreSlices = BackdropSlice &

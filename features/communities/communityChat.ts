@@ -6,6 +6,7 @@ import { ClientResponseError } from 'pocketbase'
 import { queryClient } from '@/core/queryClient'
 import { messagingKeys, buildConversationPreview } from '@/features/queries/messaging'
 import { patchConversationPreview, upsertConversationPreview, removeConversationPreview } from '@/features/queries/messaging-cache'
+import { nanoid } from 'nanoid'
 
 type InterestMeta = {
   community?: string
@@ -48,6 +49,8 @@ export const ensureCommunityChat = async (
   const conversation = await pocketbase.collection('conversations').create({
     is_direct: false,
     title,
+    inviteToken: nanoid(21),
+    inviteTokenCreatedAt: Date.now(),
   })
 
   if (creatorId) {

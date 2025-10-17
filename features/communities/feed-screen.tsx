@@ -108,46 +108,46 @@ const OnboardingPill = ({ userName, fullName, avatarUri }: { userName: string; f
       <Animated.View
         style={[
           {
-            backgroundColor: c.surface,
+            backgroundColor: 'transparent',
             borderRadius: s.$1,
-            paddingHorizontal: s.$1,
+            borderWidth: 2,
+            borderColor: `rgba(128, 128, 128, 0.5)`,
+            borderStyle: 'dashed',
+            paddingHorizontal: s.$075,
             paddingVertical: s.$075,
-            marginBottom: s.$1,
+            marginBottom: s.$075,
             flexDirection: 'row',
             alignItems: 'center',
-            gap: s.$075,
-            elevation: 2,
-            shadowColor: '#000',
-            shadowOpacity: 0.08,
-            shadowRadius: 8,
-            shadowOffset: { width: 0, height: 4 },
+            gap: 10,
           },
           pillAnimatedStyle,
         ]}
       >
         <View
           style={{
-            width: 48,
-            height: 48,
-            borderRadius: 24,
-            backgroundColor: hasAvatar ? 'transparent' : c.surface2,
+            width: 60,
+            height: 60,
+            borderRadius: 30,
+            backgroundColor: 'transparent',
+            borderWidth: hasAvatar ? 0 : 2,
+            borderColor: hasAvatar ? 'transparent' : `rgba(128, 128, 128, 0.1)`,
             alignItems: 'center',
             justifyContent: 'center',
             overflow: 'hidden',
           }}
         >
           {hasAvatar && avatarUri ? (
-            <Image source={avatarUri} style={{ width: 48, height: 48 }} contentFit="cover" />
+            <Image source={avatarUri} style={{ width: 60, height: 60 }} contentFit="cover" />
           ) : (
-            <Text style={{ color: c.muted, fontFamily: 'Inter', fontSize: s.$1 }}>+</Text>
+            <Text style={{ color: c.muted, fontFamily: 'Inter', fontSize: 24, fontWeight: '200' }}>+</Text>
           )}
         </View>
-        <View style={{ flex: 1 }}>
-          <Text style={{ color: c.newDark, fontSize: (s.$09 as number) + 2, fontFamily: 'InterBold', fontWeight: '700' }}>
-            Finish your profile
+        <View style={{ flex: 1, gap: 4 }}>
+          <Text style={{ color: c.muted, fontSize: (s.$09 as number) + 1, fontFamily: 'InterMedium', fontWeight: '700' }}>
+            {fullName}
           </Text>
-          <Text style={{ color: c.muted, fontSize: s.$09, fontFamily: 'Inter', fontWeight: '400' }}>
-            Add a photo and refs so {fullName} shows up here
+          <Text style={{ color: c.accent, fontWeight: '500', fontFamily: 'InterMedium' }}>
+            Add a photo and 3 refs to appear
           </Text>
         </View>
       </Animated.View>

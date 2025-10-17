@@ -14,6 +14,7 @@ import { c, s } from '@/features/style'
 import { Avatar, AvatarStack } from '@/ui/atoms/Avatar'
 import MessageBubble from '@/ui/messaging/MessageBubble'
 import MessageInput from '@/ui/messaging/MessageInput'
+import { InviteBanner } from '@/ui/messaging/InviteBanner'
 import { pinataUpload } from '@/features/pinata'
 import { randomColors } from './utils'
 import { useConversationMessages } from '@/features/messaging/useConversationMessages'
@@ -646,28 +647,33 @@ export function MessagesScreen({
         ListFooterComponent={<View style={{ height: headerHeight }} />}
       />
 
-      <View style={{ position: 'absolute', bottom: bottomOffset, left: 0, right: 0, paddingHorizontal: s.$075 }}>
-        <MessageInput
-          onMessageSubmit={onMessageSubmit}
-          setMessage={setMessage}
-          message={message}
-          parentMessage={replying ? highlightedMessage : undefined}
-          parentMessageSender={
-            replying
-              ? members.find((m) => m.expand?.user.id === highlightedMessage?.sender)?.expand?.user || user
-              : undefined
-          }
-          onReplyClose={() => {
-            setReplying(false)
-            setHighlightedMessageId('')
-          }}
-          allowAttachment
-          onAttachmentPress={onAttachmentPress}
-          disabled={isSendDisabled}
-          attachments={attachments}
-          onAttachmentClear={removeAttachment}
-          compact
-        />
+      <View style={{ position: 'absolute', bottom: bottomOffset, left: 0, right: 0 }}>
+        {!isDirectConversation && (
+          <InviteBanner inviteToken={conversation?.inviteToken} chatTitle={conversation?.title || 'Group Chat'} />
+        )}
+        <View style={{ paddingHorizontal: s.$075 }}>
+          <MessageInput
+            onMessageSubmit={onMessageSubmit}
+            setMessage={setMessage}
+            message={message}
+            parentMessage={replying ? highlightedMessage : undefined}
+            parentMessageSender={
+              replying
+                ? members.find((m) => m.expand?.user.id === highlightedMessage?.sender)?.expand?.user || user
+                : undefined
+            }
+            onReplyClose={() => {
+              setReplying(false)
+              setHighlightedMessageId('')
+            }}
+            allowAttachment
+            onAttachmentPress={onAttachmentPress}
+            disabled={isSendDisabled}
+            attachments={attachments}
+            onAttachmentClear={removeAttachment}
+            compact
+          />
+        </View>
       </View>
 
       {showEmojiPicker && highlightedMessage && (

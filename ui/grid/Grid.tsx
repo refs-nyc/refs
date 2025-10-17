@@ -216,6 +216,8 @@ export const Grid = ({
   isEditMode?: boolean
 }) => {
   const gridSize = columns * rows
+  const fillerCount = autoRows ? 0 : Math.max(0, gridSize - items.length)
+  const shouldShowPromptTiles = showPrompts && editingRights && fillerCount > 0
 
   // State for shuffled prompts
   const [shuffledPrompts, setShuffledPrompts] = useState<string[]>([])
@@ -340,13 +342,11 @@ export const Grid = ({
         })}
 
         {/* Prompt placeholders for empty slots (skip when autoRows to avoid forcing min grid size) */}
-        {!autoRows && showPrompts && Array.from({ length: gridSize - items.length }).map((_, i) => {
+        {!autoRows && fillerCount > 0 && Array.from({ length: fillerCount }).map((_, i) => {
           const promptIndex = i % PROMPTS.length
           const prompt = PROMPTS[promptIndex]
           const totalIndex = items.length + i
-          
-          // Only show prompt squares on own profile when grid isn't full
-          const shouldShowPrompt = editingRights && items.length < gridSize
+          const shouldShowPrompt = shouldShowPromptTiles
           
           return (
             <StartupAnimationTile

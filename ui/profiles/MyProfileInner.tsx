@@ -39,6 +39,16 @@ import {
   extractProfileHeader,
   persistProfileHeaderSnapshot,
 } from '@/features/queries/profile'
+import {
+  getProfileSnapshotByUserName,
+  getProfileCacheEntryByUserName,
+  upsertProfileCacheEntry,
+  persistProfileSnapshot,
+  updateProfileCacheEntry,
+  loadProfileSnapshotFromStorage,
+} from '@/features/cache/profileCache'
+import { gridSort } from '@/features/stores/itemFormatters'
+import { createdSort } from '@/ui/profiles/sorts'
 
 const PERF = process.env.EXPO_PUBLIC_PERF_HARNESS === '1'
 const _useEffect = React.useEffect
@@ -63,10 +73,6 @@ const RenderTimer: React.FC<{ label: string; children: React.ReactNode }> = ({ l
 console.timeEnd('[profile] module-top')
 
 type ProfileSnapshot = ProfileData
-
-type CachedProfileEntry = ProfileSnapshot & { timestamp: number }
-
-const profileMemoryCache = new Map<string, CachedProfileEntry>()
 
 const PERF_TRACE = PERF
 const logProfilePerf = (label: string, startedAt: number) => {
@@ -116,15 +122,6 @@ const useProfileEffect = (
     }
   }, deps)
 }
-
-const snapshotFromEntry = (entry?: CachedProfileEntry | null): ProfileSnapshot | undefined =>
-  entry
-    ? {
-        profile: entry.profile,
-        gridItems: entry.gridItems,
-        backlogItems: entry.backlogItems,
-      }
-    : undefined
 
 const gridAnimationHistory = new Set<string>()
 
@@ -191,16 +188,13 @@ export const MyProfile = ({ userName }: { userName: string }) => {
   const insets = useSafeAreaInsets()
   const { height: windowHeight } = useWindowDimensions()
 
-  const cachedEntry = profileMemoryCache.get(userName)
-  const [hydraulicCache, setHydraulicCache] = useState<ProfileSnapshot | undefined>(() =>
-    snapshotFromEntry(cachedEntry)
-  )
+  const cachedSnapshot = getProfileSnapshotByUserName(userName)
+  const [hydraulicCache, setHydraulicCache] = useState<ProfileSnapshot | undefined>(() => cachedSnapshot)
 
   const [profile, setProfile] = useState<Profile | undefined>(hydraulicCache?.profile)
   const [gridItems, setGridItems] = useState<ExpandedItem[]>(hydraulicCache?.gridItems ?? [])
   const [backlogItems, setBacklogItems] = useState<ExpandedItem[]>(hydraulicCache?.backlogItems ?? [])
   const [loading, setLoading] = useState(!hydraulicCache)
-  const [promptsReady, setPromptsReady] = useState(Boolean(hydraulicCache?.gridItems?.length))
   const [focusReady, setFocusReady] = useState(Boolean(hydraulicCache))
 
   const user = useAppStore((state) => state.user)
@@ -308,40 +302,70 @@ export const MyProfile = ({ userName }: { userName: string }) => {
       const header = extractProfileHeader(payload.profile)
       queryClient.setQueryData(profileKeys.header(userName), header)
       setProfile(payload.profile)
-      setGridItems(payload.gridItems)
-      setBacklogItems(payload.backlogItems)
-      setPromptsReady(payload.gridItems.length > 0)
-      useAppStore.getState().setGridItemCount(payload.gridItems.length)
+
+      const optimisticItemsMap = useAppStore.getState().optimisticItems
+      let mergedGrid: ExpandedItem[] = []
+      let mergedBacklog: ExpandedItem[] = []
+
+      setGridItems((previous) => {
+        const map = new Map<string, ExpandedItem>()
+        previous.forEach((item) => {
+          map.set(item.id, item)
+        })
+        payload.gridItems.forEach((item) => {
+          map.set(item.id, item)
+        })
+        optimisticItemsMap.forEach((item, id) => {
+          if (!item.backlog && !map.has(id)) {
+            map.set(id, item)
+          }
+        })
+        mergedGrid = gridSort(Array.from(map.values()))
+        return mergedGrid
+      })
+
+      setBacklogItems((previous) => {
+        const map = new Map<string, ExpandedItem>()
+        payload.backlogItems.forEach((item) => {
+          map.set(item.id, item)
+        })
+        previous.forEach((item) => {
+          if (!map.has(item.id)) {
+            map.set(item.id, item)
+          }
+        })
+        optimisticItemsMap.forEach((item, id) => {
+          if (item.backlog && !map.has(id)) {
+            map.set(id, item)
+          }
+        })
+        mergedBacklog = Array.from(map.values()).sort(createdSort)
+        return mergedBacklog
+      })
+
+      const nextData: ProfileData = {
+        profile: payload.profile,
+        gridItems: mergedGrid,
+        backlogItems: mergedBacklog,
+      }
+
+      useAppStore.getState().setGridItemCount(mergedGrid.length)
 
       if (PERF_TRACE) {
         const rqStartedAt = Date.now()
-        queryClient.setQueryData<ProfileData>(profileKeys.detail(userName), {
-          profile: payload.profile,
-          gridItems: payload.gridItems,
-          backlogItems: payload.backlogItems,
-        })
+        queryClient.setQueryData<ProfileData>(profileKeys.detail(userName), nextData)
         logProfilePerf('applyProfileData.setQueryData', rqStartedAt)
       } else {
-        queryClient.setQueryData<ProfileData>(profileKeys.detail(userName), {
-          profile: payload.profile,
-          gridItems: payload.gridItems,
-          backlogItems: payload.backlogItems,
-        })
+        queryClient.setQueryData<ProfileData>(profileKeys.detail(userName), nextData)
       }
-
-      profileMemoryCache.set(userName, {
-        profile: payload.profile,
-        gridItems: payload.gridItems,
-        backlogItems: payload.backlogItems,
-        timestamp: Date.now(),
-      })
 
       if (persist) {
         const userId = payload.profile.id
         if (userId) {
+          void persistProfileSnapshot(userId, payload.profile.userName, nextData)
           void persistProfileHeaderSnapshot(userId, header)
           const snapshotStartedAt = PERF_TRACE ? Date.now() : 0
-          const writePromise = putSnapshot('profileSelf', snapshotKeys.profileSelf(userId), payload, {
+          const writePromise = putSnapshot('profileSelf', snapshotKeys.profileSelf(userId), nextData, {
             timestamp: Date.now(),
           })
           if (PERF_TRACE) {
@@ -356,10 +380,12 @@ export const MyProfile = ({ userName }: { userName: string }) => {
           } else {
             writePromise.catch((error) => {
               console.warn('Profile snapshot write failed', error)
-            })
+              })
           }
           void writePromise
         }
+      } else if (payload.profile.id) {
+        upsertProfileCacheEntry(payload.profile.id, payload.profile.userName, nextData)
       }
       if (PERF_TRACE) {
         logProfilePerf('applyProfileData.total', applyStartedAt)
@@ -373,7 +399,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
 
     const hydrateFromMemory = () => {
       const startedAt = PERF_TRACE ? Date.now() : 0
-      const snapshot = snapshotFromEntry(profileMemoryCache.get(userName))
+      const snapshot = getProfileSnapshotByUserName(userName)
       if (!snapshot) {
         return false
       }
@@ -412,11 +438,31 @@ export const MyProfile = ({ userName }: { userName: string }) => {
         return
       }
 
+      if (user?.id) {
+        try {
+          const compactStart = PERF_TRACE ? Date.now() : 0
+          const compact = await loadProfileSnapshotFromStorage({ userId: user.id, userName })
+          if (PERF_TRACE) {
+            logProfilePerf('hydrateFromCompact.read', compactStart)
+          }
+          if (cancelled) return
+          if (compact) {
+            applyProfileData(compact, { persist: false })
+            setHydraulicCache(compact)
+            setLoading(false)
+            return
+          }
+        } catch (error) {
+          if (__DEV__) {
+            console.warn('[boot-trace] hydrateFromCompact failed', error)
+          }
+        }
+      }
+
       setHydraulicCache(undefined)
       setProfile(undefined)
       setGridItems([])
       setBacklogItems([])
-      setPromptsReady(false)
       setFocusReady(false)
       setLoading(true)
 
@@ -776,32 +822,32 @@ export const MyProfile = ({ userName }: { userName: string }) => {
         {(() => {
           const outerRingSize = AVATAR_SIZE * 1.1
           const innerRingSize = AVATAR_SIZE
-          const container = (
+          const avatarNode = (
             <RNAnimated.View style={{ transform: [{ scale: avatarScale }], opacity: avatarSwapOpacity }}>
+              <View
+                style={{
+                  width: outerRingSize,
+                  height: outerRingSize,
+                  borderRadius: outerRingSize / 2,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  backgroundColor: c.surface,
+                  borderWidth: 2.5,
+                  borderColor: avatarUri ? '#B0B0B0' : `rgba(128, 128, 128, 0.1)`,
+                }}
+              >
                 <View
                   style={{
-                    width: outerRingSize,
-                    height: outerRingSize,
-                    borderRadius: outerRingSize / 2,
+                    width: innerRingSize,
+                    height: innerRingSize,
+                    borderRadius: innerRingSize / 2,
+                    borderWidth: 2.5,
+                    borderColor: avatarUri ? c.surface : `rgba(128, 128, 128, 0.1)`,
+                    overflow: 'hidden',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    backgroundColor: c.surface,
-                    borderWidth: 2.5,
-                    borderColor: '#B0B0B0',
-                  }}
-                >
-                  <View
-                    style={{
-                      width: innerRingSize,
-                      height: innerRingSize,
-                      borderRadius: innerRingSize / 2,
-                      borderWidth: 2.5,
-                      borderColor: avatarUri ? c.surface : '#B0B0B0',
-                      overflow: 'hidden',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      backgroundColor: c.surface2,
-                      borderStyle: avatarUri ? 'solid' : 'dashed',
+                    backgroundColor: 'transparent',
+                    borderStyle: avatarUri ? 'solid' : 'dashed',
                   }}
                 >
                   {avatarUri ? (
@@ -812,11 +858,11 @@ export const MyProfile = ({ userName }: { userName: string }) => {
                       transition={150}
                     />
                   ) : (
-                    <Text style={{ color: c.prompt, fontSize: 28, fontWeight: '600' }}>+</Text>
+                    <Text style={{ color: c.muted, fontSize: 24, fontWeight: '200', fontFamily: 'Inter' }}>+</Text>
                   )}
                   {avatarUri && avatarUploading && (
                     <View
-        style={{
+                      style={{
                         position: 'absolute',
                         top: 0,
                         left: 0,
@@ -912,7 +958,27 @@ export const MyProfile = ({ userName }: { userName: string }) => {
             </RNAnimated.View>
           )
 
-          // Avatar is no longer clickable for own profile - use settings sheet to change
+          const container = ownProfile ? (
+            <Pressable
+              onPress={handleAvatarPress}
+              disabled={avatarUploading}
+              hitSlop={12}
+              accessibilityRole="button"
+              accessibilityLabel="Change avatar"
+              style={{
+                width: outerRingSize,
+                height: outerRingSize,
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              {avatarNode}
+            </Pressable>
+          ) : (
+            avatarNode
+          )
+
+          // Render avatar (pressable for own profile to open picker)
           return <View style={{ paddingRight: 6 }}>{container}</View>
         })()}
       </View>
@@ -920,10 +986,9 @@ export const MyProfile = ({ userName }: { userName: string }) => {
   ) : null
 
   const showGrid = hasProfile
-  const promptDisplayReady = showGrid && promptsReady && !loading
+  const promptDisplayReady = showGrid && !loading
   const allowPromptPlaceholders =
-    promptDisplayReady &&
-    displayGridItems.length < GRID_CAPACITY
+    ownProfile && promptDisplayReady && displayGridItems.length < GRID_CAPACITY
   const showPromptChips = ownProfile && promptDisplayReady && displayGridItems.length < GRID_CAPACITY && !isEditMode
 
   const fabAnimatedStyle = useAnimatedStyle(() => {
@@ -949,6 +1014,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
 
   const updateProfileCache = useCallback(
     (transform: (snapshot: ProfileData) => ProfileData) => {
+      let nextSnapshot: ProfileData | undefined
       queryClient.setQueryData<ProfileData>(profileKeys.detail(userName), (current) => {
         if (!current) return current
         const base: ProfileData = {
@@ -956,10 +1022,18 @@ export const MyProfile = ({ userName }: { userName: string }) => {
           gridItems: [...current.gridItems],
           backlogItems: [...current.backlogItems],
         }
-        return transform(base)
+        nextSnapshot = transform(base)
+        return nextSnapshot
       })
+
+      const profileId =
+        nextSnapshot?.profile.id ?? profile?.id ?? hydraulicCache?.profile.id ?? user?.id ?? null
+
+      if (nextSnapshot && profileId) {
+        updateProfileCacheEntry(profileId, nextSnapshot.profile.userName ?? userName, () => nextSnapshot!)
+      }
     },
-    [queryClient, userName]
+    [queryClient, userName, profile?.id, hydraulicCache?.profile.id, user?.id]
   )
 
   const handleAvatarSelection = useCallback(
@@ -997,17 +1071,17 @@ export const MyProfile = ({ userName }: { userName: string }) => {
           setProfile((prev) => (prev ? { ...prev, image: uploadedUrl, avatar_url: uploadedUrl } : updatedRecord))
           setOptimisticAvatarUri(uploadedUrl)
 
-          const cachedEntry = profileMemoryCache.get(userName)
-          profileMemoryCache.set(userName, {
-            profile: {
-              ...(cachedEntry?.profile ?? updatedRecord),
-              image: uploadedUrl,
-              avatar_url: uploadedUrl,
-            } as Profile,
-            gridItems: cachedEntry?.gridItems ?? gridItems,
-            backlogItems: cachedEntry?.backlogItems ?? backlogItems,
-            timestamp: Date.now(),
-          })
+          const cachedEntry = getProfileCacheEntryByUserName(userName)
+          const nextProfile = {
+            ...(cachedEntry?.profile ?? updatedRecord),
+            image: uploadedUrl,
+            avatar_url: uploadedUrl,
+          } as Profile
+          updateProfileCacheEntry(updatedRecord.id, userName, (entry) => ({
+            profile: nextProfile,
+            gridItems: entry?.gridItems ?? gridItems,
+            backlogItems: entry?.backlogItems ?? backlogItems,
+          }))
 
           updateProfileCache((current) => ({
             ...current,
@@ -1021,11 +1095,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
           const userId = updatedRecord.id
           if (userId) {
             const snapshotPayload: ProfileData = {
-              profile: {
-                ...(cachedEntry?.profile ?? updatedRecord),
-                image: uploadedUrl,
-                avatar_url: uploadedUrl,
-              } as Profile,
+              profile: nextProfile,
               gridItems: cachedEntry?.gridItems ?? gridItems,
               backlogItems: cachedEntry?.backlogItems ?? backlogItems,
             }
@@ -1060,9 +1130,11 @@ export const MyProfile = ({ userName }: { userName: string }) => {
   const gridScale = useRef(new RNAnimated.Value(hasAnimatedBefore ? 1 : 0.96)).current
   const gridAnimationPlayedRef = useRef(hasAnimatedBefore)
 
+  const hasVisibleTiles = displayGridItems.length > 0 || allowPromptPlaceholders
+
   useProfileEffect('profile.playGridAnimation', () => {
     if (!showGrid) return
-    if (!promptsReady && displayGridItems.length === 0) return
+    if (!hasVisibleTiles) return
 
     if (gridAnimationPlayedRef.current) {
       gridFade.setValue(1)
@@ -1086,7 +1158,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
         useNativeDriver: true,
       }),
     ]).start()
-  }, [showGrid, gridFade, gridScale, userName, promptsReady, displayGridItems.length])
+  }, [showGrid, gridFade, gridScale, userName, hasVisibleTiles])
 
   const gridContent = showGrid ? (
     <RNAnimated.View
@@ -1307,7 +1379,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
     const dataUpdatedAt = state?.dataUpdatedAt ?? 0
     const hasFreshData = dataUpdatedAt > 0 && Date.now() - dataUpdatedAt < PROFILE_FORCE_REFRESH_THRESHOLD_MS
 
-    const cachedEntry = profileMemoryCache.get(userName)
+    const cachedEntry = getProfileCacheEntryByUserName(userName)
     const hasRecentWarmup = Boolean(
       cachedEntry && Date.now() - cachedEntry.timestamp < PROFILE_FORCE_REFRESH_THRESHOLD_MS
     )

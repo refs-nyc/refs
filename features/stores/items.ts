@@ -7,6 +7,27 @@ import type { StoreSlices } from './types'
 import { pocketbase } from '../pocketbase'
 import { edgeFunctionClient } from '../supabase/edge-function-client'
 import { simpleCache } from '@/features/cache/simpleCache'
+import { gridSort, compactGridItem } from './itemFormatters'
+import {
+  getProfileCacheEntryByUserId,
+  persistGridSnapshot,
+  persistBacklogSnapshot,
+} from '@/features/cache/profileCache'
+
+const forceNetworkProfileIds = new Set<string>()
+
+export const markProfileGridDirty = (userId: string) => {
+  forceNetworkProfileIds.add(userId)
+}
+
+const consumeProfileGridDirty = (userId?: string): boolean => {
+  if (!userId) return false
+  if (forceNetworkProfileIds.has(userId)) {
+    forceNetworkProfileIds.delete(userId)
+    return true
+  }
+  return false
+}
 
 const USE_WEBHOOKS = (process.env.EXPO_PUBLIC_USE_WEBHOOKS || '').toLowerCase() === 'true'
 
@@ -113,24 +134,6 @@ async function processItemViaEdgeFunction(newItem: ExpandedItem) {
   await edgeFunctionClient.regenerateSpiritVector({
     user_id: newItem.creator,
   })
-}
-
-function gridSort(items: ExpandedItem[]): ExpandedItem[] {
-  const itemsWithOrder: ExpandedItem[] = []
-  const itemsWithoutOrder: ExpandedItem[] = []
-
-  for (const item of items) {
-    if (item.order !== 0) {
-      itemsWithOrder.push(item)
-    } else {
-      itemsWithoutOrder.push(item)
-    }
-  }
-  // if items have an order value, sort them by order
-  itemsWithOrder.sort((a, b) => a.order - b.order)
-  // otherwise sort them by created date
-  itemsWithoutOrder.sort(createdSort)
-  return [...itemsWithOrder, ...itemsWithoutOrder]
 }
 
 export type ItemSlice = {
@@ -352,14 +355,39 @@ export const createItemSlice: StateCreator<StoreSlices, [], [], ItemSlice> = (se
 
     get().triggerFeedRefresh()
 
-    // Clear cache for this user (silent operation)
-    const userId = pocketbase.authStore.record?.id
-    if (userId) {
-      scheduleAfterInteractions(() => {
-        simpleCache.clearUser(userId).catch(error => {
-          console.warn('Cache clear failed:', error)
+    const authRecord = pocketbase.authStore.record
+    if (authRecord) {
+      const existingEntry = getProfileCacheEntryByUserId(authRecord.id)
+      const cachedGrid =
+        existingEntry?.gridItems ??
+        ((await simpleCache.get<ExpandedItem[]>('grid_items', authRecord.id)) ?? [])
+
+      if (!backlog) {
+        const filtered = cachedGrid.filter((item) => item.id !== newItem.id)
+        const nextGrid = gridSort([...filtered, newItem])
+        await persistGridSnapshot({
+          userId: authRecord.id,
+          userName: authRecord.userName,
+          gridItems: nextGrid,
+          profile: existingEntry?.profile,
+          backlogItems: existingEntry?.backlogItems,
         })
-      })
+        markProfileGridDirty(authRecord.id)
+      } else {
+        const cachedBacklog =
+          existingEntry?.backlogItems ??
+          ((await simpleCache.get<ExpandedItem[]>('backlog_items', authRecord.id)) ?? [])
+        const filteredBacklog = cachedBacklog.filter((item) => item.id !== newItem.id)
+        const nextBacklog = [...filteredBacklog, newItem]
+        await persistBacklogSnapshot({
+          userId: authRecord.id,
+          userName: authRecord.userName,
+          backlogItems: nextBacklog,
+          profile: existingEntry?.profile,
+          gridItems: existingEntry?.gridItems,
+        })
+        markProfileGridDirty(authRecord.id)
+      }
     }
 
     return newItem
@@ -466,12 +494,39 @@ export const createItemSlice: StateCreator<StoreSlices, [], [], ItemSlice> = (se
 
     get().triggerFeedRefresh()
 
-    // Clear cache for this user (silent operation)
-    scheduleAfterInteractions(() => {
-      simpleCache.clearUser(userId).catch(error => {
-        console.warn('Cache clear failed:', error)
-      })
-    })
+    const authRecord = pocketbase.authStore.record
+    if (authRecord) {
+      const existingEntry = getProfileCacheEntryByUserId(authRecord.id)
+
+      if (!item.backlog) {
+        const cachedGrid =
+          existingEntry?.gridItems ??
+          ((await simpleCache.get<ExpandedItem[]>('grid_items', authRecord.id)) ?? [])
+        const nextGrid = cachedGrid.filter((gridItem) => gridItem.id !== id)
+
+        await persistGridSnapshot({
+          userId: authRecord.id,
+          userName: authRecord.userName,
+          gridItems: nextGrid,
+          profile: existingEntry?.profile,
+          backlogItems: existingEntry?.backlogItems,
+        })
+        markProfileGridDirty(authRecord.id)
+      } else {
+        const cachedBacklog =
+          existingEntry?.backlogItems ??
+          ((await simpleCache.get<ExpandedItem[]>('backlog_items', authRecord.id)) ?? [])
+        const nextBacklog = cachedBacklog.filter((gridItem) => gridItem.id !== id)
+
+        await persistBacklogSnapshot({
+          userId: authRecord.id,
+          userName: authRecord.userName,
+          backlogItems: nextBacklog,
+          profile: existingEntry?.profile,
+          gridItems: existingEntry?.gridItems,
+        })
+      }
+    }
   },
   addItemToList: async (listId: string, itemId: string) => {
     try {
@@ -581,6 +636,42 @@ export const createItemSlice: StateCreator<StoreSlices, [], [], ItemSlice> = (se
 
       // Trigger feed refresh since backlog items don't appear in the feed
       get().triggerFeedRefresh()
+
+      const authRecord = pocketbase.authStore.record
+      if (authRecord) {
+        const existingEntry = getProfileCacheEntryByUserId(authRecord.id)
+        const cachedGrid =
+          existingEntry?.gridItems ??
+          ((await simpleCache.get<ExpandedItem[]>('grid_items', authRecord.id)) ?? [])
+        const cachedBacklog =
+          existingEntry?.backlogItems ??
+          ((await simpleCache.get<ExpandedItem[]>('backlog_items', authRecord.id)) ?? [])
+
+        const movedItem = cachedGrid.find((gridItem) => gridItem.id === id)
+        const nextGrid = cachedGrid.filter((gridItem) => gridItem.id !== id)
+        const backlogItem =
+          movedItem ?? ({
+            ...record,
+            backlog: true,
+          } as unknown as ExpandedItem)
+        const nextBacklog = [...cachedBacklog.filter((gridItem) => gridItem.id !== id), backlogItem]
+
+        await persistGridSnapshot({
+          userId: authRecord.id,
+          userName: authRecord.userName,
+          gridItems: nextGrid,
+          profile: existingEntry?.profile,
+          backlogItems: nextBacklog,
+        })
+        await persistBacklogSnapshot({
+          userId: authRecord.id,
+          userName: authRecord.userName,
+          backlogItems: nextBacklog,
+          profile: existingEntry?.profile,
+          gridItems: nextGrid,
+        })
+        markProfileGridDirty(authRecord.id)
+      }
 
       return record
     } catch (error) {
@@ -699,8 +790,9 @@ const resolveProfileUserId = (userId: string | undefined, userName: string): str
 
 export const getProfileItems = async ({ userName, userId, forceNetwork = false }: ProfileItemsRequest) => {
   const effectiveUserId = resolveProfileUserId(userId, userName)
+  const shouldForceNetwork = forceNetwork || consumeProfileGridDirty(effectiveUserId)
 
-  if (!forceNetwork && effectiveUserId) {
+  if (!shouldForceNetwork && effectiveUserId) {
     const cached = await simpleCache.get<ExpandedItem[]>('grid_items', effectiveUserId)
     if (Array.isArray(cached) && cached.length > 0) {
       return cached.map(compactGridItem)
@@ -755,28 +847,6 @@ export const getBacklogItems = async ({ userName, userId, forceNetwork = false }
     void simpleCache.set('backlog_items', compacted, effectiveUserId)
   }
   return compacted
-}
-
-const compactGridItem = (item: ExpandedItem): ExpandedItem => {
-  const ref = item.expand?.ref
-  if (!ref) {
-    return item
-  }
-
-  const compactRef = {
-    ...ref,
-    subtitle: (ref as any)?.subtitle ?? undefined,
-    link: (ref as any)?.link ?? undefined,
-    caption: (ref as any)?.caption ?? undefined,
-  }
-
-  return {
-    ...item,
-    expand: {
-      ...item.expand,
-      ref: compactRef,
-    } as ExpandedItem['expand'],
-  }
 }
 
 // Function to automatically move items from backlog to grid when there's space

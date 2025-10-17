@@ -10,9 +10,104 @@
 - Font loader no longer blocks the app tree; we render immediately with system fonts and swap in Inter once it's ready, so the splash screen disappears without gating gestures.
 - Messaging bootstrap hydrates from cache instantly and defers the multi-query PocketBase fetch until after interactions, keeping the JS queue free during launch.
 
+## 2025-10-17: Group Chat Invite Links
+
+### Implemented MVP group chat invite link system for 200-person launch
+
+**Backend/Schema Changes:**
+- Added `inviteToken` (string, 21-char nanoid) and `inviteTokenCreatedAt` (number) fields to `ConversationsRecord` in PocketBase types
+- Modified `createConversation` to automatically generate invite tokens for all group chats (not DMs) at creation time using `nanoid(21)`
+- Token generation happens server-side during chat creation, no additional API calls needed
+
+**Join Logic:**
+- Added `joinChatByInvite(token)` function to message store that:
+  1. Queries PocketBase for conversation by token (filtered to group chats only)
+  2. Checks if user is already a member (idempotent)
+  3. Creates membership if new, skips if already joined
+  4. Invalidates only relevant caches (`conversations` and specific `messages:{chatId}`)
+  5. Returns `{ chatId, title }` for navigation
+- Error handling for invalid/expired tokens, non-group chats, and unauthenticated users
+
+**Deep Linking:**
+- Updated `app.json` to include `refsnyc://invite/g` in deep links
+- Added comprehensive deep link handler in `RootLayoutNav` (`_layout.tsx`):
+  - Listens for both initial URL and runtime URL events
+  - Parses `refsnyc://invite/g/<token>` format
+  - If unauthenticated: stores token in Zustand (`pendingInviteToken`), shows toast, redirects to login
+  - If authenticated: calls `joinChatByInvite` immediately via `InteractionManager.runAfterInteractions`
+  - After login: consumes pending token automatically and joins chat
+- All join operations are perf-gated to avoid blocking animations
+
+**UI Components:**
+- Created `InviteBanner` component for group chats:
+  - Renders above message composer, only for non-direct conversations
+  - Zero network requests (reads `inviteToken` from cached conversation data)
+  - "Copy link" button copies `https://refs.nyc/invite/g/<token>` to clipboard
+  - "Share" button opens native share sheet with formatted message
+  - Clean styling: `c.surface2` background, `c.surface3` border, compact layout
+- Integrated into `messages-screen.tsx` between message list and composer
+
+**State Management:**
+- Added `pendingInviteToken` (string | null) to UISlice
+- Added `setPendingInviteToken` action for storing/clearing token
+- Token persists during unauthenticated flow, cleared after successful join
+
+**Performance Optimizations:**
+- Join operation uses `InteractionManager.runAfterInteractions` to avoid blocking gestures
+- Targeted cache invalidation (only `conversationPreviews` + specific chat messages)
+- No hydration/warmups during deep link navigation
+- Banner reads from existing query data, no additional fetches
+
+**User Flow:**
+1. User A creates group chat → token auto-generated
+2. User A taps "Copy link" in banner → `https://refs.nyc/invite/g/<token>` copied
+3. User B receives link, taps it:
+   - **If logged out:** App opens → login prompt → auto-joins after auth → navigates to chat
+   - **If logged in:** App opens → joins immediately → navigates to chat
+   - **If already member:** Just navigates to chat (no errors)
+4. Success toast: "Joined [Chat Title]"
+5. Error toast for invalid/expired tokens
+
+**Future-Ready Design:**
+- Token rotation/revocation can be added by regenerating `inviteToken` field
+- Expiry logic can check `inviteTokenCreatedAt` timestamp
+- Universal links (`https://refs.nyc/invite/g/<token>`) already configured in iOS associatedDomains
+- Web fallback can be added via 302 redirect from `refs.nyc` to app scheme
+
+**Files Modified:**
+- `features/pocketbase/pocketbase-types.ts`: Added invite fields to ConversationsRecord
+- `app.json`: Added invite deep link
+- `features/stores/messages.ts`: Import nanoid, generate tokens in createConversation, add joinChatByInvite
+- `features/communities/communityChat.ts`: Added token generation to ensureCommunityChat for interest chats
+- `features/stores/types.ts`: Added pendingInviteToken to UISlice type
+- `ui/state.ts`: Added pendingInviteToken state and setter
+- `app/_layout.tsx`: Deep link handler with auth flow logic
+- `ui/messaging/InviteBanner.tsx`: New component (copy/share UI)
+- `features/messaging/messages-screen.tsx`: Integrated banner above composer
+
+**Backend Requirements:**
+- PocketBase schema must be updated to include `inviteToken` (string, indexed) and `inviteTokenCreatedAt` (number) on `conversations` collection
+- Server-side validation recommended to enforce group chat restriction on joins
+- Consider rate limiting join endpoint to prevent abuse
+
+**Testing Notes:**
+- Deep links testable via `npx uri-scheme open "refsnyc://invite/g/<token>" --ios`
+- Token format: 21 characters, URL-safe (nanoid default alphabet)
+- All error cases return user-friendly messages
+- Already-member case is silent (just navigates, no toast spam)
+
+**Bug Fix (Post-Implementation):**
+- Initial implementation only added tokens to group chats created via `createConversation` (regular group messages)
+- Interest/community chats use `ensureCommunityChat` which bypassed token generation
+- Fixed by adding `inviteToken` and `inviteTokenCreatedAt` generation to `features/communities/communityChat.ts`
+- Now all group chats (including solo interest chats) automatically get invite tokens
+
 ## 2025-??-??
 - Improved the "Select Item to Replace" sheet UI: added 15px border radius to images, enhanced typography (20pt title, 18pt subtitle with Inter Medium), refined spacing with s.$1 gap and targeted margins (s.$05, s.$075), moved all content up 40px to better utilize vertical space.
-- Improved the "Choose Replace Item Method" sheet UI: enhanced title typography (20pt Inter Medium), increased image size to 120px with 15px border radius, better spacing with s.$15 gap between sections, grouped buttons in a container with s.$1 gap for consistent spacing.
+- Improved the "Choose Replace Item Method" sheet UI: enhanced title typography (20pt Inter Medium), increased image size to 120px with 15px border radius, better spacing with tighter gaps (s.$1 main gap, s.$075 button margin) for compact layout.
+- Redesigned OnboardingPill (empty profile state in directory): replaced solid background with dashed border (2px stroke, grey 50% opacity), updated text to show user's full name as header (c.muted color, same size as directory row) and "Add a photo and 3 refs to appear" as subheader in c.accent color (InterMedium weight 500), matched spacing (gap: 4) and sizing (60px avatar) to regular directory pills, made avatar circle hollow with 10% opacity grey stroke and c.muted + symbol (24pt, weight 200), removed shadow styling for cleaner look.
+- Removed fill from un-added avatar on user's profile grid: changed backgroundColor from c.surface2 to 'transparent' for the inner and outer avatar rings when no avatar is set, creating a hollow dashed circle effect. Updated empty avatar styling to match onboarding pill: 10% opacity grey stroke (`rgba(128, 128, 128, 0.1)`), smaller + symbol (24pt instead of 28pt), lighter weight (200 instead of 600), c.muted color, Inter font family.
+- Cleaned up Feed sheet styling: removed divider (borderBottomWidth/borderBottomColor) below "Feed" heading, simplified header layout with cleaner spacing (paddingTop: s.$15, paddingBottom: s.$1, marginBottom: s.$1), removed unnecessary empty Text element.
 - Attempted overlay height spacer approach for settings, but it still flashed; backed out.
 - Swapped to a dedicated settings bottom sheet: pencil opens the sheet (`BottomSheet`), settings live there, FAB fades via opacity when edit mode is active, so the grid stays untouched and no more black flash.
 - Refined the settings sheet snap logic to avoid `CONTENT_HEIGHT` snap errors: compute numeric snap points from measured content/fallback heights, keep the 50px radius, and pad the scroll container so the grid stays editable beneath the open sheet.

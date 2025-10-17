@@ -353,6 +353,7 @@ export const OtherProfile = ({ userName, prefetchedUserId }: { userName: string;
                   items={gridItems}
                   rows={4}
                   editingRights={false}
+                  showPrompts={false}
                   rowJustify="center"
                   onPressItem={(item) => {
                     setDetailsSheetData({

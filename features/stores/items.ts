@@ -1,3 +1,4 @@
+import { InteractionManager } from 'react-native'
 import { StateCreator } from 'zustand'
 import { ExpandedItem, CompleteRef, StagedItemFields, StagedRefFields } from '../types'
 import { ItemsRecord, RefsRecord } from '../pocketbase/pocketbase-types'
@@ -8,6 +9,25 @@ import { edgeFunctionClient } from '../supabase/edge-function-client'
 import { simpleCache } from '@/features/cache/simpleCache'
 
 const USE_WEBHOOKS = (process.env.EXPO_PUBLIC_USE_WEBHOOKS || '').toLowerCase() === 'true'
+
+type InteractionHandle = { cancel?: () => void } | null
+let pendingFeedRefresh: InteractionHandle = null
+let pendingProfileRefresh: InteractionHandle = null
+
+const scheduleAfterInteractions = (fn: () => void): InteractionHandle => {
+  try {
+    return InteractionManager.runAfterInteractions(() => {
+      requestAnimationFrame(() => {
+        fn()
+      })
+    }) as InteractionHandle
+  } catch {
+    const timeout = setTimeout(fn, 0)
+    return {
+      cancel: () => clearTimeout(timeout),
+    }
+  }
+}
 
 // Helper function to update show_in_directory flag when item count or avatar changes
 export async function updateShowInDirectory(userId: string) {
@@ -271,16 +291,37 @@ export const createItemSlice: StateCreator<StoreSlices, [], [], ItemSlice> = (se
       editedState,
     })),
   triggerFeedRefresh: () => {
-    set((state) => ({ feedRefreshTrigger: state.feedRefreshTrigger + 1 }))
-    const refreshFeed = get().refreshFeed
-    if (typeof refreshFeed === 'function') {
-      refreshFeed({ force: true, silent: true }).catch((error: unknown) => {
-        console.warn('Feed refresh failed after item change', error)
-      })
+    const scheduleRefresh = () => {
+      pendingFeedRefresh = null
+      set((state) => ({ feedRefreshTrigger: state.feedRefreshTrigger + 1 }))
+      const refreshFeed = get().refreshFeed
+      if (typeof refreshFeed === 'function') {
+        refreshFeed({ force: true, silent: true }).catch((error: unknown) => {
+          console.warn('Feed refresh failed after item change', error)
+        })
+      }
     }
+
+    if (pendingFeedRefresh) {
+      pendingFeedRefresh.cancel?.()
+      pendingFeedRefresh = null
+    }
+
+    pendingFeedRefresh = scheduleAfterInteractions(scheduleRefresh)
   },
-  triggerProfileRefresh: () =>
-    set((state) => ({ profileRefreshTrigger: state.profileRefreshTrigger + 1 })),
+  triggerProfileRefresh: () => {
+    const scheduleRefresh = () => {
+      pendingProfileRefresh = null
+      set((state) => ({ profileRefreshTrigger: state.profileRefreshTrigger + 1 }))
+    }
+
+    if (pendingProfileRefresh) {
+      pendingProfileRefresh.cancel?.()
+      pendingProfileRefresh = null
+    }
+
+    pendingProfileRefresh = scheduleAfterInteractions(scheduleRefresh)
+  },
   addToProfile: async (refId: string | null, itemFields: StagedItemFields, backlog: boolean) => {
     // get user id
     let linkedRefId = refId
@@ -301,8 +342,10 @@ export const createItemSlice: StateCreator<StoreSlices, [], [], ItemSlice> = (se
       // Update show_in_directory flag if adding to grid (async, non-blocking)
       const userId = pocketbase.authStore.record?.id
       if (userId) {
-        updateShowInDirectory(userId).catch(error => {
-          console.warn('Failed to update show_in_directory:', error)
+        scheduleAfterInteractions(() => {
+          updateShowInDirectory(userId).catch(error => {
+            console.warn('Failed to update show_in_directory:', error)
+          })
         })
       }
     }
@@ -312,8 +355,10 @@ export const createItemSlice: StateCreator<StoreSlices, [], [], ItemSlice> = (se
     // Clear cache for this user (silent operation)
     const userId = pocketbase.authStore.record?.id
     if (userId) {
-      simpleCache.clearUser(userId).catch(error => {
-        console.warn('Cache clear failed:', error)
+      scheduleAfterInteractions(() => {
+        simpleCache.clearUser(userId).catch(error => {
+          console.warn('Cache clear failed:', error)
+        })
       })
     }
 
@@ -410,18 +455,22 @@ export const createItemSlice: StateCreator<StoreSlices, [], [], ItemSlice> = (se
     // Update cached grid count if item was in grid (not backlog)
     if (!item.backlog) {
       get().decrementGridItemCount()
-      
+
       // Update show_in_directory flag after removing from grid (async, non-blocking)
-      updateShowInDirectory(userId).catch(error => {
-        console.warn('Failed to update show_in_directory:', error)
+      scheduleAfterInteractions(() => {
+        updateShowInDirectory(userId).catch(error => {
+          console.warn('Failed to update show_in_directory:', error)
+        })
       })
     }
 
     get().triggerFeedRefresh()
 
     // Clear cache for this user (silent operation)
-    simpleCache.clearUser(userId).catch(error => {
-      console.warn('Cache clear failed:', error)
+    scheduleAfterInteractions(() => {
+      simpleCache.clearUser(userId).catch(error => {
+        console.warn('Cache clear failed:', error)
+      })
     })
   },
   addItemToList: async (listId: string, itemId: string) => {
@@ -524,8 +573,10 @@ export const createItemSlice: StateCreator<StoreSlices, [], [], ItemSlice> = (se
       get().decrementGridItemCount()
       
       // Update show_in_directory flag after moving to backlog (async, non-blocking)
-      updateShowInDirectory(userId).catch(error => {
-        console.warn('Failed to update show_in_directory:', error)
+      scheduleAfterInteractions(() => {
+        updateShowInDirectory(userId).catch(error => {
+          console.warn('Failed to update show_in_directory:', error)
+        })
       })
 
       // Trigger feed refresh since backlog items don't appear in the feed

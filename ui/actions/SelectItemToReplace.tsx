@@ -35,18 +35,30 @@ export const SelectItemToReplace = ({
         display: 'flex',
         flexDirection: 'column',
         padding: s.$3,
+        paddingTop: (s.$3 as number) - 40,
+        paddingBottom: s.$2,
         gap: s.$1,
         alignItems: 'center',
       }}
     >
-      <Text style={{ color: c.surface, fontSize: s.$1 }}>
+      <Text 
+        style={{ 
+          color: c.surface, 
+          fontSize: 20,
+          fontFamily: 'InterMedium',
+          fontWeight: '600',
+          textAlign: 'center',
+          paddingHorizontal: s.$2,
+          marginBottom: s.$05,
+        }}
+      >
         Adding {stagedItemFields.title} to your profile
       </Text>
       {stagedItemFields.image && (
-        <View style={{ alignItems: 'center' }}>
+        <View style={{ alignItems: 'center', marginBottom: s.$05 }}>
           <SimplePinataImage
             originalSource={stagedItemFields.image}
-            style={{ height: 80, width: 80 }}
+            style={{ height: 80, width: 80, borderRadius: 15 }}
             imageOptions={{
               width: 80,
               height: 80,
@@ -54,9 +66,22 @@ export const SelectItemToReplace = ({
           />
         </View>
       )}
-      <Text style={{ color: c.surface, fontSize: s.$1 }}>Choose a grid item to replace</Text>
+      <Text 
+        style={{ 
+          color: c.surface, 
+          fontSize: 18,
+          fontFamily: 'InterMedium',
+          fontWeight: '500',
+          textAlign: 'center',
+          marginBottom: s.$075,
+        }}
+      >
+        Choose a grid item to replace
+      </Text>
       <AddRefSheetGrid gridItems={gridItems} onSelectItem={onSelectItemToReplace} />
-      <Button title="Add to backlog instead" variant="small" onPress={onAddToBacklog} />
+      <View style={{ marginTop: s.$05 }}>
+        <Button title="Add to backlog instead" variant="small" onPress={onAddToBacklog} />
+      </View>
     </View>
   )
 }

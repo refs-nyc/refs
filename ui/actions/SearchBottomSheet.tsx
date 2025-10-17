@@ -133,7 +133,6 @@ export default function SearchBottomSheet() {
                 if (!searching && user?.userName) {
                   setAddingNewRefTo('grid')
                   setAddRefPrompt('')
-                  newRefSheetRef.current?.snapToIndex(1)
                 }
               }}
             >
@@ -185,7 +184,6 @@ export default function SearchBottomSheet() {
                       e.stopPropagation()
                       setAddingNewRefTo('grid')
                       setAddRefPrompt('')
-                      newRefSheetRef.current?.snapToIndex(1)
                     }}
                   >
                     <View

@@ -4,6 +4,7 @@ import { UsersRecord } from '../pocketbase/pocketbase-types'
 import { ClientResponseError } from 'pocketbase'
 import type { StoreSlices } from './types'
 import { pocketbase } from '../pocketbase'
+import { InteractionManager } from 'react-native'
 import { updateShowInDirectory } from './items'
 import { clearPersistedQueryClient } from '@/core/queryClient'
 const OFF_AUTH_RESTORE = process.env.EXPO_PUBLIC_OFF_AUTH_RESTORE === '1'
@@ -150,8 +151,12 @@ export const createUserSlice: StateCreator<StoreSlices, [], [], UserSlice> = (se
       // If avatar/image was updated, check if we should update show_in_directory flag
       if (fields.image || fields.avatar_url) {
         const userId = pocketbase.authStore.record.id
-        updateShowInDirectory(userId).catch(error => {
-          console.warn('Failed to update show_in_directory:', error)
+        InteractionManager.runAfterInteractions(() => {
+          requestAnimationFrame(() => {
+            updateShowInDirectory(userId).catch(error => {
+              console.warn('Failed to update show_in_directory:', error)
+            })
+          })
         })
       }
 

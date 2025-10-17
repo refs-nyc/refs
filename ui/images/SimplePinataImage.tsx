@@ -63,8 +63,7 @@ export function useSignedImageUrl(
   options: { priority?: 'must' | 'low'; reason?: string } = {}
 ) {
   const safeSource = originalSource?.trim() || ''
-  const [loading, setLoading] = useState(Boolean(safeSource))
-  const [source, setSource] = useState<string | null>(safeSource || null)
+  const [resolvedUrl, setResolvedUrl] = useState<string | null>(safeSource || null)
   const { getSignedUrl, signedUrls } = useAppStore()
   const priority = options.priority ?? 'low'
   const reason = useMemo(
@@ -80,6 +79,7 @@ export function useSignedImageUrl(
   const retryTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [retryToken, setRetryToken] = useState(0)
   const isMountedRef = useRef(true)
+  const lastGoodUrlRef = useRef<string | null>(safeSource || null)
 
   useEffect(() => {
     return () => {
@@ -90,6 +90,12 @@ export function useSignedImageUrl(
       }
     }
   }, [])
+
+  useEffect(() => {
+    if (!lastGoodUrlRef.current && safeSource) {
+      lastGoodUrlRef.current = safeSource
+    }
+  }, [safeSource])
   const shouldSign = useMemo(() => {
     const maxDimension = Math.max(imageOptions.width, imageOptions.height)
     return maxDimension > SIGNATURE_SKIP_THRESHOLD
@@ -98,8 +104,7 @@ export function useSignedImageUrl(
   const fetchSignedUrl = useCallback(
     async (signal: AbortSignal) => {
       if (!safeSource) {
-        setSource(null)
-        setLoading(false)
+        setResolvedUrl(lastGoodUrlRef.current)
         return
       }
 
@@ -116,8 +121,12 @@ export function useSignedImageUrl(
           signedUrl === targetUrl &&
           targetUrl.includes('mypinata.cloud')
 
-        setSource(signedUrl)
-        setLoading(false)
+        if (!needsRetry && shouldSign) {
+          lastGoodUrlRef.current = signedUrl
+        }
+
+        const nextSource = needsRetry ? lastGoodUrlRef.current ?? signedUrl : signedUrl
+        setResolvedUrl(nextSource)
 
         if (needsRetry) {
           const state = retryTokenRef.current
@@ -144,14 +153,17 @@ export function useSignedImageUrl(
           retryTimeoutRef.current = null
         }
 
-        if (shouldSign) {
+        if (shouldSign && !needsRetry) {
           storeCacheEntry(targetUrl, signedUrl)
         }
       } catch (error) {
         if (signal.aborted) return
         // Fall back to the unsigned source; screen will still render while we retry later.
-        setSource(safeSource)
-        setLoading(false)
+        const fallback = lastGoodUrlRef.current ?? safeSource ?? null
+        if (fallback) {
+          lastGoodUrlRef.current = fallback
+        }
+        setResolvedUrl((prev) => prev ?? fallback)
       }
     },
     [cacheKey, safeSource, getSignedUrl, shouldSign, reason]
@@ -169,34 +181,35 @@ export function useSignedImageUrl(
     }
 
     if (!safeSource) {
-      setSource(null)
-      setLoading(false)
+      setResolvedUrl(lastGoodUrlRef.current)
       return
     }
 
     if (!shouldSign) {
-      setSource(cacheKey || safeSource)
-      setLoading(false)
+      const base = cacheKey || safeSource
+      lastGoodUrlRef.current = base
+      setResolvedUrl(base)
       return
     }
 
     const cached = getCacheEntry(cacheKey)
     if (cached) {
-      setSource(cached.url)
-      setLoading(false)
+      lastGoodUrlRef.current = cached.url
+      setResolvedUrl(cached.url)
       return
     }
 
     const storeEntry = signedUrls[cacheKey]
     if (storeEntry && storeEntry.expires + storeEntry.date > Date.now()) {
-      setSource(storeEntry.signedUrl)
-      setLoading(false)
+      lastGoodUrlRef.current = storeEntry.signedUrl
+      setResolvedUrl(storeEntry.signedUrl)
       storeCacheEntry(cacheKey, storeEntry.signedUrl)
       return
     }
 
-    setSource(safeSource)
-    setLoading(false)
+    const fallback = lastGoodUrlRef.current ?? safeSource
+    lastGoodUrlRef.current = fallback
+    setResolvedUrl(fallback)
 
     const controller = new AbortController()
     controllerRef.current = controller
@@ -219,19 +232,20 @@ export function useSignedImageUrl(
     }
   }, [cacheKey, safeSource, signedUrls, fetchSignedUrl, shouldSign, priority, retryToken])
 
-  return { source, loading }
+  return { source: resolvedUrl }
 }
 
 export const SimplePinataImage = ({
   originalSource,
   imageOptions,
-  placeholderStyle = {},
-  ...props
+  placeholderStyle,
+  style,
+  ...rest
 }: {
   originalSource: string
   placeholderStyle?: StyleProp<ViewStyle>
   imageOptions: OptimizeImageOptions
-} & Omit<ImageProps, 'source'>) => {
+} & Omit<ImageProps, 'source' | 'style'> & { style?: ImageProps['style'] }) => {
   const scale = useWindowDimensions().scale
 
   const imageOptionsWithScale = useMemo(
@@ -242,19 +256,22 @@ export const SimplePinataImage = ({
     [imageOptions.height, imageOptions.width, scale]
   )
 
-  const { source, loading } = useSignedImageUrl(originalSource, imageOptionsWithScale)
-
-  if (loading) {
-    return <View style={placeholderStyle} />
-  }
+  const { source } = useSignedImageUrl(originalSource, imageOptionsWithScale)
+  const finalSource = source ?? originalSource ?? null
+  const imageStyle: ImageProps['style'] = style ?? { width: '100%', height: '100%' }
 
   return (
-    <Image
-      {...props}
-      contentFit="cover"
-      source={source || originalSource}
-      cachePolicy="memory"
-      priority="normal"
-    />
+    <View style={placeholderStyle}>
+      <Image
+        {...rest}
+        style={imageStyle}
+        contentFit="cover"
+        transition={0}
+        recyclingKey={originalSource}
+        cachePolicy="immutable"
+        priority="normal"
+        source={finalSource || undefined}
+      />
+    </View>
   )
 }

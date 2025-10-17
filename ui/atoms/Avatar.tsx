@@ -44,15 +44,18 @@ export const Avatar = ({ source, size, fallback, priority = 'low' }: AvatarProps
     backgroundColor: 'rgba(176,176,176,0.35)',
   }
 
+  const finalSource = resolvedSource ?? thumbSource ?? source ?? null
+
   return (
     <View style={circleStyle}>
-      {resolvedSource ? (
+      {finalSource ? (
         <Image
-          source={resolvedSource}
+          source={finalSource}
           style={{ width: bucket, height: bucket, borderRadius: bucket / 2 }}
           contentFit="cover"
-          cachePolicy="memory"
-          transition={150}
+          cachePolicy="immutable"
+          recyclingKey={`${source ?? thumbSource ?? 'avatar'}:${bucket}`}
+          transition={0}
         />
       ) : initial ? (
         <Text style={{ color: c.surface, fontWeight: '700' }}>{initial}</Text>

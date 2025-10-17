@@ -1,239 +1,384 @@
-import { getProfileItems } from '@/features/stores/items'
-import { ExpandedItem, StagedItemFields } from '@/features/types'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import BottomSheet, { BottomSheetBackdrop, BottomSheetView } from '@gorhom/bottom-sheet'
+import { Keyboard, View, InteractionManager } from 'react-native'
+import { useShareIntentContext } from 'expo-share-intent'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
+
 import { useAppStore } from '@/features/stores'
+import { ExpandedItem, StagedItemFields } from '@/features/types'
 import { c, s } from '@/features/style'
-import { AddedNewRefConfirmation } from '@/ui/actions/AddedNewRefConfirmation'
-import { ChooseReplaceItemMethod } from '@/ui/actions/ChooseReplaceItemMethod'
-import { UserLists } from '@/ui/actions/UserLists'
+
 import { RefForm } from '@/ui/actions/RefForm'
-import { NewRefFields, SearchRef } from '@/ui/actions/SearchRef'
+import { SearchRef, NewRefFields } from '@/ui/actions/SearchRef'
 import { SelectItemToReplace } from '@/ui/actions/SelectItemToReplace'
+import { ChooseReplaceItemMethod } from '@/ui/actions/ChooseReplaceItemMethod'
+import { AddedNewRefConfirmation } from '@/ui/actions/AddedNewRefConfirmation'
+import { UserLists } from '@/ui/actions/UserLists'
 import { EditableList } from '@/ui/lists/EditableList'
 
-import BottomSheet, { BottomSheetBackdrop, BottomSheetView } from '@gorhom/bottom-sheet'
-import { useEffect, useMemo, useState } from 'react'
-import { Keyboard, View } from 'react-native'
-import { Collections } from '@/features/pocketbase/pocketbase-types'
 
-export type NewRefStep =
-  | 'search'
-  | 'add'
-  | 'addToList'
-  | 'editList'
-  | 'chooseReplaceItemMethod'
-  | 'selectItemToReplace'
-  | 'addedToBacklog'
-  | 'addedToGrid'
+const SNAP_POINTS = ['80%'] as const
+const DEFAULT_INDEX = 0
 
-const SNAP_INDICES = {
-  closed: -1,
-  default: 0, // 67%
-  search: 1, // 80%
-  add: 2, // 85%
-  expanded: 3, // 100%
-  caption: 4, // 110%
+const scheduleAfterInteractions = (task: () => void) => {
+  try {
+    InteractionManager.runAfterInteractions(() => {
+      requestAnimationFrame(task)
+    })
+  } catch {
+    setTimeout(task, 0)
+  }
 }
 
-const snapPoints = ['67%', '80%', '85%', '100%', '110%']
-const maxSnapIndex = snapPoints.length - 1
+const clampIndex = (value: number) => {
+  if (value < 0) return -1
+  const max = SNAP_POINTS.length - 1
+  return Math.min(Math.max(value, 0), max)
+}
 
-export const NewRefSheet = ({
-  bottomSheetRef,
-}: {
-  bottomSheetRef: React.RefObject<BottomSheet>
-}) => {
+const useNewRefSheetController = () => {
   const {
-    triggerProfileRefresh,
-    addItemToList,
-    moveToBacklog,
-    removeItem,
-    addToProfile,
-    user,
-    getItemById,
     addingNewRefTo,
     setAddingNewRefTo,
+    newRefSheetRef,
     addRefPrompt,
+    setAddRefPrompt,
+    triggerProfileRefresh,
+    triggerFeedRefresh,
+    optimisticItems,
+    addOptimisticItem,
+    removeOptimisticItem,
   } = useAppStore()
 
-  const [step, setStep] = useState<NewRefStep>('search')
+  const { resetShareIntent } = useShareIntentContext()
+
+  const isOpen = addingNewRefTo !== null
+  const isBacklog = addingNewRefTo === 'backlog'
+
+  const [step, setStep] = useState<'search' | 'add' | 'selectReplace' | 'chooseReplaceMethod' | 'addedToGrid' | 'addedToBacklog' | 'addToList' | 'editList'>(
+    'search'
+  )
   const [existingRefId, setExistingRefId] = useState<string | null>(null)
   const [refFields, setRefFields] = useState<NewRefFields | null>(null)
   const [stagedItemFields, setStagedItemFields] = useState<StagedItemFields | null>(null)
   const [itemToReplace, setItemToReplace] = useState<ExpandedItem | null>(null)
   const [itemData, setItemData] = useState<ExpandedItem | null>(null)
-  const [sheetIndex, setSheetIndex] = useState<number>(SNAP_INDICES.closed)
-  const [shouldRenderContent, setShouldRenderContent] = useState<boolean>(false)
-  const [shouldMountSheet, setShouldMountSheet] = useState<boolean>(false)
-  const [captionFocused, setCaptionFocused] = useState<boolean>(false)
-
-  const isOpen = addingNewRefTo !== null
-  const backlog = addingNewRefTo === 'backlog'
-
-  const getNextListNumber = async (): Promise<number> => {
-    try {
-      const gridItems = await getProfileItems({
-        userName: user?.userName!,
-        userId: user?.id,
-      })
-      const existingLists = gridItems.filter(item => item.list)
-      const listNumbers = existingLists
-        .map(item => {
-          const title = item.expand?.ref?.title || ''
-          const match = title.match(/^My List (\d+)$/)
-          return match ? parseInt(match[1]) : 0
-        })
-        .filter(num => num > 0)
-
-      if (listNumbers.length === 0) {
-        return 1
-      }
-
-      return Math.max(...listNumbers) + 1
-    } catch (error) {
-      console.error('Error getting next list number:', error)
-      return 1
-    }
-  }
+  const [captionFocused, setCaptionFocused] = useState(false)
+  const [shouldRenderContent, setShouldRenderContent] = useState(false)
+  const [shouldMount, setShouldMount] = useState(false)
+  const [sheetIndex, setSheetIndex] = useState(-1)
+  const closeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const isClosingRef = useRef(false)
 
   const desiredIndex = useMemo(() => {
-    if (!isOpen) {
-      return SNAP_INDICES.closed
-    }
+    if (!isOpen) return -1
+    return SNAP_POINTS.length - 1
+  }, [isOpen])
 
-    if (step === 'add') {
-      return captionFocused ? SNAP_INDICES.caption : SNAP_INDICES.add
-    }
+  const resetState = useCallback(() => {
+    setStep('search')
+    setExistingRefId(null)
+    setRefFields(null)
+    setStagedItemFields(null)
+    setItemToReplace(null)
+    setItemData(null)
+    setCaptionFocused(false)
+  }, [])
 
-    return SNAP_INDICES.search
-  }, [isOpen, step, captionFocused])
+
+  const finalizeClose = useCallback(() => {
+    resetState()
+    resetShareIntent?.()
+    setAddRefPrompt('')
+    setShouldRenderContent(false)
+    setAddingNewRefTo(null)
+    Keyboard.dismiss()
+    isClosingRef.current = false
+  }, [resetState, resetShareIntent, setAddRefPrompt, setAddingNewRefTo])
+
+  const closeSheet = useCallback(() => {
+    if (isClosingRef.current) return
+    isClosingRef.current = true
+    setSheetIndex(-1)
+  }, [])
 
   useEffect(() => {
+    const targetIndex = clampIndex(desiredIndex < 0 ? SNAP_POINTS.length - 1 : desiredIndex)
+
     if (isOpen) {
-      setShouldMountSheet(true)
-      setShouldRenderContent(true)
+      if (closeTimeoutRef.current) {
+        clearTimeout(closeTimeoutRef.current)
+        closeTimeoutRef.current = null
+      }
+      setShouldMount(true)
+      isClosingRef.current = false
+      scheduleAfterInteractions(() => {
+        requestAnimationFrame(() => {
+          setSheetIndex(targetIndex)
+          setShouldRenderContent(true)
+        })
+      })
       return
     }
 
     setShouldRenderContent(false)
-    const timer = setTimeout(() => {
-      setShouldMountSheet(false)
-      setSheetIndex(SNAP_INDICES.closed)
+    setSheetIndex(-1)
+    if (closeTimeoutRef.current) {
+      clearTimeout(closeTimeoutRef.current)
+    }
+    closeTimeoutRef.current = setTimeout(() => {
+      setShouldMount(false)
+      closeTimeoutRef.current = null
     }, 220)
-
-    return () => clearTimeout(timer)
-  }, [isOpen])
+  }, [desiredIndex, isOpen, scheduleAfterInteractions])
 
   useEffect(() => {
-    if (!isOpen) {
-      return
-    }
-
-    const clamped = Math.min(Math.max(desiredIndex, SNAP_INDICES.closed), maxSnapIndex)
-    if (sheetIndex !== clamped) {
-      setSheetIndex(clamped)
-    }
-  }, [isOpen, desiredIndex, sheetIndex])
-
-  useEffect(() => {
-    if (step !== 'add' && captionFocused) {
-      setCaptionFocused(false)
-    }
-  }, [step, captionFocused])
-
-  // Handle photo prompts - use selectedPhoto from store if available
-  useEffect(() => {
-    if (isOpen && addRefPrompt) {
-      const photoPrompts = ['Piece from a museum', 'Tradition you love', 'Meme', 'halloween pic']
-
-      if (photoPrompts.includes(addRefPrompt)) {
-        const { selectedPhoto } = useAppStore.getState()
-
-        if (selectedPhoto) {
-          setRefFields({
-            title: '',
-            image: selectedPhoto,
-            url: '',
-            promptContext: addRefPrompt,
-          })
-          setStep('add')
-          useAppStore.getState().setSelectedPhoto(null)
-        }
+    return () => {
+      if (closeTimeoutRef.current) {
+        clearTimeout(closeTimeoutRef.current)
+        closeTimeoutRef.current = null
       }
     }
-  }, [isOpen, addRefPrompt])
+  }, [])
 
-  const resetSheetState = () => {
-    setCaptionFocused(false)
-    setStep('search')
-    setItemData(null)
-    setStagedItemFields(null)
-    setItemToReplace(null)
-    setExistingRefId(null)
-    setRefFields(null)
-  }
+  const handleSheetChange = useCallback(
+    (index: number) => {
+      const clamped = clampIndex(index)
+      setSheetIndex(clamped)
+      if (clamped >= 0) {
+        setShouldRenderContent(true)
+      }
+      if (clamped === -1) {
+        setShouldRenderContent(false)
+        finalizeClose()
+      }
+    },
+    [finalizeClose]
+  )
 
-  const handleClose = () => {
-    setAddingNewRefTo(null)
-    setSheetIndex(SNAP_INDICES.closed)
-    bottomSheetRef.current?.close()
-    Keyboard.dismiss()
-    resetSheetState()
+  const handleAddToProfile = useCallback(
+    async (fields: StagedItemFields, options: { backlog: boolean; existingRefId: string | null }) => {
+      const { backlog } = options
+      const merged = { ...fields }
+      const { addToProfile, replaceOptimisticItem } = useAppStore.getState()
+
+      const optimistic: ExpandedItem = {
+        id: `temp-${Date.now()}`,
+        collectionId: 'items',
+        collectionName: 'items',
+        creator: useAppStore.getState().user?.id ?? '',
+        ref: options.existingRefId ?? 'temp-ref',
+        image: fields.image ?? '',
+        url: fields.url ?? '',
+        text: fields.text ?? '',
+        list: fields.list ?? false,
+        parent: fields.parent ?? '',
+        backlog,
+        order: 0,
+        created: new Date().toISOString(),
+        updated: new Date().toISOString(),
+        promptContext: fields.promptContext ?? '',
+        expand: {
+          ref: {
+            id: options.existingRefId ?? 'temp-ref',
+            title: fields.title ?? '',
+            image: fields.image ?? '',
+            url: fields.url ?? '',
+            meta: '{}',
+            creator: useAppStore.getState().user?.id ?? '',
+            created: new Date().toISOString(),
+            updated: new Date().toISOString(),
+          },
+          creator: null as any,
+          items_via_parent: [] as any,
+        },
+      }
+
+      addOptimisticItem(optimistic)
+      closeSheet()
+
+      try {
+        const newItem = await addToProfile(options.existingRefId, merged, backlog)
+        replaceOptimisticItem(optimistic.id, newItem)
+        setItemData(newItem)
+        setStep(backlog ? 'addedToBacklog' : 'addedToGrid')
+      } catch (error) {
+        console.error('Failed to add to profile', error)
+        removeOptimisticItem(optimistic.id)
+      }
+    },
+    [addOptimisticItem, closeSheet, removeOptimisticItem]
+  )
+
+  const handleAddToExistingList = useCallback(
+    async (listId: string, itemId: string) => {
+      const { addItemToList } = useAppStore.getState()
+      await addItemToList(listId, itemId)
+      const { getItemById } = useAppStore.getState()
+      const updated = await getItemById(listId)
+      setItemData(updated)
+      setStep('editList')
+    },
+    []
+  )
+
+  const handleCreateList = useCallback(
+    async (nextNumber: number, itemId: string) => {
+      const { addToProfile, getItemById } = useAppStore.getState()
+      const list = await addToProfile(null, {
+        title: `My List ${nextNumber}`,
+        text: '',
+        url: '',
+        image: '',
+        list: true,
+      }, false)
+      await useAppStore.getState().addItemToList(list.id, itemId)
+      const expandedList = await getItemById(list.id)
+      setItemData(expandedList)
+      setStep('editList')
+    },
+    []
+  )
+
+  const onAddRef = useCallback(
+    async (fields: StagedItemFields) => {
+      if (!isBacklog) {
+        const gridCount = useAppStore.getState().gridItemCount
+        if (gridCount >= 12) {
+          setStagedItemFields(fields)
+          setStep('selectReplace')
+          return
+        }
+      }
+      await handleAddToProfile(fields, { backlog: isBacklog, existingRefId: existingRefId })
+    },
+    [existingRefId, handleAddToProfile, isBacklog]
+  )
+
+  const onAddPhototoList = useCallback(
+    async (fields: StagedItemFields) => {
+      await handleAddToProfile(fields, { backlog: true, existingRefId: existingRefId })
+      setStep('addToList')
+    },
+    [existingRefId, handleAddToProfile]
+  )
+
+  return {
+    isOpen,
+    isBacklog,
+    step,
+    setStep,
+    existingRefId,
+    setExistingRefId,
+    refFields,
+    setRefFields,
+    stagedItemFields,
+    setStagedItemFields,
+    itemToReplace,
+    setItemToReplace,
+    itemData,
+    setItemData,
+    captionFocused,
+    setCaptionFocused,
+    shouldRenderContent,
+    shouldMount,
+    sheetIndex,
+    handleSheetChange,
+    handleAddToProfile,
+    handleAddToExistingList,
+    handleCreateList,
+    onAddRef,
+    onAddPhototoList,
+    closeSheet,
+    newRefSheetRef,
+    addRefPrompt,
+    setAddRefPrompt,
+    triggerProfileRefresh,
+    triggerFeedRefresh,
+    scheduleAfterInteractions,
   }
+}
+
+export const NewRefSheet = () => {
+  const insets = useSafeAreaInsets()
+
+  const {
+    isOpen,
+    isBacklog,
+    step,
+    setStep,
+    existingRefId,
+    setExistingRefId,
+    refFields,
+    setRefFields,
+    stagedItemFields,
+    setStagedItemFields,
+    itemToReplace,
+    setItemToReplace,
+    itemData,
+    setItemData,
+    captionFocused,
+    setCaptionFocused,
+    shouldRenderContent,
+    shouldMount,
+    sheetIndex,
+    handleSheetChange,
+    handleAddToProfile,
+    handleAddToExistingList,
+    handleCreateList,
+    onAddRef,
+    onAddPhototoList,
+    closeSheet,
+    newRefSheetRef,
+    addRefPrompt,
+    setAddRefPrompt,
+    triggerProfileRefresh,
+    triggerFeedRefresh,
+    scheduleAfterInteractions,
+  } = useNewRefSheetController()
+
+  const snapPoints = useMemo(() => [...SNAP_POINTS], [])
 
   useEffect(() => {
-    if (isOpen) {
-      setShouldRenderContent(true)
-      return
-    }
+    if (!isOpen) return
+    scheduleAfterInteractions(() => {
+      triggerProfileRefresh()
+      triggerFeedRefresh()
+    })
+  }, [isOpen, scheduleAfterInteractions, triggerFeedRefresh, triggerProfileRefresh])
 
-    const timer = setTimeout(() => {
-      setShouldRenderContent(false)
-    }, 220)
-
-    return () => clearTimeout(timer)
-  }, [isOpen])
-
-  if (!shouldMountSheet) {
-    return null
-  }
+  if (!shouldMount) return null
 
   return (
     <BottomSheet
-      enableDynamicSizing={false}
-      ref={bottomSheetRef}
-      enablePanDownToClose={true}
-      snapPoints={snapPoints}
+      ref={newRefSheetRef}
       index={sheetIndex}
-      backgroundStyle={{ backgroundColor: c.olive, borderRadius: 50, paddingTop: 0 }}
-      onChange={(index: number) => {
-        const clamped = Math.min(Math.max(index, SNAP_INDICES.closed), maxSnapIndex)
-        if (clamped !== sheetIndex) {
-          setSheetIndex(clamped)
-        }
-
-        if (clamped === SNAP_INDICES.closed) {
-          handleClose()
-        }
-      }}
+      snapPoints={snapPoints}
+      enablePanDownToClose
+      enableDynamicSizing={false}
       handleComponent={null}
-      backdropComponent={(p) => (
-        <BottomSheetBackdrop
-          {...p}
-          disappearsOnIndex={SNAP_INDICES.closed}
-          appearsOnIndex={SNAP_INDICES.default}
-          pressBehavior={'close'}
-        />
-      )}
       keyboardBehavior="interactive"
       android_keyboardInputMode="adjustResize"
+      backgroundStyle={{ backgroundColor: c.olive, borderRadius: 50, paddingTop: 0 }}
+      style={{ zIndex: 10000 }}
+      containerStyle={{ zIndex: 10000 }}
+      backdropComponent={(props) => (
+        <BottomSheetBackdrop
+          {...props}
+          disappearsOnIndex={-1}
+          appearsOnIndex={DEFAULT_INDEX}
+          pressBehavior="close"
+        />
+      )}
+      onChange={handleSheetChange}
     >
       {shouldRenderContent && (
         <BottomSheetView
           style={{
+            paddingTop: s.$2,
             paddingHorizontal: s.$2,
-            paddingTop: 8,
-            alignItems: 'center',
-            justifyContent: 'center',
+            paddingBottom: insets.bottom ? insets.bottom + s.$075 : s.$2,
+            gap: s.$1,
           }}
         >
           {step === 'search' && (
@@ -243,177 +388,84 @@ export const NewRefSheet = ({
                 setRefFields(fields)
                 setStep('add')
               }}
-              onChooseExistingRef={(r, newImage) => {
-                setExistingRefId(r.id)
-                setRefFields({ title: r.title!, image: newImage, url: r.url })
+              onChooseExistingRef={(ref, newImage) => {
+                setExistingRefId(ref.id)
+                setRefFields({ title: ref.title || '', image: newImage ?? ref.image, url: ref.url })
                 setStep('add')
               }}
             />
           )}
 
-          {step === 'add' && (
+          {step === 'add' && refFields && (
             <RefForm
-              key={`ref-form-${refFields?.image || 'no-image'}-${addRefPrompt || 'no-prompt'}`}
               existingRefFields={refFields}
-              placeholder={'Title'}
-              pickerOpen={false}
-              canEditRefData={true}
+              placeholder="Title"
               onCaptionFocus={setCaptionFocused}
-
-              onAddRef={async (itemFields) => {
-                const mergedFields = { ...itemFields, promptContext: refFields?.promptContext }
-
-                if (!backlog) {
-                  const { gridItemCount } = useAppStore.getState()
-                  if (gridItemCount >= 12) {
-                    setStagedItemFields(mergedFields)
-                    setStep('selectItemToReplace')
-                    return
-                  }
-                }
-
-                const optimisticItem: ExpandedItem = {
-                  id: `temp-${Date.now()}`,
-                  collectionId: Collections.Items,
-                  collectionName: Collections.Items,
-                  creator: user?.id || '',
-                  ref: existingRefId || 'temp-ref',
-                  image: itemFields.image || '',
-                  url: itemFields.url || '',
-                  text: itemFields.text || '',
-                  list: itemFields.list || false,
-                  parent: itemFields.parent || '',
-                  backlog,
-                  order: 0,
-                  created: new Date().toISOString(),
-                  updated: new Date().toISOString(),
-                  promptContext: mergedFields.promptContext || '',
-                  expand: {
-                    ref: {
-                      id: existingRefId || 'temp-ref',
-                      title: itemFields.title || '',
-                      image: itemFields.image || '',
-                      url: itemFields.url || '',
-                      meta: '{}',
-                      creator: user?.id || '',
-                      created: new Date().toISOString(),
-                      updated: new Date().toISOString(),
-                    },
-                    creator: null as any,
-                    items_via_parent: [] as any,
-                  },
-                }
-
-                const { addOptimisticItem } = useAppStore.getState()
-                addOptimisticItem(optimisticItem)
-
-                Keyboard.dismiss()
-                handleClose()
-
-                ;(async () => {
-                  try {
-                    const newItem = await addToProfile(existingRefId, mergedFields, backlog)
-                    useAppStore.getState().replaceOptimisticItem(optimisticItem.id, newItem)
-                    setItemData(newItem)
-                  } catch (error) {
-                    console.error('Failed to add item to profile:', error)
-                    const { removeOptimisticItem } = useAppStore.getState()
-                    removeOptimisticItem(optimisticItem.id)
-                  }
-                })()
-              }}
-              onAddRefToList={async (itemFields) => {
-                const mergedFields = { ...itemFields, promptContext: refFields?.promptContext }
-                const newItem = await addToProfile(existingRefId, mergedFields, backlog)
-                setItemData(newItem)
-                setStep('addToList')
-              }}
-              backlog={backlog}
+              onCaptionBlur={() => setCaptionFocused(false)}
+              canEditRefData
+              backlog={isBacklog}
+              onAddRef={onAddRef}
+              onAddRefToList={onAddPhototoList}
             />
           )}
 
-          {step === 'selectItemToReplace' && stagedItemFields && (
+          {step === 'selectReplace' && stagedItemFields && (
             <SelectItemToReplace
               stagedItemFields={stagedItemFields}
               onSelectItemToReplace={(item) => {
                 setItemToReplace(item)
-                setStep('chooseReplaceItemMethod')
+                setStep('chooseReplaceMethod')
               }}
               onAddToBacklog={async () => {
-                const newItem = await addToProfile(existingRefId, stagedItemFields, true)
-                setItemData(newItem)
-                triggerProfileRefresh()
+                await onAddRef({ ...stagedItemFields, list: false })
                 setStep('addedToBacklog')
               }}
             />
           )}
 
-          {step === 'chooseReplaceItemMethod' && itemToReplace && stagedItemFields && (
+          {step === 'chooseReplaceMethod' && itemToReplace && stagedItemFields && (
             <ChooseReplaceItemMethod
               itemToReplace={itemToReplace}
               removeFromProfile={async () => {
+                const { removeItem } = useAppStore.getState()
                 await removeItem(itemToReplace.id)
-                const newItem = await addToProfile(existingRefId, stagedItemFields, false)
-                setItemData(newItem)
-                triggerProfileRefresh()
-                setStep('addedToGrid')
+                await onAddRef(stagedItemFields)
               }}
               moveToBacklog={async () => {
+                const { moveToBacklog } = useAppStore.getState()
                 await moveToBacklog(itemToReplace.id)
-                const newItem = await addToProfile(existingRefId, stagedItemFields, false)
-                setItemData(newItem)
-                triggerProfileRefresh()
-                setStep('addedToGrid')
+                await onAddRef(stagedItemFields)
               }}
             />
           )}
 
-          {step === 'addToList' && (
+          {(step === 'addedToGrid' || step === 'addedToBacklog') && itemData && (
+            <AddedNewRefConfirmation itemData={itemData} />
+          )}
+
+          {step === 'addToList' && itemData && (
             <View style={{ paddingVertical: s.$1, width: '100%' }}>
               <UserLists
-                creatorId={user?.id!}
-                onComplete={async (list: ExpandedItem) => {
-                  await addItemToList(list.id, itemData?.id!)
-                  const updatedItem = await getItemById(list.id)
-                  setItemData(updatedItem)
-                  setStep('editList')
+                creatorId={useAppStore.getState().user?.id ?? ''}
+                onComplete={async (list) => {
+                  await handleAddToExistingList(list.id, itemData.id)
                 }}
                 onCreateList={async () => {
-                  const nextNumber = await getNextListNumber()
-
-                  const list = await addToProfile(
-                    null,
-                    {
-                      title: `My List ${nextNumber}`,
-                      text: '',
-                      url: '',
-                      image: '',
-                      list: true,
-                    },
-                    false,
-                  )
-
-                  await addItemToList(list.id, itemData?.id!)
-                  const expandedList = await getItemById(list.id)
-                  setItemData(expandedList)
-                  setStep('editList')
-                  triggerProfileRefresh()
+                  const { getProfileItems } = useAppStore.getState()
+                  const items = await getProfileItems({ userName: useAppStore.getState().user?.userName!, userId: useAppStore.getState().user?.id })
+                  const listNumbers = items
+                    .filter((item) => item.list)
+                    .map((item) => parseInt(item.expand?.ref?.title?.replace('My List ', '') ?? '0', 10))
+                    .filter((n) => n > 0)
+                  const nextNumber = listNumbers.length ? Math.max(...listNumbers) + 1 : 1
+                  await handleCreateList(nextNumber, itemData.id)
                 }}
               />
             </View>
           )}
 
           {step === 'editList' && itemData && (
-            <EditableList
-              item={itemData}
-              onComplete={() => {
-                bottomSheetRef.current?.close()
-              }}
-            />
-          )}
-
-          {(step === 'addedToBacklog' || step === 'addedToGrid') && itemData && (
-            <AddedNewRefConfirmation itemData={itemData} />
+            <EditableList item={itemData} onComplete={closeSheet} />
           )}
         </BottomSheetView>
       )}

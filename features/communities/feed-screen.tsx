@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { View, Text, Pressable, FlatList, ScrollView, ActivityIndicator } from 'react-native'
+import { View, Text, Pressable, FlatList, ScrollView, ActivityIndicator, InteractionManager } from 'react-native'
 import Animated, { useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated'
 import { useIsFocused } from '@react-navigation/native'
 import { s, c, t } from '@/features/style'
@@ -563,17 +563,38 @@ const processedUsers = useMemo(() => {
 
 const [visibleUserIds, setVisibleUserIds] = useState<string[]>([])
 const visibleUserSet = useMemo(() => new Set(visibleUserIds), [visibleUserIds])
+const pendingVisibleTaskRef = useRef<ReturnType<typeof InteractionManager.runAfterInteractions> | null>(null)
+
+useEffect(() => {
+  return () => {
+    pendingVisibleTaskRef.current?.cancel?.()
+    pendingVisibleTaskRef.current = null
+  }
+}, [])
 
 const onViewableItemsChanged = useCallback(
   ({ viewableItems }: { viewableItems: Array<{ item?: FeedUser | null }> }) => {
+    if (!isFocused) return
     const ids = viewableItems
       .map((entry) => entry.item?.id)
       .filter((id): id is string => typeof id === 'string')
-    setVisibleUserIds(ids)
+
+    if (ids.length === 0) return
+
+    pendingVisibleTaskRef.current?.cancel?.()
+    pendingVisibleTaskRef.current = InteractionManager.runAfterInteractions(() => {
+      pendingVisibleTaskRef.current = null
+      setVisibleUserIds((prev) => {
+        if (prev.length === ids.length && prev.every((value, index) => value === ids[index])) {
+          return prev
+        }
+        return ids
+      })
+    })
   },
-  []
+  [isFocused]
 )
-const viewabilityConfig = useRef({ itemVisiblePercentThreshold: 60 }).current
+const viewabilityConfig = useRef({ itemVisiblePercentThreshold: 50 }).current
 
 
   useEffect(() => {
@@ -876,7 +897,6 @@ const viewabilityConfig = useRef({ itemVisiblePercentThreshold: 60 }).current
           maxToRenderPerBatch={6}
           windowSize={10}
           removeClippedSubviews={false}
-          extraData={visibleUserIds}
           onViewableItemsChanged={onViewableItemsChanged}
           viewabilityConfig={viewabilityConfig}
           onEndReached={() => {

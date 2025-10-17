@@ -708,6 +708,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
   const GRID_ROW_GAP = (s.$075 as number) + 5
   const GRID_HEIGHT = GRID_ROWS * DEFAULT_TILE_SIZE + (GRID_ROWS - 1) * GRID_ROW_GAP
   const GRID_CAPACITY = GRID_ROWS * GRID_COLUMNS
+  const shareIntentHandledRef = useRef(false)
 
   // Avatar interaction handlers - must be defined before headerContent
   const bounceAvatar = useCallback(() => {
@@ -1373,10 +1374,14 @@ export const MyProfile = ({ userName }: { userName: string }) => {
 
   useProfileEffect('profile.shareIntentEffect', () => {
     if (hasShareIntent) {
+      if (shareIntentHandledRef.current) return
+      shareIntentHandledRef.current = true
       setAddingNewRefTo(displayGridItems.length < GRID_CAPACITY ? 'grid' : 'backlog')
       bottomSheetRef.current?.snapToIndex(1)
+    } else {
+      shareIntentHandledRef.current = false
     }
-  }, [hasShareIntent])
+  }, [hasShareIntent, displayGridItems.length, setAddingNewRefTo])
 
   useProfileEffect('profile.focusReadyEffect', () => {
     if (!profileData) return

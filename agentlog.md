@@ -11,6 +11,8 @@
 - Messaging bootstrap hydrates from cache instantly and defers the multi-query PocketBase fetch until after interactions, keeping the JS queue free during launch.
 
 ## 2025-??-??
+- Improved the "Select Item to Replace" sheet UI: added 15px border radius to images, enhanced typography (20pt title, 18pt subtitle with Inter Medium), refined spacing with s.$1 gap and targeted margins (s.$05, s.$075), moved all content up 40px to better utilize vertical space.
+- Improved the "Choose Replace Item Method" sheet UI: enhanced title typography (20pt Inter Medium), increased image size to 120px with 15px border radius, better spacing with s.$15 gap between sections, grouped buttons in a container with s.$1 gap for consistent spacing.
 - Attempted overlay height spacer approach for settings, but it still flashed; backed out.
 - Swapped to a dedicated settings bottom sheet: pencil opens the sheet (`BottomSheet`), settings live there, FAB fades via opacity when edit mode is active, so the grid stays untouched and no more black flash.
 - Refined the settings sheet snap logic to avoid `CONTENT_HEIGHT` snap errors: compute numeric snap points from measured content/fallback heights, keep the 50px radius, and pad the scroll container so the grid stays editable beneath the open sheet.
@@ -245,6 +247,26 @@ Follow-up (perf harness diagnostics):
     6. Removed local `removeRefSheetRef` ref, removed duplicate handler functions (lines 1346-1425), removed `<RemoveRefSheet>` rendering (line 1696-1702)
   - **Result:** RemoveRefSheet now renders at root level with proper zIndex (10000), appears bright above NavigationBackdrop, follows global sheet architecture.
   - **Follow-up fix:** Removed local dimmer from `Navigation.tsx` (lines 75-79, 90-93) that was creating double-dimming effect on the header bar. Navigation.tsx had a `removeRefDimStyle` that added another 50% opacity layer on top of NavigationBackdrop's global dimming, causing header to be 75% dark while background was 50% dark. Now uses only the global NavigationBackdrop dimming for consistent 50% opacity everywhere.
+
+## Corkboard Interest Pills Redesign (October 17, 2025)
+
+### Redesigned Interest Pill Layout - Title Left, Avatars Right
+- **Problem:** Interest pills had avatars absolutely positioned at bottom-right, creating awkward spacing and unclear visual hierarchy.
+- **Hierarchy:** Topic is PRIMARY, people are SECONDARY (showing social proof/engagement)
+- **Solution:**
+  1. Changed pill layout from absolute positioning to **horizontal inline layout**
+  2. **Title on left** (`flex: 1`) - primary element, fills space, 2-line truncation
+  3. **Avatars on right** (`flexShrink: 0`) - secondary element showing "people are interested too"
+  4. Increased avatar size from 28px to **32px** for better visibility
+  5. Adjusted overlap from -8px to **-10px** for tighter visual grouping
+  6. Added **12px gap** between title and avatar group
+  7. Reduced vertical padding to **16px** (from 22px) for more compact, modern feel
+- **Layout structure:**
+  - `flexDirection: 'row'`, `alignItems: 'center'`, `gap: 12`
+  - Title: `flex: 1` (expands to fill space) - PRIMARY
+  - Avatars: `flexShrink: 0` (fixed width) - SECONDARY context
+- **Files changed:** `/features/communities/corkboard-screen.tsx` (lines 620-718)
+- **Result:** Clean horizontal layout with proper hierarchy. Topic name is the hero element (left, expandable), avatars provide supporting social context (right, compact). Reads naturally left-to-right: "What's the topic?" → "Who's interested?"
 
 ## Harness
 /* eslint-disable no-console */

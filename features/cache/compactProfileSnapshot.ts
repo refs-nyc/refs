@@ -5,7 +5,8 @@ import type { ExpandedItem, Profile } from '@/features/types'
 import { Collections } from '@/features/pocketbase/pocketbase-types'
 
 const SNAPSHOT_VERSION = 1
-const STORAGE_PREFIX = 'compact_profile_snapshot'
+const SNAPSHOT_EPOCH = process.env.EXPO_PUBLIC_CACHE_EPOCH ?? '1'
+const STORAGE_PREFIX = `compact_profile_snapshot_v${SNAPSHOT_EPOCH}`
 const MAX_BYTES = 45 * 1024 // stay below AsyncStorage 50KB limit
 
 type CompactProfile = {

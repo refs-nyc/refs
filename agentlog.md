@@ -657,3 +657,9 @@ export const done = (label: string) => {
   console.log(`[boot] ${label} ${dt}ms`);
   return dt;
 };
+
+## 2025-10-17
+- Wiped local PocketBase data (removed `.pocketbase/pb_data/data.db` and storage), restarted with `./pocketbase serve --http "127.0.0.1:8090"`, created new superuser, and re-imported the exported schema JSON to restore collection structure.
+- Updated `env.local`: pointed `EXPO_PUBLIC_POCKETBASE_URL` to `http://127.0.0.1:8090` for local testing and added `EXPO_PUBLIC_CACHE_EPOCH=2` to force client cache flush; remember to swap the URL to the prod host and bump the epoch again before shipping.
+- Versioned local caches: `simpleCache` and compact profile snapshot helpers now prefix keys with the current cache epoch (reads `EXPO_PUBLIC_CACHE_EPOCH`) so old AsyncStorage entries are ignored after env changes.
+- Next steps: seed mandatory reference data (interests/prompts/settings), run full onboarding + add/delete ref smoke test, and update mobile/Expo build configs with the new PocketBase URL + cache epoch before release.

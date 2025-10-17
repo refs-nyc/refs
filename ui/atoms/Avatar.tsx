@@ -53,7 +53,7 @@ export const Avatar = ({ source, size, fallback, priority = 'low' }: AvatarProps
           source={finalSource}
           style={{ width: bucket, height: bucket, borderRadius: bucket / 2 }}
           contentFit="cover"
-          cachePolicy="immutable"
+          cachePolicy="memory-disk"
           recyclingKey={`${source ?? thumbSource ?? 'avatar'}:${bucket}`}
           transition={0}
         />

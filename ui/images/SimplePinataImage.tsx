@@ -268,7 +268,7 @@ export const SimplePinataImage = ({
         contentFit="cover"
         transition={0}
         recyclingKey={originalSource}
-        cachePolicy="immutable"
+        cachePolicy="memory-disk"
         priority="normal"
         source={finalSource || undefined}
       />

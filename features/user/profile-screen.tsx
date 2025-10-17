@@ -35,6 +35,7 @@ export function UserProfileScreen({ userName, prefetchedUserId }: { userName: st
   // Pager gesture setup (hooks must always be called in the same order)
   const translateX = useSharedValue(-homePagerIndex * width)
   const isDragging = useSharedValue(false)
+  const ownProfile = user?.userName === userName
   const pagerInteractionRef = useRef<number | null>(null)
   const recordPagerStart = useCallback(() => {
     pagerInteractionRef.current = startInteraction('profile:pager-swipe', { userName, ownProfile })
@@ -50,8 +51,6 @@ export function UserProfileScreen({ userName, prefetchedUserId }: { userName: st
   if (!user) {
     return null
   }
-
-  const ownProfile = user.userName === userName
   useEffect(() => {
     skipNextAnimation.current = true
     hasCommittedDefault.current = false

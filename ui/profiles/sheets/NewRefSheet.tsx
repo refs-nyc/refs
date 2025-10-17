@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import BottomSheet, { BottomSheetBackdrop, BottomSheetView } from '@gorhom/bottom-sheet'
 import { Keyboard, View, InteractionManager } from 'react-native'
 import { useShareIntentContext } from 'expo-share-intent'
@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { useAppStore } from '@/features/stores'
 import { ExpandedItem, StagedItemFields, Profile } from '@/features/types'
+import { getProfileItems } from '@/features/stores/items'
 import { c, s } from '@/features/style'
 
 import { RefForm } from '@/ui/actions/RefForm'
@@ -17,6 +18,7 @@ import { EditableList } from '@/ui/lists/EditableList'
 import { persistBacklogSnapshot, persistGridSnapshot, getProfileCacheEntryByUserId } from '@/features/cache/profileCache'
 import { gridSort } from '@/features/stores/itemFormatters'
 import { markProfileGridDirty } from '@/features/stores/items'
+import { Collections } from '@/features/pocketbase/pocketbase-types'
 
 
 const SNAP_POINTS = ['80%'] as const
@@ -214,8 +216,8 @@ const useNewRefSheetController = () => {
 
       const optimistic: ExpandedItem = {
         id: `temp-${Date.now()}`,
-        collectionId: 'items',
-        collectionName: 'items',
+        collectionId: Collections.Items,
+        collectionName: Collections.Items,
         creator: useAppStore.getState().user?.id ?? '',
         ref: options.existingRefId ?? 'temp-ref',
         image: fields.image ?? '',
@@ -351,7 +353,11 @@ const useNewRefSheetController = () => {
   }
 }
 
-export const NewRefSheet = () => {
+export const NewRefSheet = ({
+  bottomSheetRef,
+}: {
+  bottomSheetRef?: React.RefObject<BottomSheet>
+}) => {
   const insets = useSafeAreaInsets()
 
   const {
@@ -391,6 +397,7 @@ export const NewRefSheet = () => {
   } = useNewRefSheetController()
 
   const snapPoints = useMemo(() => [...SNAP_POINTS], [])
+  const sheetRef = bottomSheetRef ?? newRefSheetRef
 
   useEffect(() => {
     if (!isOpen) return
@@ -404,7 +411,7 @@ export const NewRefSheet = () => {
 
   return (
     <BottomSheet
-      ref={newRefSheetRef}
+      ref={sheetRef}
       index={sheetIndex}
       snapPoints={snapPoints}
       enablePanDownToClose
@@ -455,7 +462,6 @@ export const NewRefSheet = () => {
               existingRefFields={refFields}
               placeholder="Title"
               onCaptionFocus={setCaptionFocused}
-              onCaptionBlur={() => setCaptionFocused(false)}
               canEditRefData
               backlog={isBacklog}
               onAddRef={onAddRef}
@@ -501,12 +507,14 @@ export const NewRefSheet = () => {
                   await handleAddToExistingList(list.id, itemData.id)
                 }}
                 onCreateList={async () => {
-                  const { getProfileItems } = useAppStore.getState()
-                  const items = await getProfileItems({ userName: useAppStore.getState().user?.userName!, userId: useAppStore.getState().user?.id })
+                  const items: ExpandedItem[] = await getProfileItems({
+                    userName: useAppStore.getState().user?.userName!,
+                    userId: useAppStore.getState().user?.id,
+                  })
                   const listNumbers = items
                     .filter((item) => item.list)
                     .map((item) => parseInt(item.expand?.ref?.title?.replace('My List ', '') ?? '0', 10))
-                    .filter((n) => n > 0)
+                    .filter((n: number) => n > 0)
                   const nextNumber = listNumbers.length ? Math.max(...listNumbers) + 1 : 1
                   await handleCreateList(nextNumber, itemData.id)
                 }}

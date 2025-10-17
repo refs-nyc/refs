@@ -81,8 +81,6 @@ const expandedFromCompact = (item: CompactItem): ExpandedItem => {
     expand: {
       ref: {
         id: item.ref,
-        collectionId: Collections.Refs,
-        collectionName: Collections.Refs,
         title: item.title ?? '',
         image: item.image ?? '',
         url: item.url ?? '',

@@ -2,7 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 
 import type { ProfileData } from '@/features/queries/profile'
 import type { ExpandedItem, Profile } from '@/features/types'
-import { Collections } from '@/features/pocketbase/pocketbase-types'
+import { Collections, UsersRecord } from '@/features/pocketbase/pocketbase-types'
 
 const SNAPSHOT_VERSION = 1
 const SNAPSHOT_EPOCH = process.env.EXPO_PUBLIC_CACHE_EPOCH ?? '1'
@@ -93,7 +93,15 @@ const expandedFromCompact = (item: CompactItem): ExpandedItem => {
         created: updatedIso,
         updated: updatedIso,
       },
-      creator: undefined,
+      creator: {
+        id: '',
+        email: '',
+        emailVisibility: false,
+        username: '',
+        verified: false,
+        created: updatedIso,
+        updated: updatedIso,
+      } as UsersRecord,
       items_via_parent: [],
     },
   }

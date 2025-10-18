@@ -32,6 +32,7 @@ type CompactItem = {
   backlog?: boolean
   order?: number
   promptContext?: string
+  parent?: string | null
   updatedAt: number
 }
 
@@ -58,6 +59,7 @@ const compactItemFromExpanded = (item: ExpandedItem): CompactItem => {
     backlog: item.backlog || false,
     order: item.order ?? 0,
     promptContext: item.promptContext || '',
+    parent: item.parent ?? null,
     updatedAt: item.updated ? Date.parse(item.updated) || Date.now() : Date.now(),
   }
 }
@@ -76,10 +78,10 @@ const expandedFromCompact = (item: CompactItem): ExpandedItem => {
     backlog: Boolean(item.backlog),
     order: item.order ?? 0,
     promptContext: item.promptContext ?? '',
+    parent: item.parent ?? '',
     created: updatedIso,
     updated: updatedIso,
     creator: '',
-    parent: null,
     expand: {
       ref: {
         id: item.ref,
@@ -91,17 +93,7 @@ const expandedFromCompact = (item: CompactItem): ExpandedItem => {
         created: updatedIso,
         updated: updatedIso,
       },
-      creator: {
-        id: '',
-        collectionId: Collections.Users,
-        collectionName: Collections.Users,
-        email: '',
-        emailVisibility: false,
-        username: '',
-        verified: false,
-        created: updatedIso,
-        updated: updatedIso,
-      },
+      creator: undefined,
       items_via_parent: [],
     },
   }

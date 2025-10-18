@@ -97,7 +97,7 @@ const expandedFromCompact = (item: CompactItem): ExpandedItem => {
         id: '',
         email: '',
         emailVisibility: false,
-        username: '',
+        userName: '',
         verified: false,
         created: updatedIso,
         updated: updatedIso,

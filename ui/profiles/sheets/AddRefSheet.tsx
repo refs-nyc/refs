@@ -157,22 +157,29 @@ export const AddRefSheet = ({
       unregisterBackdropPress(backdropKeyRef.current)
       backdropKeyRef.current = null
     }
-  }, [moduleBackdropAnimatedIndex, unregisterBackdropPress, setAddingRefPrefill])
+    setAddingRefId('')
+  }, [moduleBackdropAnimatedIndex, unregisterBackdropPress, setAddingRefId, setAddingRefPrefill])
 
   const closeSheet = useCallback(() => {
+    if (sheetIndex === -1) {
+      return
+    }
     setAddingRefId('')
+    if (moduleBackdropAnimatedIndex) {
+      moduleBackdropAnimatedIndex.value = -1
+    }
+    bottomSheetRef.current?.close()
     setSheetIndex(-1)
-  }, [setAddingRefId])
+  }, [bottomSheetRef, moduleBackdropAnimatedIndex, setAddingRefId, sheetIndex])
 
   const prevSheetIndexRef = useRef(sheetIndex)
 
   useEffect(() => {
     if (sheetIndex === -1 && prevSheetIndexRef.current !== -1) {
       resetSheetState()
-      setAddingRefId('')
     }
     prevSheetIndexRef.current = sheetIndex
-  }, [resetSheetState, setAddingRefId, sheetIndex])
+  }, [resetSheetState, sheetIndex])
 
   useEffect(() => {
     if (!isSheetActive) {
@@ -195,6 +202,12 @@ export const AddRefSheet = ({
       }
     }
   }, [closeSheet, isSheetActive, registerBackdropPress, unregisterBackdropPress])
+
+  useEffect(() => {
+    return () => {
+      resetSheetState()
+    }
+  }, [resetSheetState])
 
   const containerZIndex = isSheetActive ? 10000 : 0
 

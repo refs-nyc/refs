@@ -5,8 +5,7 @@ import { ExpandedItem } from '@/features/types'
 import { c, s } from '@/features/style'
 import BottomSheet from '@gorhom/bottom-sheet'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { ScrollView, View, Text, Pressable, Animated, Dimensions, StyleSheet, GestureResponderEvent } from 'react-native'
-import { withTiming } from 'react-native-reanimated'
+import { ScrollView, View, Text, Pressable } from 'react-native'
 import { Grid } from '../grid/Grid'
 import { PlaceholderGrid } from '../grid/PlaceholderGrid'
 import { Heading } from '../typo/Heading'
@@ -30,11 +29,9 @@ export const OtherProfile = ({ userName, prefetchedUserId }: { userName: string;
   const {
     user,
     stopEditing,
-    otherProfileBackdropAnimatedIndex,
     detailsSheetRef,
     setDetailsSheetData,
-    registerBackdropPress,
-    unregisterBackdropPress,
+    openAvatarZoom,
   } = useAppStore()
 
   const queueForceNetworkRefresh = useCallback(
@@ -221,9 +218,6 @@ export const OtherProfile = ({ userName, prefetchedUserId }: { userName: string;
 
   const bottomSheetRef = useRef<BottomSheet>(null)
   const backlogSheetRef = useRef<BottomSheet>(null)
-  const [avatarOverlayVisible, setAvatarOverlayVisible] = useState(false)
-  const overlayOpacity = useRef(new Animated.Value(0)).current
-  const overlayScale = useRef(new Animated.Value(0.85)).current
 
   const displayName = (() => {
     if (!profile) return userName
@@ -238,87 +232,11 @@ export const OtherProfile = ({ userName, prefetchedUserId }: { userName: string;
   const locationLabel = (profile?.location || '').trim()
   const remoteAvatar = profile?.image || (profile as any)?.avatar_url || ''
   const hasAvatar = Boolean(remoteAvatar)
-  const expandedAvatarSize = Math.min(Dimensions.get('window').width * 0.75, 300)
 
-  const openAvatar = useCallback(() => {
-    if (!hasAvatar) return
-    setAvatarOverlayVisible(true)
-    if (otherProfileBackdropAnimatedIndex) {
-      otherProfileBackdropAnimatedIndex.value = withTiming(0, { duration: 180 })
-    }
-    overlayOpacity.setValue(0)
-    overlayScale.setValue(0.85)
-    Animated.parallel([
-      Animated.timing(overlayOpacity, {
-        toValue: 1,
-        duration: 180,
-        useNativeDriver: true,
-      }),
-      Animated.spring(overlayScale, {
-        toValue: 1,
-        damping: 14,
-        stiffness: 200,
-        useNativeDriver: true,
-      }),
-    ]).start()
-  }, [hasAvatar, otherProfileBackdropAnimatedIndex, overlayOpacity, overlayScale])
-
-  const closeAvatar = useCallback(() => {
-    if (otherProfileBackdropAnimatedIndex) {
-      otherProfileBackdropAnimatedIndex.value = withTiming(-1, { duration: 180 })
-    }
-    Animated.parallel([
-      Animated.timing(overlayOpacity, {
-        toValue: 0,
-        duration: 150,
-        useNativeDriver: true,
-      }),
-      Animated.spring(overlayScale, {
-        toValue: 0.85,
-        damping: 14,
-        stiffness: 200,
-        useNativeDriver: true,
-      }),
-    ]).start(() => {
-      setAvatarOverlayVisible(false)
-    })
-  }, [otherProfileBackdropAnimatedIndex, overlayOpacity, overlayScale])
-
-  const backdropPressKeyRef = useRef<string | null>(null)
-
-  useEffect(() => {
-    if (!avatarOverlayVisible) {
-      if (backdropPressKeyRef.current) {
-        unregisterBackdropPress(backdropPressKeyRef.current)
-        backdropPressKeyRef.current = null
-      }
-      return
-    }
-
-    const key = registerBackdropPress(() => {
-      closeAvatar()
-    })
-    backdropPressKeyRef.current = key
-
-    return () => {
-      if (backdropPressKeyRef.current) {
-        unregisterBackdropPress(backdropPressKeyRef.current)
-        backdropPressKeyRef.current = null
-      }
-    }
-  }, [avatarOverlayVisible, closeAvatar, registerBackdropPress, unregisterBackdropPress])
-
-  useEffect(() => {
-    return () => {
-      if (backdropPressKeyRef.current) {
-        unregisterBackdropPress(backdropPressKeyRef.current)
-        backdropPressKeyRef.current = null
-      }
-      if (otherProfileBackdropAnimatedIndex) {
-        otherProfileBackdropAnimatedIndex.value = -1
-      }
-    }
-  }, [otherProfileBackdropAnimatedIndex, unregisterBackdropPress])
+  const handleAvatarPress = useCallback(() => {
+    if (!hasAvatar || !remoteAvatar) return
+    openAvatarZoom(remoteAvatar)
+  }, [hasAvatar, remoteAvatar, openAvatarZoom])
 
   return (
     <>
@@ -370,7 +288,7 @@ export const OtherProfile = ({ userName, prefetchedUserId }: { userName: string;
                     </Text>
                   ) : null}
                 </View>
-                <Pressable onPress={openAvatar} hitSlop={12} disabled={!hasAvatar}>
+                <Pressable onPress={handleAvatarPress} hitSlop={12} disabled={!hasAvatar}>
                   {hasAvatar ? (
                     <View
                       style={{
@@ -435,6 +353,7 @@ export const OtherProfile = ({ userName, prefetchedUserId }: { userName: string;
                   items={gridItems}
                   rows={4}
                   editingRights={false}
+                  showPrompts={false}
                   rowJustify="center"
                   onPressItem={(item) => {
                     setDetailsSheetData({
@@ -471,42 +390,6 @@ export const OtherProfile = ({ userName, prefetchedUserId }: { userName: string;
         </>
       )}
 
-      {avatarOverlayVisible && (
-        <Pressable style={StyleSheet.absoluteFill} onPress={closeAvatar}>
-          <Animated.View
-            pointerEvents="none"
-            style={[StyleSheet.absoluteFillObject, { backgroundColor: 'rgba(0,0,0,0.5)', opacity: overlayOpacity }]}
-          />
-          <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }} pointerEvents="box-none">
-            <Pressable
-              onPress={(event: GestureResponderEvent) => {
-                event.stopPropagation()
-              }}
-              hitSlop={20}
-            >
-              <Animated.View
-                style={{
-                  transform: [{ scale: overlayScale }],
-                  borderRadius: expandedAvatarSize / 2,
-                  overflow: 'hidden',
-                  shadowColor: '#000',
-                  shadowOpacity: 0.35,
-                  shadowRadius: 16,
-                  shadowOffset: { width: 0, height: 10 },
-                  backgroundColor: c.surface,
-                  opacity: overlayOpacity,
-                }}
-              >
-                <Image
-                  source={remoteAvatar}
-                  style={{ width: expandedAvatarSize, height: expandedAvatarSize, backgroundColor: c.surface2 }}
-                  contentFit="cover"
-                />
-              </Animated.View>
-            </Pressable>
-          </View>
-        </Pressable>
-      )}
     </>
   )
 }

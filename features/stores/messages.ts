@@ -1,5 +1,5 @@
 import { StateCreator } from 'zustand'
-import { ConversationWithMemberships, ExpandedReaction, ExpandedSave, Message, Reaction, Save } from '../types'
+import { ConversationWithMemberships, ExpandedReaction, ExpandedSave, Message, Reaction, Save, Conversation } from '../types'
 import { pocketbase } from '../pocketbase'
 import { ClientResponseError } from 'pocketbase'
 import { queryClient } from '@/core/queryClient'
@@ -8,6 +8,7 @@ import { messagingKeys, type ConversationMessagesPage, type ConversationsPage } 
 import { wantToMeetKeys } from '@/features/queries/wantToMeet'
 import type { StoreSlices } from './types'
 import type { Profile } from '../types'
+import { nanoid } from 'nanoid'
 
 export const PAGE_SIZE = 10
 
@@ -48,6 +49,7 @@ export type MessageSlice = {
   archiveConversation: (userId: string, conversationId: string) => Promise<void>
   unarchiveConversation: (userId: string, conversationId: string) => Promise<void>
   leaveConversation: (conversationId: string, userId: string) => Promise<void>
+  joinChatByInvite: (token: string) => Promise<{ chatId: string; title: string }>
 }
 
 export const createMessageSlice: StateCreator<StoreSlices, [], [], MessageSlice> = (set, get) => ({
@@ -62,6 +64,8 @@ export const createMessageSlice: StateCreator<StoreSlices, [], [], MessageSlice>
       const newConversation = await pocketbase.collection('conversations').create({
         is_direct,
         title: is_direct ? undefined : title || 'New Group Chat',
+        inviteToken: is_direct ? undefined : nanoid(21),
+        inviteTokenCreatedAt: is_direct ? undefined : Date.now(),
       })
 
       await pocketbase
@@ -430,6 +434,57 @@ export const createMessageSlice: StateCreator<StoreSlices, [], [], MessageSlice>
       queryClient.removeQueries({ queryKey: messagingKeys.messages(conversationId) })
     } catch (error) {
       console.warn('leaveConversation failed', { conversationId, userId, error })
+      throw error
+    }
+  },
+  joinChatByInvite: async (token: string): Promise<{ chatId: string; title: string }> => {
+    const userId = pocketbase.authStore.record?.id
+    if (!userId) {
+      throw new Error('User not authenticated')
+    }
+
+    try {
+      // Find conversation by invite token
+      const conversations = await pocketbase.collection<Conversation>('conversations').getFullList({
+        filter: pocketbase.filter('inviteToken = {:token} && is_direct = false', {
+          token,
+        }),
+      })
+
+      if (conversations.length === 0) {
+        throw new Error('Invalid or expired invite link')
+      }
+
+      const conversation = conversations[0]
+
+      // Check if already a member
+      const existingMemberships = await pocketbase.collection('memberships').getFullList({
+        filter: pocketbase.filter('conversation = {:cid} && user = {:uid}', {
+          cid: conversation.id,
+          uid: userId,
+        }),
+      })
+
+      // If not a member, create membership
+      if (existingMemberships.length === 0) {
+        await pocketbase.collection('memberships').create({
+          conversation: conversation.id,
+          user: userId,
+        })
+      }
+
+      // Invalidate only relevant caches
+      queryClient.invalidateQueries({ queryKey: messagingKeys.conversations(userId) })
+      queryClient.invalidateQueries({ queryKey: messagingKeys.messages(conversation.id) })
+
+      return {
+        chatId: conversation.id,
+        title: conversation.title || 'Group Chat',
+      }
+    } catch (error) {
+      if (error instanceof ClientResponseError) {
+        throw new Error('Unable to join chat. The invite link may be invalid or expired.')
+      }
       throw error
     }
   },

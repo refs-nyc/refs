@@ -116,7 +116,7 @@ export const ProfileDetailsSheet = () => {
     }
   }, [clearDetailsSheetData])
 
-  const sheetZIndex = addingRefId || referencersContext ? 100 : 9000
+  const sheetZIndex = (Boolean(addingRefId) || Boolean(referencersContext)) ? 100 : 9000
 
   return (
     <BottomSheet

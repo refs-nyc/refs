@@ -15,7 +15,11 @@ const PASSWORD_MIN_LENGTH = 8
 
 export function UnifiedOnboarding() {
   const { register: registerUser, updateStagedUser, setJustOnboarded } = useAppStore() as any
-  const form = useForm({ mode: 'onChange', shouldUnregister: false })
+  const form = useForm({
+    mode: 'onBlur',
+    reValidateMode: 'onBlur',
+    shouldUnregister: false,
+  })
   const { control, handleSubmit, formState, getValues, watch, setFocus } = form
   const insets = useSafeAreaInsets()
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -24,6 +28,8 @@ export function UnifiedOnboarding() {
   const scrollViewRef = useRef<ScrollView>(null)
   const [currentFieldIndex, setCurrentFieldIndex] = useState(0)
   const [serverError, setServerError] = useState<string>('')
+  const [emailAlreadyExists, setEmailAlreadyExists] = useState(false)
+  const [isCheckingEmail, setIsCheckingEmail] = useState(false)
   const pillScale = useRef(new Animated.Value(1)).current
   const [displayedUsers, setDisplayedUsers] = useState<any[]>([])
   const [allUsers, setAllUsers] = useState<any[]>([])
@@ -34,6 +40,16 @@ export function UnifiedOnboarding() {
   const email = watch('email')
   const password = watch('password')
   const confirmPassword = watch('confirmPassword')
+
+  const refocusEmailField = () => {
+    setCurrentFieldIndex(1)
+    setTimeout(() => setFocus('email'), 0)
+  }
+
+  useEffect(() => {
+    setEmailAlreadyExists(false)
+    setIsCheckingEmail(false)
+  }, [email])
 
   // Handle keyboard show/hide and scroll to active field
   useEffect(() => {
@@ -93,6 +109,7 @@ export function UnifiedOnboarding() {
     if (!isFormValid || isSubmitting) return
     setIsSubmitting(true)
     setServerError('')
+    setEmailAlreadyExists(false)
 
     try {
       // Validate all required fields
@@ -132,6 +149,19 @@ export function UnifiedOnboarding() {
       // Registration successful, app will auto-navigate
     } catch (error: any) {
       console.error('Registration failed:', error)
+      const emailError = error?.data?.data?.email || error?.response?.data?.email
+      const emailMessage = typeof emailError?.message === 'string' ? emailError.message.toLowerCase() : ''
+      const duplicateEmail =
+        emailError?.code === 'validation_not_unique' ||
+        emailMessage.includes('already') ||
+        emailMessage.includes('exists')
+
+      if (duplicateEmail) {
+        setEmailAlreadyExists(true)
+        refocusEmailField()
+        return
+      }
+
       setServerError(error?.message || 'Registration failed. Please try again.')
     } finally {
       setIsSubmitting(false)
@@ -354,34 +384,128 @@ export function UnifiedOnboarding() {
                 message: 'Invalid email address',
               },
             }}
-            render={({ field: { onChange, onBlur, value, ref } }) => (
-              <View>
-                <FormFieldWithIcon
-                  ref={ref}
-                  type="email"
-                  id="email"
-                  placeholder="Email"
-                  onChange={onChange}
-                  onBlur={() => {
-                    setCurrentFieldIndex(1)
-                    onBlur()
-                  }}
-                  value={value || ''}
-                  autoFocus={false}
-                  autoCorrect={false}
-                  returnKeyType="next"
-                  onSubmitEditing={() => {
-                    setCurrentFieldIndex(2)
-                    setFocus('password')
-                  }}
-                />
-                {formState.errors.email && (
-                  <Text style={{ color: c.accent, fontSize: 11, marginTop: 4, marginLeft: 4, fontFamily: 'InterSemiBold', fontWeight: '600' }}>
-                    {formState.errors.email.message as string}
-                  </Text>
-                )}
-              </View>
-            )}
+            render={({ field: { onChange, onBlur, value, ref } }) => {
+              const handleEmailBlur = async () => {
+                setCurrentFieldIndex(1)
+                onBlur()
+                const normalized = (value || '').trim().toLowerCase()
+                if (!normalized || !normalized.includes('@')) {
+                  setEmailAlreadyExists(false)
+                  return
+                }
+                setIsCheckingEmail(true)
+                let duplicate = false
+                try {
+                  await pocketbase.collection('users').getFirstListItem(`email = "${normalized}"`)
+                  setEmailAlreadyExists(true)
+                  duplicate = true
+                } catch (err: any) {
+                  if (err?.status === 404) {
+                    setEmailAlreadyExists(false)
+                  } else {
+                    console.warn('Email availability check failed', err)
+                  }
+                } finally {
+                  setIsCheckingEmail(false)
+                  if (duplicate) {
+                    refocusEmailField()
+                  }
+                }
+              }
+
+              return (
+                <View>
+                  <FormFieldWithIcon
+                    ref={ref}
+                    type="email"
+                    id="email"
+                    placeholder="Email"
+                    onChange={onChange}
+                    onBlur={handleEmailBlur}
+                    value={value || ''}
+                    autoFocus={false}
+                    autoCorrect={false}
+                    returnKeyType="next"
+                    onSubmitEditing={() => {
+                      if (emailAlreadyExists) {
+                        refocusEmailField()
+                        return
+                      }
+                      setCurrentFieldIndex(2)
+                      setFocus('password')
+                    }}
+                  />
+                  {formState.errors.email && (
+                    <Text style={{ color: c.accent, fontSize: 11, marginTop: 4, marginLeft: 4, fontFamily: 'InterSemiBold', fontWeight: '600' }}>
+                      {formState.errors.email.message as string}
+                    </Text>
+                  )}
+                  {emailAlreadyExists && !isCheckingEmail && (
+                    <View style={{ gap: s.$075, marginTop: s.$075 }}>
+                      <Text
+                        style={{
+                          color: c.accent,
+                          fontSize: 12,
+                          fontFamily: 'InterSemiBold',
+                          fontWeight: '600',
+                        }}
+                      >
+                        This email is already registered.
+                      </Text>
+                      <View
+                        style={{
+                          flexDirection: 'row',
+                          gap: s.$075,
+                        }}
+                      >
+                        <Pressable
+                          onPress={() => router.replace('/user/login')}
+                          style={{
+                            flex: 1,
+                            backgroundColor: c.surface2,
+                            paddingVertical: 14,
+                            borderRadius: s.$12,
+                            alignItems: 'center',
+                          }}
+                        >
+                          <Text
+                            style={{
+                              color: c.newDark,
+                              fontSize: s.$09,
+                              fontFamily: 'InterSemiBold',
+                              fontWeight: '600',
+                            }}
+                          >
+                            Log In
+                          </Text>
+                        </Pressable>
+                        <Pressable
+                          onPress={() => router.push({ pathname: '/user/forgot-password', params: { email: value || '' } })}
+                          style={{
+                            flex: 1,
+                            backgroundColor: c.surface2,
+                            paddingVertical: 14,
+                            borderRadius: s.$12,
+                            alignItems: 'center',
+                          }}
+                        >
+                          <Text
+                            style={{
+                              color: c.newDark,
+                              fontSize: s.$09,
+                              fontFamily: 'InterSemiBold',
+                              fontWeight: '600',
+                            }}
+                          >
+                            Reset Password
+                          </Text>
+                        </Pressable>
+                      </View>
+                    </View>
+                  )}
+                </View>
+              )
+            }}
           />
 
           <Controller

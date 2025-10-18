@@ -6,6 +6,19 @@
 
 import { InteractionManager } from 'react-native'
 
+let gateAccessor: (() => boolean) | null = null
+const isGateActive = () => {
+  if (!gateAccessor) {
+    try {
+      const { useAppStore } = require('@/features/stores')
+      gateAccessor = () => useAppStore.getState().interactionGateActive
+    } catch {
+      gateAccessor = () => false
+    }
+  }
+  return gateAccessor()
+}
+
 export type IdleTask = () => void | Promise<void>
 
 export type IdleTaskHandle = {
@@ -34,7 +47,7 @@ const highQueue: QueueEntry[] = []
 const lowQueue: QueueEntry[] = []
 let nextId = 1
 let scheduled = false
-let running = false
+let runningCount = 0
 let lastLabel: string | undefined
 let lastDuration = 0
 let totalCompleted = 0
@@ -52,7 +65,6 @@ const exitIdleContext = () => {
 
 export const isIdleTaskContext = () => idleContextDepth > 0
 
-const DELAY_BETWEEN_JOBS_MS = 12
 const FALLBACK_DELAY_MS = 240
 const MAX_PENDING_JOBS = 12
 const AVG_DURATION_BUDGET_MS = 8
@@ -66,7 +78,7 @@ const getQueues = () => ({
 const pendingCount = () =>
   highQueue.filter((entry) => !entry.cancelled).length + lowQueue.filter((entry) => !entry.cancelled).length
 
-const totalPending = () => pendingCount() + (running ? 1 : 0)
+const totalPendingWithRunning = () => pendingCount() + runningCount
 
 const shiftNextEntry = (): QueueEntry | undefined => {
   while (highQueue.length) {
@@ -90,108 +102,100 @@ const peekNextEntry = (): QueueEntry | undefined => {
   return lowQueue.find((entry) => !entry.cancelled)
 }
 
-const flushNext = () => {
-  if (running) {
-    return
+const MAX_CONCURRENCY = 2
+const MAX_JOBS_PER_TICK = 2
+
+const logDrainIfIdle = () => {
+  if (__DEV__ && runningCount === 0 && !peekNextEntry()) {
+    console.log('[boot-trace] idleQueue:drained', {
+      completed: totalCompleted,
+      averageDuration: totalCompleted === 0 ? 0 : Math.round((totalDuration / totalCompleted) * 100) / 100,
+    })
   }
+}
 
-  const entry = shiftNextEntry()
-  if (!entry) {
-    running = false
-    scheduled = false
-    return
-  }
+const runEntry = (entry: QueueEntry) => {
+  runningCount += 1
+  const started = Date.now()
+  let finished = false
 
-  running = true
-
-  const execute = () => {
-    const started = Date.now()
-    let finished = false
-
-    const finalize = () => {
-      if (finished) return
-      finished = true
-      exitIdleContext()
-      const duration = Date.now() - started
-      lastDuration = duration
-      lastLabel = entry.label
-      totalCompleted += 1
-      totalDuration += duration
-      running = false
-      scheduled = false
-      if (__DEV__ && duration >= LONG_TASK_WARN_MS) {
-        console.warn('[idleQueue] job long', entry.label, `${duration}ms`)
-      } else if (__DEV__ && duration > 0 && duration > AVG_DURATION_BUDGET_MS * 2) {
-        console.log('[idleQueue] job completed', entry.label, `${duration}ms`)
-      }
-      const pending = pendingCount()
-      if (__DEV__ && totalCompleted && totalDuration / totalCompleted > AVG_DURATION_BUDGET_MS) {
-        console.warn('[idleQueue] average duration drift', {
-          average: totalDuration / totalCompleted,
-          totalCompleted,
-        })
-      }
-      if (pending > 0) {
-        setTimeout(() => schedule(), DELAY_BETWEEN_JOBS_MS)
-      } else if (__DEV__) {
-        console.log('[boot-trace] idleQueue:drained', {
-          completed: totalCompleted,
-          averageDuration: totalCompleted === 0 ? 0 : Math.round((totalDuration / totalCompleted) * 100) / 100,
-        })
-      }
+  const finalize = () => {
+    if (finished) return
+    finished = true
+    exitIdleContext()
+    const duration = Date.now() - started
+    lastDuration = duration
+    lastLabel = entry.label
+    totalCompleted += 1
+    totalDuration += duration
+    runningCount = Math.max(0, runningCount - 1)
+    if (__DEV__ && duration >= LONG_TASK_WARN_MS) {
+      console.warn('[idleQueue] job long', entry.label, `${duration}ms`)
+    } else if (__DEV__ && duration > 0 && duration > AVG_DURATION_BUDGET_MS * 2) {
+      console.log('[idleQueue] job completed', entry.label, `${duration}ms`)
     }
+    const pending = pendingCount()
+    if (__DEV__ && totalCompleted && totalDuration / totalCompleted > AVG_DURATION_BUDGET_MS) {
+      console.warn('[idleQueue] average duration drift', {
+        average: totalDuration / totalCompleted,
+        totalCompleted,
+      })
+    }
+    if (pending > 0) {
+      schedule()
+    } else {
+      logDrainIfIdle()
+    }
+  }
 
-    try {
-      if (__DEV__) {
-        console.log('[idleQueue] job start', { id: entry.id, label: entry.label })
-      }
-      enterIdleContext()
-      const result = entry.task()
-      if (result && typeof (result as Promise<void>).then === 'function') {
-        ;(result as Promise<void>)
-          .then(finalize)
-          .catch((error) => {
-            console.warn('[idleQueue] task failed', entry.label, error)
-            finalize()
-          })
-      } else {
-        finalize()
-      }
-    } catch (error) {
-      console.warn('[idleQueue] task failed', entry.label, error)
+  try {
+    if (__DEV__) {
+      console.log('[idleQueue] job start', { id: entry.id, label: entry.label })
+    }
+    enterIdleContext()
+    const result = entry.task()
+    if (result && typeof (result as Promise<void>).then === 'function') {
+      ;(result as Promise<void>)
+        .then(finalize)
+        .catch((error) => {
+          console.warn('[idleQueue] task failed', entry.label, error)
+          finalize()
+        })
+    } else {
       finalize()
     }
+  } catch (error) {
+    console.warn('[idleQueue] task failed', entry.label, error)
+    finalize()
   }
+}
 
-  execute()
+const drainQueue = () => {
+  let launched = 0
+  while (runningCount < MAX_CONCURRENCY && launched < MAX_JOBS_PER_TICK) {
+    const entry = shiftNextEntry()
+    if (!entry) break
+    launched += 1
+    runEntry(entry)
+  }
+  if (peekNextEntry() && runningCount < MAX_CONCURRENCY) {
+    schedule()
+  }
 }
 
 const schedule = () => {
-  if (scheduled || running) {
-    return
-  }
-  const nextPending = peekNextEntry()
-  if (!nextPending) {
-    scheduled = false
+  if (scheduled || (!peekNextEntry() && runningCount === 0)) {
     return
   }
 
   scheduled = true
   let cancelled = false
 
-  const interactionMeta = {
-    pending: pendingCount(),
-    nextLabel: nextPending?.label,
-    nextPriority: nextPending?.priority,
-  }
-
   const fallback = setTimeout(() => {
     if (cancelled) return
-    if (__DEV__) {
-      console.log('[idleQueue] fallbackTick', interactionMeta)
-    }
+    cancelled = true
     scheduled = false
-    flushNext()
+    drainQueue()
   }, FALLBACK_DELAY_MS)
 
   const interactionCallback = () => {
@@ -199,12 +203,8 @@ const schedule = () => {
     cancelled = true
     clearTimeout(fallback)
     scheduled = false
-    flushNext()
+    drainQueue()
   }
-  ;(interactionCallback as any).__interactionLabel = nextPending?.label
-    ? `idleQueue:${nextPending.label}`
-    : 'idleQueue:flushNext'
-  ;(interactionCallback as any).__interactionMeta = interactionMeta
 
   InteractionManager.runAfterInteractions(interactionCallback)
 }
@@ -217,7 +217,6 @@ type EnqueueOptions =
     }
 
 export const enqueueIdleTask = (task: IdleTask, options?: EnqueueOptions): IdleTaskHandle => {
-  const entryId = nextId++
   const resolved =
     typeof options === 'string'
       ? { label: options, priority: 'low' as const }
@@ -225,6 +224,19 @@ export const enqueueIdleTask = (task: IdleTask, options?: EnqueueOptions): IdleT
           label: options?.label,
           priority: options?.priority ?? 'low',
         }
+
+  if (isGateActive() && resolved.priority === 'low') {
+    const timeoutId = setTimeout(() => {
+      enqueueIdleTask(task, options)
+    }, 160)
+    return {
+      cancel: () => {
+        clearTimeout(timeoutId)
+      },
+    }
+  }
+
+  const entryId = nextId++
 
   const entryLabel = resolved.label ?? `idle:${entryId}`
   const entry: QueueEntry = {
@@ -281,7 +293,7 @@ export const enqueueIdleTask = (task: IdleTask, options?: EnqueueOptions): IdleT
       id: entryId,
       label: entryLabel,
       priority: resolved.priority,
-      pending: totalPending(),
+      pending: totalPendingWithRunning(),
     })
   }
   schedule()
@@ -303,18 +315,15 @@ export const clearIdleQueue = () => {
   highQueue.length = 0
   lowQueue.length = 0
   scheduled = false
-  running = false
+  runningCount = 0
 }
 
 export const getIdleQueueStats = (): IdleQueueStats => {
   const averageDuration = totalCompleted === 0 ? 0 : totalDuration / totalCompleted
 
   return {
-    pending:
-      highQueue.filter((entry) => !entry.cancelled).length +
-      lowQueue.filter((entry) => !entry.cancelled).length +
-      (running ? 1 : 0),
-    running,
+    pending: totalPendingWithRunning(),
+    running: runningCount > 0,
     lastLabel,
     lastDuration,
     averageDuration,

@@ -10,7 +10,104 @@
 - Font loader no longer blocks the app tree; we render immediately with system fonts and swap in Inter once it's ready, so the splash screen disappears without gating gestures.
 - Messaging bootstrap hydrates from cache instantly and defers the multi-query PocketBase fetch until after interactions, keeping the JS queue free during launch.
 
+## 2025-10-17: Group Chat Invite Links
+
+### Implemented MVP group chat invite link system for 200-person launch
+
+**Backend/Schema Changes:**
+- Added `inviteToken` (string, 21-char nanoid) and `inviteTokenCreatedAt` (number) fields to `ConversationsRecord` in PocketBase types
+- Modified `createConversation` to automatically generate invite tokens for all group chats (not DMs) at creation time using `nanoid(21)`
+- Token generation happens server-side during chat creation, no additional API calls needed
+
+**Join Logic:**
+- Added `joinChatByInvite(token)` function to message store that:
+  1. Queries PocketBase for conversation by token (filtered to group chats only)
+  2. Checks if user is already a member (idempotent)
+  3. Creates membership if new, skips if already joined
+  4. Invalidates only relevant caches (`conversations` and specific `messages:{chatId}`)
+  5. Returns `{ chatId, title }` for navigation
+- Error handling for invalid/expired tokens, non-group chats, and unauthenticated users
+
+**Deep Linking:**
+- Updated `app.json` to include `refsnyc://invite/g` in deep links
+- Added comprehensive deep link handler in `RootLayoutNav` (`_layout.tsx`):
+  - Listens for both initial URL and runtime URL events
+  - Parses `refsnyc://invite/g/<token>` format
+  - If unauthenticated: stores token in Zustand (`pendingInviteToken`), shows toast, redirects to login
+  - If authenticated: calls `joinChatByInvite` immediately via `InteractionManager.runAfterInteractions`
+  - After login: consumes pending token automatically and joins chat
+- All join operations are perf-gated to avoid blocking animations
+
+**UI Components:**
+- Created `InviteBanner` component for group chats:
+  - Renders above message composer, only for non-direct conversations
+  - Zero network requests (reads `inviteToken` from cached conversation data)
+  - "Copy link" button copies `https://refs.nyc/invite/g/<token>` to clipboard
+  - "Share" button opens native share sheet with formatted message
+  - Clean styling: `c.surface2` background, `c.surface3` border, compact layout
+- Integrated into `messages-screen.tsx` between message list and composer
+
+**State Management:**
+- Added `pendingInviteToken` (string | null) to UISlice
+- Added `setPendingInviteToken` action for storing/clearing token
+- Token persists during unauthenticated flow, cleared after successful join
+
+**Performance Optimizations:**
+- Join operation uses `InteractionManager.runAfterInteractions` to avoid blocking gestures
+- Targeted cache invalidation (only `conversationPreviews` + specific chat messages)
+- No hydration/warmups during deep link navigation
+- Banner reads from existing query data, no additional fetches
+
+**User Flow:**
+1. User A creates group chat → token auto-generated
+2. User A taps "Copy link" in banner → `https://refs.nyc/invite/g/<token>` copied
+3. User B receives link, taps it:
+   - **If logged out:** App opens → login prompt → auto-joins after auth → navigates to chat
+   - **If logged in:** App opens → joins immediately → navigates to chat
+   - **If already member:** Just navigates to chat (no errors)
+4. Success toast: "Joined [Chat Title]"
+5. Error toast for invalid/expired tokens
+
+**Future-Ready Design:**
+- Token rotation/revocation can be added by regenerating `inviteToken` field
+- Expiry logic can check `inviteTokenCreatedAt` timestamp
+- Universal links (`https://refs.nyc/invite/g/<token>`) already configured in iOS associatedDomains
+- Web fallback can be added via 302 redirect from `refs.nyc` to app scheme
+
+**Files Modified:**
+- `features/pocketbase/pocketbase-types.ts`: Added invite fields to ConversationsRecord
+- `app.json`: Added invite deep link
+- `features/stores/messages.ts`: Import nanoid, generate tokens in createConversation, add joinChatByInvite
+- `features/communities/communityChat.ts`: Added token generation to ensureCommunityChat for interest chats
+- `features/stores/types.ts`: Added pendingInviteToken to UISlice type
+- `ui/state.ts`: Added pendingInviteToken state and setter
+- `app/_layout.tsx`: Deep link handler with auth flow logic
+- `ui/messaging/InviteBanner.tsx`: New component (copy/share UI)
+- `features/messaging/messages-screen.tsx`: Integrated banner above composer
+
+**Backend Requirements:**
+- PocketBase schema must be updated to include `inviteToken` (string, indexed) and `inviteTokenCreatedAt` (number) on `conversations` collection
+- Server-side validation recommended to enforce group chat restriction on joins
+- Consider rate limiting join endpoint to prevent abuse
+
+**Testing Notes:**
+- Deep links testable via `npx uri-scheme open "refsnyc://invite/g/<token>" --ios`
+- Token format: 21 characters, URL-safe (nanoid default alphabet)
+- All error cases return user-friendly messages
+- Already-member case is silent (just navigates, no toast spam)
+
+**Bug Fix (Post-Implementation):**
+- Initial implementation only added tokens to group chats created via `createConversation` (regular group messages)
+- Interest/community chats use `ensureCommunityChat` which bypassed token generation
+- Fixed by adding `inviteToken` and `inviteTokenCreatedAt` generation to `features/communities/communityChat.ts`
+- Now all group chats (including solo interest chats) automatically get invite tokens
+
 ## 2025-??-??
+- Improved the "Select Item to Replace" sheet UI: added 15px border radius to images, enhanced typography (20pt title, 18pt subtitle with Inter Medium), refined spacing with s.$1 gap and targeted margins (s.$05, s.$075), moved all content up 40px to better utilize vertical space.
+- Improved the "Choose Replace Item Method" sheet UI: enhanced title typography (20pt Inter Medium), increased image size to 120px with 15px border radius, better spacing with tighter gaps (s.$1 main gap, s.$075 button margin) for compact layout.
+- Redesigned OnboardingPill (empty profile state in directory): replaced solid background with dashed border (2px stroke, grey 50% opacity), updated text to show user's full name as header (c.muted color, same size as directory row) and "Add a photo and 3 refs to appear" as subheader in c.accent color (InterMedium weight 500), matched spacing (gap: 4) and sizing (60px avatar) to regular directory pills, made avatar circle hollow with 10% opacity grey stroke and c.muted + symbol (24pt, weight 200), removed shadow styling for cleaner look.
+- Removed fill from un-added avatar on user's profile grid: changed backgroundColor from c.surface2 to 'transparent' for the inner and outer avatar rings when no avatar is set, creating a hollow dashed circle effect. Updated empty avatar styling to match onboarding pill: 10% opacity grey stroke (`rgba(128, 128, 128, 0.1)`), smaller + symbol (24pt instead of 28pt), lighter weight (200 instead of 600), c.muted color, Inter font family.
+- Cleaned up Feed sheet styling: removed divider (borderBottomWidth/borderBottomColor) below "Feed" heading, simplified header layout with cleaner spacing (paddingTop: s.$15, paddingBottom: s.$1, marginBottom: s.$1), removed unnecessary empty Text element.
 - Attempted overlay height spacer approach for settings, but it still flashed; backed out.
 - Swapped to a dedicated settings bottom sheet: pencil opens the sheet (`BottomSheet`), settings live there, FAB fades via opacity when edit mode is active, so the grid stays untouched and no more black flash.
 - Refined the settings sheet snap logic to avoid `CONTENT_HEIGHT` snap errors: compute numeric snap points from measured content/fallback heights, keep the 50px radius, and pad the scroll container so the grid stays editable beneath the open sheet.
@@ -141,7 +238,7 @@ Restructure prefetchMessaging to keep the existing skeleton load but hydrate onl
 Remove the redundant prefetchDirectoryTopRefs call once the new warmup flow populates directoryKeys.all, and make the MyProfile “force refresh” consume that cached data (only falling back to forceNetwork if the query cache is stale)."
 
 ## 2025-10-13
-- Wired the perf harness into the codebase (`core/perf/harness.ts`) and gated it with `EXPO_PUBLIC_PERF_HARNESS`. Harness instruments boot invariants, require-time cost, JSON/AsyncStorage payload size, React Query writes, effect timings, and JS event-loop lag.
+- Wired the perf harness into the codebase (`core/perf/harness.ts`) and gated it withEXPO_PUBLIC_PERF_HARNESS ``. Harness instruments boot invariants, require-time cost, JSON/AsyncStorage payload size, React Query writes, effect timings, and JS event-loop lag.
 - Running with the harness enabled immediately surfaced:
   - `[RQ HEAVY WRITE]` & `[JSON BIG stringify]` at `hydrateMessagesFirstPage` → `queryClient.setQueryData` writing ~117 KB conversation blobs.
   - `[JSON BIG stringify]` & `[JSON BIG parse]` in `snapshotStore.putSnapshot/getSnapshots` → same payload persisted via AsyncStorage during boot.
@@ -193,6 +290,10 @@ Follow-up (perf harness diagnostics):
 - Limited the in-memory signed URL cache to 100 entries with true LRU eviction so image warmups can’t balloon past the AsyncStorage budget.
 - Hardened the perf harness logging so `[perf]`, `[lag]`, and heavy-write tripwires only print in DEV or when `EXPO_PUBLIC_PERF_HARNESS=1`, keeping release builds silent by default.
 - Normalized avatar fields across directory, want-to-meet, and messaging fetches so every profile exposes a canonical `image`/`avatar_url`, restored the missing want-to-meet/message preview avatars, and introduced shared avatar sizing buckets (`AVATAR_PX = 60`) wired through `Avatar`, `UserListItem`, and messaging rows for consistent rendering.
+- Added a global interaction gate: swipe gestures (profile pager, back swipe, messages modal) now flip the gate while running. Idle queue jobs and image signing skip/requeue during that window so interactions stay smooth. Avatar signing only escalates to “must” priority for rows that are actually visible, tracked via `onViewableItemsChanged` in the directory list.
+- Slimmed the interaction guard: only back swipes and the messages modal toggle the gate (pager/tab flips no longer pay the overhead). Idle queue now runs up to two jobs per frame/concurrency, defers low-priority work during interactions with a 16 ms requeue, and keeps cached data warm while closing the modal.
+- Directory & corkboard tabs update immediately from cached state; post-flip warmups run after the transition, and profile force-refreshes only kick in when stale, idle, and at least 60 s after the previous refresh.
+- Added lazy gate accessor in `idleQueue` so queue can run before the store file loads, restored Expo `Image` import for the onboarding pill, and scoped gesture logging helpers to dev/harness builds only.
 
 ### 2025-10-15 (perf summary for next agent)
 - Boot-paint workflow: hydrate directory + self-profile only; messaging and want-to-meet prefetch helpers run on screen focus (`useFocusEffect`). Boot shouldn’t enqueue any other hydrators.
@@ -205,6 +306,63 @@ Follow-up (perf harness diagnostics):
   * If idle logs show `image:signed` flooding again, check that new screens use `SimplePinataImage` and don’t call `getSignedUrl` directly.
   * Keep symbolication/dev logging wrapped in `__DEV__` so release builds stay quiet.
   * RCTView shadow warning: ensure any view with `shadow*` props has `backgroundColor` set (or move the shadow to a small wrapper) to avoid layout cost.
+## 2025-10-16
+- Implemented complete password reset flow using PocketBase's built-in `requestPasswordReset` and `confirmPasswordReset` APIs.
+- Added deep link configuration (`refsnyc://reset-password`) to `app.json` for email-to-app navigation.
+- Created `/app/user/forgot-password.tsx`: Clean request screen where users enter email to receive reset link. Always shows success message (prevents account enumeration). Supports email prefilling via route params.
+- Created `/app/user/reset-password.tsx`: Token handler screen that validates reset tokens, lets users set new password with confirmation, shows friendly errors for expired/invalid tokens, and auto-redirects to login on success.
+- Updated `/app/user/login.tsx`: Added subtle "Forgot password?" link below login button, styled consistently with existing "Register instead" pattern.
+- Updated `/features/onboarding/UnifiedOnboarding.tsx`: Changed "Change Password" to "Reset Password" in duplicate email error, now navigates to forgot-password screen with email prefilled for seamless UX. Replaced generic Button component with styled Pressable buttons using c.surface2 background, c.grey1 border, rounded corners (s.$12), and c.newDark text to match form styling throughout the app.
+- All screens follow existing design patterns: same KeyboardAvoidingView structure, FormFieldWithIcon components, react-hook-form validation, consistent spacing/colors (c.accent, c.surface, c.muted, c.newDark), matching typography (InterBold/InterSemiBold), and fixed bottom navigation links.
+- Security: No account enumeration (always success), silent error handling, 8+ char password requirement, token expiration handled by PocketBase.
+- Created `/docs/password-reset-setup.md` with PocketBase SMTP setup, email template configuration, testing instructions, and troubleshooting guide.
+- Improved form validation UX: All validation errors (email, password, confirmPassword, fullName) now only appear after user blurs/clicks away from field, not while actively typing. Changed react-hook-form `mode` from `'onChange'` to `'onBlur'` across all auth screens for cleaner validation without interrupting typing.
+- **Fixed OtherProfile avatar zoom dimming bug (double dimmer + zIndex issue):**
+  - **Problem identified:** When tapping another user's avatar to zoom, two issues occurred:
+    1. Avatar appeared dimmed/behind the backdrop (trapped under NavigationBackdrop at zIndex: 1000)
+    2. Background was darker than header (double dimming: local rgba(0,0,0,0.5) overlay + global NavigationBackdrop = 75% darkness, with header sitting between layers)
+  - **Root cause:** Avatar zoom overlay was rendering inside `OtherProfile.tsx` component (lines 474-509) instead of at root level in `_layout.tsx`, violating the architecture documented in agentlog lines 68-76 which states "NEVER render confirmation sheets or any global UI inside screen components—they will be trapped under the NavigationBackdrop and appear dimmed."
+  - **Solution implemented:**
+    1. Created new `OtherProfileAvatarZoom.tsx` component with proper zIndex (10000) to render above NavigationBackdrop
+    2. Added store state to `ui/state.ts` and `features/stores/types.ts`: `avatarZoomVisible`, `avatarZoomImageUrl`, `openAvatarZoom(imageUrl)`, `closeAvatarZoom()`
+    3. Moved component to `_layout.tsx` after NotificationPromptSheet (rendered at root level)
+    4. Updated `OtherProfile.tsx`: removed local overlay (lines 393-428), removed local dimmer `rgba(0,0,0,0.5)`, changed avatar tap to call `openAvatarZoom(remoteAvatar)`
+    5. Component uses global `otherProfileBackdropAnimatedIndex` for coordinated dimming with NavigationBackdrop
+    6. Added `zIndex: 10000` to overlay wrapper to ensure it renders above NavigationBackdrop (zIndex: 1000)
+  - **Result:** Avatar now appears bright and centered above a single 50% dimmed backdrop, consistent with all other global sheets. No double dimming, proper z-ordering, follows architecture.
+- **Fixed RemoveRefSheet (MyProfile) dimming bug (same root cause):**
+  - **Problem:** When removing/deleting a ref from MyProfile grid, the RemoveRefSheet appeared dimmed/behind the NavigationBackdrop.
+  - **Root cause:** RemoveRefSheet was rendered inside `MyProfileInner.tsx` (line 1709) instead of at root level in `_layout.tsx`, violating the same architecture rule.
+  - **Solution implemented:**
+    1. Created `RemoveRefSheetGlobal.tsx` wrapper component that reads from store state
+    2. Added store state to `ui/state.ts` and `features/stores/types.ts`: `removeRefSheetRef` (ref), `pendingRefRemoval` (data), `setPendingRefRemoval()`
+    3. Moved inline handler functions (`handleMoveToBacklog`, `handleRemoveFromProfile`) from component to store-triggered callbacks in `useProfileEffect`
+    4. Rendered `RemoveRefSheetGlobal` at root level in `_layout.tsx` after OtherProfileAvatarZoom
+    5. Updated MyProfileInner to call `setPendingRefRemoval({ item, onMoveToBacklog, onRemove })` instead of opening local sheet
+    6. Removed local `removeRefSheetRef` ref, removed duplicate handler functions (lines 1346-1425), removed `<RemoveRefSheet>` rendering (line 1696-1702)
+  - **Result:** RemoveRefSheet now renders at root level with proper zIndex (10000), appears bright above NavigationBackdrop, follows global sheet architecture.
+  - **Follow-up fix:** Removed local dimmer from `Navigation.tsx` (lines 75-79, 90-93) that was creating double-dimming effect on the header bar. Navigation.tsx had a `removeRefDimStyle` that added another 50% opacity layer on top of NavigationBackdrop's global dimming, causing header to be 75% dark while background was 50% dark. Now uses only the global NavigationBackdrop dimming for consistent 50% opacity everywhere.
+
+## Corkboard Interest Pills Redesign (October 17, 2025)
+
+### Redesigned Interest Pill Layout - Title Left, Avatars Right
+- **Problem:** Interest pills had avatars absolutely positioned at bottom-right, creating awkward spacing and unclear visual hierarchy.
+- **Hierarchy:** Topic is PRIMARY, people are SECONDARY (showing social proof/engagement)
+- **Solution:**
+  1. Changed pill layout from absolute positioning to **horizontal inline layout**
+  2. **Title on left** (`flex: 1`) - primary element, fills space, 2-line truncation
+  3. **Avatars on right** (`flexShrink: 0`) - secondary element showing "people are interested too"
+  4. Increased avatar size from 28px to **32px** for better visibility
+  5. Adjusted overlap from -8px to **-10px** for tighter visual grouping
+  6. Added **12px gap** between title and avatar group
+  7. Reduced vertical padding to **16px** (from 22px) for more compact, modern feel
+- **Layout structure:**
+  - `flexDirection: 'row'`, `alignItems: 'center'`, `gap: 12`
+  - Title: `flex: 1` (expands to fill space) - PRIMARY
+  - Avatars: `flexShrink: 0` (fixed width) - SECONDARY context
+- **Files changed:** `/features/communities/corkboard-screen.tsx` (lines 620-718)
+- **Result:** Clean horizontal layout with proper hierarchy. Topic name is the hero element (left, expandable), avatars provide supporting social context (right, compact). Reads naturally left-to-right: "What's the topic?" → "Who's interested?"
+
 ## Harness
 /* eslint-disable no-console */
 /**
@@ -499,3 +657,9 @@ export const done = (label: string) => {
   console.log(`[boot] ${label} ${dt}ms`);
   return dt;
 };
+
+## 2025-10-17
+- Wiped local PocketBase data (removed `.pocketbase/pb_data/data.db` and storage), restarted with `./pocketbase serve --http "127.0.0.1:8090"`, created new superuser, and re-imported the exported schema JSON to restore collection structure.
+- Updated `env.local`: pointed `EXPO_PUBLIC_POCKETBASE_URL` to `http://127.0.0.1:8090` for local testing and added `EXPO_PUBLIC_CACHE_EPOCH=2` to force client cache flush; remember to swap the URL to the prod host and bump the epoch again before shipping.
+- Versioned local caches: `simpleCache` and compact profile snapshot helpers now prefix keys with the current cache epoch (reads `EXPO_PUBLIC_CACHE_EPOCH`) so old AsyncStorage entries are ignored after env changes.
+- Next steps: seed mandatory reference data (interests/prompts/settings), run full onboarding + add/delete ref smoke test, and update mobile/Expo build configs with the new PocketBase URL + cache epoch before release.

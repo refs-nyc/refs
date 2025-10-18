@@ -116,6 +116,8 @@ export type ConversationsRecord = {
   id: string
   is_direct?: boolean
   title?: string
+  inviteToken?: string
+  inviteTokenCreatedAt?: number
 }
 
 export type ItemsRecord = {

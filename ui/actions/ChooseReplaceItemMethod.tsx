@@ -23,27 +23,40 @@ export const ChooseReplaceItemMethod = ({
         display: 'flex',
         flexDirection: 'column',
         padding: s.$3,
+        paddingTop: s.$2,
         gap: s.$1,
+        alignItems: 'center',
       }}
     >
-      <View style={{ alignItems: 'center' }}>
-        <Text style={{ color: c.muted }}>Do what with {ref.title}?</Text>
-      </View>
+      <Text 
+        style={{ 
+          color: c.surface, 
+          fontSize: 20,
+          fontFamily: 'InterMedium',
+          fontWeight: '600',
+          textAlign: 'center',
+          paddingHorizontal: s.$2,
+        }}
+      >
+        Do what with {ref.title}?
+      </Text>
       {/* display the image of the item to be replaced */}
       {image && (
         <View style={{ alignItems: 'center' }}>
           <SimplePinataImage
             originalSource={image}
-            style={{ height: 100, width: 100 }}
+            style={{ height: 120, width: 120, borderRadius: 15 }}
             imageOptions={{
-              width: 100,
-              height: 100,
+              width: 120,
+              height: 120,
             }}
           />
         </View>
       )}
-      <Button title="Remove" variant="basic" onPress={removeFromProfile} />
-      <Button title="Send to backlog" onPress={moveToBacklog} />
+      <View style={{ width: '100%', gap: s.$1, marginTop: s.$075 }}>
+        <Button title="Remove" variant="basic" onPress={removeFromProfile} />
+        <Button title="Send to backlog" onPress={moveToBacklog} />
+      </View>
     </View>
   )
 }

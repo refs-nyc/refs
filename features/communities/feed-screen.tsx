@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { View, Text, Pressable, FlatList, ScrollView, ActivityIndicator } from 'react-native'
+import { View, Text, Pressable, FlatList, ScrollView, ActivityIndicator, InteractionManager } from 'react-native'
 import Animated, { useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated'
 import { useIsFocused } from '@react-navigation/native'
 import { s, c, t } from '@/features/style'
@@ -15,6 +15,7 @@ import { directoryKeys, fetchDirectoryPage, fetchDirectoryTopRefs } from '@/feat
 import { profileKeys, fetchProfileData, type ProfileData } from '@/features/queries/profile'
 import { communityInterestsKeys, fetchCommunityInterestSummary } from '@/features/queries/communityInterests'
 import { useWantToMeet } from '@/features/queries/wantToMeet'
+import { Avatar } from '@/ui/atoms/Avatar'
 
 const DIRECTORY_TICKER_COLOR = c.accent
 // Listen for interests added from the CommunityInterestsScreen and update chips instantly
@@ -107,46 +108,46 @@ const OnboardingPill = ({ userName, fullName, avatarUri }: { userName: string; f
       <Animated.View
         style={[
           {
-            backgroundColor: c.surface,
+            backgroundColor: 'transparent',
             borderRadius: s.$1,
-            paddingHorizontal: s.$1,
+            borderWidth: 2,
+            borderColor: `rgba(128, 128, 128, 0.5)`,
+            borderStyle: 'dashed',
+            paddingHorizontal: s.$075,
             paddingVertical: s.$075,
-            marginBottom: s.$1,
+            marginBottom: s.$075,
             flexDirection: 'row',
             alignItems: 'center',
-            gap: s.$075,
-            elevation: 2,
-            shadowColor: '#000',
-            shadowOpacity: 0.08,
-            shadowRadius: 8,
-            shadowOffset: { width: 0, height: 4 },
+            gap: 10,
           },
           pillAnimatedStyle,
         ]}
       >
         <View
           style={{
-            width: 48,
-            height: 48,
-            borderRadius: 24,
-            backgroundColor: hasAvatar ? 'transparent' : c.surface2,
+            width: 60,
+            height: 60,
+            borderRadius: 30,
+            backgroundColor: 'transparent',
+            borderWidth: hasAvatar ? 0 : 2,
+            borderColor: hasAvatar ? 'transparent' : `rgba(128, 128, 128, 0.1)`,
             alignItems: 'center',
             justifyContent: 'center',
             overflow: 'hidden',
           }}
         >
           {hasAvatar && avatarUri ? (
-            <Image source={avatarUri} style={{ width: 48, height: 48 }} contentFit="cover" />
+            <Image source={avatarUri} style={{ width: 60, height: 60 }} contentFit="cover" />
           ) : (
-            <Text style={{ color: c.muted, fontFamily: 'Inter', fontSize: s.$1 }}>+</Text>
+            <Text style={{ color: c.muted, fontFamily: 'Inter', fontSize: 24, fontWeight: '200' }}>+</Text>
           )}
         </View>
-        <View style={{ flex: 1 }}>
-          <Text style={{ color: c.newDark, fontSize: (s.$09 as number) + 2, fontFamily: 'InterBold', fontWeight: '700' }}>
-            Finish your profile
+        <View style={{ flex: 1, gap: 4 }}>
+          <Text style={{ color: c.muted, fontSize: (s.$09 as number) + 1, fontFamily: 'InterMedium', fontWeight: '700' }}>
+            {fullName}
           </Text>
-          <Text style={{ color: c.muted, fontSize: s.$09, fontFamily: 'Inter', fontWeight: '400' }}>
-            Add a photo and refs so {fullName} shows up here
+          <Text style={{ color: c.accent, fontWeight: '500', fontFamily: 'InterMedium' }}>
+            Add a photo and 3 refs to appear
           </Text>
         </View>
       </Animated.View>
@@ -163,6 +164,7 @@ const DirectoryRow = React.memo(({
   refTitleMap,
   currentUserId,
   innerLeftPadding,
+  isVisible,
 }: {
   u: FeedUser
   onPress: () => void
@@ -172,6 +174,7 @@ const DirectoryRow = React.memo(({
   refTitleMap: Map<string, string>
   currentUserId?: string
   innerLeftPadding?: number
+  isVisible?: boolean
 }) => {
   const bookmarkScale = useSharedValue(1)
 
@@ -220,18 +223,7 @@ const DirectoryRow = React.memo(({
       onPress={onPress}
     >
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 }}>
-        {u.avatar_url ? (
-          <Image
-            source={u.avatar_url}
-            style={{ width: 60, height: 60, borderRadius: 30, backgroundColor: c.surface2 }}
-            contentFit="cover"
-            cachePolicy="memory-disk"
-            transition={0}
-            priority="high"
-          />
-        ) : (
-          <View style={{ width: 60, height: 60, borderRadius: 30, backgroundColor: 'transparent' }} />
-        )}
+        <Avatar source={u.avatar_url} fallback={u.name} size={60} priority={isVisible ? 'must' : 'low'} />
         <View style={{ flex: 1, marginLeft: 5, gap: 4 }}>
           <Text style={{ color: c.black, fontWeight: '700', fontSize: (s.$09 as number) + 1 }} numberOfLines={1} ellipsizeMode="tail">
             {u.name}
@@ -277,6 +269,7 @@ const DirectoryRow = React.memo(({
 }, (prevProps, nextProps) => {
   if (prevProps.u.id !== nextProps.u.id) return false
   if (prevProps.isSaved !== nextProps.isSaved) return false
+  if (prevProps.isVisible !== nextProps.isVisible) return false
   return true
 })
 
@@ -373,7 +366,7 @@ export function CommunitiesFeedScreen({
     queryFn: ({ pageParam }) => fetchDirectoryPage((pageParam as number) ?? 1),
     getNextPageParam: (lastPage: DirectoryPage, pages: DirectoryPage[]) =>
       lastPage.hasMore ? pages.length + 1 : undefined,
-    staleTime: 60_000,
+    staleTime: 5 * 60_000,
     gcTime: 30 * 60_000,
   })
 
@@ -562,11 +555,46 @@ export function CommunitiesFeedScreen({
     return Array.from(aggregated.values())
   }, [directoryData])
 
-  const processedUsers = useMemo(() => {
-    const normalized = normalizeDirectoryUsers(rawDirectoryUsers, user?.userName)
-    normalized.sort((a, b) => (b._latest ?? 0) - (a._latest ?? 0))
-    return normalized
-  }, [rawDirectoryUsers, user?.userName])
+const processedUsers = useMemo(() => {
+  const normalized = normalizeDirectoryUsers(rawDirectoryUsers, user?.userName)
+  normalized.sort((a, b) => (b._latest ?? 0) - (a._latest ?? 0))
+  return normalized
+}, [rawDirectoryUsers, user?.userName])
+
+const [visibleUserIds, setVisibleUserIds] = useState<string[]>([])
+const visibleUserSet = useMemo(() => new Set(visibleUserIds), [visibleUserIds])
+const pendingVisibleTaskRef = useRef<ReturnType<typeof InteractionManager.runAfterInteractions> | null>(null)
+
+useEffect(() => {
+  return () => {
+    pendingVisibleTaskRef.current?.cancel?.()
+    pendingVisibleTaskRef.current = null
+  }
+}, [])
+
+const onViewableItemsChanged = useCallback(
+  ({ viewableItems }: { viewableItems: Array<{ item?: FeedUser | null }> }) => {
+    if (!isFocused) return
+    const ids = viewableItems
+      .map((entry) => entry.item?.id)
+      .filter((id): id is string => typeof id === 'string')
+
+    if (ids.length === 0) return
+
+    pendingVisibleTaskRef.current?.cancel?.()
+    pendingVisibleTaskRef.current = InteractionManager.runAfterInteractions(() => {
+      pendingVisibleTaskRef.current = null
+      setVisibleUserIds((prev) => {
+        if (prev.length === ids.length && prev.every((value, index) => value === ids[index])) {
+          return prev
+        }
+        return ids
+      })
+    })
+  },
+  [isFocused]
+)
+const viewabilityConfig = useRef({ itemVisiblePercentThreshold: 50 }).current
 
 
   useEffect(() => {
@@ -747,6 +775,7 @@ export function CommunitiesFeedScreen({
 
   const renderItem = useCallback(
     ({ item }: { item: FeedUser; index: number }) => {
+      const userVisible = visibleUserSet.has(item.id)
       return (
         <DirectoryRow
           u={item}
@@ -757,10 +786,11 @@ export function CommunitiesFeedScreen({
           refTitleMap={refTitleMap}
           currentUserId={user?.id}
           innerLeftPadding={0}
+          isVisible={userVisible}
         />
       )
     },
-    [handleUserPress, toggleSaveForUser, isUserSaved, userInterestMap, refTitleMap, user?.id]
+    [handleUserPress, toggleSaveForUser, isUserSaved, userInterestMap, refTitleMap, user?.id, visibleUserSet]
   )
 
   const userDisplayName = useMemo(() => {
@@ -867,6 +897,8 @@ export function CommunitiesFeedScreen({
           maxToRenderPerBatch={6}
           windowSize={10}
           removeClippedSubviews={false}
+          onViewableItemsChanged={onViewableItemsChanged}
+          viewabilityConfig={viewabilityConfig}
           onEndReached={() => {
             if (!hasNextPage || isFetchingNextPage) return
             void fetchNextPage()

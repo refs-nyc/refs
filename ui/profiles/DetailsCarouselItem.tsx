@@ -93,26 +93,36 @@ const ApplyChangesButton = () => {
 }
 ApplyChangesButton.displayName = 'ApplyChangesButton'
 
-const ProfileLabel = ({ profile }: { profile: Profile }) => {
+const ProfileLabel = ({ profile }: { profile?: Profile | null }) => {
+  if (!profile) {
+    return null
+  }
   const router = useRouter()
+  const displayName =
+    (profile.firstName && profile.lastName
+      ? `${profile.firstName} ${profile.lastName}`
+      : profile.firstName || (profile as any)?.name || profile.userName) || 'Someone'
+  const avatarSource = profile.image || (profile as any)?.avatar_url
   return (
     <Pressable
       onPress={() => {
         try {
           useAppStore.getState().setProfileNavIntent({ targetPagerIndex: 0, source: 'other' })
         } catch {}
-        router.replace(`/user/${profile.userName}`)
+        if (profile.userName) {
+          router.replace(`/user/${profile.userName}`)
+        }
       }}
     >
       <XStack style={{ alignItems: 'center' }} gap={s.$075}>
         {/* show user avatar and name */}
         <Text style={{ fontSize: s.$1, fontWeight: 500, opacity: 0.6, color: c.muted }}>
-          {profile.firstName}
+          {displayName}
         </Text>
         <Avatar
           size={s.$1}
-          source={profile.image || (profile as any)?.avatar_url}
-          fallback={profile.firstName || profile.name || profile.userName}
+          source={avatarSource}
+          fallback={displayName}
         />
       </XStack>
     </Pressable>

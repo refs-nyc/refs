@@ -9,7 +9,7 @@ import MessageIcon from '@/assets/icons/message.svg'
 import { Ionicons } from '@expo/vector-icons'
 import BottomSheet from '@gorhom/bottom-sheet'
 import { useNavigation } from '@react-navigation/native'
-import Animated, { Extrapolation, interpolate, useAnimatedStyle } from 'react-native-reanimated'
+import { withInteraction } from '@/features/perf/interactions'
 
 export const Navigation = ({
   savesBottomSheetRef,
@@ -32,7 +32,6 @@ export const Navigation = ({
     setProfileNavIntent,
     setHomePagerIndex,
     conversationUnreadCounts,
-    removeRefSheetBackdropAnimatedIndex,
   } = useAppStore()
 
   const isHomePage = pathname === '/' || pathname === '/index' || pathname === `/user/${user?.userName}`
@@ -71,21 +70,15 @@ export const Navigation = ({
     return Object.values(conversationUnreadCounts).reduce((total, count) => total + count, 0)
   }, [conversationUnreadCounts, user?.id])
 
-  const removeRefDimStyle = useAnimatedStyle(() => {
-    const index = removeRefSheetBackdropAnimatedIndex?.value ?? -1
-    const opacity = interpolate(index, [-1, 0], [0, 0.5], Extrapolation.CLAMP)
-    return { opacity }
-  }, [removeRefSheetBackdropAnimatedIndex])
+  const onBackPress = useMemo(
+    () => withInteraction('navigation:back-button', handleBackPress),
+    [handleBackPress]
+  )
 
-  if (!user) return null
-  if (inMessageThread) return null
+  if (!user || inMessageThread) return null
 
   return (
     <View style={{ display: 'flex', flexDirection: 'row', paddingLeft: 2, backgroundColor: c.surface }}>
-      <Animated.View
-        pointerEvents="none"
-        style={[StyleSheet.absoluteFill, { backgroundColor: '#1a1a18' }, removeRefDimStyle]}
-      />
       <View
         style={{
           display: 'flex',
@@ -101,7 +94,7 @@ export const Navigation = ({
           <View style={{ flexDirection: 'row', alignItems: 'center', position: 'relative' }}>
             {!isHomePage && (
               <Pressable
-                onPress={handleBackPress}
+                onPress={onBackPress}
                 style={{
                   position: 'absolute',
                   left: -15,

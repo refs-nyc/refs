@@ -6,6 +6,7 @@ import type { UserSlice } from './users'
 import type { UserCacheSlice } from './userCache'
 import type { FeedSlice } from './feed'
 import { Item, Profile } from '@/features/types'
+import type { InteractionGateSlice } from './interactionGate'
 import BottomSheet from '@gorhom/bottom-sheet'
 import React from 'react'
 
@@ -27,6 +28,11 @@ export type ReferencersContext =
     }
   | null
 
+export type ReferencersSheetApi = {
+  closeAsync: () => Promise<void>
+  isOpen: () => boolean
+}
+
 export type RefPrefillFields = {
   title: string
   url?: string
@@ -39,6 +45,7 @@ export type UISlice = {
   addingToList: string
   addingItem: Item | null
   referencersBottomSheetRef: React.RefObject<BottomSheet>
+  referencersSheetApi: ReferencersSheetApi | null
   currentRefId: string
   addRefSheetRef: React.RefObject<BottomSheet>
   addingRefId: string
@@ -56,6 +63,7 @@ export type UISlice = {
   setAddingRefId: (id: string) => void
   setAddingRefPrefill: (fields: RefPrefillFields | null) => void
   setCurrentRefId: (id: string) => void
+  setReferencersSheetApi: (api: ReferencersSheetApi | null) => void
   setReferencersContext: (ctx: ReferencersContext) => void
   setAddingToList: (newState: string) => void
   setAddRefPrompt: (prompt: string) => void
@@ -122,6 +130,18 @@ export type UISlice = {
   toast: { id: number; message: string } | null
   showToast: (message: string) => void
   clearToast: () => void
+  // Other Profile Avatar Zoom
+  avatarZoomVisible: boolean
+  avatarZoomImageUrl: string | null
+  openAvatarZoom: (imageUrl: string) => void
+  closeAvatarZoom: () => void
+  // Remove Ref Sheet (MyProfile)
+  removeRefSheetRef: React.RefObject<BottomSheet>
+  pendingRefRemoval: { item: any; onMoveToBacklog: () => Promise<void>; onRemove: () => Promise<void> } | null
+  setPendingRefRemoval: (data: { item: any; onMoveToBacklog: () => Promise<void>; onRemove: () => Promise<void> } | null) => void
+  // Invite link deep linking
+  pendingInviteToken: string | null
+  setPendingInviteToken: (token: string | null) => void
 }
 
 export type StoreSlices = BackdropSlice &
@@ -131,4 +151,5 @@ export type StoreSlices = BackdropSlice &
   UserSlice &
   UserCacheSlice &
   FeedSlice &
-  UISlice
+  UISlice &
+  InteractionGateSlice

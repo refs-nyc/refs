@@ -1,4 +1,9 @@
-import type { StoreSlices, UISlice, ProfileNavIntent } from '@/features/stores/types'
+import type {
+  StoreSlices,
+  UISlice,
+  ProfileNavIntent,
+  ReferencersSheetApi,
+} from '@/features/stores/types'
 import { Item, Profile } from '@/features/types'
 import BottomSheet from '@gorhom/bottom-sheet'
 import React from 'react'
@@ -8,6 +13,7 @@ export const createUISlice: StateCreator<StoreSlices, [], [], UISlice> = (set, g
   addingToList: '',
   addingItem: null,
   referencersBottomSheetRef: React.createRef(),
+  referencersSheetApi: null,
   logoutSheetRef: React.createRef<BottomSheet>(),
   detailsSheetRef: React.createRef<BottomSheet>(),
   detailsItemId: null,
@@ -35,9 +41,14 @@ export const createUISlice: StateCreator<StoreSlices, [], [], UISlice> = (set, g
     }))
   },
   setAddingNewRefTo: (newState: null | 'grid' | 'backlog') => {
-    set(() => ({
-      addingNewRefTo: newState,
-    }))
+    set((state) => {
+      if (newState !== null && state.addingNewRefTo === newState) {
+        // Force a toggle so listeners react when trying to reopen the same sheet
+        set({ addingNewRefTo: null })
+        return { addingNewRefTo: newState }
+      }
+      return { addingNewRefTo: newState }
+    })
   },
   setAddingRefId: (id: string) => {
     set((state) => ({
@@ -63,6 +74,11 @@ export const createUISlice: StateCreator<StoreSlices, [], [], UISlice> = (set, g
   setCurrentRefId: (id: string) => {
     set(() => ({
       currentRefId: id,
+    }))
+  },
+  setReferencersSheetApi: (api: ReferencersSheetApi | null) => {
+    set(() => ({
+      referencersSheetApi: api,
     }))
   },
   setDetailsSheetData: (data) => {
@@ -241,5 +257,35 @@ export const createUISlice: StateCreator<StoreSlices, [], [], UISlice> = (set, g
   },
   clearToast: () => {
     set(() => ({ toast: null }))
+  },
+  // Other Profile Avatar Zoom
+  avatarZoomVisible: false,
+  avatarZoomImageUrl: null,
+  openAvatarZoom: (imageUrl: string) => {
+    set(() => ({
+      avatarZoomVisible: true,
+      avatarZoomImageUrl: imageUrl,
+    }))
+  },
+  closeAvatarZoom: () => {
+    set(() => ({
+      avatarZoomVisible: false,
+      avatarZoomImageUrl: null,
+    }))
+  },
+  // Remove Ref Sheet (MyProfile)
+  removeRefSheetRef: React.createRef<BottomSheet>(),
+  pendingRefRemoval: null,
+  setPendingRefRemoval: (data) => {
+    set(() => ({
+      pendingRefRemoval: data,
+    }))
+  },
+  // Invite link deep linking
+  pendingInviteToken: null,
+  setPendingInviteToken: (token: string | null) => {
+    set(() => ({
+      pendingInviteToken: token,
+    }))
   },
 })

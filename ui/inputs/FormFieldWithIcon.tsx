@@ -102,17 +102,17 @@ export const FormFieldWithIcon = forwardRef<TextInput, {
           onSubmitEditing={onSubmitEditing}
           blurOnSubmit={false}
           textContentType={
-            type === 'password' ? 'password' :
-            type === 'passwordConfirm' ? 'newPassword' :
             type === 'email' ? 'emailAddress' :
             type === 'userName' ? 'username' :
             type === 'user' ? 'name' :
             'none'
           }
           autoComplete={
-            type === 'password' || type === 'passwordConfirm' ? 'password' : 
-            type === 'email' ? 'email' : 
+            type === 'email' ? 'email' :
             'off'
+          }
+          importantForAutofill={
+            type === 'password' || type === 'passwordConfirm' ? 'no' : 'auto'
           }
           onLayout={() => {
             if (autoFocus) {

@@ -171,6 +171,9 @@ export const createImageSlice: StateCreator<StoreSlices, [], [], ImageSlice> = (
       scheduleSignatureSummary()
 
       const state = get()
+      if (state.interactionGateActive && options.reason !== 'must') {
+        return url
+      }
       const cachedSignedUrl = state.signedUrls[url]
       if (cachedSignedUrl && !isExpired(cachedSignedUrl)) {
         signatureCounters.cacheHit += 1

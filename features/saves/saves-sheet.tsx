@@ -148,13 +148,11 @@ export default function FeedSheet({
         }
       }}
     >
-      <View style={{ flex: 1, paddingHorizontal: s.$3, paddingBottom: s.$2 }}>
-        <View style={{ paddingVertical: s.$1, borderBottomWidth: 1, borderBottomColor: '#E6E2D9', marginBottom: s.$2 }}>
+      <View style={{ flex: 1, paddingHorizontal: s.$2, paddingBottom: s.$2 }}>
+        <View style={{ paddingVertical: s.$1, marginBottom: s.$2 }}>
           <Heading tag="h1" style={{ lineHeight: 30 }}>
             Feed
           </Heading>
-          <View style={{ height: 8 }} />
-          <Text style={{ color: c.grey2 }}>{' '}</Text>
         </View>
         <BottomSheetFlatList
           data={feedEntries}

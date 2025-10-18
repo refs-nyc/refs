@@ -1,6 +1,8 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { isIdleTaskContext } from '@/features/utils/idleQueue'
 
+const CACHE_EPOCH = process.env.EXPO_PUBLIC_CACHE_EPOCH ?? '1'
+
 // Simple cache with fixed TTLs
 const CACHE_TTLS = {
   profile: 15 * 60 * 1000,        // 15 minutes
@@ -24,7 +26,7 @@ interface CacheEntry<T> {
 
 class SimpleCache {
   private static instance: SimpleCache
-  private cachePrefix = 'simple_cache_'
+  private cachePrefix = `simple_cache_v${CACHE_EPOCH}_`
 
   private writeQueue: Array<{ cacheKey: string; payload: string }> = []
   private writing = false

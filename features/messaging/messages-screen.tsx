@@ -14,6 +14,7 @@ import { c, s } from '@/features/style'
 import { Avatar, AvatarStack } from '@/ui/atoms/Avatar'
 import MessageBubble from '@/ui/messaging/MessageBubble'
 import MessageInput from '@/ui/messaging/MessageInput'
+import { InviteBanner } from '@/ui/messaging/InviteBanner'
 import { pinataUpload } from '@/features/pinata'
 import { randomColors } from './utils'
 import { useConversationMessages } from '@/features/messaging/useConversationMessages'
@@ -21,6 +22,7 @@ import { messagingKeys, fetchConversation, type ConversationMessagesPage } from 
 import { patchConversationPreview } from '@/features/queries/messaging-cache'
 import { queryClient } from '@/core/queryClient'
 import { pocketbase } from '@/features/pocketbase'
+import { endInteraction, startInteraction } from '@/features/perf/interactions'
 const EmojiPicker = lazy(() => import('rn-emoji-keyboard'))
 
 export function MessagesScreen({
@@ -40,10 +42,15 @@ export function MessagesScreen({
     setProfileNavIntent,
     showToast,
   } = useAppStore()
+  const activateInteractionGate = useAppStore((state) => state.activateInteractionGate)
+  const deactivateInteractionGate = useAppStore((state) => state.deactivateInteractionGate)
 
   const realtimeLockRef = useRef(false)
   const realtimeReleaseRef = useRef<NodeJS.Timeout | null>(null)
+  const realtimeUnsubscribeRef = useRef<(() => void) | null>(null)
   const sendMutexRef = useRef(false)
+  const preparedExitRef = useRef(false)
+  const closeInteractionRef = useRef<number | null>(null)
 
   const {
     messages: queryMessages,
@@ -53,6 +60,13 @@ export function MessagesScreen({
   } = useConversationMessages(conversationId, {
     enabled: Boolean(user?.id),
   })
+
+  useEffect(() => {
+    const startedAt = startInteraction('messages:open', { conversationId })
+    return () => {
+      endInteraction('messages:open', startedAt, { conversationId })
+    }
+  }, [conversationId])
 
   const applyRealtimeMessage = useCallback(
     async (record: Message, action: 'create' | 'update' | 'delete') => {
@@ -150,6 +164,7 @@ export function MessagesScreen({
           )
           console.log('[boot-trace] messages.thread.subscribe:established', conversationId, Date.now() - startedAt, 'ms')
 
+          realtimeUnsubscribeRef.current = sub
           if (cancelled) {
             sub?.()
           } else {
@@ -169,6 +184,7 @@ export function MessagesScreen({
             unsubscribe()
           } catch {}
         }
+        realtimeUnsubscribeRef.current = null
         if (realtimeReleaseRef.current) {
           clearTimeout(realtimeReleaseRef.current)
           realtimeReleaseRef.current = null
@@ -504,16 +520,31 @@ export function MessagesScreen({
   const stackFallbacks = stackAvatarEntries.map((entry) => entry.fallback)
 
   const handleCloseComplete = useCallback(() => {
+    endInteraction('messages:close', closeInteractionRef.current ?? undefined, { conversationId })
+    closeInteractionRef.current = null
+    preparedExitRef.current = false
+    deactivateInteractionGate()
     if (onClose) {
       onClose()
       return
     }
     router.replace('/messages')
-  }, [onClose])
+  }, [deactivateInteractionGate, onClose, conversationId])
 
   const startExitTransition = useCallback(() => {
     if (isExitingRef.current) return
     isExitingRef.current = true
+    if (!preparedExitRef.current) {
+      preparedExitRef.current = true
+      closeInteractionRef.current = startInteraction('messages:close', { conversationId })
+      if (realtimeUnsubscribeRef.current) {
+        try {
+          realtimeUnsubscribeRef.current()
+        } catch {}
+        realtimeUnsubscribeRef.current = null
+      }
+      activateInteractionGate()
+    }
     screenOpacity.value = withTiming(
       0,
       { duration: 160, easing: Easing.out(Easing.quad) },
@@ -523,7 +554,7 @@ export function MessagesScreen({
         }
       }
     )
-  }, [handleCloseComplete, screenOpacity])
+  }, [activateInteractionGate, conversationId, handleCloseComplete, screenOpacity])
 
   useEffect(() => {
     registerCloseHandler?.(startExitTransition)
@@ -616,28 +647,33 @@ export function MessagesScreen({
         ListFooterComponent={<View style={{ height: headerHeight }} />}
       />
 
-      <View style={{ position: 'absolute', bottom: bottomOffset, left: 0, right: 0, paddingHorizontal: s.$075 }}>
-        <MessageInput
-          onMessageSubmit={onMessageSubmit}
-          setMessage={setMessage}
-          message={message}
-          parentMessage={replying ? highlightedMessage : undefined}
-          parentMessageSender={
-            replying
-              ? members.find((m) => m.expand?.user.id === highlightedMessage?.sender)?.expand?.user || user
-              : undefined
-          }
-          onReplyClose={() => {
-            setReplying(false)
-            setHighlightedMessageId('')
-          }}
-          allowAttachment
-          onAttachmentPress={onAttachmentPress}
-          disabled={isSendDisabled}
-          attachments={attachments}
-          onAttachmentClear={removeAttachment}
-          compact
-        />
+      <View style={{ position: 'absolute', bottom: bottomOffset, left: 0, right: 0 }}>
+        {!isDirectConversation && (
+          <InviteBanner inviteToken={conversation?.inviteToken} chatTitle={conversation?.title || 'Group Chat'} />
+        )}
+        <View style={{ paddingHorizontal: s.$075 }}>
+          <MessageInput
+            onMessageSubmit={onMessageSubmit}
+            setMessage={setMessage}
+            message={message}
+            parentMessage={replying ? highlightedMessage : undefined}
+            parentMessageSender={
+              replying
+                ? members.find((m) => m.expand?.user.id === highlightedMessage?.sender)?.expand?.user || user
+                : undefined
+            }
+            onReplyClose={() => {
+              setReplying(false)
+              setHighlightedMessageId('')
+            }}
+            allowAttachment
+            onAttachmentPress={onAttachmentPress}
+            disabled={isSendDisabled}
+            attachments={attachments}
+            onAttachmentClear={removeAttachment}
+            compact
+          />
+        </View>
       </View>
 
       {showEmojiPicker && highlightedMessage && (

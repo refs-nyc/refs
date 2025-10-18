@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef } from 'react'
-import { ActivityIndicator, Dimensions, FlatList, View } from 'react-native'
+import { ActivityIndicator, Dimensions, FlatList, View, InteractionManager } from 'react-native'
 import { router } from 'expo-router'
 
 import { FeedRow } from '@/features/feed/FeedRow'
@@ -24,13 +24,13 @@ export const Feed = () => {
   const feedLoadingMore = useAppStore((state) => state.feedLoadingMore)
   const feedHydrated = useAppStore((state) => state.feedHydrated)
   const referencersBottomSheetRef = useAppStore((state) => state.referencersBottomSheetRef)
-  const detailsSheetRef = useAppStore((state) => state.detailsSheetRef)
+  const referencersSheetApi = useAppStore((state) => state.referencersSheetApi)
   const setCurrentRefId = useAppStore((state) => state.setCurrentRefId)
-  const setDetailsSheetData = useAppStore((state) => state.setDetailsSheetData)
   const logout = useAppStore((state) => state.logout)
   const enableFeedNetwork = useAppStore((state) => state.enableFeedNetwork)
 
   const hydrationAttemptedRef = useRef(false)
+  const actorNavInFlightRef = useRef(false)
 
   useEffect(() => {
     enableFeedNetwork()
@@ -90,31 +90,40 @@ export const Feed = () => {
     (entry: FeedEntry) => {
       if (!entry.ref?.id) return
       setCurrentRefId(entry.ref.id)
-      referencersBottomSheetRef.current?.expand?.()
+      referencersBottomSheetRef.current?.snapToIndex?.(0)
     },
     [referencersBottomSheetRef, setCurrentRefId]
   )
 
   const handleImagePress = useCallback(
     (entry: FeedEntry) => {
-      if (entry.kind === 'ref_add' && entry.itemId) {
-        setDetailsSheetData({
-          itemId: entry.itemId,
-          profileUsername: entry.actor.userName,
-          openedFromFeed: true,
-        })
-        detailsSheetRef.current?.snapToIndex?.(0)
-        return
-      }
       handleRefPress(entry)
     },
-    [detailsSheetRef, handleRefPress, setDetailsSheetData]
+    [handleRefPress]
   )
 
-  const handleActorPress = useCallback((entry: FeedEntry) => {
-    if (!entry.actor.userName) return
-    router.push(`/user/${entry.actor.userName}`)
-  }, [])
+  const handleActorPress = useCallback(
+    async (entry: FeedEntry) => {
+      if (!entry.actor.userName) return
+      if (actorNavInFlightRef.current) return
+      actorNavInFlightRef.current = true
+      try {
+        if (referencersSheetApi?.isOpen?.()) {
+          await referencersSheetApi.closeAsync()
+          await new Promise((resolve) => requestAnimationFrame(() => resolve(null)))
+          await new Promise((resolve) =>
+            InteractionManager.runAfterInteractions(() => resolve(null))
+          )
+        }
+        router.push(`/user/${entry.actor.userName}`)
+      } finally {
+        setTimeout(() => {
+          actorNavInFlightRef.current = false
+        }, 150)
+      }
+    },
+    [referencersSheetApi]
+  )
 
   const handleEndReached = useCallback(() => {
     if (!feedHasMore || feedLoadingMore) {

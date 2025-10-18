@@ -1,13 +1,14 @@
 import { Profile } from '@/ui'
-import React, { useEffect, useMemo, useRef } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef } from 'react'
 import { Dimensions, View } from 'react-native'
 import Svg, { Path, G } from 'react-native-svg'
-import { useAppStore } from '@/features/stores'
 import { CommunityInterestsScreen } from '@/features/communities/interests-screen'
 import { WantToMeetScreen } from '@/features/communities/want-to-meet-screen'
 import { c } from '@/features/style'
 import { Gesture, GestureDetector } from 'react-native-gesture-handler'
 import Animated, { useSharedValue, useAnimatedStyle, withSpring, runOnJS } from 'react-native-reanimated'
+import { endInteraction, startInteraction } from '@/features/perf/interactions'
+import { useAppStore } from '@/features/stores'
 
 export function UserProfileScreen({ userName, prefetchedUserId }: { userName: string; prefetchedUserId?: string }) {
   if (!userName) {
@@ -34,13 +35,22 @@ export function UserProfileScreen({ userName, prefetchedUserId }: { userName: st
   // Pager gesture setup (hooks must always be called in the same order)
   const translateX = useSharedValue(-homePagerIndex * width)
   const isDragging = useSharedValue(false)
+  const ownProfile = user?.userName === userName
+  const pagerInteractionRef = useRef<number | null>(null)
+  const recordPagerStart = useCallback(() => {
+    pagerInteractionRef.current = startInteraction('profile:pager-swipe', { userName, ownProfile })
+  }, [ownProfile, userName])
+  const recordPagerEnd = useCallback(() => {
+    if (pagerInteractionRef.current != null) {
+      endInteraction('profile:pager-swipe', pagerInteractionRef.current, { userName, ownProfile })
+      pagerInteractionRef.current = null
+    }
+  }, [ownProfile, userName])
   const skipNextAnimation = useRef(true)
   const hasCommittedDefault = useRef(false)
   if (!user) {
     return null
   }
-
-  const ownProfile = user.userName === userName
   useEffect(() => {
     skipNextAnimation.current = true
     hasCommittedDefault.current = false
@@ -109,6 +119,7 @@ export function UserProfileScreen({ userName, prefetchedUserId }: { userName: st
     .activeOffsetX([-20, 20])
     .failOffsetY([-10, 10])
     .onBegin(() => {
+      runOnJS(recordPagerStart)()
       isDragging.value = true
     })
     .onUpdate((event) => {
@@ -138,7 +149,9 @@ export function UserProfileScreen({ userName, prefetchedUserId }: { userName: st
         runOnJS(setHomePagerIndex)(nextIndex)
       }
     })
-    .onFinalize(() => {})
+    .onFinalize(() => {
+      runOnJS(recordPagerEnd)()
+    })
 
   // Animated styles for the container
   const animatedStyle = useAnimatedStyle(() => ({

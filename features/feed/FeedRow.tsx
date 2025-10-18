@@ -13,9 +13,9 @@ const DEFAULT_REF_IMAGE_SIZE = Math.round(DEFAULT_AVATAR_SIZE * 1.33)
 
 export type FeedRowProps = {
   entry: FeedEntry
-  onPressRef?: (entry: FeedEntry) => void
-  onPressImage?: (entry: FeedEntry) => void
-  onPressActor?: (entry: FeedEntry) => void
+  onPressRef?: (entry: FeedEntry) => void | Promise<void>
+  onPressImage?: (entry: FeedEntry) => void | Promise<void>
+  onPressActor?: (entry: FeedEntry) => void | Promise<void>
   avatarSize?: number
   refImageSize?: number
 }
@@ -32,15 +32,15 @@ export const FeedRow: React.FC<FeedRowProps> = ({
   const timestamp = useMemo(() => formatRelativeTime(entry.created), [entry.created])
 
   const handlePressRef = () => {
-    onPressRef?.(entry)
+    void onPressRef?.(entry)
   }
 
   const handlePressImage = () => {
-    onPressImage?.(entry)
+    void onPressImage?.(entry)
   }
 
   const handlePressActor = () => {
-    onPressActor?.(entry)
+    void onPressActor?.(entry)
   }
 
   const refImage = entry.ref?.image

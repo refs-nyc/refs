@@ -10,6 +10,7 @@ type AvatarProps = {
   source?: string | null
   size: number
   fallback?: string | null
+  priority?: 'must' | 'low'
 }
 
 const deriveInitial = (text?: string | null) => {
@@ -18,16 +19,20 @@ const deriveInitial = (text?: string | null) => {
   return trimmed[0]?.toUpperCase() ?? ''
 }
 
-export const Avatar = ({ source, size, fallback }: AvatarProps) => {
+export const Avatar = ({ source, size, fallback, priority = 'low' }: AvatarProps) => {
   const finalSize = typeof size === 'number' ? size : 32
   const bucket = nearestBucket(finalSize)
   const deviceScale = currentDpr()
   const initial = useMemo(() => deriveInitial(fallback), [fallback])
   const thumbSource = getAvatarThumbUrl(source, bucket)
-  const { source: resolvedSource } = useSignedImageUrl(thumbSource ?? source, {
-    width: bucket * deviceScale,
-    height: bucket * deviceScale,
-  })
+  const { source: resolvedSource } = useSignedImageUrl(
+    thumbSource ?? source,
+    {
+      width: bucket * deviceScale,
+      height: bucket * deviceScale,
+    },
+    { priority }
+  )
 
   const circleStyle = {
     width: bucket,
@@ -39,15 +44,18 @@ export const Avatar = ({ source, size, fallback }: AvatarProps) => {
     backgroundColor: 'rgba(176,176,176,0.35)',
   }
 
+  const finalSource = resolvedSource ?? thumbSource ?? source ?? null
+
   return (
     <View style={circleStyle}>
-      {resolvedSource ? (
+      {finalSource ? (
         <Image
-          source={resolvedSource}
+          source={finalSource}
           style={{ width: bucket, height: bucket, borderRadius: bucket / 2 }}
           contentFit="cover"
-          cachePolicy="memory"
-          transition={150}
+          cachePolicy="memory-disk"
+          recyclingKey={`${source ?? thumbSource ?? 'avatar'}:${bucket}`}
+          transition={0}
         />
       ) : initial ? (
         <Text style={{ color: c.surface, fontWeight: '700' }}>{initial}</Text>

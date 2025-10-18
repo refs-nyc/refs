@@ -1,21 +1,73 @@
-import React from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { StyleSheet, Dimensions } from 'react-native'
 import { GestureDetector, Gesture } from 'react-native-gesture-handler'
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, runOnJS, interpolate, Extrapolation, Easing } from 'react-native-reanimated'
 import { c } from '@/features/style'
+import { endInteraction, startInteraction } from '@/features/perf/interactions'
+import { useAppStore } from '@/features/stores'
 
 const { width } = Dimensions.get('window')
 
 export const SwipeToGoBack = ({ 
   onSwipeComplete, 
-  children 
+  children,
+  interactionLabel = 'swipe-back',
+  disablePointerDurationMs = 220,
 }: { 
   onSwipeComplete: () => void
-  children: React.ReactNode 
+  children: React.ReactNode
+  interactionLabel?: string
+  disablePointerDurationMs?: number
 }) => {
+  const activateGate = useAppStore((state) => state.activateInteractionGate)
+  const deactivateGate = useAppStore((state) => state.deactivateInteractionGate)
   const translateX = useSharedValue(0)
   const opacity = useSharedValue(1)
   const hasTriggeredNav = useSharedValue(false)
+  const interactionTokenRef = useRef<number | null>(null)
+  const [pointerDisabled, setPointerDisabled] = useState(false)
+  const disableTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const unlockPointer = useCallback(() => {
+    if (disableTimeoutRef.current) {
+      clearTimeout(disableTimeoutRef.current)
+      disableTimeoutRef.current = null
+    }
+    setPointerDisabled(false)
+    hasTriggeredNav.value = false
+  }, [hasTriggeredNav])
+
+  const recordInteractionStart = useCallback((label: string) => {
+    interactionTokenRef.current = startInteraction(label)
+  }, [])
+
+  const recordInteractionEnd = useCallback((label: string) => {
+    if (interactionTokenRef.current != null) {
+      endInteraction(label, interactionTokenRef.current)
+      interactionTokenRef.current = null
+    }
+  }, [])
+
+  const lockAndComplete = useCallback(() => {
+    if (!pointerDisabled) {
+      setPointerDisabled(true)
+      if (disableTimeoutRef.current) {
+        clearTimeout(disableTimeoutRef.current)
+      }
+      disableTimeoutRef.current = setTimeout(() => {
+        unlockPointer()
+      }, disablePointerDurationMs)
+    }
+    onSwipeComplete()
+  }, [disablePointerDurationMs, onSwipeComplete, pointerDisabled, unlockPointer])
+  useEffect(() => {
+    return () => {
+      if (disableTimeoutRef.current) {
+        clearTimeout(disableTimeoutRef.current)
+        disableTimeoutRef.current = null
+      }
+    }
+  }, [])
 
   const panGesture = Gesture.Pan()
     .activeOffsetX(15) // Only start after meaningful horizontal movement
@@ -33,13 +85,18 @@ export const SwipeToGoBack = ({
         )
       }
     })
+    .onBegin(() => {
+      runOnJS(recordInteractionStart)(interactionLabel)
+      runOnJS(activateGate)()
+    })
     .onEnd((event) => {
       const velocity = event.velocityX
       const shouldComplete = event.translationX > width * 0.25 || velocity > 500
 
       if (shouldComplete) {
         // Trigger navigation IMMEDIATELY so both fades happen together
-        runOnJS(onSwipeComplete)()
+        hasTriggeredNav.value = true
+        runOnJS(lockAndComplete)()
         
         // Continue fade out animation - keep interpolating from current value
         const currentOpacity = opacity.value
@@ -63,6 +120,13 @@ export const SwipeToGoBack = ({
         })
       }
     })
+    .onFinalize(() => {
+      runOnJS(recordInteractionEnd)(interactionLabel)
+      runOnJS(deactivateGate)()
+      if (!hasTriggeredNav.value) {
+        runOnJS(unlockPointer)()
+      }
+    })
 
   const animatedStyle = useAnimatedStyle(() => {
     return {
@@ -73,7 +137,12 @@ export const SwipeToGoBack = ({
 
   return (
     <GestureDetector gesture={panGesture}>
-      <Animated.View style={[styles.container, animatedStyle]}>{children}</Animated.View>
+      <Animated.View
+        style={[styles.container, animatedStyle]}
+        pointerEvents={pointerDisabled ? 'none' : 'auto'}
+      >
+        {children}
+      </Animated.View>
     </GestureDetector>
   )
 }

@@ -31,7 +31,7 @@ export const directoryKeys = {
   page: (page: number) => ['directory', page] as const,
 }
 
-const DIRECTORY_PAGE_SIZE = 50
+const DIRECTORY_PAGE_SIZE = 32
 
 export const mapUserRecord = (record: RawUser): DirectoryEntry => {
   const normalized = normalizeAvatarFields(record)
@@ -54,8 +54,8 @@ export const mapUserRecord = (record: RawUser): DirectoryEntry => {
 export async function fetchDirectoryPage(page = 1) {
   const response = await pocketbase.collection('users').getList(page, DIRECTORY_PAGE_SIZE, {
     filter: 'show_in_directory = true',
-    fields: 'id,userName,firstName,lastName,name,location,image,avatar_url,updated,created',
-    sort: '-created',
+    fields: 'id,userName,firstName,lastName,name,location,image,avatar_url,updated',
+    sort: '-updated',
   })
 
   const users = (((response.items ?? []) as unknown) as RawUser[]).map(mapUserRecord)

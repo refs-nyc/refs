@@ -229,11 +229,11 @@ export const MyProfile = ({ userName }: { userName: string }) => {
   const avatarScale = useRef(new RNAnimated.Value(1)).current
   const avatarSwapOpacity = useRef(new RNAnimated.Value(1)).current
   const bottomSheetRef = useRef<BottomSheet>(null)
+  const directPhotoPickerGuardRef = useRef(false)
   // Get optimistic items from store
   const { optimisticItems, setPendingRefRemoval } = useAppStore()
   const profileRefreshTrigger = useAppStore((state) => state.profileRefreshTrigger)
   const interactionGateActive = useAppStore((state) => state.interactionGateActive)
-  const openDirectPhotoSheet = useAppStore((state) => state.openDirectPhotoSheet)
 
   const {
     getUserByUserName,
@@ -261,6 +261,8 @@ export const MyProfile = ({ userName }: { userName: string }) => {
     setDetailsSheetData,
     homePagerIndex,
     editingProfile,
+    setDirectPhotoPrefill,
+    presentNewRefSheet,
   } = useAppStore()
 
   const queryClient = useQueryClient()
@@ -1195,8 +1197,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
       }}
       onAddItem={(prompt?: string) => {
         const proceed = () => {
-          setAddingNewRefTo('grid')
-          if (prompt) useAppStore.getState().setAddRefPrompt(prompt)
+          presentNewRefSheet(prompt)
         }
 
         if (isSettingsSheetOpen) {
@@ -1211,8 +1212,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
           if (photoPath) {
             void triggerDirectPhotoPicker(prompt)
           } else {
-            setAddingNewRefTo('grid')
-            useAppStore.getState().setAddRefPrompt(prompt)
+            presentNewRefSheet(prompt)
           }
         }
 
@@ -1415,6 +1415,9 @@ export const MyProfile = ({ userName }: { userName: string }) => {
   // Direct photo picker flow - route into existing NewRefSheet with pre-populated photo
   const triggerDirectPhotoPicker = useCallback(
     async (prompt: string) => {
+      if (directPhotoPickerGuardRef.current) return
+
+      directPhotoPickerGuardRef.current = true
       try {
         const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync()
         if (status !== 'granted') {
@@ -1430,21 +1433,24 @@ export const MyProfile = ({ userName }: { userName: string }) => {
         if (!result.canceled && result.assets && result.assets[0]) {
           const selectedImage = result.assets[0]
           Keyboard.dismiss()
-          requestAnimationFrame(() => {
-            openDirectPhotoSheet({
-              title: prompt,
-              image: selectedImage.uri,
-              asset: selectedImage,
-              url: '',
-              promptContext: prompt,
-            })
+
+          setDirectPhotoPrefill({
+            title: prompt,
+            image: selectedImage.uri,
+            asset: selectedImage,
+            url: '',
+            promptContext: prompt,
           })
+
+          presentNewRefSheet(prompt)
         }
       } catch (error) {
         console.error('Error picking image:', error)
+      } finally {
+        directPhotoPickerGuardRef.current = false
       }
     },
-    [openDirectPhotoSheet]
+    [setDirectPhotoPrefill, presentNewRefSheet]
   )
 
   const handlePromptChipPress = useCallback(
@@ -1467,9 +1473,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
           return
         }
 
-        setAddingNewRefTo('grid')
-        try { useAppStore.getState().setAddRefPrompt(prompt.text) } catch {}
-        // Opening is controlled by NewRefSheet effect
+        presentNewRefSheet(prompt.text)
       }
 
       if (isSettingsSheetOpen) {
@@ -1479,7 +1483,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
 
       execute()
     },
-    [triggerDirectPhotoPicker, setAddingNewRefTo, isSettingsSheetOpen, closeSettingsSheet]
+    [triggerDirectPhotoPicker, presentNewRefSheet, isSettingsSheetOpen, closeSettingsSheet]
   )
 
   const promptChipSection = promptSuggestions.length > 0 ? (
@@ -1671,8 +1675,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
                 <FloatingJaggedButton
                   icon="plus"
                   onPress={() => {
-                    setAddingNewRefTo('grid')
-                    try { useAppStore.getState().setAddRefPrompt('') } catch {}
+                    presentNewRefSheet()
                   }}
                 />
               </Animated.View>

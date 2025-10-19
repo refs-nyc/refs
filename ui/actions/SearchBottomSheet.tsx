@@ -35,9 +35,7 @@ export default function SearchBottomSheet() {
     moduleBackdropAnimatedIndex,
     getRefsByTitle,
     getRandomUser,
-    newRefSheetRef,
-    setAddingNewRefTo,
-    setAddRefPrompt,
+    presentNewRefSheet,
     setProfileNavIntent,
   } = useAppStore()
 
@@ -131,8 +129,7 @@ export default function SearchBottomSheet() {
               }}
               onPress={async () => {
                 if (!searching && user?.userName) {
-                  setAddingNewRefTo('grid')
-                  setAddRefPrompt('')
+                  presentNewRefSheet()
                 }
               }}
             >
@@ -182,8 +179,7 @@ export default function SearchBottomSheet() {
                   <Pressable
                     onPress={(e) => {
                       e.stopPropagation()
-                      setAddingNewRefTo('grid')
-                      setAddRefPrompt('')
+                      presentNewRefSheet()
                     }}
                   >
                     <View

@@ -68,8 +68,8 @@ export type UISlice = {
   addRefPrompt: string
   referencersContext: ReferencersContext
   selectedPhoto: string | null
-  directPhotoSheetVisible: boolean
-  directPhotoRefFields: DirectPhotoRefFields | null
+  directPhotoPrefill: DirectPhotoRefFields | null
+  presentNewRefSheet: (prompt?: string) => void
   setAddingNewRefTo: (newState: null | 'grid' | 'backlog') => void
   setAddingRefId: (id: string) => void
   setAddingRefPrefill: (fields: RefPrefillFields | null) => void
@@ -79,8 +79,7 @@ export type UISlice = {
   setAddingToList: (newState: string) => void
   setAddRefPrompt: (prompt: string) => void
   setSelectedPhoto: (photo: string | null) => void
-  openDirectPhotoSheet: (fields: DirectPhotoRefFields) => void
-  closeDirectPhotoSheet: () => void
+  setDirectPhotoPrefill: (fields: DirectPhotoRefFields | null) => void
   setIsSettingsSheetOpen: (value: boolean) => void
   setSettingsSheetHeight: (value: number) => void
   setIsEditMode: (value: boolean) => void

@@ -12,7 +12,6 @@ export const NavigationBackdrop = () => {
     detailsBackdropAnimatedIndex,
     otherProfileBackdropAnimatedIndex,
     removeRefSheetBackdropAnimatedIndex,
-    directPhotoBackdropAnimatedIndex,
     backdropPressHandlers,
     isSettingsSheetOpen,
   } = useAppStore()
@@ -53,21 +52,13 @@ export const NavigationBackdrop = () => {
       Extrapolation.CLAMP
     )
 
-    const directPhotoOpacityValue = interpolate(
-      directPhotoBackdropAnimatedIndex?.value ?? -1,
-      [-1, 0],
-      [0, 0.5],
-      Extrapolation.CLAMP
-    )
-
     // mix together the opacity values
     const opacityValue =
       1 -
       (1 - moduleOpacityValue) *
       (1 - detailsOpacityValue) *
       (1 - otherProfileOpacityValue) *
-        (1 - removeRefOpacityValue) *
-        (1 - directPhotoOpacityValue)
+        (1 - removeRefOpacityValue)
     return {
       opacity: opacityValue,
       display: opacityValue < 0.001 ? 'none' : 'flex',
@@ -77,7 +68,6 @@ export const NavigationBackdrop = () => {
     detailsBackdropAnimatedIndex,
     otherProfileBackdropAnimatedIndex,
     removeRefSheetBackdropAnimatedIndex,
-    directPhotoBackdropAnimatedIndex,
     isSettingsSheetOpen,
   ])
 

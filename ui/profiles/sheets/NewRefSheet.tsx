@@ -48,6 +48,8 @@ const useNewRefSheetController = () => {
     triggerProfileRefresh,
     triggerFeedRefresh,
     optimisticItems,
+    directPhotoPrefill,
+    setDirectPhotoPrefill,
   } = useAppStore()
 
   const { resetShareIntent } = useShareIntentContext()
@@ -127,11 +129,10 @@ const useNewRefSheetController = () => {
       }
       setShouldMount(true)
       isClosingRef.current = false
-      scheduleAfterInteractions(() => {
-        requestAnimationFrame(() => {
-          setSheetIndex(targetIndex)
-          setShouldRenderContent(true)
-        })
+      requestAnimationFrame(() => {
+        setSheetIndex(targetIndex)
+        setShouldRenderContent(true)
+        newRefSheetRef.current?.snapToIndex?.(targetIndex)
       })
       return
     }
@@ -145,7 +146,7 @@ const useNewRefSheetController = () => {
       setShouldMount(false)
       closeTimeoutRef.current = null
     }, 220)
-  }, [desiredIndex, isOpen, scheduleAfterInteractions])
+  }, [desiredIndex, isOpen, newRefSheetRef])
 
   useEffect(() => {
     return () => {
@@ -155,6 +156,20 @@ const useNewRefSheetController = () => {
       }
     }
   }, [])
+
+  useEffect(() => {
+    if (!directPhotoPrefill) return
+
+    setExistingRefId(null)
+    setRefFields({
+      title: directPhotoPrefill.title,
+      image: directPhotoPrefill.asset ?? directPhotoPrefill.image,
+      url: directPhotoPrefill.url ?? '',
+      promptContext: directPhotoPrefill.promptContext,
+    })
+    setStep('add')
+    setDirectPhotoPrefill(null)
+  }, [directPhotoPrefill, setDirectPhotoPrefill, setExistingRefId, setRefFields, setStep])
 
   const handleSheetChange = useCallback(
     (index: number) => {

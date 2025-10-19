@@ -35,8 +35,7 @@ export const createUISlice: StateCreator<StoreSlices, [], [], UISlice> = (set, g
   addingNewRefTo: null,
   addRefPrompt: '',
   selectedPhoto: null,
-  directPhotoSheetVisible: false,
-  directPhotoRefFields: null,
+  directPhotoPrefill: null,
   isBackgroundLoading: false,
   setBackgroundLoading: (loading: boolean) => {
     set(() => ({
@@ -120,25 +119,25 @@ export const createUISlice: StateCreator<StoreSlices, [], [], UISlice> = (set, g
       selectedPhoto: photo,
     }))
   },
-  openDirectPhotoSheet: (fields: DirectPhotoRefFields) => {
-    const { directPhotoBackdropAnimatedIndex } = get()
-    if (directPhotoBackdropAnimatedIndex) {
-      directPhotoBackdropAnimatedIndex.value = 0
-    }
+  setDirectPhotoPrefill: (fields: DirectPhotoRefFields | null) => {
     set(() => ({
-      directPhotoSheetVisible: true,
-      directPhotoRefFields: fields,
+      directPhotoPrefill: fields,
     }))
   },
-  closeDirectPhotoSheet: () => {
-    const { directPhotoBackdropAnimatedIndex } = get()
-    if (directPhotoBackdropAnimatedIndex) {
-      directPhotoBackdropAnimatedIndex.value = -1
+  presentNewRefSheet: (prompt?: string) => {
+    const { setAddRefPrompt, setAddingNewRefTo, newRefSheetRef } = get()
+
+    if (typeof prompt === 'string') {
+      setAddRefPrompt(prompt)
+    } else {
+      setAddRefPrompt('')
     }
-    set(() => ({
-      directPhotoSheetVisible: false,
-      directPhotoRefFields: null,
-    }))
+
+    setAddingNewRefTo('grid')
+
+    requestAnimationFrame(() => {
+      newRefSheetRef.current?.snapToIndex?.(0)
+    })
   },
   setIsSettingsSheetOpen: (value: boolean) => {
     set(() => ({

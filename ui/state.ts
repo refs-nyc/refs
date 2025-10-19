@@ -3,6 +3,7 @@ import type {
   UISlice,
   ProfileNavIntent,
   ReferencersSheetApi,
+  DirectPhotoRefFields,
 } from '@/features/stores/types'
 import { Item, Profile } from '@/features/types'
 import BottomSheet from '@gorhom/bottom-sheet'
@@ -34,6 +35,8 @@ export const createUISlice: StateCreator<StoreSlices, [], [], UISlice> = (set, g
   addingNewRefTo: null,
   addRefPrompt: '',
   selectedPhoto: null,
+  directPhotoSheetVisible: false,
+  directPhotoRefFields: null,
   isBackgroundLoading: false,
   setBackgroundLoading: (loading: boolean) => {
     set(() => ({
@@ -115,6 +118,26 @@ export const createUISlice: StateCreator<StoreSlices, [], [], UISlice> = (set, g
   setSelectedPhoto: (photo: string | null) => {
     set(() => ({
       selectedPhoto: photo,
+    }))
+  },
+  openDirectPhotoSheet: (fields: DirectPhotoRefFields) => {
+    const { directPhotoBackdropAnimatedIndex } = get()
+    if (directPhotoBackdropAnimatedIndex) {
+      directPhotoBackdropAnimatedIndex.value = 0
+    }
+    set(() => ({
+      directPhotoSheetVisible: true,
+      directPhotoRefFields: fields,
+    }))
+  },
+  closeDirectPhotoSheet: () => {
+    const { directPhotoBackdropAnimatedIndex } = get()
+    if (directPhotoBackdropAnimatedIndex) {
+      directPhotoBackdropAnimatedIndex.value = -1
+    }
+    set(() => ({
+      directPhotoSheetVisible: false,
+      directPhotoRefFields: null,
     }))
   },
   setIsSettingsSheetOpen: (value: boolean) => {

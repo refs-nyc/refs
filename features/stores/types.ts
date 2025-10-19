@@ -6,6 +6,7 @@ import type { UserSlice } from './users'
 import type { UserCacheSlice } from './userCache'
 import type { FeedSlice } from './feed'
 import { Item, Profile } from '@/features/types'
+import type { ImagePickerAsset } from 'expo-image-picker'
 import type { InteractionGateSlice } from './interactionGate'
 import BottomSheet from '@gorhom/bottom-sheet'
 import React from 'react'
@@ -40,6 +41,14 @@ export type RefPrefillFields = {
   meta?: string
 }
 
+export type DirectPhotoRefFields = {
+  title: string
+  image: string
+  asset?: ImagePickerAsset | null
+  url?: string
+  promptContext: string
+}
+
 export type UISlice = {
   editingProfile: boolean
   addingToList: string
@@ -59,6 +68,8 @@ export type UISlice = {
   addRefPrompt: string
   referencersContext: ReferencersContext
   selectedPhoto: string | null
+  directPhotoSheetVisible: boolean
+  directPhotoRefFields: DirectPhotoRefFields | null
   setAddingNewRefTo: (newState: null | 'grid' | 'backlog') => void
   setAddingRefId: (id: string) => void
   setAddingRefPrefill: (fields: RefPrefillFields | null) => void
@@ -68,6 +79,8 @@ export type UISlice = {
   setAddingToList: (newState: string) => void
   setAddRefPrompt: (prompt: string) => void
   setSelectedPhoto: (photo: string | null) => void
+  openDirectPhotoSheet: (fields: DirectPhotoRefFields) => void
+  closeDirectPhotoSheet: () => void
   setIsSettingsSheetOpen: (value: boolean) => void
   setSettingsSheetHeight: (value: number) => void
   setIsEditMode: (value: boolean) => void

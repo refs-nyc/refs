@@ -27,6 +27,7 @@ import { useEffect, useRef, useState } from 'react'
 import { StatusBar, useColorScheme, Linking, InteractionManager } from 'react-native'
 import { Navigation } from '@/ui/navigation/Navigation'
 import { NavigationBackdrop } from '@/ui/navigation/NavigationBackdrop'
+import { DirectPhotoSheet } from '@/ui/profiles/DirectPhotoSheet'
 import { LogoutSheet } from '@/ui/navigation/LogoutSheet'
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native'
 import { useFonts } from 'expo-font'
@@ -312,6 +313,7 @@ function RootLayoutNav() {
       <RegisterPushNotifications />
       <Navigation savesBottomSheetRef={savesBottomSheetRef} />
       <NavigationBackdrop />
+      <DirectPhotoSheet />
 
       <Stack
         screenOptions={{

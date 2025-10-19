@@ -5,7 +5,7 @@ import { useAppStore } from '@/features/stores'
 import type { Profile } from '@/features/types'
 import { ExpandedItem } from '@/features/types'
 import { s, c } from '@/features/style'
-import BottomSheet, { BottomSheetBackdrop, BottomSheetTextInput, BottomSheetView } from '@gorhom/bottom-sheet'
+import { BottomSheetTextInput } from '@gorhom/bottom-sheet'
 import { useShareIntentContext } from 'expo-share-intent'
 import { useRef, useState, useMemo, useCallback } from 'react'
 import type { DependencyList } from 'react'
@@ -233,6 +233,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
   const { optimisticItems, setPendingRefRemoval } = useAppStore()
   const profileRefreshTrigger = useAppStore((state) => state.profileRefreshTrigger)
   const interactionGateActive = useAppStore((state) => state.interactionGateActive)
+  const openDirectPhotoSheet = useAppStore((state) => state.openDirectPhotoSheet)
 
   const {
     getUserByUserName,
@@ -255,9 +256,6 @@ export const MyProfile = ({ userName }: { userName: string }) => {
     setJustOnboarded,
     addToProfile,
     removeOptimisticItem,
-    detailsBackdropAnimatedIndex,
-    registerBackdropPress,
-    unregisterBackdropPress,
     updateUser,
     detailsSheetRef,
     setDetailsSheetData,
@@ -1236,67 +1234,6 @@ export const MyProfile = ({ userName }: { userName: string }) => {
     </RNAnimated.View>
   ) : null
 
-  // Direct photo form state
-  const [showDirectPhotoForm, setShowDirectPhotoForm] = useState(false)
-  const [directPhotoRefFields, setDirectPhotoRefFields] = useState<{
-    title: string
-    image: string
-    url: string
-    promptContext: string
-  } | null>(null)
-
-
-
-  // Register backdrop press for direct photo form
-  useProfileEffect('profile.registerDirectPhotoBackdrop', () => {
-    if (showDirectPhotoForm) {
-      const key = registerBackdropPress(() => {
-        setShowDirectPhotoForm(false)
-        setDirectPhotoRefFields(null)
-        // Ensure backdrop animated index is reset when closed via backdrop press
-        if (detailsBackdropAnimatedIndex) {
-          detailsBackdropAnimatedIndex.value = -1
-        }
-      })
-      return () => {
-        unregisterBackdropPress(key)
-      }
-    }
-  }, [showDirectPhotoForm, detailsBackdropAnimatedIndex])
-
-  // Simple keyboard dismissal - snap to 67% when keyboard is not showing
-  useProfileEffect('profile.directPhotoKeyboard', () => {
-    if (!showDirectPhotoForm) return
-    
-    const keyboardDidHide = () => {
-      if (photoRefFormRef.current) {
-        photoRefFormRef.current.snapToIndex(0)
-      }
-    }
-    
-    const hideSubscription = Keyboard.addListener('keyboardDidHide', keyboardDidHide)
-    
-    return () => {
-      hideSubscription?.remove()
-    }
-  }, [showDirectPhotoForm])
-
-
-
-
-
-
-
-
-
-  // Render backdrop for direct photo form
-  const renderDirectPhotoBackdrop = useCallback(
-    (p: any) => <BottomSheetBackdrop {...p} disappearsOnIndex={-1} appearsOnIndex={0} />,
-    []
-  )
-
-  // Refs
-  const photoRefFormRef = useRef<BottomSheet>(null)
 
   const profileQuery = useQuery<ProfileData>({
     queryKey: profileUserId ? profileKeys.grid(profileUserId) : ['profile', 'pending', 'grid'],
@@ -1492,24 +1429,22 @@ export const MyProfile = ({ userName }: { userName: string }) => {
 
         if (!result.canceled && result.assets && result.assets[0]) {
           const selectedImage = result.assets[0]
-          setDirectPhotoRefFields({
-            title: prompt,
-            image: selectedImage.uri,
-            url: '',
-            promptContext: prompt,
-          })
-          setShowDirectPhotoForm(true)
-          if (detailsBackdropAnimatedIndex) {
-            detailsBackdropAnimatedIndex.value = 0
-          }
           Keyboard.dismiss()
-          console.log('[newref] directPhoto:start', { prompt, asset: selectedImage.uri })
+          requestAnimationFrame(() => {
+            openDirectPhotoSheet({
+              title: prompt,
+              image: selectedImage.uri,
+              asset: selectedImage,
+              url: '',
+              promptContext: prompt,
+            })
+          })
         }
       } catch (error) {
         console.error('Error picking image:', error)
       }
     },
-    [setDirectPhotoRefFields, setShowDirectPhotoForm, detailsBackdropAnimatedIndex]
+    [openDirectPhotoSheet]
   )
 
   const handlePromptChipPress = useCallback(
@@ -1806,108 +1741,6 @@ export const MyProfile = ({ userName }: { userName: string }) => {
                 setAddingNewRefTo('backlog')
               }}
             />
-
-            {/* Direct Photo Form - bypasses NewRefSheet entirely */}
-            {showDirectPhotoForm && directPhotoRefFields && (
-              <BottomSheet
-
-                ref={photoRefFormRef}
-                snapPoints={['80%', '85%', '100%', '110%']}
-                index={0}
-                enablePanDownToClose={true}
-
-
-
-
-
-                            backgroundStyle={{ backgroundColor: c.olive, borderRadius: 50, paddingTop: 0 }}
-                animatedIndex={detailsBackdropAnimatedIndex}
-                backdropComponent={(p) => (
-                  <BottomSheetBackdrop
-                    {...p}
-                    disappearsOnIndex={-1}
-                    appearsOnIndex={0}
-                    pressBehavior={'close'}
-                  />
-                )}
-                handleComponent={null}
-                enableDynamicSizing={false}
-                enableOverDrag={false}
-                onChange={(i: number) => {
-                  if (i === -1) {
-                    Keyboard.dismiss()
-                    setShowDirectPhotoForm(false)
-                    setDirectPhotoRefFields(null)
-                    // Ensure backdrop animated index is reset
-                    if (detailsBackdropAnimatedIndex) {
-                      detailsBackdropAnimatedIndex.value = -1
-                    }
-                  }
-                }}
-              >
-                <BottomSheetView
-                  style={{
-                    paddingHorizontal: s.$2,
-                    paddingTop: 8,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <RefForm
-                    key={`direct-photo-form-${directPhotoRefFields.image}`}
-                    existingRefFields={directPhotoRefFields}
-                    pickerOpen={false}
-                    canEditRefData={true}
-                    
-
-                    onAddRef={async (itemFields) => {
-                      // Merge promptContext from directPhotoRefFields if present
-                      // Ensure title is not empty - use prompt context as fallback
-                      const mergedFields = { 
-                        ...itemFields, 
-                        promptContext: directPhotoRefFields.promptContext,
-                        title: itemFields.title || directPhotoRefFields.promptContext || 'Untitled'
-                      }
-                      
-                      // Create optimistic item immediately
-// Close the sheet immediately and reset backdrop
-                      Keyboard.dismiss()
-                      setShowDirectPhotoForm(false)
-                      setDirectPhotoRefFields(null)
-                      if (detailsBackdropAnimatedIndex) {
-                        detailsBackdropAnimatedIndex.value = -1
-                      }
-                      
-                      // Background database operations
-                      ;(async () => {
-                        try {
-                          await addToProfile(null, mergedFields, false)
-                        } catch (error) {
-                          console.error('Failed to add item to profile:', error)
-                        }
-                      })()
-                    }}
-                    onAddRefToList={async (itemFields) => {
-                      // Merge promptContext from directPhotoRefFields if present
-                      // Ensure title is not empty - use prompt context as fallback
-                      const mergedFields = { 
-                        ...itemFields, 
-                        promptContext: directPhotoRefFields.promptContext,
-                        title: itemFields.title || directPhotoRefFields.promptContext || 'Untitled'
-                      }
-                      const newItem = await addToProfile(null, mergedFields, false)
-                      Keyboard.dismiss()
-                      setShowDirectPhotoForm(false)
-                      setDirectPhotoRefFields(null)
-                      if (detailsBackdropAnimatedIndex) {
-                        detailsBackdropAnimatedIndex.value = -1
-                      }
-                    }}
-                    backlog={false}
-                  />
-                </BottomSheetView>
-              </BottomSheet>
-            )}
           </>
         )}
       </ScrollView>

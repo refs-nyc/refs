@@ -95,9 +95,20 @@ export function UnifiedOnboarding() {
           sort: '-created',
           fields: 'id,image,avatar_url',
         })
-        const users = res.items || []
-        setAllUsers(users)
-        setDisplayedUsers(users.slice(0, 3))
+        const users =
+          res?.items
+            ?.map((item: any) => {
+              if (!item || typeof item !== 'object') return null
+              const id = typeof item.id === 'string' ? item.id : ''
+              const image = typeof item.image === 'string' ? item.image : ''
+              const avatarUrl = typeof item.avatar_url === 'string' ? item.avatar_url : ''
+              if (!id) return null
+              return { id, image, avatar_url: avatarUrl }
+            })
+            ?.filter((item) => item !== null) ?? []
+        const normalizedUsers = users as any[]
+        setAllUsers(normalizedUsers)
+        setDisplayedUsers(normalizedUsers.filter((user) => user?.id).slice(0, 3))
       } catch (e) {
         console.warn('Failed to fetch recent users', e)
       }
@@ -242,17 +253,23 @@ export function UnifiedOnboarding() {
                 useNativeDriver: true,
               }).start(() => {
                 // Get random 3 users that aren't currently displayed
-                const currentIds = displayedUsers.map(u => u.id)
-                const availableUsers = allUsers.filter(u => !currentIds.includes(u.id))
-                
+                const currentIds = displayedUsers.map((u) => u?.id).filter((id): id is string => Boolean(id))
+                const availableUsers = allUsers.filter(
+                  (u) => u?.id && !currentIds.includes(u.id as string)
+                )
+
                 if (availableUsers.length >= 3) {
                   // Shuffle and pick 3
-                  const shuffled = [...availableUsers].sort(() => Math.random() - 0.5)
-                  setDisplayedUsers(shuffled.slice(0, 3))
+                  const shuffled = [...availableUsers]
+                    .filter((u) => u?.id)
+                    .sort(() => Math.random() - 0.5)
+                  setDisplayedUsers(shuffled.filter((u) => u?.id).slice(0, 3))
                 } else {
                   // Not enough different users, just shuffle all
-                  const shuffled = [...allUsers].sort(() => Math.random() - 0.5)
-                  setDisplayedUsers(shuffled.slice(0, 3))
+                  const shuffled = [...allUsers]
+                    .filter((u) => u?.id)
+                    .sort(() => Math.random() - 0.5)
+                  setDisplayedUsers(shuffled.filter((u) => u?.id).slice(0, 3))
                 }
 
                 // Fade in
@@ -303,11 +320,13 @@ export function UnifiedOnboarding() {
 
             {/* Avatars */}
             <Animated.View style={{ flexDirection: 'row', marginLeft: 10, opacity: avatarOpacity }}>
-              {displayedUsers.map((user, idx) => {
-                const avatarUrl = user.image || user.avatar_url
+              {displayedUsers
+                .filter((item) => typeof item === 'object' && item !== null)
+                .map((user, idx) => {
+                const avatarUrl = user?.image || user?.avatar_url
                 return (
                   <View
-                    key={user.id}
+                    key={user?.id ?? `avatar-${idx}`}
                     style={{
                       width: 32,
                       height: 32,

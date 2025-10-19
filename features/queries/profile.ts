@@ -1,6 +1,6 @@
 import { pocketbase } from '@/features/pocketbase'
-import { getProfileItems, getBacklogItems } from '@/features/stores/items'
 import type { Profile, ExpandedItem } from '@/features/types'
+import { createdSort } from '@/ui/profiles/sorts'
 import { QUERY_WINDOWS } from '@/features/queries/queryConfig'
 import { queryClient } from '@/core/queryClient'
 import {
@@ -43,14 +43,8 @@ export type ProfileHeaderSnapshot = ProfileHeader
 
 export const profileKeys = {
   all: ['profile'] as const,
-  detail: (userName: string) => ['profile', userName] as const,
+  grid: (userId: string) => ['profile', userId, 'grid'] as const,
   header: (userName: string) => ['profile', 'header', userName] as const,
-}
-
-export type FetchProfileOptions = {
-  forceNetwork?: boolean
-  userId?: string
-  includeBacklog?: boolean
 }
 
 type FetchProfileHeaderOptions = {
@@ -128,51 +122,50 @@ export const fetchProfileHeaderSafe = async (
   return header
 }
 
-export async function fetchProfileData(userName: string, options: FetchProfileOptions = {}): Promise<ProfileData> {
-  const startedAt = Date.now()
+export type FetchProfileParams = {
+  userId: string
+  includeBacklog?: boolean
+}
+
+export async function fetchProfileData(params: FetchProfileParams): Promise<ProfileData> {
+  const { userId, includeBacklog = false } = params
   const totalStartedAt = PERF_TRACE ? Date.now() : 0
-  if (__DEV__) {
-    console.log('[boot-trace] profile.fetch:start', userName)
-  }
-  if (PERF_TRACE) {
-    console.log('[profile][fetch] start', { userName, forceNetwork: options.forceNetwork ?? false })
-  }
 
-  const cachedHeader = queryClient.getQueryData<ProfileHeader>(profileKeys.header(userName))
-  const header = await fetchProfileHeaderSafe(userName, {
-    userId: options.forceNetwork ? options.userId : options.userId ?? cachedHeader?.id,
-    forceNetwork: options.forceNetwork,
+  const headerStartedAt = PERF_TRACE ? Date.now() : 0
+  const profileRecord = await pocketbase.collection<Profile>('users').getOne(userId, {
+    fields: PROFILE_HEADER_FIELDS,
   })
-  const request = {
-    userName,
-    userId: header.id,
-    forceNetwork: options.forceNetwork,
-  }
+  logProfileFetchPerf('profile.pocketbase', headerStartedAt)
+  const profile = {
+    ...profileRecord,
+    ...normalizeAvatarFields(profileRecord),
+  } as Profile
 
-  const gridPromise = (async () => {
-    const started = PERF_TRACE ? Date.now() : 0
-    const result = await getProfileItems(request)
-    logProfileFetchPerf('getProfileItems', started, { count: result.length })
-    return result
-  })()
+  const gridStartedAt = PERF_TRACE ? Date.now() : 0
+  const gridResponse = await pocketbase.collection<ExpandedItem>('items').getFullList({
+    filter: `creator = "${userId}" && backlog = false && parent = null`,
+    expand: 'ref',
+    sort: 'order, -created',
+  })
+  const gridItems = gridSort([...gridResponse] as ExpandedItem[])
+  logProfileFetchPerf('grid.pocketbase', gridStartedAt, { count: gridItems.length })
+  console.log('[profile][fetch] PB grid', {
+    userId,
+    count: gridItems.length,
+    ids: gridItems.map((item) => item.id),
+  })
 
-  const backlogPromise = options.includeBacklog
-    ? (async () => {
-        const started = PERF_TRACE ? Date.now() : 0
-        const result = await getBacklogItems(request)
-        logProfileFetchPerf('getBacklogItems', started, { count: result.length })
-        return result
-      })()
-    : Promise.resolve<ExpandedItem[]>([])
-
-  const [gridItems, backlogItems] = await Promise.all([gridPromise, backlogPromise])
-
-  if (__DEV__) {
-    console.log('[boot-trace] profile.fetch:complete', userName, {
-      duration: Date.now() - startedAt,
-      gridCount: gridItems.length,
-      backlogCount: backlogItems.length,
+  let backlogItems: ExpandedItem[] = []
+  if (includeBacklog) {
+    const backlogStartedAt = PERF_TRACE ? Date.now() : 0
+    const backlogResponse = await pocketbase.collection<ExpandedItem>('items').getFullList({
+      filter: `creator = "${userId}" && backlog = true && parent = null`,
+      expand: 'ref',
+      sort: '-created',
     })
+    backlogItems = [...backlogResponse] as ExpandedItem[]
+    backlogItems = backlogItems.sort(createdSort)
+    logProfileFetchPerf('backlog.pocketbase', backlogStartedAt, { count: backlogItems.length })
   }
 
   logProfileFetchPerf('total', totalStartedAt, {
@@ -181,8 +174,8 @@ export async function fetchProfileData(userName: string, options: FetchProfileOp
   })
 
   return {
-    profile: header as Profile,
+    profile,
     gridItems,
-    backlogItems: backlogItems as ExpandedItem[],
+    backlogItems,
   }
 }

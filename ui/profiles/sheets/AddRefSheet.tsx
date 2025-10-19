@@ -35,7 +35,6 @@ export const AddRefSheet = ({
     moveToBacklog,
     removeItem,
     addToProfile,
-    addOptimisticItem,
     getRefById,
     addingRefId,
     setAddingRefId,
@@ -270,7 +269,6 @@ export const AddRefSheet = ({
                 setStep('selectItemToReplace')
               } else {
                 const newItem = await addToProfile(addingRefId, fields, false)
-                addOptimisticItem(newItem)
                 setItemData(newItem)
                 setStep('addedToGrid')
               }
@@ -300,7 +298,6 @@ export const AddRefSheet = ({
             await removeItem(itemToReplace.id)
             // add the new item to the grid
             const newItem = await addToProfile(addingRefId, stagedItemFields, false)
-            addOptimisticItem(newItem)
             setItemData(newItem)
             setStep('addedToGrid')
           }}
@@ -309,7 +306,6 @@ export const AddRefSheet = ({
             await moveToBacklog(itemToReplace.id)
             // add the new item to the grid
             const newItem = await addToProfile(addingRefId, stagedItemFields, false)
-            addOptimisticItem(newItem)
             setItemData(newItem)
             setStep('addedToGrid')
           }}

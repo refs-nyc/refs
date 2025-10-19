@@ -15,9 +15,7 @@ import { SelectItemToReplace } from '@/ui/actions/SelectItemToReplace'
 import { ChooseReplaceItemMethod } from '@/ui/actions/ChooseReplaceItemMethod'
 import { UserLists } from '@/ui/actions/UserLists'
 import { EditableList } from '@/ui/lists/EditableList'
-import { persistBacklogSnapshot, persistGridSnapshot, getProfileCacheEntryByUserId } from '@/features/cache/profileCache'
 import { gridSort } from '@/features/stores/itemFormatters'
-import { markProfileGridDirty } from '@/features/stores/items'
 import { Collections } from '@/features/pocketbase/pocketbase-types'
 
 
@@ -50,8 +48,6 @@ const useNewRefSheetController = () => {
     triggerProfileRefresh,
     triggerFeedRefresh,
     optimisticItems,
-    addOptimisticItem,
-    removeOptimisticItem,
   } = useAppStore()
 
   const { resetShareIntent } = useShareIntentContext()
@@ -87,44 +83,7 @@ const useNewRefSheetController = () => {
     setCaptionFocused(false)
   }, [])
 
-  const persistOptimisticSnapshot = useCallback(async (item: ExpandedItem, backlogTarget: boolean) => {
-    try {
-      const { user } = useAppStore.getState()
-      if (!user?.id) return
-      const cacheEntry = getProfileCacheEntryByUserId(user.id)
-      const resolvedProfile: Profile | undefined = cacheEntry?.profile ?? (user as Profile | undefined)
-
-      if (!backlogTarget) {
-        const base = cacheEntry?.gridItems ?? []
-        const filtered = base.filter((existing) => existing.id !== item.id)
-        const next = gridSort([...filtered, item])
-        await persistGridSnapshot({
-          userId: user.id,
-          userName: user.userName,
-          gridItems: next,
-          profile: resolvedProfile,
-          backlogItems: cacheEntry?.backlogItems,
-        })
-        markProfileGridDirty(user.id)
-      } else {
-        const base = cacheEntry?.backlogItems ?? []
-        const filtered = base.filter((existing) => existing.id !== item.id)
-        const next = [...filtered, item]
-        await persistBacklogSnapshot({
-          userId: user.id,
-          userName: user.userName,
-          backlogItems: next,
-          profile: resolvedProfile,
-          gridItems: cacheEntry?.gridItems,
-        })
-      }
-    } catch (error) {
-      if (__DEV__) {
-        console.warn('[new-ref] persist optimistic snapshot failed', error)
-      }
-    }
-  }, [])
-
+  
 
   const finalizeClose = useCallback(() => {
     resetState()
@@ -212,55 +171,18 @@ const useNewRefSheetController = () => {
     async (fields: StagedItemFields, options: { backlog: boolean; existingRefId: string | null }) => {
       const { backlog } = options
       const merged = { ...fields }
-      const { addToProfile, replaceOptimisticItem } = useAppStore.getState()
+      const { addToProfile } = useAppStore.getState()
 
-      const optimistic: ExpandedItem = {
-        id: `temp-${Date.now()}`,
-        collectionId: Collections.Items,
-        collectionName: Collections.Items,
-        creator: useAppStore.getState().user?.id ?? '',
-        ref: options.existingRefId ?? 'temp-ref',
-        image: fields.image ?? '',
-        url: fields.url ?? '',
-        text: fields.text ?? '',
-        list: fields.list ?? false,
-        parent: fields.parent ?? '',
-        backlog,
-        order: 0,
-        created: new Date().toISOString(),
-        updated: new Date().toISOString(),
-        promptContext: fields.promptContext ?? '',
-        expand: {
-          ref: {
-            id: options.existingRefId ?? 'temp-ref',
-            title: fields.title ?? '',
-            image: fields.image ?? '',
-            url: fields.url ?? '',
-            meta: '{}',
-            creator: useAppStore.getState().user?.id ?? '',
-            created: new Date().toISOString(),
-            updated: new Date().toISOString(),
-          },
-          creator: null as any,
-          items_via_parent: [] as any,
-        },
-      }
-
-      addOptimisticItem(optimistic)
-      void persistOptimisticSnapshot(optimistic, backlog)
-      closeSheet({ reason: 'submit' })
+closeSheet({ reason: 'submit' })
 
       try {
         const newItem = await addToProfile(options.existingRefId, merged, backlog)
-        replaceOptimisticItem(optimistic.id, newItem)
         setItemData(newItem)
-        void persistOptimisticSnapshot(newItem, backlog)
       } catch (error) {
         console.error('Failed to add to profile', error)
-        removeOptimisticItem(optimistic.id)
       }
     },
-    [addOptimisticItem, closeSheet, removeOptimisticItem]
+    [closeSheet]
   )
 
   const handleAddToExistingList = useCallback(

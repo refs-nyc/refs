@@ -19,6 +19,8 @@ import { withTiming, clearTimingSamples, getTimingReport } from '@/features/quer
 import { enqueueIdleTask, getIdleQueueStats } from '@/features/utils/idleQueue'
 import { enqueueHydratorJob } from '@/core/hydratorQueue'
 import { putSnapshot, snapshotKeys, MAX_SNAPSHOT_BYTES } from '@/features/cache/snapshotStore'
+import { writeProfileSnapshot, getSnapshotUpdatedAt } from '@/features/cache/profileCache'
+import { isProfileMutationInFlight, shouldIgnoreRealtimeItem } from '@/features/cache/profileMutationState'
 import { DEFAULT_COMMUNITY } from '@/core/bootstrap/seedSnapshots'
 
 type DirectoryPage = Awaited<ReturnType<typeof fetchDirectoryPage>>
@@ -26,6 +28,7 @@ type ConversationsPage = Awaited<ReturnType<typeof fetchConversationsPage>>
 
 let realtimeStarted = false
 let authSubscription: (() => void) | null = null
+let itemsSubscription: (() => void) | null = null
 
 const INLINE_CONVERSATION_HYDRATE_COUNT = 3
 const STALE_THRESHOLD_MS = 5 * 60_000
@@ -143,7 +146,13 @@ const hydrateDirectoryFirstPage = async (communityId: string) => {
 
 const hydrateProfileSelf = async (userId: string, userName: string) => {
   if (!userId || !userName) return
-  if (isQueryFresh(profileKeys.detail(userName))) {
+  if (isProfileMutationInFlight()) {
+    if (PERF_TRACE) {
+      console.log('[profile][hydrator] skip:mutationInFlight', { userId })
+    }
+    return
+  }
+  if (isQueryFresh(profileKeys.grid(userId))) {
     if (PERF_TRACE) {
       console.log('[profile][hydrator] skip:fresh', { userName })
     }
@@ -156,7 +165,7 @@ const hydrateProfileSelf = async (userId: string, userName: string) => {
   }
 
   const fetchStartedAt = PERF_TRACE ? Date.now() : 0
-  const data = await fetchProfileData(userName, { userId })
+  const data = await fetchProfileData({ userId })
   if (PERF_TRACE) {
     logProfileHydratorPerf('fetchProfileData', fetchStartedAt, {
       grid: data.gridItems?.length ?? 0,
@@ -165,23 +174,31 @@ const hydrateProfileSelf = async (userId: string, userName: string) => {
   }
   const updatedAt = Date.now()
   const setQueryStartedAt = PERF_TRACE ? Date.now() : 0
-  queryClient.setQueryData(profileKeys.detail(userName), data, { updatedAt })
+  queryClient.setQueryData(profileKeys.grid(userId), data, { updatedAt })
   logProfileHydratorPerf('setQueryData', setQueryStartedAt)
   const snapshotStartedAt = PERF_TRACE ? Date.now() : 0
-  const snapshotPromise = putSnapshot('profileSelf', snapshotKeys.profileSelf(userId), data, {
-    timestamp: updatedAt,
-  })
-  if (PERF_TRACE) {
-    snapshotPromise
-      .then(() => {
-        logProfileHydratorPerf('putSnapshot', snapshotStartedAt)
-      })
-      .catch((error) => {
-        console.warn('[profile][hydrator] putSnapshot failed', error)
-        logProfileHydratorPerf('putSnapshot.error', snapshotStartedAt)
-      })
+  const existingTimestamp = getSnapshotUpdatedAt(userId) ?? 0
+  if (updatedAt >= existingTimestamp) {
+    const snapshotPromise = writeProfileSnapshot({
+      userId,
+      userName,
+      profile: data.profile,
+      gridItems: data.gridItems,
+      backlogItems: data.backlogItems,
+      updatedAt,
+    })
+    if (PERF_TRACE) {
+      snapshotPromise
+        .then(() => {
+          logProfileHydratorPerf('writeSnapshot', snapshotStartedAt)
+        })
+        .catch((error) => {
+          console.warn('[profile][hydrator] writeSnapshot failed', error)
+          logProfileHydratorPerf('writeSnapshot.error', snapshotStartedAt)
+        })
+    }
+    await snapshotPromise
   }
-  await snapshotPromise
   logProfileHydratorPerf('total', totalStartedAt)
 }
 
@@ -298,17 +315,48 @@ export function startRealtime() {
   if (realtimeStarted) return
   realtimeStarted = true
 
+  const subscribeToItems = async (userId?: string | null) => {
+    if (itemsSubscription) {
+      try {
+        await itemsSubscription()
+      } catch (error) {
+        if (__DEV__) {
+          console.warn('[profile] items realtime unsubscribe failed', error)
+        }
+      } finally {
+        itemsSubscription = null
+      }
+    }
+    if (!userId) return
+
+    try {
+      itemsSubscription = await pocketbase.collection('items').subscribe('*', (event) => {
+        const record = event.record as { id?: string; creator?: string } | undefined
+        if (!record?.id) return
+        if (record.creator && record.creator !== userId) return
+        if (shouldIgnoreRealtimeItem(record.id)) return
+        queryClient.invalidateQueries({ queryKey: profileKeys.grid(userId) })
+      })
+    } catch (error) {
+      if (__DEV__) {
+        console.warn('[profile] items realtime subscribe failed', error)
+      }
+    }
+  }
+
   const ensureAuthSubscriptions = () => {
     const interactionCallback = () => {
       const currentUserId = useAppStore.getState().user?.id
       if (!currentUserId) {
         queryClient.removeQueries({ queryKey: wantToMeetKeys.all })
         queryClient.removeQueries({ queryKey: messagingKeys.root })
+        void subscribeToItems(null)
         return
       }
 
       queryClient.invalidateQueries({ queryKey: wantToMeetKeys.list(currentUserId) })
       queryClient.invalidateQueries({ queryKey: messagingKeys.conversations(currentUserId) })
+      void subscribeToItems(currentUserId)
     }
     ;(interactionCallback as any).__interactionLabel = 'startRealtime:ensureAuthSubscriptions'
     InteractionManager.runAfterInteractions(interactionCallback)

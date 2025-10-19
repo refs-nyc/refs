@@ -371,14 +371,14 @@ export function CommunitiesFeedScreen({
   })
 
   const seedProfileQuery = useCallback(
-    (userName: string, profileRecord?: Profile, gridItems?: ExpandedItem[], backlogItems?: ExpandedItem[]) => {
-      if (!profileRecord || !Array.isArray(gridItems) || !Array.isArray(backlogItems)) return
+    (userId: string, profileRecord?: Profile, gridItems?: ExpandedItem[], backlogItems?: ExpandedItem[]) => {
+      if (!userId || !profileRecord || !Array.isArray(gridItems) || !Array.isArray(backlogItems)) return
       const profileData: ProfileData = {
         profile: profileRecord,
         gridItems,
         backlogItems,
       }
-      queryClient.setQueryData<ProfileData>(profileKeys.detail(userName), profileData)
+      queryClient.setQueryData<ProfileData>(profileKeys.grid(userId), profileData)
     },
     [queryClient]
   )
@@ -404,13 +404,13 @@ export function CommunitiesFeedScreen({
             })
           }
 
-          const existing = queryClient.getQueryData<ProfileData>(profileKeys.detail(feedUser.userName))
+          const existing = queryClient.getQueryData<ProfileData>(profileKeys.grid(userId))
           if (existing) {
             warmed.add(userId)
             return
           }
 
-          const fetched = await fetchProfileData(feedUser.userName)
+          const fetched = await fetchProfileData({ userId })
           const normalizedProfile = normalizeProfileRecord(fetched.profile)
 
           if (__DEV__) {
@@ -424,7 +424,7 @@ export function CommunitiesFeedScreen({
           }
           if (normalizedProfile) {
             seedProfileQuery(
-              feedUser.userName,
+              userId,
               normalizedProfile,
               fetched.gridItems as ExpandedItem[],
               fetched.backlogItems as ExpandedItem[]

@@ -10,6 +10,7 @@ import {
   type SnapshotReadResult,
 } from '@/features/cache/snapshotStore'
 import { normalizeAvatarFields } from '@/features/users/avatar'
+import { gridSort } from '@/features/stores/itemFormatters'
 
 const PERF_TRACE = process.env.EXPO_PUBLIC_PERF_HARNESS === '1'
 
@@ -147,7 +148,13 @@ export async function fetchProfileData(params: FetchProfileParams): Promise<Prof
     expand: 'ref',
     sort: 'order, -created',
   })
-  const gridItems = gridSort([...gridResponse] as ExpandedItem[])
+  let gridItems: ExpandedItem[] = []
+  try {
+    gridItems = gridSort([...gridResponse] as ExpandedItem[])
+  } catch (error) {
+    console.warn('[profile][fetch] gridSort failed, using unsorted grid', error)
+    gridItems = [...gridResponse] as ExpandedItem[]
+  }
   logProfileFetchPerf('grid.pocketbase', gridStartedAt, { count: gridItems.length })
   console.log('[profile][fetch] PB grid', {
     userId,

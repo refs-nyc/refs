@@ -5,6 +5,7 @@ import type { MessageSlice } from './messages'
 import type { UserSlice } from './users'
 import type { UserCacheSlice } from './userCache'
 import type { FeedSlice } from './feed'
+import type { NewRefSlice } from './newRef'
 import { Item, Profile } from '@/features/types'
 import type { ImagePickerAsset } from 'expo-image-picker'
 import type { InteractionGateSlice } from './interactionGate'
@@ -64,22 +65,13 @@ export type UISlice = {
   isSettingsSheetOpen: boolean
   settingsSheetHeight: number
   isEditMode: boolean
-  addingNewRefTo: null | 'grid' | 'backlog'
-  addRefPrompt: string
   referencersContext: ReferencersContext
-  selectedPhoto: string | null
-  directPhotoPrefill: DirectPhotoRefFields | null
-  presentNewRefSheet: (prompt?: string) => void
-  setAddingNewRefTo: (newState: null | 'grid' | 'backlog') => void
   setAddingRefId: (id: string) => void
   setAddingRefPrefill: (fields: RefPrefillFields | null) => void
   setCurrentRefId: (id: string) => void
   setReferencersSheetApi: (api: ReferencersSheetApi | null) => void
   setReferencersContext: (ctx: ReferencersContext) => void
   setAddingToList: (newState: string) => void
-  setAddRefPrompt: (prompt: string) => void
-  setSelectedPhoto: (photo: string | null) => void
-  setDirectPhotoPrefill: (fields: DirectPhotoRefFields | null) => void
   setIsSettingsSheetOpen: (value: boolean) => void
   setSettingsSheetHeight: (value: number) => void
   setIsEditMode: (value: boolean) => void
@@ -163,5 +155,6 @@ export type StoreSlices = BackdropSlice &
   UserSlice &
   UserCacheSlice &
   FeedSlice &
+  NewRefSlice &
   UISlice &
   InteractionGateSlice

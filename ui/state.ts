@@ -1,10 +1,4 @@
-import type {
-  StoreSlices,
-  UISlice,
-  ProfileNavIntent,
-  ReferencersSheetApi,
-  DirectPhotoRefFields,
-} from '@/features/stores/types'
+import type { StoreSlices, UISlice, ProfileNavIntent, ReferencersSheetApi } from '@/features/stores/types'
 import { Item, Profile } from '@/features/types'
 import BottomSheet from '@gorhom/bottom-sheet'
 import React from 'react'
@@ -32,25 +26,11 @@ export const createUISlice: StateCreator<StoreSlices, [], [], UISlice> = (set, g
   addingRefId: '',
   addingRefPrefill: null,
   newRefSheetRef: React.createRef(),
-  addingNewRefTo: null,
-  addRefPrompt: '',
-  selectedPhoto: null,
-  directPhotoPrefill: null,
   isBackgroundLoading: false,
   setBackgroundLoading: (loading: boolean) => {
     set(() => ({
       isBackgroundLoading: loading,
     }))
-  },
-  setAddingNewRefTo: (newState: null | 'grid' | 'backlog') => {
-    set((state) => {
-      if (newState !== null && state.addingNewRefTo === newState) {
-        // Force a toggle so listeners react when trying to reopen the same sheet
-        set({ addingNewRefTo: null })
-        return { addingNewRefTo: newState }
-      }
-      return { addingNewRefTo: newState }
-    })
   },
   setAddingRefId: (id: string) => {
     set((state) => ({
@@ -108,36 +88,6 @@ export const createUISlice: StateCreator<StoreSlices, [], [], UISlice> = (set, g
       communityFormOnAdded: null,
     }))
     get().communityFormSheetRef.current?.close()
-  },
-  setAddRefPrompt: (prompt: string) => {
-    set(() => ({
-      addRefPrompt: prompt,
-    }))
-  },
-  setSelectedPhoto: (photo: string | null) => {
-    set(() => ({
-      selectedPhoto: photo,
-    }))
-  },
-  setDirectPhotoPrefill: (fields: DirectPhotoRefFields | null) => {
-    set(() => ({
-      directPhotoPrefill: fields,
-    }))
-  },
-  presentNewRefSheet: (prompt?: string) => {
-    const { setAddRefPrompt, setAddingNewRefTo, newRefSheetRef } = get()
-
-    if (typeof prompt === 'string') {
-      setAddRefPrompt(prompt)
-    } else {
-      setAddRefPrompt('')
-    }
-
-    setAddingNewRefTo('grid')
-
-    requestAnimationFrame(() => {
-      newRefSheetRef.current?.snapToIndex?.(0)
-    })
   },
   setIsSettingsSheetOpen: (value: boolean) => {
     set(() => ({

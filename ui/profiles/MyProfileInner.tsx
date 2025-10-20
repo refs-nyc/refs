@@ -230,6 +230,15 @@ export const MyProfile = ({ userName }: { userName: string }) => {
   const avatarSwapOpacity = useRef(new RNAnimated.Value(1)).current
   const bottomSheetRef = useRef<BottomSheet>(null)
   const directPhotoPickerGuardRef = useRef(false)
+  const promptTapGuardRef = useRef(0)
+  const acceptPromptTap = useCallback(() => {
+    const now = Date.now()
+    if (now - promptTapGuardRef.current < 150) {
+      return false
+    }
+    promptTapGuardRef.current = now
+    return true
+  }, [])
   // Get optimistic items from store
   const { optimisticItems, setPendingRefRemoval } = useAppStore()
   const profileRefreshTrigger = useAppStore((state) => state.profileRefreshTrigger)
@@ -242,7 +251,6 @@ export const MyProfile = ({ userName }: { userName: string }) => {
     startEditProfile,
     stopEditProfile,
     stopEditing,
-    setAddingNewRefTo,
     newRefSheetRef,
     settingsSheetRef,
     isSettingsSheetOpen,
@@ -261,8 +269,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
     setDetailsSheetData,
     homePagerIndex,
     editingProfile,
-    setDirectPhotoPrefill,
-    presentNewRefSheet,
+    openNewRef,
   } = useAppStore()
 
   const queryClient = useQueryClient()
@@ -1197,22 +1204,11 @@ export const MyProfile = ({ userName }: { userName: string }) => {
       }}
       onAddItem={(prompt?: string) => {
         const proceed = () => {
-          presentNewRefSheet(prompt)
-        }
-
-        if (isSettingsSheetOpen) {
-          closeSettingsSheet({ afterClose: proceed })
-          return
-        }
-
-        proceed()
-      }}
-      onAddItemWithPrompt={(prompt: string, photoPath?: boolean) => {
-        const proceed = () => {
-          if (photoPath) {
-            void triggerDirectPhotoPicker(prompt)
+          if (!acceptPromptTap()) return
+          if (prompt) {
+            openNewRef({ prompt })
           } else {
-            presentNewRefSheet(prompt)
+            openNewRef()
           }
         }
 
@@ -1223,6 +1219,31 @@ export const MyProfile = ({ userName }: { userName: string }) => {
 
         proceed()
       }}
+    onAddItemWithPrompt={(prompt: string, photoPath?: boolean) => {
+      const proceed = () => {
+        if (!acceptPromptTap()) {
+          if (__DEV__) {
+            console.log('[prompt] tap throttled', { prompt })
+          }
+          return
+        }
+        if (__DEV__) {
+          console.log('[prompt] tap accepted', { prompt, photoPath })
+        }
+        if (photoPath) {
+          void triggerDirectPhotoPicker(prompt)
+        } else {
+          openNewRef({ prompt })
+        }
+        }
+
+        if (isSettingsSheetOpen) {
+          closeSettingsSheet({ afterClose: proceed })
+          return
+      }
+
+      proceed()
+    }}
         columns={GRID_COLUMNS}
       items={displayGridItems}
         rows={GRID_ROWS}
@@ -1381,12 +1402,11 @@ export const MyProfile = ({ userName }: { userName: string }) => {
     if (hasShareIntent) {
       if (shareIntentHandledRef.current) return
       shareIntentHandledRef.current = true
-      setAddingNewRefTo(displayGridItems.length < GRID_CAPACITY ? 'grid' : 'backlog')
-      bottomSheetRef.current?.snapToIndex(1)
+      openNewRef({ target: displayGridItems.length < GRID_CAPACITY ? 'grid' : 'backlog' })
     } else {
       shareIntentHandledRef.current = false
     }
-  }, [hasShareIntent, displayGridItems.length, setAddingNewRefTo])
+  }, [hasShareIntent, displayGridItems.length, openNewRef])
 
   useProfileEffect('profile.focusReadyEffect', () => {
     if (!profileData) return
@@ -1434,15 +1454,14 @@ export const MyProfile = ({ userName }: { userName: string }) => {
           const selectedImage = result.assets[0]
           Keyboard.dismiss()
 
-          setDirectPhotoPrefill({
-            title: prompt,
-            image: selectedImage.uri,
-            asset: selectedImage,
-            url: '',
-            promptContext: prompt,
+          openNewRef({
+            prompt,
+            photo: {
+              uri: selectedImage.uri,
+              width: selectedImage.width ?? 0,
+              height: selectedImage.height ?? 0,
+            },
           })
-
-          presentNewRefSheet(prompt)
         }
       } catch (error) {
         console.error('Error picking image:', error)
@@ -1450,7 +1469,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
         directPhotoPickerGuardRef.current = false
       }
     },
-    [setDirectPhotoPrefill, presentNewRefSheet]
+    [openNewRef]
   )
 
   const handlePromptChipPress = useCallback(
@@ -1468,12 +1487,15 @@ export const MyProfile = ({ userName }: { userName: string }) => {
       })
 
       const execute = () => {
+        if (!acceptPromptTap()) {
+          return
+        }
         if (prompt.photoPath) {
           void triggerDirectPhotoPicker(prompt.text)
           return
         }
 
-        presentNewRefSheet(prompt.text)
+        openNewRef({ prompt: prompt.text })
       }
 
       if (isSettingsSheetOpen) {
@@ -1483,7 +1505,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
 
       execute()
     },
-    [triggerDirectPhotoPicker, presentNewRefSheet, isSettingsSheetOpen, closeSettingsSheet]
+    [acceptPromptTap, triggerDirectPhotoPicker, openNewRef, isSettingsSheetOpen, closeSettingsSheet]
   )
 
   const promptChipSection = promptSuggestions.length > 0 ? (
@@ -1675,7 +1697,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
                 <FloatingJaggedButton
                   icon="plus"
                   onPress={() => {
-                    presentNewRefSheet()
+                    openNewRef()
                   }}
                 />
               </Animated.View>
@@ -1741,7 +1763,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
               profile={effectiveProfile}
               user={user}
               openAddtoBacklog={() => {
-                setAddingNewRefTo('backlog')
+                openNewRef({ target: 'backlog' })
               }}
             />
           </>

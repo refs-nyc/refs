@@ -26,6 +26,7 @@ import {
   endProfileMutation,
   recordDeletedTombstone,
 } from '@/features/cache/profileMutationState'
+import { isInteractionGateActive } from '@/features/perf/interactionGate'
 
 const forceNetworkProfileIds = new Set<string>()
 
@@ -458,6 +459,12 @@ export const createItemSlice: StateCreator<StoreSlices, [], [], ItemSlice> = (se
       editedState,
     })),
   triggerFeedRefresh: () => {
+    if (isInteractionGateActive()) {
+      if (__DEV__) {
+        console.log('[gate] drop feed refresh')
+      }
+      return
+    }
     const scheduleRefresh = () => {
       pendingFeedRefresh = null
       set((state) => ({ feedRefreshTrigger: state.feedRefreshTrigger + 1 }))
@@ -477,6 +484,12 @@ export const createItemSlice: StateCreator<StoreSlices, [], [], ItemSlice> = (se
     pendingFeedRefresh = scheduleAfterInteractions(scheduleRefresh)
   },
   triggerProfileRefresh: () => {
+    if (isInteractionGateActive()) {
+      if (__DEV__) {
+        console.log('[gate] drop profile refresh')
+      }
+      return
+    }
     const scheduleRefresh = () => {
       pendingProfileRefresh = null
       set((state) => ({ profileRefreshTrigger: state.profileRefreshTrigger + 1 }))

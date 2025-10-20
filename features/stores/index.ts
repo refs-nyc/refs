@@ -8,6 +8,7 @@ import { createUserCacheSlice } from './userCache'
 import type { StoreSlices } from './types'
 import { createUISlice } from '@/ui/state'
 import { createFeedSlice } from './feed'
+import { createNewRefSlice } from './newRef'
 import { createInteractionGateSlice } from './interactionGate'
 
 export const useAppStore = create<StoreSlices>((...a) => ({
@@ -18,6 +19,7 @@ export const useAppStore = create<StoreSlices>((...a) => ({
   ...createUserSlice(...a),
   ...createUserCacheSlice(...a),
   ...createFeedSlice(...a),
+  ...createNewRefSlice(...a),
   ...createUISlice(...a),
   ...createInteractionGateSlice(...a),
 }))

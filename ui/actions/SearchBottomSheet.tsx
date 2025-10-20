@@ -35,7 +35,7 @@ export default function SearchBottomSheet() {
     moduleBackdropAnimatedIndex,
     getRefsByTitle,
     getRandomUser,
-    presentNewRefSheet,
+    openNewRef,
     setProfileNavIntent,
   } = useAppStore()
 
@@ -129,7 +129,7 @@ export default function SearchBottomSheet() {
               }}
               onPress={async () => {
                 if (!searching && user?.userName) {
-                  presentNewRefSheet()
+                  openNewRef()
                 }
               }}
             >
@@ -179,7 +179,7 @@ export default function SearchBottomSheet() {
                   <Pressable
                     onPress={(e) => {
                       e.stopPropagation()
-                      presentNewRefSheet()
+                      openNewRef()
                     }}
                   >
                     <View

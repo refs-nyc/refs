@@ -663,3 +663,38 @@ export const done = (label: string) => {
 - Updated `env.local`: pointed `EXPO_PUBLIC_POCKETBASE_URL` to `http://127.0.0.1:8090` for local testing and added `EXPO_PUBLIC_CACHE_EPOCH=2` to force client cache flush; remember to swap the URL to the prod host and bump the epoch again before shipping.
 - Versioned local caches: `simpleCache` and compact profile snapshot helpers now prefix keys with the current cache epoch (reads `EXPO_PUBLIC_CACHE_EPOCH`) so old AsyncStorage entries are ignored after env changes.
 - Next steps: seed mandatory reference data (interests/prompts/settings), run full onboarding + add/delete ref smoke test, and update mobile/Expo build configs with the new PocketBase URL + cache epoch before release.
+
+## 2025-10-20: RefForm Bottom Padding & Scroll Fix
+- **Problem:** When opening RefForm (via NewRefSheet after selecting a photo), the "Add" button was clipped/hidden below the keyboard, with a green gap visible between the content and keyboard.
+- **Root causes:**
+  1. `BottomSheetView` wrapper in `NewRefSheet.tsx` had excessive `paddingBottom` (initially `insets.bottom + s.$075` or `s.$2`)
+  2. `BottomSheetScrollView` in `RefForm.tsx` had no bottom padding to create scrollable space
+  3. No auto-scroll to reveal the bottom content when keyboard appeared
+- **Solution (2-part fix):**
+  1. **NewRefSheet.tsx**: Reduced `BottomSheetView` `paddingBottom` from dynamic inset calculation to `0` to eliminate green gap
+  2. **RefForm.tsx**: Added `paddingBottom: 35` to `BottomSheetScrollView`'s `contentContainerStyle` + added `scrollViewRef` with `useEffect` that calls `scrollToEnd({ animated: true })` after 300ms delay when `canEditRefData` is true
+- **Why both were needed:**
+  - `paddingBottom` creates scrollable space beyond the last element (the "Add" button)
+  - `scrollToEnd()` automatically scrolls to reveal that space, bringing the button above the keyboard
+  - Without padding: nowhere to scroll to
+  - Without scroll: user has to manually scroll to see button
+- **Files changed:**
+  - `ui/profiles/sheets/NewRefSheet.tsx` (line 219): `paddingBottom: 0`
+  - `ui/actions/RefForm.tsx` (lines 111-120, 233, 239): Added `scrollViewRef`, scroll effect, attached ref, `paddingBottom: 35`
+- **Result:** "Add" button now visible above keyboard on sheet open, no green gap, smooth UX
+
+## 2025-10-20: RefForm Keyboard Reopening Bug Fix
+- **Problem:** When dismissing RefForm (via NewRefSheet) without submitting, the keyboard would rise again immediately after dismissal. Terminal showed `ACTIVE FIELD CHANGE - activeField: title` during dismissal.
+- **Root cause:** The `useEffect` in `RefForm.tsx` (lines 115-130) that manages auto-scroll and sets `activeField` to `'title'` was only checking `canEditRefData`, not whether the sheet was actually open. When the sheet closed, `canEditRefData` remained `true`, causing the effect to re-run and set `activeField` back to `'title'`, which triggered the keyboard to reopen.
+- **Why AddRefSheet worked correctly:** `AddRefSheet` passes `canEditRefData={false}` to `RefForm`, so the effect never runs and doesn't set `activeField`. `NewRefSheet` passes `canEditRefData={true}`, exposing the bug.
+- **Solution:**
+  1. Added `isSheetOpen?: boolean` prop to `RefForm` (defaults to `true` for backward compatibility)
+  2. Modified the `useEffect` to depend on BOTH `canEditRefData` AND `isSheetOpen`
+  3. When `isSheetOpen` becomes `false`: Set `activeField` to `null` immediately and return (prevents keyboard)
+  4. When `isSheetOpen` is `true` AND `canEditRefData` is `true`: Set `activeField` to `'title'` and scroll (normal behavior)
+  5. Updated `NewRefSheet.tsx` to pass `isSheetOpen={isOpen}` to `RefForm` (where `isOpen = newRefTarget !== null`)
+- **Key insight:** `RefForm` needs to know when the sheet is ACTUALLY closing (not just when editing is disabled) to prevent the keyboard from reopening. The sheet state from the parent controls when it's safe to set `activeField`.
+- **Files changed:**
+  - `ui/actions/RefForm.tsx` (lines 77, 91, 115-130): Added `isSheetOpen` prop and updated effect logic to clear `activeField` on close
+  - `ui/profiles/sheets/NewRefSheet.tsx` (line 244): Pass `isSheetOpen={isOpen}` to RefForm
+- **Result:** Keyboard no longer reopens when dismissing RefForm. Clean dismissal behavior matching AddRefSheet.

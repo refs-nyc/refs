@@ -48,7 +48,12 @@ export const NewRefSheet = ({
   const [stagedItemFields, setStagedItemFields] = useState<StagedItemFields | null>(null)
   const [itemToReplace, setItemToReplace] = useState<ExpandedItem | null>(null)
   const [itemData, setItemData] = useState<ExpandedItem | null>(null)
-
+  const [sheetIndex, setSheetIndex] = useState(-1)
+  const [shouldRenderContent, setShouldRenderContent] = useState(isOpen)
+  const [keyboardVisible, setKeyboardVisible] = useState(false)
+  const [keyboardHeight, setKeyboardHeight] = useState(0)
+  
+  const isSheetActive = sheetIndex >= 0
   const hasOpenedRef = useRef(false)
 
   const resetState = useCallback(() => {
@@ -65,6 +70,54 @@ export const NewRefSheet = ({
     closeNewRef()
   }, [closeNewRef])
 
+  // Keyboard listeners (matching AddRefSheet)
+  useEffect(() => {
+    const handleShow = (event: any) => {
+      setKeyboardVisible(true)
+      setKeyboardHeight(event?.endCoordinates?.height ?? 0)
+    }
+    const handleHide = () => {
+      setKeyboardVisible(false)
+      setKeyboardHeight(0)
+    }
+
+    const subs = [
+      Keyboard.addListener('keyboardWillShow', handleShow),
+      Keyboard.addListener('keyboardDidShow', handleShow),
+      Keyboard.addListener('keyboardWillHide', handleHide),
+      Keyboard.addListener('keyboardDidHide', handleHide),
+    ]
+
+    return () => subs.forEach((sub) => sub.remove())
+  }, [])
+
+  // Prevent SearchRef (with autoFocus) from mounting during close animation
+  useEffect(() => {
+    if (isOpen) {
+      // Immediately show content when opening
+      setShouldRenderContent(true)
+    } else {
+      // Delay hiding content when closing to prevent autoFocus from triggering
+      const timeout = setTimeout(() => setShouldRenderContent(false), 120)
+      return () => clearTimeout(timeout)
+    }
+  }, [isOpen])
+
+  // Sync refFields and step with current props BEFORE first render
+  useEffect(() => {
+    if (isOpen && newRefPhoto) {
+      setRefFields({
+        title: newRefPrompt ?? '',
+        image: newRefPhoto.uri,
+        promptContext: newRefPrompt ?? undefined,
+      })
+      setStep('add')
+    } else if (isOpen && !newRefPhoto) {
+      setRefFields(null)
+      setStep('search')
+    }
+  }, [isOpen, newRefPhoto, newRefPrompt])
+
   useEffect(() => {
     if (!isOpen) {
       hasOpenedRef.current = false
@@ -75,20 +128,7 @@ export const NewRefSheet = ({
     }
 
     hasOpenedRef.current = true
-    resetState()
-
-    if (newRefPhoto) {
-      setRefFields({
-        title: newRefPrompt ?? '',
-        image: newRefPhoto.uri,
-        promptContext: newRefPrompt ?? undefined,
-      })
-      setStep('add')
-    } else {
-      setRefFields(null)
-      setStep('search')
-    }
-  }, [isOpen, newRefPhoto, newRefPrompt, resetShareIntent, resetState])
+  }, [isOpen, resetState, resetShareIntent])
 
   const addRefToProfile = useCallback(
     async (
@@ -179,7 +219,13 @@ export const NewRefSheet = ({
     [addRefToProfile, existingRefId]
   )
 
-  const snapPoints = useMemo(() => [...SNAP_POINTS], [])
+  const snapPoints = useMemo(() => {
+    // Use 95% when showing RefForm with an image (photoPath=true prompts)
+    if (step === 'add' && refFields?.image) {
+      return ['95%']
+    }
+    return ['80%']
+  }, [step, refFields?.image])
 
   return (
     <BottomSheet
@@ -203,6 +249,10 @@ export const NewRefSheet = ({
         />
       )}
       onChange={(index) => {
+        if (__DEV__) {
+          console.log('[new-ref-sheet] onChange - sheetIndex:', index)
+        }
+        setSheetIndex(index)
         if (index < 0 && hasOpenedRef.current) {
           closeSheet()
         }
@@ -216,11 +266,11 @@ export const NewRefSheet = ({
         style={{
           paddingTop: s.$2,
           paddingHorizontal: s.$2,
-          paddingBottom: insets.bottom ? insets.bottom + s.$075 : s.$2,
+          paddingBottom: 0,
           gap: s.$1,
         }}
       >
-        {step === 'search' && (
+        {shouldRenderContent && step === 'search' && (
           <SearchRef
             prompt={newRefPrompt ?? ''}
             onAddNewRef={(fields) => {
@@ -235,16 +285,24 @@ export const NewRefSheet = ({
           />
         )}
 
-        {step === 'add' && refFields && (
-          <RefForm
-            key={newRefPhoto?.uri ?? 'ref-form'}
-            existingRefFields={refFields}
-            placeholder="Title"
-            canEditRefData
-            backlog={isBacklog}
-            onAddRef={onAddRef}
-            onAddRefToList={onAddPhototoList}
-          />
+        {shouldRenderContent && step === 'add' && refFields && (
+          <View
+            style={{
+              marginTop: keyboardVisible ? (newRefPhoto ? -50 : -60) : 0,
+            }}
+          >
+            <RefForm
+              key={newRefPhoto?.uri ?? 'ref-form'}
+              existingRefFields={refFields}
+              placeholder="Title"
+              canEditRefData
+              backlog={isBacklog}
+              onAddRef={onAddRef}
+              onAddRefToList={onAddPhototoList}
+              bottomInset={0}
+              isSheetOpen={isSheetActive}
+            />
+          </View>
         )}
 
         {step === 'selectReplace' && stagedItemFields && (

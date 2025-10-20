@@ -74,6 +74,7 @@ export const RefForm = ({
   onAddRefToList,
   pickerOpen = false,
   canEditRefData = true,
+  isSheetOpen = true,
   onCaptionFocus,
   onManualTransition,
   onLinkIconClick,
@@ -87,6 +88,7 @@ export const RefForm = ({
   pickerOpen?: boolean
   backlog?: boolean
   canEditRefData?: boolean
+  isSheetOpen?: boolean
   onCaptionFocus?: (focused: boolean) => void
   onManualTransition?: () => void
   onLinkIconClick?: () => void
@@ -104,17 +106,63 @@ export const RefForm = ({
   const [createInProgress, setCreateInProgress] = useState(false)
   const [uploadInitiated, setUploadInitiated] = useState(false)
   const [editingUrl, setEditingUrl] = useState<boolean>(false)
-  const [activeField, setActiveField] = useState<'title' | 'link' | 'caption' | null>(canEditRefData ? 'title' : null)
+  const [activeField, setActiveField] = useState<'title' | 'link' | 'caption' | null>(null)
   const [hasAttemptedAddWithoutTitle, setHasAttemptedAddWithoutTitle] = useState<boolean>(false)
   const captionInputRef = useRef<any>(null)
   const urlInputRef = useRef<any>(null)
+  const scrollViewRef = useRef<any>(null)
+  const titleInputRef = useRef<any>(null)
+  const hasInitializedRef = useRef(false)
+
+  // Scroll to bottom when component mounts and manage activeField based on sheet state
+  useEffect(() => {
+    if (__DEV__) {
+      console.log('📋 RefForm sheet state changed:', { isSheetOpen, canEditRefData, hasInitialized: hasInitializedRef.current })
+    }
+    
+    if (!isSheetOpen) {
+      // Sheet is closing - clear activeField to prevent keyboard from reopening
+      if (__DEV__) {
+        console.log('📋 Sheet closing - clearing activeField and dismissing keyboard')
+      }
+      setActiveField(null)
+      hasInitializedRef.current = false
+      // Dismiss keyboard after a small delay to ensure field is cleared first
+      setTimeout(() => {
+        if (__DEV__) {
+          console.log('📋 Calling Keyboard.dismiss()')
+        }
+        Keyboard.dismiss()
+      }, 50)
+      return
+    }
+    
+    if (isSheetOpen && !hasInitializedRef.current) {
+      // Sheet is open and not yet initialized - set initial field and scroll ONCE
+      if (__DEV__) {
+        console.log('📋 Sheet open - INITIALIZING activeField and scrolling')
+      }
+      hasInitializedRef.current = true
+      // If data can't be edited (AddRefSheet), focus caption instead of title
+      setActiveField(canEditRefData ? 'title' : 'caption')
+      // Small delay for scroll to let keyboard start appearing
+      setTimeout(() => {
+        scrollViewRef.current?.scrollToEnd({ animated: true })
+      }, 150)
+    }
+  }, [canEditRefData, isSheetOpen])
+
+  // Auto-focus title when activeField becomes 'title'
+  useEffect(() => {
+    if (activeField === 'title') {
+      titleInputRef.current?.focus()
+    }
+  }, [activeField])
 
   // Auto-focus caption when activeField becomes 'caption'
   useEffect(() => {
     if (activeField === 'caption') {
-      setTimeout(() => {
-        captionInputRef.current?.focus()
-      }, 100)
+      captionInputRef.current?.focus()
     }
   }, [activeField])
 
@@ -220,12 +268,13 @@ export const RefForm = ({
 
   return (
           <BottomSheetScrollView
+        ref={scrollViewRef}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={{
         gap: s.$1,
         marginTop: s.$2 - 5,
-        marginBottom: (s.$2 as number) + 10 + bottomInset,
+        paddingBottom: 35,
         justifyContent: 'flex-start',
         // Stretch children to container width so inputs never grow wider
         // than the sheet and inadvertently shift the whole layout.
@@ -407,8 +456,26 @@ export const RefForm = ({
                 url={url || ''}
                 image={pinataSource}
                 withUrl={false}
-                onActiveFieldChange={setActiveField}
-                isActive={activeField === 'title'}
+                onActiveFieldChange={(field) => {
+                  if (__DEV__) {
+                    console.log('🎯 EditableHeader onActiveFieldChange called:', { field, isSheetOpen })
+                  }
+                  // Only allow field changes when sheet is actually open
+                  if (isSheetOpen) {
+                    setActiveField(field)
+                  } else {
+                    if (__DEV__) {
+                      console.log('🚫 BLOCKED: Sheet is closed, ignoring field change')
+                    }
+                  }
+                }}
+                isActive={(() => {
+                  const isActive = activeField === 'title'
+                  if (__DEV__) {
+                    console.log('🔵 EditableHeader isActive computed:', { activeField, isActive })
+                  }
+                  return isActive
+                })()}
                 hideEditIcon={true}
                 forceNotEditing={false}
                 onManualTransition={onManualTransition}

@@ -52,13 +52,19 @@ export const AddRefSheet = ({
 
   const [keyboardVisible, setKeyboardVisible] = useState(false)
   const [keyboardHeight, setKeyboardHeight] = useState(0)
+  const keyboardTimeoutRef = useRef<NodeJS.Timeout>()
 
   useEffect(() => {
     const handleShow = (event: any) => {
-      setKeyboardVisible(true)
-      setKeyboardHeight(event?.endCoordinates?.height ?? 0)
+      // Small delay to prevent snap point change from interfering with sheet opening
+      if (keyboardTimeoutRef.current) clearTimeout(keyboardTimeoutRef.current)
+      keyboardTimeoutRef.current = setTimeout(() => {
+        setKeyboardVisible(true)
+        setKeyboardHeight(event?.endCoordinates?.height ?? 0)
+      }, 150)
     }
     const handleHide = () => {
+      if (keyboardTimeoutRef.current) clearTimeout(keyboardTimeoutRef.current)
       setKeyboardVisible(false)
       setKeyboardHeight(0)
     }
@@ -70,7 +76,10 @@ export const AddRefSheet = ({
       Keyboard.addListener('keyboardDidHide', handleHide),
     ]
 
-    return () => subs.forEach((sub) => sub.remove())
+    return () => {
+      subs.forEach((sub) => sub.remove())
+      if (keyboardTimeoutRef.current) clearTimeout(keyboardTimeoutRef.current)
+    }
   }, [])
 
   useEffect(() => {
@@ -275,6 +284,7 @@ export const AddRefSheet = ({
             }}
             backlog={false}
             bottomInset={keyboardVisible ? keyboardHeight + 84 : 0}
+            isSheetOpen={isSheetActive}
           />
         </View>
       ) : step === 'selectItemToReplace' && stagedItemFields ? (

@@ -123,17 +123,11 @@ export const RefForm = ({
     if (!isSheetOpen) {
       // Sheet is closing - clear activeField to prevent keyboard from reopening
       if (__DEV__) {
-        console.log('📋 Sheet closing - clearing activeField and dismissing keyboard')
+        console.log('📋 Sheet closing - clearing activeField')
       }
       setActiveField(null)
       hasInitializedRef.current = false
-      // Dismiss keyboard after a small delay to ensure field is cleared first
-      setTimeout(() => {
-        if (__DEV__) {
-          console.log('📋 Calling Keyboard.dismiss()')
-        }
-        Keyboard.dismiss()
-      }, 50)
+      // Don't manually dismiss keyboard - let keyboardBlurBehavior="restore" handle it
       return
     }
     

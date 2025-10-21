@@ -7,17 +7,29 @@ export function Picker({
   onCancel,
   disablePinata = false,
   options,
+  useCamera = false,
 }: {
   onCancel: () => void
   onSuccess: (asset: ImagePicker.ImagePickerAsset) => void
   disablePinata?: boolean
   options?: ImagePicker.ImagePickerOptions
+  useCamera?: boolean
 }) {
   useEffect(() => {
     const pickImage = async () => {
-      // No permissions request is necessary for launching the image library
       try {
-        console.log('📸 Picker component mounted, launching image library...')
+        // Request camera permission if using camera
+        if (useCamera) {
+          console.log('📸 Requesting camera permissions...')
+          const { status } = await ImagePicker.requestCameraPermissionsAsync()
+          if (status !== 'granted') {
+            console.log('📸 Camera permission denied')
+            onCancel()
+            return
+          }
+        }
+
+        console.log(`📸 Picker component mounted, launching ${useCamera ? 'camera' : 'image library'}...`)
         const pickerOptions: ImagePicker.ImagePickerOptions = {
           allowsEditing: true,
           aspect: [4, 3],
@@ -26,8 +38,10 @@ export function Picker({
           ...(options ?? {}),
         }
 
-        console.log('📸 Calling launchImageLibraryAsync with options:', pickerOptions)
-        let result = await ImagePicker.launchImageLibraryAsync(pickerOptions)
+        console.log(`📸 Calling ${useCamera ? 'launchCameraAsync' : 'launchImageLibraryAsync'} with options:`, pickerOptions)
+        let result = useCamera
+          ? await ImagePicker.launchCameraAsync(pickerOptions)
+          : await ImagePicker.launchImageLibraryAsync(pickerOptions)
         console.log('📸 Image picker result:', result.canceled ? 'canceled' : 'success')
 
         if (!result.canceled) {

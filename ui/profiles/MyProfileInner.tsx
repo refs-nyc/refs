@@ -126,43 +126,39 @@ const gridAnimationHistory = new Set<string>()
 type PromptSuggestion = {
   text: string
   photoPath?: boolean
+  cameraPath?: boolean
 }
 
 const PROMPT_SUGGESTIONS: PromptSuggestion[] = [
   { text: 'Link you shared recently' },
   { text: 'Free space' },
-  { text: 'Place you feel like yourself' },
   { text: 'Example of perfect design' },
   { text: 'Nascent hobby' },
-  { text: 'Piece from a museum', photoPath: true },
   { text: 'Most-rewatched movie' },
-  { text: 'Tradition you love', photoPath: true },
-  { text: 'Meme slot', photoPath: true },
-  { text: 'Neighborhood haunt' },
+  { text: 'Neighborhood spot' },
   { text: 'What you put on aux' },
-  { text: 'Halloween pic', photoPath: true },
   { text: 'Rabbit hole' },
   { text: 'A preferred publication' },
   { text: 'Something on your reading list' },
+  { text: 'A tool you actually love using' },
+  { text: 'Piece from a museum', photoPath: true },
+  { text: 'Tradition you love', photoPath: true },
+  { text: 'Meme', photoPath: true },
+  { text: 'Halloween pic', photoPath: true },
   { text: 'Favorite view', photoPath: true },
   { text: "Material you're drawn to", photoPath: true },
-  { text: 'A tool you actually love using' },
   { text: 'Someone who shaped your taste', photoPath: true },
   { text: 'Ritual that grounds you', photoPath: true },
-  { text: "Image that's been stuck in your head", photoPath: true },
   { text: 'Sense of style in a single pic', photoPath: true },
-  { text: 'Day you felt alive', photoPath: true },
-  { text: 'Something on your wall', photoPath: true },
-  { text: 'Something you cooked', photoPath: true },
+  { text: 'From a day you felt alive', photoPath: true },
   { text: 'When the gang looked beautiful', photoPath: true },
   { text: "Quietest place you've been", photoPath: true },
-  { text: 'Coolest thing in your immediate vicinity', photoPath: true },
   { text: 'Evidence of a good time', photoPath: true },
-  { text: 'Screenshot that says it all', photoPath: true },
+  { text: 'Something you screenshotted', photoPath: true },
   { text: 'Photo of a project mid-life', photoPath: true },
-  { text: 'Favorite street corner', photoPath: true },
-  { text: 'Personal website/twitter square', photoPath: true },
-  { text: 'Recently read' },
+  { text: 'A street corner', photoPath: true },
+  { text: 'Personal website/twitter', photoPath: true },
+  { text: 'Coolest thing in your immediate vicinity', cameraPath: true },
 ]
 
 const PROMPT_BATCH_SIZE = 6
@@ -1219,7 +1215,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
 
         proceed()
       }}
-    onAddItemWithPrompt={(prompt: string, photoPath?: boolean) => {
+    onAddItemWithPrompt={(prompt: string, photoPath?: boolean, cameraPath?: boolean) => {
       const proceed = () => {
         if (!acceptPromptTap()) {
           if (__DEV__) {
@@ -1228,10 +1224,10 @@ export const MyProfile = ({ userName }: { userName: string }) => {
           return
         }
         if (__DEV__) {
-          console.log('[prompt] tap accepted', { prompt, photoPath })
+          console.log('[prompt] tap accepted', { prompt, photoPath, cameraPath })
         }
-        if (photoPath) {
-          void triggerDirectPhotoPicker(prompt)
+        if (photoPath || cameraPath) {
+          void triggerDirectPhotoPicker(prompt, cameraPath)
         } else {
           openNewRef({ prompt })
         }
@@ -1432,23 +1428,31 @@ export const MyProfile = ({ userName }: { userName: string }) => {
   // timeout used to stop editing the profile after 10 seconds
   let timeout: ReturnType<typeof setTimeout>
 
-  // Direct photo picker flow - route into existing NewRefSheet with pre-populated photo
+  // Direct photo/camera picker flow - route into existing NewRefSheet with pre-populated photo
   const triggerDirectPhotoPicker = useCallback(
-    async (prompt: string) => {
+    async (prompt: string, useCamera = false) => {
       if (directPhotoPickerGuardRef.current) return
 
       directPhotoPickerGuardRef.current = true
       try {
-        const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync()
+        // Request appropriate permissions
+        const { status } = useCamera
+          ? await ImagePicker.requestCameraPermissionsAsync()
+          : await ImagePicker.requestMediaLibraryPermissionsAsync()
+        
         if (status !== 'granted') {
           return
         }
 
-        const result = await ImagePicker.launchImageLibraryAsync({
+        const pickerOptions = {
           allowsEditing: true,
-          aspect: [1, 1],
+          aspect: [1, 1] as [number, number],
           quality: 0.8,
-        })
+        }
+
+        const result = useCamera
+          ? await ImagePicker.launchCameraAsync(pickerOptions)
+          : await ImagePicker.launchImageLibraryAsync(pickerOptions)
 
         if (!result.canceled && result.assets && result.assets[0]) {
           const selectedImage = result.assets[0]
@@ -1490,8 +1494,8 @@ export const MyProfile = ({ userName }: { userName: string }) => {
         if (!acceptPromptTap()) {
           return
         }
-        if (prompt.photoPath) {
-          void triggerDirectPhotoPicker(prompt.text)
+        if (prompt.photoPath || prompt.cameraPath) {
+          void triggerDirectPhotoPicker(prompt.text, prompt.cameraPath)
           return
         }
 
@@ -1608,7 +1612,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
                 />
                 <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
                   <Ionicons
-                    name={suggestion.photoPath ? 'camera-outline' : 'bulb-outline'}
+                    name={suggestion.cameraPath ? 'camera' : suggestion.photoPath ? 'camera-outline' : 'bulb-outline'}
                     size={15}
                     color={c.muted2}
                     style={{ marginRight: 6 }}

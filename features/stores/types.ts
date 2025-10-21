@@ -64,6 +64,7 @@ export type UISlice = {
   settingsSheetRef: React.RefObject<BottomSheet>
   isSettingsSheetOpen: boolean
   settingsSheetHeight: number
+  shouldFocusLocationInput: boolean
   isEditMode: boolean
   referencersContext: ReferencersContext
   pendingReferencersReturn: { refId: string; context: ReferencersContext } | null
@@ -76,6 +77,7 @@ export type UISlice = {
   setAddingToList: (newState: string) => void
   setIsSettingsSheetOpen: (value: boolean) => void
   setSettingsSheetHeight: (value: number) => void
+  setShouldFocusLocationInput: (value: boolean) => void
   setIsEditMode: (value: boolean) => void
   stopEditProfile: () => void
   startEditProfile: () => void

@@ -251,6 +251,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
     settingsSheetRef,
     isSettingsSheetOpen,
     setIsSettingsSheetOpen,
+    setShouldFocusLocationInput,
     isEditMode,
     setIsEditMode,
     logout,
@@ -806,6 +807,26 @@ export const MyProfile = ({ userName }: { userName: string }) => {
       >
               {locationLabel}
       </Text>
+          ) : ownProfile ? (
+            <Pressable
+              onPress={() => {
+                setShouldFocusLocationInput(true)
+                openSettingsSheet()
+              }}
+              hitSlop={8}
+            >
+              <Text
+                style={{
+                  color: c.muted,
+                  fontSize: 13,
+                  fontFamily: 'Inter',
+                  fontWeight: '500',
+                  lineHeight: s.$1half,
+                }}
+              >
+                + Location
+              </Text>
+            </Pressable>
           ) : null}
         </View>
         {(() => {

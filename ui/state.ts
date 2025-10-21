@@ -19,6 +19,7 @@ export const createUISlice: StateCreator<StoreSlices, [], [], UISlice> = (set, g
   settingsSheetRef: React.createRef<BottomSheet>(),
   isSettingsSheetOpen: false,
   settingsSheetHeight: 0,
+  shouldFocusLocationInput: false,
   isEditMode: false,
   currentRefId: '',
   referencersContext: null,
@@ -103,6 +104,11 @@ export const createUISlice: StateCreator<StoreSlices, [], [], UISlice> = (set, g
   setSettingsSheetHeight: (value: number) => {
     set(() => ({
       settingsSheetHeight: value,
+    }))
+  },
+  setShouldFocusLocationInput: (value: boolean) => {
+    set(() => ({
+      shouldFocusLocationInput: value,
     }))
   },
   setIsEditMode: (value: boolean) => {

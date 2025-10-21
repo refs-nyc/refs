@@ -1,5 +1,5 @@
 import BottomSheet, { BottomSheetBackdrop, BottomSheetView, BottomSheetTextInput } from '@gorhom/bottom-sheet'
-import React, { useMemo, useState } from 'react'
+import React, { useMemo, useState, useRef, useEffect } from 'react'
 import { useAppStore } from '@/features/stores'
 import { c, s } from '@/features/style'
 import { Text, View, Pressable, useWindowDimensions, ActivityIndicator } from 'react-native'
@@ -25,8 +25,12 @@ export const ProfileSettingsSheet = () => {
   const setIsSettingsSheetOpen = useAppStore((state) => state.setIsSettingsSheetOpen)
   const settingsSheetHeight = useAppStore((state) => state.settingsSheetHeight)
   const setSettingsSheetHeight = useAppStore((state) => state.setSettingsSheetHeight)
+  const shouldFocusLocation = useAppStore((state) => state.shouldFocusLocationInput)
+  const setShouldFocusLocation = useAppStore((state) => state.setShouldFocusLocationInput)
 
   const { height: windowHeight } = useWindowDimensions()
+  
+  const locationInputRef = useRef<any>(null)
 
   // Local state for editing
   const [fullName, setFullName] = useState('')
@@ -35,6 +39,16 @@ export const ProfileSettingsSheet = () => {
   const [isSavingLocation, setIsSavingLocation] = useState(false)
   const [isLoadingLocation, setIsLoadingLocation] = useState(false)
   const [avatarUploading, setAvatarUploading] = useState(false)
+  
+  // Auto-focus location input when requested
+  useEffect(() => {
+    if (shouldFocusLocation && isSettingsSheetOpen && locationInputRef.current) {
+      setTimeout(() => {
+        locationInputRef.current?.focus()
+        setShouldFocusLocation(false)
+      }, 400)
+    }
+  }, [shouldFocusLocation, isSettingsSheetOpen, setShouldFocusLocation])
 
   const settingsSheetSnapPoints = useMemo(() => {
     const baseHeight = Math.max(settingsSheetHeight, Math.round(windowHeight * 0.45))
@@ -483,6 +497,7 @@ export const ProfileSettingsSheet = () => {
             </Pressable>
           </View>
           <BottomSheetTextInput
+            ref={locationInputRef}
             value={location}
             onChangeText={setLocation}
             onBlur={handleSaveLocation}

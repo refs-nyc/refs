@@ -15,7 +15,7 @@ import React from 'react'
 export type ProfileNavIntent = {
   targetPagerIndex: 0 | 1 | 2
   directoryFilter?: 'popular' | 'people'
-  source?: 'directory' | 'wantToMeet' | 'messages' | 'other' | 'back-fallback'
+  source?: 'directory' | 'wantToMeet' | 'messages' | 'other' | 'back-fallback' | 'corkboard'
   animate?: boolean
 }
 
@@ -66,11 +66,13 @@ export type UISlice = {
   settingsSheetHeight: number
   isEditMode: boolean
   referencersContext: ReferencersContext
+  pendingReferencersReturn: { refId: string; context: ReferencersContext } | null
   setAddingRefId: (id: string) => void
   setAddingRefPrefill: (fields: RefPrefillFields | null) => void
   setCurrentRefId: (id: string) => void
   setReferencersSheetApi: (api: ReferencersSheetApi | null) => void
   setReferencersContext: (ctx: ReferencersContext) => void
+  setPendingReferencersReturn: (payload: { refId: string; context: ReferencersContext } | null) => void
   setAddingToList: (newState: string) => void
   setIsSettingsSheetOpen: (value: boolean) => void
   setSettingsSheetHeight: (value: number) => void

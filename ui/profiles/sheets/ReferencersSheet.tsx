@@ -30,6 +30,7 @@ export default function Referencers({
     currentRefId,
     referencersContext,
     setReferencersContext,
+    setPendingReferencersReturn,
     setProfileNavIntent,
     moduleBackdropAnimatedIndex,
     detailsBackdropAnimatedIndex,
@@ -38,6 +39,7 @@ export default function Referencers({
   const [actionLoading, setActionLoading] = useState(false)
   const closeWaitersRef = useRef(new Set<() => void>())
   const sheetOpenRef = useRef(false)
+  const preserveOnCloseRef = useRef(false)
 
   const flushWaiters = useCallback(() => {
     if (closeWaitersRef.current.size === 0) return
@@ -84,13 +86,18 @@ export default function Referencers({
       sheetOpenRef.current = index >= 0
       if (index === -1) {
         flushWaiters()
-        setReferencersContext(null)
+        if (preserveOnCloseRef.current) {
+          preserveOnCloseRef.current = false
+        } else {
+          setPendingReferencersReturn(null)
+          setReferencersContext(null)
+        }
         if (detailsBackdropAnimatedIndex) {
           detailsBackdropAnimatedIndex.value = -1
         }
       }
     },
-    [detailsBackdropAnimatedIndex, flushWaiters, setReferencersContext]
+    [detailsBackdropAnimatedIndex, flushWaiters, setPendingReferencersReturn, setReferencersContext]
   )
 
   useEffect(() => {
@@ -238,9 +245,35 @@ export default function Referencers({
                   user={user}
                   small={false}
                   onPress={() => {
-                    referencersBottomSheetRef.current?.close()
-                    setProfileNavIntent({ targetPagerIndex: 0, source: 'other' })
-                    router.push(`/user/${user.userName}`)
+                    void (async () => {
+                      const hasCommunityContext = referencersContext?.type === 'community' && currentRefId
+                      const params: Record<string, string> = {}
+                      if (user.userName) {
+                        params.userName = user.userName
+                      }
+                      if (user.id) {
+                        params.userId = user.id
+                      }
+
+                      if (hasCommunityContext) {
+                        const contextCopy = referencersContext ? { ...referencersContext } : null
+                        preserveOnCloseRef.current = true
+                        setPendingReferencersReturn({
+                          refId: currentRefId,
+                          context: contextCopy,
+                        })
+                        setProfileNavIntent({ targetPagerIndex: 2, source: 'corkboard' })
+                        params.fromCorkboard = '1'
+                      } else {
+                        setProfileNavIntent({ targetPagerIndex: 0, source: 'other' })
+                      }
+
+                      await closeAsync()
+
+                      if (params.userName) {
+                        router.push({ pathname: '/user/[userName]', params })
+                      }
+                    })()
                   }}
                   style={{ paddingHorizontal: 0 }}
                 />

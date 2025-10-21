@@ -22,6 +22,7 @@ export const createUISlice: StateCreator<StoreSlices, [], [], UISlice> = (set, g
   isEditMode: false,
   currentRefId: '',
   referencersContext: null,
+  pendingReferencersReturn: null,
   addRefSheetRef: React.createRef(),
   addingRefId: '',
   addingRefPrefill: null,
@@ -46,6 +47,11 @@ export const createUISlice: StateCreator<StoreSlices, [], [], UISlice> = (set, g
   setReferencersContext: (ctx) => {
     set(() => ({
       referencersContext: ctx,
+    }))
+  },
+  setPendingReferencersReturn: (payload) => {
+    set(() => ({
+      pendingReferencersReturn: payload,
     }))
   },
   setAddingToList: (newState: string) => {

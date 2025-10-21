@@ -7,11 +7,13 @@ import {
   readCompactProfileSnapshot,
   compactSnapshotToProfileData,
 } from '@/features/cache/compactProfileSnapshot'
+import { putSnapshot, snapshotKeys } from '@/features/cache/snapshotStore'
 
 export type ProfileCacheEntry = ProfileData & { timestamp: number }
 
 const cacheByUserId = new Map<string, ProfileCacheEntry>()
 const userNameToUserId = new Map<string, string>()
+const snapshotUpdatedAtByUserId = new Map<string, number>()
 
 const rememberUserMapping = (userId: string, userName?: string) => {
   if (userName) {
@@ -32,6 +34,9 @@ export const getProfileCacheEntryByUserName = (userName: string): ProfileCacheEn
   return cacheByUserId.get(userId)
 }
 
+export const getSnapshotUpdatedAt = (userId: string): number | undefined =>
+  snapshotUpdatedAtByUserId.get(userId)
+
 export const upsertProfileCacheEntry = (
   userId: string,
   userName: string | undefined,
@@ -44,6 +49,7 @@ export const upsertProfileCacheEntry = (
     timestamp,
   }
   cacheByUserId.set(userId, entry)
+  snapshotUpdatedAtByUserId.set(userId, timestamp)
   return entry
 }
 
@@ -64,6 +70,7 @@ export const updateProfileCacheEntry = (
     timestamp: Date.now(),
   }
   cacheByUserId.set(userId, entry)
+  snapshotUpdatedAtByUserId.set(userId, entry.timestamp)
   return entry
 }
 
@@ -71,6 +78,83 @@ const ensureProfile = (profile?: Profile, fallback?: Profile): Profile | undefin
   if (profile) return profile
   if (fallback) return fallback
   return undefined
+}
+
+export type ProfileSnapshotPayload = {
+  userId: string
+  userName?: string
+  profile: Profile
+  gridItems: ExpandedItem[]
+  backlogItems: ExpandedItem[]
+  updatedAt?: number
+}
+
+const MIN_WRITE_INTERVAL_MS = 0
+
+export const writeProfileSnapshot = async ({
+  userId,
+  userName,
+  profile,
+  gridItems,
+  backlogItems,
+  updatedAt,
+}: ProfileSnapshotPayload): Promise<void> => {
+  if (!userId || userId === 'unknown') {
+    if (__DEV__) {
+      console.warn('[profile][snapshot] skipped write (invalid userId)', { userId })
+    }
+    return
+  }
+
+  const resolvedProfile = ensureProfile(profile)
+  if (!resolvedProfile) {
+    if (__DEV__) {
+      console.warn('[profile][snapshot] skipped write (missing profile)', { userId })
+    }
+    return
+  }
+
+  const timestamp = updatedAt ?? Date.now()
+  const lastWrite = snapshotUpdatedAtByUserId.get(userId)
+  if (typeof lastWrite === 'number' && timestamp + MIN_WRITE_INTERVAL_MS < lastWrite) {
+    if (__DEV__) {
+      console.warn('[profile][snapshot] skipped write (stale payload)', {
+        userId,
+        incoming: timestamp,
+        existing: lastWrite,
+      })
+    }
+    return
+  }
+
+  const entry: ProfileData = {
+    profile: resolvedProfile,
+    gridItems,
+    backlogItems,
+  }
+
+  upsertProfileCacheEntry(userId, userName ?? resolvedProfile.userName, entry, timestamp)
+
+  const compactedGrid = gridItems.map(compactGridItem)
+  const compactedBacklog = backlogItems.map(compactGridItem)
+
+  await Promise.all([
+    simpleCache.set('grid_items', compactedGrid, userId),
+    simpleCache.set('backlog_items', compactedBacklog, userId),
+    writeCompactProfileSnapshot({
+      userId,
+      userName: userName ?? resolvedProfile.userName,
+      profile: resolvedProfile,
+      gridItems,
+      backlogItems,
+      updatedAt: timestamp,
+    }),
+    putSnapshot('profileSelf', snapshotKeys.profileSelf(userId), entry, {
+      timestamp,
+    }),
+  ])
+
+  console.log('[profile][snapshot] write', { userId, size: gridItems.length })
 }
 
 export const persistGridSnapshot = async ({
@@ -88,22 +172,16 @@ export const persistGridSnapshot = async ({
 }): Promise<void> => {
   const existing = cacheByUserId.get(userId)
   const resolvedProfile = ensureProfile(profile ?? undefined, existing?.profile)
-  if (resolvedProfile) {
-    updateProfileCacheEntry(userId, userName, () => ({
-      profile: resolvedProfile,
-      gridItems,
-      backlogItems: backlogItems ?? existing?.backlogItems ?? [],
-    }))
-  }
+  if (!resolvedProfile) return
 
-  await simpleCache.set('grid_items', gridItems.map(compactGridItem), userId)
-  rememberUserMapping(userId, userName)
-  await writeCompactProfileSnapshot({
+  const nextBacklog = backlogItems ?? existing?.backlogItems ?? []
+  await writeProfileSnapshot({
     userId,
     userName,
-    profile: resolvedProfile ?? existing?.profile ?? null,
+    profile: resolvedProfile,
     gridItems,
-    backlogItems: backlogItems ?? existing?.backlogItems ?? [],
+    backlogItems: nextBacklog,
+    updatedAt: Date.now(),
   })
 }
 
@@ -122,22 +200,16 @@ export const persistBacklogSnapshot = async ({
 }): Promise<void> => {
   const existing = cacheByUserId.get(userId)
   const resolvedProfile = ensureProfile(profile ?? undefined, existing?.profile)
-  if (resolvedProfile) {
-    updateProfileCacheEntry(userId, userName, () => ({
-      profile: resolvedProfile,
-      gridItems: gridItems ?? existing?.gridItems ?? [],
-      backlogItems,
-    }))
-  }
+  if (!resolvedProfile) return
 
-  await simpleCache.set('backlog_items', backlogItems.map(compactGridItem), userId)
-  rememberUserMapping(userId, userName)
-  await writeCompactProfileSnapshot({
+  const nextGrid = gridItems ?? existing?.gridItems ?? []
+  await writeProfileSnapshot({
     userId,
     userName,
-    profile: resolvedProfile ?? existing?.profile ?? null,
-    gridItems: gridItems ?? existing?.gridItems ?? [],
+    profile: resolvedProfile,
+    gridItems: nextGrid,
     backlogItems,
+    updatedAt: Date.now(),
   })
 }
 
@@ -146,18 +218,14 @@ export const persistProfileSnapshot = async (
   userName: string | undefined,
   data: ProfileData
 ): Promise<void> => {
-  upsertProfileCacheEntry(userId, userName, data)
-  await Promise.all([
-    simpleCache.set('grid_items', data.gridItems.map(compactGridItem), userId),
-    simpleCache.set('backlog_items', data.backlogItems.map(compactGridItem), userId),
-    writeCompactProfileSnapshot({
-      userId,
-      userName,
-      profile: data.profile,
-      gridItems: data.gridItems,
-      backlogItems: data.backlogItems,
-    }),
-  ])
+  await writeProfileSnapshot({
+    userId,
+    userName,
+    profile: data.profile,
+    gridItems: data.gridItems,
+    backlogItems: data.backlogItems,
+    updatedAt: Date.now(),
+  })
 }
 
 export const getProfileSnapshotByUserName = (userName: string): ProfileData | undefined => {

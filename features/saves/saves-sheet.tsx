@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef } from 'react'
-import { ActivityIndicator, View } from 'react-native'
+import { ActivityIndicator, InteractionManager, View } from 'react-native'
 import { router } from 'expo-router'
 import BottomSheet, { BottomSheetBackdrop, BottomSheetFlatList } from '@gorhom/bottom-sheet'
 
@@ -24,12 +24,9 @@ export default function FeedSheet({
   const feedRefreshing = useAppStore((state) => state.feedRefreshing)
   const feedLoadingMore = useAppStore((state) => state.feedLoadingMore)
   const feedHydrated = useAppStore((state) => state.feedHydrated)
-  const referencersBottomSheetRef = useAppStore((state) => state.referencersBottomSheetRef)
-  const detailsSheetRef = useAppStore((state) => state.detailsSheetRef)
-  const setCurrentRefId = useAppStore((state) => state.setCurrentRefId)
-  const setDetailsSheetData = useAppStore((state) => state.setDetailsSheetData)
 
   const prefetchedOnceRef = useRef(false)
+  const navInFlightRef = useRef(false)
 
   useEffect(() => {
     if (feedEntries.length === 0) {
@@ -45,46 +42,28 @@ export default function FeedSheet({
     }
   }, [feedEntries.length, prefetchNextFeedPage])
 
-  const handleRefPress = useCallback(
-    (entry: FeedEntry) => {
-      if (!entry.ref?.id) return
-      setCurrentRefId(entry.ref.id)
-      referencersBottomSheetRef.current?.expand?.()
-    },
-    [referencersBottomSheetRef, setCurrentRefId]
-  )
-
-  const handleImagePress = useCallback(
-    (entry: FeedEntry) => {
-      if (entry.kind === 'ref_add' && entry.itemId) {
-        setDetailsSheetData({
-          itemId: entry.itemId,
-          profileUsername: entry.actor.userName,
-          openedFromFeed: true,
-        })
-        detailsSheetRef.current?.snapToIndex?.(0)
-        return
+  const handleActorPress = useCallback(
+    async (entry: FeedEntry) => {
+      const userName = entry.actor.userName
+      if (!userName || navInFlightRef.current) return
+      navInFlightRef.current = true
+      try {
+        savesBottomSheetRef.current?.close?.()
+        await new Promise((resolve) => requestAnimationFrame(() => resolve(null)))
+        await new Promise((resolve) => InteractionManager.runAfterInteractions(() => resolve(null)))
+        router.push(`/user/${userName}`)
+      } finally {
+        setTimeout(() => {
+          navInFlightRef.current = false
+        }, 150)
       }
-      handleRefPress(entry)
     },
-    [detailsSheetRef, handleRefPress, setDetailsSheetData]
+    [savesBottomSheetRef]
   )
-
-  const handleActorPress = useCallback((entry: FeedEntry) => {
-    if (!entry.actor.userName) return
-    router.push(`/user/${entry.actor.userName}`)
-  }, [])
 
   const renderItem = useCallback(
-    ({ item }: { item: FeedEntry }) => (
-      <FeedRow
-        entry={item}
-        onPressRef={handleRefPress}
-        onPressImage={handleImagePress}
-        onPressActor={handleActorPress}
-      />
-    ),
-    [handleActorPress, handleImagePress, handleRefPress]
+    ({ item }: { item: FeedEntry }) => <FeedRow entry={item} onPressRow={handleActorPress} />,
+    [handleActorPress]
   )
 
   const keyExtractor = useCallback((item: FeedEntry) => item.id, [])
@@ -149,10 +128,14 @@ export default function FeedSheet({
       }}
     >
       <View style={{ flex: 1, paddingHorizontal: s.$2, paddingBottom: s.$2 }}>
-        <View style={{ paddingVertical: s.$1, marginBottom: s.$2 }}>
+        <View style={{ paddingVertical: s.$1, marginBottom: (s.$2 as number) - 10 }}>
           <Heading tag="h1" style={{ lineHeight: 30 }}>
             Feed
           </Heading>
+          <Text style={{ fontSize: 15, color: c.muted2, marginTop: 2 }}>
+            Everyone who's here.
+          </Text>
+          <View style={{ height: 1, backgroundColor: '#E0E0E0', marginTop: s.$1 }} />
         </View>
         <BottomSheetFlatList
           data={feedEntries}

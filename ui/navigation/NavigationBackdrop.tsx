@@ -56,8 +56,8 @@ export const NavigationBackdrop = () => {
     const opacityValue =
       1 -
       (1 - moduleOpacityValue) *
-        (1 - detailsOpacityValue) *
-        (1 - otherProfileOpacityValue) *
+      (1 - detailsOpacityValue) *
+      (1 - otherProfileOpacityValue) *
         (1 - removeRefOpacityValue)
     return {
       opacity: opacityValue,

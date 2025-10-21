@@ -54,6 +54,9 @@ export function EdgeCorkboardScreen() {
     setCurrentRefId,
     referencersBottomSheetRef,
     setReferencersContext,
+    referencersSheetApi,
+    pendingReferencersReturn,
+    setPendingReferencersReturn,
     openCommunityFormSheet,
     removeInterestSheetRef,
     setPendingInterestRemoval,
@@ -309,6 +312,46 @@ export function EdgeCorkboardScreen() {
         }
       }
     }, [user?.id])
+  )
+
+  useFocusEffect(
+    React.useCallback(() => {
+      if (!pendingReferencersReturn || pendingReferencersReturn.context?.type !== 'community') {
+        return
+      }
+
+      let cancelled = false
+      const { context, refId } = pendingReferencersReturn
+
+      if (refId) {
+        setCurrentRefId(refId)
+      }
+      if (context) {
+        setReferencersContext({ ...context })
+      }
+
+      const raf = requestAnimationFrame(() => {
+        InteractionManager.runAfterInteractions(() => {
+          if (cancelled) return
+          if (!referencersSheetApi?.isOpen?.()) {
+            referencersBottomSheetRef.current?.expand?.()
+          }
+          setPendingReferencersReturn(null)
+        })
+      })
+
+      return () => {
+        cancelled = true
+        cancelAnimationFrame(raf)
+      }
+    }, [
+      pendingReferencersReturn,
+      referencersSheetApi,
+      referencersBottomSheetRef,
+      setCurrentRefId,
+      setPendingReferencersReturn,
+      setReferencersContext,
+    ])
   )
 
   const computeFilteredItems = useCallback(

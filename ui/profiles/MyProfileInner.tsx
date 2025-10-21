@@ -5,7 +5,7 @@ import { useAppStore } from '@/features/stores'
 import type { Profile } from '@/features/types'
 import { ExpandedItem } from '@/features/types'
 import { s, c } from '@/features/style'
-import BottomSheet, { BottomSheetBackdrop, BottomSheetTextInput, BottomSheetView } from '@gorhom/bottom-sheet'
+import BottomSheet, { BottomSheetTextInput } from '@gorhom/bottom-sheet'
 import { useShareIntentContext } from 'expo-share-intent'
 import { useRef, useState, useMemo, useCallback } from 'react'
 import type { DependencyList } from 'react'
@@ -26,7 +26,7 @@ import { RefForm } from '../actions/RefForm'
 import Animated, { FadeIn, FadeOut, SlideInDown, SlideOutDown, Easing, useAnimatedStyle, withTiming } from 'react-native-reanimated'
 import { Animated as RNAnimated, Easing as RNEasing } from 'react-native'
 import { Collections } from '@/features/pocketbase/pocketbase-types'
-import { getSnapshot, putSnapshot, snapshotKeys } from '@/features/cache/snapshotStore'
+import { getSnapshot, snapshotKeys } from '@/features/cache/snapshotStore'
 import { pinataUpload } from '@/features/pinata'
 import { Picker } from '@/ui/inputs/Picker'
 import { enqueueIdleTask } from '@/features/utils/idleQueue'
@@ -43,12 +43,10 @@ import {
   getProfileSnapshotByUserName,
   getProfileCacheEntryByUserName,
   upsertProfileCacheEntry,
-  persistProfileSnapshot,
   updateProfileCacheEntry,
   loadProfileSnapshotFromStorage,
+  writeProfileSnapshot,
 } from '@/features/cache/profileCache'
-import { gridSort } from '@/features/stores/itemFormatters'
-import { createdSort } from '@/ui/profiles/sorts'
 
 const PERF = process.env.EXPO_PUBLIC_PERF_HARNESS === '1'
 const _useEffect = React.useEffect
@@ -128,43 +126,39 @@ const gridAnimationHistory = new Set<string>()
 type PromptSuggestion = {
   text: string
   photoPath?: boolean
+  cameraPath?: boolean
 }
 
 const PROMPT_SUGGESTIONS: PromptSuggestion[] = [
   { text: 'Link you shared recently' },
   { text: 'Free space' },
-  { text: 'Place you feel like yourself' },
   { text: 'Example of perfect design' },
   { text: 'Nascent hobby' },
-  { text: 'Piece from a museum', photoPath: true },
   { text: 'Most-rewatched movie' },
-  { text: 'Tradition you love', photoPath: true },
-  { text: 'Meme slot', photoPath: true },
-  { text: 'Neighborhood haunt' },
+  { text: 'Neighborhood spot' },
   { text: 'What you put on aux' },
-  { text: 'Halloween pic', photoPath: true },
   { text: 'Rabbit hole' },
   { text: 'A preferred publication' },
   { text: 'Something on your reading list' },
+  { text: 'A tool you actually love using' },
+  { text: 'Piece from a museum', photoPath: true },
+  { text: 'Tradition you love', photoPath: true },
+  { text: 'Meme', photoPath: true },
+  { text: 'Halloween pic', photoPath: true },
   { text: 'Favorite view', photoPath: true },
   { text: "Material you're drawn to", photoPath: true },
-  { text: 'A tool you actually love using' },
   { text: 'Someone who shaped your taste', photoPath: true },
   { text: 'Ritual that grounds you', photoPath: true },
-  { text: "Image that's been stuck in your head", photoPath: true },
   { text: 'Sense of style in a single pic', photoPath: true },
-  { text: 'Day you felt alive', photoPath: true },
-  { text: 'Something on your wall', photoPath: true },
-  { text: 'Something you cooked', photoPath: true },
+  { text: 'From a day you felt alive', photoPath: true },
   { text: 'When the gang looked beautiful', photoPath: true },
   { text: "Quietest place you've been", photoPath: true },
-  { text: 'Coolest thing in your immediate vicinity', photoPath: true },
   { text: 'Evidence of a good time', photoPath: true },
-  { text: 'Screenshot that says it all', photoPath: true },
+  { text: 'Something you screenshotted', photoPath: true },
   { text: 'Photo of a project mid-life', photoPath: true },
-  { text: 'Favorite street corner', photoPath: true },
-  { text: 'Personal website/twitter square', photoPath: true },
-  { text: 'Recently read' },
+  { text: 'A street corner', photoPath: true },
+  { text: 'Personal website/twitter', photoPath: true },
+  { text: 'Coolest thing in your immediate vicinity', cameraPath: true },
 ]
 
 const PROMPT_BATCH_SIZE = 6
@@ -231,6 +225,16 @@ export const MyProfile = ({ userName }: { userName: string }) => {
   const avatarScale = useRef(new RNAnimated.Value(1)).current
   const avatarSwapOpacity = useRef(new RNAnimated.Value(1)).current
   const bottomSheetRef = useRef<BottomSheet>(null)
+  const directPhotoPickerGuardRef = useRef(false)
+  const promptTapGuardRef = useRef(0)
+  const acceptPromptTap = useCallback(() => {
+    const now = Date.now()
+    if (now - promptTapGuardRef.current < 150) {
+      return false
+    }
+    promptTapGuardRef.current = now
+    return true
+  }, [])
   // Get optimistic items from store
   const { optimisticItems, setPendingRefRemoval } = useAppStore()
   const profileRefreshTrigger = useAppStore((state) => state.profileRefreshTrigger)
@@ -243,7 +247,6 @@ export const MyProfile = ({ userName }: { userName: string }) => {
     startEditProfile,
     stopEditProfile,
     stopEditing,
-    setAddingNewRefTo,
     newRefSheetRef,
     settingsSheetRef,
     isSettingsSheetOpen,
@@ -256,19 +259,30 @@ export const MyProfile = ({ userName }: { userName: string }) => {
     justOnboarded,
     setJustOnboarded,
     addToProfile,
-    addOptimisticItem,
     removeOptimisticItem,
-    detailsBackdropAnimatedIndex,
-    registerBackdropPress,
-    unregisterBackdropPress,
     updateUser,
     detailsSheetRef,
     setDetailsSheetData,
     homePagerIndex,
     editingProfile,
+    openNewRef,
   } = useAppStore()
 
   const queryClient = useQueryClient()
+
+  const ownProfile = user?.userName === userName
+  // For own profile, always prefer global user state (source of truth)
+  // For other profiles, rely on fetched profile or cached data
+  const effectiveProfile = ownProfile ? (user ?? profile) : profile
+  const hasProfile = Boolean(effectiveProfile)
+
+  const profileUserId = useMemo(() => {
+    if (ownProfile && user?.id) return user.id
+    if (profile?.id) return profile.id
+    if (hydraulicCache?.profile.id) return hydraulicCache.profile.id
+    const cachedEntry = getProfileCacheEntryByUserName(userName)
+    return cachedEntry?.profile.id
+  }, [ownProfile, user?.id, profile?.id, hydraulicCache?.profile.id, userName])
 
   if (PERF_TRACE) {
     const queryClientAny = queryClient as unknown as {
@@ -321,90 +335,49 @@ export const MyProfile = ({ userName }: { userName: string }) => {
       const header = extractProfileHeader(payload.profile)
       queryClient.setQueryData(profileKeys.header(userName), header)
       setProfile(payload.profile)
-
-      const optimisticItemsMap = useAppStore.getState().optimisticItems
-      let mergedGrid: ExpandedItem[] = []
-      let mergedBacklog: ExpandedItem[] = []
-
-      setGridItems((previous) => {
-        const map = new Map<string, ExpandedItem>()
-        previous.forEach((item) => {
-          map.set(item.id, item)
-        })
-        payload.gridItems.forEach((item) => {
-          map.set(item.id, item)
-        })
-        optimisticItemsMap.forEach((item, id) => {
-          if (!item.backlog && !map.has(id)) {
-            map.set(id, item)
-          }
-        })
-        mergedGrid = gridSort(Array.from(map.values()))
-        return mergedGrid
-      })
-
-      setBacklogItems((previous) => {
-        const map = new Map<string, ExpandedItem>()
-        payload.backlogItems.forEach((item) => {
-          map.set(item.id, item)
-        })
-        previous.forEach((item) => {
-          if (!map.has(item.id)) {
-            map.set(item.id, item)
-          }
-        })
-        optimisticItemsMap.forEach((item, id) => {
-          if (item.backlog && !map.has(id)) {
-            map.set(id, item)
-          }
-        })
-        mergedBacklog = Array.from(map.values()).sort(createdSort)
-        return mergedBacklog
-      })
-
-      const nextData: ProfileData = {
-        profile: payload.profile,
-        gridItems: mergedGrid,
-        backlogItems: mergedBacklog,
-      }
-
-      useAppStore.getState().setGridItemCount(mergedGrid.length)
+      setGridItems(payload.gridItems)
+      setBacklogItems(payload.backlogItems)
+      useAppStore.getState().setGridItemCount(payload.gridItems.length)
 
       if (PERF_TRACE) {
         const rqStartedAt = Date.now()
-        queryClient.setQueryData<ProfileData>(profileKeys.detail(userName), nextData)
+        queryClient.setQueryData<ProfileData>(profileKeys.grid(payload.profile.id), payload)
         logProfilePerf('applyProfileData.setQueryData', rqStartedAt)
       } else {
-        queryClient.setQueryData<ProfileData>(profileKeys.detail(userName), nextData)
+        queryClient.setQueryData<ProfileData>(profileKeys.grid(payload.profile.id), payload)
       }
 
       if (persist) {
         const userId = payload.profile.id
         if (userId) {
-          void persistProfileSnapshot(userId, payload.profile.userName, nextData)
           void persistProfileHeaderSnapshot(userId, header)
           const snapshotStartedAt = PERF_TRACE ? Date.now() : 0
-          const writePromise = putSnapshot('profileSelf', snapshotKeys.profileSelf(userId), nextData, {
-            timestamp: Date.now(),
+          const writePromise = writeProfileSnapshot({
+            userId,
+            userName: payload.profile.userName,
+            profile: payload.profile,
+            gridItems: payload.gridItems,
+            backlogItems: payload.backlogItems,
+            updatedAt: Date.now(),
           })
           if (PERF_TRACE) {
             writePromise
               .then(() => {
-                logProfilePerf('applyProfileData.putSnapshot', snapshotStartedAt)
+                logProfilePerf('applyProfileData.writeProfileSnapshot', snapshotStartedAt)
               })
               .catch((error) => {
                 console.warn('Profile snapshot write failed', error)
-                logProfilePerf('applyProfileData.putSnapshot.error', snapshotStartedAt)
+                logProfilePerf('applyProfileData.writeProfileSnapshot.error', snapshotStartedAt)
               })
           } else {
             writePromise.catch((error) => {
               console.warn('Profile snapshot write failed', error)
-              })
+            })
           }
           void writePromise
         }
       } else if (payload.profile.id) {
-        upsertProfileCacheEntry(payload.profile.id, payload.profile.userName, nextData)
+        upsertProfileCacheEntry(payload.profile.id, payload.profile.userName, payload)
       }
       if (PERF_TRACE) {
         logProfilePerf('applyProfileData.total', applyStartedAt)
@@ -435,8 +408,11 @@ export const MyProfile = ({ userName }: { userName: string }) => {
     }
 
     const hydrateFromQuery = () => {
+      if (!profileUserId) {
+        return false
+      }
       const startedAt = PERF_TRACE ? Date.now() : 0
-      const cached = queryClient.getQueryData<ProfileData>(profileKeys.detail(userName))
+      const cached = queryClient.getQueryData<ProfileData>(profileKeys.grid(profileUserId))
       if (!cached) {
         return false
       }
@@ -537,7 +513,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
     return () => {
       cancelled = true
     }
-  }, [user?.id, userName, queryClient, applyProfileData])
+  }, [user?.id, userName, profileUserId, queryClient, applyProfileData])
 
   useProfileEffect('profile.cleanupEditMode', () => {
     return () => {
@@ -658,12 +634,6 @@ export const MyProfile = ({ userName }: { userName: string }) => {
       exitEditMode()
     }
   }, [homePagerIndex, isEditMode, editingProfile, exitEditMode])
-
-  const ownProfile = user?.userName === userName
-  // For own profile, always prefer global user state (source of truth)
-  // For other profiles, use fetched profile
-  const effectiveProfile = ownProfile ? (user ?? profile) : profile
-  const hasProfile = Boolean(effectiveProfile)
 
   const displayName = useMemo(() => {
     if (!effectiveProfile) return userName
@@ -1033,8 +1003,11 @@ export const MyProfile = ({ userName }: { userName: string }) => {
 
   const updateProfileCache = useCallback(
     (transform: (snapshot: ProfileData) => ProfileData) => {
+      if (!profileUserId) {
+        return
+      }
       let nextSnapshot: ProfileData | undefined
-      queryClient.setQueryData<ProfileData>(profileKeys.detail(userName), (current) => {
+      queryClient.setQueryData<ProfileData>(profileKeys.grid(profileUserId), (current) => {
         if (!current) return current
         const base: ProfileData = {
           profile: { ...current.profile },
@@ -1045,14 +1018,13 @@ export const MyProfile = ({ userName }: { userName: string }) => {
         return nextSnapshot
       })
 
-      const profileId =
-        nextSnapshot?.profile.id ?? profile?.id ?? hydraulicCache?.profile.id ?? user?.id ?? null
+      const profileId = nextSnapshot?.profile.id ?? profileUserId
 
       if (nextSnapshot && profileId) {
         updateProfileCacheEntry(profileId, nextSnapshot.profile.userName ?? userName, () => nextSnapshot!)
       }
     },
-    [queryClient, userName, profile?.id, hydraulicCache?.profile.id, user?.id]
+    [profileUserId, queryClient, userName]
   )
 
   const handleAvatarSelection = useCallback(
@@ -1119,8 +1091,13 @@ export const MyProfile = ({ userName }: { userName: string }) => {
               backlogItems: cachedEntry?.backlogItems ?? backlogItems,
             }
 
-            void putSnapshot('profileSelf', snapshotKeys.profileSelf(userId), snapshotPayload, {
-              timestamp: Date.now(),
+            writeProfileSnapshot({
+              userId,
+              userName,
+              profile: snapshotPayload.profile,
+              gridItems: snapshotPayload.gridItems,
+              backlogItems: snapshotPayload.backlogItems,
+              updatedAt: Date.now(),
             }).catch((error) => {
               console.warn('Profile snapshot update failed:', error)
             })
@@ -1223,24 +1200,11 @@ export const MyProfile = ({ userName }: { userName: string }) => {
       }}
       onAddItem={(prompt?: string) => {
         const proceed = () => {
-          setAddingNewRefTo('grid')
-          if (prompt) useAppStore.getState().setAddRefPrompt(prompt)
-        }
-
-        if (isSettingsSheetOpen) {
-          closeSettingsSheet({ afterClose: proceed })
-          return
-        }
-
-        proceed()
-      }}
-      onAddItemWithPrompt={(prompt: string, photoPath?: boolean) => {
-        const proceed = () => {
-          if (photoPath) {
-            void triggerDirectPhotoPicker(prompt)
+          if (!acceptPromptTap()) return
+          if (prompt) {
+            openNewRef({ prompt })
           } else {
-            setAddingNewRefTo('grid')
-            useAppStore.getState().setAddRefPrompt(prompt)
+            openNewRef()
           }
         }
 
@@ -1251,6 +1215,31 @@ export const MyProfile = ({ userName }: { userName: string }) => {
 
         proceed()
       }}
+    onAddItemWithPrompt={(prompt: string, photoPath?: boolean, cameraPath?: boolean) => {
+      const proceed = () => {
+        if (!acceptPromptTap()) {
+          if (__DEV__) {
+            console.log('[prompt] tap throttled', { prompt })
+          }
+          return
+        }
+        if (__DEV__) {
+          console.log('[prompt] tap accepted', { prompt, photoPath, cameraPath })
+        }
+        if (photoPath || cameraPath) {
+          void triggerDirectPhotoPicker(prompt, cameraPath)
+        } else {
+          openNewRef({ prompt })
+        }
+        }
+
+        if (isSettingsSheetOpen) {
+          closeSettingsSheet({ afterClose: proceed })
+          return
+      }
+
+      proceed()
+    }}
         columns={GRID_COLUMNS}
       items={displayGridItems}
         rows={GRID_ROWS}
@@ -1262,72 +1251,11 @@ export const MyProfile = ({ userName }: { userName: string }) => {
     </RNAnimated.View>
   ) : null
 
-  // Direct photo form state
-  const [showDirectPhotoForm, setShowDirectPhotoForm] = useState(false)
-  const [directPhotoRefFields, setDirectPhotoRefFields] = useState<{
-    title: string
-    image: string
-    url: string
-    promptContext: string
-  } | null>(null)
-
-
-
-  // Register backdrop press for direct photo form
-  useProfileEffect('profile.registerDirectPhotoBackdrop', () => {
-    if (showDirectPhotoForm) {
-      const key = registerBackdropPress(() => {
-        setShowDirectPhotoForm(false)
-        setDirectPhotoRefFields(null)
-        // Ensure backdrop animated index is reset when closed via backdrop press
-        if (detailsBackdropAnimatedIndex) {
-          detailsBackdropAnimatedIndex.value = -1
-        }
-      })
-      return () => {
-        unregisterBackdropPress(key)
-      }
-    }
-  }, [showDirectPhotoForm, detailsBackdropAnimatedIndex])
-
-  // Simple keyboard dismissal - snap to 67% when keyboard is not showing
-  useProfileEffect('profile.directPhotoKeyboard', () => {
-    if (!showDirectPhotoForm) return
-    
-    const keyboardDidHide = () => {
-      if (photoRefFormRef.current) {
-        photoRefFormRef.current.snapToIndex(0)
-      }
-    }
-    
-    const hideSubscription = Keyboard.addListener('keyboardDidHide', keyboardDidHide)
-    
-    return () => {
-      hideSubscription?.remove()
-    }
-  }, [showDirectPhotoForm])
-
-
-
-
-
-
-
-
-
-  // Render backdrop for direct photo form
-  const renderDirectPhotoBackdrop = useCallback(
-    (p: any) => <BottomSheetBackdrop {...p} disappearsOnIndex={-1} appearsOnIndex={0} />,
-    []
-  )
-
-  // Refs
-  const photoRefFormRef = useRef<BottomSheet>(null)
 
   const profileQuery = useQuery<ProfileData>({
-    queryKey: profileKeys.detail(userName),
-    queryFn: () => fetchProfileData(userName, { userId: user?.id }),
-    staleTime: 60_000,
+    queryKey: profileUserId ? profileKeys.grid(profileUserId) : ['profile', 'pending', 'grid'],
+    queryFn: () => fetchProfileData({ userId: profileUserId! }),
+    staleTime: 0,
     gcTime: 30 * 60_000,
     initialData: !hydraulicCache
       ? undefined
@@ -1336,9 +1264,9 @@ export const MyProfile = ({ userName }: { userName: string }) => {
           gridItems: hydraulicCache.gridItems,
           backlogItems: hydraulicCache.backlogItems,
         },
-    enabled: !hydraulicCache,
-    refetchOnMount: false,
-    refetchOnReconnect: false,
+    enabled: Boolean(profileUserId),
+    refetchOnMount: 'always',
+    refetchOnReconnect: 'always',
     refetchOnWindowFocus: false,
   })
 
@@ -1381,21 +1309,24 @@ export const MyProfile = ({ userName }: { userName: string }) => {
   }, [applyProfileData, profileData])
 
   useProfileEffect('profile.forceNetworkRefreshEffect', () => {
-    if (!profile?.id) return
+    if (!profileUserId) return
     if (gridItems.length === 0) return
     if (gridItems.length >= GRID_CAPACITY) return
     if (forceNetworkRefreshQueuedRef.current) return
     if (interactionGateActive) return
     if (homePagerIndex !== 0) return
+
+    const queryKey = profileKeys.grid(profileUserId)
+    const state = queryClient.getQueryState<ProfileData>(queryKey)
+    const dataUpdatedAt = state?.dataUpdatedAt ?? 0
+
     if (PERF_TRACE) {
       console.log('[profile][perf] forceRefresh:eligible', {
         gridCount: gridItems.length,
-        dataUpdatedAt: queryClient.getQueryState<ProfileData>(profileKeys.detail(userName))?.dataUpdatedAt ?? 0,
+        dataUpdatedAt,
       })
     }
 
-    const state = queryClient.getQueryState<ProfileData>(profileKeys.detail(userName))
-    const dataUpdatedAt = state?.dataUpdatedAt ?? 0
     const hasFreshData = dataUpdatedAt > 0 && Date.now() - dataUpdatedAt < PROFILE_FORCE_REFRESH_THRESHOLD_MS
 
     const cachedEntry = getProfileCacheEntryByUserName(userName)
@@ -1404,7 +1335,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
     )
 
     const now = Date.now()
-    const lastRefresh = profileForceRefreshTimestamps.get(profile.id)
+    const lastRefresh = profileForceRefreshTimestamps.get(profileUserId)
     const isStale = state?.isInvalidated ?? false
 
     if (hasFreshData || hasRecentWarmup || !isStale) {
@@ -1427,7 +1358,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
       return
     }
 
-    profileForceRefreshTimestamps.set(profile.id, now)
+    profileForceRefreshTimestamps.set(profileUserId, now)
 
     forceNetworkRefreshQueuedRef.current = true
     enqueueIdleTask(async () => {
@@ -1436,7 +1367,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
         console.log('[profile][perf] forceRefresh:run')
       }
       try {
-        const fresh = await fetchProfileData(userName, { forceNetwork: true, userId: profile?.id ?? user?.id })
+        const fresh = await fetchProfileData({ userId: profileUserId, includeBacklog: false })
         if (PERF_TRACE) {
           logProfilePerf('forceRefresh.fetchProfileData', refreshStartedAt)
         }
@@ -1455,7 +1386,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
         }
       }
     }, 'profile:forceNetworkRefresh')
-  }, [applyProfileData, gridItems.length, homePagerIndex, interactionGateActive, profile?.id, queryClient, user?.id, userName])
+  }, [applyProfileData, gridItems.length, homePagerIndex, interactionGateActive, profileUserId, queryClient, userName])
 
   useProfileEffect('profile.loadingStateEffect', () => {
     if (!profileData && isProfileLoading) {
@@ -1467,12 +1398,11 @@ export const MyProfile = ({ userName }: { userName: string }) => {
     if (hasShareIntent) {
       if (shareIntentHandledRef.current) return
       shareIntentHandledRef.current = true
-      setAddingNewRefTo(displayGridItems.length < GRID_CAPACITY ? 'grid' : 'backlog')
-      bottomSheetRef.current?.snapToIndex(1)
+      openNewRef({ target: displayGridItems.length < GRID_CAPACITY ? 'grid' : 'backlog' })
     } else {
       shareIntentHandledRef.current = false
     }
-  }, [hasShareIntent, displayGridItems.length, setAddingNewRefTo])
+  }, [hasShareIntent, displayGridItems.length, openNewRef])
 
   useProfileEffect('profile.focusReadyEffect', () => {
     if (!profileData) return
@@ -1498,30 +1428,53 @@ export const MyProfile = ({ userName }: { userName: string }) => {
   // timeout used to stop editing the profile after 10 seconds
   let timeout: ReturnType<typeof setTimeout>
 
-  // Direct photo picker flow - route into existing NewRefSheet with pre-populated photo
-  const triggerDirectPhotoPicker = useCallback(async (prompt: string) => {
-    try {
-      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync()
-      if (status !== 'granted') {
-        return
-      }
+  // Direct photo/camera picker flow - route into existing NewRefSheet with pre-populated photo
+  const triggerDirectPhotoPicker = useCallback(
+    async (prompt: string, useCamera = false) => {
+      if (directPhotoPickerGuardRef.current) return
 
-      const result = await ImagePicker.launchImageLibraryAsync({
-        allowsEditing: true,
-        aspect: [1, 1],
-        quality: 0.8,
-      })
+      directPhotoPickerGuardRef.current = true
+      try {
+        // Request appropriate permissions
+        const { status } = useCamera
+          ? await ImagePicker.requestCameraPermissionsAsync()
+          : await ImagePicker.requestMediaLibraryPermissionsAsync()
+        
+        if (status !== 'granted') {
+          return
+        }
 
-      if (!result.canceled && result.assets && result.assets[0]) {
-        const selectedImage = result.assets[0]
-        try { useAppStore.getState().setSelectedPhoto(selectedImage.uri) } catch {}
-        try { useAppStore.getState().setAddRefPrompt(prompt) } catch {}
-        setAddingNewRefTo('grid')
+        const pickerOptions = {
+          allowsEditing: true,
+          aspect: [1, 1] as [number, number],
+          quality: 0.8,
+        }
+
+        const result = useCamera
+          ? await ImagePicker.launchCameraAsync(pickerOptions)
+          : await ImagePicker.launchImageLibraryAsync(pickerOptions)
+
+        if (!result.canceled && result.assets && result.assets[0]) {
+          const selectedImage = result.assets[0]
+          Keyboard.dismiss()
+
+          openNewRef({
+            prompt,
+            photo: {
+              uri: selectedImage.uri,
+              width: selectedImage.width ?? 0,
+              height: selectedImage.height ?? 0,
+            },
+          })
+        }
+      } catch (error) {
+        console.error('Error picking image:', error)
+      } finally {
+        directPhotoPickerGuardRef.current = false
       }
-    } catch (error) {
-      console.error('Error picking image:', error)
-    }
-  }, [setAddingNewRefTo])
+    },
+    [openNewRef]
+  )
 
   const handlePromptChipPress = useCallback(
     (prompt: PromptSuggestion) => {
@@ -1538,14 +1491,15 @@ export const MyProfile = ({ userName }: { userName: string }) => {
       })
 
       const execute = () => {
-        if (prompt.photoPath) {
-          void triggerDirectPhotoPicker(prompt.text)
+        if (!acceptPromptTap()) {
+          return
+        }
+        if (prompt.photoPath || prompt.cameraPath) {
+          void triggerDirectPhotoPicker(prompt.text, prompt.cameraPath)
           return
         }
 
-        setAddingNewRefTo('grid')
-        try { useAppStore.getState().setAddRefPrompt(prompt.text) } catch {}
-        // Opening is controlled by NewRefSheet effect
+        openNewRef({ prompt: prompt.text })
       }
 
       if (isSettingsSheetOpen) {
@@ -1555,7 +1509,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
 
       execute()
     },
-    [triggerDirectPhotoPicker, setAddingNewRefTo, isSettingsSheetOpen, closeSettingsSheet]
+    [acceptPromptTap, triggerDirectPhotoPicker, openNewRef, isSettingsSheetOpen, closeSettingsSheet]
   )
 
   const promptChipSection = promptSuggestions.length > 0 ? (
@@ -1658,7 +1612,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
                 />
                 <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
                   <Ionicons
-                    name={suggestion.photoPath ? 'camera-outline' : 'bulb-outline'}
+                    name={suggestion.cameraPath ? 'camera' : suggestion.photoPath ? 'camera-outline' : 'bulb-outline'}
                     size={15}
                     color={c.muted2}
                     style={{ marginRight: 6 }}
@@ -1747,8 +1701,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
                 <FloatingJaggedButton
                   icon="plus"
                   onPress={() => {
-                    setAddingNewRefTo('grid')
-                    try { useAppStore.getState().setAddRefPrompt('') } catch {}
+                    openNewRef()
                   }}
                 />
               </Animated.View>
@@ -1814,140 +1767,9 @@ export const MyProfile = ({ userName }: { userName: string }) => {
               profile={effectiveProfile}
               user={user}
               openAddtoBacklog={() => {
-                setAddingNewRefTo('backlog')
+                openNewRef({ target: 'backlog' })
               }}
             />
-
-            {/* Direct Photo Form - bypasses NewRefSheet entirely */}
-            {showDirectPhotoForm && directPhotoRefFields && (
-              <BottomSheet
-
-                ref={photoRefFormRef}
-                snapPoints={['80%', '85%', '100%', '110%']}
-                index={0}
-                enablePanDownToClose={true}
-
-
-
-
-
-                            backgroundStyle={{ backgroundColor: c.olive, borderRadius: 50, paddingTop: 0 }}
-                animatedIndex={detailsBackdropAnimatedIndex}
-                backdropComponent={(p) => (
-                  <BottomSheetBackdrop
-                    {...p}
-                    disappearsOnIndex={-1}
-                    appearsOnIndex={0}
-                    pressBehavior={'close'}
-                  />
-                )}
-                handleComponent={null}
-                enableDynamicSizing={false}
-                enableOverDrag={false}
-                onChange={(i: number) => {
-                  if (i === -1) {
-                    Keyboard.dismiss()
-                    setShowDirectPhotoForm(false)
-                    setDirectPhotoRefFields(null)
-                    // Ensure backdrop animated index is reset
-                    if (detailsBackdropAnimatedIndex) {
-                      detailsBackdropAnimatedIndex.value = -1
-                    }
-                  }
-                }}
-              >
-                <BottomSheetView
-                  style={{
-                    paddingHorizontal: s.$2,
-                    paddingTop: 8,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <RefForm
-                    key={`direct-photo-form-${directPhotoRefFields.image}`}
-                    existingRefFields={directPhotoRefFields}
-                    pickerOpen={false}
-                    canEditRefData={true}
-                    
-
-                    onAddRef={async (itemFields) => {
-                      // Merge promptContext from directPhotoRefFields if present
-                      // Ensure title is not empty - use prompt context as fallback
-                      const mergedFields = { 
-                        ...itemFields, 
-                        promptContext: directPhotoRefFields.promptContext,
-                        title: itemFields.title || directPhotoRefFields.promptContext || 'Untitled'
-                      }
-                      
-                      // Create optimistic item immediately
-                      const optimisticItem: ExpandedItem = {
-                        id: `temp-${Date.now()}`, collectionId: Collections.Items, collectionName: Collections.Items,
-                        creator: user?.id || '', ref: 'temp-ref', image: itemFields.image || '',
-                        url: itemFields.url || '', text: itemFields.text || '', list: itemFields.list || false,
-                        parent: itemFields.parent || '', backlog: false, order: 0,
-                        created: new Date().toISOString(), updated: new Date().toISOString(),
-                        promptContext: mergedFields.promptContext || '',
-                        expand: { 
-                          ref: { 
-                            id: 'temp-ref', 
-                            title: itemFields.title || '', 
-                            image: itemFields.image || '',
-                            url: itemFields.url || '',
-                            meta: '{}',
-                            creator: user?.id || '',
-                            created: new Date().toISOString(),
-                            updated: new Date().toISOString()
-                          }, 
-                          creator: null as any, 
-                          items_via_parent: [] as any 
-                        }
-                      }
-
-                      // Add optimistic item to grid immediately
-                      addOptimisticItem(optimisticItem)
-
-                      // Close the sheet immediately and reset backdrop
-                      Keyboard.dismiss()
-                      setShowDirectPhotoForm(false)
-                      setDirectPhotoRefFields(null)
-                      if (detailsBackdropAnimatedIndex) {
-                        detailsBackdropAnimatedIndex.value = -1
-                      }
-                      
-                      // Background database operations
-                      ;(async () => {
-                        try {
-                          const createdItem = await addToProfile(null, mergedFields, false)
-                          useAppStore.getState().replaceOptimisticItem(optimisticItem.id, createdItem)
-                        } catch (error) {
-                          console.error('Failed to add item to profile:', error)
-                          // Remove optimistic item on failure
-                          useAppStore.getState().removeOptimisticItem(optimisticItem.id)
-                        }
-                      })()
-                    }}
-                    onAddRefToList={async (itemFields) => {
-                      // Merge promptContext from directPhotoRefFields if present
-                      // Ensure title is not empty - use prompt context as fallback
-                      const mergedFields = { 
-                        ...itemFields, 
-                        promptContext: directPhotoRefFields.promptContext,
-                        title: itemFields.title || directPhotoRefFields.promptContext || 'Untitled'
-                      }
-                      const newItem = await addToProfile(null, mergedFields, false)
-                      Keyboard.dismiss()
-                      setShowDirectPhotoForm(false)
-                      setDirectPhotoRefFields(null)
-                      if (detailsBackdropAnimatedIndex) {
-                        detailsBackdropAnimatedIndex.value = -1
-                      }
-                    }}
-                    backlog={false}
-                  />
-                </BottomSheetView>
-              </BottomSheet>
-            )}
           </>
         )}
       </ScrollView>

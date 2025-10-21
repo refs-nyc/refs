@@ -5,7 +5,9 @@ import type { MessageSlice } from './messages'
 import type { UserSlice } from './users'
 import type { UserCacheSlice } from './userCache'
 import type { FeedSlice } from './feed'
+import type { NewRefSlice } from './newRef'
 import { Item, Profile } from '@/features/types'
+import type { ImagePickerAsset } from 'expo-image-picker'
 import type { InteractionGateSlice } from './interactionGate'
 import BottomSheet from '@gorhom/bottom-sheet'
 import React from 'react'
@@ -13,7 +15,7 @@ import React from 'react'
 export type ProfileNavIntent = {
   targetPagerIndex: 0 | 1 | 2
   directoryFilter?: 'popular' | 'people'
-  source?: 'directory' | 'wantToMeet' | 'messages' | 'other' | 'back-fallback'
+  source?: 'directory' | 'wantToMeet' | 'messages' | 'other' | 'back-fallback' | 'corkboard'
   animate?: boolean
 }
 
@@ -40,6 +42,14 @@ export type RefPrefillFields = {
   meta?: string
 }
 
+export type DirectPhotoRefFields = {
+  title: string
+  image: string
+  asset?: ImagePickerAsset | null
+  url?: string
+  promptContext: string
+}
+
 export type UISlice = {
   editingProfile: boolean
   addingToList: string
@@ -55,19 +65,15 @@ export type UISlice = {
   isSettingsSheetOpen: boolean
   settingsSheetHeight: number
   isEditMode: boolean
-  addingNewRefTo: null | 'grid' | 'backlog'
-  addRefPrompt: string
   referencersContext: ReferencersContext
-  selectedPhoto: string | null
-  setAddingNewRefTo: (newState: null | 'grid' | 'backlog') => void
+  pendingReferencersReturn: { refId: string; context: ReferencersContext } | null
   setAddingRefId: (id: string) => void
   setAddingRefPrefill: (fields: RefPrefillFields | null) => void
   setCurrentRefId: (id: string) => void
   setReferencersSheetApi: (api: ReferencersSheetApi | null) => void
   setReferencersContext: (ctx: ReferencersContext) => void
+  setPendingReferencersReturn: (payload: { refId: string; context: ReferencersContext } | null) => void
   setAddingToList: (newState: string) => void
-  setAddRefPrompt: (prompt: string) => void
-  setSelectedPhoto: (photo: string | null) => void
   setIsSettingsSheetOpen: (value: boolean) => void
   setSettingsSheetHeight: (value: number) => void
   setIsEditMode: (value: boolean) => void
@@ -151,5 +157,6 @@ export type StoreSlices = BackdropSlice &
   UserSlice &
   UserCacheSlice &
   FeedSlice &
+  NewRefSlice &
   UISlice &
   InteractionGateSlice

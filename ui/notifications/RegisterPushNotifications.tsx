@@ -32,40 +32,49 @@ export function RegisterPushNotifications() {
       }
     }
 
-    // Delay push notification registration to prioritize UI responsiveness
-    const timeoutId = setTimeout(() => {
-      registerForPushNotificationsAsync()
-        .then(async (token) => {
-          if (!token) {
-            return
-          }
-
-          setExpoPushToken(token)
-
-          if (!user) {
-            return
-          }
-
-          try {
-            await updateUser({ pushToken: token })
-          } catch (error) {
-            console.info('Failed to update push token in PocketBase (non-fatal)', error)
-          }
-
-          const supabaseClient = supabase.client
-          if (supabaseClient) {
-            try {
-              await supabaseClient
-                .from('users')
-                .upsert({ id: user.id, push_token: token }, { onConflict: 'id' })
-            } catch (error) {
-              console.info('Failed to upsert push token in Supabase (non-fatal)', error)
+    // Only silently register if permissions are already granted
+    // Don't prompt automatically - let contextual prompts handle that
+    const timeoutId = setTimeout(async () => {
+      // Check if permissions are already granted before attempting registration
+      const { status } = await Notifications.getPermissionsAsync()
+      
+      if (status === 'granted') {
+        // Silently register token if permissions already granted
+        registerForPushNotificationsAsync()
+          .then(async (token) => {
+            if (!token) {
+              return
             }
-          }
-        })
-        .catch((error: any) => {
-          console.info('[push] registration promise rejected:', error)
-        })
+
+            setExpoPushToken(token)
+
+            if (!user) {
+              return
+            }
+
+            try {
+              await updateUser({ pushToken: token })
+            } catch (error) {
+              console.info('Failed to update push token in PocketBase (non-fatal)', error)
+            }
+
+            const supabaseClient = supabase.client
+            if (supabaseClient) {
+              try {
+                await supabaseClient
+                  .from('users')
+                  .upsert({ id: user.id, push_token: token }, { onConflict: 'id' })
+              } catch (error) {
+                console.info('Failed to upsert push token in Supabase (non-fatal)', error)
+              }
+            }
+          })
+          .catch((error: any) => {
+            console.info('[push] registration promise rejected:', error)
+          })
+      }
+      // If status is 'undetermined' or 'denied', do nothing
+      // Let the contextual prompts (messages, interests) handle permission requests
 
       notificationListener.current = Notifications.addNotificationReceivedListener((notification) => {
         setNotification(notification)

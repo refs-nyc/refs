@@ -41,7 +41,7 @@ export const OtherProfile = ({ userName, prefetchedUserId }: { userName: string;
 
       enqueueIdleTask(async () => {
         try {
-          const fresh = await fetchProfileData(userName, { forceNetwork: true, userId })
+          const fresh = await fetchProfileData({ userId, includeBacklog: true })
           setProfile(fresh.profile)
           setGridItems(fresh.gridItems)
           setBacklogItems(fresh.backlogItems)

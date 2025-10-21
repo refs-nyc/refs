@@ -1,7 +1,14 @@
 import { InteractionManager } from 'react-native'
 import { StateCreator } from 'zustand'
-import { ExpandedItem, CompleteRef, StagedItemFields, StagedRefFields } from '../types'
-import { ItemsRecord, RefsRecord } from '../pocketbase/pocketbase-types'
+import { nanoid } from 'nanoid'
+import { queryClient } from '@/core/queryClient'
+import {
+  ExpandedItem,
+  CompleteRef,
+  StagedItemFields,
+  StagedRefFields,
+} from '../types'
+import { ItemsRecord, RefsRecord, Collections } from '../pocketbase/pocketbase-types'
 import { createdSort } from '@/ui/profiles/sorts'
 import type { StoreSlices } from './types'
 import { pocketbase } from '../pocketbase'
@@ -10,11 +17,169 @@ import { simpleCache } from '@/features/cache/simpleCache'
 import { gridSort, compactGridItem } from './itemFormatters'
 import {
   getProfileCacheEntryByUserId,
-  persistGridSnapshot,
-  persistBacklogSnapshot,
+  writeProfileSnapshot,
+  type ProfileSnapshotPayload,
 } from '@/features/cache/profileCache'
+import { profileKeys, type ProfileData } from '@/features/queries/profile'
+import {
+  beginProfileMutation,
+  endProfileMutation,
+  recordDeletedTombstone,
+} from '@/features/cache/profileMutationState'
+import { isInteractionGateActive } from '@/features/perf/interactionGate'
 
 const forceNetworkProfileIds = new Set<string>()
+
+const buildProfileQueryKey = (userId?: string) =>
+  userId ? profileKeys.grid(userId) : (['profile', 'unknown', 'grid'] as const)
+
+const cloneProfileData = (data: ProfileData): ProfileData => ({
+  profile: { ...data.profile },
+  gridItems: [...data.gridItems],
+  backlogItems: [...data.backlogItems],
+})
+
+const readProfileSnapshot = (userId: string, userName?: string): ProfileData | null => {
+  const entry = getProfileCacheEntryByUserId(userId)
+  if (entry) {
+    return cloneProfileData(entry)
+  }
+  const queryData = queryClient.getQueryData<ProfileData>(buildProfileQueryKey(userId))
+  if (queryData) {
+    return cloneProfileData(queryData)
+  }
+  return null
+}
+
+const ensureProfileSnapshot = (userId: string, userName?: string): ProfileData => {
+  const snapshot = readProfileSnapshot(userId, userName)
+  if (snapshot) {
+    return snapshot
+  }
+
+  const authRecord = pocketbase.authStore.record
+  if (authRecord && authRecord.id === userId) {
+    const nowIso = new Date().toISOString()
+    return {
+      profile: {
+        ...(authRecord as any),
+        updated: authRecord.updated ?? nowIso,
+      },
+      gridItems: [],
+      backlogItems: [],
+    } as ProfileData
+  }
+
+  throw new Error('Profile snapshot unavailable')
+}
+
+const buildOptimisticItem = ({
+  tempId,
+  refId,
+  creatorId,
+  itemFields,
+  backlog,
+}: {
+  tempId: string
+  refId?: string | null
+  creatorId: string
+  itemFields: StagedItemFields
+  backlog: boolean
+}): ExpandedItem => {
+  const nowIso = new Date().toISOString()
+  const resolvedRefId = refId || `temp_ref_${nanoid(8)}`
+  const title = (itemFields.title || '').trim()
+  const normalizedList = Boolean(itemFields.list)
+  return {
+    id: tempId,
+    collectionId: Collections.Items,
+    collectionName: Collections.Items,
+    ref: resolvedRefId,
+    image: itemFields.image || '',
+    url: itemFields.url || '',
+    text: itemFields.text || '',
+    list: normalizedList,
+    backlog,
+    order: itemFields.order ?? 0,
+    promptContext: itemFields.promptContext || '',
+    parent: itemFields.parent ?? '',
+    created: nowIso,
+    updated: nowIso,
+    creator: creatorId,
+    expand: {
+      ref: {
+        id: resolvedRefId,
+        title,
+        image: itemFields.image || '',
+        url: itemFields.url || '',
+        meta: itemFields.meta || '{}',
+        creator: creatorId,
+        created: nowIso,
+        updated: nowIso,
+      },
+      creator: {
+        id: creatorId,
+        email: '',
+        emailVisibility: false,
+        userName: '',
+        verified: false,
+        created: nowIso,
+        updated: nowIso,
+      },
+      items_via_parent: [],
+    },
+  }
+}
+
+const applyOptimisticAdd = (
+  snapshot: ProfileData,
+  optimisticItem: ExpandedItem,
+  backlog: boolean
+): ProfileData => {
+  const nextGrid = backlog
+    ? snapshot.gridItems
+    : gridSort([...snapshot.gridItems.filter((item) => item.id !== optimisticItem.id), optimisticItem])
+  const nextBacklog = backlog
+    ? [...snapshot.backlogItems.filter((item) => item.id !== optimisticItem.id), optimisticItem].sort(createdSort)
+    : snapshot.backlogItems
+
+  return {
+    profile: snapshot.profile,
+    gridItems: nextGrid,
+    backlogItems: nextBacklog,
+  }
+}
+
+const applyOptimisticRemoval = (
+  snapshot: ProfileData,
+  itemId: string,
+  options: { backlog: boolean }
+): ProfileData => {
+  const nextGrid = options.backlog ? snapshot.gridItems : snapshot.gridItems.filter((item) => item.id !== itemId)
+  const nextBacklog = options.backlog
+    ? snapshot.backlogItems.filter((item) => item.id !== itemId)
+    : snapshot.backlogItems
+
+  return {
+    profile: snapshot.profile,
+    gridItems: nextGrid,
+    backlogItems: nextBacklog,
+  }
+}
+
+const applyOptimisticMoveToBacklog = (snapshot: ProfileData, item: ExpandedItem): ProfileData => {
+  const nextGrid = snapshot.gridItems.filter((candidate) => candidate.id !== item.id)
+  const backlogItem = { ...item, backlog: true }
+  const nextBacklog = [...snapshot.backlogItems.filter((candidate) => candidate.id !== item.id), backlogItem].sort(
+    createdSort
+  )
+
+  return {
+    profile: snapshot.profile,
+    gridItems: nextGrid,
+    backlogItems: nextBacklog,
+  }
+}
 
 export const markProfileGridDirty = (userId: string) => {
   forceNetworkProfileIds.add(userId)
@@ -294,6 +459,12 @@ export const createItemSlice: StateCreator<StoreSlices, [], [], ItemSlice> = (se
       editedState,
     })),
   triggerFeedRefresh: () => {
+    if (isInteractionGateActive()) {
+      if (__DEV__) {
+        console.log('[gate] drop feed refresh')
+      }
+      return
+    }
     const scheduleRefresh = () => {
       pendingFeedRefresh = null
       set((state) => ({ feedRefreshTrigger: state.feedRefreshTrigger + 1 }))
@@ -313,6 +484,12 @@ export const createItemSlice: StateCreator<StoreSlices, [], [], ItemSlice> = (se
     pendingFeedRefresh = scheduleAfterInteractions(scheduleRefresh)
   },
   triggerProfileRefresh: () => {
+    if (isInteractionGateActive()) {
+      if (__DEV__) {
+        console.log('[gate] drop profile refresh')
+      }
+      return
+    }
     const scheduleRefresh = () => {
       pendingProfileRefresh = null
       set((state) => ({ profileRefreshTrigger: state.profileRefreshTrigger + 1 }))
@@ -326,71 +503,118 @@ export const createItemSlice: StateCreator<StoreSlices, [], [], ItemSlice> = (se
     pendingProfileRefresh = scheduleAfterInteractions(scheduleRefresh)
   },
   addToProfile: async (refId: string | null, itemFields: StagedItemFields, backlog: boolean) => {
-    // get user id
-    let linkedRefId = refId
-    if (linkedRefId === null) {
-      const newRef = await get().createRef({
-        title: itemFields.title || '',
-        meta: itemFields.meta || '{}',
-        image: itemFields.image,
-      })
-      linkedRefId = newRef.id
+    const authRecord = pocketbase.authStore.record
+    if (!authRecord?.id) {
+      throw new Error('User not found')
     }
-    const newItem = await get().createItem(linkedRefId, itemFields, backlog)
 
-    // Update cached grid count if adding to grid (not backlog)
+    const userId = authRecord.id
+    const userName = (authRecord as any)?.userName
+    const previousSnapshot = ensureProfileSnapshot(userId, userName)
+    const tempId = `temp_${nanoid(10)}`
+    const optimisticItem = buildOptimisticItem({
+      tempId,
+      refId,
+      creatorId: userId,
+      itemFields,
+      backlog,
+    })
+
+    beginProfileMutation()
+
     if (!backlog) {
       get().incrementGridItemCount()
-      
-      // Update show_in_directory flag if adding to grid (async, non-blocking)
-      const userId = pocketbase.authStore.record?.id
-      if (userId) {
+    }
+
+    get().addOptimisticItem(optimisticItem)
+
+    const optimisticSnapshot = applyOptimisticAdd(previousSnapshot, optimisticItem, backlog)
+    await writeProfileSnapshot({
+      userId,
+      userName,
+      profile: optimisticSnapshot.profile,
+      gridItems: optimisticSnapshot.gridItems,
+      backlogItems: optimisticSnapshot.backlogItems,
+      updatedAt: Date.now(),
+    })
+
+    try {
+      let linkedRefId = refId
+      if (!linkedRefId) {
+        const newRef = await get().createRef({
+          title: itemFields.title || '',
+          meta: itemFields.meta || '{}',
+          image: itemFields.image,
+        })
+        linkedRefId = newRef.id
+      }
+
+      const createdItem = await get().createItem(linkedRefId, itemFields, backlog)
+      get().replaceOptimisticItem(optimisticItem.id, createdItem)
+
+      const canonicalSnapshot: ProfileSnapshotPayload = backlog
+        ? {
+            userId,
+            userName,
+            profile: optimisticSnapshot.profile,
+            gridItems: optimisticSnapshot.gridItems,
+            backlogItems: optimisticSnapshot.backlogItems.map((item) =>
+              item.id === optimisticItem.id ? { ...createdItem, backlog: true } : item
+            ),
+            updatedAt: Date.now(),
+          }
+        : {
+            userId,
+            userName,
+            profile: optimisticSnapshot.profile,
+            gridItems: gridSort(
+              optimisticSnapshot.gridItems.map((item) =>
+                item.id === optimisticItem.id ? createdItem : item
+              )
+            ),
+            backlogItems: optimisticSnapshot.backlogItems,
+            updatedAt: Date.now(),
+          }
+
+      await writeProfileSnapshot(canonicalSnapshot)
+      console.log('[items][add] ok', { tempId: optimisticItem.id, id: createdItem.id })
+
+      get().triggerFeedRefresh()
+      queryClient.invalidateQueries({
+        queryKey: buildProfileQueryKey(userId),
+      }).catch((error) => {
+        if (__DEV__) {
+          console.warn('Failed to invalidate profile query after add', error)
+        }
+      })
+
+      if (!backlog) {
         scheduleAfterInteractions(() => {
-          updateShowInDirectory(userId).catch(error => {
+          updateShowInDirectory(userId).catch((error) => {
             console.warn('Failed to update show_in_directory:', error)
           })
         })
       }
-    }
 
-    get().triggerFeedRefresh()
-
-    const authRecord = pocketbase.authStore.record
-    if (authRecord) {
-      const existingEntry = getProfileCacheEntryByUserId(authRecord.id)
-      const cachedGrid =
-        existingEntry?.gridItems ??
-        ((await simpleCache.get<ExpandedItem[]>('grid_items', authRecord.id)) ?? [])
+      return createdItem
+    } catch (error) {
+      get().removeOptimisticItem(optimisticItem.id)
+      await writeProfileSnapshot({
+        userId,
+        userName,
+        profile: previousSnapshot.profile,
+        gridItems: previousSnapshot.gridItems,
+        backlogItems: previousSnapshot.backlogItems,
+        updatedAt: Date.now(),
+      })
 
       if (!backlog) {
-        const filtered = cachedGrid.filter((item) => item.id !== newItem.id)
-        const nextGrid = gridSort([...filtered, newItem])
-        await persistGridSnapshot({
-          userId: authRecord.id,
-          userName: authRecord.userName,
-          gridItems: nextGrid,
-          profile: existingEntry?.profile,
-          backlogItems: existingEntry?.backlogItems,
-        })
-        markProfileGridDirty(authRecord.id)
-      } else {
-        const cachedBacklog =
-          existingEntry?.backlogItems ??
-          ((await simpleCache.get<ExpandedItem[]>('backlog_items', authRecord.id)) ?? [])
-        const filteredBacklog = cachedBacklog.filter((item) => item.id !== newItem.id)
-        const nextBacklog = [...filteredBacklog, newItem]
-        await persistBacklogSnapshot({
-          userId: authRecord.id,
-          userName: authRecord.userName,
-          backlogItems: nextBacklog,
-          profile: existingEntry?.profile,
-          gridItems: existingEntry?.gridItems,
-        })
-        markProfileGridDirty(authRecord.id)
+        get().decrementGridItemCount()
       }
+      throw error
+    } finally {
+      endProfileMutation()
     }
-
-    return newItem
   },
   createRef: async (refFields: StagedRefFields) => {
     const userId = pocketbase.authStore.record?.id
@@ -456,76 +680,100 @@ export const createItemSlice: StateCreator<StoreSlices, [], [], ItemSlice> = (se
   },
 
   removeItem: async (id: string): Promise<void> => {
-    const userId = pocketbase.authStore.record?.id
-    if (!userId) {
+    const authRecord = pocketbase.authStore.record
+    if (!authRecord?.id) {
       throw new Error('User not found')
     }
 
-    // Check if this is an optimistic item (temp ID)
-    if (id.startsWith('temp-')) {
-      // Optimistic item - just remove it from optimistic items
+    const userId = authRecord.id
+    const userName = (authRecord as any)?.userName
+    const previousSnapshot = ensureProfileSnapshot(userId, userName)
+    const itemFromGrid = previousSnapshot.gridItems.find((entry) => entry.id === id)
+    const itemFromBacklog = previousSnapshot.backlogItems.find((entry) => entry.id === id)
+    const isBacklog = Boolean(itemFromBacklog?.backlog || (!itemFromGrid && itemFromBacklog))
+
+    beginProfileMutation()
+
+    const optimisticSnapshot = applyOptimisticRemoval(previousSnapshot, id, { backlog: isBacklog })
+    await writeProfileSnapshot({
+      userId,
+      userName,
+      profile: optimisticSnapshot.profile,
+      gridItems: optimisticSnapshot.gridItems,
+      backlogItems: optimisticSnapshot.backlogItems,
+      updatedAt: Date.now(),
+    })
+
+    if (id.startsWith('temp_')) {
       get().removeOptimisticItem(id)
+      endProfileMutation()
       return
     }
 
-    const item = await pocketbase.collection('items').getOne(id)
+    recordDeletedTombstone(id)
+    get().removeOptimisticItem(id)
 
-    if (item.list) {
-      const children = await pocketbase
-        .collection('items')
-        .getFullList({ filter: `parent = "${id}"` })
-      for (const child of children) {
-        await pocketbase.collection('items').delete(child.id)
+    let decrementedGridCount = false
+    try {
+      const itemRecord = await pocketbase.collection('items').getOne(id)
+
+      if (itemRecord.list) {
+        const children = await pocketbase
+          .collection('items')
+          .getFullList({ filter: `parent = "${id}"` })
+        for (const child of children) {
+          await pocketbase.collection('items').delete(child.id)
+        }
       }
-    }
-    await pocketbase.collection('items').delete(id)
 
-    // Update cached grid count if item was in grid (not backlog)
-    if (!item.backlog) {
-      get().decrementGridItemCount()
+      await pocketbase.collection('items').delete(id)
 
-      // Update show_in_directory flag after removing from grid (async, non-blocking)
-      scheduleAfterInteractions(() => {
-        updateShowInDirectory(userId).catch(error => {
-          console.warn('Failed to update show_in_directory:', error)
+      if (!isBacklog) {
+        get().decrementGridItemCount()
+        decrementedGridCount = true
+        scheduleAfterInteractions(() => {
+          updateShowInDirectory(userId).catch((error) => {
+            console.warn('Failed to update show_in_directory:', error)
+          })
         })
+      }
+
+      await writeProfileSnapshot({
+        userId,
+        userName,
+        profile: optimisticSnapshot.profile,
+        gridItems: optimisticSnapshot.gridItems,
+        backlogItems: optimisticSnapshot.backlogItems,
+        updatedAt: Date.now(),
       })
-    }
 
-    get().triggerFeedRefresh()
-
-    const authRecord = pocketbase.authStore.record
-    if (authRecord) {
-      const existingEntry = getProfileCacheEntryByUserId(authRecord.id)
-
-      if (!item.backlog) {
-        const cachedGrid =
-          existingEntry?.gridItems ??
-          ((await simpleCache.get<ExpandedItem[]>('grid_items', authRecord.id)) ?? [])
-        const nextGrid = cachedGrid.filter((gridItem) => gridItem.id !== id)
-
-        await persistGridSnapshot({
-          userId: authRecord.id,
-          userName: authRecord.userName,
-          gridItems: nextGrid,
-          profile: existingEntry?.profile,
-          backlogItems: existingEntry?.backlogItems,
-        })
-        markProfileGridDirty(authRecord.id)
-      } else {
-        const cachedBacklog =
-          existingEntry?.backlogItems ??
-          ((await simpleCache.get<ExpandedItem[]>('backlog_items', authRecord.id)) ?? [])
-        const nextBacklog = cachedBacklog.filter((gridItem) => gridItem.id !== id)
-
-        await persistBacklogSnapshot({
-          userId: authRecord.id,
-          userName: authRecord.userName,
-          backlogItems: nextBacklog,
-          profile: existingEntry?.profile,
-          gridItems: existingEntry?.gridItems,
-        })
+      console.log('[items][delete] ok', { id })
+      get().triggerFeedRefresh()
+      queryClient.invalidateQueries({
+        queryKey: buildProfileQueryKey(userId),
+      }).catch((error) => {
+        if (__DEV__) {
+          console.warn('Failed to invalidate profile query after delete', error)
+        }
+      })
+    } catch (error) {
+      await writeProfileSnapshot({
+        userId,
+        userName,
+        profile: previousSnapshot.profile,
+        gridItems: previousSnapshot.gridItems,
+        backlogItems: previousSnapshot.backlogItems,
+        updatedAt: Date.now(),
+      })
+      if (!isBacklog) {
+        // Only revert the grid count if we previously decremented it during this removal.
+        if (decrementedGridCount) {
+          get().incrementGridItemCount()
+        }
       }
+      throw error
+    } finally {
+      endProfileMutation()
     }
   },
   addItemToList: async (listId: string, itemId: string) => {
@@ -609,74 +857,81 @@ export const createItemSlice: StateCreator<StoreSlices, [], [], ItemSlice> = (se
     }
   },
   moveToBacklog: async (id: string) => {
+    const authRecord = pocketbase.authStore.record
+    if (!authRecord?.id) {
+      throw new Error('User not found')
+    }
+
+    if (id.startsWith('temp-') || id.startsWith('temp_')) {
+      get().removeOptimisticItem(id)
+      return null as any
+    }
+
+    const userId = authRecord.id
+    const userName = (authRecord as any)?.userName
+    const previousSnapshot = ensureProfileSnapshot(userId, userName)
+    const targetItem = previousSnapshot.gridItems.find((entry) => entry.id === id)
+
+    if (!targetItem) {
+      throw new Error('Item not found in snapshot')
+    }
+
+    beginProfileMutation()
+
+    const optimisticSnapshot = applyOptimisticMoveToBacklog(previousSnapshot, targetItem)
+    await writeProfileSnapshot({
+      userId,
+      userName,
+      profile: optimisticSnapshot.profile,
+      gridItems: optimisticSnapshot.gridItems,
+      backlogItems: optimisticSnapshot.backlogItems,
+      updatedAt: Date.now(),
+    })
+
+    get().removeOptimisticItem(id)
+
     try {
-      const userId = pocketbase.authStore.record?.id
-      if (!userId) {
-        throw new Error('User not found')
-      }
-
-      // Check if this is an optimistic item (temp ID)
-      if (id.startsWith('temp-')) {
-        // Optimistic item - just remove it from optimistic items
-        get().removeOptimisticItem(id)
-        return null as any
-      }
-
       const record = await pocketbase.collection<ItemsRecord>('items').update(id, { backlog: true })
-
-      // Update cached grid count since item is moving from grid to backlog
       get().decrementGridItemCount()
-      
-      // Update show_in_directory flag after moving to backlog (async, non-blocking)
+
       scheduleAfterInteractions(() => {
-        updateShowInDirectory(userId).catch(error => {
+        updateShowInDirectory(userId).catch((error) => {
           console.warn('Failed to update show_in_directory:', error)
         })
       })
 
-      // Trigger feed refresh since backlog items don't appear in the feed
       get().triggerFeedRefresh()
 
-      const authRecord = pocketbase.authStore.record
-      if (authRecord) {
-        const existingEntry = getProfileCacheEntryByUserId(authRecord.id)
-        const cachedGrid =
-          existingEntry?.gridItems ??
-          ((await simpleCache.get<ExpandedItem[]>('grid_items', authRecord.id)) ?? [])
-        const cachedBacklog =
-          existingEntry?.backlogItems ??
-          ((await simpleCache.get<ExpandedItem[]>('backlog_items', authRecord.id)) ?? [])
+      await writeProfileSnapshot({
+        userId,
+        userName,
+        profile: optimisticSnapshot.profile,
+        gridItems: optimisticSnapshot.gridItems,
+        backlogItems: optimisticSnapshot.backlogItems,
+        updatedAt: Date.now(),
+      })
 
-        const movedItem = cachedGrid.find((gridItem) => gridItem.id === id)
-        const nextGrid = cachedGrid.filter((gridItem) => gridItem.id !== id)
-        const backlogItem =
-          movedItem ?? ({
-            ...record,
-            backlog: true,
-          } as unknown as ExpandedItem)
-        const nextBacklog = [...cachedBacklog.filter((gridItem) => gridItem.id !== id), backlogItem]
-
-        await persistGridSnapshot({
-          userId: authRecord.id,
-          userName: authRecord.userName,
-          gridItems: nextGrid,
-          profile: existingEntry?.profile,
-          backlogItems: nextBacklog,
-        })
-        await persistBacklogSnapshot({
-          userId: authRecord.id,
-          userName: authRecord.userName,
-          backlogItems: nextBacklog,
-          profile: existingEntry?.profile,
-          gridItems: nextGrid,
-        })
-        markProfileGridDirty(authRecord.id)
-      }
+      queryClient.invalidateQueries({
+        queryKey: buildProfileQueryKey(userId),
+      }).catch((error) => {
+        if (__DEV__) {
+          console.warn('Failed to invalidate profile query after moveToBacklog', error)
+        }
+      })
 
       return record
     } catch (error) {
-      console.error(error)
+      await writeProfileSnapshot({
+        userId,
+        userName,
+        profile: previousSnapshot.profile,
+        gridItems: previousSnapshot.gridItems,
+        backlogItems: previousSnapshot.backlogItems,
+        updatedAt: Date.now(),
+      })
       throw error
+    } finally {
+      endProfileMutation()
     }
   },
   updateRefTitle: async (id: string, title: string) => {

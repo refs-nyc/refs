@@ -1,9 +1,4 @@
-import type {
-  StoreSlices,
-  UISlice,
-  ProfileNavIntent,
-  ReferencersSheetApi,
-} from '@/features/stores/types'
+import type { StoreSlices, UISlice, ProfileNavIntent, ReferencersSheetApi } from '@/features/stores/types'
 import { Item, Profile } from '@/features/types'
 import BottomSheet from '@gorhom/bottom-sheet'
 import React from 'react'
@@ -27,28 +22,16 @@ export const createUISlice: StateCreator<StoreSlices, [], [], UISlice> = (set, g
   isEditMode: false,
   currentRefId: '',
   referencersContext: null,
+  pendingReferencersReturn: null,
   addRefSheetRef: React.createRef(),
   addingRefId: '',
   addingRefPrefill: null,
   newRefSheetRef: React.createRef(),
-  addingNewRefTo: null,
-  addRefPrompt: '',
-  selectedPhoto: null,
   isBackgroundLoading: false,
   setBackgroundLoading: (loading: boolean) => {
     set(() => ({
       isBackgroundLoading: loading,
     }))
-  },
-  setAddingNewRefTo: (newState: null | 'grid' | 'backlog') => {
-    set((state) => {
-      if (newState !== null && state.addingNewRefTo === newState) {
-        // Force a toggle so listeners react when trying to reopen the same sheet
-        set({ addingNewRefTo: null })
-        return { addingNewRefTo: newState }
-      }
-      return { addingNewRefTo: newState }
-    })
   },
   setAddingRefId: (id: string) => {
     set((state) => ({
@@ -64,6 +47,11 @@ export const createUISlice: StateCreator<StoreSlices, [], [], UISlice> = (set, g
   setReferencersContext: (ctx) => {
     set(() => ({
       referencersContext: ctx,
+    }))
+  },
+  setPendingReferencersReturn: (payload) => {
+    set(() => ({
+      pendingReferencersReturn: payload,
     }))
   },
   setAddingToList: (newState: string) => {
@@ -106,16 +94,6 @@ export const createUISlice: StateCreator<StoreSlices, [], [], UISlice> = (set, g
       communityFormOnAdded: null,
     }))
     get().communityFormSheetRef.current?.close()
-  },
-  setAddRefPrompt: (prompt: string) => {
-    set(() => ({
-      addRefPrompt: prompt,
-    }))
-  },
-  setSelectedPhoto: (photo: string | null) => {
-    set(() => ({
-      selectedPhoto: photo,
-    }))
   },
   setIsSettingsSheetOpen: (value: boolean) => {
     set(() => ({

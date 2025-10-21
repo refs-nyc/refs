@@ -16,38 +16,33 @@ import Animated, {
 const PROMPTS = [
   { text: 'Link you shared recently', photoPath: false },
   { text: 'Free space', photoPath: false },
-  { text: 'Place you feel like yourself', photoPath: false },
   { text: 'Example of perfect design', photoPath: false },
   { text: 'Nascent hobby', photoPath: false },
-  { text: 'Piece from a museum', photoPath: true },
   { text: 'Most-rewatched movie', photoPath: false },
-  { text: 'Tradition you love', photoPath: true },
-  { text: 'Meme slot', photoPath: true },
-  { text: 'Neighborhood haunt', photoPath: false },
+  { text: 'Neighborhood spot', photoPath: false },
   { text: 'What you put on aux', photoPath: false },
-  { text: 'Halloween pic', photoPath: true },
   { text: 'Rabbit hole', photoPath: false },
   { text: 'A preferred publication', photoPath: false },
   { text: 'Something on your reading list', photoPath: false },
+  { text: 'A tool you actually love using', photoPath: false },
+  { text: 'Piece from a museum', photoPath: true },
+  { text: 'Tradition you love', photoPath: true },
+  { text: 'Meme', photoPath: true },
+  { text: 'Halloween pic', photoPath: true },
   { text: 'Favorite view', photoPath: true },
   { text: "Material you're drawn to", photoPath: true },
-  { text: 'A tool you actually love using', photoPath: false },
   { text: 'Someone who shaped your taste', photoPath: true },
   { text: 'Ritual that grounds you', photoPath: true },
-  { text: "Image that's been stuck in your head", photoPath: true },
   { text: 'Sense of style in a single pic', photoPath: true },
-  { text: 'Day you felt alive', photoPath: true },
-  { text: 'Something on your wall', photoPath: true },
-  { text: 'Something you cooked', photoPath: true },
+  { text: 'From a day you felt alive', photoPath: true },
   { text: 'When the gang looked beautiful', photoPath: true },
   { text: "Quietest place you've been", photoPath: true },
-  { text: 'Coolest thing in your immediate vicinity', photoPath: true },
   { text: 'Evidence of a good time', photoPath: true },
-  { text: 'Screenshot that says it all', photoPath: true },
+  { text: 'Something you screenshotted', photoPath: true },
   { text: 'Photo of a project mid-life', photoPath: true },
-  { text: 'Favorite street corner', photoPath: true },
-  { text: 'Personal website/twitter square', photoPath: true },
-  { text: 'Recently read', photoPath: false },
+  { text: 'A street corner', photoPath: true },
+  { text: 'Personal website/twitter', photoPath: true },
+  { text: 'Coolest thing in your immediate vicinity', cameraPath: true },
 ]
 
 // Fisher-Yates shuffle function
@@ -214,7 +209,7 @@ export const Grid = ({
   onPressItem?: (item?: ExpandedItem) => void
   onLongPressItem?: () => void
   onAddItem?: () => void
-  onAddItemWithPrompt?: (prompt: string, photoPath?: boolean) => void
+  onAddItemWithPrompt?: (prompt: string, photoPath?: boolean, cameraPath?: boolean) => void
   onRemoveItem?: (item: ExpandedItem) => void
   columns: number
   rows: number
@@ -366,6 +361,7 @@ export const Grid = ({
           const promptText = shuffledPrompts[promptIndex] || ''
           const originalPrompt = PROMPTS.find(p => p.text === promptText)
           const photoPath = originalPrompt?.photoPath || false
+          const cameraPath = originalPrompt?.cameraPath || false
           const totalIndex = items.length + i
           const shouldShowPrompt = shouldShowPromptTiles
           
@@ -381,7 +377,7 @@ export const Grid = ({
             >
               <GridTileWrapper
                 type={shouldShowPrompt ? "prompt" : "placeholder"}
-                onPress={() => shouldShowPrompt && onAddItemWithPrompt && onAddItemWithPrompt(promptText, photoPath)}
+                onPress={() => shouldShowPrompt && onAddItemWithPrompt && onAddItemWithPrompt(promptText, photoPath, cameraPath)}
                 isShuffling={isShuffling}
               >
                 <Text style={{ fontSize: 14 }}>

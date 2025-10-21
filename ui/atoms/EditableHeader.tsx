@@ -154,6 +154,7 @@ export const EditableHeader = ({
               },
             ]}
             autoFocus={isActive}
+            selectTextOnFocus={false}
             value={title == placeholder ? '' : title}
             placeholder={placeholder}
             placeholderTextColor={`${c.surface}80`}
@@ -162,6 +163,9 @@ export const EditableHeader = ({
             }}
             multiline={true}
             onFocus={() => {
+              if (__DEV__) {
+                console.log('📝 EditableHeader TextInput onFocus fired')
+              }
               onActiveFieldChange?.('title')
               onFieldEditStart?.()
             }}

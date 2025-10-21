@@ -20,6 +20,7 @@ import {
 } from '@/features/queries/profile'
 import { wantToMeetKeys } from '@/features/queries/wantToMeet'
 import { messagingKeys, type ConversationsPage } from '@/features/queries/messaging'
+import { isProfileMutationInFlight } from '@/features/cache/profileMutationState'
 
 export const DEFAULT_COMMUNITY = 'edge-patagonia'
 const PERF_TRACE = process.env.EXPO_PUBLIC_PERF_HARNESS === '1'
@@ -80,14 +81,14 @@ export async function seedBootSnapshots(context: SeedContext = {}): Promise<void
       | { data: ProfileSnapshot; timestamp: number }
       | undefined
     if (profileSnapshot?.data) {
-      queryClient.setQueryData(profileKeys.detail(userName), profileSnapshot.data, {
+      queryClient.setQueryData(profileKeys.grid(userId), profileSnapshot.data, {
         updatedAt: profileSnapshot.timestamp,
       })
       const header = extractProfileHeader(profileSnapshot.data.profile)
       queryClient.setQueryData(profileKeys.header(userName), header, {
         updatedAt: profileSnapshot.timestamp,
       })
-      if (userId) {
+      if (userId && !isProfileMutationInFlight()) {
         await persistProfileHeaderSnapshot(userId, header)
       }
       if (PERF_TRACE) {

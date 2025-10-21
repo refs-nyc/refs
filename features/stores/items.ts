@@ -713,6 +713,7 @@ export const createItemSlice: StateCreator<StoreSlices, [], [], ItemSlice> = (se
     recordDeletedTombstone(id)
     get().removeOptimisticItem(id)
 
+    let decrementedGridCount = false
     try {
       const itemRecord = await pocketbase.collection('items').getOne(id)
 
@@ -729,6 +730,7 @@ export const createItemSlice: StateCreator<StoreSlices, [], [], ItemSlice> = (se
 
       if (!isBacklog) {
         get().decrementGridItemCount()
+        decrementedGridCount = true
         scheduleAfterInteractions(() => {
           updateShowInDirectory(userId).catch((error) => {
             console.warn('Failed to update show_in_directory:', error)
@@ -764,7 +766,10 @@ export const createItemSlice: StateCreator<StoreSlices, [], [], ItemSlice> = (se
         updatedAt: Date.now(),
       })
       if (!isBacklog) {
-        get().incrementGridItemCount()
+        // Only revert the grid count if we previously decremented it during this removal.
+        if (decrementedGridCount) {
+          get().incrementGridItemCount()
+        }
       }
       throw error
     } finally {

@@ -102,7 +102,7 @@ const buildOptimisticItem = ({
     backlog,
     order: itemFields.order ?? 0,
     promptContext: itemFields.promptContext || '',
-    parent: itemFields.parent ?? null,
+    parent: itemFields.parent ?? undefined,
     created: nowIso,
     updated: nowIso,
     creator: creatorId,

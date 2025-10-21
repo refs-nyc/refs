@@ -37,6 +37,7 @@ export type StagedItemFields = {
   promptContext?: string // NEW: the prompt the user replied to
   list?: boolean
   parent?: string
+  order?: number
 }
 
 export type StagedRefFields = {

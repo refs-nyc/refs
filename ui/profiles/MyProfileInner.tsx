@@ -5,7 +5,7 @@ import { useAppStore } from '@/features/stores'
 import type { Profile } from '@/features/types'
 import { ExpandedItem } from '@/features/types'
 import { s, c } from '@/features/style'
-import { BottomSheetTextInput } from '@gorhom/bottom-sheet'
+import BottomSheet, { BottomSheetTextInput } from '@gorhom/bottom-sheet'
 import { useShareIntentContext } from 'expo-share-intent'
 import { useRef, useState, useMemo, useCallback } from 'react'
 import type { DependencyList } from 'react'
@@ -269,6 +269,20 @@ export const MyProfile = ({ userName }: { userName: string }) => {
   } = useAppStore()
 
   const queryClient = useQueryClient()
+
+  const ownProfile = user?.userName === userName
+  // For own profile, always prefer global user state (source of truth)
+  // For other profiles, rely on fetched profile or cached data
+  const effectiveProfile = ownProfile ? (user ?? profile) : profile
+  const hasProfile = Boolean(effectiveProfile)
+
+  const profileUserId = useMemo(() => {
+    if (ownProfile && user?.id) return user.id
+    if (profile?.id) return profile.id
+    if (hydraulicCache?.profile.id) return hydraulicCache.profile.id
+    const cachedEntry = getProfileCacheEntryByUserName(userName)
+    return cachedEntry?.profile.id
+  }, [ownProfile, user?.id, profile?.id, hydraulicCache?.profile.id, userName])
 
   if (PERF_TRACE) {
     const queryClientAny = queryClient as unknown as {
@@ -620,20 +634,6 @@ export const MyProfile = ({ userName }: { userName: string }) => {
       exitEditMode()
     }
   }, [homePagerIndex, isEditMode, editingProfile, exitEditMode])
-
-  const ownProfile = user?.userName === userName
-  // For own profile, always prefer global user state (source of truth)
-  // For other profiles, use fetched profile
-  const effectiveProfile = ownProfile ? (user ?? profile) : profile
-  const hasProfile = Boolean(effectiveProfile)
-
-  const profileUserId = useMemo(() => {
-    if (ownProfile && user?.id) return user.id
-    if (profile?.id) return profile.id
-    if (hydraulicCache?.profile.id) return hydraulicCache.profile.id
-    const cachedEntry = getProfileCacheEntryByUserName(userName)
-    return cachedEntry?.profile.id
-  }, [ownProfile, user?.id, profile?.id, hydraulicCache?.profile.id, userName])
 
   const displayName = useMemo(() => {
     if (!effectiveProfile) return userName

@@ -384,25 +384,12 @@ export const createFeedSlice: StateCreator<StoreSlices, [], [], FeedSlice> = (se
       const page = await fetchFeedPage(null, FEED_PAGE_SIZE, get)
       const t1 = Date.now()
 
+      if (__DEV__) {
+        console.log(`[feed] fetchFeedPage ${FEED_PAGE_SIZE} in ${(t1 - t0).toFixed(0)}ms`)
+      }
+
       set(() => ({
-        feedEntries: [
-          {
-            id: `meta:refresh-page-${t0}`,
-            kind: 'ref_add',
-            created: new Date(t1).toISOString(),
-            itemId: `refresh-page-${t0}`,
-            actor: {
-              id: 'meta',
-              userName: 'refresh',
-              displayName: `[feed] fetchFeedPage ${FEED_PAGE_SIZE} in ${(t1 - t0).toFixed(0)}ms`,
-            },
-            ref: {
-              id: 'meta-fetch',
-              title: 'Stage timings',
-            },
-          } as FeedEntry,
-          ...page.entries,
-        ],
+        feedEntries: page.entries,
         feedActorCache: page.actorCache,
         feedRefCache: page.refCache,
         feedHydrated: true,

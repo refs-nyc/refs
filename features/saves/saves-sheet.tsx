@@ -149,10 +149,13 @@ export default function FeedSheet({
       }}
     >
       <View style={{ flex: 1, paddingHorizontal: s.$2, paddingBottom: s.$2 }}>
-        <View style={{ paddingVertical: s.$1, marginBottom: s.$2 }}>
+        <View style={{ paddingVertical: s.$1, marginBottom: (s.$2 as number) - 10 }}>
           <Heading tag="h1" style={{ lineHeight: 30 }}>
             Feed
           </Heading>
+          <Text style={{ fontSize: 15, color: c.muted2, marginTop: 2 }}>
+            Everyone who's here.
+          </Text>
         </View>
         <BottomSheetFlatList
           data={feedEntries}

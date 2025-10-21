@@ -48,9 +48,6 @@ export const FeedRow: React.FC<FeedRowProps> = ({
   return (
     <View
       style={{
-        backgroundColor: c.surface2,
-        borderRadius: 10,
-        paddingHorizontal: 10,
         paddingVertical: 10,
         width: '100%',
         marginBottom: 6,
@@ -62,7 +59,6 @@ export const FeedRow: React.FC<FeedRowProps> = ({
           alignItems: 'center',
           width: '100%',
           justifyContent: 'space-between',
-          paddingHorizontal: 10,
         }}
       >
         <Pressable onPress={handlePressActor} hitSlop={8}>

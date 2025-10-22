@@ -396,7 +396,7 @@ export const Grid = ({
             onPress={handleShufflePrompts}
             style={{
               alignSelf: 'center',
-              marginTop: 40,
+              marginTop: 25,
               paddingVertical: 4,
               paddingHorizontal: 8,
             }}

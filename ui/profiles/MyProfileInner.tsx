@@ -9,7 +9,7 @@ import BottomSheet, { BottomSheetTextInput } from '@gorhom/bottom-sheet'
 import { useShareIntentContext } from 'expo-share-intent'
 import { useRef, useState, useMemo, useCallback } from 'react'
 import type { DependencyList } from 'react'
-import { ScrollView, View, Text, Pressable, Keyboard, ActivityIndicator, useWindowDimensions, Alert } from 'react-native'
+import { ScrollView, View, Text, Pressable, Keyboard, ActivityIndicator, useWindowDimensions, Alert, Share, Platform } from 'react-native'
 import { Image } from 'expo-image'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import * as ImagePicker from 'expo-image-picker'
@@ -210,6 +210,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
   const [backlogItems, setBacklogItems] = useState<ExpandedItem[]>(hydraulicCache?.backlogItems ?? [])
   const [loading, setLoading] = useState(!hydraulicCache)
   const [focusReady, setFocusReady] = useState(Boolean(hydraulicCache))
+  const shareButtonScale = useRef(new RNAnimated.Value(1)).current
 
   const user = useAppStore((state) => state.user)
 
@@ -781,55 +782,34 @@ export const MyProfile = ({ userName }: { userName: string }) => {
     setAvatarUploading(false)
   }, [])
 
+  const handleShareProfile = useCallback(async () => {
+    if (!profile) return
+    try {
+      const profileUrl = `https://refs.nyc/${profile.userName}`
+      const message = `Check out ${displayName}'s profile on Refs`
+      
+      await Share.share(
+        Platform.OS === 'ios'
+          ? { url: profileUrl, message }
+          : { message: `${message}\n${profileUrl}` }
+      )
+    } catch (error) {
+      console.error('Error sharing profile:', error)
+    }
+  }, [profile, displayName])
+
+  const handleSharePressIn = useCallback(() => {
+    RNAnimated.spring(shareButtonScale, { toValue: 0.94, useNativeDriver: true }).start()
+  }, [shareButtonScale])
+
+  const handleSharePressOut = useCallback(() => {
+    RNAnimated.spring(shareButtonScale, { toValue: 1, useNativeDriver: true }).start()
+  }, [shareButtonScale])
+
   const headerContent = hasProfile ? (
     <View style={{ width: '100%', paddingHorizontal: 0 }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 18 }}>
-        <View style={{ flex: 1 }}>
-      <Text
-        style={{
-              color: '#030303',
-              fontSize: (s.$09 as number) + 4,
-          fontFamily: 'System',
-              fontWeight: '700',
-          lineHeight: s.$1half,
-        }}
-      >
-            {displayName}
-      </Text>
-          {locationLabel ? (
-      <Text
-        style={{
-          color: c.prompt,
-                fontSize: 13,
-                fontFamily: 'Inter',
-                fontWeight: '500',
-          lineHeight: s.$1half,
-        }}
-      >
-              {locationLabel}
-      </Text>
-          ) : ownProfile ? (
-            <Pressable
-              onPress={() => {
-                setShouldFocusLocationInput(true)
-                openSettingsSheet()
-              }}
-              hitSlop={8}
-            >
-              <Text
-                style={{
-                  color: c.muted,
-                  fontSize: 13,
-                  fontFamily: 'Inter',
-                  fontWeight: '500',
-                  lineHeight: s.$1half,
-                }}
-              >
-                + Location
-              </Text>
-            </Pressable>
-          ) : null}
-        </View>
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+        {/* Avatar on left */}
         {(() => {
           const outerRingSize = AVATAR_SIZE * 1.1
           const innerRingSize = AVATAR_SIZE
@@ -912,57 +892,51 @@ export const MyProfile = ({ userName }: { userName: string }) => {
                       elevation: 3,
                     }}
                   >
-                    <Svg width={36} height={36} viewBox="0 0 36 36">
-                      {/* Drop shadow circle (offset down) */}
-                      <Circle
-                        cx={18}
-                        cy={18.4}
-                        r={16}
-                        fill="rgba(0,0,0,0.25)"
-                      />
-                      {/* White outline ring for 3D effect */}
-                      <Circle
-                        cx={18}
-                        cy={18}
-                        r={17}
-                        fill="none"
-                        stroke="rgba(255,255,255,0.3)"
-                        strokeWidth={1.6}
-                      />
-                      {/* Outer surface border ring */}
-                      <Circle
-                        cx={18}
-                        cy={18}
-                        r={16}
-                        fill={c.surface2}
-                      />
-                      {/* Inner surface circle (main button) */}
-                      <Circle
-                        cx={18}
-                        cy={18}
-                        r={13}
-                        fill={c.surface}
-                      />
-                      {/* Icon - pencil path */}
-                      <G transform="translate(18 18) scale(0.68) translate(-12 -12)">
-                        <Path
-                          d="M19.5 7.5L16.5 4.5L4.5 16.5V19.5H7.5L19.5 7.5Z"
-                          fill={c.newDark}
-                          stroke={c.newDark}
-                          strokeWidth={1}
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
+                    <View>
+                      <Svg width={36} height={36} viewBox="0 0 36 36">
+                        {/* Drop shadow circle (offset down) */}
+                        <Circle
+                          cx={18}
+                          cy={18.4}
+                          r={16}
+                          fill="rgba(0,0,0,0.25)"
                         />
-                        <Path
-                          d="M16.5 7.5L19.5 4.5"
+                        {/* White outline ring for 3D effect */}
+                        <Circle
+                          cx={18}
+                          cy={18}
+                          r={17}
                           fill="none"
-                          stroke={c.newDark}
-                          strokeWidth={1.5}
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
+                          stroke="rgba(255,255,255,0.3)"
+                          strokeWidth={1.6}
                         />
-                      </G>
-                    </Svg>
+                        {/* Outer surface border ring */}
+                        <Circle
+                          cx={18}
+                          cy={18}
+                          r={16}
+                          fill={c.surface2}
+                        />
+                        {/* Inner surface circle (main button) */}
+                        <Circle cx={18} cy={18} r={13} fill={c.surface} />
+                      </Svg>
+                      {/* Icon overlay */}
+                      <View style={{ position: 'absolute', top: 9, left: 9 }}>
+                        {isEditMode ? (
+                          <Ionicons
+                            name="checkmark"
+                            size={18}
+                            color={c.olive}
+                          />
+                        ) : (
+                          <Ionicons
+                            name="pencil-outline"
+                            size={18}
+                            color={c.muted}
+                          />
+                        )}
+                      </View>
+                    </View>
                   </Pressable>
                 )}
               </View>
@@ -970,19 +944,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
           )
 
           const container = ownProfile ? (
-            <Pressable
-              onPress={handleAvatarPress}
-              disabled={avatarUploading}
-              hitSlop={12}
-              accessibilityRole="button"
-              accessibilityLabel="Change avatar"
-              style={{
-                width: outerRingSize,
-                height: outerRingSize,
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
+            <Pressable onPress={handleAvatarPress} hitSlop={12} disabled={avatarUploading}>
               {avatarNode}
             </Pressable>
           ) : (
@@ -990,8 +952,92 @@ export const MyProfile = ({ userName }: { userName: string }) => {
           )
 
           // Render avatar (pressable for own profile to open picker)
-          return <View style={{ paddingRight: 6 }}>{container}</View>
+          return container
         })()}
+
+        {/* Name and location in center */}
+        <View style={{ flex: 1 }}>
+          <Text
+            style={{
+              color: '#030303',
+              fontSize: (s.$09 as number) + 4,
+              fontFamily: 'System',
+              fontWeight: '700',
+              lineHeight: s.$1half,
+            }}
+          >
+            {displayName}
+          </Text>
+          {locationLabel ? (
+            <Text
+              style={{
+                color: c.prompt,
+                fontSize: 13,
+                fontFamily: 'Inter',
+                fontWeight: '500',
+                lineHeight: s.$1half,
+              }}
+            >
+              {locationLabel}
+            </Text>
+          ) : ownProfile ? (
+            <Pressable
+              onPress={() => {
+                setShouldFocusLocationInput(true)
+                openSettingsSheet()
+              }}
+              hitSlop={8}
+            >
+              <Text
+                style={{
+                  color: c.muted,
+                  fontSize: 13,
+                  fontFamily: 'Inter',
+                  fontWeight: '500',
+                  lineHeight: s.$1half,
+                }}
+              >
+                + Location
+              </Text>
+            </Pressable>
+          ) : null}
+        </View>
+
+        {/* Share button on right */}
+        <RNAnimated.View style={{ transform: [{ scale: shareButtonScale }] }}>
+          <Pressable
+            onPress={handleShareProfile}
+            onPressIn={handleSharePressIn}
+            onPressOut={handleSharePressOut}
+            style={{
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 1 },
+              shadowOpacity: 0.08,
+              shadowRadius: 0,
+              elevation: 2,
+              backgroundColor: c.surface,
+              borderRadius: 50,
+              borderWidth: 3,
+              borderColor: c.grey1,
+              paddingHorizontal: 12,
+              paddingVertical: 7,
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+            accessibilityLabel="Share profile"
+          >
+            <Text
+              style={{
+                color: c.muted,
+                fontSize: 13,
+                fontWeight: '500',
+                fontFamily: 'Inter',
+              }}
+            >
+              share
+            </Text>
+          </Pressable>
+        </RNAnimated.View>
       </View>
     </View>
   ) : null
@@ -1675,7 +1721,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
               paddingVertical: s.$1,
               alignItems: 'flex-start',
               justifyContent: 'flex-start',
-              marginTop: -3,
+              marginTop: -8,
               zIndex: 5,
               alignSelf: 'stretch',
             }}
@@ -1686,7 +1732,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
           <View
             style={{
               position: 'absolute',
-              top: 90,
+              top: 95,
               left: 0,
               right: 0,
               zIndex: 5,
@@ -1709,7 +1755,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
                   {
                     position: 'absolute',
                     right: 5,
-                    bottom: -65,
+                    bottom: -70,
                     zIndex: 5,
                   },
                   fabAnimatedStyle,

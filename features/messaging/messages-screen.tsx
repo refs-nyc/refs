@@ -1,19 +1,19 @@
 import { useEffect, useMemo, useRef, useState, lazy, Suspense, useCallback } from 'react'
-import { FlatList, Keyboard, Platform, Pressable, Text, View } from 'react-native'
+import { FlatList, Keyboard, Platform, Pressable, ScrollView, Text, View } from 'react-native'
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { useQuery, type InfiniteData } from '@tanstack/react-query'
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, Easing, runOnJS } from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Link, router } from 'expo-router'
-import * as ImagePicker from 'expo-image-picker'
 import { useFocusEffect } from '@react-navigation/native'
+import * as ImagePicker from 'expo-image-picker'
 
 import { useAppStore } from '@/features/stores'
 import { Message } from '@/features/types'
 import { c, s } from '@/features/style'
 import { Avatar, AvatarStack } from '@/ui/atoms/Avatar'
 import MessageBubble from '@/ui/messaging/MessageBubble'
-import MessageInput from '@/ui/messaging/MessageInput'
+import MessageInput, { MessageInputHandle } from '@/ui/messaging/MessageInput'
 import { InviteBanner } from '@/ui/messaging/InviteBanner'
 import { pinataUpload } from '@/features/pinata'
 import { randomColors } from './utils'
@@ -23,6 +23,7 @@ import { patchConversationPreview } from '@/features/queries/messaging-cache'
 import { queryClient } from '@/core/queryClient'
 import { pocketbase } from '@/features/pocketbase'
 import { endInteraction, startInteraction } from '@/features/perf/interactions'
+import { ensureMediaLibraryAccess } from '@/features/media/permissions'
 const EmojiPicker = lazy(() => import('rn-emoji-keyboard'))
 
 export function MessagesScreen({
@@ -34,14 +35,12 @@ export function MessagesScreen({
   onClose?: () => void
   registerCloseHandler?: (fn: (() => void) | null) => void
 }) {
-  const {
-    user,
-    sendMessage,
-    sendReaction,
-    updateLastRead,
-    setProfileNavIntent,
-    showToast,
-  } = useAppStore()
+  const user = useAppStore((state) => state.user)
+  const sendMessage = useAppStore((state) => state.sendMessage)
+  const sendReaction = useAppStore((state) => state.sendReaction)
+  const updateLastRead = useAppStore((state) => state.updateLastRead)
+  const setProfileNavIntent = useAppStore((state) => state.setProfileNavIntent)
+  const showToast = useAppStore((state) => state.showToast)
   const activateInteractionGate = useAppStore((state) => state.activateInteractionGate)
   const deactivateInteractionGate = useAppStore((state) => state.deactivateInteractionGate)
 
@@ -203,6 +202,8 @@ export function MessagesScreen({
   })
 
   const flatListRef = useRef<FlatList<Message>>(null)
+  const messageInputRef = useRef<MessageInputHandle>(null)
+  const focusTimerRef = useRef<NodeJS.Timeout | null>(null)
   const [message, setMessage] = useState('')
   const [highlightedMessageId, setHighlightedMessageId] = useState('')
   const [replying, setReplying] = useState(false)
@@ -292,11 +293,20 @@ export function MessagesScreen({
     const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide'
 
     const handleShow = (e: any) => {
+      if (__DEV__) {
+        console.log('[messages] keyboard show', {
+          at: Date.now(),
+          height: e?.endCoordinates?.height ?? 0,
+        })
+      }
       setKeyboardVisible(true)
       setKeyboardHeight(e?.endCoordinates?.height ?? 0)
     }
 
     const handleHide = () => {
+      if (__DEV__) {
+        console.log('[messages] keyboard hide', { at: Date.now() })
+      }
       setKeyboardVisible(false)
       setKeyboardHeight(0)
     }
@@ -331,6 +341,34 @@ export function MessagesScreen({
   )
   const canSendMessage = message.trim().length > 0 || readyAttachments.length > 0
   const isSendDisabled = !canSendMessage || isUploadingAttachment
+
+  useEffect(() => {
+    return () => {
+      if (focusTimerRef.current) {
+        clearTimeout(focusTimerRef.current)
+        focusTimerRef.current = null
+      }
+    }
+  }, [])
+
+  const focusMessageInput = useCallback(() => {
+    if (__DEV__) {
+      console.log('[messages] focusMessageInput immediate', Date.now())
+    }
+    messageInputRef.current?.preventNextBlur()
+    messageInputRef.current?.focus()
+    if (focusTimerRef.current) {
+      clearTimeout(focusTimerRef.current)
+    }
+    focusTimerRef.current = setTimeout(() => {
+      if (__DEV__) {
+        console.log('[messages] focusMessageInput delayed', Date.now())
+      }
+      messageInputRef.current?.preventNextBlur()
+      messageInputRef.current?.focus()
+      focusTimerRef.current = null
+    }, 140)
+  }, [])
 
   const onMessageSubmit = async () => {
     if (!message.trim() && readyAttachments.length === 0) return
@@ -369,8 +407,8 @@ export function MessagesScreen({
 
   const onAttachmentPress = useCallback(async () => {
     try {
-      const permission = await ImagePicker.requestMediaLibraryPermissionsAsync()
-      if (!permission.granted) {
+      const hasPermission = await ensureMediaLibraryAccess()
+      if (!hasPermission) {
         showToast('Photo access is required to attach images')
         return
       }
@@ -637,6 +675,7 @@ export function MessagesScreen({
         onEndReached={loadMoreMessages}
         onEndReachedThreshold={0.1}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
         style={{ flex: 1 }}
         contentContainerStyle={{
           paddingHorizontal: s.$075,
@@ -647,34 +686,49 @@ export function MessagesScreen({
         ListFooterComponent={<View style={{ height: headerHeight }} />}
       />
 
-      <View style={{ position: 'absolute', bottom: bottomOffset, left: 0, right: 0 }}>
+      <ScrollView
+        style={{ position: 'absolute', bottom: bottomOffset, left: 0, right: 0 }}
+        contentContainerStyle={{ paddingHorizontal: s.$075, paddingBottom: s.$05 }}
+        keyboardShouldPersistTaps="handled"
+        scrollEnabled={false}
+      >
         {!isDirectConversation && (
-          <InviteBanner inviteToken={conversation?.inviteToken} chatTitle={conversation?.title || 'Group Chat'} />
-        )}
-        <View style={{ paddingHorizontal: s.$075 }}>
-          <MessageInput
-            onMessageSubmit={onMessageSubmit}
-            setMessage={setMessage}
-            message={message}
-            parentMessage={replying ? highlightedMessage : undefined}
-            parentMessageSender={
-              replying
-                ? members.find((m) => m.expand?.user.id === highlightedMessage?.sender)?.expand?.user || user
-                : undefined
-            }
-            onReplyClose={() => {
-              setReplying(false)
-              setHighlightedMessageId('')
+          <InviteBanner
+            inviteToken={conversation?.inviteToken}
+            chatTitle={conversation?.title || 'Group Chat'}
+            onActionPressIn={() => {
+              if (__DEV__) {
+                console.log('[messages] invite action press-in', Date.now())
+              }
+              messageInputRef.current?.preventNextBlur()
+              messageInputRef.current?.focus()
             }}
-            allowAttachment
-            onAttachmentPress={onAttachmentPress}
-            disabled={isSendDisabled}
-            attachments={attachments}
-            onAttachmentClear={removeAttachment}
-            compact
+            onActionComplete={focusMessageInput}
           />
-        </View>
-      </View>
+        )}
+        <MessageInput
+          ref={messageInputRef}
+          onMessageSubmit={onMessageSubmit}
+          setMessage={setMessage}
+          message={message}
+          parentMessage={replying ? highlightedMessage : undefined}
+          parentMessageSender={
+            replying
+              ? members.find((m) => m.expand?.user.id === highlightedMessage?.sender)?.expand?.user || user
+              : undefined
+          }
+          onReplyClose={() => {
+            setReplying(false)
+            setHighlightedMessageId('')
+          }}
+          allowAttachment
+          onAttachmentPress={onAttachmentPress}
+          disabled={isSendDisabled}
+          attachments={attachments}
+          onAttachmentClear={removeAttachment}
+          compact
+        />
+      </ScrollView>
 
       {showEmojiPicker && highlightedMessage && (
         <Suspense fallback={null}>

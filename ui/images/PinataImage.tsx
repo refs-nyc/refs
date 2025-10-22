@@ -44,6 +44,13 @@ export const PinataImage = ({
   const isUploadingRef = useRef(false)
   // Track if we've already auto-retried on reconnect to avoid loops
   const didReconnectRetryRef = useRef(false)
+  const isMountedRef = useRef(true)
+
+  useEffect(() => {
+    return () => {
+      isMountedRef.current = false
+    }
+  }, [])
 
   const withTimeout = async <T,>(promise: Promise<T>, ms: number): Promise<T> => {
     return new Promise<T>((resolve, reject) => {
@@ -142,9 +149,11 @@ export const PinataImage = ({
           isUploadingRef.current = true
           try {
             const url = await withTimeout(pinataUpload(asset), 25000)
+            if (!isMountedRef.current) return
             // Don't update pinataSource here to avoid visual flash; parent may react to onSuccess elsewhere
             setPinataSource(url)
             setUploadFailed(false)
+            onSuccess(url)
           } catch (error) {
             console.warn('Background upload failed:', error)
             setUploadFailed(true)
@@ -156,6 +165,7 @@ export const PinataImage = ({
         try {
           setLoading(true)
           const url = await withTimeout(pinataUpload(asset), 30000)
+          if (!isMountedRef.current) return
           setPinataSource(url)
           onSuccess(url)
 

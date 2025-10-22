@@ -78,13 +78,13 @@ const Meta = ({ refRecord, numberOfLines }: { refRecord: CompleteRef; numberOfLi
   )
 }
 
-const ApplyChangesButton = () => {
-  const { update, stopEditing, triggerProfileRefresh } = useAppStore()
+const ApplyChangesButton = ({ onSave }: { onSave: () => Promise<void> }) => {
+  const { stopEditing, triggerProfileRefresh } = useAppStore()
 
   return (
     <Checkbox
       onPress={async () => {
-        await update()
+        await onSave()
         stopEditing()
         triggerProfileRefresh()
       }}
@@ -193,27 +193,34 @@ export const DetailsCarouselItem = ({ item, index }: { item: ExpandedItem; index
 
   const editingThisItem = editing === item.id
 
+  // Sync currentItem with item prop when it changes (unless we're editing)
+  useEffect(() => {
+    if (!editingThisItem) {
+      setCurrentItem(item)
+    }
+  }, [item.id, item.text, item.url, item.expand?.ref?.title, editingThisItem])
+
   // Initialize editing state only when needed
   useEffect(() => {
     if (editingThisItem && !isEditingInitialized) {
-      setText(item?.text || '')
-      setUrl(item?.url || '')
-      setListTitle(item.list ? item?.expand.ref.title || '' : '')
-      setRefTitle(item?.expand?.ref?.title || '')
+      setText(currentItem?.text || '')
+      setUrl(currentItem?.url || '')
+      setListTitle(currentItem.list ? currentItem?.expand.ref.title || '' : '')
+      setRefTitle(currentItem?.expand?.ref?.title || '')
       setIsEditingInitialized(true)
     }
-  }, [editingThisItem, item.id, isEditingInitialized])
+  }, [editingThisItem, currentItem.id, isEditingInitialized])
 
   // Sync local state with item data when not editing
   useEffect(() => {
     if (!editingThisItem) {
-      setText(item?.text || '')
-      setUrl(item?.url || '')
-      setListTitle(item.list ? item?.expand.ref.title || '' : '')
-      setRefTitle(item?.expand?.ref?.title || '')
+      setText(currentItem?.text || '')
+      setUrl(currentItem?.url || '')
+      setListTitle(currentItem.list ? currentItem?.expand.ref.title || '' : '')
+      setRefTitle(currentItem?.expand?.ref?.title || '')
       setIsEditingInitialized(false)
     }
-  }, [item.id, item?.text, item?.url, item?.expand?.ref?.title, editingThisItem])
+  }, [currentItem.id, editingThisItem])
 
   const showAddRefButton = item.creator !== user?.id
 
@@ -278,7 +285,11 @@ export const DetailsCarouselItem = ({ item, index }: { item: ExpandedItem; index
             {openedFromFeed && <ProfileLabel profile={item.expand.creator} />}
           </View>
           <Animated.View style={[{ position: 'absolute', right: s.$2, top: s.$1, zIndex: 99 }, checkboxAnimatedStyle]}>
-            {editingThisItem && <ApplyChangesButton />}
+            {editingThisItem && <ApplyChangesButton onSave={async () => {
+              updateEditedState({ text, url, listTitle, refTitle })
+              const updatedItem = await update()
+              setCurrentItem(updatedItem)
+            }} />}
           </Animated.View>
           <Pressable
             style={{
@@ -371,11 +382,9 @@ export const DetailsCarouselItem = ({ item, index }: { item: ExpandedItem; index
                       ]}
                       value={url}
                       placeholder="abc.xyz"
-                      onChangeText={async (e) => {
-                        setUrl(e)
-                        updateEditedState({
-                          url: e,
-                        })
+                      onChangeText={setUrl}
+                      onBlur={() => {
+                        updateEditedState({ url })
                       }}
                     />
                   ) : editingThisItem && item.list ? (
@@ -391,11 +400,9 @@ export const DetailsCarouselItem = ({ item, index }: { item: ExpandedItem; index
                       defaultValue={item.expand.ref.title}
                       value={listTitle}
                       placeholder="Add a list title"
-                      onChangeText={async (e) => {
-                        setListTitle(e),
-                          updateEditedState({
-                            listTitle: e,
-                          })
+                      onChangeText={setListTitle}
+                      onBlur={() => {
+                        updateEditedState({ listTitle })
                       }}
                     />
                   ) : editingThisItem ? (
@@ -420,11 +427,9 @@ export const DetailsCarouselItem = ({ item, index }: { item: ExpandedItem; index
                       value={refTitle}
                       placeholder="Add a title"
                       multiline={true}
-                      onChangeText={async (e) => {
-                        setRefTitle(e)
-                        updateEditedState({
-                          refTitle: e,
-                        })
+                      onChangeText={setRefTitle}
+                      onBlur={() => {
+                        updateEditedState({ refTitle })
                       }}
                     />
                   ) : (
@@ -541,11 +546,9 @@ export const DetailsCarouselItem = ({ item, index }: { item: ExpandedItem; index
                   ]}
                   multiline={true}
                   maxLength={1000}
-                  onChangeText={async (e) => {
-                    updateEditedState({
-                      text: e,
-                    })
-                    setText(e)
+                  onChangeText={setText}
+                  onBlur={() => {
+                    updateEditedState({ text })
                   }}
                 />
               ) : (

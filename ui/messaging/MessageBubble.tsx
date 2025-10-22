@@ -35,9 +35,9 @@ export default function MessageBubble({
   localImageUri?: string
 }) {
   const calendars = useCalendars()
-  const { user, reactions, deleteReaction } = useAppStore()
-
-  const messageReactions = reactions[message.id]
+  const user = useAppStore((state) => state.user)
+  const messageReactions = useAppStore((state) => state.reactions[message.id])
+  const deleteReaction = useAppStore((state) => state.deleteReaction)
 
   const senderAvatar = sender?.image || (sender as any)?.avatar_url || ''
   const senderFallback = sender?.firstName || sender?.name || sender?.userName || null

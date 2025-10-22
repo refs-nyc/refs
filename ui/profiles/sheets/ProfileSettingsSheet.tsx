@@ -2,13 +2,14 @@ import BottomSheet, { BottomSheetBackdrop, BottomSheetView, BottomSheetTextInput
 import React, { useMemo, useState, useRef, useEffect } from 'react'
 import { useAppStore } from '@/features/stores'
 import { c, s } from '@/features/style'
-import { Text, View, Pressable, useWindowDimensions, ActivityIndicator } from 'react-native'
+import { Text, View, Pressable, useWindowDimensions, ActivityIndicator, Keyboard } from 'react-native'
 import Ionicons from '@expo/vector-icons/Ionicons'
 import * as Location from 'expo-location'
-import * as ImagePicker from 'expo-image-picker'
 import { Image } from 'expo-image'
 import { pinataUpload } from '@/features/pinata'
 import Svg, { Circle } from 'react-native-svg'
+import * as ImagePicker from 'expo-image-picker'
+import { ensureMediaLibraryAccess } from '@/features/media/permissions'
 
 export const ProfileSettingsSheet = () => {
   const {
@@ -31,6 +32,10 @@ export const ProfileSettingsSheet = () => {
   const { height: windowHeight } = useWindowDimensions()
   
   const locationInputRef = useRef<any>(null)
+  const nameInputRef = useRef<any>(null)
+  const activeFieldRef = useRef<'name' | 'location' | null>(null)
+  const freezeLayoutRef = useRef(false)
+  const [isKeyboardVisible, setIsKeyboardVisible] = useState(false)
 
   // Local state for editing
   const [fullName, setFullName] = useState('')
@@ -39,7 +44,17 @@ export const ProfileSettingsSheet = () => {
   const [isSavingLocation, setIsSavingLocation] = useState(false)
   const [isLoadingLocation, setIsLoadingLocation] = useState(false)
   const [avatarUploading, setAvatarUploading] = useState(false)
-  
+
+  useEffect(() => {
+    const showListener = Keyboard.addListener('keyboardDidShow', () => setIsKeyboardVisible(true))
+    const hideListener = Keyboard.addListener('keyboardDidHide', () => setIsKeyboardVisible(false))
+
+    return () => {
+      showListener.remove()
+      hideListener.remove()
+    }
+  }, [])
+
   // Auto-focus location input when requested
   useEffect(() => {
     if (shouldFocusLocation && isSettingsSheetOpen && locationInputRef.current) {
@@ -123,6 +138,11 @@ export const ProfileSettingsSheet = () => {
     if (avatarUploading) return
 
     try {
+      const hasPermission = await ensureMediaLibraryAccess()
+      if (!hasPermission) {
+        return
+      }
+
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: true,
@@ -275,9 +295,11 @@ export const ProfileSettingsSheet = () => {
     >
       <BottomSheetView
         onLayout={(event) => {
-          const height = Math.round(event.nativeEvent.layout.height)
-          if (height > 0 && Math.abs(height - settingsSheetHeight) > 2) {
-            setSettingsSheetHeight(height)
+          if (!isKeyboardVisible && !activeFieldRef.current && !freezeLayoutRef.current) {
+            const height = Math.round(event.nativeEvent.layout.height)
+            if (height > 0 && Math.abs(height - settingsSheetHeight) > 2) {
+              setSettingsSheetHeight(height)
+            }
           }
         }}
         style={{ paddingHorizontal: s.$1, paddingVertical: s.$1, gap: s.$075 }}
@@ -434,9 +456,21 @@ export const ProfileSettingsSheet = () => {
             Full Name
           </Text>
           <BottomSheetTextInput
+            ref={nameInputRef}
             value={fullName}
             onChangeText={setFullName}
-            onBlur={handleSaveName}
+            onFocus={() => {
+              activeFieldRef.current = 'name'
+              freezeLayoutRef.current = true
+            }}
+            onBlur={async () => {
+              try {
+                await handleSaveName()
+              } finally {
+                activeFieldRef.current = null
+                freezeLayoutRef.current = false
+              }
+            }}
             placeholder="Your name"
             placeholderTextColor={c.muted}
             style={{
@@ -500,7 +534,18 @@ export const ProfileSettingsSheet = () => {
             ref={locationInputRef}
             value={location}
             onChangeText={setLocation}
-            onBlur={handleSaveLocation}
+            onFocus={() => {
+              activeFieldRef.current = 'location'
+              freezeLayoutRef.current = true
+            }}
+            onBlur={async () => {
+              try {
+                await handleSaveLocation()
+              } finally {
+                activeFieldRef.current = null
+                freezeLayoutRef.current = false
+              }
+            }}
             placeholder="e.g. West Village, NYC"
             placeholderTextColor={c.prompt}
             style={{

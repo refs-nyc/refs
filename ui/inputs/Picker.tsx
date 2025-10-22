@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { StyleSheet } from 'react-native'
 import * as ImagePicker from 'expo-image-picker'
+import { ensureMediaLibraryAccess } from '@/features/media/permissions'
 
 export function Picker({
   onSuccess,
@@ -24,6 +25,12 @@ export function Picker({
           const { status } = await ImagePicker.requestCameraPermissionsAsync()
           if (status !== 'granted') {
             console.log('📸 Camera permission denied')
+            onCancel()
+            return
+          }
+        } else {
+          const hasPermission = await ensureMediaLibraryAccess()
+          if (!hasPermission) {
             onCancel()
             return
           }

@@ -5,7 +5,7 @@ import { ExpandedItem } from '@/features/types'
 import { c, s } from '@/features/style'
 import BottomSheet from '@gorhom/bottom-sheet'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { ScrollView, View, Text, Pressable, Share, Platform, Animated } from 'react-native'
+import { ScrollView, View, Text, Pressable, Share, Animated } from 'react-native'
 import { Grid } from '../grid/Grid'
 import { PlaceholderGrid } from '../grid/PlaceholderGrid'
 import { Heading } from '../typo/Heading'
@@ -243,14 +243,11 @@ export const OtherProfile = ({ userName, prefetchedUserId }: { userName: string;
   const handleShareProfile = useCallback(async () => {
     if (!profile) return
     try {
-      const profileUrl = `https://refs.nyc/${profile.userName}`
-      const message = `Check out ${displayName}'s profile on Refs`
-      
-      await Share.share(
-        Platform.OS === 'ios'
-          ? { url: profileUrl, message }
-          : { message: `${message}\n${profileUrl}` }
-      )
+      const profileUrl = `refsnyc://profile/${profile.userName}`
+      const fallbackInstallUrl = 'https://testflight.apple.com/join/ENqdZ73R'
+      const shareMessage = `Check out ${displayName} on Refs:\n${profileUrl}\nNeed the app? ${fallbackInstallUrl}`
+
+      await Share.share({ message: shareMessage })
     } catch (error) {
       console.error('Error sharing profile:', error)
     }

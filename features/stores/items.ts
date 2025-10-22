@@ -33,6 +33,19 @@ const forceNetworkProfileIds = new Set<string>()
 const buildProfileQueryKey = (userId?: string) =>
   userId ? profileKeys.grid(userId) : (['profile', 'unknown', 'grid'] as const)
 
+const LOCAL_IMAGE_PREFIXES = ['file://', 'content://', 'ph://', 'assets-library://', 'data:image', 'blob:']
+
+const isLikelyLocalImageUri = (value?: string | null): value is string => {
+  if (!value) return false
+  const trimmed = value.trim()
+  if (!trimmed) return false
+  return (
+    LOCAL_IMAGE_PREFIXES.some((prefix) => trimmed.startsWith(prefix)) ||
+    trimmed.startsWith('/') ||
+    /^[A-Za-z0-9_-]+$/.test(trimmed)
+  )
+}
+
 type PendingImageMeta = {
   type: 'temp' | 'real'
   backlog: boolean
@@ -785,7 +798,7 @@ export const createItemSlice: StateCreator<StoreSlices, [], [], ItemSlice> = (se
       itemFields,
       backlog,
     })
-    const localUri = typeof itemFields.image === 'string' && itemFields.image.startsWith('file://') ? itemFields.image : undefined
+    const localUri = isLikelyLocalImageUri(itemFields.image) ? itemFields.image : undefined
 
     beginProfileMutation()
 

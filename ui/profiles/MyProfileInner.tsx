@@ -9,7 +9,7 @@ import BottomSheet, { BottomSheetTextInput } from '@gorhom/bottom-sheet'
 import { useShareIntentContext } from 'expo-share-intent'
 import { useRef, useState, useMemo, useCallback } from 'react'
 import type { DependencyList } from 'react'
-import { ScrollView, View, Text, Pressable, Keyboard, ActivityIndicator, useWindowDimensions, Alert, Share, Platform } from 'react-native'
+import { ScrollView, View, Text, Pressable, Keyboard, ActivityIndicator, useWindowDimensions, Alert, Share } from 'react-native'
 import { Image } from 'expo-image'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import * as ImagePicker from 'expo-image-picker'
@@ -785,14 +785,11 @@ export const MyProfile = ({ userName }: { userName: string }) => {
   const handleShareProfile = useCallback(async () => {
     if (!profile) return
     try {
-      const profileUrl = `https://refs.nyc/${profile.userName}`
-      const message = `Check out ${displayName}'s profile on Refs`
-      
-      await Share.share(
-        Platform.OS === 'ios'
-          ? { url: profileUrl, message }
-          : { message: `${message}\n${profileUrl}` }
-      )
+      const profileUrl = `refsnyc://profile/${profile.userName}`
+      const fallbackInstallUrl = 'https://testflight.apple.com/join/ENqdZ73R'
+      const shareMessage = `Check out ${displayName} on Refs:\n${profileUrl}\nNeed the app? ${fallbackInstallUrl}`
+
+      await Share.share({ message: shareMessage })
     } catch (error) {
       console.error('Error sharing profile:', error)
     }

@@ -8,8 +8,8 @@ import { SimplePinataImage } from '@/ui/images/SimplePinataImage'
 import { Heading, Text, XStack } from '@/ui'
 import { c, s } from '@/features/style'
 
-const DEFAULT_AVATAR_SIZE = 42
-const DEFAULT_REF_IMAGE_SIZE = Math.round(DEFAULT_AVATAR_SIZE * 1.33)
+const DEFAULT_AVATAR_SIZE = 44
+const DEFAULT_REF_IMAGE_SIZE = 60
 
 export type FeedRowProps = {
   entry: FeedEntry
@@ -59,28 +59,6 @@ export const FeedRow: React.FC<FeedRowProps> = ({
     </Pressable>
   )
 
-  const nameNode = onPressRow ? (
-    <View style={{ marginRight: 4 }}>
-      <Heading tag="semistrong">{entry.actor.displayName}</Heading>
-    </View>
-  ) : (
-    <Pressable onPress={handlePressActor} hitSlop={4} style={{ marginRight: 4 }}>
-      <Heading tag="semistrong">{entry.actor.displayName}</Heading>
-    </Pressable>
-  )
-
-  const refNode =
-    entry.ref &&
-    (onPressRow ? (
-      <View>
-        <Heading tag="semistrong">{entry.ref.title}</Heading>
-      </View>
-    ) : (
-      <Pressable onPress={handlePressRef} hitSlop={4}>
-        <Heading tag="semistrong">{entry.ref.title}</Heading>
-      </Pressable>
-    ))
-
   const imageContent = refImage ? (
     <SimplePinataImage
       originalSource={refImage}
@@ -88,7 +66,7 @@ export const FeedRow: React.FC<FeedRowProps> = ({
       style={{
         width: refImageSize,
         height: refImageSize,
-        borderRadius: s.$075,
+        borderRadius: 10,
         backgroundColor: c.accent,
       }}
     />
@@ -97,7 +75,7 @@ export const FeedRow: React.FC<FeedRowProps> = ({
       style={{
         width: refImageSize,
         height: refImageSize,
-        borderRadius: s.$075,
+        borderRadius: 10,
         backgroundColor: '#E2E2E2',
       }}
     />
@@ -108,7 +86,7 @@ export const FeedRow: React.FC<FeedRowProps> = ({
       style={{
         minWidth: refImageSize,
         minHeight: refImageSize,
-        borderRadius: s.$075,
+        borderRadius: 10,
         overflow: 'hidden',
         backgroundColor: refImage ? c.accent : 'transparent',
       }}
@@ -121,7 +99,7 @@ export const FeedRow: React.FC<FeedRowProps> = ({
         style={{
           minWidth: refImageSize,
           minHeight: refImageSize,
-          borderRadius: s.$075,
+          borderRadius: 10,
           overflow: 'hidden',
           backgroundColor: refImage ? c.accent : 'transparent',
         }}
@@ -132,16 +110,15 @@ export const FeedRow: React.FC<FeedRowProps> = ({
   )
 
   const containerStyle = {
-    paddingVertical: 10,
+    paddingVertical: 12,
     width: '100%',
-    marginBottom: 6,
   } as const
 
   const rowContent = (
     <XStack
-      gap={s.$08}
+      gap={12}
       style={{
-        alignItems: 'center',
+        alignItems: 'flex-start',
         width: '100%',
         justifyContent: 'space-between',
       }}
@@ -149,19 +126,27 @@ export const FeedRow: React.FC<FeedRowProps> = ({
       {actorNode}
 
       <View style={{ overflow: 'hidden', flex: 1 }}>
-        <View
-          style={{
-            flexDirection: 'row',
-            flexWrap: 'wrap',
-            alignItems: 'center',
-          }}
-        >
-          {nameNode}
-          <Text style={{ fontSize: 16, color: c.muted2, marginRight: 4 }}>{verb}</Text>
-          {refNode}
-        </View>
+        <Text style={{ marginBottom: 4, lineHeight: 22 }}>
+          {onPressRow ? (
+            <Text style={{ fontSize: 16, fontWeight: '600', color: c.black }}>{entry.actor.displayName}</Text>
+          ) : (
+            <Text onPress={handlePressActor} style={{ fontSize: 16, fontWeight: '600', color: c.black }}>
+              {entry.actor.displayName}
+            </Text>
+          )}
+          <Text style={{ fontSize: 15, color: c.muted2, fontWeight: '400' }}> {verb} </Text>
+          {entry.ref && (
+            onPressRow ? (
+              <Text style={{ fontSize: 16, fontWeight: '600', color: c.black }}>{entry.ref.title}</Text>
+            ) : (
+              <Text onPress={handlePressRef} style={{ fontSize: 16, fontWeight: '600', color: c.black }}>
+                {entry.ref.title}
+              </Text>
+            )
+          )}
+        </Text>
         {timestamp ? (
-          <Text style={{ fontSize: 12, color: c.muted, paddingTop: 2 }}>{timestamp}</Text>
+          <Text style={{ fontSize: 13, color: c.muted }}>{timestamp}</Text>
         ) : null}
       </View>
 

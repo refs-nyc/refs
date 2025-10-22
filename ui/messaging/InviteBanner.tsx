@@ -27,8 +27,9 @@ export function InviteBanner({
   const resetTimerRef = useRef<NodeJS.Timeout | null>(null)
   const iconProgress = useSharedValue(0)
 
-  const inviteUrl = `https://refs.nyc/invite/g/${inviteToken}`
-  const shareMessage = `Join ${chatTitle} on Refs: ${inviteUrl}`
+  const inviteUrl = `refsnyc://invite/g/${inviteToken}`
+  const fallbackInstallUrl = 'https://testflight.apple.com/join/ENqdZ73R'
+  const shareMessage = `Join ${chatTitle} on Refs:\n${inviteUrl}\nNeed the app? ${fallbackInstallUrl}`
 
   const scheduleFocusRestore = () => {
     if (!onActionComplete) return
@@ -50,8 +51,8 @@ export function InviteBanner({
   }, [iconProgress])
 
   const handleCopy = async () => {
-    await Clipboard.setStringAsync(inviteUrl)
-    showToast('Link copied')
+    await Clipboard.setStringAsync(shareMessage)
+    showToast('Invite copied')
     scheduleFocusRestore()
 
     if (resetTimerRef.current) {
@@ -68,7 +69,6 @@ export function InviteBanner({
     try {
       await Share.share({
         message: shareMessage,
-        url: inviteUrl,
       })
     } catch (error) {
       console.error('Error sharing:', error)

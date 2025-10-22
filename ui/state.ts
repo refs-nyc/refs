@@ -272,4 +272,11 @@ export const createUISlice: StateCreator<StoreSlices, [], [], UISlice> = (set, g
       pendingInviteToken: token,
     }))
   },
+  // Profile deep linking
+  pendingProfileUserName: null,
+  setPendingProfileUserName: (userName: string | null) => {
+    set(() => ({
+      pendingProfileUserName: userName,
+    }))
+  },
 })

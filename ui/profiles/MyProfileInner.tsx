@@ -18,7 +18,7 @@ import { DEFAULT_TILE_SIZE } from '../grid/GridTile'
 import { Grid } from '../grid/Grid'
 import { Button } from '../buttons/Button'
 import Ionicons from '@expo/vector-icons/Ionicons'
-import Svg, { Circle, G, Path } from 'react-native-svg'
+import Svg, { Circle } from 'react-native-svg'
 
 import { Heading } from '../typo/Heading'
 import { MyBacklogSheet } from './sheets/MyBacklogSheet'
@@ -883,10 +883,10 @@ export const MyProfile = ({ userName }: { userName: string }) => {
                       bottom: -10,
                       right: -12,
                       shadowColor: '#000',
-                      shadowOffset: { width: 0, height: 2 },
-                      shadowOpacity: 0.25,
+                      shadowOffset: { width: 0, height: 1 },
+                      shadowOpacity: 0.15,
                       shadowRadius: 3,
-                      elevation: 3,
+                      elevation: 2,
                     }}
                   >
                     <View>

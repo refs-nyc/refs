@@ -47,6 +47,7 @@ import {
   loadProfileSnapshotFromStorage,
   writeProfileSnapshot,
 } from '@/features/cache/profileCache'
+import { ensureMediaLibraryAccess } from '@/features/media/permissions'
 
 const PERF = process.env.EXPO_PUBLIC_PERF_HARNESS === '1'
 const _useEffect = React.useEffect
@@ -1457,11 +1458,11 @@ export const MyProfile = ({ userName }: { userName: string }) => {
       directPhotoPickerGuardRef.current = true
       try {
         // Request appropriate permissions
-        const { status } = useCamera
-          ? await ImagePicker.requestCameraPermissionsAsync()
-          : await ImagePicker.requestMediaLibraryPermissionsAsync()
-        
-        if (status !== 'granted') {
+        const hasPermission = useCamera
+          ? (await ImagePicker.requestCameraPermissionsAsync()).status === 'granted'
+          : await ensureMediaLibraryAccess()
+
+        if (!hasPermission) {
           return
         }
 
@@ -1481,11 +1482,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
 
           openNewRef({
             prompt,
-            photo: {
-              uri: selectedImage.uri,
-              width: selectedImage.width ?? 0,
-              height: selectedImage.height ?? 0,
-            },
+            photo: selectedImage,
           })
         }
       } catch (error) {

@@ -1,25 +1,21 @@
 import type { StateCreator } from 'zustand'
+import type { ImagePickerAsset } from 'expo-image-picker'
 import type { StoreSlices } from './types'
-type StagedPhoto = {
-  uri: string
-  width: number
-  height: number
-}
 
 const initialState = {
   newRefTarget: null as 'grid' | 'backlog' | null,
   newRefPrompt: null as string | null,
-  newRefPhoto: null as StagedPhoto | null,
+  newRefPhoto: null as ImagePickerAsset | null,
 }
 
 export type NewRefSlice = {
   newRefTarget: 'grid' | 'backlog' | null
   newRefPrompt: string | null
-  newRefPhoto: StagedPhoto | null
+  newRefPhoto: ImagePickerAsset | null
   openNewRef: (options?: {
     prompt?: string
     target?: 'grid' | 'backlog'
-    photo?: StagedPhoto | null
+    photo?: ImagePickerAsset | null
   }) => void
   closeNewRef: () => void
   resetNewRefStage: () => void

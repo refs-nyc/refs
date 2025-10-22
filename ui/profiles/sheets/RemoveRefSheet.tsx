@@ -11,13 +11,11 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 export const RemoveRefSheet = ({
   bottomSheetRef,
-  handleMoveToBacklog,
   handleRemoveFromProfile,
   item,
   onClose,
 }: {
   bottomSheetRef: React.RefObject<BottomSheet>
-  handleMoveToBacklog: () => Promise<void>
   handleRemoveFromProfile: () => Promise<void>
   item: ExpandedItem | null
   onClose: () => void
@@ -46,7 +44,7 @@ export const RemoveRefSheet = ({
       ref={bottomSheetRef}
       enablePanDownToClose
       index={-1}
-      snapPoints={[240]}
+      snapPoints={[228]}
       animatedIndex={removeRefSheetBackdropAnimatedIndex}
       backgroundStyle={{ backgroundColor: c.surface, borderRadius: 50, paddingTop: 0, opacity: 1 }}
       handleComponent={null}
@@ -68,25 +66,26 @@ export const RemoveRefSheet = ({
       }}
     >
       <YStack
-        gap={s.$2}
+        gap={s.$3}
         style={{
           paddingHorizontal: s.$2,
           paddingTop: s.$3,
           paddingBottom: (insets.bottom || s.$2) + s.$075,
+          flex: 1,
+          justifyContent: 'center',
         }}
       >
         <XStack style={{ justifyContent: 'center' }}>
           <Heading tag="h2semi" style={{ color: c.muted }}>
-            Do what with{' '}
+            Drop{' '}
             <Heading tag="h2semi" style={{ color: c.black }}>
               {item?.expand.ref?.title}
             </Heading>
-            ?
+            {' '}from your grid?
           </Heading>
         </XStack>
         <YStack gap={s.$1 + s.$05}>
           <Button onPress={handleRemoveFromProfile} title="Remove" variant="basic" style={{ minHeight: 50 }} />
-          <Button onPress={handleMoveToBacklog} title={`Send to Backlog`} style={{ minHeight: 50 }} />
         </YStack>
       </YStack>
     </BottomSheet>

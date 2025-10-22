@@ -21,13 +21,6 @@ export const RemoveRefSheetGlobal = () => {
     setPendingRefRemoval(null)
   }
 
-  const handleMoveToBacklog = async () => {
-    if (!pendingRefRemoval) return
-    removeRefSheetRef.current?.close()
-    await pendingRefRemoval.onMoveToBacklog()
-    setPendingRefRemoval(null)
-  }
-
   const handleRemoveFromProfile = async () => {
     if (!pendingRefRemoval) return
     removeRefSheetRef.current?.close()
@@ -38,7 +31,6 @@ export const RemoveRefSheetGlobal = () => {
   return (
     <RemoveRefSheet
       bottomSheetRef={removeRefSheetRef}
-      handleMoveToBacklog={handleMoveToBacklog}
       handleRemoveFromProfile={handleRemoveFromProfile}
       item={pendingRefRemoval?.item || null}
       onClose={handleClose}

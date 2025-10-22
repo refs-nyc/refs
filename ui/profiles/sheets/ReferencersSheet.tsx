@@ -247,12 +247,9 @@ export default function Referencers({
                   onPress={() => {
                     void (async () => {
                       const hasCommunityContext = referencersContext?.type === 'community' && currentRefId
-                      const params: Record<string, string> = {}
-                      if (user.userName) {
-                        params.userName = user.userName
-                      }
-                      if (user.id) {
-                        params.userId = user.id
+                      const userName = user.userName
+                      if (!userName) {
+                        return
                       }
 
                       if (hasCommunityContext) {
@@ -263,16 +260,23 @@ export default function Referencers({
                           context: contextCopy,
                         })
                         setProfileNavIntent({ targetPagerIndex: 2, source: 'corkboard' })
-                        params.fromCorkboard = '1'
                       } else {
                         setProfileNavIntent({ targetPagerIndex: 0, source: 'other' })
                       }
 
                       await closeAsync()
 
-                      if (params.userName) {
-                        router.push({ pathname: '/user/[userName]', params })
+                      const params: { userName: string | number; userId?: string; fromCorkboard?: string } = {
+                        userName,
                       }
+                      if (user.id) {
+                        params.userId = user.id
+                      }
+                      if (hasCommunityContext) {
+                        params.fromCorkboard = '1'
+                      }
+
+                      router.push({ pathname: '/user/[userName]', params })
                     })()
                   }}
                   style={{ paddingHorizontal: 0 }}

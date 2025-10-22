@@ -7,6 +7,7 @@ import { endInteraction, startInteraction } from '@/features/perf/interactions'
 import { useAppStore } from '@/features/stores'
 
 const { width } = Dimensions.get('window')
+const EDGE_GESTURE_WIDTH = Math.max(24, Math.min(44, width * 0.12))
 
 export const SwipeToGoBack = ({ 
   onSwipeComplete, 
@@ -70,6 +71,12 @@ export const SwipeToGoBack = ({
   }, [])
 
   const panGesture = Gesture.Pan()
+    .onTouchesDown((event, stateManager) => {
+      const touchX = event.allTouches?.[0]?.x ?? Number.POSITIVE_INFINITY
+      if (touchX > EDGE_GESTURE_WIDTH) {
+        stateManager.fail()
+      }
+    })
     .activeOffsetX(15) // Only start after meaningful horizontal movement
     .failOffsetX(-5) // Fail quickly if moving left
     .onUpdate((event) => {

@@ -125,6 +125,9 @@ export const RefForm = ({
       if (__DEV__) {
         console.log('📋 Sheet closing - clearing activeField')
       }
+      titleInputRef.current?.blur?.()
+      captionInputRef.current?.blur?.()
+      urlInputRef.current?.blur?.()
       setActiveField(null)
       hasInitializedRef.current = false
       // Don't manually dismiss keyboard - let keyboardBlurBehavior="restore" handle it
@@ -206,18 +209,26 @@ export const RefForm = ({
     }
   }, [existingRefFields])
 
+  const lastLocalImageRef = useRef<string | null>(null)
+
   const handleImageSuccess = (imageUrl: string) => {
-    // For background uploads, we get called with local URI immediately
-    // Don't update pinataSource to prevent flashing - keep using local URI
-    if (!imageUrl.startsWith('http')) {
-      // Local URI - set it as the source
-      setPinataSource(imageUrl)
+    if (!imageUrl) {
+      return
     }
-    // For Pinata URLs (background uploads), don't update pinataSource to prevent flash
-    
-    // Prefetch image in background as optimization, but don't block UI updates
+
+    // Track last good local asset so we can fall back if upload fails
+    if (!imageUrl.startsWith('http')) {
+      lastLocalImageRef.current = imageUrl
+      setPinataSource(imageUrl)
+      return
+    }
+
+    setPinataSource(imageUrl)
     Image.prefetch(imageUrl).catch((err) => {
       console.error('Failed to prefetch image:', err)
+      if (lastLocalImageRef.current) {
+        setPinataSource(lastLocalImageRef.current)
+      }
     })
   }
 

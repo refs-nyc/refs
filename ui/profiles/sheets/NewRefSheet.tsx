@@ -52,9 +52,12 @@ export const NewRefSheet = ({
   const [shouldRenderContent, setShouldRenderContent] = useState(isOpen)
   const [keyboardVisible, setKeyboardVisible] = useState(false)
   const [keyboardHeight, setKeyboardHeight] = useState(0)
-  
+  const [formActive, setFormActive] = useState(false)
+
   const isSheetActive = sheetIndex >= 0
   const hasOpenedRef = useRef(false)
+  const isClosingRef = useRef(false)
+  const isClosedRef = useRef(true)
 
   const resetState = useCallback(() => {
     setStep('search')
@@ -65,10 +68,37 @@ export const NewRefSheet = ({
     setItemData(null)
   }, [])
 
-  const closeSheet = useCallback(() => {
+  const finalizeClose = useCallback(() => {
+    if (isClosedRef.current) {
+      return
+    }
     hasOpenedRef.current = false
+    isClosingRef.current = false
+    isClosedRef.current = true
     closeNewRef()
   }, [closeNewRef])
+
+  const closeSheet = useCallback(() => {
+    if (isClosingRef.current) {
+      return
+    }
+
+    isClosingRef.current = true
+    setFormActive(false)
+    Keyboard.dismiss()
+
+    if (sheetRef.current) {
+      sheetRef.current.close()
+      return
+    }
+
+    // Fallback if ref is unavailable
+    setShouldRenderContent(false)
+    finalizeClose()
+    resetState()
+    resetShareIntent?.()
+    isClosingRef.current = false
+  }, [finalizeClose, resetShareIntent, resetState, sheetRef])
 
   // Keyboard listeners (matching AddRefSheet)
   useEffect(() => {
@@ -106,9 +136,10 @@ export const NewRefSheet = ({
   // Sync refFields and step with current props BEFORE first render
   useEffect(() => {
     if (isOpen && newRefPhoto) {
+      isClosedRef.current = false
       setRefFields({
         title: newRefPrompt ?? '',
-        image: newRefPhoto.uri,
+        image: newRefPhoto,
         promptContext: newRefPrompt ?? undefined,
       })
       setStep('add')
@@ -124,10 +155,17 @@ export const NewRefSheet = ({
       Keyboard.dismiss()
       resetState()
       resetShareIntent?.()
+      isClosedRef.current = true
+      isClosingRef.current = false
+      setFormActive(false)
       return
     }
 
     hasOpenedRef.current = true
+    isClosedRef.current = false
+    if (!isClosingRef.current) {
+      setFormActive(true)
+    }
   }, [isOpen, resetState, resetShareIntent])
 
   const addRefToProfile = useCallback(
@@ -253,11 +291,11 @@ export const NewRefSheet = ({
           console.log('[new-ref-sheet] onChange - sheetIndex:', index)
         }
         setSheetIndex(index)
-        if (index < 0 && hasOpenedRef.current) {
-          closeSheet()
-        }
       }}
       onClose={() => {
+        setSheetIndex(-1)
+        setShouldRenderContent(false)
+        finalizeClose()
         resetState()
         resetShareIntent?.()
       }}
@@ -300,7 +338,7 @@ export const NewRefSheet = ({
               onAddRef={onAddRef}
               onAddRefToList={onAddPhototoList}
               bottomInset={0}
-              isSheetOpen={isSheetActive}
+              isSheetOpen={formActive && isSheetActive}
             />
           </View>
         )}

@@ -1,27 +1,29 @@
-import { Pressable, TextInput, View, Text, ActivityIndicator, StyleSheet, ScrollView } from 'react-native'
-import { XStack, YStack } from '../core/Stacks'
-import { c, s } from '@/features/style'
+import {
+  ActivityIndicator,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native'
+import { forwardRef, useEffect, useImperativeHandle, useRef } from 'react'
 import { Ionicons } from '@expo/vector-icons'
-import { Message, Profile } from '@/features/types'
-import { useRef, useEffect } from 'react'
 import { Image } from 'expo-image'
 
-export default function MessageInput({
-  onMessageSubmit,
-  setMessage,
-  message,
-  disabled,
-  parentMessage,
-  parentMessageSender,
-  onReplyClose,
-  allowAttachment,
-  onAttachmentPress,
-  compact = false,
-  attachments = [],
-  onAttachmentClear,
-}: {
+import { c, s } from '@/features/style'
+import { Message, Profile } from '@/features/types'
+
+import { XStack, YStack } from '../core/Stacks'
+
+export type MessageInputHandle = {
+  focus: () => void
+  preventNextBlur: () => void
+}
+
+type MessageInputProps = {
   onMessageSubmit: () => void | Promise<void>
-  setMessage: (str: string) => void
+  setMessage: (text: string) => void
   message: string
   disabled: boolean
   parentMessage?: Message
@@ -32,138 +34,223 @@ export default function MessageInput({
   compact?: boolean
   attachments?: Array<{ id: string; localUri: string; status: 'uploading' | 'ready' }>
   onAttachmentClear?: (id: string) => void
-}) {
-  const verticalSpacing = compact ? s.$05 : s.$075
-  const inputRef = useRef<TextInput>(null)
-
-  // Focus the input when component mounts (more reliable than autoFocus during navigation)
-  useEffect(() => {
-    // Small delay to ensure the component is fully mounted
-    const timer = setTimeout(() => {
-      try {
-        inputRef.current?.focus()
-      } catch (e) {
-        console.warn('Failed to focus message input:', e)
-      }
-    }, 100)
-    
-    return () => clearTimeout(timer)
-  }, [])
-
-  return (
-    <>
-      {parentMessage && (
-        <View style={{ backgroundColor: c.surface2, padding: s.$1, borderRadius: s.$2 }}>
-          <XStack style={{ justifyContent: 'space-between' }}>
-            <YStack>
-              <Text style={{ fontWeight: 'bold' }}>
-                Replying to {parentMessageSender?.firstName}
-              </Text>
-              <Text>{parentMessage.text}</Text>
-            </YStack>
-            <Pressable onPress={onReplyClose}>
-              <Ionicons name="close-outline" size={s.$2} color={c.grey2} />
-            </Pressable>
-          </XStack>
-        </View>
-      )}
-      {attachments.length > 0 && (
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{ paddingVertical: verticalSpacing / 2, paddingRight: s.$075 }}
-          style={{ alignSelf: 'flex-start' }}
-        >
-          {attachments.map((attachment, index) => (
-            <View
-              key={attachment.id}
-              style={[styles.attachmentCardWrapper, index === 0 ? null : styles.attachmentCardSpacing]}
-            >
-              <View style={styles.attachmentCard}>
-                <Image
-                  source={{ uri: attachment.localUri }}
-                  style={styles.attachmentImage}
-                  contentFit="cover"
-                />
-              {attachment.status === 'uploading' && (
-                <View style={styles.attachmentOverlay}>
-                  <ActivityIndicator size="small" color={c.surface} />
-                </View>
-              )}
-              {onAttachmentClear && (
-                <Pressable
-                  onPress={() => onAttachmentClear(attachment.id)}
-                  hitSlop={6}
-                  style={styles.attachmentClose}
-                >
-                  <Ionicons name="close" size={14} color={c.surface} />
-                </Pressable>
-              )}
-              </View>
-            </View>
-          ))}
-        </ScrollView>
-      )}
-      <XStack
-        style={{
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-        gap={s.$075}
-      >
-        {allowAttachment && (
-          <Pressable
-            onPress={() => {
-              if (onAttachmentPress) {
-                void onAttachmentPress()
-              }
-            }}
-            hitSlop={6}
-          >
-            <Ionicons name="add" size={s.$2} color={c.grey2} />
-          </Pressable>
-        )}
-        <XStack
-          style={{
-            backgroundColor: c.white,
-            borderRadius: s.$2,
-            marginVertical: verticalSpacing,
-            paddingVertical: s.$09,
-            paddingHorizontal: s.$1,
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            flex: 1,
-          }}
-        >
-          <TextInput
-            ref={inputRef}
-            style={{ width: '70%' }}
-            placeholder="Type anything..."
-            multiline={true}
-            value={message}
-            onChangeText={setMessage}
-            autoFocus={true}
-          />
-          <Pressable
-            onPress={() => {
-              void onMessageSubmit()
-            }}
-            disabled={disabled}
-            hitSlop={6}
-          >
-            <Ionicons
-              name="paper-plane-outline"
-              size={s.$2}
-              color={disabled ? 'rgba(176,176,176,0.5)' : c.grey2}
-            />
-          </Pressable>
-        </XStack>
-      </XStack>
-    </>
-  )
 }
 
+const MessageInput = forwardRef<MessageInputHandle, MessageInputProps>(
+  (
+    {
+      onMessageSubmit,
+      setMessage,
+      message,
+      disabled,
+      parentMessage,
+      parentMessageSender,
+      onReplyClose,
+      allowAttachment,
+      onAttachmentPress,
+      compact = false,
+      attachments = [],
+      onAttachmentClear,
+    },
+    ref
+  ) => {
+    const PREVENT_BLUR_WINDOW_MS = 400
+    const verticalSpacing = compact ? s.$05 : s.$075
+    const inputRef = useRef<TextInput>(null)
+    const preventNextBlurRef = useRef({ active: false, expiresAt: 0 })
+
+    const logEvent = (label: string) => {
+      if (__DEV__) {
+        console.log(`[message-input] ${label}`, Date.now())
+      }
+    }
+
+    useImperativeHandle(
+      ref,
+      () => ({
+        focus: () => {
+          requestAnimationFrame(() => {
+            inputRef.current?.focus()
+          })
+          logEvent('focus() called')
+        },
+        preventNextBlur: () => {
+          preventNextBlurRef.current = {
+            active: true,
+            expiresAt: Date.now() + PREVENT_BLUR_WINDOW_MS,
+          }
+          logEvent('preventNextBlur()')
+        },
+      }),
+      []
+    )
+
+    useEffect(() => {
+      const timer = setTimeout(() => {
+        try {
+          preventNextBlurRef.current = {
+            active: true,
+            expiresAt: Date.now() + PREVENT_BLUR_WINDOW_MS,
+          }
+          logEvent('auto-focus timer')
+          inputRef.current?.focus()
+        } catch (error) {
+          console.warn('Failed to focus message input:', error)
+        }
+      }, 100)
+
+      return () => clearTimeout(timer)
+    }, [])
+
+    return (
+      <>
+        {parentMessage && (
+          <View style={styles.replyContainer}>
+            <XStack style={styles.replyHeader}>
+              <YStack>
+                <Text style={styles.replyTitle}>
+                  Replying to {parentMessageSender?.firstName}
+                </Text>
+                <Text>{parentMessage.text}</Text>
+              </YStack>
+              <Pressable onPress={onReplyClose}>
+                <Ionicons name="close-outline" size={s.$2} color={c.grey2} />
+              </Pressable>
+            </XStack>
+          </View>
+        )}
+
+        {attachments.length > 0 && (
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{
+              paddingVertical: verticalSpacing / 2,
+              paddingRight: s.$075,
+            }}
+            style={{ alignSelf: 'flex-start' }}
+          >
+            {attachments.map((attachment, index) => (
+              <View
+                key={attachment.id}
+                style={[
+                  styles.attachmentCardWrapper,
+                  index === 0 ? null : styles.attachmentCardSpacing,
+                ]}
+              >
+                <View style={styles.attachmentCard}>
+                  <Image
+                    source={{ uri: attachment.localUri }}
+                    style={styles.attachmentImage}
+                    contentFit="cover"
+                  />
+                  {attachment.status === 'uploading' && (
+                    <View style={styles.attachmentOverlay}>
+                      <ActivityIndicator size="small" color={c.surface} />
+                    </View>
+                  )}
+                  {onAttachmentClear && (
+                    <Pressable
+                      onPress={() => onAttachmentClear(attachment.id)}
+                      hitSlop={6}
+                      style={styles.attachmentClose}
+                    >
+                      <Ionicons name="close" size={14} color={c.surface} />
+                    </Pressable>
+                  )}
+                </View>
+              </View>
+            ))}
+          </ScrollView>
+        )}
+
+        <XStack style={styles.composerRow} gap={s.$075}>
+          {allowAttachment && (
+            <Pressable
+              onPress={() => {
+                if (onAttachmentPress) {
+                  void onAttachmentPress()
+                }
+              }}
+              hitSlop={6}
+            >
+              <Ionicons name="add" size={s.$2} color={c.grey2} />
+            </Pressable>
+          )}
+
+          <XStack
+            style={[
+              styles.inputContainer,
+              {
+                marginVertical: verticalSpacing,
+              },
+            ]}
+          >
+            <TextInput
+              ref={inputRef}
+              style={styles.input}
+              placeholder="Type anything..."
+              multiline
+              value={message}
+              onChangeText={setMessage}
+              autoFocus
+              onBlur={() => {
+                logEvent('onBlur')
+                const guard = preventNextBlurRef.current
+                if (guard.active && Date.now() <= guard.expiresAt) {
+                  preventNextBlurRef.current = { active: false, expiresAt: 0 }
+                  requestAnimationFrame(() => {
+                    inputRef.current?.focus()
+                    logEvent('re-focus from preventNextBlur')
+                  })
+                  return
+                }
+                preventNextBlurRef.current = { active: false, expiresAt: 0 }
+              }}
+              onFocus={() => {
+                logEvent('onFocus')
+                const guard = preventNextBlurRef.current
+                if (guard.active && Date.now() > guard.expiresAt) {
+                  preventNextBlurRef.current = { active: false, expiresAt: 0 }
+                }
+              }}
+            />
+            <Pressable
+              onPress={() => {
+                void onMessageSubmit()
+              }}
+              disabled={disabled}
+              hitSlop={6}
+            >
+              <Ionicons
+                name="paper-plane-outline"
+                size={s.$2}
+                color={disabled ? 'rgba(176,176,176,0.5)' : c.grey2}
+              />
+            </Pressable>
+          </XStack>
+        </XStack>
+      </>
+    )
+  }
+)
+
+MessageInput.displayName = 'MessageInput'
+
+export default MessageInput
+
 const styles = StyleSheet.create({
+  replyContainer: {
+    backgroundColor: c.surface2,
+    padding: s.$1,
+    borderRadius: s.$2,
+  },
+  replyHeader: {
+    justifyContent: 'space-between',
+  },
+  replyTitle: {
+    fontWeight: 'bold',
+  },
   attachmentCardWrapper: {
     width: 76,
     height: 76,
@@ -203,5 +290,21 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.55)',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  composerRow: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  inputContainer: {
+    backgroundColor: c.white,
+    borderRadius: s.$2,
+    paddingVertical: s.$09,
+    paddingHorizontal: s.$1,
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    flex: 1,
+  },
+  input: {
+    width: '70%',
   },
 })

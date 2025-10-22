@@ -33,6 +33,27 @@ const forceNetworkProfileIds = new Set<string>()
 const buildProfileQueryKey = (userId?: string) =>
   userId ? profileKeys.grid(userId) : (['profile', 'unknown', 'grid'] as const)
 
+type PendingImageMeta = {
+  type: 'temp' | 'real'
+  backlog: boolean
+}
+
+type PendingImageUploadEntry = {
+  localUri: string
+  creatorId?: string
+  userName?: string
+  remoteUrl?: string
+  items: Map<string, PendingImageMeta>
+}
+
+const clonePendingEntry = (entry: PendingImageUploadEntry): PendingImageUploadEntry => ({
+  localUri: entry.localUri,
+  creatorId: entry.creatorId,
+  userName: entry.userName,
+  remoteUrl: entry.remoteUrl,
+  items: new Map(entry.items),
+})
+
 const cloneProfileData = (data: ProfileData): ProfileData => ({
   profile: { ...data.profile },
   gridItems: [...data.gridItems],
@@ -319,6 +340,20 @@ export type ItemSlice = {
   uploadingItems: Set<string>
   addUploadingItem: (itemId: string) => void
   removeUploadingItem: (itemId: string) => void
+  pendingImageUploads: Map<string, PendingImageUploadEntry>
+  notePendingImageForItem: (
+    localUri: string,
+    options: {
+      itemId: string
+      backlog: boolean
+      type: PendingImageMeta['type']
+      creatorId: string
+      userName?: string
+    }
+  ) => void
+  transitionPendingImageToReal: (localUri: string, tempId: string, realId: string) => void
+  finalizePendingImageUpload: (localUri: string, remoteUrl: string) => Promise<void>
+  failPendingImageUpload: (localUri: string) => void
   // Cache grid count to avoid database queries
   gridItemCount: number
   setGridItemCount: (count: number) => void
@@ -378,6 +413,7 @@ export const createItemSlice: StateCreator<StoreSlices, [], [], ItemSlice> = (se
   feedRefreshTrigger: 0,
   profileRefreshTrigger: 0,
   uploadingItems: new Set<string>(),
+  pendingImageUploads: new Map<string, PendingImageUploadEntry>(),
   gridItemCount: 0, // Initialize to 0, will be set when profile loads
   optimisticItems: new Map<string, ExpandedItem>(),
   addUploadingItem: (itemId: string) =>
@@ -388,6 +424,236 @@ export const createItemSlice: StateCreator<StoreSlices, [], [], ItemSlice> = (se
       next.delete(itemId)
       return { uploadingItems: next }
     }),
+  notePendingImageForItem: (localUri, { itemId, backlog, type, creatorId, userName }) => {
+    let remoteUrlToFinalize: string | undefined
+    set((state) => {
+      const pending = new Map(state.pendingImageUploads)
+      const existing = pending.get(localUri)
+      const entry = existing
+        ? clonePendingEntry(existing)
+        : {
+            localUri,
+            creatorId,
+            userName,
+            remoteUrl: undefined,
+            items: new Map<string, PendingImageMeta>(),
+          }
+      if (!entry.creatorId) entry.creatorId = creatorId
+      if (!entry.userName && userName) entry.userName = userName
+      entry.items.set(itemId, { backlog, type })
+      pending.set(localUri, entry)
+      remoteUrlToFinalize = entry.remoteUrl
+      return { pendingImageUploads: pending }
+    })
+    if (remoteUrlToFinalize) {
+      void get().finalizePendingImageUpload(localUri, remoteUrlToFinalize)
+    }
+  },
+  transitionPendingImageToReal: (localUri, tempId, realId) => {
+    let remoteUrlToFinalize: string | undefined
+    set((state) => {
+      const pending = new Map(state.pendingImageUploads)
+      const existing = pending.get(localUri)
+      if (!existing) {
+        return {}
+      }
+      const entry = clonePendingEntry(existing)
+      const tempMeta = entry.items.get(tempId)
+      if (!tempMeta) {
+        return {}
+      }
+      entry.items.delete(tempId)
+      entry.items.set(realId, { backlog: tempMeta.backlog, type: 'real' })
+      remoteUrlToFinalize = entry.remoteUrl
+      pending.set(localUri, entry)
+      return {
+        pendingImageUploads: pending,
+      }
+    })
+    if (remoteUrlToFinalize) {
+      void get().finalizePendingImageUpload(localUri, remoteUrlToFinalize)
+    }
+  },
+  finalizePendingImageUpload: async (localUri, remoteUrl) => {
+    const stateBefore = get()
+    const existing = stateBefore.pendingImageUploads.get(localUri)
+    if (!existing) {
+      set((state) => {
+        const pending = new Map(state.pendingImageUploads)
+        pending.set(localUri, {
+          localUri,
+          creatorId: stateBefore.user?.id ?? pocketbase.authStore.record?.id,
+          userName: stateBefore.user?.userName ?? (pocketbase.authStore.record as any)?.userName,
+          remoteUrl,
+          items: new Map<string, PendingImageMeta>(),
+        })
+        return { pendingImageUploads: pending }
+      })
+      return
+    }
+    const entry = clonePendingEntry(existing)
+    entry.remoteUrl = remoteUrl
+    const itemsMeta = Array.from(entry.items.entries())
+    if (itemsMeta.length === 0) {
+      set((state) => {
+        const pending = new Map(state.pendingImageUploads)
+        const nextEntry = clonePendingEntry(entry)
+        pending.set(localUri, nextEntry)
+        return { pendingImageUploads: pending }
+      })
+      return
+    }
+
+    const itemMetaMap = new Map(itemsMeta)
+    const realItemIds = itemsMeta.filter(([, meta]) => meta.type === 'real').map(([id]) => id)
+    const tempItemIds = itemsMeta.filter(([, meta]) => meta.type === 'temp').map(([id]) => id)
+    const uploadingRemovals = new Set([...realItemIds, ...tempItemIds])
+    const allReal = tempItemIds.length === 0
+
+    set((state) => {
+      const pending = new Map(state.pendingImageUploads)
+      const currentEntry = pending.get(localUri)
+      if (!currentEntry) {
+        return {}
+      }
+      const mutableEntry = clonePendingEntry(currentEntry)
+      mutableEntry.remoteUrl = remoteUrl
+
+      const nextOptimistic = new Map(state.optimisticItems)
+      const uploadingItems = new Set(state.uploadingItems)
+
+      uploadingRemovals.forEach((itemId) => {
+        const optimisticItem = nextOptimistic.get(itemId)
+        if (optimisticItem) {
+          const updatedItem: ExpandedItem = {
+            ...optimisticItem,
+            image: remoteUrl,
+            expand: optimisticItem.expand
+              ? {
+                  ...optimisticItem.expand,
+                  ref: optimisticItem.expand.ref
+                    ? { ...optimisticItem.expand.ref, image: remoteUrl }
+                    : optimisticItem.expand.ref,
+                }
+              : optimisticItem.expand,
+          }
+          nextOptimistic.set(itemId, updatedItem)
+        }
+      })
+
+      uploadingRemovals.forEach((id) => uploadingItems.delete(id))
+
+      if (allReal) {
+        pending.delete(localUri)
+      } else {
+        pending.set(localUri, mutableEntry)
+      }
+
+      return {
+        pendingImageUploads: pending,
+        optimisticItems: nextOptimistic,
+        uploadingItems,
+      }
+    })
+
+    const creatorId =
+      entry.creatorId ??
+      pocketbase.authStore.record?.id ??
+      stateBefore.user?.id ??
+      ''
+    const creatorUserName =
+      entry.userName ?? (pocketbase.authStore.record as any)?.userName ?? stateBefore.user?.userName
+
+    if (creatorId) {
+      try {
+        const snapshot = ensureProfileSnapshot(creatorId, creatorUserName)
+        let gridChanged = false
+        let backlogChanged = false
+
+        const updateList = (list: ExpandedItem[], backlogFlag: boolean) =>
+          list.map((item) => {
+            const meta = itemMetaMap.get(item.id)
+            if (meta && meta.backlog === backlogFlag) {
+              const updatedItem: ExpandedItem = {
+                ...item,
+                image: remoteUrl,
+                expand: item.expand
+                  ? {
+                      ...item.expand,
+                      ref: item.expand.ref ? { ...item.expand.ref, image: remoteUrl } : item.expand.ref,
+                    }
+                  : item.expand,
+              }
+              if (backlogFlag) {
+                backlogChanged = true
+              } else {
+                gridChanged = true
+              }
+              return updatedItem
+            }
+            return item
+          })
+
+        const updatedGridItems = updateList(snapshot.gridItems, false)
+        const updatedBacklogItems = updateList(snapshot.backlogItems, true)
+
+        if (gridChanged || backlogChanged) {
+          await writeProfileSnapshot({
+            userId: creatorId,
+            userName: creatorUserName,
+            profile: snapshot.profile,
+            gridItems: updatedGridItems,
+            backlogItems: updatedBacklogItems,
+            updatedAt: Date.now(),
+          })
+        }
+      } catch (error) {
+        console.warn('Failed to update profile snapshot after image upload', error)
+      }
+
+      queryClient
+        .invalidateQueries({
+          queryKey: buildProfileQueryKey(creatorId),
+        })
+        .catch((error) => {
+          if (__DEV__) {
+            console.warn('Failed to invalidate profile query after image upload', error)
+          }
+        })
+    }
+
+    if (realItemIds.length > 0) {
+      await Promise.all(
+        realItemIds.map((id) =>
+          pocketbase
+            .collection('items')
+            .update(id, { image: remoteUrl })
+            .catch((error) => {
+              console.warn('Failed to update item image after upload', { id, error })
+            })
+        )
+      )
+      get().triggerFeedRefresh()
+    }
+  },
+  failPendingImageUpload: (localUri) => {
+    set((state) => {
+      const pending = new Map(state.pendingImageUploads)
+      const entry = pending.get(localUri)
+      if (!entry) {
+        return {}
+      }
+      const uploadingItems = new Set(state.uploadingItems)
+      entry.items.forEach((_meta, itemId) => {
+        uploadingItems.delete(itemId)
+      })
+      pending.delete(localUri)
+      return {
+        pendingImageUploads: pending,
+        uploadingItems,
+      }
+    })
+  },
   setGridItemCount: (count: number) => set(() => ({ gridItemCount: count })),
   incrementGridItemCount: () => set((state) => ({ gridItemCount: state.gridItemCount + 1 })),
   decrementGridItemCount: () => set((state) => ({ gridItemCount: Math.max(0, state.gridItemCount - 1) })),
@@ -519,11 +785,23 @@ export const createItemSlice: StateCreator<StoreSlices, [], [], ItemSlice> = (se
       itemFields,
       backlog,
     })
+    const localUri = typeof itemFields.image === 'string' && itemFields.image.startsWith('file://') ? itemFields.image : undefined
 
     beginProfileMutation()
 
     if (!backlog) {
       get().incrementGridItemCount()
+    }
+
+    if (localUri) {
+      get().notePendingImageForItem(localUri, {
+        itemId: optimisticItem.id,
+        backlog,
+        type: 'temp',
+        creatorId: userId,
+        userName,
+      })
+      get().addUploadingItem(optimisticItem.id)
     }
 
     get().addOptimisticItem(optimisticItem)
@@ -551,6 +829,21 @@ export const createItemSlice: StateCreator<StoreSlices, [], [], ItemSlice> = (se
 
       const createdItem = await get().createItem(linkedRefId, itemFields, backlog)
       get().replaceOptimisticItem(optimisticItem.id, createdItem)
+
+      if (localUri) {
+        get().transitionPendingImageToReal(localUri, optimisticItem.id, createdItem.id)
+        get().removeUploadingItem(optimisticItem.id)
+        const pendingEntry = get().pendingImageUploads.get(localUri)
+        if (pendingEntry && !pendingEntry.remoteUrl) {
+          get().addUploadingItem(createdItem.id)
+        } else if (pendingEntry?.remoteUrl) {
+          void get().finalizePendingImageUpload(localUri, pendingEntry.remoteUrl)
+        } else {
+          get().removeUploadingItem(createdItem.id)
+        }
+      } else {
+        get().removeUploadingItem(optimisticItem.id)
+      }
 
       const canonicalSnapshot: ProfileSnapshotPayload = backlog
         ? {
@@ -598,6 +891,10 @@ export const createItemSlice: StateCreator<StoreSlices, [], [], ItemSlice> = (se
 
       return createdItem
     } catch (error) {
+      if (localUri) {
+        get().failPendingImageUpload(localUri)
+        get().removeUploadingItem(optimisticItem.id)
+      }
       get().removeOptimisticItem(optimisticItem.id)
       await writeProfileSnapshot({
         userId,

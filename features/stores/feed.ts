@@ -285,24 +285,12 @@ export const createFeedSlice: StateCreator<StoreSlices, [], [], FeedSlice> = (se
 
     try {
       const cached = await simpleCache.get<CachedFeedSnapshot>('feed_entries', userId)
-      const debugMarkers: FeedEntry[] = []
-      const start = Date.now()
-      if (cached) {
-        debugMarkers.push({
-          id: `meta:cached-${start}`,
-          kind: 'ref_add',
-          created: new Date(start).toISOString(),
-          itemId: `cached-${start}`,
-          actor: {
-            id: 'meta',
-            userName: 'cache',
-            displayName: '[feed] applying cache',
-          },
-          ref: {
-            id: 'meta-cache',
-            title: `${cached.entries.length} entries`,
-          },
-        } as FeedEntry)
+      if (cached && __DEV__) {
+        console.log('[feed] applying cache snapshot', {
+          entries: cached.entries.length,
+          hasMore: cached.hasMore,
+          cursor: cached.cursor,
+        })
       }
       if (cached && Array.isArray(cached.entries) && cached.entries.length > 0) {
         const actorCache = { ...state.feedActorCache }
@@ -315,7 +303,7 @@ export const createFeedSlice: StateCreator<StoreSlices, [], [], FeedSlice> = (se
         }
 
         set(() => ({
-          feedEntries: [...debugMarkers, ...cached.entries],
+          feedEntries: cached.entries,
           feedActorCache: actorCache,
           feedRefCache: refCache,
           feedHydrated: true,
@@ -329,26 +317,6 @@ export const createFeedSlice: StateCreator<StoreSlices, [], [], FeedSlice> = (se
         await get().refreshFeed({ force: true, silent: true })
         const refreshEnd = Date.now()
         console.log('[boot-trace] feed.ensure:refresh', refreshEnd - refreshStart, 'ms')
-        set((state) => ({
-          feedEntries: [
-            {
-              id: `meta:refresh-${refreshStart}`,
-              kind: 'ref_add',
-              created: new Date(refreshEnd).toISOString(),
-              itemId: `refresh-${refreshStart}`,
-              actor: {
-                id: 'meta',
-                userName: 'refresh',
-                displayName: `[feed] refresh took ${(refreshEnd - refreshStart).toFixed(0)}ms`,
-              },
-              ref: {
-                id: 'meta-refresh',
-                title: 'Network timings',
-              },
-            } as FeedEntry,
-            ...state.feedEntries,
-          ],
-        }))
       }
     } catch (error) {
       console.warn('Feed: failed to hydrate', error)

@@ -7,6 +7,7 @@ import { useNetInfo } from '@react-native-community/netinfo'
 import { Ionicons } from '@expo/vector-icons'
 import { SearchLoadingSpinner } from '@/ui/atoms/SearchLoadingSpinner'
 import { s, c } from '@/features/style'
+import { useAppStore } from '@/features/stores'
 
 export const PinataImage = ({
   asset,
@@ -35,6 +36,8 @@ export const PinataImage = ({
   const [source, setSource] = useState(typeof asset === 'string' ? asset : asset?.uri)
   const [pinataSource, setPinataSource] = useState(typeof asset === 'string' ? asset : '')
   const { isConnected } = useNetInfo()
+  const finalizePendingImageUpload = useAppStore((state) => state.finalizePendingImageUpload)
+  const failPendingImageUpload = useAppStore((state) => state.failPendingImageUpload)
 
   // Create animation values
   const pulseAnim = useRef(new Animated.Value(1)).current
@@ -83,12 +86,14 @@ export const PinataImage = ({
       const url = await withTimeout(pinataUpload(asset), 25000)
       setPinataSource(url)
       onSuccess(url)
+      void finalizePendingImageUpload(asset.uri, url)
       setRetrying(false)
       didReconnectRetryRef.current = false
     } catch (error) {
       console.warn('Retry upload failed:', error)
       setUploadFailed(true)
       setRetrying(false)
+      failPendingImageUpload(asset.uri)
     }
     isUploadingRef.current = false
   }
@@ -149,6 +154,7 @@ export const PinataImage = ({
           isUploadingRef.current = true
           try {
             const url = await withTimeout(pinataUpload(asset), 25000)
+            void finalizePendingImageUpload(asset.uri, url)
             if (!isMountedRef.current) return
             // Don't update pinataSource here to avoid visual flash; parent may react to onSuccess elsewhere
             setPinataSource(url)
@@ -157,6 +163,7 @@ export const PinataImage = ({
           } catch (error) {
             console.warn('Background upload failed:', error)
             setUploadFailed(true)
+            failPendingImageUpload(asset.uri)
           }
           isUploadingRef.current = false
         })()
@@ -165,6 +172,7 @@ export const PinataImage = ({
         try {
           setLoading(true)
           const url = await withTimeout(pinataUpload(asset), 30000)
+          void finalizePendingImageUpload(asset.uri, url)
           if (!isMountedRef.current) return
           setPinataSource(url)
           onSuccess(url)
@@ -181,6 +189,7 @@ export const PinataImage = ({
           console.warn('Upload failed:', error)
           setLoading(false)
           setUploadFailed(true)
+          failPendingImageUpload(asset.uri)
           onFail()
         }
       }

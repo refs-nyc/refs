@@ -1,20 +1,19 @@
 import { useEffect, useMemo, useRef, useState, lazy, Suspense, useCallback } from 'react'
-import { FlatList, Keyboard, Platform, Pressable, ScrollView, Text, View } from 'react-native'
+import { FlatList, InteractionManager, Keyboard, Platform, Pressable, Text, View } from 'react-native'
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { useQuery, type InfiniteData } from '@tanstack/react-query'
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, Easing, runOnJS } from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { Link, router } from 'expo-router'
+import { router } from 'expo-router'
 import { useFocusEffect } from '@react-navigation/native'
 import * as ImagePicker from 'expo-image-picker'
 
 import { useAppStore } from '@/features/stores'
 import { Message } from '@/features/types'
 import { c, s } from '@/features/style'
-import { Avatar, AvatarStack } from '@/ui/atoms/Avatar'
+import { Avatar } from '@/ui/atoms/Avatar'
 import MessageBubble from '@/ui/messaging/MessageBubble'
 import MessageInput, { MessageInputHandle } from '@/ui/messaging/MessageInput'
-import { InviteBanner } from '@/ui/messaging/InviteBanner'
 import { pinataUpload } from '@/features/pinata'
 import { randomColors } from './utils'
 import { useConversationMessages } from '@/features/messaging/useConversationMessages'
@@ -69,6 +68,26 @@ export function MessagesScreen({
 
   const applyRealtimeMessage = useCallback(
     async (record: Message, action: 'create' | 'update' | 'delete') => {
+      let nextRecord = record
+
+      if (
+        action === 'create' &&
+        !record.image &&
+        (typeof record.text !== 'string' || record.text.trim().length === 0)
+      ) {
+        try {
+          const hydrated = await pocketbase.collection('messages').getOne<Message>(record.id)
+          if (hydrated) {
+            nextRecord = hydrated
+          }
+        } catch (error) {
+          console.warn('[messages] failed to hydrate realtime message', {
+            id: record.id,
+            error,
+          })
+        }
+      }
+
       queryClient.setQueryData<InfiniteData<ConversationMessagesPage>>(
         messagingKeys.messages(conversationId),
         (existing) => {
@@ -79,25 +98,27 @@ export function MessagesScreen({
             if (action === 'delete') {
               return {
                 ...page,
-                messages: page.messages.filter((message) => message.id !== record.id),
+                messages: page.messages.filter((message) => message.id !== nextRecord.id),
               }
             }
 
             if (action === 'update') {
               return {
                 ...page,
-                messages: page.messages.map((message) => (message.id === record.id ? { ...message, ...record } : message)),
+                messages: page.messages.map((message) =>
+                  message.id === nextRecord.id ? { ...message, ...nextRecord } : message
+                ),
               }
             }
 
             // create
             if (page === existing.pages[0]) {
-              if (page.messages.some((message) => message.id === record.id)) {
+              if (page.messages.some((message) => message.id === nextRecord.id)) {
                 return page
               }
               return {
                 ...page,
-                messages: [record, ...page.messages],
+                messages: [nextRecord, ...page.messages],
               }
             }
 
@@ -117,7 +138,7 @@ export function MessagesScreen({
             if (!entry) return entry
             return {
               ...entry,
-              latestMessage: record,
+              latestMessage: nextRecord,
             }
           })
         }
@@ -158,7 +179,7 @@ export function MessagesScreen({
               }
             },
             {
-              fields: 'id,conversation,sender,created',
+              fields: 'id,conversation,sender,text,image,replying_to,created',
             }
           )
           console.log('[boot-trace] messages.thread.subscribe:established', conversationId, Date.now() - startedAt, 'ms')
@@ -203,7 +224,6 @@ export function MessagesScreen({
 
   const flatListRef = useRef<FlatList<Message>>(null)
   const messageInputRef = useRef<MessageInputHandle>(null)
-  const focusTimerRef = useRef<NodeJS.Timeout | null>(null)
   const [message, setMessage] = useState('')
   const [highlightedMessageId, setHighlightedMessageId] = useState('')
   const [replying, setReplying] = useState(false)
@@ -288,6 +308,15 @@ export function MessagesScreen({
     updateLastRead(conversationId, user.id, conversationMessages[0]?.created)
   }, [conversationId, conversationMessages, updateLastRead, user?.id])
 
+  const focusMessageInput = useCallback(() => {
+    InteractionManager.runAfterInteractions(() => {
+      if (__DEV__) {
+        console.log('[messages] focusMessageInput', Date.now())
+      }
+      messageInputRef.current?.focus()
+    })
+  }, [])
+
   useEffect(() => {
     const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow'
     const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide'
@@ -341,34 +370,6 @@ export function MessagesScreen({
   )
   const canSendMessage = message.trim().length > 0 || readyAttachments.length > 0
   const isSendDisabled = !canSendMessage || isUploadingAttachment
-
-  useEffect(() => {
-    return () => {
-      if (focusTimerRef.current) {
-        clearTimeout(focusTimerRef.current)
-        focusTimerRef.current = null
-      }
-    }
-  }, [])
-
-  const focusMessageInput = useCallback(() => {
-    if (__DEV__) {
-      console.log('[messages] focusMessageInput immediate', Date.now())
-    }
-    messageInputRef.current?.preventNextBlur()
-    messageInputRef.current?.focus()
-    if (focusTimerRef.current) {
-      clearTimeout(focusTimerRef.current)
-    }
-    focusTimerRef.current = setTimeout(() => {
-      if (__DEV__) {
-        console.log('[messages] focusMessageInput delayed', Date.now())
-      }
-      messageInputRef.current?.preventNextBlur()
-      messageInputRef.current?.focus()
-      focusTimerRef.current = null
-    }, 140)
-  }, [])
 
   const onMessageSubmit = async () => {
     if (!message.trim() && readyAttachments.length === 0) return
@@ -543,20 +544,6 @@ export function MessagesScreen({
   const firstMemberUser = members[0]?.expand?.user
   const firstMemberAvatar = firstMemberUser?.image || (firstMemberUser as any)?.avatar_url || ''
 
-  const stackAvatarEntries = useMemo(
-    () =>
-      members.map((m) => {
-        const userRecord = m.expand?.user as any
-        return {
-          source: userRecord?.image || userRecord?.avatar_url || '',
-          fallback: userRecord?.firstName || userRecord?.name || userRecord?.userName || '',
-        }
-      }),
-    [members]
-  )
-  const stackSources = stackAvatarEntries.map((entry) => entry.source)
-  const stackFallbacks = stackAvatarEntries.map((entry) => entry.fallback)
-
   const handleCloseComplete = useCallback(() => {
     endInteraction('messages:close', closeInteractionRef.current ?? undefined, { conversationId })
     closeInteractionRef.current = null
@@ -650,7 +637,7 @@ export function MessagesScreen({
                 const profileUserName = firstMemberUser?.userName
                 if (!profileUserName) return
                 setProfileNavIntent({ targetPagerIndex: 0, source: 'messages' })
-                router.push(`/user/${profileUserName}`)
+                router.replace(`/user/${profileUserName}`)
               }}
             >
               <Avatar
@@ -660,9 +647,38 @@ export function MessagesScreen({
               />
             </Pressable>
           ) : (
-            <Link href={`/messages/${conversationId}/member-list`}>
-              <AvatarStack sources={stackSources} fallbacks={stackFallbacks} size={s.$3} />
-            </Link>
+            <Pressable
+              onPress={() => router.push(`/messages/${conversationId}/member-list`)}
+              hitSlop={8}
+              style={{
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 1 },
+                shadowOpacity: 0.08,
+                shadowRadius: 0,
+                elevation: 2,
+                backgroundColor: c.surface,
+                borderRadius: 50,
+                borderWidth: 3,
+                borderColor: c.grey1,
+                paddingHorizontal: 12,
+                paddingVertical: 7,
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+              accessibilityLabel="Chat details"
+            >
+              <Text
+                style={{
+                  color: c.muted,
+                  fontSize: 13,
+                  fontWeight: '500',
+                  fontFamily: 'Inter',
+                  textTransform: 'lowercase',
+                }}
+              >
+                details
+              </Text>
+            </Pressable>
           )}
         </View>
       </View>
@@ -684,28 +700,19 @@ export function MessagesScreen({
           justifyContent: 'flex-end',
         }}
         ListFooterComponent={<View style={{ height: headerHeight }} />}
+        onScrollBeginDrag={Keyboard.dismiss}
       />
 
-      <ScrollView
-        style={{ position: 'absolute', bottom: bottomOffset, left: 0, right: 0 }}
-        contentContainerStyle={{ paddingHorizontal: s.$075, paddingBottom: s.$05 }}
-        keyboardShouldPersistTaps="handled"
-        scrollEnabled={false}
+      <View
+        style={{
+          position: 'absolute',
+          bottom: bottomOffset,
+          left: 0,
+          right: 0,
+          paddingHorizontal: s.$075,
+          paddingBottom: s.$05,
+        }}
       >
-        {!isDirectConversation && (
-          <InviteBanner
-            inviteToken={conversation?.inviteToken}
-            chatTitle={conversation?.title || 'Group Chat'}
-            onActionPressIn={() => {
-              if (__DEV__) {
-                console.log('[messages] invite action press-in', Date.now())
-              }
-              messageInputRef.current?.preventNextBlur()
-              messageInputRef.current?.focus()
-            }}
-            onActionComplete={focusMessageInput}
-          />
-        )}
         <MessageInput
           ref={messageInputRef}
           onMessageSubmit={onMessageSubmit}
@@ -728,7 +735,7 @@ export function MessagesScreen({
           onAttachmentClear={removeAttachment}
           compact
         />
-      </ScrollView>
+      </View>
 
       {showEmojiPicker && highlightedMessage && (
         <Suspense fallback={null}>

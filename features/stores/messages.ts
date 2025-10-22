@@ -108,13 +108,20 @@ export const createMessageSlice: StateCreator<StoreSlices, [], [], MessageSlice>
   },
   sendMessage: async (senderId, conversationId, text, parentMessageId, imageUrl) => {
     try {
-      const message = await pocketbase.collection('messages').create<Message>({
+      const created = await pocketbase.collection('messages').create<Message>({
         conversation: conversationId,
         text,
         sender: senderId,
         replying_to: parentMessageId,
         image: imageUrl,
       })
+
+      const message: Message = created.text !== undefined
+        ? created
+        : {
+            ...created,
+            text: typeof text === 'string' ? text : '',
+          }
 
       set((state) => ({
         conversationUnreadCounts: {

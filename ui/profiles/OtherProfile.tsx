@@ -5,7 +5,7 @@ import { ExpandedItem } from '@/features/types'
 import { c, s } from '@/features/style'
 import BottomSheet from '@gorhom/bottom-sheet'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { ScrollView, View, Text, Pressable } from 'react-native'
+import { ScrollView, View, Text, Pressable, Share, Animated } from 'react-native'
 import { Grid } from '../grid/Grid'
 import { PlaceholderGrid } from '../grid/PlaceholderGrid'
 import { Heading } from '../typo/Heading'
@@ -18,6 +18,7 @@ import { Image } from 'expo-image'
 import Svg, { Circle } from 'react-native-svg'
 import { enqueueIdleTask } from '@/features/utils/idleQueue'
 import { fetchProfileData } from '@/features/queries/profile'
+import Ionicons from '@expo/vector-icons/Ionicons'
 
 export const OtherProfile = ({ userName, prefetchedUserId }: { userName: string; prefetchedUserId?: string }) => {
   const [profile, setProfile] = useState<Profile>()
@@ -25,6 +26,7 @@ export const OtherProfile = ({ userName, prefetchedUserId }: { userName: string;
   const [backlogItems, setBacklogItems] = useState<ExpandedItem[]>([])
   const [loading, setLoading] = useState<boolean>(true)
   const forceNetworkRefreshQueuedRef = useRef(false)
+  const shareButtonScale = useRef(new Animated.Value(1)).current
 
   const {
     user,
@@ -238,6 +240,27 @@ export const OtherProfile = ({ userName, prefetchedUserId }: { userName: string;
     openAvatarZoom(remoteAvatar)
   }, [hasAvatar, remoteAvatar, openAvatarZoom])
 
+  const handleShareProfile = useCallback(async () => {
+    if (!profile) return
+    try {
+      const profileUrl = `refsnyc://profile/${profile.userName}`
+      const fallbackInstallUrl = 'https://testflight.apple.com/join/ENqdZ73R'
+      const shareMessage = `Check out ${displayName} on Refs:\n${profileUrl}\nNeed the app? ${fallbackInstallUrl}`
+
+      await Share.share({ message: shareMessage })
+    } catch (error) {
+      console.error('Error sharing profile:', error)
+    }
+  }, [profile, displayName])
+
+  const handleSharePressIn = useCallback(() => {
+    Animated.spring(shareButtonScale, { toValue: 0.94, useNativeDriver: true }).start()
+  }, [shareButtonScale])
+
+  const handleSharePressOut = useCallback(() => {
+    Animated.spring(shareButtonScale, { toValue: 1, useNativeDriver: true }).start()
+  }, [shareButtonScale])
+
   return (
     <>
       <ScrollView
@@ -256,38 +279,13 @@ export const OtherProfile = ({ userName, prefetchedUserId }: { userName: string;
             style={{
               flex: 1,
               width: '100%',
-              paddingHorizontal: s.$1 + 6,
-              marginTop: 5,
+              paddingHorizontal: 16,
+              marginTop: 10,
             }}
           >
             <View style={{ width: '100%', paddingHorizontal: 0, marginBottom: s.$1 }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 18 }}>
-                <View style={{ flex: 1 }}>
-                  <Text
-                    style={{
-                      color: '#030303',
-                      fontSize: (s.$09 as number) + 4,
-                      fontFamily: 'System',
-                      fontWeight: '700',
-                      lineHeight: s.$1half,
-                    }}
-                  >
-                    {displayName}
-                  </Text>
-                  {locationLabel ? (
-                    <Text
-                      style={{
-                        color: c.prompt,
-                        fontSize: 13,
-                        fontFamily: 'Inter',
-                        fontWeight: '500',
-                        lineHeight: s.$1half,
-                      }}
-                    >
-                      {locationLabel}
-                    </Text>
-                  ) : null}
-                </View>
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+                {/* Avatar on left */}
                 <Pressable onPress={handleAvatarPress} hitSlop={12} disabled={!hasAvatar}>
                   {hasAvatar ? (
                     <View
@@ -341,6 +339,70 @@ export const OtherProfile = ({ userName, prefetchedUserId }: { userName: string;
                     </View>
                   )}
                 </Pressable>
+
+                {/* Name and location in center */}
+                <View style={{ flex: 1 }}>
+                  <Text
+                    style={{
+                      color: '#030303',
+                      fontSize: (s.$09 as number) + 4,
+                      fontFamily: 'System',
+                      fontWeight: '700',
+                      lineHeight: s.$1half,
+                    }}
+                  >
+                    {displayName}
+                  </Text>
+                  {locationLabel ? (
+                    <Text
+                      style={{
+                        color: c.prompt,
+                        fontSize: 13,
+                        fontFamily: 'Inter',
+                        fontWeight: '500',
+                        lineHeight: s.$1half,
+                      }}
+                    >
+                      {locationLabel}
+                    </Text>
+                  ) : null}
+                </View>
+
+                {/* Share button on right */}
+                <Animated.View style={{ transform: [{ scale: shareButtonScale }] }}>
+                  <Pressable
+                    onPress={handleShareProfile}
+                    onPressIn={handleSharePressIn}
+                    onPressOut={handleSharePressOut}
+                    style={{
+                      shadowColor: '#000',
+                      shadowOffset: { width: 0, height: 1 },
+                      shadowOpacity: 0.08,
+                      shadowRadius: 0,
+                      elevation: 2,
+                      backgroundColor: c.surface,
+                      borderRadius: 50,
+                      borderWidth: 3,
+                      borderColor: c.grey1,
+                      paddingHorizontal: 12,
+                      paddingVertical: 7,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                    accessibilityLabel="Share profile"
+                  >
+                    <Text
+                      style={{
+                        color: c.muted,
+                        fontSize: 13,
+                        fontWeight: '500',
+                        fontFamily: 'Inter',
+                      }}
+                    >
+                      share
+                    </Text>
+                  </Pressable>
+                </Animated.View>
               </View>
             </View>
 

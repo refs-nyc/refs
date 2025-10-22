@@ -18,7 +18,6 @@ import { XStack, YStack } from '../core/Stacks'
 
 export type MessageInputHandle = {
   focus: () => void
-  preventNextBlur: () => void
 }
 
 type MessageInputProps = {
@@ -54,10 +53,8 @@ const MessageInput = forwardRef<MessageInputHandle, MessageInputProps>(
     },
     ref
   ) => {
-    const PREVENT_BLUR_WINDOW_MS = 400
     const verticalSpacing = compact ? s.$05 : s.$075
     const inputRef = useRef<TextInput>(null)
-    const preventNextBlurRef = useRef({ active: false, expiresAt: 0 })
 
     const logEvent = (label: string) => {
       if (__DEV__) {
@@ -74,13 +71,6 @@ const MessageInput = forwardRef<MessageInputHandle, MessageInputProps>(
           })
           logEvent('focus() called')
         },
-        preventNextBlur: () => {
-          preventNextBlurRef.current = {
-            active: true,
-            expiresAt: Date.now() + PREVENT_BLUR_WINDOW_MS,
-          }
-          logEvent('preventNextBlur()')
-        },
       }),
       []
     )
@@ -88,10 +78,6 @@ const MessageInput = forwardRef<MessageInputHandle, MessageInputProps>(
     useEffect(() => {
       const timer = setTimeout(() => {
         try {
-          preventNextBlurRef.current = {
-            active: true,
-            expiresAt: Date.now() + PREVENT_BLUR_WINDOW_MS,
-          }
           logEvent('auto-focus timer')
           inputRef.current?.focus()
         } catch (error) {
@@ -196,23 +182,9 @@ const MessageInput = forwardRef<MessageInputHandle, MessageInputProps>(
               autoFocus
               onBlur={() => {
                 logEvent('onBlur')
-                const guard = preventNextBlurRef.current
-                if (guard.active && Date.now() <= guard.expiresAt) {
-                  preventNextBlurRef.current = { active: false, expiresAt: 0 }
-                  requestAnimationFrame(() => {
-                    inputRef.current?.focus()
-                    logEvent('re-focus from preventNextBlur')
-                  })
-                  return
-                }
-                preventNextBlurRef.current = { active: false, expiresAt: 0 }
               }}
               onFocus={() => {
                 logEvent('onFocus')
-                const guard = preventNextBlurRef.current
-                if (guard.active && Date.now() > guard.expiresAt) {
-                  preventNextBlurRef.current = { active: false, expiresAt: 0 }
-                }
               }}
             />
             <Pressable
@@ -305,6 +277,6 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   input: {
-    width: '70%',
+    flex: 1,
   },
 })

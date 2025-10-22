@@ -1,4 +1,4 @@
-import { View, Text, Share, Pressable, StyleSheet } from 'react-native'
+import { View, Text, Share, Pressable, StyleSheet, InteractionManager } from 'react-native'
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -13,14 +13,12 @@ import { useEffect, useRef } from 'react'
 type InviteBannerProps = {
   inviteToken: string | undefined
   chatTitle: string
-  onActionPressIn?: () => void
   onActionComplete?: () => void
 }
 
 export function InviteBanner({
   inviteToken,
   chatTitle,
-  onActionPressIn,
   onActionComplete,
 }: InviteBannerProps) {
   if (!inviteToken) return null
@@ -29,7 +27,18 @@ export function InviteBanner({
   const resetTimerRef = useRef<NodeJS.Timeout | null>(null)
   const iconProgress = useSharedValue(0)
 
-  const inviteUrl = `https://refs.nyc/invite/g/${inviteToken}`
+  const inviteUrl = `refsnyc://invite/g/${inviteToken}`
+  const fallbackInstallUrl = 'https://testflight.apple.com/join/ENqdZ73R'
+  const shareMessage = `Join ${chatTitle} on Refs:\n${inviteUrl}\nNeed the app? ${fallbackInstallUrl}`
+
+  const scheduleFocusRestore = () => {
+    if (!onActionComplete) return
+    InteractionManager.runAfterInteractions(() => {
+      requestAnimationFrame(() => {
+        onActionComplete()
+      })
+    })
+  }
 
   useEffect(() => {
     return () => {
@@ -42,9 +51,9 @@ export function InviteBanner({
   }, [iconProgress])
 
   const handleCopy = async () => {
-    await Clipboard.setStringAsync(inviteUrl)
-    showToast('Link copied')
-    onActionComplete?.()
+    await Clipboard.setStringAsync(shareMessage)
+    showToast('Invite copied')
+    scheduleFocusRestore()
 
     if (resetTimerRef.current) {
       clearTimeout(resetTimerRef.current)
@@ -59,14 +68,13 @@ export function InviteBanner({
   const handleShare = async () => {
     try {
       await Share.share({
-        message: `Join ${chatTitle} on Refs: ${inviteUrl}`,
-        url: inviteUrl,
+        message: shareMessage,
       })
     } catch (error) {
       console.error('Error sharing:', error)
       // User cancelled or error occurred
     } finally {
-      onActionComplete?.()
+      scheduleFocusRestore()
     }
   }
 
@@ -115,7 +123,6 @@ export function InviteBanner({
         </View>
         
         <Pressable
-          onPressIn={onActionPressIn}
           onPress={handleCopy}
           hitSlop={12}
           style={({ pressed }) => ({
@@ -134,7 +141,6 @@ export function InviteBanner({
         </Pressable>
         
         <Pressable
-          onPressIn={onActionPressIn}
           onPress={handleShare}
           hitSlop={12}
           style={({ pressed }) => ({

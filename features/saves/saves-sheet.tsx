@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef } from 'react'
 import { ActivityIndicator, InteractionManager, View } from 'react-native'
 import { router } from 'expo-router'
 import BottomSheet, { BottomSheetBackdrop, BottomSheetFlatList } from '@gorhom/bottom-sheet'
+import { Ionicons } from '@expo/vector-icons'
 
 import { FeedRow } from '@/features/feed/FeedRow'
 import { useAppStore } from '@/features/stores'
@@ -62,8 +63,15 @@ export default function FeedSheet({
   )
 
   const renderItem = useCallback(
-    ({ item }: { item: FeedEntry }) => <FeedRow entry={item} onPressRow={handleActorPress} />,
-    [handleActorPress]
+    ({ item, index }: { item: FeedEntry; index: number }) => (
+      <View>
+        <FeedRow entry={item} onPressRow={handleActorPress} />
+        {index < feedEntries.length - 1 && (
+          <View style={{ height: 1, backgroundColor: '#F0F0F0', marginLeft: 56 }} />
+        )}
+      </View>
+    ),
+    [handleActorPress, feedEntries.length]
   )
 
   const keyExtractor = useCallback((item: FeedEntry) => item.id, [])
@@ -128,14 +136,22 @@ export default function FeedSheet({
       }}
     >
       <View style={{ flex: 1, paddingHorizontal: s.$2, paddingBottom: s.$2 }}>
-        <View style={{ paddingVertical: s.$1, marginBottom: (s.$2 as number) - 10 }}>
-          <Heading tag="h1" style={{ lineHeight: 30 }}>
-            Feed
-          </Heading>
-          <Text style={{ fontSize: 15, color: c.muted2, marginTop: 2 }}>
-            Everyone who's here.
-          </Text>
-          <View style={{ height: 1, backgroundColor: '#E0E0E0', marginTop: s.$1 }} />
+        <View style={{ paddingTop: s.$1 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
+            <View style={{ flex: 1, minWidth: 0, justifyContent: 'flex-start' }}>
+              <Heading tag="h1" style={{ lineHeight: 30 }}>
+                Feed
+              </Heading>
+              <View style={{ height: 8 }} />
+              <Text style={{ fontSize: 15, color: c.muted2 }}>
+                Everyone who's here.
+              </Text>
+            </View>
+            <View style={{ marginLeft: 16, width: 60, height: 60, borderRadius: 10, backgroundColor: c.surface, alignItems: 'center', justifyContent: 'center' }}>
+              <Ionicons name="earth-outline" size={40} color={c.newDark} />
+            </View>
+          </View>
+          <View style={{ height: 1, backgroundColor: '#E0E0E0', marginTop: 16, marginBottom: 12 }} />
         </View>
         <BottomSheetFlatList
           data={feedEntries}

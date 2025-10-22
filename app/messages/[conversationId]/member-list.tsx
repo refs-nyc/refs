@@ -6,13 +6,14 @@ import { Avatar } from '@/ui/atoms/Avatar'
 import { Ionicons } from '@expo/vector-icons'
 import { router, useLocalSearchParams } from 'expo-router'
 import { View, Text, Pressable, ScrollView, Alert, ActivityIndicator } from 'react-native'
+import * as Clipboard from 'expo-clipboard'
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useQuery } from '@tanstack/react-query'
 import { messagingKeys, fetchConversation } from '@/features/queries/messaging'
 
 export default function MemberListScreen() {
   const { conversationId } = useLocalSearchParams()
-  const { user, setProfileNavIntent, leaveConversation } = useAppStore()
+  const { user, setProfileNavIntent, leaveConversation, showToast } = useAppStore()
   const [leaving, setLeaving] = useState(false)
   const insets = useSafeAreaInsets()
 
@@ -52,7 +53,21 @@ export default function MemberListScreen() {
   const handleMemberPress = (member: Profile) => {
     if (!member?.userName) return
     setProfileNavIntent({ targetPagerIndex: 0, source: 'messages' })
-    router.push(`/user/${member.userName}`)
+    router.replace(`/user/${member.userName}`)
+  }
+
+  const inviteLink =
+    !conversation?.is_direct && conversation?.inviteToken
+      ? `https://refs.nyc/invite/g/${conversation.inviteToken}`
+      : null
+
+  const handleCopyLink = async () => {
+    if (!inviteLink) {
+      showToast('Invite link not available yet')
+      return
+    }
+    await Clipboard.setStringAsync(inviteLink)
+    showToast('Link copied')
   }
 
   const confirmLeave = () => {
@@ -185,7 +200,29 @@ export default function MemberListScreen() {
         )}
       </ScrollView>
 
-      <View style={{ paddingHorizontal: s.$1 + 6, paddingBottom: insets.bottom + (s.$1 as number) }}>
+      <View
+        style={{
+          paddingHorizontal: s.$1 + 6,
+          paddingBottom: insets.bottom + (s.$1 as number),
+          gap: s.$075,
+        }}
+      >
+        <Pressable
+          onPress={handleCopyLink}
+          style={{
+            backgroundColor: c.surface2,
+            borderRadius: s.$1,
+            paddingVertical: s.$09,
+            alignItems: 'center',
+            flexDirection: 'row',
+            justifyContent: 'center',
+            gap: s.$05,
+            opacity: inviteLink ? 1 : 0.7,
+          }}
+        >
+          <Ionicons name="copy-outline" size={18} color={c.muted} />
+          <Text style={{ color: c.muted, fontSize: s.$09, fontWeight: '600' }}>Copy link to chat</Text>
+        </Pressable>
         <Pressable
           onPress={confirmLeave}
           disabled={leaving}
@@ -201,7 +238,7 @@ export default function MemberListScreen() {
           }}
         >
           {leaving && <ActivityIndicator color={c.accent} size="small" />}
-          <Text style={{ color: c.accent, fontWeight: '700' }}>Leave chat</Text>
+          <Text style={{ color: c.accent, fontWeight: '600', fontSize: s.$09 }}>Leave chat</Text>
         </Pressable>
       </View>
     </View>

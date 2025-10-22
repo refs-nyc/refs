@@ -14,6 +14,16 @@ function sendNotifications(notifications) {
     return
   }
 
+  console.log(
+    '[push] dispatch',
+    JSON.stringify({
+      url: NOTIFICATIONS_URL,
+      anonKey: SUPABASE_ANON_KEY ? 'present' : 'missing',
+      secret: NOTIFICATIONS_SECRET ? 'present' : 'missing',
+      count: notifications.length,
+    })
+  )
+
   try {
     const headers = {
       'Content-Type': 'application/json',
@@ -34,6 +44,8 @@ function sendNotifications(notifications) {
       headers,
       body: JSON.stringify({ notifications }),
     })
+
+    console.log('[push] response', response.statusCode, response.raw)
 
     if (response.statusCode >= 300) {
       console.log('Push notification call failed', response.statusCode, response.raw)

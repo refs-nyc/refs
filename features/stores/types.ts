@@ -150,6 +150,9 @@ export type UISlice = {
   // Invite link deep linking
   pendingInviteToken: string | null
   setPendingInviteToken: (token: string | null) => void
+  // Profile deep linking
+  pendingProfileUserName: string | null
+  setPendingProfileUserName: (userName: string | null) => void
 }
 
 export type StoreSlices = BackdropSlice &

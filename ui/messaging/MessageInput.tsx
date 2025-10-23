@@ -15,6 +15,7 @@ import { c, s } from '@/features/style'
 import { Message, Profile } from '@/features/types'
 
 import { XStack, YStack } from '../core/Stacks'
+import { clearActiveKeyboardInput, setActiveKeyboardInput } from '@/features/utils/keyboardFocusTracker'
 
 export type MessageInputHandle = {
   focus: () => void
@@ -74,6 +75,12 @@ const MessageInput = forwardRef<MessageInputHandle, MessageInputProps>(
       }),
       []
     )
+
+    useEffect(() => {
+      return () => {
+        clearActiveKeyboardInput('MessageInput:composer')
+      }
+    }, [])
 
     return (
       <>
@@ -169,9 +176,11 @@ const MessageInput = forwardRef<MessageInputHandle, MessageInputProps>(
               autoFocus
               onBlur={() => {
                 logEvent('onBlur')
+                clearActiveKeyboardInput('MessageInput:composer')
               }}
               onFocus={() => {
                 logEvent('onFocus')
+                setActiveKeyboardInput('MessageInput:composer')
               }}
             />
             <Pressable

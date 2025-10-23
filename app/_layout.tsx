@@ -24,7 +24,7 @@ import { ShareIntentProvider } from 'expo-share-intent'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { StatusBar, useColorScheme, Linking, InteractionManager, Keyboard } from 'react-native'
+import { StatusBar, useColorScheme, Linking, InteractionManager, Keyboard, TextInput } from 'react-native'
 import { Navigation } from '@/ui/navigation/Navigation'
 import { NavigationBackdrop } from '@/ui/navigation/NavigationBackdrop'
 import { LogoutSheet } from '@/ui/navigation/LogoutSheet'
@@ -38,6 +38,7 @@ import * as SystemUI from 'expo-system-ui'
 import { KeyboardProvider } from 'react-native-keyboard-controller'
 import { QueryClientProvider } from '@tanstack/react-query'
 import { traceKeyboard, isKeyboardTraceEnabled } from '@/features/utils/keyboardTrace'
+import { getActiveKeyboardInput, shouldGuardDismiss } from '@/features/utils/keyboardFocusTracker'
 
 import { RegisterPushNotifications } from '@/ui/notifications/RegisterPushNotifications'
 import { DirectMessageComposer } from '@/features/messaging/DirectMessageComposer'
@@ -122,19 +123,54 @@ if (PERF_HARNESS_ENABLED && OFF_ANALYTICS) {
   console.log('[boot-trace] perfHarness:skipped (analytics flag)')
 }
 
+const resolveModuleLabel = (stack: string[] | undefined) => {
+  if (!stack?.length) return undefined
+  const moduleRegex = /app:(\d+)/
+  for (const line of stack) {
+    const match = line.match(moduleRegex)
+    if (!match) continue
+    const id = Number(match[1])
+    if (Number.isNaN(id)) continue
+    const metro = (globalThis as any)?.__r
+    if (!metro) return `module:${id}`
+    try {
+      const modulesMaybe = metro.getModules?.() ?? metro.modules ?? metro._modules
+      if (!modulesMaybe) return `module:${id}`
+      const moduleEntry =
+        typeof modulesMaybe.get === 'function'
+          ? modulesMaybe.get(id)
+          : modulesMaybe[id] ?? modulesMaybe[String(id)]
+      const label = moduleEntry?.verboseName || moduleEntry?.path || moduleEntry?.name
+      return label ? `${label} (module:${id})` : `module:${id}`
+    } catch {
+      return `module:${id}`
+    }
+  }
+  return undefined
+}
 const KEYBOARD_TRACE_SETUP_FLAG = '__refs_keyboard_trace_setup__'
+const TEXT_INPUT_TRACE_FLAG = '__refs_text_input_trace_setup__'
+const KEYBOARD_GUARD_WINDOW_MS = 650
 if (isKeyboardTraceEnabled() && !(globalThis as any)[KEYBOARD_TRACE_SETUP_FLAG]) {
   ;(globalThis as any)[KEYBOARD_TRACE_SETUP_FLAG] = true
   const originalDismiss = Keyboard.dismiss.bind(Keyboard)
   let dismissCount = 0
   Keyboard.dismiss = () => {
     dismissCount += 1
-    const stack = new Error().stack?.split('\n').slice(2, 7).map((line) => line.trim())
-    traceKeyboard('dismiss', {
+    const stack = new Error().stack?.split('\n').slice(2, 12).map((line) => line.trim())
+    const activeInput = getActiveKeyboardInput()
+    const guarded = shouldGuardDismiss(KEYBOARD_GUARD_WINDOW_MS)
+    traceKeyboard(guarded ? 'dismiss-swallowed' : 'dismiss', {
       count: dismissCount,
       at: Date.now(),
       stack,
+      activeInput,
+      guardWindowMs: KEYBOARD_GUARD_WINDOW_MS,
+      module: resolveModuleLabel(stack),
     })
+    if (guarded) {
+      return
+    }
     return originalDismiss()
   }
   const KEYBOARD_TRACE_EVENTS: Array<Parameters<typeof Keyboard.addListener>[0]> = [
@@ -154,6 +190,23 @@ if (isKeyboardTraceEnabled() && !(globalThis as any)[KEYBOARD_TRACE_SETUP_FLAG])
     })
   })
   traceKeyboard('trace-enabled')
+}
+
+if (isKeyboardTraceEnabled() && !(globalThis as any)[TEXT_INPUT_TRACE_FLAG]) {
+  ;(globalThis as any)[TEXT_INPUT_TRACE_FLAG] = true
+  const state = (TextInput as any)?.State
+  if (state?.blurTextInput && typeof state.blurTextInput === 'function') {
+    const originalBlur = state.blurTextInput.bind(state)
+    state.blurTextInput = (...args: any[]) => {
+      const stack = new Error().stack?.split('\n').slice(2, 12).map((line) => line.trim())
+      traceKeyboard('blurTextInput', {
+        at: Date.now(),
+        stack,
+        module: resolveModuleLabel(stack),
+      })
+      return originalBlur(...args)
+    }
+  }
 }
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.

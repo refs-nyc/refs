@@ -20,6 +20,7 @@ import { Avatar } from '@/ui/atoms/Avatar'
 import { c, s } from '@/features/style'
 import type { Profile } from '@/features/types'
 import { promptForNotifications } from '@/ui/notifications/utils'
+import { clearActiveKeyboardInput, setActiveKeyboardInput } from '@/features/utils/keyboardFocusTracker'
 
 const RETRY_DELAY_MS = 2000
 
@@ -82,12 +83,15 @@ export function GroupMessageComposer() {
           titleInputRef.current?.focus()
         }, 150)
       })
+      setActiveKeyboardInput('GroupComposer:title')
     } else {
       clearRetry()
       sheetRef.current?.close()
       pendingPayloadRef.current = null
       pendingSuccessRef.current = null
       targetsSnapshotRef.current = []
+      clearActiveKeyboardInput('GroupComposer:title')
+      clearActiveKeyboardInput('GroupComposer:message')
     }
 
     return () => {
@@ -106,6 +110,13 @@ export function GroupMessageComposer() {
 
     return () => subscription.remove()
   }, [groupComposerTargets.length, closeGroupComposer])
+
+  useEffect(() => {
+    return () => {
+      clearActiveKeyboardInput('GroupComposer:title')
+      clearActiveKeyboardInput('GroupComposer:message')
+    }
+  }, [])
 
   const triggerTitleValidationAnimation = useCallback(() => {
     titleAnimation.setValue(0)
@@ -324,6 +335,12 @@ export function GroupMessageComposer() {
                       returnKeyType="next"
                       blurOnSubmit={false}
                       onSubmitEditing={() => messageInputRef.current?.focus()}
+                      onFocus={() => {
+                        setActiveKeyboardInput('GroupComposer:title')
+                      }}
+                      onBlur={() => {
+                        clearActiveKeyboardInput('GroupComposer:title')
+                      }}
                     />
                   </Animated.View>
                   <Pressable onPress={handleGoToMembers} style={{ flexDirection: 'row', alignItems: 'center' }}>
@@ -368,6 +385,12 @@ export function GroupMessageComposer() {
                     returnKeyType="send"
                     enablesReturnKeyAutomatically
                     onSubmitEditing={handleSend}
+                    onFocus={() => {
+                      setActiveKeyboardInput('GroupComposer:message')
+                    }}
+                    onBlur={() => {
+                      clearActiveKeyboardInput('GroupComposer:message')
+                    }}
                   />
                   <Pressable
                     onPress={handleSend}

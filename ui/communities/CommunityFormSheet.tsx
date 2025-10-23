@@ -6,6 +6,7 @@ import { c, s } from '@/features/style'
 import { useAppStore } from '@/features/stores'
 import type { ExpandedItem } from '@/features/types'
 import { TapGestureHandler } from 'react-native-gesture-handler'
+import { clearActiveKeyboardInput, setActiveKeyboardInput } from '@/features/utils/keyboardFocusTracker'
 
 export type CommunityKind = 'interest' | 'event'
 
@@ -38,7 +39,10 @@ export function CommunityFormSheet() {
 
   // Initialize visible text on open
   useEffect(() => {
-    if (!isOpen) return
+    if (!isOpen) {
+      clearActiveKeyboardInput('CommunityForm:title')
+      return
+    }
     setText(interestText)
     // Ensure Add button is enabled on fresh open
     setSubmitting(false)
@@ -51,6 +55,7 @@ export function CommunityFormSheet() {
         try { unregisterBackdropPress(backdropKeyRef.current) } catch {}
         backdropKeyRef.current = null
       }
+      clearActiveKeyboardInput('CommunityForm:title')
     }
   }, [isOpen])
 
@@ -97,6 +102,8 @@ export function CommunityFormSheet() {
       snapPoints={snapPoints}
       enablePanDownToClose={true}
       backgroundStyle={{ backgroundColor: c.surface, borderRadius: 50 }}
+      enableBlurKeyboardOnGesture={false}
+      keyboardBlurBehavior="none"
       onAnimate={(fromIndex, toIndex) => {
         // Focus keyboard immediately when sheet starts opening
         if (fromIndex === -1 && toIndex !== -1) {
@@ -105,6 +112,7 @@ export function CommunityFormSheet() {
           setTimeout(() => {
             try {
               inputRef.current?.focus()
+              setActiveKeyboardInput('CommunityForm:title')
             } catch (e) {
               console.warn('Failed to focus input:', e)
             }
@@ -114,6 +122,7 @@ export function CommunityFormSheet() {
         if (fromIndex !== -1 && toIndex === -1) {
           try { inputRef.current?.blur() } catch {}
           try { require('react-native').Keyboard.dismiss() } catch {}
+          clearActiveKeyboardInput('CommunityForm:title')
         }
       }}
       onChange={(i) => {
@@ -125,6 +134,9 @@ export function CommunityFormSheet() {
             try { unregisterBackdropPress(backdropKeyRef.current) } catch {}
             backdropKeyRef.current = null
           }
+          if (!open) {
+            clearActiveKeyboardInput('CommunityForm:title')
+          }
         }
       }}
       handleComponent={null}
@@ -133,7 +145,6 @@ export function CommunityFormSheet() {
       )}
       enableDynamicSizing={false}
       keyboardBehavior="interactive"
-      keyboardBlurBehavior="restore"
       enableContentPanningGesture={true}
       android_keyboardInputMode="adjustResize"
     >
@@ -158,6 +169,12 @@ export function CommunityFormSheet() {
             blurOnSubmit={false}
             returnKeyType="done"
             onSubmitEditing={handleSubmit}
+            onFocus={() => {
+              setActiveKeyboardInput('CommunityForm:title')
+            }}
+            onBlur={() => {
+              clearActiveKeyboardInput('CommunityForm:title')
+            }}
           />
           <Text style={{ color: c.muted, opacity: 0.7, fontSize: s.$09, marginTop: 6 }}>{subtitleText}</Text>
         </View>

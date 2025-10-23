@@ -151,8 +151,11 @@ export const NewRefSheet = ({
 
   useEffect(() => {
     if (!isOpen) {
+      const wasOpen = hasOpenedRef.current || isClosingRef.current
       hasOpenedRef.current = false
-      Keyboard.dismiss()
+      if (wasOpen) {
+        Keyboard.dismiss()
+      }
       resetState()
       resetShareIntent?.()
       isClosedRef.current = true

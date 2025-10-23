@@ -2,7 +2,7 @@
   "expo": {
     "name": "Refs",
     "slug": "refsnyc",
-    "version": "0.0.38",
+    "version": "0.0.39",
     "orientation": "portrait",
     "icon": "./assets/app-icon.png",
     "scheme": "refsnyc",
@@ -13,6 +13,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "refsnyc.app",
+      "buildNumber": "140",
       "associatedDomains": ["applinks:refs.nyc"],
       "config": {
         "usesNonExemptEncryption": false

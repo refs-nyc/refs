@@ -145,7 +145,6 @@ export function CommunityFormSheet() {
       )}
       enableDynamicSizing={false}
       keyboardBehavior="interactive"
-      keyboardBlurBehavior="restore"
       enableContentPanningGesture={true}
       android_keyboardInputMode="adjustResize"
     >

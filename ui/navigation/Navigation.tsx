@@ -108,15 +108,24 @@ export const Navigation = ({
             <Pressable
             onPress={() => {
               if (!user?.userName) return
-              const targetIndex = homePagerIndex ?? 0
+              
+              // Always navigate to grid (index 0)
+              const targetIndex = 0
+              const alreadyOnGrid = homePagerIndex === targetIndex
+              
               setHomePagerIndex(targetIndex)
               setProfileNavIntent({
-                targetPagerIndex: targetIndex as 0 | 1 | 2,
-                directoryFilter: targetIndex === 1 ? directoriesFilterTab : undefined,
+                targetPagerIndex: targetIndex,
                 source: 'other',
+                animate: !alreadyOnGrid,
               })
-                router.push(`/user/${user.userName}`)
-              }}
+              
+              // If not on user's own profile page, navigate there
+              const expectedPath = `/user/${user.userName}`
+              if (!isHomePage) {
+                router.push({ pathname: '/user/[userName]', params: { userName: user.userName, _t: Date.now().toString() } })
+              }
+            }}
               onLongPress={() => {
                 logoutSheetRef?.current?.expand?.()
               }}

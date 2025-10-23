@@ -27,6 +27,7 @@ import {
   recordDeletedTombstone,
 } from '@/features/cache/profileMutationState'
 import { isInteractionGateActive } from '@/features/perf/interactionGate'
+import { normalizeExternalUrl } from '@/features/utils/url'
 
 const forceNetworkProfileIds = new Set<string>()
 
@@ -811,11 +812,15 @@ export const createItemSlice: StateCreator<StoreSlices, [], [], ItemSlice> = (se
     const userName = (authRecord as any)?.userName
     const previousSnapshot = ensureProfileSnapshot(userId, userName)
     const tempId = `temp_${nanoid(10)}`
+    const normalizedFields: StagedItemFields = {
+      ...itemFields,
+      url: normalizeExternalUrl(itemFields.url),
+    }
     const optimisticItem = buildOptimisticItem({
       tempId,
       refId,
       creatorId: userId,
-      itemFields,
+      itemFields: normalizedFields,
       backlog,
     })
     const localUri = isLikelyLocalImageUri(itemFields.image) ? itemFields.image : undefined
@@ -854,14 +859,15 @@ export const createItemSlice: StateCreator<StoreSlices, [], [], ItemSlice> = (se
       let linkedRefId = refId
       if (!linkedRefId) {
         const newRef = await get().createRef({
-          title: itemFields.title || '',
-          meta: itemFields.meta || '{}',
-          image: itemFields.image,
+          title: normalizedFields.title || '',
+          meta: normalizedFields.meta || '{}',
+          image: normalizedFields.image,
+          url: normalizedFields.url,
         })
         linkedRefId = newRef.id
       }
 
-      const createdItem = await get().createItem(linkedRefId, itemFields, backlog)
+      const createdItem = await get().createItem(linkedRefId, normalizedFields, backlog)
       get().replaceOptimisticItem(optimisticItem.id, createdItem)
 
       if (localUri) {
@@ -954,10 +960,11 @@ export const createItemSlice: StateCreator<StoreSlices, [], [], ItemSlice> = (se
     }
 
     const normalizeTitle = (t?: string) => (t || '').replace(/\s+/g, ' ').trim()
+    const normalizedUrl = normalizeExternalUrl(refFields.url)
     const createRefArgs = {
       creator: userId,
       title: normalizeTitle(refFields.title),
-      url: refFields.url || '',
+      url: normalizedUrl,
       meta: refFields.meta || '{}',
       image: refFields.image || '',
     }
@@ -973,14 +980,18 @@ export const createItemSlice: StateCreator<StoreSlices, [], [], ItemSlice> = (se
       throw new Error('User not found')
     }
 
+    const normalizedFields: StagedItemFields = {
+      ...itemFields,
+      url: normalizeExternalUrl(itemFields.url),
+    }
     const createItemArgs = {
       creator: userId,
       ref: refId,
-      image: itemFields.image,
-      url: itemFields.url,
-      text: itemFields.text,
-      list: itemFields.list || false,
-      parent: itemFields.parent || null,
+      image: normalizedFields.image,
+      url: normalizedFields.url,
+      text: normalizedFields.text,
+      list: normalizedFields.list || false,
+      parent: normalizedFields.parent || null,
       backlog,
     }
 

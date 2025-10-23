@@ -135,8 +135,8 @@ export default function FeedSheet({
         }
       }}
     >
-      <View style={{ flex: 1, paddingBottom: s.$2 }}>
-        <BottomSheetView style={{ paddingHorizontal: s.$2, paddingTop: s.$1, backgroundColor: 'rgba(255, 200, 200, 0.3)' }}>
+      <View style={{ flex: 1, paddingHorizontal: s.$2, paddingBottom: s.$2 }}>
+        <BottomSheetView style={{ paddingTop: s.$1 }}>
           <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
             <View style={{ flex: 1, minWidth: 0, justifyContent: 'flex-start' }}>
               <Heading tag="h1" style={{ lineHeight: 30 }}>

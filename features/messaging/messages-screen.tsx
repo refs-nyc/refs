@@ -23,7 +23,10 @@ import { queryClient } from '@/core/queryClient'
 import { pocketbase } from '@/features/pocketbase'
 import { endInteraction, startInteraction } from '@/features/perf/interactions'
 import { ensureMediaLibraryAccess } from '@/features/media/permissions'
+import { traceKeyboard, isKeyboardTraceEnabled } from '@/features/utils/keyboardTrace'
 const EmojiPicker = lazy(() => import('rn-emoji-keyboard'))
+
+const KEYBOARD_TRACE_ENABLED = isKeyboardTraceEnabled()
 
 export function MessagesScreen({
   conversationId,
@@ -227,6 +230,8 @@ export function MessagesScreen({
   const [message, setMessage] = useState('')
   const [highlightedMessageId, setHighlightedMessageId] = useState('')
   const [replying, setReplying] = useState(false)
+  const listScrollDismissCountRef = useRef(0)
+  const mountTimestampRef = useRef(Date.now())
   type AttachmentDraft = {
     id: string
     localUri: string
@@ -263,6 +268,11 @@ export function MessagesScreen({
     setAttachments([])
     Object.values(attachmentTimersRef.current).forEach((timer) => clearTimeout(timer))
     attachmentTimersRef.current = {}
+  }, [conversationId])
+
+  useEffect(() => {
+    listScrollDismissCountRef.current = 0
+    mountTimestampRef.current = Date.now()
   }, [conversationId])
 
   const headerGap = 5
@@ -543,6 +553,18 @@ export function MessagesScreen({
 
   const firstMemberUser = members[0]?.expand?.user
   const firstMemberAvatar = firstMemberUser?.image || (firstMemberUser as any)?.avatar_url || ''
+  const handleScrollBeginDrag = useCallback(() => {
+    if (KEYBOARD_TRACE_ENABLED) {
+      listScrollDismissCountRef.current += 1
+      traceKeyboard('messages-thread.scroll-begin', {
+        conversationId,
+        keyboardVisible,
+        count: listScrollDismissCountRef.current,
+        sinceMountMs: Date.now() - mountTimestampRef.current,
+      })
+    }
+    Keyboard.dismiss()
+  }, [conversationId, keyboardVisible])
 
   const handleCloseComplete = useCallback(() => {
     endInteraction('messages:close', closeInteractionRef.current ?? undefined, { conversationId })
@@ -700,7 +722,7 @@ export function MessagesScreen({
           justifyContent: 'flex-end',
         }}
         ListFooterComponent={<View style={{ height: headerHeight }} />}
-        onScrollBeginDrag={Keyboard.dismiss}
+        onScrollBeginDrag={handleScrollBeginDrag}
       />
 
       <View

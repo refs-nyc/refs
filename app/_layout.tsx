@@ -24,7 +24,7 @@ import { ShareIntentProvider } from 'expo-share-intent'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { StatusBar, useColorScheme, Linking, InteractionManager } from 'react-native'
+import { StatusBar, useColorScheme, Linking, InteractionManager, Keyboard } from 'react-native'
 import { Navigation } from '@/ui/navigation/Navigation'
 import { NavigationBackdrop } from '@/ui/navigation/NavigationBackdrop'
 import { LogoutSheet } from '@/ui/navigation/LogoutSheet'
@@ -37,6 +37,7 @@ import { c } from '@/features/style'
 import * as SystemUI from 'expo-system-ui'
 import { KeyboardProvider } from 'react-native-keyboard-controller'
 import { QueryClientProvider } from '@tanstack/react-query'
+import { traceKeyboard, isKeyboardTraceEnabled } from '@/features/utils/keyboardTrace'
 
 import { RegisterPushNotifications } from '@/ui/notifications/RegisterPushNotifications'
 import { DirectMessageComposer } from '@/features/messaging/DirectMessageComposer'
@@ -119,6 +120,33 @@ if (__DEV__) {
 
 if (PERF_HARNESS_ENABLED && OFF_ANALYTICS) {
   console.log('[boot-trace] perfHarness:skipped (analytics flag)')
+}
+
+const KEYBOARD_TRACE_SETUP_FLAG = '__refs_keyboard_trace_setup__'
+if (isKeyboardTraceEnabled() && !(globalThis as any)[KEYBOARD_TRACE_SETUP_FLAG]) {
+  ;(globalThis as any)[KEYBOARD_TRACE_SETUP_FLAG] = true
+  const originalDismiss = Keyboard.dismiss.bind(Keyboard)
+  let dismissCount = 0
+  Keyboard.dismiss = () => {
+    dismissCount += 1
+    const stack = new Error().stack?.split('\n').slice(2, 7).map((line) => line.trim())
+    traceKeyboard('dismiss', {
+      count: dismissCount,
+      at: Date.now(),
+      stack,
+    })
+    return originalDismiss()
+  }
+  ;['keyboardWillShow', 'keyboardDidShow', 'keyboardWillHide', 'keyboardDidHide'].forEach((event) => {
+    Keyboard.addListener(event, (e: any) => {
+      traceKeyboard(event, {
+        at: Date.now(),
+        height: e?.endCoordinates?.height ?? 0,
+        duration: e?.duration ?? 0,
+      })
+    })
+  })
+  traceKeyboard('trace-enabled')
 }
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.

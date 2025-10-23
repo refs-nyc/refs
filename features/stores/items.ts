@@ -49,6 +49,7 @@ const isLikelyLocalImageUri = (value?: string | null): value is string => {
 type PendingImageMeta = {
   type: 'temp' | 'real'
   backlog: boolean
+  refId?: string
 }
 
 type PendingImageUploadEntry = {
@@ -362,9 +363,10 @@ export type ItemSlice = {
       type: PendingImageMeta['type']
       creatorId: string
       userName?: string
+      refId?: string
     }
   ) => void
-  transitionPendingImageToReal: (localUri: string, tempId: string, realId: string) => void
+  transitionPendingImageToReal: (localUri: string, tempId: string, realId: string, realRefId: string) => void
   finalizePendingImageUpload: (localUri: string, remoteUrl: string) => Promise<void>
   failPendingImageUpload: (localUri: string) => void
   // Cache grid count to avoid database queries
@@ -437,7 +439,7 @@ export const createItemSlice: StateCreator<StoreSlices, [], [], ItemSlice> = (se
       next.delete(itemId)
       return { uploadingItems: next }
     }),
-  notePendingImageForItem: (localUri, { itemId, backlog, type, creatorId, userName }) => {
+  notePendingImageForItem: (localUri, { itemId, backlog, type, creatorId, userName, refId }) => {
     let remoteUrlToFinalize: string | undefined
     set((state) => {
       const pending = new Map(state.pendingImageUploads)
@@ -453,7 +455,7 @@ export const createItemSlice: StateCreator<StoreSlices, [], [], ItemSlice> = (se
           }
       if (!entry.creatorId) entry.creatorId = creatorId
       if (!entry.userName && userName) entry.userName = userName
-      entry.items.set(itemId, { backlog, type })
+      entry.items.set(itemId, { backlog, type, refId })
       pending.set(localUri, entry)
       remoteUrlToFinalize = entry.remoteUrl
       return { pendingImageUploads: pending }
@@ -462,7 +464,7 @@ export const createItemSlice: StateCreator<StoreSlices, [], [], ItemSlice> = (se
       void get().finalizePendingImageUpload(localUri, remoteUrlToFinalize)
     }
   },
-  transitionPendingImageToReal: (localUri, tempId, realId) => {
+  transitionPendingImageToReal: (localUri, tempId, realId, realRefId) => {
     let remoteUrlToFinalize: string | undefined
     set((state) => {
       const pending = new Map(state.pendingImageUploads)
@@ -476,7 +478,7 @@ export const createItemSlice: StateCreator<StoreSlices, [], [], ItemSlice> = (se
         return {}
       }
       entry.items.delete(tempId)
-      entry.items.set(realId, { backlog: tempMeta.backlog, type: 'real' })
+      entry.items.set(realId, { backlog: tempMeta.backlog, type: 'real', refId: realRefId || tempMeta.refId })
       remoteUrlToFinalize = entry.remoteUrl
       pending.set(localUri, entry)
       return {
@@ -518,6 +520,7 @@ export const createItemSlice: StateCreator<StoreSlices, [], [], ItemSlice> = (se
     }
 
     const itemMetaMap = new Map(itemsMeta)
+    const refIdsToUpdate = new Set<string>()
     const realItemIds = itemsMeta.filter(([, meta]) => meta.type === 'real').map(([id]) => id)
     const tempItemIds = itemsMeta.filter(([, meta]) => meta.type === 'temp').map(([id]) => id)
     const uploadingRemovals = new Set([...realItemIds, ...tempItemIds])
@@ -538,6 +541,10 @@ export const createItemSlice: StateCreator<StoreSlices, [], [], ItemSlice> = (se
       uploadingRemovals.forEach((itemId) => {
         const optimisticItem = nextOptimistic.get(itemId)
         if (optimisticItem) {
+          const meta = itemMetaMap.get(itemId)
+          if (meta?.refId && meta.type === 'real') {
+            refIdsToUpdate.add(meta.refId)
+          }
           const updatedItem: ExpandedItem = {
             ...optimisticItem,
             image: remoteUrl,
@@ -647,6 +654,19 @@ export const createItemSlice: StateCreator<StoreSlices, [], [], ItemSlice> = (se
         )
       )
       get().triggerFeedRefresh()
+    }
+
+    if (refIdsToUpdate.size > 0) {
+      await Promise.all(
+        Array.from(refIdsToUpdate).map((refId) =>
+          pocketbase
+            .collection('refs')
+            .update(refId, { image: remoteUrl })
+            .catch((error) => {
+              console.warn('Failed to update ref image after upload', { refId, error })
+            })
+        )
+      )
     }
   },
   failPendingImageUpload: (localUri) => {
@@ -813,6 +833,7 @@ export const createItemSlice: StateCreator<StoreSlices, [], [], ItemSlice> = (se
         type: 'temp',
         creatorId: userId,
         userName,
+        refId: optimisticItem.expand?.ref?.id,
       })
       get().addUploadingItem(optimisticItem.id)
     }
@@ -844,7 +865,7 @@ export const createItemSlice: StateCreator<StoreSlices, [], [], ItemSlice> = (se
       get().replaceOptimisticItem(optimisticItem.id, createdItem)
 
       if (localUri) {
-        get().transitionPendingImageToReal(localUri, optimisticItem.id, createdItem.id)
+        get().transitionPendingImageToReal(localUri, optimisticItem.id, createdItem.id, createdItem.ref)
         get().removeUploadingItem(optimisticItem.id)
         const pendingEntry = get().pendingImageUploads.get(localUri)
         if (pendingEntry && !pendingEntry.remoteUrl) {

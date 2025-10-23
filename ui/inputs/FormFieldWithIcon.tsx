@@ -45,6 +45,27 @@ export const FormFieldWithIcon = forwardRef<TextInput, {
   const onSelect = (s: string) => {}
   const onCancel = () => {}
 
+  const textContentType =
+    type === 'email'
+      ? 'emailAddress'
+      : type === 'userName'
+      ? 'username'
+      : type === 'user'
+      ? 'name'
+      : type === 'password' || type === 'passwordConfirm'
+      ? 'newPassword'
+      : 'none'
+
+  const autoComplete =
+    type === 'email'
+      ? 'email'
+      : type === 'password' || type === 'passwordConfirm'
+      ? 'new-password'
+      : 'off'
+
+  const importantForAutofill =
+    type === 'password' || type === 'passwordConfirm' ? 'auto' : 'auto'
+
   return (
     <>
       <XStack
@@ -101,19 +122,9 @@ export const FormFieldWithIcon = forwardRef<TextInput, {
           returnKeyType={returnKeyType}
           onSubmitEditing={onSubmitEditing}
           blurOnSubmit={false}
-          textContentType={
-            type === 'email' ? 'emailAddress' :
-            type === 'userName' ? 'username' :
-            type === 'user' ? 'name' :
-            'none'
-          }
-          autoComplete={
-            type === 'email' ? 'email' :
-            'off'
-          }
-          importantForAutofill={
-            type === 'password' || type === 'passwordConfirm' ? 'no' : 'auto'
-          }
+          textContentType={textContentType}
+          autoComplete={autoComplete}
+          importantForAutofill={importantForAutofill}
           onLayout={() => {
             if (autoFocus) {
               // re-affirm focus to keep keyboard visible across step transitions

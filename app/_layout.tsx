@@ -137,7 +137,14 @@ if (isKeyboardTraceEnabled() && !(globalThis as any)[KEYBOARD_TRACE_SETUP_FLAG])
     })
     return originalDismiss()
   }
-  ;['keyboardWillShow', 'keyboardDidShow', 'keyboardWillHide', 'keyboardDidHide'].forEach((event) => {
+  const KEYBOARD_TRACE_EVENTS: Array<Parameters<typeof Keyboard.addListener>[0]> = [
+    'keyboardWillShow',
+    'keyboardDidShow',
+    'keyboardWillHide',
+    'keyboardDidHide',
+  ]
+
+  KEYBOARD_TRACE_EVENTS.forEach((event) => {
     Keyboard.addListener(event, (e: any) => {
       traceKeyboard(event, {
         at: Date.now(),

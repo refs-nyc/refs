@@ -147,9 +147,13 @@ export const AddRefSheet = ({
   const disappearsOnIndex = -1
   const appearsOnIndex = 0
   const HANDLE_HEIGHT = s.$2
+  const hasBeenOpenRef = useRef(false)
 
   const resetSheetState = useCallback(() => {
-    Keyboard.dismiss()
+    if (hasBeenOpenRef.current) {
+      Keyboard.dismiss()
+      hasBeenOpenRef.current = false
+    }
     setKeyboardVisible(false)
     setKeyboardHeight(0)
     setRefFields(null)
@@ -183,6 +187,9 @@ export const AddRefSheet = ({
   const prevSheetIndexRef = useRef(sheetIndex)
 
   useEffect(() => {
+    if (sheetIndex !== -1) {
+      hasBeenOpenRef.current = true
+    }
     if (sheetIndex === -1 && prevSheetIndexRef.current !== -1) {
       resetSheetState()
     }

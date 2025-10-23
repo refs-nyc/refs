@@ -75,19 +75,6 @@ const MessageInput = forwardRef<MessageInputHandle, MessageInputProps>(
       []
     )
 
-    useEffect(() => {
-      const timer = setTimeout(() => {
-        try {
-          logEvent('auto-focus timer')
-          inputRef.current?.focus()
-        } catch (error) {
-          console.warn('Failed to focus message input:', error)
-        }
-      }, 100)
-
-      return () => clearTimeout(timer)
-    }, [])
-
     return (
       <>
         {parentMessage && (

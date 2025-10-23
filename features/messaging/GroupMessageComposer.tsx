@@ -264,6 +264,7 @@ export function GroupMessageComposer() {
       snapPoints={snapPoints}
       animatedIndex={moduleBackdropAnimatedIndex}
       enablePanDownToClose
+      keyboardBlurBehavior="none"
       backdropComponent={(props) => (
         <BottomSheetBackdrop
           {...props}

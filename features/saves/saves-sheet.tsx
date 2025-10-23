@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef } from 'react'
 import { ActivityIndicator, InteractionManager, View } from 'react-native'
 import { router } from 'expo-router'
-import BottomSheet, { BottomSheetBackdrop, BottomSheetFlatList } from '@gorhom/bottom-sheet'
+import BottomSheet, { BottomSheetBackdrop, BottomSheetFlatList, BottomSheetView } from '@gorhom/bottom-sheet'
 import { Ionicons } from '@expo/vector-icons'
 
 import { FeedRow } from '@/features/feed/FeedRow'
@@ -135,8 +135,8 @@ export default function FeedSheet({
         }
       }}
     >
-      <View style={{ flex: 1, paddingHorizontal: s.$2, paddingBottom: s.$2 }}>
-        <View style={{ paddingTop: s.$1 }}>
+      <View style={{ flex: 1, paddingBottom: s.$2 }}>
+        <BottomSheetView style={{ paddingHorizontal: s.$2, paddingTop: s.$1, backgroundColor: 'rgba(255, 200, 200, 0.3)' }}>
           <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
             <View style={{ flex: 1, minWidth: 0, justifyContent: 'flex-start' }}>
               <Heading tag="h1" style={{ lineHeight: 30 }}>
@@ -152,7 +152,7 @@ export default function FeedSheet({
             </View>
           </View>
           <View style={{ height: 1, backgroundColor: '#E0E0E0', marginTop: 16, marginBottom: 12 }} />
-        </View>
+        </BottomSheetView>
         <BottomSheetFlatList
           data={feedEntries}
           keyExtractor={keyExtractor}

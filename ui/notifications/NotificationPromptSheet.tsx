@@ -95,7 +95,8 @@ export const NotificationPromptSheet = () => {
       enableDynamicSizing={false}
       ref={notificationPromptSheetRef}
       enablePanDownToClose
-      snapPoints={[220]}
+      keyboardBlurBehavior="none"
+      snapPoints={[250]}
       index={-1}
       animatedIndex={removeRefSheetBackdropAnimatedIndex}
       backgroundStyle={{ backgroundColor: c.surface, borderRadius: 50, paddingTop: 0, opacity: 1 }}
@@ -150,4 +151,3 @@ export const NotificationPromptSheet = () => {
     </BottomSheet>
   )
 }
-

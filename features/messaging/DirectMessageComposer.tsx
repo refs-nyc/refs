@@ -122,6 +122,7 @@ export function DirectMessageComposer() {
       snapPoints={snapPoints}
       animatedIndex={moduleBackdropAnimatedIndex}
       enablePanDownToClose
+      keyboardBlurBehavior="none"
       backdropComponent={(props) => (
         <BottomSheetBackdrop
           {...props}
@@ -172,7 +173,6 @@ export function DirectMessageComposer() {
                 placeholderTextColor="rgba(176,176,176,0.5)"
                 style={{ flex: 1, fontSize: s.$09, color: c.muted2, paddingVertical: 0 }}
                 multiline
-                autoFocus
                 returnKeyType="send"
                 enablesReturnKeyAutomatically
                 onSubmitEditing={handleSend}

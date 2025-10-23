@@ -5,7 +5,7 @@ import { useQuery, type InfiniteData } from '@tanstack/react-query'
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, Easing, runOnJS } from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { router } from 'expo-router'
-import { useFocusEffect } from '@react-navigation/native'
+import { useFocusEffect, useNavigation } from '@react-navigation/native'
 import * as ImagePicker from 'expo-image-picker'
 
 import { useAppStore } from '@/features/stores'
@@ -42,6 +42,7 @@ export function MessagesScreen({
   const showToast = useAppStore((state) => state.showToast)
   const activateInteractionGate = useAppStore((state) => state.activateInteractionGate)
   const deactivateInteractionGate = useAppStore((state) => state.deactivateInteractionGate)
+  const navigation = useNavigation<any>()
 
   const realtimeLockRef = useRef(false)
   const realtimeReleaseRef = useRef<NodeJS.Timeout | null>(null)
@@ -309,13 +310,29 @@ export function MessagesScreen({
   }, [conversationId, conversationMessages, updateLastRead, user?.id])
 
   const focusMessageInput = useCallback(() => {
-    InteractionManager.runAfterInteractions(() => {
+    const performFocus = () => {
       if (__DEV__) {
         console.log('[messages] focusMessageInput', Date.now())
       }
       messageInputRef.current?.focus()
-    })
+    }
+
+    requestAnimationFrame(performFocus)
+    InteractionManager.runAfterInteractions(performFocus)
   }, [])
+
+  useEffect(() => {
+    const unsubscribe = navigation?.addListener?.('transitionEnd', focusMessageInput)
+    return () => {
+      unsubscribe?.()
+    }
+  }, [navigation, focusMessageInput, conversationId])
+
+  useFocusEffect(
+    useCallback(() => {
+      focusMessageInput()
+    }, [focusMessageInput, conversationId])
+  )
 
   useEffect(() => {
     const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow'
@@ -692,6 +709,7 @@ export function MessagesScreen({
         onEndReachedThreshold={0.1}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="none"
         style={{ flex: 1 }}
         contentContainerStyle={{
           paddingHorizontal: s.$075,
@@ -700,7 +718,6 @@ export function MessagesScreen({
           justifyContent: 'flex-end',
         }}
         ListFooterComponent={<View style={{ height: headerHeight }} />}
-        onScrollBeginDrag={Keyboard.dismiss}
       />
 
       <View

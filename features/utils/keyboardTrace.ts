@@ -1,4 +1,4 @@
-const TRACE_ENABLED = process.env.EXPO_PUBLIC_KEYBOARD_TRACE === '1'
+const TRACE_ENABLED = process.env.EXPO_PUBLIC_KEYBOARD_TRACE === '1' || __DEV__
 
 type LogPayload = Record<string, unknown> | undefined
 

@@ -10,6 +10,7 @@ import { pinataUpload } from '@/features/pinata'
 import Svg, { Circle } from 'react-native-svg'
 import * as ImagePicker from 'expo-image-picker'
 import { ensureMediaLibraryAccess } from '@/features/media/permissions'
+import { clearActiveKeyboardInput, setActiveKeyboardInput } from '@/features/utils/keyboardFocusTracker'
 
 export const ProfileSettingsSheet = () => {
   const {
@@ -535,6 +536,7 @@ export const ProfileSettingsSheet = () => {
             value={location}
             onChangeText={setLocation}
             onFocus={() => {
+              setActiveKeyboardInput('ProfileSettings:location')
               activeFieldRef.current = 'location'
               freezeLayoutRef.current = true
             }}
@@ -544,6 +546,7 @@ export const ProfileSettingsSheet = () => {
               } finally {
                 activeFieldRef.current = null
                 freezeLayoutRef.current = false
+                clearActiveKeyboardInput('ProfileSettings:location')
               }
             }}
             placeholder="e.g. West Village, NYC"

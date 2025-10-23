@@ -23,6 +23,7 @@ import { StagedItemFields } from '@/features/types'
 import { DismissKeyboard } from '../atoms/DismissKeyboard'
 import { Ionicons } from '@expo/vector-icons'
 import { Svg, Path, Defs, Filter, FeFlood, FeColorMatrix, FeOffset, FeComposite, FeBlend, G } from 'react-native-svg'
+import { clearActiveKeyboardInput, setActiveKeyboardInput } from '@/features/utils/keyboardFocusTracker'
 
 const win = Dimensions.get('window')
 
@@ -114,6 +115,12 @@ export const RefForm = ({
   const titleInputRef = useRef<any>(null)
   const hasInitializedRef = useRef(false)
 
+  useEffect(() => {
+    return () => {
+      clearActiveKeyboardInput()
+    }
+  }, [])
+
   // Scroll to bottom when component mounts and manage activeField based on sheet state
   useEffect(() => {
     if (__DEV__) {
@@ -129,6 +136,7 @@ export const RefForm = ({
       captionInputRef.current?.blur?.()
       urlInputRef.current?.blur?.()
       setActiveField(null)
+      clearActiveKeyboardInput()
       hasInitializedRef.current = false
       // Don't manually dismiss keyboard - let keyboardBlurBehavior="restore" handle it
       return
@@ -141,7 +149,9 @@ export const RefForm = ({
       }
       hasInitializedRef.current = true
       // If data can't be edited (AddRefSheet), focus caption instead of title
-      setActiveField(canEditRefData ? 'title' : 'caption')
+      const initialField = canEditRefData ? 'title' : 'caption'
+      setActiveField(initialField)
+      setActiveKeyboardInput(`RefForm:${initialField}`)
       // Small delay for scroll to let keyboard start appearing
       setTimeout(() => {
         scrollViewRef.current?.scrollToEnd({ animated: true })
@@ -441,6 +451,7 @@ export const RefForm = ({
                 returnKeyType="done"
                 onSubmitEditing={() => {
                   setActiveField('caption')
+                  setActiveKeyboardInput('RefForm:caption')
                   // Focus the caption field to encourage typing
                 }}
                 onBlur={() => {
@@ -448,6 +459,10 @@ export const RefForm = ({
                   setActiveField(null)
                   // Trigger manual transition to snap to 67%
                   onManualTransition?.()
+                  clearActiveKeyboardInput('RefForm:link')
+                }}
+                onFocus={() => {
+                  setActiveKeyboardInput('RefForm:link')
                 }}
               />
             ) : (
@@ -468,10 +483,16 @@ export const RefForm = ({
                   // Only allow field changes when sheet is actually open
                   if (isSheetOpen) {
                     setActiveField(field)
+                    if (field) {
+                      setActiveKeyboardInput(`RefForm:${field}`)
+                    } else {
+                      clearActiveKeyboardInput()
+                    }
                   } else {
                     if (__DEV__) {
                       console.log('🚫 BLOCKED: Sheet is closed, ignoring field change')
                     }
+                    clearActiveKeyboardInput()
                   }
                 }}
                 isActive={(() => {
@@ -498,6 +519,7 @@ export const RefForm = ({
                 onManualTransition?.()
                 // Immediately change state to return to normal view
                 setActiveField(null)
+                clearActiveKeyboardInput('RefForm:link')
                 // Dismiss keyboard after setting the flag
                 Keyboard.dismiss()
                 // Prevent caption from auto-focusing
@@ -524,11 +546,12 @@ export const RefForm = ({
               onPress={() => {
                 console.log('🔗 LINK ICON CLICK - Processing click, current activeField:', activeField)
                 // Notify parent about transition to prevent unwanted snaps
-                onLinkIconClick?.()
-                onFieldEditStart?.()
-                // Set active field to link - let keyboard behavior handle itself
-                setActiveField('link')
-              }}
+              onLinkIconClick?.()
+              onFieldEditStart?.()
+              // Set active field to link - let keyboard behavior handle itself
+              setActiveField('link')
+              setActiveKeyboardInput('RefForm:link')
+            }}
             >
               <View style={{ 
                 zIndex: 9999,
@@ -588,6 +611,7 @@ export const RefForm = ({
             autoCapitalize="sentences"
             onFocus={() => {
               setActiveField('caption')
+              setActiveKeyboardInput('RefForm:caption')
               // Snap to 100% when caption is focused to give full access to buttons
               // This will be handled by the parent BottomSheet's keyboardBehavior
               onCaptionFocus?.(true)
@@ -596,6 +620,7 @@ export const RefForm = ({
               // Reset caption focus state when caption loses focus - this should trigger immediate snap
               console.log('📝 CAPTION ONBLUR - Calling onCaptionFocus(false)')
               onCaptionFocus?.(false)
+              clearActiveKeyboardInput('RefForm:caption')
             }}
             blurOnSubmit={false}
           />

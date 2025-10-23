@@ -12,6 +12,7 @@ import { NewListItemButton } from './NewListItemButton'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { XStack } from '../core/Stacks'
 import { Ionicons } from '@expo/vector-icons'
+import { clearActiveKeyboardInput, setActiveKeyboardInput } from '@/features/utils/keyboardFocusTracker'
 
 export const EditableList = ({
   item,
@@ -115,8 +116,14 @@ export const EditableList = ({
               placeholderTextColor={c.surface}
               value={title}
               onChangeText={(e) => setTitle(e)}
-              onBlur={() => onTitleChange(title)}
-              onFocus={() => setEditingTitle(true)}
+              onBlur={() => {
+                clearActiveKeyboardInput('EditableList:title')
+                onTitleChange(title)
+              }}
+              onFocus={() => {
+                setEditingTitle(true)
+                setActiveKeyboardInput('EditableList:title')
+              }}
             />
             {editingTitle && (
               <Pressable onPress={() => onTitleChange(title)}>

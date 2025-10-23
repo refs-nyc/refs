@@ -8,6 +8,7 @@ import { Avatar } from '@/ui/atoms/Avatar'
 import { c, s } from '@/features/style'
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { promptForNotifications } from '@/ui/notifications/utils'
+import { clearActiveKeyboardInput, setActiveKeyboardInput } from '@/features/utils/keyboardFocusTracker'
 
 export function DirectMessageComposer() {
   const {
@@ -41,6 +42,7 @@ export function DirectMessageComposer() {
       sheetRef.current?.close()
       setMessage('')
       setSending(false)
+      clearActiveKeyboardInput('DMComposer:message')
     }
   }, [dmComposerTarget])
 
@@ -55,6 +57,12 @@ export function DirectMessageComposer() {
 
     return () => subscription.remove()
   }, [dmComposerTarget, closeDMComposer])
+
+  useEffect(() => {
+    return () => {
+      clearActiveKeyboardInput('DMComposer:message')
+    }
+  }, [])
 
   const handleSend = async () => {
     if (!user || !dmComposerTarget) return
@@ -176,6 +184,12 @@ export function DirectMessageComposer() {
                 returnKeyType="send"
                 enablesReturnKeyAutomatically
                 onSubmitEditing={handleSend}
+                onFocus={() => {
+                  setActiveKeyboardInput('DMComposer:message')
+                }}
+                onBlur={() => {
+                  clearActiveKeyboardInput('DMComposer:message')
+                }}
               />
               <Pressable
                 onPress={handleSend}

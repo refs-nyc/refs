@@ -60,7 +60,6 @@ export function EdgeCorkboardScreen() {
     openCommunityFormSheet,
     removeInterestSheetRef,
     setPendingInterestRemoval,
-    pendingInterestRemoval,
   } = useAppStore()
   const [communityItems, setCommunityItems] = useState<any[]>(() => communityCache.items)
   const [filteredItems, setFilteredItems] = useState<any[]>(() =>
@@ -499,26 +498,57 @@ export function EdgeCorkboardScreen() {
   )
 
   // Handle confirmed removal of interest
-  const handleConfirmRemoval = useCallback(() => {
-    if (!pendingInterestRemoval) return
-    const { item, isOwner } = pendingInterestRemoval
+  const handleConfirmRemoval = useCallback(
+    (item: any, isOwner: boolean) => {
+      if (!item) return
 
-    if (isOwner) {
-      const refToDelete = item.ref || item.id
-      if (refToDelete) {
-        void pocketbase
-          .collection('refs')
-          .delete(refToDelete)
-          .catch((error) => {
-            console.warn('Failed to delete community ref', error)
+      if (isOwner) {
+        const refToDelete = item.ref || item.id
+        if (refToDelete) {
+          const subscriptionKey = user?.id ? `community_subs:${user.id}:edge-patagonia` : null
+          let updatedSubscriptions: Map<string, boolean> | null = null
+          // Optimistically remove the interest so the exit animation plays immediately
+          setCommunityItems((prev) => prev.filter((it) => (it.ref || it.id) !== refToDelete))
+          setFilteredItems((prev) => prev.filter((it) => (it.ref || it.id) !== refToDelete))
+          setSubscriptions((prev) => {
+            if (!prev.has(refToDelete)) return prev
+            const next = new Map(prev)
+            next.delete(refToDelete)
+            updatedSubscriptions = next
+            return next
           })
-      }
-    } else {
-      toggleSubscription(item)
-    }
+          setSubscriptionCounts((prev) => {
+            if (!prev.has(refToDelete)) return prev
+            const next = new Map(prev)
+            next.delete(refToDelete)
+            return next
+          })
+          setMemberAvatars((prev) => {
+            if (!prev.has(refToDelete)) return prev
+            const next = new Map(prev)
+            next.delete(refToDelete)
+            return next
+          })
+          if (subscriptionKey && updatedSubscriptions) {
+            const arr = Array.from(updatedSubscriptions.keys())
+            AsyncStorage.setItem(subscriptionKey, JSON.stringify(arr)).catch((error) => {
+              console.warn('Failed to persist subscriptions after interest delete:', error)
+            })
+          }
 
-    setPendingInterestRemoval(null)
-  }, [pendingInterestRemoval, toggleSubscription, setPendingInterestRemoval])
+          void pocketbase
+            .collection('refs')
+            .delete(refToDelete)
+            .catch((error) => {
+              console.warn('Failed to delete community ref', error)
+            })
+        }
+      } else {
+        toggleSubscription(item)
+      }
+    },
+    [toggleSubscription, setCommunityItems, setFilteredItems, setSubscriptions, setSubscriptionCounts, setMemberAvatars, user?.id]
+  )
 
   // Filter tabs were previously used to flip to the directory view. With the directory now living
   // on its own screen we only display a static label for context.
@@ -623,6 +653,8 @@ export function EdgeCorkboardScreen() {
             const avatars = memberAvatars.get(refId) || []
             return (
               <Animated.View
+                entering={FadeIn.duration(160)}
+                exiting={FadeOut.duration(220)}
                 style={{ position: 'relative', marginBottom: (s.$075 as number) + 2, paddingRight: BADGE_OVERHANG + 2 }}
                 onLayout={(e) => {
                   try {
@@ -769,7 +801,7 @@ export function EdgeCorkboardScreen() {
                         item,
                         isOwner,
                         title,
-                        onConfirm: () => handleConfirmRemoval(),
+                        onConfirm: () => handleConfirmRemoval(item, isOwner),
                       })
                     }}
                     hitSlop={8}

@@ -1145,9 +1145,15 @@ export const createItemSlice: StateCreator<StoreSlices, [], [], ItemSlice> = (se
       }
 
       const editedState = get().editedState
+      const normalizedEditedState = editedState.url
+        ? {
+            ...editedState,
+            url: normalizeExternalUrl(editedState.url),
+          }
+        : editedState
       const updatedItem = await pocketbase
         .collection<ExpandedItem>('items')
-        .update(id || get().editing, editedState, { expand: 'ref' })
+        .update(id || get().editing, normalizedEditedState, { expand: 'ref' })
 
       if (editedState.listTitle && updatedItem.list) {
         const ref = await pocketbase

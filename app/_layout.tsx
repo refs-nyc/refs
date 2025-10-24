@@ -43,6 +43,7 @@ import { getActiveKeyboardInput, shouldGuardDismiss } from '@/features/utils/key
 import { RegisterPushNotifications } from '@/ui/notifications/RegisterPushNotifications'
 import { DirectMessageComposer } from '@/features/messaging/DirectMessageComposer'
 import { GroupMessageComposer } from '@/features/messaging/GroupMessageComposer'
+import { MessagingObserver } from '@/features/messaging/message-loader'
 import { useAppStore } from '@/features/stores'
 import { GlobalToast } from '@/ui/feedback/Toast'
 
@@ -457,6 +458,7 @@ function RootLayoutNav() {
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <StatusBar barStyle={colorScheme === 'dark' ? 'light-content' : 'dark-content'} />
+      <MessagingObserver />
       <RegisterPushNotifications />
       <Navigation savesBottomSheetRef={savesBottomSheetRef} />
       <NavigationBackdrop />

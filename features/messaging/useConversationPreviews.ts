@@ -53,11 +53,18 @@ export function useConversationPreviews(enabled = true): ConversationPreviewResu
     })
   }, [enabled, query.data])
 
+  const parseTimestamp = (value?: string | null): number => {
+    if (!value) return 0
+    const normalized = value.includes('T') ? value : value.replace(' ', 'T')
+    const time = Date.parse(normalized)
+    return Number.isNaN(time) ? 0 : time
+  }
+
   const previews = useMemo<ConversationPreviewSnapshot[]>(() => {
     const pages = query.data?.pages
     if (!pages) return []
 
-    return pages.flatMap((page) =>
+    const flattened = pages.flatMap((page) =>
       page.entries.map((entry) => ({
         conversation: entry.conversation as unknown as Conversation,
         memberships: entry.memberships,
@@ -65,6 +72,22 @@ export function useConversationPreviews(enabled = true): ConversationPreviewResu
         unreadCount: entry.unreadCount,
       }))
     )
+
+    if (flattened.length <= 1) {
+      return flattened
+    }
+
+    return flattened.sort((a, b) => {
+      const aTime =
+        parseTimestamp(a.latestMessage?.created) ||
+        parseTimestamp((a.conversation as any)?.updated) ||
+        parseTimestamp((a.conversation as any)?.created)
+      const bTime =
+        parseTimestamp(b.latestMessage?.created) ||
+        parseTimestamp((b.conversation as any)?.updated) ||
+        parseTimestamp((b.conversation as any)?.created)
+      return bTime - aTime
+    })
   }, [query.data?.pages])
 
   useEffect(() => {

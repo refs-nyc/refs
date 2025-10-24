@@ -1,11 +1,10 @@
 import { useEffect, useCallback, useRef } from 'react'
 import { Pressable, View, StyleSheet, GestureResponderEvent, Dimensions } from 'react-native'
-import Animated, { useSharedValue, withTiming, withSpring } from 'react-native-reanimated'
+import Animated, { useSharedValue, withTiming, withSpring, useAnimatedStyle } from 'react-native-reanimated'
 import { Image } from 'expo-image'
 import { useAppStore } from '@/features/stores'
 import { c } from '@/features/style'
-
-const AnimatedPressable = Animated.createAnimatedComponent(Pressable)
+import { Gesture, GestureDetector } from 'react-native-gesture-handler'
 
 export const OtherProfileAvatarZoom = () => {
   const {
@@ -19,6 +18,8 @@ export const OtherProfileAvatarZoom = () => {
 
   const overlayOpacity = useSharedValue(0)
   const overlayScale = useSharedValue(0.85)
+  const pinchScale = useSharedValue(1)
+  const savedScale = useSharedValue(1)
   const backdropPressKeyRef = useRef<string | null>(null)
 
   const expandedAvatarSize = Math.min(Dimensions.get('window').width * 0.75, 300)
@@ -32,12 +33,14 @@ export const OtherProfileAvatarZoom = () => {
       damping: 14,
       stiffness: 200,
     })
+    pinchScale.value = withTiming(1, { duration: 150 })
+    savedScale.value = 1
     
     // Delay state update to allow animation to complete
     setTimeout(() => {
       closeAvatarZoom()
     }, 150)
-  }, [closeAvatarZoom, otherProfileBackdropAnimatedIndex, overlayOpacity, overlayScale])
+  }, [closeAvatarZoom, otherProfileBackdropAnimatedIndex, overlayOpacity, overlayScale, pinchScale, savedScale])
 
   // Register backdrop press handler
   useEffect(() => {
@@ -73,8 +76,10 @@ export const OtherProfileAvatarZoom = () => {
         damping: 14,
         stiffness: 200,
       })
+      pinchScale.value = 1
+      savedScale.value = 1
     }
-  }, [avatarZoomVisible, otherProfileBackdropAnimatedIndex, overlayOpacity, overlayScale])
+  }, [avatarZoomVisible, otherProfileBackdropAnimatedIndex, overlayOpacity, overlayScale, pinchScale, savedScale])
 
   // Cleanup on unmount
   useEffect(() => {
@@ -93,6 +98,24 @@ export const OtherProfileAvatarZoom = () => {
     return null
   }
 
+  const clamp = (value: number, lower: number, upper: number): number => {
+    'worklet'
+    return Math.min(Math.max(value, lower), upper)
+  }
+
+  const pinchGesture = Gesture.Pinch()
+    .onUpdate((event) => {
+      pinchScale.value = clamp(savedScale.value * event.scale, 1, 3)
+    })
+    .onEnd(() => {
+      savedScale.value = clamp(pinchScale.value, 1, 3)
+    })
+
+  const imageAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: overlayOpacity.value,
+    transform: [{ scale: overlayScale.value * pinchScale.value }],
+  }))
+
   return (
     <Pressable 
       style={[
@@ -108,28 +131,30 @@ export const OtherProfileAvatarZoom = () => {
           }}
           hitSlop={20}
         >
-          <Animated.View
-            style={{
-              transform: [{ scale: overlayScale }],
-              borderRadius: expandedAvatarSize / 2,
-              overflow: 'hidden',
-              shadowColor: '#000',
-              shadowOpacity: 0.35,
-              shadowRadius: 16,
-              shadowOffset: { width: 0, height: 10 },
-              backgroundColor: c.surface,
-              opacity: overlayOpacity,
-            }}
-          >
-            <Image
-              source={avatarZoomImageUrl}
-              style={{ width: expandedAvatarSize, height: expandedAvatarSize, backgroundColor: c.surface2 }}
-              contentFit="cover"
-            />
-          </Animated.View>
+          <GestureDetector gesture={pinchGesture}>
+            <Animated.View
+              style={[
+                {
+                  borderRadius: expandedAvatarSize / 2,
+                  overflow: 'hidden',
+                  shadowColor: '#000',
+                  shadowOpacity: 0.35,
+                  shadowRadius: 16,
+                  shadowOffset: { width: 0, height: 10 },
+                  backgroundColor: c.surface,
+                },
+                imageAnimatedStyle,
+              ]}
+            >
+              <Image
+                source={avatarZoomImageUrl}
+                style={{ width: expandedAvatarSize, height: expandedAvatarSize, backgroundColor: c.surface2 }}
+                contentFit="cover"
+              />
+            </Animated.View>
+          </GestureDetector>
         </Pressable>
       </View>
     </Pressable>
   )
 }
-

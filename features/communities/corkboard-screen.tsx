@@ -506,7 +506,6 @@ export function EdgeCorkboardScreen() {
         const refToDelete = item.ref || item.id
         if (refToDelete) {
           const subscriptionKey = user?.id ? `community_subs:${user.id}:edge-patagonia` : null
-          let updatedSubscriptions: Map<string, boolean> | null = null
           // Optimistically remove the interest so the exit animation plays immediately
           setCommunityItems((prev) => prev.filter((it) => (it.ref || it.id) !== refToDelete))
           setFilteredItems((prev) => prev.filter((it) => (it.ref || it.id) !== refToDelete))
@@ -514,7 +513,12 @@ export function EdgeCorkboardScreen() {
             if (!prev.has(refToDelete)) return prev
             const next = new Map(prev)
             next.delete(refToDelete)
-            updatedSubscriptions = next
+            if (subscriptionKey) {
+              const arr = Array.from(next.keys())
+              AsyncStorage.setItem(subscriptionKey, JSON.stringify(arr)).catch((error) => {
+                console.warn('Failed to persist subscriptions after interest delete:', error)
+              })
+            }
             return next
           })
           setSubscriptionCounts((prev) => {
@@ -529,12 +533,6 @@ export function EdgeCorkboardScreen() {
             next.delete(refToDelete)
             return next
           })
-          if (subscriptionKey && updatedSubscriptions) {
-            const arr = Array.from(updatedSubscriptions.keys())
-            AsyncStorage.setItem(subscriptionKey, JSON.stringify(arr)).catch((error) => {
-              console.warn('Failed to persist subscriptions after interest delete:', error)
-            })
-          }
 
           void pocketbase
             .collection('refs')

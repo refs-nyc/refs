@@ -53,7 +53,7 @@ export function MessagesScreen({
   const showToast = useAppStore((state) => state.showToast)
   const blockUser = useAppStore((state) => state.blockUser)
   const unblockUser = useAppStore((state) => state.unblockUser)
-  const isUserBlocked = useAppStore((state) => state.isUserBlocked)
+  const blockedUsers = useAppStore((state) => state.blockedUsers)
   const activateInteractionGate = useAppStore((state) => state.activateInteractionGate)
   const deactivateInteractionGate = useAppStore((state) => state.deactivateInteractionGate)
   const navigation = useNavigation<any>()
@@ -418,7 +418,10 @@ export function MessagesScreen({
       attachment.status === 'ready' && Boolean(attachment.remoteUrl)
   )
   const canSendMessage = message.trim().length > 0 || readyAttachments.length > 0
-  const isBlocked = Boolean(isDirectConversation && otherMemberId && isUserBlocked(otherMemberId))
+  const isBlocked = useMemo(
+    () => Boolean(isDirectConversation && otherMemberId && blockedUsers[otherMemberId]),
+    [blockedUsers, isDirectConversation, otherMemberId]
+  )
   const isSendDisabled = !canSendMessage || isUploadingAttachment || isBlocked
 
   useEffect(() => {

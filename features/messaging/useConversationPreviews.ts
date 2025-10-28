@@ -28,6 +28,7 @@ export type ConversationPreviewResult = {
 
 export function useConversationPreviews(enabled = true): ConversationPreviewResult {
   const { user, setConversationUnreadCount, clearConversationUnreadCounts } = useAppStore()
+  const blockedUsers = useAppStore((state) => state.blockedUsers)
   const userId = user?.id
 
   const query = useInfiniteQuery<ConversationsPage>({
@@ -73,11 +74,22 @@ export function useConversationPreviews(enabled = true): ConversationPreviewResu
       }))
     )
 
-    if (flattened.length <= 1) {
-      return flattened
+    const filtered = flattened.filter((preview) => {
+      if (!userId) return true
+      const isDirect = Boolean((preview.conversation as Conversation | undefined)?.is_direct)
+      if (!isDirect) return true
+      const otherMemberId = preview.memberships
+        .map((membership) => membership.expand?.user?.id)
+        .find((memberId) => memberId && memberId !== userId)
+      if (!otherMemberId) return true
+      return !blockedUsers[otherMemberId]
+    })
+
+    if (filtered.length <= 1) {
+      return filtered
     }
 
-    return flattened.sort((a, b) => {
+    return filtered.sort((a, b) => {
       const aTime =
         parseTimestamp(a.latestMessage?.created) ||
         parseTimestamp((a.conversation as any)?.updated) ||
@@ -88,7 +100,7 @@ export function useConversationPreviews(enabled = true): ConversationPreviewResu
         parseTimestamp((b.conversation as any)?.created)
       return bTime - aTime
     })
-  }, [query.data?.pages])
+  }, [blockedUsers, query.data?.pages, userId])
 
   useEffect(() => {
     if (!enabled) return

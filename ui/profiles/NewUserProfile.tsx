@@ -1,5 +1,5 @@
 import { useRef } from 'react'
-import { View } from 'react-native'
+import { View, Text, Linking } from 'react-native'
 import { Dimensions } from 'react-native'
 import { useAppStore } from '@/features/stores'
 import { s, c } from '@/features/style'
@@ -269,6 +269,14 @@ const ImageStep = ({ carouselRef }: { carouselRef: React.RefObject<ICarouselInst
   } = useForm({ mode: 'onChange' })
   const { register, updateStagedUser } = useAppStore()
 
+  const handleOpenTerms = () => {
+    Linking.openURL('https://maxsworkspace.notion.site/Refs-Terms-of-Service-29a26179e8fe80be9a9cfe6b109e6eaf').catch(() => {})
+  }
+
+  const handleOpenPrivacy = () => {
+    Linking.openURL('https://maxsworkspace.notion.site/Refs-Privacy-Policy-29a26179e8fe80c196adfb3ff9090669').catch(() => {})
+  }
+
   return (
     <ProfileStep
       buttonTitle="Register"
@@ -290,6 +298,36 @@ const ImageStep = ({ carouselRef }: { carouselRef: React.RefObject<ICarouselInst
         (errors) => console.error('Errors:', errors)
       )}
     >
+      <Text
+        style={{
+          color: c.muted,
+          opacity: 0.8,
+          fontSize: 12,
+          fontFamily: 'Inter',
+          textAlign: 'center',
+          marginBottom: 16,
+          lineHeight: 18,
+        }}
+        accessibilityRole="text"
+      >
+        By tapping Register you agree to our{' '}
+        <Text
+          onPress={handleOpenTerms}
+          style={{ color: c.accent, textDecorationLine: 'underline' }}
+          accessibilityRole="link"
+        >
+          Terms of Use
+        </Text>{' '}
+        and{' '}
+        <Text
+          onPress={handleOpenPrivacy}
+          style={{ color: c.accent, textDecorationLine: 'underline' }}
+          accessibilityRole="link"
+        >
+          Privacy Policy
+        </Text>
+        .
+      </Text>
       <Controller
         name="image"
         control={control}

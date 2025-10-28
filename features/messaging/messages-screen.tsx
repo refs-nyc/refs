@@ -1,5 +1,16 @@
 import { useEffect, useMemo, useRef, useState, lazy, Suspense, useCallback } from 'react'
-import { FlatList, InteractionManager, Keyboard, Platform, Pressable, Text, View } from 'react-native'
+import {
+  ActionSheetIOS,
+  Alert,
+  FlatList,
+  InteractionManager,
+  Keyboard,
+  Platform,
+  Pressable,
+  Text,
+  View,
+  Linking,
+} from 'react-native'
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { useQuery, type InfiniteData } from '@tanstack/react-query'
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, Easing, runOnJS } from 'react-native-reanimated'
@@ -40,6 +51,9 @@ export function MessagesScreen({
   const updateLastRead = useAppStore((state) => state.updateLastRead)
   const setProfileNavIntent = useAppStore((state) => state.setProfileNavIntent)
   const showToast = useAppStore((state) => state.showToast)
+  const blockUser = useAppStore((state) => state.blockUser)
+  const unblockUser = useAppStore((state) => state.unblockUser)
+  const isUserBlocked = useAppStore((state) => state.isUserBlocked)
   const activateInteractionGate = useAppStore((state) => state.activateInteractionGate)
   const deactivateInteractionGate = useAppStore((state) => state.deactivateInteractionGate)
   const navigation = useNavigation<any>()
@@ -50,6 +64,7 @@ export function MessagesScreen({
   const sendMutexRef = useRef(false)
   const preparedExitRef = useRef(false)
   const closeInteractionRef = useRef<number | null>(null)
+  const conversationBlockedRef = useRef(false)
 
   const {
     messages: queryMessages,
@@ -87,6 +102,10 @@ export function MessagesScreen({
             error,
           })
         }
+      }
+
+      if (conversationBlockedRef.current && action === 'create') {
+        return
       }
 
       queryClient.setQueryData<InfiniteData<ConversationMessagesPage>>(
@@ -293,6 +312,19 @@ export function MessagesScreen({
     return membershipRecords.filter((m) => m.expand?.user.id !== user.id)
   }, [membershipRecords, user?.id])
 
+  const otherMemberUser = members[0]?.expand?.user
+  const otherMemberId = otherMemberUser?.id
+  const otherMemberAvatar =
+    otherMemberUser?.image || (otherMemberUser as any)?.avatar_url || ''
+  const otherMemberDisplayName =
+    `${otherMemberUser?.firstName ?? ''} ${otherMemberUser?.lastName ?? ''}`.trim() ||
+    otherMemberUser?.name ||
+    otherMemberUser?.userName ||
+    ''
+  const otherMemberHandle = otherMemberUser?.userName
+    ? `@${otherMemberUser.userName}`
+    : null
+
   const conversationMessages = queryMessages
   const highlightedMessage = conversationMessages.find((m) => m.id === highlightedMessageId)
   const colorMap = useMemo(() => {
@@ -386,10 +418,22 @@ export function MessagesScreen({
       attachment.status === 'ready' && Boolean(attachment.remoteUrl)
   )
   const canSendMessage = message.trim().length > 0 || readyAttachments.length > 0
-  const isSendDisabled = !canSendMessage || isUploadingAttachment
+  const isBlocked = Boolean(isDirectConversation && otherMemberId && isUserBlocked(otherMemberId))
+  const isSendDisabled = !canSendMessage || isUploadingAttachment || isBlocked
+
+  useEffect(() => {
+    conversationBlockedRef.current = isBlocked
+    if (isBlocked) {
+      setReplying(false)
+      setHighlightedMessageId('')
+      setAttachments((prev) => (prev.length ? [] : prev))
+      setMessage('')
+    }
+  }, [isBlocked])
 
   const onMessageSubmit = async () => {
     if (!message.trim() && readyAttachments.length === 0) return
+    if (isBlocked) return
     if (sendMutexRef.current) return
 
     sendMutexRef.current = true
@@ -558,8 +602,6 @@ export function MessagesScreen({
     )
   }
 
-  const firstMemberUser = members[0]?.expand?.user
-  const firstMemberAvatar = firstMemberUser?.image || (firstMemberUser as any)?.avatar_url || ''
 
   const handleCloseComplete = useCallback(() => {
     endInteraction('messages:close', closeInteractionRef.current ?? undefined, { conversationId })
@@ -597,6 +639,87 @@ export function MessagesScreen({
       }
     )
   }, [activateInteractionGate, conversationId, handleCloseComplete, screenOpacity])
+
+  const handleDirectActions = useCallback(() => {
+    if (!isDirectConversation || !otherMemberId) return
+
+    const displayName = otherMemberDisplayName || 'this user'
+    const blockLabel = isBlocked ? 'Unblock user' : `Block ${displayName}`
+
+    const sendReport = () => {
+      const targetHandle = otherMemberHandle || displayName
+      const subject = encodeURIComponent('Report user')
+      const body = encodeURIComponent(
+        `I would like to report ${targetHandle}.\n\nPlease include any details below:`
+      )
+      const mailtoUrl = `mailto:support@refs.nyc?subject=${subject}&body=${body}`
+      Linking.openURL(mailtoUrl).catch(() => {
+        showToast('Unable to open mail client')
+      })
+    }
+
+    const toggleBlock = async () => {
+      try {
+        if (isBlocked) {
+          await unblockUser(otherMemberId)
+          showToast('User unblocked')
+        } else {
+          await blockUser(otherMemberId)
+          showToast('User blocked')
+        }
+      } catch (error) {
+        console.warn('Failed to toggle block', error)
+        showToast('Something went wrong')
+      }
+    }
+
+    if (Platform.OS === 'ios') {
+      ActionSheetIOS.showActionSheetWithOptions(
+        {
+          options: [blockLabel, 'Report user', 'Cancel'],
+          cancelButtonIndex: 2,
+          destructiveButtonIndex: isBlocked ? undefined : 0,
+          title: otherMemberDisplayName || undefined,
+        },
+        (selection) => {
+          if (selection === 0) {
+            void toggleBlock()
+          } else if (selection === 1) {
+            sendReport()
+          }
+        }
+      )
+    } else {
+      Alert.alert(
+        displayName,
+        undefined,
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: blockLabel,
+            style: isBlocked ? 'default' : 'destructive',
+            onPress: () => {
+              void toggleBlock()
+            },
+          },
+          {
+            text: 'Report user',
+            onPress: sendReport,
+          },
+        ],
+        { cancelable: true }
+      )
+    }
+  }, [
+    blockUser,
+    isBlocked,
+    isDirectConversation,
+    otherMemberDisplayName,
+    otherMemberId,
+    otherMemberHandle,
+    showToast,
+    unblockUser,
+  ])
 
   useEffect(() => {
     registerCloseHandler?.(startExitTransition)
@@ -643,26 +766,34 @@ export function MessagesScreen({
               numberOfLines={2}
             >
               {isDirectConversation
-                ? `${firstMemberUser?.firstName ?? ''} ${firstMemberUser?.lastName ?? ''}`.trim() ||
-                  conversation?.title || 'Conversation'
+                ? otherMemberDisplayName || conversation?.title || 'Conversation'
                 : conversation?.title || 'Conversation'}
             </Text>
           </View>
           {isDirectConversation ? (
-            <Pressable
-              onPress={() => {
-                const profileUserName = firstMemberUser?.userName
-                if (!profileUserName) return
-                setProfileNavIntent({ targetPagerIndex: 0, source: 'messages' })
-                router.replace(`/user/${profileUserName}`)
-              }}
-            >
-              <Avatar
-                source={firstMemberAvatar}
-                fallback={firstMemberUser?.firstName || firstMemberUser?.name || firstMemberUser?.userName}
-                size={s.$4}
-              />
-            </Pressable>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <Pressable
+                onPress={() => {
+                  const profileUserName = otherMemberUser?.userName
+                  if (!profileUserName) return
+                  setProfileNavIntent({ targetPagerIndex: 0, source: 'messages' })
+                  router.replace(`/user/${profileUserName}`)
+                }}
+              >
+                <Avatar
+                  source={otherMemberAvatar}
+                  fallback={otherMemberDisplayName || otherMemberUser?.name || otherMemberUser?.userName}
+                  size={s.$4}
+                />
+              </Pressable>
+              <Pressable
+                onPress={handleDirectActions}
+                hitSlop={10}
+                style={{ paddingHorizontal: 2, paddingVertical: 4 }}
+              >
+                <Ionicons name="ellipsis-vertical" size={18} color={c.muted} />
+              </Pressable>
+            </View>
           ) : (
             <Pressable
               onPress={() => router.push(`/messages/${conversationId}/member-list`)}
@@ -730,6 +861,54 @@ export function MessagesScreen({
           paddingBottom: s.$05,
         }}
       >
+        {isBlocked && otherMemberId && (
+          <View
+            style={{
+              backgroundColor: c.surface2,
+              borderRadius: s.$12,
+              paddingVertical: 12,
+              paddingHorizontal: s.$1,
+              marginBottom: s.$075,
+            }}
+          >
+            <Text
+              style={{
+                color: c.muted,
+                fontSize: 12,
+                fontFamily: 'Inter',
+                textAlign: 'center',
+              }}
+            >
+              {`You blocked ${otherMemberDisplayName || 'this user'}. Unblock to resume chatting.`}
+            </Text>
+            <Pressable
+              onPress={() => {
+                void (async () => {
+                  try {
+                    await unblockUser(otherMemberId)
+                    showToast('User unblocked')
+                  } catch (error) {
+                    console.warn('Failed to unblock user', error)
+                    showToast('Something went wrong')
+                  }
+                })()
+              }}
+              style={{ alignSelf: 'center', paddingVertical: 6, paddingHorizontal: 12 }}
+              hitSlop={6}
+            >
+              <Text
+                style={{
+                  color: c.accent,
+                  fontSize: 12,
+                  fontFamily: 'Inter',
+                  fontWeight: '600',
+                }}
+              >
+                Unblock
+              </Text>
+            </Pressable>
+          </View>
+        )}
         <MessageInput
           ref={messageInputRef}
           onMessageSubmit={onMessageSubmit}

@@ -8,9 +8,13 @@ import { s, c } from '@/features/style'
 export const ContextMenu = ({
   editingRights = false,
   onEditPress = () => {},
+  onSharePress = () => {},
+  onCopyLinkPress = () => {},
 }: {
   editingRights?: boolean
   onEditPress: () => void
+  onSharePress: () => void
+  onCopyLinkPress: () => void
 }) => {
   return (
     <Animated.View
@@ -32,18 +36,16 @@ export const ContextMenu = ({
         style={{ backgroundColor: c.surface, padding: s.$08, borderRadius: s.$10 }}
         gap={s.$09}
       >
-        <Pressable style={{ backgroundColor: c.grey2, padding: s.$075, borderRadius: s.$10 }}>
-          <Ionicons
-            size={s.$1}
-            style={{ transform: 'translateX(-1px)' }}
-            name="paper-plane-outline"
-            color={c.white}
-          />
-        </Pressable>
-        <Pressable style={{ backgroundColor: c.grey2, padding: s.$075, borderRadius: s.$10 }}>
+        <Pressable
+          style={{ backgroundColor: c.grey2, padding: s.$075, borderRadius: s.$10 }}
+          onPress={onSharePress}
+        >
           <Ionicons size={s.$1} style={{ transform: '' }} name="share-outline" color={c.white} />
         </Pressable>
-        <Pressable style={{ backgroundColor: c.grey2, padding: s.$075, borderRadius: s.$10 }}>
+        <Pressable
+          style={{ backgroundColor: c.grey2, padding: s.$075, borderRadius: s.$10 }}
+          onPress={onCopyLinkPress}
+        >
           <Ionicons size={s.$1} style={{ transform: '' }} name="link" color={c.white} />
         </Pressable>
         {editingRights && (

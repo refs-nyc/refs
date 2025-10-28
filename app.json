@@ -19,7 +19,13 @@
         "usesNonExemptEncryption": false
       },
       "entitlements": {
-        "aps-environment": "development"
+        "aps-environment": "production"
+      },
+      "infoPlist": {
+        "NSCameraUsageDescription": "Allow Refs to use your camera so you can capture photos for your refs.",
+        "NSPhotoLibraryUsageDescription": "Allow Refs to access your photos so you can share them as refs.",
+        "NSPhotoLibraryAddUsageDescription": "Allow Refs to save shared photos to your library when you download them.",
+        "NSUserNotificationUsageDescription": "Allow Refs to send notifications so you don\u2019t miss new messages or community activity."
       }
     },
     "plugins": [
@@ -37,7 +43,7 @@
       [
         "expo-location",
         {
-          "locationAlwaysAndWhenInUsePermission": "Allow Refs to use your location."
+          "locationAlwaysAndWhenInUsePermission": "Allow Refs to use your location to show people nearby."
         }
       ],
       "expo-localization"

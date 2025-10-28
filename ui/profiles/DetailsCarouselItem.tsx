@@ -9,21 +9,22 @@ import { Button } from '@/ui/buttons/Button'
 import { Sheet } from '@/ui/core/Sheets'
 import { XStack, YStack } from '@/ui/core/Stacks'
 import { ListContainer } from '@/ui/lists/ListContainer'
+import { SimplePinataImage } from '@/ui/images/SimplePinataImage'
 import { ProfileDetailsContext } from '@/ui/profiles/profileDetailsStore'
 
 import { Heading } from '@/ui/typo/Heading'
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { BottomSheetScrollView, BottomSheetTextInput, BottomSheetView } from '@gorhom/bottom-sheet'
 import { Zoomable } from '@likashefqet/react-native-image-zoom'
-import { Image } from 'expo-image'
 import { Link, useRouter } from 'expo-router'
-import { useContext, useState, useEffect } from 'react'
-import { Keyboard, Pressable, Text, useWindowDimensions, View } from 'react-native'
+import { useContext, useState, useEffect, useCallback } from 'react'
+import { Keyboard, Pressable, Share, Text, useWindowDimensions, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { TextInput } from 'react-native-gesture-handler'
 import { KeyboardAvoidingView } from 'react-native-keyboard-controller'
 import Animated, { useAnimatedStyle, withTiming, useSharedValue } from 'react-native-reanimated'
 import { useStore } from 'zustand'
+import * as Clipboard from 'expo-clipboard'
 
 const LocationMeta = ({
   location,
@@ -133,6 +134,7 @@ ProfileLabel.displayName = 'ProfileLabel'
 export const DetailsCarouselItem = ({ item, index }: { item: ExpandedItem; index?: number }) => {
   const win = useWindowDimensions()
   const insets = useSafeAreaInsets()
+  const detailImageSize = Math.max(400, Math.ceil(win.width))
 
   const profileDetailsStore = useContext(ProfileDetailsContext)
   const { currentIndex, showContextMenu, setShowContextMenu, openedFromFeed, editingRights } =
@@ -155,6 +157,7 @@ export const DetailsCarouselItem = ({ item, index }: { item: ExpandedItem; index
     referencersBottomSheetRef,
     setCurrentRefId,
     getItemByIdWithFullExpansion,
+    showToast,
   } = useAppStore()
 
   // Fetch full item data if it's a list and doesn't have items_via_parent
@@ -192,6 +195,45 @@ export const DetailsCarouselItem = ({ item, index }: { item: ExpandedItem; index
   const [refTitle, setRefTitle] = useState('')
 
   const editingThisItem = editing === item.id
+
+  const profileUserName =
+    currentItem.expand?.creator?.userName ||
+    item.expand?.creator?.userName ||
+    null
+
+  const deepLink = profileUserName ? `refsnyc://profile/${profileUserName}` : 'https://refs.nyc'
+  const shareTitle = currentItem.expand?.ref?.title || currentItem.text || 'Check this out on Refs'
+  const imageSource =
+    currentItem.image ||
+    currentItem.expand?.ref?.image ||
+    item.image ||
+    item.expand?.ref?.image ||
+    ''
+
+  const handleShareRef = useCallback(async () => {
+    try {
+      await Share.share({
+        title: shareTitle,
+        message: `${shareTitle}\n${deepLink}`,
+        url: deepLink,
+      })
+    } catch (error) {
+      console.warn('Share failed', error)
+    } finally {
+      setShowContextMenu(false)
+    }
+  }, [deepLink, setShowContextMenu, shareTitle])
+
+  const handleCopyLink = useCallback(async () => {
+    try {
+      await Clipboard.setStringAsync(deepLink)
+      showToast('Link copied')
+    } catch (error) {
+      console.warn('Failed to copy link', error)
+    } finally {
+      setShowContextMenu(false)
+    }
+  }, [deepLink, setShowContextMenu, showToast])
 
   // Sync currentItem with item prop when it changes (unless we're editing)
   useEffect(() => {
@@ -318,9 +360,11 @@ export const DetailsCarouselItem = ({ item, index }: { item: ExpandedItem; index
                     setShowContextMenu(false)
                   }}
                   editingRights={editingRights}
+                  onSharePress={handleShareRef}
+                  onCopyLinkPress={handleCopyLink}
                 />
               )}
-              {item.expand?.ref.image || item.image ? (
+              {imageSource ? (
                 <Zoomable minScale={0.25} maxScale={3} isPanEnabled={true}>
                   <Animated.View
                     style={[
@@ -334,11 +378,11 @@ export const DetailsCarouselItem = ({ item, index }: { item: ExpandedItem; index
                     ]}
                   >
                     <BottomSheetView style={{ flex: 1, padding: s.$075 }}>
-                      <Image
-                        style={[
-                          { flex: 1, aspectRatio: 1, overflow: 'hidden', borderRadius: s.$075 },
-                        ]}
-                        source={item.image || item.expand?.ref.image}
+                      <SimplePinataImage
+                        originalSource={imageSource}
+                        imageOptions={{ width: detailImageSize, height: detailImageSize }}
+                        placeholderStyle={{ flex: 1 }}
+                        style={[{ width: '100%', height: '100%', borderRadius: s.$075 }]}
                       />
                     </BottomSheetView>
                   </Animated.View>

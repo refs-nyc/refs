@@ -95,13 +95,32 @@ function handleMessageCreated(record) {
     return
   }
 
+  const filteredRecipients = []
+  for (const recipientId of recipientIds) {
+    try {
+      const blockRecord = $app
+        .dao()
+        .findFirstRecordByFilter('blocked_users', `blocker = "${recipientId}" && blocked = "${senderId}"`)
+      if (blockRecord) {
+        continue
+      }
+    } catch (error) {
+      // Not blocked; pocketbase throws when no record found
+    }
+    filteredRecipients.push(recipientId)
+  }
+
+  if (filteredRecipients.length === 0) {
+    return
+  }
+
   const senderName = getUserDisplayName(senderId)
   const body = truncate(record.get('text') || '')
   const title = body ? `${senderName}: ${body}` : `${senderName} sent a message`
 
   sendNotifications([
     {
-      recipientIds: Array.from(recipientIds),
+      recipientIds: filteredRecipients,
       title,
       body: body || undefined,
       data: {

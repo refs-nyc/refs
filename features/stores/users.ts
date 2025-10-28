@@ -23,6 +23,7 @@ export type UserSlice = {
   stagedUser: Partial<Profile> & { password?: string; passwordConfirm?: string }
   user: Profile | null
   isInitialized: boolean
+  blockedUsers: Record<string, string>
   register: () => Promise<ExpandedProfile>
   updateUser: (fields: Partial<Profile>) => Promise<Profile>
   updateStagedUser: (formFields: Partial<Profile> & { password?: string; passwordConfirm?: string }) => void
@@ -34,12 +35,17 @@ export type UserSlice = {
   login: (userName: string) => Promise<Profile>
   logout: () => void
   init: () => Promise<void>
+  loadBlockedUsers: () => Promise<void>
+  blockUser: (userId: string) => Promise<void>
+  unblockUser: (userId: string) => Promise<void>
+  isUserBlocked: (userId?: string | null) => boolean
 }
 
 export const createUserSlice: StateCreator<StoreSlices, [], [], UserSlice> = (set, get) => ({
   stagedUser: {},
   user: null, // user is ALWAYS the user of the app, this is only set if the user is logged in
   isInitialized: false,
+  blockedUsers: {},
   //
   //
   //
@@ -90,6 +96,7 @@ export const createUserSlice: StateCreator<StoreSlices, [], [], UserSlice> = (se
           }))
 
           primeBackgroundData()
+          await get().loadBlockedUsers()
         } catch (error) {
           console.error('Failed to sync user state:', error)
           // If we can't get the user record, clear the auth store
@@ -98,6 +105,7 @@ export const createUserSlice: StateCreator<StoreSlices, [], [], UserSlice> = (se
             user: null,
             homePagerIndex: 0,
             profileNavIntent: null,
+            blockedUsers: {},
           }))
         }
       } else {
@@ -106,6 +114,7 @@ export const createUserSlice: StateCreator<StoreSlices, [], [], UserSlice> = (se
           user: null,
           homePagerIndex: 0,
           profileNavIntent: null,
+          blockedUsers: {},
         }))
       }
     } catch (error) {
@@ -114,9 +123,94 @@ export const createUserSlice: StateCreator<StoreSlices, [], [], UserSlice> = (se
         user: null,
         homePagerIndex: 0,
         profileNavIntent: null,
+        blockedUsers: {},
       }))
     }
     console.log('[boot-trace] user.init:complete', Date.now() - startedAt, 'ms')
+  },
+  //
+  //
+  //
+  loadBlockedUsers: async () => {
+    const currentUserId = pocketbase.authStore.record?.id
+    if (!currentUserId) {
+      set(() => ({ blockedUsers: {} }))
+      return
+    }
+
+    try {
+      const records = await pocketbase
+        .collection('blocked_users')
+        .getFullList(200, {
+          filter: pocketbase.filter('blocker = {:uid}', { uid: currentUserId }),
+        })
+
+      const next: Record<string, string> = {}
+      for (const record of records || []) {
+        const blockedId = (record as any)?.blocked
+        if (blockedId) {
+          next[String(blockedId)] = record.id
+        }
+      }
+
+      set(() => ({ blockedUsers: next }))
+    } catch (error) {
+      console.warn('Failed to load blocked users', error)
+      set(() => ({ blockedUsers: {} }))
+    }
+  },
+  blockUser: async (userId: string) => {
+    const currentUserId = pocketbase.authStore.record?.id
+    if (!currentUserId || !userId || currentUserId === userId) {
+      return
+    }
+
+    const existing = get().blockedUsers[userId]
+    if (existing) {
+      return
+    }
+
+    try {
+      const record = await pocketbase.collection('blocked_users').create({
+        blocker: currentUserId,
+        blocked: userId,
+      })
+
+      set((state) => ({
+        blockedUsers: { ...state.blockedUsers, [userId]: record.id },
+      }))
+    } catch (error) {
+      console.warn('Failed to block user', error)
+      throw error
+    }
+  },
+  unblockUser: async (userId: string) => {
+    const currentUserId = pocketbase.authStore.record?.id
+    if (!currentUserId || !userId) {
+      return
+    }
+
+    const existing = get().blockedUsers[userId]
+    if (!existing) {
+      return
+    }
+
+    try {
+      await pocketbase.collection('blocked_users').delete(existing)
+
+      set((state) => {
+        const next = { ...state.blockedUsers }
+        delete next[userId]
+        return { blockedUsers: next }
+      })
+    } catch (error) {
+      console.warn('Failed to unblock user', error)
+      throw error
+    }
+  },
+  isUserBlocked: (userId?: string | null) => {
+    if (!userId) return false
+    return Boolean(get().blockedUsers[userId])
   },
   //
   //
@@ -241,6 +335,7 @@ export const createUserSlice: StateCreator<StoreSlices, [], [], UserSlice> = (se
       set(() => ({
         user: record,
       }))
+      await get().loadBlockedUsers()
       return record
     } catch (error) {
       console.error(error)
@@ -257,6 +352,7 @@ export const createUserSlice: StateCreator<StoreSlices, [], [], UserSlice> = (se
     set(() => ({
       user: response.record,
     }))
+    await get().loadBlockedUsers()
     return response.record
   },
   //
@@ -285,6 +381,7 @@ export const createUserSlice: StateCreator<StoreSlices, [], [], UserSlice> = (se
       set(() => ({
         user: record,
       }))
+      await get().loadBlockedUsers()
       return record
     } catch (error) {
       if ((error as ClientResponseError).status === 404) {
@@ -294,6 +391,7 @@ export const createUserSlice: StateCreator<StoreSlices, [], [], UserSlice> = (se
           set(() => ({
             user: record,
           }))
+          await get().loadBlockedUsers()
 
           return record
         } catch (err) {
@@ -312,6 +410,7 @@ export const createUserSlice: StateCreator<StoreSlices, [], [], UserSlice> = (se
       user: null,
       stagedUser: {},
       isInitialized: true,
+      blockedUsers: {},
     }))
 
     const resetFeed = get().resetFeed

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { View, Text, Pressable, ScrollView, Dimensions, ActivityIndicator, Keyboard, Platform, KeyboardAvoidingView, Animated } from 'react-native'
+import { View, Text, Pressable, ScrollView, Dimensions, ActivityIndicator, Keyboard, Platform, KeyboardAvoidingView, Animated, Linking } from 'react-native'
 import { router } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { s, c } from '@/features/style'
@@ -606,9 +606,9 @@ export function UnifiedOnboarding() {
           )}
 
           {/* Looks good button - styled like a form field */}
-          <Pressable
-            onPress={handleSubmit(onSubmit)}
-            disabled={!isFormValid || isSubmitting}
+        <Pressable
+          onPress={handleSubmit(onSubmit)}
+          disabled={!isFormValid || isSubmitting}
             style={{
               marginTop: (s.$1 as number) + 6,
               backgroundColor: c.accent,
@@ -633,6 +633,41 @@ export function UnifiedOnboarding() {
               </Text>
             )}
           </Pressable>
+          <Text
+            style={{
+              color: c.muted,
+              opacity: 0.8,
+              fontSize: 12,
+              fontFamily: 'Inter',
+              textAlign: 'center',
+              marginTop: 12,
+              lineHeight: 18,
+            }}
+          >
+            By continuing you agree to our{' '}
+            <Text
+              style={{ color: c.accent, textDecorationLine: 'underline' }}
+              onPress={() =>
+                Linking.openURL(
+                  'https://maxsworkspace.notion.site/Refs-Terms-of-Service-29a26179e8fe80be9a9cfe6b109e6eaf'
+                ).catch(() => {})
+              }
+            >
+              Terms of Use
+            </Text>{' '}
+            and{' '}
+            <Text
+              style={{ color: c.accent, textDecorationLine: 'underline' }}
+              onPress={() =>
+                Linking.openURL(
+                  'https://maxsworkspace.notion.site/Refs-Privacy-Policy-29a26179e8fe80c196adfb3ff9090669'
+                ).catch(() => {})
+              }
+            >
+              Privacy Policy
+            </Text>
+            .
+          </Text>
         </View>
 
       </ScrollView>

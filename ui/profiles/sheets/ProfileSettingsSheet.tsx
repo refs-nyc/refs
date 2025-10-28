@@ -2,7 +2,7 @@ import BottomSheet, { BottomSheetBackdrop, BottomSheetView, BottomSheetTextInput
 import React, { useMemo, useState, useRef, useEffect } from 'react'
 import { useAppStore } from '@/features/stores'
 import { c, s } from '@/features/style'
-import { Text, View, Pressable, useWindowDimensions, ActivityIndicator, Keyboard } from 'react-native'
+import { Text, View, Pressable, useWindowDimensions, ActivityIndicator, Keyboard, Linking } from 'react-native'
 import Ionicons from '@expo/vector-icons/Ionicons'
 import * as Location from 'expo-location'
 import { Image } from 'expo-image'
@@ -638,12 +638,28 @@ export const ProfileSettingsSheet = () => {
           </Text>
         </Pressable>
 
+        <Text
+          style={{
+            color: c.muted,
+            fontSize: 12,
+            fontFamily: 'Inter',
+            textAlign: 'center',
+            lineHeight: 18,
+            marginTop: s.$05,
+          }}
+        >
+          Need help or want to report someone? Open their chat, tap the menu, or email support@refs.nyc.
+        </Text>
+
         <Pressable
           onPress={() => {
-            console.log('Delete account')
+            const subject = encodeURIComponent('Delete my Refs account')
+            const body = encodeURIComponent('Please delete my Refs account associated with this email address.')
+            const mailtoUrl = `mailto:delete@refs.nyc?subject=${subject}&body=${body}`
+            Linking.openURL(mailtoUrl).catch(() => {})
           }}
           style={({ pressed }) => ({
-            backgroundColor: c.surface2,
+            backgroundColor: '#F6E3E3',
             borderRadius: s.$12,
             padding: s.$1,
             opacity: pressed ? 0.6 : 1,
@@ -651,7 +667,7 @@ export const ProfileSettingsSheet = () => {
         >
           <Text
             style={{
-              color: c.accent,
+              color: '#C04444',
               fontSize: 15,
               fontFamily: 'Inter',
               fontWeight: '600',

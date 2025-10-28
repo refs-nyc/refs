@@ -790,7 +790,7 @@ export function EdgeCorkboardScreen() {
                     )}
                   </RNPressable>
                 </RNAnimated.View>
-                {isSubscribed ? (
+                {isSubscribed && contentTab === 'mine' ? (
                   <Pressable
                     onPress={() => {
                       const isOwner = item?.expand?.ref?.creator === user?.id
@@ -809,13 +809,11 @@ export function EdgeCorkboardScreen() {
                       <Text style={{ color: c.surface, fontWeight: '700', fontSize: (s.$09 as number) - 2, transform: [{ scale: 1.3 }] }}>-</Text>
                     </View>
                   </Pressable>
-                ) : (
-                  showNewBadge && (
+                ) : (!isSubscribed && showNewBadge && (
                     <View style={{ position: 'absolute', top: -2, right: 0, backgroundColor: c.accent, borderRadius: 14, paddingHorizontal: 8, paddingVertical: 4, zIndex: 4 }}>
                       <Text style={{ color: c.surface, fontSize: (s.$09 as number) - 2, fontWeight: '700' }}>New</Text>
                     </View>
-                  )
-                )}
+                  ))}
               </Animated.View>
             )
           }}

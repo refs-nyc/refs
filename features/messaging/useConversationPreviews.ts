@@ -28,6 +28,7 @@ export type ConversationPreviewResult = {
 
 export function useConversationPreviews(enabled = true): ConversationPreviewResult {
   const { user, setConversationUnreadCount, clearConversationUnreadCounts } = useAppStore()
+  const blockedUsers = useAppStore((state) => state.blockedUsers)
   const userId = user?.id
 
   const query = useInfiniteQuery<ConversationsPage>({
@@ -53,11 +54,18 @@ export function useConversationPreviews(enabled = true): ConversationPreviewResu
     })
   }, [enabled, query.data])
 
+  const parseTimestamp = (value?: string | null): number => {
+    if (!value) return 0
+    const normalized = value.includes('T') ? value : value.replace(' ', 'T')
+    const time = Date.parse(normalized)
+    return Number.isNaN(time) ? 0 : time
+  }
+
   const previews = useMemo<ConversationPreviewSnapshot[]>(() => {
     const pages = query.data?.pages
     if (!pages) return []
 
-    return pages.flatMap((page) =>
+    const flattened = pages.flatMap((page) =>
       page.entries.map((entry) => ({
         conversation: entry.conversation as unknown as Conversation,
         memberships: entry.memberships,
@@ -65,7 +73,34 @@ export function useConversationPreviews(enabled = true): ConversationPreviewResu
         unreadCount: entry.unreadCount,
       }))
     )
-  }, [query.data?.pages])
+
+    const filtered = flattened.filter((preview) => {
+      if (!userId) return true
+      const isDirect = Boolean((preview.conversation as Conversation | undefined)?.is_direct)
+      if (!isDirect) return true
+      const otherMemberId = preview.memberships
+        .map((membership) => membership.expand?.user?.id)
+        .find((memberId) => memberId && memberId !== userId)
+      if (!otherMemberId) return true
+      return !blockedUsers[otherMemberId]
+    })
+
+    if (filtered.length <= 1) {
+      return filtered
+    }
+
+    return filtered.sort((a, b) => {
+      const aTime =
+        parseTimestamp(a.latestMessage?.created) ||
+        parseTimestamp((a.conversation as any)?.updated) ||
+        parseTimestamp((a.conversation as any)?.created)
+      const bTime =
+        parseTimestamp(b.latestMessage?.created) ||
+        parseTimestamp((b.conversation as any)?.updated) ||
+        parseTimestamp((b.conversation as any)?.created)
+      return bTime - aTime
+    })
+  }, [blockedUsers, query.data?.pages, userId])
 
   useEffect(() => {
     if (!enabled) return

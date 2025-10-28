@@ -198,8 +198,7 @@ export const DetailsCarouselItem = ({ item, index }: { item: ExpandedItem; index
 
   const profileUserName =
     currentItem.expand?.creator?.userName ||
-    currentItem.expand?.ref?.expand?.creator?.userName ||
-    (typeof currentItem.expand?.ref?.creator === 'string' ? currentItem.expand?.ref?.creator : null) ||
+    item.expand?.creator?.userName ||
     null
 
   const deepLink = profileUserName ? `refsnyc://profile/${profileUserName}` : 'https://refs.nyc'

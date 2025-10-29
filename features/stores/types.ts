@@ -50,6 +50,12 @@ export type DirectPhotoRefFields = {
   promptContext: string
 }
 
+export type ReportSheetContext = {
+  target: Profile
+  conversationId?: string | null
+  messageId?: string | null
+}
+
 export type UISlice = {
   editingProfile: boolean
   addingToList: string
@@ -61,6 +67,9 @@ export type UISlice = {
   addingRefId: string
   addingRefPrefill: RefPrefillFields | null
   newRefSheetRef: React.RefObject<BottomSheet>
+  deleteAccountSheetRef: React.RefObject<BottomSheet>
+  reportSheetRef: React.RefObject<BottomSheet>
+  reportSheetContext: ReportSheetContext | null
   settingsSheetRef: React.RefObject<BottomSheet>
   isSettingsSheetOpen: boolean
   settingsSheetHeight: number
@@ -79,6 +88,10 @@ export type UISlice = {
   setSettingsSheetHeight: (value: number) => void
   setShouldFocusLocationInput: (value: boolean) => void
   setIsEditMode: (value: boolean) => void
+  openDeleteAccountSheet: () => void
+  closeDeleteAccountSheet: () => void
+  openReportSheet: (context: ReportSheetContext) => void
+  closeReportSheet: () => void
   stopEditProfile: () => void
   startEditProfile: () => void
   // Background loading state

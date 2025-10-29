@@ -240,11 +240,13 @@ export const SimplePinataImage = ({
   imageOptions,
   placeholderStyle,
   style,
+  signingPriority = 'low',
   ...rest
 }: {
   originalSource: string
   placeholderStyle?: StyleProp<ViewStyle>
   imageOptions: OptimizeImageOptions
+  signingPriority?: 'must' | 'low'
 } & Omit<ImageProps, 'source' | 'style'> & { style?: ImageProps['style'] }) => {
   const scale = useWindowDimensions().scale
 
@@ -256,7 +258,7 @@ export const SimplePinataImage = ({
     [imageOptions.height, imageOptions.width, scale]
   )
 
-  const { source } = useSignedImageUrl(originalSource, imageOptionsWithScale)
+  const { source } = useSignedImageUrl(originalSource, imageOptionsWithScale, { priority: signingPriority })
   const finalSource = source ?? originalSource ?? null
   const imageStyle: ImageProps['style'] = style ?? { width: '100%', height: '100%' }
 

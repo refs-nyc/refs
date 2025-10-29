@@ -9,7 +9,6 @@ import {
   Pressable,
   Text,
   View,
-  Linking,
 } from 'react-native'
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { useQuery, type InfiniteData } from '@tanstack/react-query'
@@ -45,15 +44,16 @@ export function MessagesScreen({
   onClose?: () => void
   registerCloseHandler?: (fn: (() => void) | null) => void
 }) {
-  const user = useAppStore((state) => state.user)
-  const sendMessage = useAppStore((state) => state.sendMessage)
-  const sendReaction = useAppStore((state) => state.sendReaction)
-  const updateLastRead = useAppStore((state) => state.updateLastRead)
-  const setProfileNavIntent = useAppStore((state) => state.setProfileNavIntent)
-  const showToast = useAppStore((state) => state.showToast)
-  const blockUser = useAppStore((state) => state.blockUser)
-  const unblockUser = useAppStore((state) => state.unblockUser)
-  const blockedUsers = useAppStore((state) => state.blockedUsers)
+const user = useAppStore((state) => state.user)
+const sendMessage = useAppStore((state) => state.sendMessage)
+const sendReaction = useAppStore((state) => state.sendReaction)
+const updateLastRead = useAppStore((state) => state.updateLastRead)
+const setProfileNavIntent = useAppStore((state) => state.setProfileNavIntent)
+const showToast = useAppStore((state) => state.showToast)
+const blockUser = useAppStore((state) => state.blockUser)
+const unblockUser = useAppStore((state) => state.unblockUser)
+const blockedUsers = useAppStore((state) => state.blockedUsers)
+const openReportSheet = useAppStore((state) => state.openReportSheet)
   const activateInteractionGate = useAppStore((state) => state.activateInteractionGate)
   const deactivateInteractionGate = useAppStore((state) => state.deactivateInteractionGate)
   const navigation = useNavigation<any>()
@@ -291,7 +291,8 @@ export function MessagesScreen({
   // Use a fixed header height to prevent jumping on mount
   const headerHeight = insets.top + headerGap + headerPaddingBottom + (s.$4 as number)
 
-  const conversation = conversationQuery.data?.conversation
+const conversation = conversationQuery.data?.conversation
+const resolvedConversationId = conversation?.id ?? conversationId
   const membershipRecords = conversationQuery.data?.memberships ?? []
 
   useEffect(() => {
@@ -650,14 +651,14 @@ export function MessagesScreen({
     const blockLabel = isBlocked ? 'Unblock user' : `Block ${displayName}`
 
     const sendReport = () => {
-      const targetHandle = otherMemberHandle || displayName
-      const subject = encodeURIComponent('Report user')
-      const body = encodeURIComponent(
-        `I would like to report ${targetHandle}.\n\nPlease include any details below:`
-      )
-      const mailtoUrl = `mailto:support@refs.nyc?subject=${subject}&body=${body}`
-      Linking.openURL(mailtoUrl).catch(() => {
-        showToast('Unable to open mail client')
+      if (!otherMemberUser) {
+        showToast('Something went wrong')
+        return
+      }
+      openReportSheet({
+        target: otherMemberUser,
+        conversationId: resolvedConversationId,
+        messageId: null,
       })
     }
 
@@ -720,6 +721,9 @@ export function MessagesScreen({
     otherMemberDisplayName,
     otherMemberId,
     otherMemberHandle,
+    otherMemberUser,
+    openReportSheet,
+    resolvedConversationId,
     showToast,
     unblockUser,
   ])

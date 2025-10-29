@@ -12,6 +12,7 @@ export enum Collections {
   Mfas = '_mfas',
   Otps = '_otps',
   Superusers = '_superusers',
+  AccountDeletionRequests = 'account_deletion_requests',
   Conversations = 'conversations',
   Items = 'items',
   Memberships = 'memberships',
@@ -19,6 +20,7 @@ export enum Collections {
   Reactions = 'reactions',
   Refs = 'refs',
   Saves = 'saves',
+  UserReports = 'user_reports',
   Users = 'users',
 }
 
@@ -120,6 +122,20 @@ export type ConversationsRecord = {
   inviteTokenCreatedAt?: number
 }
 
+export enum AccountDeletionRequestsStatusOptions {
+  'scheduled' = 'scheduled',
+  'completed' = 'completed',
+}
+export type AccountDeletionRequestsRecord = {
+  created?: IsoDateString
+  id: string
+  notes?: string
+  scheduled_for?: IsoDateString
+  status: AccountDeletionRequestsStatusOptions
+  updated?: IsoDateString
+  user: RecordIdString
+}
+
 export type ItemsRecord = {
   backlog?: boolean
   created?: IsoDateString
@@ -191,6 +207,35 @@ export type SavesRecord = {
   user: RecordIdString
 }
 
+export enum UserReportsReasonOptions {
+  'spam' = 'spam',
+  'harassment' = 'harassment',
+  'hate' = 'hate',
+  'inappropriate' = 'inappropriate',
+  'other' = 'other',
+}
+
+export enum UserReportsStatusOptions {
+  'open' = 'open',
+  'in_review' = 'in_review',
+  'closed' = 'closed',
+}
+
+export type UserReportsRecord = {
+  conversation?: RecordIdString
+  context?: unknown
+  created?: IsoDateString
+  details?: string
+  id: string
+  include_recent_messages?: boolean
+  message?: RecordIdString
+  reason: UserReportsReasonOptions
+  reporter: RecordIdString
+  status: UserReportsStatusOptions
+  target_user: RecordIdString
+  updated?: IsoDateString
+}
+
 export type UsersRecord = {
   avatar_url?: string
   created?: IsoDateString
@@ -224,6 +269,8 @@ export type SuperusersResponse<Texpand = unknown> = Required<SuperusersRecord> &
   AuthSystemFields<Texpand>
 export type ConversationsResponse<Texpand = unknown> = Required<ConversationsRecord> &
   BaseSystemFields<Texpand>
+export type AccountDeletionRequestsResponse<Texpand = unknown> =
+  Required<AccountDeletionRequestsRecord> & BaseSystemFields<Texpand>
 export type ItemsResponse<Texpand = unknown> = Required<ItemsRecord> & BaseSystemFields<Texpand>
 export type MembershipsResponse<Texpand = unknown> = Required<MembershipsRecord> &
   BaseSystemFields<Texpand>
@@ -233,6 +280,8 @@ export type ReactionsResponse<Texpand = unknown> = Required<ReactionsRecord> &
   BaseSystemFields<Texpand>
 export type RefsResponse<Texpand = unknown> = Required<RefsRecord> & BaseSystemFields<Texpand>
 export type SavesResponse<Texpand = unknown> = Required<SavesRecord> & BaseSystemFields<Texpand>
+export type UserReportsResponse<Texpand = unknown> = Required<UserReportsRecord> &
+  BaseSystemFields<Texpand>
 export type UsersResponse<Texpand = unknown> = Required<UsersRecord> & AuthSystemFields<Texpand>
 
 // Types containing all Records and Responses, useful for creating typing helper functions
@@ -244,6 +293,7 @@ export type CollectionRecords = {
   _mfas: MfasRecord
   _otps: OtpsRecord
   _superusers: SuperusersRecord
+  account_deletion_requests: AccountDeletionRequestsRecord
   conversations: ConversationsRecord
   items: ItemsRecord
   memberships: MembershipsRecord
@@ -251,6 +301,7 @@ export type CollectionRecords = {
   reactions: ReactionsRecord
   refs: RefsRecord
   saves: SavesRecord
+  user_reports: UserReportsRecord
   users: UsersRecord
 }
 
@@ -261,6 +312,7 @@ export type CollectionResponses = {
   _mfas: MfasResponse
   _otps: OtpsResponse
   _superusers: SuperusersResponse
+  account_deletion_requests: AccountDeletionRequestsResponse
   conversations: ConversationsResponse
   items: ItemsResponse
   memberships: MembershipsResponse
@@ -268,6 +320,7 @@ export type CollectionResponses = {
   reactions: ReactionsResponse
   refs: RefsResponse
   saves: SavesResponse
+  user_reports: UserReportsResponse
   users: UsersResponse
 }
 
@@ -281,6 +334,7 @@ export type TypedPocketBase = PocketBase & {
   collection(idOrName: '_mfas'): RecordService<MfasResponse>
   collection(idOrName: '_otps'): RecordService<OtpsResponse>
   collection(idOrName: '_superusers'): RecordService<SuperusersResponse>
+  collection(idOrName: 'account_deletion_requests'): RecordService<AccountDeletionRequestsResponse>
   collection(idOrName: 'conversations'): RecordService<ConversationsResponse>
   collection(idOrName: 'items'): RecordService<ItemsResponse>
   collection(idOrName: 'memberships'): RecordService<MembershipsResponse>
@@ -288,5 +342,6 @@ export type TypedPocketBase = PocketBase & {
   collection(idOrName: 'reactions'): RecordService<ReactionsResponse>
   collection(idOrName: 'refs'): RecordService<RefsResponse>
   collection(idOrName: 'saves'): RecordService<SavesResponse>
+  collection(idOrName: 'user_reports'): RecordService<UserReportsResponse>
   collection(idOrName: 'users'): RecordService<UsersResponse>
 }

@@ -55,11 +55,13 @@ import { AddRefSheet } from '@/ui/profiles/sheets/AddRefSheet'
 import { NewRefSheet } from '@/ui/profiles/sheets/NewRefSheet'
 import { ProfileDetailsSheet } from '@/ui/profiles/ProfileDetailsSheet'
 import { ProfileSettingsSheet } from '@/ui/profiles/sheets/ProfileSettingsSheet'
+import { DeleteAccountSheet } from '@/ui/profiles/sheets/DeleteAccountSheet'
 import { CommunityFormSheet } from '@/ui/communities/CommunityFormSheet'
 import { RemoveInterestSheet } from '@/ui/communities/RemoveInterestSheet'
 import { NotificationPromptSheet } from '@/ui/notifications/NotificationPromptSheet'
 import { OtherProfileAvatarZoom } from '@/ui/profiles/OtherProfileAvatarZoom'
 import { RemoveRefSheetGlobal } from '@/ui/profiles/sheets/RemoveRefSheetGlobal'
+import { ReportUserSheet } from '@/ui/messaging/ReportUserSheet'
 import { queryClient } from '@/core/queryClient'
 import { preloadInitial, startRealtime } from '@/core/preload-controller'
 import { seedBootSnapshots } from '@/core/bootstrap/seedSnapshots'
@@ -540,10 +542,12 @@ function RootLayoutNav() {
       <LogoutSheet bottomSheetRef={logoutSheetRef} />
       {/* profile settings sheet */}
       <ProfileSettingsSheet />
+      <DeleteAccountSheet />
       {/* community form sheet */}
       <CommunityFormSheet />
       <DirectMessageComposer />
       <GroupMessageComposer />
+      <ReportUserSheet />
       <RemoveInterestSheet />
       <NotificationPromptSheet />
       <OtherProfileAvatarZoom />

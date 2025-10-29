@@ -383,6 +383,8 @@ export const DetailsCarouselItem = ({ item, index }: { item: ExpandedItem; index
                         imageOptions={{ width: detailImageSize, height: detailImageSize }}
                         placeholderStyle={{ flex: 1 }}
                         style={[{ width: '100%', height: '100%', borderRadius: s.$075 }]}
+                        signingPriority="must"
+                        priority="high"
                       />
                     </BottomSheetView>
                   </Animated.View>

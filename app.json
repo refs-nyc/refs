@@ -43,7 +43,7 @@
       [
         "expo-location",
         {
-          "locationAlwaysAndWhenInUsePermission": "Allow Refs to use your location to show people nearby."
+          "locationAlwaysAndWhenInUsePermission": "Allow Refs to use your location to show your neighborhood on your profile."
         }
       ],
       "expo-localization"

@@ -958,6 +958,82 @@
     "system": true
   },
   {
+    "id": "pbc_1257691492",
+    "listRule": null,
+    "viewRule": null,
+    "createRule": null,
+    "updateRule": null,
+    "deleteRule": null,
+    "name": "blocked_users",
+    "type": "base",
+    "fields": [
+      {
+        "autogeneratePattern": "[a-z0-9]{15}",
+        "hidden": false,
+        "id": "text3208210256",
+        "max": 15,
+        "min": 15,
+        "name": "id",
+        "pattern": "^[a-z0-9]+$",
+        "presentable": false,
+        "primaryKey": true,
+        "required": true,
+        "system": true,
+        "type": "text"
+      },
+      {
+        "cascadeDelete": true,
+        "collectionId": "_pb_users_auth_",
+        "hidden": false,
+        "id": "relation780230353",
+        "maxSelect": 1,
+        "minSelect": 0,
+        "name": "blocker",
+        "presentable": false,
+        "required": true,
+        "system": false,
+        "type": "relation"
+      },
+      {
+        "cascadeDelete": true,
+        "collectionId": "_pb_users_auth_",
+        "hidden": false,
+        "id": "relation3663063936",
+        "maxSelect": 1,
+        "minSelect": 0,
+        "name": "blocked",
+        "presentable": false,
+        "required": true,
+        "system": false,
+        "type": "relation"
+      },
+      {
+        "hidden": false,
+        "id": "autodate2990389176",
+        "name": "created",
+        "onCreate": true,
+        "onUpdate": false,
+        "presentable": false,
+        "system": false,
+        "type": "autodate"
+      },
+      {
+        "hidden": false,
+        "id": "autodate3332085495",
+        "name": "updated",
+        "onCreate": true,
+        "onUpdate": true,
+        "presentable": false,
+        "system": false,
+        "type": "autodate"
+      }
+    ],
+    "indexes": [
+      "CREATE UNIQUE INDEX idx_blocked_unique ON blocked_users (\n  blocker,\n  blocked\n);\n"
+    ],
+    "system": false
+  },
+  {
     "id": "pbc_728114816",
     "listRule": "@request.auth.id != \"\" &&\nmemberships_via_conversation.user ?= @request.auth.id",
     "viewRule": "@request.auth.id != \"\" &&\nmemberships_via_conversation.user ?= @request.auth.id",
@@ -1722,342 +1798,6 @@
     "indexes": [
       "CREATE UNIQUE INDEX `idx_nzWX7Pv51V` ON `saves` (\n  `saved_by`,\n  `user`\n)"
     ],
-    "system": false
-  },
-  {
-    "id": "pbc_1257691492",
-    "listRule": null,
-    "viewRule": null,
-    "createRule": null,
-    "updateRule": null,
-    "deleteRule": null,
-    "name": "blocked_users",
-    "type": "base",
-    "fields": [
-      {
-        "autogeneratePattern": "[a-z0-9]{15}",
-        "hidden": false,
-        "id": "text3208210256",
-        "max": 15,
-        "min": 15,
-        "name": "id",
-        "pattern": "^[a-z0-9]+$",
-        "presentable": false,
-        "primaryKey": true,
-        "required": true,
-        "system": true,
-        "type": "text"
-      },
-      {
-        "cascadeDelete": true,
-        "collectionId": "_pb_users_auth_",
-        "hidden": false,
-        "id": "relation780230353",
-        "maxSelect": 1,
-        "minSelect": 0,
-        "name": "blocker",
-        "presentable": false,
-        "required": true,
-        "system": false,
-        "type": "relation"
-      },
-      {
-        "cascadeDelete": true,
-        "collectionId": "_pb_users_auth_",
-        "hidden": false,
-        "id": "relation3663063936",
-        "maxSelect": 1,
-        "minSelect": 0,
-        "name": "blocked",
-        "presentable": false,
-        "required": true,
-        "system": false,
-        "type": "relation"
-      },
-      {
-        "hidden": false,
-        "id": "autodate2990389176",
-        "name": "created",
-        "onCreate": true,
-        "onUpdate": false,
-        "presentable": false,
-        "system": false,
-        "type": "autodate"
-      },
-      {
-        "hidden": false,
-        "id": "autodate3332085495",
-        "name": "updated",
-        "onCreate": true,
-        "onUpdate": true,
-        "presentable": false,
-        "system": false,
-        "type": "autodate"
-      }
-    ],
-    "indexes": [
-      "CREATE UNIQUE INDEX idx_blocked_unique ON blocked_users (\n  blocker,\n  blocked\n);\n"
-    ],
-    "system": false
-  },
-  {
-    "id": "pbc_4100259471",
-    "listRule": "@request.auth.id != \"\" &&\nuser = @request.auth.id",
-    "viewRule": "@request.auth.id != \"\" &&\nuser = @request.auth.id",
-    "createRule": "@request.auth.id != \"\" &&\nuser = @request.auth.id",
-    "updateRule": "@request.auth.id != \"\" &&\nuser = @request.auth.id",
-    "deleteRule": "@request.auth.id != \"\" &&\nuser = @request.auth.id",
-    "name": "account_deletion_requests",
-    "type": "base",
-    "fields": [
-      {
-        "autogeneratePattern": "[a-z0-9]{15}",
-        "hidden": false,
-        "id": "text2928475011",
-        "max": 15,
-        "min": 15,
-        "name": "id",
-        "pattern": "^[a-z0-9]+$",
-        "presentable": false,
-        "primaryKey": true,
-        "required": true,
-        "system": true,
-        "type": "text"
-      },
-      {
-        "cascadeDelete": true,
-        "collectionId": "_pb_users_auth_",
-        "hidden": false,
-        "id": "relation2145983200",
-        "maxSelect": 1,
-        "minSelect": 1,
-        "name": "user",
-        "presentable": false,
-        "required": true,
-        "system": false,
-        "type": "relation"
-      },
-      {
-        "hidden": false,
-        "id": "date2145983201",
-        "max": "",
-        "min": "",
-        "name": "scheduled_for",
-        "presentable": false,
-        "required": false,
-        "system": false,
-        "type": "date"
-      },
-      {
-        "hidden": false,
-        "id": "select2145983202",
-        "name": "status",
-        "presentable": false,
-        "required": true,
-        "system": false,
-        "type": "select",
-        "maxSelect": 1,
-        "values": [
-          "scheduled",
-          "completed"
-        ]
-      },
-      {
-        "hidden": false,
-        "id": "text2145983203",
-        "max": 500,
-        "min": 0,
-        "name": "notes",
-        "pattern": "",
-        "presentable": false,
-        "required": false,
-        "system": false,
-        "type": "text"
-      },
-      {
-        "hidden": false,
-        "id": "autodate2145983204",
-        "name": "created",
-        "onCreate": true,
-        "onUpdate": false,
-        "presentable": false,
-        "system": false,
-        "type": "autodate"
-      },
-      {
-        "hidden": false,
-        "id": "autodate2145983205",
-        "name": "updated",
-        "onCreate": true,
-        "onUpdate": true,
-        "presentable": false,
-        "system": false,
-        "type": "autodate"
-      }
-    ],
-    "indexes": [],
-    "system": false
-  },
-  {
-    "id": "pbc_4203985222",
-    "listRule": "@request.auth.id != \"\" &&\nreporter = @request.auth.id",
-    "viewRule": "@request.auth.id != \"\" &&\nreporter = @request.auth.id",
-    "createRule": "@request.auth.id != \"\" &&\nreporter = @request.auth.id",
-    "updateRule": "@request.auth.id != \"\" &&\nreporter = @request.auth.id",
-    "deleteRule": "@request.auth.id != \"\" &&\nreporter = @request.auth.id",
-    "name": "user_reports",
-    "type": "base",
-    "fields": [
-      {
-        "autogeneratePattern": "[a-z0-9]{15}",
-        "hidden": false,
-        "id": "text2004985300",
-        "max": 15,
-        "min": 15,
-        "name": "id",
-        "pattern": "^[a-z0-9]+$",
-        "presentable": false,
-        "primaryKey": true,
-        "required": true,
-        "system": true,
-        "type": "text"
-      },
-      {
-        "cascadeDelete": true,
-        "collectionId": "_pb_users_auth_",
-        "hidden": false,
-        "id": "relation2004985301",
-        "maxSelect": 1,
-        "minSelect": 1,
-        "name": "reporter",
-        "presentable": false,
-        "required": true,
-        "system": false,
-        "type": "relation"
-      },
-      {
-        "cascadeDelete": false,
-        "collectionId": "_pb_users_auth_",
-        "hidden": false,
-        "id": "relation2004985302",
-        "maxSelect": 1,
-        "minSelect": 1,
-        "name": "target_user",
-        "presentable": false,
-        "required": true,
-        "system": false,
-        "type": "relation"
-      },
-      {
-        "cascadeDelete": false,
-        "collectionId": "pbc_728114816",
-        "hidden": false,
-        "id": "relation2004985303",
-        "maxSelect": 1,
-        "minSelect": 0,
-        "name": "conversation",
-        "presentable": false,
-        "required": false,
-        "system": false,
-        "type": "relation"
-      },
-      {
-        "cascadeDelete": false,
-        "collectionId": "pbc_2605467279",
-        "hidden": false,
-        "id": "relation2004985304",
-        "maxSelect": 1,
-        "minSelect": 0,
-        "name": "message",
-        "presentable": false,
-        "required": false,
-        "system": false,
-        "type": "relation"
-      },
-      {
-        "hidden": false,
-        "id": "select2004985305",
-        "name": "reason",
-        "presentable": false,
-        "required": true,
-        "system": false,
-        "type": "select",
-        "maxSelect": 1,
-        "values": [
-          "spam",
-          "harassment",
-          "hate",
-          "inappropriate",
-          "other"
-        ]
-      },
-      {
-        "hidden": false,
-        "id": "text2004985306",
-        "max": 1000,
-        "min": 0,
-        "name": "details",
-        "pattern": "",
-        "presentable": false,
-        "required": false,
-        "system": false,
-        "type": "text"
-      },
-      {
-        "hidden": false,
-        "id": "bool2004985307",
-        "name": "include_recent_messages",
-        "presentable": false,
-        "required": false,
-        "system": false,
-        "type": "bool"
-      },
-      {
-        "hidden": false,
-        "id": "json2004985308",
-        "name": "context",
-        "presentable": false,
-        "required": false,
-        "system": false,
-        "type": "json"
-      },
-      {
-        "hidden": false,
-        "id": "select2004985309",
-        "name": "status",
-        "presentable": false,
-        "required": true,
-        "system": false,
-        "type": "select",
-        "maxSelect": 1,
-        "values": [
-          "open",
-          "in_review",
-          "closed"
-        ]
-      },
-      {
-        "hidden": false,
-        "id": "autodate2004985310",
-        "name": "created",
-        "onCreate": true,
-        "onUpdate": false,
-        "presentable": false,
-        "system": false,
-        "type": "autodate"
-      },
-      {
-        "hidden": false,
-        "id": "autodate2004985311",
-        "name": "updated",
-        "onCreate": true,
-        "onUpdate": true,
-        "presentable": false,
-        "system": false,
-        "type": "autodate"
-      }
-    ],
-    "indexes": [],
     "system": false
   }
 ]

@@ -1,16 +1,17 @@
 import { View } from 'react-native'
-import { Image } from 'expo-image'
 import { s } from '@/features/style'
 import { SearchLoadingSpinner } from '@/ui/atoms/SearchLoadingSpinner'
-import { getThumbUrl } from '@/features/media/thumb'
+import { SimplePinataImage } from '@/ui/images/SimplePinataImage'
+import { DEFAULT_TILE_SIZE } from './GridTile'
 
 export const GridTileImage = ({ source, processing = false }: { source: string; processing?: boolean }) => {
-  const thumbSource = getThumbUrl(source)
   return (
     <View style={{ width: '100%', height: '100%' }}>
-      <Image
-        style={[{ borderRadius: s.$075, width: '100%', height: '100%' }]}
-        source={thumbSource ?? source}
+      <SimplePinataImage
+        originalSource={source}
+        imageOptions={{ width: DEFAULT_TILE_SIZE, height: DEFAULT_TILE_SIZE }}
+        placeholderStyle={{ borderRadius: s.$075, width: '100%', height: '100%' }}
+        style={{ borderRadius: s.$075, width: '100%', height: '100%' }}
         contentFit="cover"
         priority="low"
         transition={200}

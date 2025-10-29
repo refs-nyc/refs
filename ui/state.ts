@@ -11,6 +11,9 @@ export const createUISlice: StateCreator<StoreSlices, [], [], UISlice> = (set, g
   referencersSheetApi: null,
   logoutSheetRef: React.createRef<BottomSheet>(),
   detailsSheetRef: React.createRef<BottomSheet>(),
+  deleteAccountSheetRef: React.createRef<BottomSheet>(),
+  reportSheetRef: React.createRef<BottomSheet>(),
+  reportSheetContext: null,
   detailsItemId: null,
   detailsProfileUsername: null,
   detailsOpenedFromFeed: false,
@@ -114,6 +117,29 @@ export const createUISlice: StateCreator<StoreSlices, [], [], UISlice> = (set, g
   setIsEditMode: (value: boolean) => {
     set(() => ({
       isEditMode: value,
+    }))
+  },
+  openDeleteAccountSheet: () => {
+    const ref = get().deleteAccountSheetRef
+    requestAnimationFrame(() => {
+      ref.current?.snapToIndex(0)
+    })
+  },
+  closeDeleteAccountSheet: () => {
+    get().deleteAccountSheetRef.current?.close()
+  },
+  openReportSheet: (context) => {
+    set(() => ({
+      reportSheetContext: context,
+    }))
+    requestAnimationFrame(() => {
+      get().reportSheetRef.current?.snapToIndex(0)
+    })
+  },
+  closeReportSheet: () => {
+    get().reportSheetRef.current?.close()
+    set(() => ({
+      reportSheetContext: null,
     }))
   },
   editingProfile: false,

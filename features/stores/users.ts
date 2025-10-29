@@ -8,6 +8,24 @@ import { InteractionManager } from 'react-native'
 import { updateShowInDirectory } from './items'
 import { clearPersistedQueryClient } from '@/core/queryClient'
 const OFF_AUTH_RESTORE = process.env.EXPO_PUBLIC_OFF_AUTH_RESTORE === '1'
+const deleteCollectionRecords = async (collectionName: string, filter: string) => {
+  try {
+    const service = pocketbase.collection(collectionName)
+    const records = await service.getFullList<{ id: string }>(200, {
+      filter,
+      fields: 'id',
+    })
+    for (const record of records) {
+      try {
+        await service.delete(record.id)
+      } catch (error) {
+        console.warn('[account-delete] record delete failed', { collectionName, id: record.id, error })
+      }
+    }
+  } catch (error) {
+    console.warn('[account-delete] fetch failed', { collectionName, error })
+  }
+}
 
 export type DirectoryUser = {
   id: string
@@ -39,6 +57,15 @@ export type UserSlice = {
   blockUser: (userId: string) => Promise<void>
   unblockUser: (userId: string) => Promise<void>
   isUserBlocked: (userId?: string | null) => boolean
+  deleteAccount: (options: { password: string }) => Promise<void>
+  submitUserReport: (payload: {
+    targetUserId: string
+    conversationId?: string | null
+    messageId?: string | null
+    reason: string
+    details?: string
+    includeRecentMessages?: boolean
+  }) => Promise<void>
 }
 
 export const createUserSlice: StateCreator<StoreSlices, [], [], UserSlice> = (set, get) => ({
@@ -422,5 +449,115 @@ export const createUserSlice: StateCreator<StoreSlices, [], [], UserSlice> = (se
 
     pocketbase.realtime.unsubscribe()
     pocketbase.authStore.clear()
+  },
+  deleteAccount: async ({ password }) => {
+    const user = get().user
+    const authRecord = pocketbase.authStore.record
+
+    if (!user || !authRecord?.id) {
+      throw new Error('You must be signed in to delete your account.')
+    }
+
+    if (!user.email) {
+      throw new Error('Unable to locate your email address. Please try again later.')
+    }
+
+    const trimmedPassword = password.trim()
+    if (!trimmedPassword) {
+      throw new Error('Please re-enter your password to continue.')
+    }
+
+    const userId = authRecord.id
+
+    try {
+      await pocketbase.collection('users').authWithPassword(user.email, trimmedPassword)
+    } catch (error) {
+      if ((error as ClientResponseError)?.status === 400) {
+        throw new Error('Incorrect password. Please try again.')
+      }
+      throw error
+    }
+
+    try {
+      await deleteCollectionRecords('reactions', `user = "${userId}"`)
+      await deleteCollectionRecords('messages', `sender = "${userId}"`)
+      await deleteCollectionRecords('memberships', `user = "${userId}"`)
+      await deleteCollectionRecords('saves', `saved_by = "${userId}"`)
+      await deleteCollectionRecords('saves', `user = "${userId}"`)
+      await deleteCollectionRecords('items', `creator = "${userId}"`)
+      await deleteCollectionRecords('refs', `creator = "${userId}"`)
+      await deleteCollectionRecords('blocked_users', `blocked = "${userId}"`)
+
+      await pocketbase.collection('users').delete(userId)
+      get().logout()
+    } catch (error) {
+      throw error
+    }
+  },
+  submitUserReport: async ({
+    targetUserId,
+    conversationId,
+    messageId,
+    reason,
+    details,
+    includeRecentMessages,
+  }) => {
+    const reporterId = pocketbase.authStore.record?.id
+
+    if (!reporterId) {
+      throw new Error('You need to be signed in to report someone.')
+    }
+
+    if (!targetUserId) {
+      throw new Error('Select a user to report.')
+    }
+
+    const trimmedReason = reason.trim()
+    if (!trimmedReason) {
+      throw new Error('Select a reason for this report.')
+    }
+
+    let contextPayload: unknown = null
+    const shouldIncludeMessages = Boolean(includeRecentMessages && conversationId)
+
+    if (shouldIncludeMessages) {
+      try {
+        const messages = await pocketbase.collection('messages').getList(1, 10, {
+          filter: `conversation = "${conversationId}"`,
+          sort: '-created',
+          fields: 'id,text,sender,created',
+        })
+
+        contextPayload = messages.items
+          .map((msg: any) => ({
+            id: msg.id,
+            sender: msg.sender,
+            text: msg.text ?? '',
+            created: msg.created,
+          }))
+          .reverse()
+      } catch (error) {
+        console.warn('[report-user] failed to collect context', error)
+      }
+    }
+
+    const payload: Record<string, unknown> = {
+      reporter: reporterId,
+      target_user: targetUserId,
+      reason: trimmedReason,
+      details: details?.trim() || '',
+      include_recent_messages: shouldIncludeMessages,
+      context: contextPayload,
+      status: 'open',
+    }
+
+    if (conversationId) {
+      payload.conversation = conversationId
+    }
+    if (messageId) {
+      payload.message = messageId
+    }
+
+    await pocketbase.collection('user_reports').create(payload)
   },
 })

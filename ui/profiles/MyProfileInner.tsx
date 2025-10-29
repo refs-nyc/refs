@@ -810,6 +810,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
         {(() => {
           const outerRingSize = AVATAR_SIZE * 1.1
           const innerRingSize = AVATAR_SIZE
+          const ringPadding = (outerRingSize - innerRingSize) / 2
           const avatarNode = (
             <RNAnimated.View style={{ transform: [{ scale: avatarScale }], opacity: avatarSwapOpacity }}>
               <View
@@ -819,9 +820,8 @@ export const MyProfile = ({ userName }: { userName: string }) => {
                   borderRadius: outerRingSize / 2,
                   alignItems: 'center',
                   justifyContent: 'center',
-                  backgroundColor: c.surface,
-                  borderWidth: 2.5,
-                  borderColor: avatarUri ? '#B0B0B0' : `rgba(128, 128, 128, 0.1)`,
+                  backgroundColor: avatarUri ? '#B0B0B0' : c.accent,
+                  padding: ringPadding,
                 }}
               >
                 <View
@@ -829,12 +829,12 @@ export const MyProfile = ({ userName }: { userName: string }) => {
                     width: innerRingSize,
                     height: innerRingSize,
                     borderRadius: innerRingSize / 2,
-                    borderWidth: 2.5,
-                    borderColor: avatarUri ? c.surface : `rgba(128, 128, 128, 0.1)`,
+                    borderWidth: avatarUri ? 0 : 2.5,
+                    borderColor: avatarUri ? 'transparent' : c.accent,
                     overflow: 'hidden',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    backgroundColor: 'transparent',
+                    backgroundColor: c.surface,
                     borderStyle: avatarUri ? 'solid' : 'dashed',
                   }}
                 >

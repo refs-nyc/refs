@@ -134,7 +134,7 @@ const PROMPT_SUGGESTIONS: PromptSuggestion[] = [
   { text: 'Link you shared recently' },
   { text: 'Free space' },
   { text: 'Example of perfect design' },
-  { text: 'Nascent hobby' },
+  { text: 'Something I want to do more of' },
   { text: 'Most-rewatched movie' },
   { text: 'Neighborhood spot' },
   { text: 'What you put on aux' },
@@ -142,23 +142,27 @@ const PROMPT_SUGGESTIONS: PromptSuggestion[] = [
   { text: 'A preferred publication' },
   { text: 'Something on your reading list' },
   { text: 'A tool you actually love using' },
-  { text: 'Piece from a museum', photoPath: true },
-  { text: 'Tradition you love', photoPath: true },
-  { text: 'Meme', photoPath: true },
-  { text: 'Halloween pic', photoPath: true },
-  { text: 'Favorite view', photoPath: true },
-  { text: "Material you're drawn to", photoPath: true },
-  { text: 'Someone who shaped your taste', photoPath: true },
-  { text: 'Ritual that grounds you', photoPath: true },
-  { text: 'Sense of style in a single pic', photoPath: true },
-  { text: 'From a day you felt alive', photoPath: true },
-  { text: 'When the gang looked beautiful', photoPath: true },
-  { text: "Quietest place you've been", photoPath: true },
-  { text: 'Evidence of a good time', photoPath: true },
-  { text: 'Something you screenshotted', photoPath: true },
-  { text: 'Photo of a project mid-life', photoPath: true },
-  { text: 'A street corner', photoPath: true },
-  { text: 'Personal website/twitter', photoPath: true },
+  { text: "Something I'm good at" },
+  { text: 'Food', photoPath: false },
+  { text: 'Game I like', photoPath: false },
+  { text: 'Piece from a museum', photoPath: false },
+  { text: 'Tradition you love', photoPath: false },
+  { text: 'Meme', photoPath: false },
+  { text: 'Halloween pic', photoPath: false },
+  { text: 'Favorite view', photoPath: false },
+  { text: "Material you're drawn to", photoPath: false },
+  { text: 'Someone who shaped your taste', photoPath: false },
+  { text: 'Ritual that grounds you', photoPath: false },
+  { text: 'Sense of style in a single pic', photoPath: false },
+  { text: 'From a moment you felt alive', photoPath: false },
+  { text: 'When the gang looked beautiful', photoPath: false },
+  { text: "Quietest place you've been", photoPath: false },
+  { text: 'Evidence of a good time', photoPath: false },
+  { text: 'Something you screenshotted', photoPath: false },
+  { text: 'Photo of a project mid-life', photoPath: false },
+  { text: 'A street corner', photoPath: false },
+  { text: 'Personal website/twitter', photoPath: false },
+  { text: 'Animal', photoPath: false },
   { text: 'Coolest thing in your immediate vicinity', cameraPath: true },
 ]
 
@@ -653,13 +657,26 @@ export const MyProfile = ({ userName }: { userName: string }) => {
 
   // Combine grid items with optimistic items for display
   const displayGridItems = useMemo(() => {
+    // First, filter out completed prompts (prompts that have been fulfilled with actual refs)
+    const refsWithImages = new Set(
+      gridItems
+        .filter(item => !(item as any).__promptKind && (item.image || item.expand?.ref?.image))
+        .map(item => item.ref)
+    )
+    
+    // Filter out prompt items that have been completed (same ref exists with an image)
+    const filteredGridItems = gridItems.filter(item => {
+      if (!(item as any).__promptKind) return true // Keep all non-prompt items
+      return !refsWithImages.has(item.ref) // Only keep prompts that haven't been completed
+    })
+    
     // Early return if no optimistic items
     if (optimisticItems.size === 0) {
-      return gridItems
+      return filteredGridItems
     }
     
     // Create a Set of existing grid item IDs for O(1) lookup
-    const gridItemIds = new Set(gridItems.map(item => item.id))
+    const gridItemIds = new Set(filteredGridItems.map(item => item.id))
     
     // Filter out optimistic items that already exist in grid items
     const filteredOptimisticItems = Array.from(optimisticItems.values()).filter(optimisticItem =>
@@ -668,11 +685,11 @@ export const MyProfile = ({ userName }: { userName: string }) => {
     
     // Only create new array if we actually have optimistic items to add
     if (filteredOptimisticItems.length === 0) {
-      return gridItems
+      return filteredGridItems
     }
     
     // Use a stable reference to prevent unnecessary re-renders
-    return [...gridItems, ...filteredOptimisticItems]
+    return [...filteredGridItems, ...filteredOptimisticItems]
   }, [gridItems, optimisticItems.size]) // Only depend on size, not the actual objects
 
   const animatedItemsRef = useRef<Set<string>>(new Set())

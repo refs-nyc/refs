@@ -17,12 +17,12 @@ import Ionicons from '@expo/vector-icons/Ionicons'
 import { BottomSheetScrollView, BottomSheetTextInput, BottomSheetView } from '@gorhom/bottom-sheet'
 import { Zoomable } from '@likashefqet/react-native-image-zoom'
 import { Link, useRouter } from 'expo-router'
-import { useContext, useState, useEffect, useCallback } from 'react'
-import { Keyboard, Pressable, Share, Text, useWindowDimensions, View } from 'react-native'
+import { useContext, useState, useEffect, useCallback, useMemo } from 'react'
+import { Keyboard, Pressable, Share, Text, useWindowDimensions, View, Linking } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { TextInput } from 'react-native-gesture-handler'
 import { KeyboardAvoidingView } from 'react-native-keyboard-controller'
-import Animated, { useAnimatedStyle, withTiming, useSharedValue } from 'react-native-reanimated'
+import Animated, { FadeIn, FadeOut, useAnimatedStyle, withTiming, useSharedValue } from 'react-native-reanimated'
 import { useStore } from 'zustand'
 import * as Clipboard from 'expo-clipboard'
 
@@ -203,7 +203,7 @@ export const DetailsCarouselItem = ({ item, index }: { item: ExpandedItem; index
 
   const deepLink = profileUserName ? `refsnyc://profile/${profileUserName}` : 'https://refs.nyc'
   const shareTitle = currentItem.expand?.ref?.title || currentItem.text || 'Check this out on Refs'
-  const imageSource =
+  const imageAssetSource =
     currentItem.image ||
     currentItem.expand?.ref?.image ||
     item.image ||
@@ -235,12 +235,62 @@ export const DetailsCarouselItem = ({ item, index }: { item: ExpandedItem; index
     }
   }, [deepLink, setShowContextMenu, showToast])
 
+  const imageSourceMemo = useMemo(() => {
+    const extractSource = (value?: string | null) => {
+      if (!value) return null
+      if (typeof value !== 'string') return null
+      try {
+        const parsed = JSON.parse(value)
+        const source = parsed?.imageSource || parsed?.image_source
+        if (source?.url) {
+          return {
+            url: String(source.url),
+            label: typeof source.label === 'string' ? source.label : undefined,
+          }
+        }
+      } catch (error) {
+        return null
+      }
+      return null
+    }
+
+    const fromItem = extractSource(currentItem.promptContext)
+    if (fromItem) {
+      return fromItem
+    }
+    const refPromptContext = (currentItem.expand?.ref as { promptContext?: string } | undefined)?.promptContext
+    return extractSource(refPromptContext)
+  }, [currentItem.promptContext, currentItem.expand?.ref])
+
+  if (__DEV__) {
+    console.log('[details] promptContext', currentItem.promptContext)
+    console.log('[details] imageSource', imageSourceMemo)
+  }
+
+  const imageSource = imageSourceMemo
+
+  const handleOpenImageSource = useCallback(() => {
+    if (!imageSource?.url) return
+    Linking.openURL(imageSource.url).catch(() => {})
+    setShowContextMenu(false)
+  }, [imageSource?.url, setShowContextMenu])
+
+  const showImageSourcePill = Boolean(imageSource?.url && showContextMenu && currentIndex === index)
+
   // Sync currentItem with item prop when it changes (unless we're editing)
   useEffect(() => {
     if (!editingThisItem) {
       setCurrentItem(item)
     }
-  }, [item.id, item.text, item.url, item.expand?.ref?.title, editingThisItem])
+  }, [
+    item.id,
+    item.text,
+    item.url,
+    item.promptContext,
+    item.expand?.ref?.title,
+    item.expand?.ref,
+    editingThisItem,
+  ])
 
   // Initialize editing state only when needed
   useEffect(() => {
@@ -364,7 +414,7 @@ export const DetailsCarouselItem = ({ item, index }: { item: ExpandedItem; index
                   onCopyLinkPress={handleCopyLink}
                 />
               )}
-              {imageSource ? (
+              {imageAssetSource ? (
                 <Zoomable minScale={0.25} maxScale={3} isPanEnabled={true}>
                   <Animated.View
                     style={[
@@ -379,7 +429,7 @@ export const DetailsCarouselItem = ({ item, index }: { item: ExpandedItem; index
                   >
                     <BottomSheetView style={{ flex: 1, padding: s.$075 }}>
                       <SimplePinataImage
-                        originalSource={imageSource}
+                        originalSource={imageAssetSource}
                         imageOptions={{ width: detailImageSize, height: detailImageSize }}
                         placeholderStyle={{ flex: 1 }}
                         style={[{ width: '100%', height: '100%', borderRadius: s.$075 }]}
@@ -399,6 +449,50 @@ export const DetailsCarouselItem = ({ item, index }: { item: ExpandedItem; index
                   {/* List */}
                   {currentItem.list && <ListContainer editingRights={!!editingRights} item={currentItem} />}
                 </BottomSheetView>
+              )}
+              {showImageSourcePill && (
+                <Animated.View
+                  entering={FadeIn.duration(200).delay(100)}
+                  exiting={FadeOut.duration(200)}
+                  style={{
+                    position: 'absolute',
+                    top: s.$1,
+                    right: s.$1,
+                  }}
+                >
+                  <Pressable
+                    onPress={handleOpenImageSource}
+                    style={{
+                      backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                      paddingHorizontal: 14,
+                      paddingVertical: 8,
+                      borderRadius: 20,
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      gap: 6,
+                      shadowColor: '#000',
+                      shadowOffset: { width: 0, height: 2 },
+                      shadowOpacity: 0.08,
+                      shadowRadius: 4,
+                      elevation: 2,
+                    }}
+                    hitSlop={10}
+                    accessibilityRole="button"
+                    accessibilityLabel="Open image source"
+                  >
+                    <Ionicons name="open-outline" size={15} color={c.grey2} />
+                    <Text
+                      style={{
+                        color: c.grey2,
+                        fontSize: 13,
+                        fontWeight: '600',
+                        letterSpacing: 0.3,
+                      }}
+                    >
+                      Image source
+                    </Text>
+                  </Pressable>
+                </Animated.View>
               )}
             </BottomSheetView>
 

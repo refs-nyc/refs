@@ -11,7 +11,10 @@ export type ExpandedItem = PBTypes.ItemsResponse<{
   items_via_parent: Array<PBTypes.ItemsResponse<{
     ref: PBTypes.RefsRecord
   }>> // list children with expanded refs
-}>
+}> & {
+  __promptKind?: 'interest' | 'event' // Community prompt type (added at runtime)
+  __emphasized?: boolean // Emphasized flag for community items (added at runtime)
+}
 
 export type GridTileType = 'add' | 'image' | 'text' | 'list' | 'placeholder' | 'prompt' | ''
 
@@ -34,6 +37,10 @@ export type StagedItemFields = {
   text: string
   url: string
   image: string
+  imageAttribution?: {
+    url: string
+    label?: string
+  }
   promptContext?: string // NEW: the prompt the user replied to
   list?: boolean
   parent?: string

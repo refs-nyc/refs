@@ -6,6 +6,7 @@ import type { StoreSlices } from './types'
 import { pocketbase } from '../pocketbase'
 import { InteractionManager } from 'react-native'
 import { updateShowInDirectory } from './items'
+import { isHiddenDirectoryProfile } from '@/features/users/directoryVisibility'
 import { clearPersistedQueryClient } from '@/core/queryClient'
 const OFF_AUTH_RESTORE = process.env.EXPO_PUBLIC_OFF_AUTH_RESTORE === '1'
 const deleteCollectionRecords = async (collectionName: string, filter: string) => {
@@ -325,7 +326,7 @@ export const createUserSlice: StateCreator<StoreSlices, [], [], UserSlice> = (se
   register: async () => {
     // Build a clean create payload; avoid leaking system fields like id/created/updated
     const staged = get().stagedUser as any
-    const finalUser: any = {
+  const finalUser: any = {
       email: staged?.email,
       emailVisibility: true,
       password: staged?.password,
@@ -338,6 +339,13 @@ export const createUserSlice: StateCreator<StoreSlices, [], [], UserSlice> = (se
       lon: staged?.lon,
       userName: staged?.userName,
     }
+
+    finalUser.show_in_directory = !isHiddenDirectoryProfile({
+      userName: finalUser.userName,
+      name: finalUser.name,
+      firstName: finalUser.firstName,
+      lastName: finalUser.lastName,
+    })
 
     if (!finalUser) throw Error('No user data')
     if (!finalUser.email) throw Error('User must have email')

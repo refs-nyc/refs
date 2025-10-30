@@ -147,7 +147,7 @@ const OnboardingPill = ({ userName, fullName, avatarUri }: { userName: string; f
             {fullName}
           </Text>
           <Text style={{ color: c.accent, fontWeight: '500', fontFamily: 'InterMedium' }}>
-            Add a photo and 3 refs to appear
+            Add a photo and 3 refs
           </Text>
         </View>
       </Animated.View>
@@ -275,15 +275,13 @@ const DirectoryRow = React.memo(({
 
 DirectoryRow.displayName = 'DirectoryRow'
 
-const normalizeDirectoryUsers = (list: FeedUser[], currentUserName?: string) => {
+const normalizeDirectoryUsers = (list: FeedUser[], _currentUserName?: string) => {
   if (!Array.isArray(list)) return []
   const seen = new Set<string>()
   const normalized: FeedUser[] = []
 
   for (const user of list) {
     if (!user) continue
-    if (user.userName && user.userName === currentUserName) continue
-
     const rawId = user.id ?? user.userName
     if (!rawId) continue
     const stringId = String(rawId)
@@ -557,7 +555,14 @@ export function CommunitiesFeedScreen({
 
 const processedUsers = useMemo(() => {
   const normalized = normalizeDirectoryUsers(rawDirectoryUsers, user?.userName)
-  normalized.sort((a, b) => (b._latest ?? 0) - (a._latest ?? 0))
+  normalized.sort((a, b) => {
+    const aHasAvatar = Boolean(a.avatar_url && String(a.avatar_url).trim())
+    const bHasAvatar = Boolean(b.avatar_url && String(b.avatar_url).trim())
+    if (aHasAvatar !== bHasAvatar) {
+      return aHasAvatar ? -1 : 1
+    }
+    return (b._latest ?? 0) - (a._latest ?? 0)
+  })
   return normalized
 }, [rawDirectoryUsers, user?.userName])
 

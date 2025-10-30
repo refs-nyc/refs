@@ -1,6 +1,7 @@
 import { pocketbase } from '@/features/pocketbase'
 import { QUERY_WINDOWS } from '@/features/queries/queryConfig'
 import { normalizeAvatarFields } from '@/features/users/avatar'
+import { isHiddenDirectoryProfile } from '@/features/users/directoryVisibility'
 
 export type RawUser = {
   id: string
@@ -53,12 +54,24 @@ export const mapUserRecord = (record: RawUser): DirectoryEntry => {
 
 export async function fetchDirectoryPage(page = 1) {
   const response = await pocketbase.collection('users').getList(page, DIRECTORY_PAGE_SIZE, {
-    filter: 'show_in_directory = true',
-    fields: 'id,userName,firstName,lastName,name,location,image,avatar_url,updated',
+    fields: 'id,userName,firstName,lastName,name,location,image,avatar_url,updated,show_in_directory',
     sort: '-updated',
   })
 
-  const users = (((response.items ?? []) as unknown) as RawUser[]).map(mapUserRecord)
+  const users = (((response.items ?? []) as unknown) as RawUser[])
+    .filter((record) => !isHiddenDirectoryProfile(record))
+    .map(mapUserRecord)
+    .sort((a, b) => {
+      const aHasAvatar = Boolean(a.avatarUrl)
+      const bHasAvatar = Boolean(b.avatarUrl)
+      if (aHasAvatar !== bHasAvatar) {
+        return aHasAvatar ? -1 : 1
+      }
+      // Fall back to updated timestamp (descending)
+      const aLatest = a.latest ?? 0
+      const bLatest = b.latest ?? 0
+      return bLatest - aLatest
+    })
 
   return {
     users,

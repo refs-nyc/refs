@@ -66,6 +66,10 @@ type ExistingRefFields = {
   url?: string
   image?: string | ImagePickerAsset
   meta?: string
+  imageSource?: {
+    url: string
+    label?: string
+  }
 }
 
 export const RefForm = ({
@@ -102,6 +106,9 @@ export const RefForm = ({
   const [text, setText] = useState<string>(existingRefFields?.meta || '')
   const [imageAsset, setImageAsset] = useState<ImagePickerAsset | null>(null)
   const [pinataSource, setPinataSource] = useState<string>('')
+  const [imageSource, setImageSource] = useState<{ url: string; label?: string } | null>(
+    (existingRefFields?.imageSource as { url: string; label?: string } | undefined) || null
+  )
   const [picking, setPicking] = useState(pickerOpen)
   const [uploadInProgress, setUploadInProgress] = useState(false)
   const [createInProgress, setCreateInProgress] = useState(false)
@@ -200,10 +207,12 @@ export const RefForm = ({
       setPinataSource('')
       setImageAsset(null)
       setText('')
+      setImageSource(null)
     } else {
       setTitle(existingRefFields.title || '')
       setUrl(existingRefFields.url || '')
       setText(existingRefFields.meta || '')
+      setImageSource(existingRefFields.imageSource ?? null)
 
       // Initialize image state
       if (existingRefFields?.image) {
@@ -230,14 +239,17 @@ export const RefForm = ({
     if (!imageUrl.startsWith('http')) {
       lastLocalImageRef.current = imageUrl
       setPinataSource(imageUrl)
+      setImageSource(null)
       return
     }
 
     setPinataSource(imageUrl)
+    setImageSource(null)
     Image.prefetch(imageUrl).catch((err) => {
       console.error('Failed to prefetch image:', err)
       if (lastLocalImageRef.current) {
         setPinataSource(lastLocalImageRef.current)
+        setImageSource(null)
       }
     })
   }
@@ -702,7 +714,16 @@ export const RefForm = ({
                 try {
                   setCreateInProgress(true)
                   // Call onAddRef which will handle the submission
-                  await onAddRef({ title, text, url: url, image: pinataSource })
+                  if (__DEV__) {
+                    console.log('[refForm] submitting imageSource', imageSource)
+                  }
+                  await onAddRef({
+                    title,
+                    text,
+                    url,
+                    image: pinataSource,
+                    imageAttribution: imageSource || undefined,
+                  })
                 } catch (e) {
                   console.error(e)
                 } finally {

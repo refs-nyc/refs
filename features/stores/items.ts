@@ -8,7 +8,7 @@ import {
   StagedItemFields,
   StagedRefFields,
 } from '../types'
-import { ItemsRecord, RefsRecord, Collections } from '../pocketbase/pocketbase-types'
+import { ItemsRecord, RefsRecord, Collections, UsersRecord } from '../pocketbase/pocketbase-types'
 import { createdSort } from '@/ui/profiles/sorts'
 import type { StoreSlices } from './types'
 import { pocketbase } from '../pocketbase'
@@ -299,7 +299,7 @@ const scheduleAfterInteractions = (fn: () => void): InteractionHandle => {
 export async function updateShowInDirectory(userId: string) {
   try {
     // Get user's current info
-    const user = await pocketbase.collection('users').getOne(userId)
+    const user = await pocketbase.collection<UsersRecord>('users').getOne(userId)
 
     const hiddenProfile = isHiddenDirectoryProfile(user)
     const desiredVisibility = hiddenProfile ? false : true

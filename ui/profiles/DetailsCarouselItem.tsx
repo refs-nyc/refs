@@ -258,8 +258,9 @@ export const DetailsCarouselItem = ({ item, index }: { item: ExpandedItem; index
     if (fromItem) {
       return fromItem
     }
-    return extractSource(currentItem.expand?.ref?.promptContext)
-  }, [currentItem.promptContext, currentItem.expand?.ref?.promptContext])
+    const refPromptContext = (currentItem.expand?.ref as { promptContext?: string } | undefined)?.promptContext
+    return extractSource(refPromptContext)
+  }, [currentItem.promptContext, currentItem.expand?.ref])
 
   if (__DEV__) {
     console.log('[details] promptContext', currentItem.promptContext)
@@ -287,7 +288,7 @@ export const DetailsCarouselItem = ({ item, index }: { item: ExpandedItem; index
     item.url,
     item.promptContext,
     item.expand?.ref?.title,
-    item.expand?.ref?.promptContext,
+    item.expand?.ref,
     editingThisItem,
   ])
 

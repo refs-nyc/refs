@@ -4,7 +4,7 @@ import type { Profile } from '@/features/types'
 import { ExpandedItem } from '@/features/types'
 import { c, s } from '@/features/style'
 import BottomSheet from '@gorhom/bottom-sheet'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ScrollView, View, Text, Pressable, Share, Animated } from 'react-native'
 import { Grid } from '../grid/Grid'
 import { PlaceholderGrid } from '../grid/PlaceholderGrid'
@@ -35,6 +35,20 @@ export const OtherProfile = ({ userName, prefetchedUserId }: { userName: string;
     setDetailsSheetData,
     openAvatarZoom,
   } = useAppStore()
+
+  // Filter out completed prompts (prompts that have been fulfilled with actual refs)
+  const displayGridItems = useMemo(() => {
+    const refsWithImages = new Set(
+      gridItems
+        .filter(item => !(item as any).__promptKind && (item.image || item.expand?.ref?.image))
+        .map(item => item.ref)
+    )
+    
+    return gridItems.filter(item => {
+      if (!(item as any).__promptKind) return true // Keep all non-prompt items
+      return !refsWithImages.has(item.ref) // Only keep prompts that haven't been completed
+    })
+  }, [gridItems])
 
   const queueForceNetworkRefresh = useCallback(
     (userId: string) => {
@@ -412,7 +426,7 @@ export const OtherProfile = ({ userName, prefetchedUserId }: { userName: string;
               ) : (
                 <Grid
                   columns={3}
-                  items={gridItems}
+                  items={displayGridItems}
                   rows={4}
                   editingRights={false}
                   showPrompts={false}

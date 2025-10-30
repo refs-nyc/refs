@@ -134,7 +134,7 @@ const PROMPT_SUGGESTIONS: PromptSuggestion[] = [
   { text: 'Link you shared recently' },
   { text: 'Free space' },
   { text: 'Example of perfect design' },
-  { text: 'Nascent hobby' },
+  { text: 'Something I want to do more of' },
   { text: 'Most-rewatched movie' },
   { text: 'Neighborhood spot' },
   { text: 'What you put on aux' },
@@ -142,6 +142,7 @@ const PROMPT_SUGGESTIONS: PromptSuggestion[] = [
   { text: 'A preferred publication' },
   { text: 'Something on your reading list' },
   { text: 'A tool you actually love using' },
+  { text: "Something I'm good at" },
   { text: 'Piece from a museum', photoPath: true },
   { text: 'Tradition you love', photoPath: true },
   { text: 'Meme', photoPath: true },
@@ -159,6 +160,7 @@ const PROMPT_SUGGESTIONS: PromptSuggestion[] = [
   { text: 'Photo of a project mid-life', photoPath: true },
   { text: 'A street corner', photoPath: true },
   { text: 'Personal website/twitter', photoPath: true },
+  { text: 'Animal', photoPath: true },
   { text: 'Coolest thing in your immediate vicinity', cameraPath: true },
 ]
 
@@ -653,13 +655,26 @@ export const MyProfile = ({ userName }: { userName: string }) => {
 
   // Combine grid items with optimistic items for display
   const displayGridItems = useMemo(() => {
+    // First, filter out completed prompts (prompts that have been fulfilled with actual refs)
+    const refsWithImages = new Set(
+      gridItems
+        .filter(item => !(item as any).__promptKind && (item.image || item.expand?.ref?.image))
+        .map(item => item.ref)
+    )
+    
+    // Filter out prompt items that have been completed (same ref exists with an image)
+    const filteredGridItems = gridItems.filter(item => {
+      if (!(item as any).__promptKind) return true // Keep all non-prompt items
+      return !refsWithImages.has(item.ref) // Only keep prompts that haven't been completed
+    })
+    
     // Early return if no optimistic items
     if (optimisticItems.size === 0) {
-      return gridItems
+      return filteredGridItems
     }
     
     // Create a Set of existing grid item IDs for O(1) lookup
-    const gridItemIds = new Set(gridItems.map(item => item.id))
+    const gridItemIds = new Set(filteredGridItems.map(item => item.id))
     
     // Filter out optimistic items that already exist in grid items
     const filteredOptimisticItems = Array.from(optimisticItems.values()).filter(optimisticItem =>
@@ -668,11 +683,11 @@ export const MyProfile = ({ userName }: { userName: string }) => {
     
     // Only create new array if we actually have optimistic items to add
     if (filteredOptimisticItems.length === 0) {
-      return gridItems
+      return filteredGridItems
     }
     
     // Use a stable reference to prevent unnecessary re-renders
-    return [...gridItems, ...filteredOptimisticItems]
+    return [...filteredGridItems, ...filteredOptimisticItems]
   }, [gridItems, optimisticItems.size]) // Only depend on size, not the actual objects
 
   const animatedItemsRef = useRef<Set<string>>(new Set())

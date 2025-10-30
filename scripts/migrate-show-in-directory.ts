@@ -10,6 +10,7 @@
  */
 import PocketBase from 'pocketbase'
 import { isHiddenDirectoryProfile } from '../features/users/directoryVisibility'
+import type { UsersRecord } from '../features/pocketbase/pocketbase-types'
 
 const POCKETBASE_URL = process.env.POCKETBASE_URL || process.env.EXPO_PUBLIC_POCKETBASE_URL || 'http://127.0.0.1:8090'
 
@@ -32,7 +33,7 @@ async function migrate() {
   
   try {
     // Try regular user auth (works for both regular users and admins)
-    await pb.collection('users').authWithPassword(adminEmail, adminPassword)
+    await pb.collection<UsersRecord>('users').authWithPassword(adminEmail, adminPassword)
     console.log('✅ Authenticated successfully')
   } catch (userError) {
     // If that fails, try superuser auth
@@ -61,7 +62,7 @@ async function migrate() {
     console.log(`\n📄 Processing page ${page}...`)
     
     try {
-      const usersRes = await pb.collection('users').getList(page, perPage, {
+      const usersRes = await pb.collection<UsersRecord>('users').getList(page, perPage, {
         fields: 'id,userName,firstName,lastName,name,image,avatar_url,show_in_directory',
       })
       
@@ -83,7 +84,7 @@ async function migrate() {
           )
 
           if (user.show_in_directory !== desiredVisibility) {
-            await pb.collection('users').update(user.id, {
+            await pb.collection<UsersRecord>('users').update(user.id, {
               show_in_directory: desiredVisibility,
             })
             console.log(`    ✅ Updated to ${desiredVisibility}`)

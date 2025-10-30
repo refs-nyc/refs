@@ -17,7 +17,7 @@ const PROMPTS = [
   { text: 'Link you shared recently', photoPath: false },
   { text: 'Free space', photoPath: false },
   { text: 'Example of perfect design', photoPath: false },
-  { text: 'Nascent hobby', photoPath: false },
+  { text: 'Something I want to do more of', photoPath: false },
   { text: 'Most-rewatched movie', photoPath: false },
   { text: 'Neighborhood spot', photoPath: false },
   { text: 'What you put on aux', photoPath: false },
@@ -25,6 +25,7 @@ const PROMPTS = [
   { text: 'A preferred publication', photoPath: false },
   { text: 'Something on your reading list', photoPath: false },
   { text: 'A tool you actually love using', photoPath: false },
+  { text: "Something I'm good at", photoPath: false },
   { text: 'Piece from a museum', photoPath: true },
   { text: 'Tradition you love', photoPath: true },
   { text: 'Meme', photoPath: true },
@@ -42,6 +43,7 @@ const PROMPTS = [
   { text: 'Photo of a project mid-life', photoPath: true },
   { text: 'A street corner', photoPath: true },
   { text: 'Personal website/twitter', photoPath: true },
+  { text: 'Animal', photoPath: true },
   { text: 'Coolest thing in your immediate vicinity', cameraPath: true },
 ]
 

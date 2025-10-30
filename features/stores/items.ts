@@ -28,6 +28,7 @@ import {
 } from '@/features/cache/profileMutationState'
 import { isInteractionGateActive } from '@/features/perf/interactionGate'
 import { normalizeExternalUrl } from '@/features/utils/url'
+import { isHiddenDirectoryProfile } from '@/features/users/directoryVisibility'
 
 const forceNetworkProfileIds = new Set<string>()
 
@@ -74,6 +75,49 @@ const cloneProfileData = (data: ProfileData): ProfileData => ({
   gridItems: [...data.gridItems],
   backlogItems: [...data.backlogItems],
 })
+
+type ImageAttribution = {
+  url: string
+  label?: string
+}
+
+const parsePromptContextValue = (value?: string | null): Record<string, any> => {
+  if (!value) return {}
+  if (typeof value === 'string') {
+    const trimmed = value.trim()
+    if (!trimmed) return {}
+    try {
+      return JSON.parse(trimmed)
+    } catch (error) {
+      return { prompt: value }
+    }
+  }
+  if (typeof value === 'object') {
+    return { ...(value as Record<string, any>) }
+  }
+  return {}
+}
+
+const mergePromptContextWithAttribution = (
+  promptContext: string | undefined,
+  attribution?: ImageAttribution
+): string | undefined => {
+  if (!attribution || !attribution.url) {
+    return promptContext
+  }
+
+  const base = parsePromptContextValue(promptContext)
+  base.imageSource = {
+    url: attribution.url,
+    label: attribution.label,
+  }
+
+  if (promptContext && typeof base.prompt === 'undefined' && typeof promptContext === 'string') {
+    base.prompt = promptContext
+  }
+
+  return JSON.stringify(base)
+}
 
 const readProfileSnapshot = (userId: string, userName?: string): ProfileData | null => {
   const entry = getProfileCacheEntryByUserId(userId)
@@ -251,37 +295,23 @@ const scheduleAfterInteractions = (fn: () => void): InteractionHandle => {
   }
 }
 
-// Helper function to update show_in_directory flag when item count or avatar changes
+// Helper function to update show_in_directory flag based on manual overrides
 export async function updateShowInDirectory(userId: string) {
   try {
     // Get user's current info
     const user = await pocketbase.collection('users').getOne(userId)
-    const hasAvatar = Boolean((user.image || '').trim() || (user.avatar_url || '').trim())
-    
-    // Count items created by user (non-backlog, non-list grid items)
-    const createdItems = await pocketbase.collection('items').getList(1, 1, {
-      filter: `creator = "${userId}" && backlog = false && list = false && parent = null`,
-    })
-    
-    // Count saved items on user's profile
-    const savedItems = await pocketbase.collection('saves').getList(1, 1, {
-      filter: `user = "${userId}"`,
-    })
-    
-    const totalProfileItems = createdItems.totalItems + savedItems.totalItems
-    const hasEnoughItems = totalProfileItems >= 3
-    
-    // Update flag if criteria is met
-    const shouldShow = hasAvatar && hasEnoughItems
-    
-    console.log(`🏷️ Updating show_in_directory for ${userId}: hasAvatar=${hasAvatar}, created=${createdItems.totalItems}, saved=${savedItems.totalItems}, total=${totalProfileItems}, shouldShow=${shouldShow}`)
-    
-    if (user.show_in_directory !== shouldShow) {
+
+    const hiddenProfile = isHiddenDirectoryProfile(user)
+    const desiredVisibility = hiddenProfile ? false : true
+
+    if (user.show_in_directory !== desiredVisibility) {
       await pocketbase.collection('users').update(userId, {
-        show_in_directory: shouldShow,
+        show_in_directory: desiredVisibility,
       })
-      console.log(`✅ Updated show_in_directory to ${shouldShow} for user ${userId}`)
-      
+      console.log(
+        `✅ Updated show_in_directory to ${desiredVisibility} for user ${userId} (hiddenProfile=${hiddenProfile})`
+      )
+
       // Clear directory cache so the change is reflected immediately
       simpleCache.set('directory_users', null).catch(error => {
         console.warn('Directory cache clear failed:', error)
@@ -816,6 +846,13 @@ export const createItemSlice: StateCreator<StoreSlices, [], [], ItemSlice> = (se
       ...itemFields,
       url: normalizeExternalUrl(itemFields.url),
     }
+    if (itemFields.imageAttribution?.url) {
+      normalizedFields.promptContext = mergePromptContextWithAttribution(
+        normalizedFields.promptContext,
+        itemFields.imageAttribution
+      )
+    }
+    delete (normalizedFields as any).imageAttribution
     const optimisticItem = buildOptimisticItem({
       tempId,
       refId,
@@ -992,7 +1029,12 @@ export const createItemSlice: StateCreator<StoreSlices, [], [], ItemSlice> = (se
       text: normalizedFields.text,
       list: normalizedFields.list || false,
       parent: normalizedFields.parent || null,
+      promptContext: normalizedFields.promptContext || '',
       backlog,
+    }
+
+    if (__DEV__) {
+      console.log('[items][createItem] promptContext', createItemArgs.promptContext)
     }
 
     // create the item in pocketbase

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { Pressable, View, Text } from 'react-native'
+import { Pressable, View, Text, Linking } from 'react-native'
 import { BottomSheetTextInput as TextInput } from '@gorhom/bottom-sheet'
 import { ListItem } from '@/ui/lists/ListItem'
 import { NewRefListItem } from '@/ui/atoms/NewRefListItem'
@@ -19,13 +19,22 @@ import { Image } from 'expo-image'
 import Animated, { StretchInY, StretchOutY } from 'react-native-reanimated'
 import { useAppStore } from '@/features/stores'
 
+type GoogleImageResult = {
+  id: string
+  url: string
+  contextUrl: string
+  displayLink: string
+}
+
 const ImageSearchResults = ({
   imageSearchResults,
   onImagePress,
+  onSourcePress,
   setPicking,
 }: {
-  imageSearchResults: string[]
-  onImagePress: (url: string) => void
+  imageSearchResults: GoogleImageResult[]
+  onImagePress: (result: GoogleImageResult) => void
+  onSourcePress: (url: string) => void
   setPicking: (b: boolean) => void
 }) => {
   return (
@@ -34,22 +43,39 @@ const ImageSearchResults = ({
       exiting={StretchOutY.duration(200)}
       style={{ flexDirection: 'row', gap: s.$075, width: '100%' }}
     >
-      {imageSearchResults.map((url, index) =>
-        url ? (
-          <Pressable key={url} onPress={() => onImagePress(url)}>
-            <Image
-              style={{ borderRadius: s.$075, width: s.$7, height: s.$7, backgroundColor: c.olive2 }}
-              source={url}
-              contentFit="cover"
+      {imageSearchResults.map((result, index) => {
+        if (!result.url) {
+          return (
+            <View
+              key={result.id || `placeholder-${index}`}
+              style={{ width: s.$7, height: s.$7, backgroundColor: c.olive2, borderRadius: s.$075 }}
             />
-          </Pressable>
-        ) : (
-          <View
-            key={index}
-            style={{ width: s.$7, height: s.$7, backgroundColor: c.olive2, borderRadius: s.$075 }}
-          />
+          )
+        }
+        return (
+          <View key={result.id || result.url} style={{ alignItems: 'center', gap: 4 }}>
+            <Pressable onPress={() => onImagePress(result)}>
+              <Image
+                style={{ borderRadius: s.$075, width: s.$7, height: s.$7, backgroundColor: c.olive2 }}
+                source={result.url}
+                contentFit="cover"
+              />
+            </Pressable>
+            <Pressable
+              onPress={() => onSourcePress(result.contextUrl)}
+              hitSlop={10}
+              style={{ maxWidth: s.$7 }}
+            >
+              <Text
+                numberOfLines={1}
+                style={{ fontSize: 10, color: c.surface, opacity: 0.65, textAlign: 'center' }}
+              >
+                {result.displayLink || 'Source'}
+              </Text>
+            </Pressable>
+          </View>
         )
-      )}
+      })}
       <Pressable
         onPress={() => setPicking(true)}
         style={{
@@ -75,6 +101,10 @@ export type NewRefFields = {
   url?: string
   promptContext?: string
   meta?: string
+  imageSource?: {
+    url: string
+    label?: string
+  }
 }
 
 export const SearchRef = ({
@@ -90,7 +120,7 @@ export const SearchRef = ({
   url?: string
   image?: string
   paste?: boolean
-  onChooseExistingRef: (r: CompleteRef, newImage?: string) => void
+  onChooseExistingRef: (r: CompleteRef, newImage?: string, attribution?: GoogleImageResult) => void
   onAddNewRef: (fields: NewRefFields) => void
   prompt?: string
 }) => {
@@ -105,9 +135,9 @@ export const SearchRef = ({
   const [imageAsset, setImageAsset] = useState<ImagePickerAsset | null>(null)
   const [uploadInProgress, setUploadInProgress] = useState(false)
   const [uploadInitiated, setUploadInitiated] = useState(false)
-  const [imageSearchResults, setImageSearchResults] = useState<string[]>([])
+  const [imageSearchResults, setImageSearchResults] = useState<GoogleImageResult[]>([])
   const [displayingImagesFor, setDisplayingImagesFor] = useState<string>('') // ref id OR search query
-  const [imageResultsCache, setImageResultsCache] = useState<Record<string, string[]>>({})
+  const [imageResultsCache, setImageResultsCache] = useState<Record<string, GoogleImageResult[]>>({})
 
   const { getRefsByTitle } = useAppStore()
 
@@ -135,14 +165,22 @@ export const SearchRef = ({
           {imageSearchResults && displayingImagesFor === item.id && (
             <ImageSearchResults
               imageSearchResults={imageSearchResults}
-              onImagePress={(imageUrl) => onChooseExistingRef(item, imageUrl)}
+              onImagePress={(result) => {
+                if (result.url) {
+                  onChooseExistingRef(item, result.url, result)
+                }
+              }}
+              onSourcePress={(url) => {
+                if (!url) return
+                Linking.openURL(url).catch(() => {})
+              }}
               setPicking={setPicking}
             />
           )}
         </XStack>
         {imageSearchResults && displayingImagesFor === item.id && (
           <Text style={{ color: c.surface, opacity: 0.6, fontSize: 12, paddingLeft: s.$08, marginTop: 4 }}>
-            pick a photo
+            Images from Google
           </Text>
         )}
       </View>
@@ -236,7 +274,10 @@ export const SearchRef = ({
   const onRefPress = async (refId: string, ref?: CompleteRef) => {
     // If already showing, toggle closed but cache what we fetched
     if (displayingImagesFor === refId) {
-      setImageResultsCache((prev) => ({ ...prev, [refId]: imageSearchResults }))
+      setImageResultsCache((prev) => ({
+        ...prev,
+        [refId]: imageSearchResults.filter((entry) => Boolean(entry.url)),
+      }))
       setDisplayingImagesFor('')
       return
     }
@@ -261,7 +302,14 @@ export const SearchRef = ({
 
     // otherwise, search for images
     setDisplayingImagesFor(refId)
-    setImageSearchResults(['', '', ''])
+    setImageSearchResults(
+      Array.from({ length: 3 }).map((_, idx) => ({
+        id: `placeholder-${refId}-${idx}`,
+        url: '',
+        contextUrl: '',
+        displayLink: '',
+      }))
+    )
     try {
       const params = new URLSearchParams({
         key: process.env.EXPO_PUBLIC_GOOGLE_SEARCH_API_KEY!,
@@ -270,13 +318,35 @@ export const SearchRef = ({
         searchType: 'image',
       })
 
-      const results = await fetch(`https://www.googleapis.com/customsearch/v1?${params}`).then(
-        (res) => res.json()
+      const results = await fetch(`https://www.googleapis.com/customsearch/v1?${params}`).then((res) =>
+        res.json()
       )
 
-      const resultUrls = results.items.map((item: any) => item.link).slice(0, 3)
-      setImageSearchResults(resultUrls)
-      setImageResultsCache((prev) => ({ ...prev, [refId]: resultUrls }))
+      const mappedResults: GoogleImageResult[] = Array.isArray(results.items)
+        ? results.items.slice(0, 3).map((item: any, index: number) => {
+            const contextUrl = item?.image?.contextLink || item?.link || ''
+            let displayLink = item?.displayLink || ''
+            if (!displayLink && contextUrl) {
+              try {
+                displayLink = new URL(contextUrl).hostname
+              } catch (error) {
+                displayLink = ''
+              }
+            }
+            return {
+              id: item?.cacheId || item?.link || `${refId}-${index}`,
+              url: item?.link || '',
+              contextUrl,
+              displayLink,
+            }
+          })
+        : []
+
+      setImageSearchResults(mappedResults)
+      setImageResultsCache((prev) => ({
+        ...prev,
+        [refId]: mappedResults.filter((entry) => Boolean(entry.url)),
+      }))
     } catch (error) {
       console.error(error)
       setImageSearchResults([])
@@ -382,7 +452,10 @@ export const SearchRef = ({
               onPress={() => {
                 // Toggle behavior for new-ref row based on current state
                 if (displayingImagesFor === searchQuery) {
-                  setImageResultsCache((prev) => ({ ...prev, [searchQuery]: imageSearchResults }))
+                  setImageResultsCache((prev) => ({
+                    ...prev,
+                    [searchQuery]: imageSearchResults.filter((entry) => Boolean(entry.url)),
+                  }))
                   setDisplayingImagesFor('')
                 } else {
                   onRefPress(searchQuery)
@@ -395,21 +468,30 @@ export const SearchRef = ({
               {imageSearchResults && displayingImagesFor === searchQuery && (
                 <ImageSearchResults
                   imageSearchResults={imageSearchResults}
-                  onImagePress={(imageUrl) =>
+                  onImagePress={(result) => {
+                    if (!result.url) return
                     onAddNewRef({
                       title: searchQuery,
-                      image: imageUrl,
+                      image: result.url,
                       url: urlState,
                       promptContext: prompt,
+                      imageSource: {
+                        url: result.contextUrl || result.url,
+                        label: result.displayLink,
+                      },
                     })
-                  }
+                  }}
+                  onSourcePress={(url) => {
+                    if (!url) return
+                    Linking.openURL(url).catch(() => {})
+                  }}
                   setPicking={setPicking}
                 />
               )}
             </XStack>
             {imageSearchResults && displayingImagesFor === searchQuery && (
               <Text style={{ color: c.surface, opacity: 0.6, fontSize: 12, paddingLeft: s.$08, marginTop: 4 }}>
-                pick a photo
+                Images from Google
               </Text>
             )}
           </>

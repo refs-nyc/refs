@@ -67,11 +67,12 @@ export function HomeScreen() {
   // Handle redirect when user is logged in
   useEffect(() => {
     if (user) {
-      const redirectToProfile = () => {
-        // Ensure we land on grid view when redirecting from login
-        useAppStore.getState().setProfileNavIntent({
-          targetPagerIndex: 0,
-          source: 'other',
+      const redirectToDirectory = () => {
+        const appStore = useAppStore.getState()
+        appStore.setHomePagerIndex(1)
+        appStore.setProfileNavIntent({
+          targetPagerIndex: 1,
+          source: 'directory',
         })
         router.replace({
           pathname: '/user/[userName]',
@@ -79,7 +80,7 @@ export function HomeScreen() {
         })
       }
       // Small delay to prevent navigation errors
-      const timeout = setTimeout(redirectToProfile, 100)
+      const timeout = setTimeout(redirectToDirectory, 100)
       return () => clearTimeout(timeout)
     }
   }, [user?.userName])

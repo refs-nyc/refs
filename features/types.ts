@@ -34,6 +34,10 @@ export type StagedItemFields = {
   text: string
   url: string
   image: string
+  imageAttribution?: {
+    url: string
+    label?: string
+  }
   promptContext?: string // NEW: the prompt the user replied to
   list?: boolean
   parent?: string

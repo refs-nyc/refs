@@ -20,6 +20,35 @@ const SNAP_POINTS = ['80%'] as const
 const DEFAULT_INDEX = 0
 const GRID_CAPACITY = 12
 
+const parseImageSourceFromMeta = (meta?: string | null) => {
+  if (!meta) return undefined
+  if (typeof meta === 'string') {
+    const trimmed = meta.trim()
+    if (!trimmed) return undefined
+    try {
+      const parsed = JSON.parse(trimmed)
+      const source = parsed?.imageSource || parsed?.image_source
+      if (source?.url) {
+        return {
+          url: String(source.url),
+          label: typeof source.label === 'string' ? source.label : undefined,
+        }
+      }
+    } catch (error) {
+      return undefined
+    }
+  } else if (typeof meta === 'object') {
+    const source = (meta as any)?.imageSource || (meta as any)?.image_source
+    if (source?.url) {
+      return {
+        url: String(source.url),
+        label: typeof source.label === 'string' ? source.label : undefined,
+      }
+    }
+  }
+  return undefined
+}
+
 type SheetStep =
   | 'search'
   | 'add'
@@ -141,6 +170,7 @@ export const NewRefSheet = ({
         title: newRefPrompt ?? '',
         image: newRefPhoto,
         promptContext: newRefPrompt ?? undefined,
+        imageSource: undefined,
       })
       setStep('add')
     } else if (isOpen && !newRefPhoto) {
@@ -318,9 +348,17 @@ export const NewRefSheet = ({
               setRefFields(fields)
               setStep('add')
             }}
-            onChooseExistingRef={(ref, newImage) => {
+            onChooseExistingRef={(ref, newImage, attribution) => {
               setExistingRefId(ref.id)
-              setRefFields({ title: ref.title || '', image: newImage ?? ref.image, url: ref.url })
+              setRefFields({
+                title: ref.title || '',
+                image: newImage ?? ref.image,
+                url: ref.url,
+                imageSource:
+                  attribution?.url
+                    ? { url: attribution.contextUrl || attribution.url, label: attribution.displayLink }
+                    : parseImageSourceFromMeta(ref.meta),
+              })
               setStep('add')
             }}
           />

@@ -1,15 +1,15 @@
 #!/usr/bin/env tsx
 /**
- * Migration script to populate show_in_directory flag for existing users
- * 
- * This script checks all users and sets show_in_directory = true for users who have:
- * 1. A profile avatar (image or avatar_url)
- * 2. At least 3 grid items (not in backlog, not in a list)
- * 
+ * Migration script to normalize the show_in_directory flag.
+ *
+ * The current approach:
+ *   • show_in_directory = false for the profiles listed in HIDDEN_DIRECTORY_PROFILES
+ *   • show_in_directory = true for everyone else
+ *
  * Run with: npx tsx scripts/migrate-show-in-directory.ts
  */
-
 import PocketBase from 'pocketbase'
+import { isHiddenDirectoryProfile } from '../features/users/directoryVisibility'
 
 const POCKETBASE_URL = process.env.POCKETBASE_URL || process.env.EXPO_PUBLIC_POCKETBASE_URL || 'http://127.0.0.1:8090'
 
@@ -62,7 +62,7 @@ async function migrate() {
     
     try {
       const usersRes = await pb.collection('users').getList(page, perPage, {
-        fields: 'id,userName,image,avatar_url,show_in_directory',
+        fields: 'id,userName,firstName,lastName,name,image,avatar_url,show_in_directory',
       })
       
       if (usersRes.items.length === 0) {
@@ -75,36 +75,21 @@ async function migrate() {
       // Process each user
       for (const user of usersRes.items) {
         try {
-          // Check if user has an avatar
-          const hasAvatar = Boolean((user.image || '').trim() || (user.avatar_url || '').trim())
-          
-          // Count items created by user (non-backlog, non-list grid items)
-          const createdItemsRes = await pb.collection('items').getList(1, 1, {
-            filter: `creator = "${user.id}" && backlog = false && list = false && parent = null`,
-          })
-          
-          // Count saved items on user's profile
-          const savedItemsRes = await pb.collection('saves').getList(1, 1, {
-            filter: `user = "${user.id}"`,
-          })
-          
-          const totalProfileItems = createdItemsRes.totalItems + savedItemsRes.totalItems
-          const hasEnoughItems = totalProfileItems >= 3
-          
-          // Determine if user should be shown in directory
-          const shouldShow = hasAvatar && hasEnoughItems
-          
-          console.log(`  👤 ${user.userName}: avatar=${hasAvatar}, created=${createdItemsRes.totalItems}, saved=${savedItemsRes.totalItems}, total=${totalProfileItems}, shouldShow=${shouldShow}`)
-          
-          // Only update if the flag is different from current value
-          if (user.show_in_directory !== shouldShow) {
+          const hiddenProfile = isHiddenDirectoryProfile(user)
+          const desiredVisibility = hiddenProfile ? false : true
+
+          console.log(
+            `  👤 ${user.userName || '(no username)'}: hiddenProfile=${hiddenProfile}, desiredVisibility=${desiredVisibility}`
+          )
+
+          if (user.show_in_directory !== desiredVisibility) {
             await pb.collection('users').update(user.id, {
-              show_in_directory: shouldShow,
+              show_in_directory: desiredVisibility,
             })
-            console.log(`    ✅ Updated to ${shouldShow}`)
+            console.log(`    ✅ Updated to ${desiredVisibility}`)
             updated++
           } else {
-            console.log(`    ⏭️  Already correct (${shouldShow})`)
+            console.log(`    ⏭️  Already correct (${desiredVisibility})`)
             skipped++
           }
         } catch (error) {
@@ -145,4 +130,3 @@ migrate()
     console.error('\n❌ Migration script failed:', error)
     process.exit(1)
   })
-

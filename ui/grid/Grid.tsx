@@ -26,6 +26,8 @@ const PROMPTS = [
   { text: 'Something on your reading list', photoPath: false },
   { text: 'A tool you actually love using', photoPath: false },
   { text: "Something I'm good at", photoPath: false },
+  { text: 'Food', photoPath: true },
+  { text: 'Game I like', photoPath: true },
   { text: 'Piece from a museum', photoPath: true },
   { text: 'Tradition you love', photoPath: true },
   { text: 'Meme', photoPath: true },

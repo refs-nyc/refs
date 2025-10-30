@@ -143,6 +143,8 @@ const PROMPT_SUGGESTIONS: PromptSuggestion[] = [
   { text: 'Something on your reading list' },
   { text: 'A tool you actually love using' },
   { text: "Something I'm good at" },
+  { text: 'Food', photoPath: true },
+  { text: 'Game I like', photoPath: true },
   { text: 'Piece from a museum', photoPath: true },
   { text: 'Tradition you love', photoPath: true },
   { text: 'Meme', photoPath: true },

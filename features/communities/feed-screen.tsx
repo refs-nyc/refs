@@ -275,15 +275,13 @@ const DirectoryRow = React.memo(({
 
 DirectoryRow.displayName = 'DirectoryRow'
 
-const normalizeDirectoryUsers = (list: FeedUser[], currentUserName?: string) => {
+const normalizeDirectoryUsers = (list: FeedUser[], _currentUserName?: string) => {
   if (!Array.isArray(list)) return []
   const seen = new Set<string>()
   const normalized: FeedUser[] = []
 
   for (const user of list) {
     if (!user) continue
-    if (user.userName && user.userName === currentUserName) continue
-
     const rawId = user.id ?? user.userName
     if (!rawId) continue
     const stringId = String(rawId)

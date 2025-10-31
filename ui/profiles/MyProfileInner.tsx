@@ -9,7 +9,7 @@ import BottomSheet, { BottomSheetTextInput } from '@gorhom/bottom-sheet'
 import { useShareIntentContext } from 'expo-share-intent'
 import { useRef, useState, useMemo, useCallback } from 'react'
 import type { DependencyList } from 'react'
-import { ScrollView, View, Text, Pressable, Keyboard, ActivityIndicator, useWindowDimensions, Alert, Share } from 'react-native'
+import { ScrollView, View, Text, Pressable, Keyboard, ActivityIndicator, useWindowDimensions, Alert, Share, InteractionManager } from 'react-native'
 import { Image } from 'expo-image'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import * as ImagePicker from 'expo-image-picker'
@@ -214,6 +214,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
   const [backlogItems, setBacklogItems] = useState<ExpandedItem[]>(hydraulicCache?.backlogItems ?? [])
   const [loading, setLoading] = useState(!hydraulicCache)
   const [focusReady, setFocusReady] = useState(Boolean(hydraulicCache))
+  const [shouldHydrateProfile, setShouldHydrateProfile] = useState(false)
   const shareButtonScale = useRef(new RNAnimated.Value(1)).current
 
   const user = useAppStore((state) => state.user)
@@ -392,6 +393,21 @@ export const MyProfile = ({ userName }: { userName: string }) => {
     },
     [queryClient, userName]
   )
+
+  React.useEffect(() => {
+    const handle = InteractionManager.runAfterInteractions(() => {
+      setShouldHydrateProfile(true)
+    })
+    return () => {
+      handle?.cancel?.()
+    }
+  }, [])
+
+  React.useEffect(() => {
+    if (homePagerIndex === 0) {
+      setShouldHydrateProfile(true)
+    }
+  }, [homePagerIndex])
 
   useProfileEffect('profile.cacheHydrate', () => {
     let cancelled = false
@@ -1346,7 +1362,7 @@ export const MyProfile = ({ userName }: { userName: string }) => {
           gridItems: hydraulicCache.gridItems,
           backlogItems: hydraulicCache.backlogItems,
         },
-    enabled: Boolean(profileUserId),
+    enabled: Boolean(profileUserId && shouldHydrateProfile),
     refetchOnMount: 'always',
     refetchOnReconnect: 'always',
     refetchOnWindowFocus: false,

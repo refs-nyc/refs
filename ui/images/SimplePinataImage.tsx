@@ -60,10 +60,11 @@ const storeCacheEntry = (key: string, url: string) => {
 export function useSignedImageUrl(
   originalSource: string | null | undefined,
   imageOptions: OptimizeImageOptions,
-  options: { priority?: 'must' | 'low'; reason?: string } = {}
+  options: { priority?: 'must' | 'low'; reason?: string; enabled?: boolean } = {}
 ) {
   const safeSource = originalSource?.trim() || ''
-  const [resolvedUrl, setResolvedUrl] = useState<string | null>(safeSource || null)
+  const enabled = options.enabled ?? true
+  const [resolvedUrl, setResolvedUrl] = useState<string | null>(() => (enabled ? safeSource || null : null))
   const { getSignedUrl, signedUrls } = useAppStore()
   const priority = options.priority ?? 'low'
   const reason = useMemo(
@@ -180,6 +181,16 @@ export function useSignedImageUrl(
       }
     }
 
+    if (!enabled) {
+      if (retryTimeoutRef.current) {
+        clearTimeout(retryTimeoutRef.current)
+        retryTimeoutRef.current = null
+      }
+      const fallback = lastGoodUrlRef.current ?? (shouldSign ? null : cacheKey || safeSource || null)
+      setResolvedUrl(fallback)
+      return
+    }
+
     if (!safeSource) {
       setResolvedUrl(lastGoodUrlRef.current)
       return
@@ -230,7 +241,7 @@ export function useSignedImageUrl(
       controller.abort()
       controllerRef.current = null
     }
-  }, [cacheKey, safeSource, signedUrls, fetchSignedUrl, shouldSign, priority, retryToken])
+  }, [cacheKey, safeSource, signedUrls, fetchSignedUrl, shouldSign, priority, retryToken, enabled])
 
   return { source: resolvedUrl }
 }

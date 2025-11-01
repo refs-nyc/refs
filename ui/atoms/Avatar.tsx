@@ -11,6 +11,7 @@ type AvatarProps = {
   size: number
   fallback?: string | null
   priority?: 'must' | 'low'
+  enabled?: boolean
 }
 
 const deriveInitial = (text?: string | null) => {
@@ -19,7 +20,7 @@ const deriveInitial = (text?: string | null) => {
   return trimmed[0]?.toUpperCase() ?? ''
 }
 
-export const Avatar = ({ source, size, fallback, priority = 'low' }: AvatarProps) => {
+export const Avatar = ({ source, size, fallback, priority = 'low', enabled = true }: AvatarProps) => {
   const finalSize = typeof size === 'number' ? size : 32
   const bucket = nearestBucket(finalSize)
   const deviceScale = currentDpr()
@@ -31,7 +32,7 @@ export const Avatar = ({ source, size, fallback, priority = 'low' }: AvatarProps
       width: bucket * deviceScale,
       height: bucket * deviceScale,
     },
-    { priority }
+    { priority, enabled }
   )
 
   const circleStyle = {

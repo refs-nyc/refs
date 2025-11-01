@@ -94,10 +94,6 @@ export const OtherProfileAvatarZoom = () => {
     }
   }, [otherProfileBackdropAnimatedIndex, unregisterBackdropPress])
 
-  if (!avatarZoomVisible || !avatarZoomImageUrl) {
-    return null
-  }
-
   const clamp = (value: number, lower: number, upper: number): number => {
     'worklet'
     return Math.min(Math.max(value, lower), upper)
@@ -115,6 +111,10 @@ export const OtherProfileAvatarZoom = () => {
     opacity: overlayOpacity.value,
     transform: [{ scale: overlayScale.value * pinchScale.value }],
   }))
+
+  if (!avatarZoomVisible || !avatarZoomImageUrl) {
+    return null
+  }
 
   return (
     <Pressable 

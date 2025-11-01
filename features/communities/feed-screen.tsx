@@ -177,6 +177,7 @@ const DirectoryRow = React.memo(({
   isVisible?: boolean
 }) => {
   const bookmarkScale = useSharedValue(1)
+  const avatarShouldLoad = isVisible !== false
 
   const bookmarkAnimatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: bookmarkScale.value }],
@@ -223,7 +224,13 @@ const DirectoryRow = React.memo(({
       onPress={onPress}
     >
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 }}>
-        <Avatar source={u.avatar_url} fallback={u.name} size={60} priority={isVisible ? 'must' : 'low'} />
+        <Avatar
+          source={u.avatar_url}
+          fallback={u.name}
+          size={60}
+          priority={avatarShouldLoad ? 'must' : 'low'}
+          enabled={avatarShouldLoad}
+        />
         <View style={{ flex: 1, marginLeft: 5, gap: 4 }}>
           <Text style={{ color: c.black, fontWeight: '700', fontSize: (s.$09 as number) + 1 }} numberOfLines={1} ellipsizeMode="tail">
             {u.name}
@@ -780,7 +787,7 @@ const viewabilityConfig = useRef({ itemVisiblePercentThreshold: 50 }).current
 
   const renderItem = useCallback(
     ({ item }: { item: FeedUser; index: number }) => {
-      const userVisible = visibleUserSet.has(item.id)
+      const userVisible = visibleUserSet.size === 0 || visibleUserSet.has(item.id)
       return (
         <DirectoryRow
           u={item}

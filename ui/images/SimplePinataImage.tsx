@@ -186,8 +186,10 @@ export function useSignedImageUrl(
         clearTimeout(retryTimeoutRef.current)
         retryTimeoutRef.current = null
       }
-      const fallback = lastGoodUrlRef.current ?? (shouldSign ? null : cacheKey || safeSource || null)
-      setResolvedUrl(fallback)
+
+      const disabledFallback = shouldSign ? null : cacheKey || safeSource || null
+      lastGoodUrlRef.current = disabledFallback
+      setResolvedUrl(disabledFallback)
       return
     }
 

@@ -2,6 +2,40 @@
 
 echo "🚀 Starting Refs services..."
 
+# Ensure PocketBase push notification env vars are available (mirrors start-pocketbase.sh)
+ENV_FILE=".env.local"
+
+export SUPABASE_NOTIFICATIONS_URL="${SUPABASE_NOTIFICATIONS_URL:-https://zrxgnplwnfaxtpffrqxo.supabase.co/functions/v1/notifications}"
+export SUPABASE_NOTIFICATIONS_SECRET="${SUPABASE_NOTIFICATIONS_SECRET:-WWmbsd55!!27}"
+
+if [ -z "${SUPABASE_ANON_KEY:-}" ]; then
+    if [ -f "$ENV_FILE" ]; then
+        while IFS= read -r line || [ -n "$line" ]; do
+            case "$line" in
+                ''|\#*)
+                    continue
+                    ;;
+                EXPO_PUBLIC_SUPA_KEY=*)
+                    export SUPABASE_ANON_KEY="${line#*=}"
+                    break
+                    ;;
+            esac
+        done < "$ENV_FILE"
+
+        if [ -z "${SUPABASE_ANON_KEY:-}" ]; then
+            echo "[push] warning: EXPO_PUBLIC_SUPA_KEY not found in $ENV_FILE; Supabase anon key unavailable" >&2
+        fi
+    else
+        echo "[push] warning: $ENV_FILE not found; Supabase anon key unavailable" >&2
+    fi
+fi
+
+if [ -z "${SUPABASE_ANON_KEY:-}" ]; then
+    echo "[push] warning: SUPABASE_ANON_KEY is not set; push notification calls will be unauthenticated" >&2
+else
+    echo "[push] SUPABASE_ANON_KEY configured for PocketBase notifications"
+fi
+
 # Check if PocketBase is already running
 if ! lsof -i :8090 > /dev/null 2>&1; then
     echo "📦 Starting PocketBase server..."

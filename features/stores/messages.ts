@@ -108,12 +108,27 @@ export const createMessageSlice: StateCreator<StoreSlices, [], [], MessageSlice>
   },
   sendMessage: async (senderId, conversationId, text, parentMessageId, imageUrl) => {
     try {
+      console.info('[messages] send:start', {
+        conversationId,
+        senderId,
+        hasReply: Boolean(parentMessageId),
+        hasImage: Boolean(imageUrl),
+        textLength: typeof text === 'string' ? text.length : 0,
+      })
+
       const created = await pocketbase.collection('messages').create<Message>({
         conversation: conversationId,
         text,
         sender: senderId,
         replying_to: parentMessageId,
         image: imageUrl,
+      })
+
+      console.info('[messages] send:created', {
+        id: created.id,
+        createdAt: created.created,
+        conversationId: created.conversation,
+        sender: created.sender,
       })
 
       const message: Message = created.text !== undefined
@@ -170,9 +185,19 @@ export const createMessageSlice: StateCreator<StoreSlices, [], [], MessageSlice>
         .collection('memberships')
         .getFirstListItem(`conversation = "${conversationId}" && user = "${senderId}"`)
       await pocketbase.collection('memberships').update(membership.id, { last_read: message.created })
+      console.info('[messages] send:complete', {
+        conversationId,
+        messageId: message.id,
+        membershipId: membership.id,
+      })
     } catch (error) {
-      console.error(error)
-    }
+      console.error('[messages] send:error', {
+        conversationId,
+        senderId,
+        textLength: typeof text === 'string' ? text.length : 0,
+        error,
+      })
+      }
   },
 
   updateLastRead: async (conversationId: string, userId: string, lastReadDate?: string) => {

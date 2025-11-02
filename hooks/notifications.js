@@ -4,6 +4,15 @@ const NOTIFICATIONS_URL = $os.getenv('SUPABASE_NOTIFICATIONS_URL') || ''
 const NOTIFICATIONS_SECRET = $os.getenv('SUPABASE_NOTIFICATIONS_SECRET') || ''
 const SUPABASE_ANON_KEY = $os.getenv('SUPABASE_ANON_KEY') || ''
 
+console.log(
+  '[push] init',
+  JSON.stringify({
+    url: NOTIFICATIONS_URL ? 'present' : 'missing',
+    secret: NOTIFICATIONS_SECRET ? 'present' : 'missing',
+    anonKey: SUPABASE_ANON_KEY ? 'present' : 'missing',
+  })
+)
+
 function sendNotifications(notifications) {
   if (!NOTIFICATIONS_URL) {
     console.log('Push notifications disabled: SUPABASE_NOTIFICATIONS_URL not set')
@@ -12,6 +21,23 @@ function sendNotifications(notifications) {
 
   if (!notifications || notifications.length === 0) {
     return
+  }
+
+  try {
+    const preview = notifications.map((notification) => ({
+      recipients: Array.isArray(notification.recipientIds)
+        ? notification.recipientIds.slice(0, 5)
+        : [],
+      recipientCount: Array.isArray(notification.recipientIds)
+        ? notification.recipientIds.length
+        : 0,
+      title: notification?.title ?? null,
+      type: notification?.data?.type ?? null,
+      hasBody: Boolean(notification?.body && notification.body.length > 0),
+    }))
+    console.log('[push] payload', JSON.stringify(preview))
+  } catch (error) {
+    console.log('[push] payload log failed', error)
   }
 
   console.log(
@@ -92,6 +118,7 @@ function handleMessageCreated(record) {
   }
 
   if (recipientIds.size === 0) {
+    console.log('[push] message:new:skip', JSON.stringify({ reason: 'no_members', conversationId, senderId }))
     return
   }
 
@@ -111,12 +138,23 @@ function handleMessageCreated(record) {
   }
 
   if (filteredRecipients.length === 0) {
+    console.log('[push] message:new:skip', JSON.stringify({ reason: 'blocked', conversationId, senderId }))
     return
   }
 
   const senderName = getUserDisplayName(senderId)
   const body = truncate(record.get('text') || '')
   const title = body ? `${senderName}: ${body}` : `${senderName} sent a message`
+
+  console.log(
+    '[push] message:new',
+    JSON.stringify({
+      conversationId,
+      senderId,
+      messageId: record.id,
+      recipientCount: filteredRecipients.length,
+    })
+  )
 
   sendNotifications([
     {
@@ -151,6 +189,15 @@ function handleItemCreated(record) {
   // Notify parent profile owner if applicable
   const parentId = record.get('parent')
   if (parentId && parentId !== creatorId) {
+    console.log(
+      '[push] item:parent',
+      JSON.stringify({
+        refId,
+        itemId: record.id,
+        creatorId,
+        parentId,
+      })
+    )
     sendNotifications([
       {
         recipientIds: [parentId],
@@ -181,6 +228,15 @@ function handleItemCreated(record) {
   }
 
   if (otherCreators.size > 0) {
+    console.log(
+      '[push] item:others',
+      JSON.stringify({
+        refId,
+        itemId: record.id,
+        creatorId,
+        recipientCount: otherCreators.size,
+      })
+    )
     sendNotifications([
       {
         recipientIds: Array.from(otherCreators),
@@ -225,8 +281,21 @@ function handleMembershipCreated(record) {
   }
 
   if (recipientIds.size === 0) {
+    console.log(
+      '[push] membership:skip',
+      JSON.stringify({ reason: 'no_members', conversationId, userId })
+    )
     return
   }
+
+  console.log(
+    '[push] membership:new',
+    JSON.stringify({
+      conversationId,
+      userId,
+      recipientCount: recipientIds.size,
+    })
+  )
 
   sendNotifications([
     {

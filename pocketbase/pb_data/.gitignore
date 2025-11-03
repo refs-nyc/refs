@@ -1,0 +1,7 @@
+# Ignore PocketBase data files (they live on Railway volume)
+*
+# But keep the hooks directory
+!pb_hooks/
+!pb_hooks/**
+!.gitignore
+

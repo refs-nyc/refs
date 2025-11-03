@@ -1,7 +1,9 @@
 #!/bin/sh
 set -e
 
-cd /workspace
+# Get the directory where the script is located
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+cd "$SCRIPT_DIR/.."
 
 # Start PocketBase with hooks support
 exec ./pocketbase/pocketbase serve \

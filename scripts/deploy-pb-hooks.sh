@@ -15,14 +15,14 @@ if ! command -v railway &> /dev/null; then
     exit 1
 fi
 
-# Check if hooks/notifications.js exists
-if [ ! -f "hooks/notifications.js" ]; then
-    echo "❌ hooks/notifications.js not found"
+# Check if hooks/notifications.pb.js exists
+if [ ! -f "hooks/notifications.pb.js" ]; then
+    echo "❌ hooks/notifications.pb.js not found"
     echo "   Make sure you're running this from the project root"
     exit 1
 fi
 
-echo "📦 Found hooks/notifications.js"
+echo "📦 Found hooks/notifications.pb.js"
 echo ""
 
 # Create a temporary script to deploy hooks
@@ -33,19 +33,19 @@ set -e
 echo "Creating hooks directory..."
 mkdir -p /pb/pb_data/pb_hooks
 
-echo "Deploying notifications.js..."
-cat > /pb/pb_data/pb_hooks/notifications.js <<'HOOKEOF'
+echo "Deploying notifications.pb.js..."
+cat > /pb/pb_data/pb_hooks/notifications.pb.js <<'HOOKEOF'
 EOF
 
 # Append the actual hooks content
-cat hooks/notifications.js >> /tmp/deploy-hooks.sh
+cat hooks/notifications.pb.js >> /tmp/deploy-hooks.sh
 
 # Close the heredoc
 cat >> /tmp/deploy-hooks.sh <<'EOF'
 HOOKEOF
 
 echo "Setting permissions..."
-chmod 644 /pb/pb_data/pb_hooks/notifications.js
+chmod 644 /pb/pb_data/pb_hooks/notifications.pb.js
 
 echo "✅ Hooks deployed!"
 echo ""
@@ -54,7 +54,7 @@ ls -la /pb/pb_data/pb_hooks/
 
 echo ""
 echo "📋 Hooks content preview (first 10 lines):"
-head -n 10 /pb/pb_data/pb_hooks/notifications.js
+head -n 10 /pb/pb_data/pb_hooks/notifications.pb.js
 EOF
 
 echo "📤 Uploading deployment script to PocketBase..."
@@ -78,4 +78,3 @@ echo "      railway logs --service pocketbase"
 
 # Clean up
 rm /tmp/deploy-hooks.sh
-

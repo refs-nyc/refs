@@ -7,7 +7,7 @@ routerAdd('GET', '/hooks_ping', (c) =>
   })
 )
 
-onRecordAfterCreateRequest((event) => {
+onRecordAfterCreateSuccess((event) => {
   try {
     const collection = event?.collection?.name || 'unknown'
     const id = event?.record?.id || null

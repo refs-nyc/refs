@@ -40,4 +40,7 @@ else
   echo "[push] SUPABASE_ANON_KEY loaded for PocketBase notifications"
 fi
 
-./.pocketbase/pocketbase serve
+export POCKETBASE_DATA_DIR="${POCKETBASE_DATA_DIR:-$(pwd)/.pocketbase/pb_data}"
+export PORT="${PORT:-8090}"
+
+exec ./pocketbase/start.sh

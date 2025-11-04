@@ -1,5 +1,14 @@
 /// <reference path="../.pocketbase/pb_data/types.d.ts" />
 
+// Add a test endpoint to verify hooks are loading
+routerAdd('GET', '/hooks_ping', (c) => {
+  return c.json(200, { 
+    ok: true, 
+    message: 'PocketBase hooks are loaded and working!',
+    timestamp: new Date().toISOString()
+  })
+})
+
 const NOTIFICATIONS_URL = $os.getenv('SUPABASE_NOTIFICATIONS_URL') || ''
 const NOTIFICATIONS_SECRET = $os.getenv('SUPABASE_NOTIFICATIONS_SECRET') || ''
 const SUPABASE_ANON_KEY = $os.getenv('SUPABASE_ANON_KEY') || ''
@@ -311,7 +320,7 @@ function handleMembershipCreated(record) {
   ])
 }
 
-onRecordAfterCreateRequest((e) => {
+onRecordAfterCreateSuccess((e) => {
   if (!NOTIFICATIONS_URL) {
     return
   }

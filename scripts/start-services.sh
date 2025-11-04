@@ -36,13 +36,16 @@ else
     echo "[push] SUPABASE_ANON_KEY configured for PocketBase notifications"
 fi
 
+POCKETBASE_DATA_DIR_VALUE="${POCKETBASE_DATA_DIR:-$(pwd)/.pocketbase/pb_data}"
+POCKETBASE_PORT="${PORT:-8090}"
+
 # Check if PocketBase is already running
-if ! lsof -i :8090 > /dev/null 2>&1; then
+if ! lsof -i :"$POCKETBASE_PORT" > /dev/null 2>&1; then
     echo "📦 Starting PocketBase server..."
-    ./.pocketbase/pocketbase serve &
+    POCKETBASE_DATA_DIR="$POCKETBASE_DATA_DIR_VALUE" PORT="$POCKETBASE_PORT" ./pocketbase/start.sh &
     sleep 3
 else
-    echo "✅ PocketBase already running on port 8090"
+    echo "✅ PocketBase already running on port $POCKETBASE_PORT"
 fi
 
 # Check if webhook server is already running
